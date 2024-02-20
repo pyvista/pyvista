@@ -1,6 +1,8 @@
 """Attributes common to PolyData and Grid Objects."""
+
 from __future__ import annotations
 
+import collections
 from collections import namedtuple
 from copy import deepcopy
 from functools import partial
@@ -25,7 +27,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, Matrix, Number, Vector
+from ._typing_core import BoundsLike, Matrix, Number, NumpyArray, Vector
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning, VTKVersionError
@@ -313,7 +315,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
+    def active_tensors(self) -> Optional[NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return the active tensors array.
 
         Returns
@@ -394,7 +396,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore
-    def active_scalars_name(self) -> str:  # type: ignore  # numpydoc ignore=RT01
+    def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the active scalars.
 
         Returns
@@ -494,12 +496,12 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[Matrix, _vtk.vtkPoints]):  # numpydoc ignore=GL08
+    def points(self, points: Union[Matrix[float], _vtk.vtkPoints]):  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
         ----------
-        points : Union[Matrix, _vtk.vtkPoints]
+        points : Matrix[float] | vtk.vtkPoints
             Points as a array object.
 
         """
@@ -583,7 +585,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -599,7 +601,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def set_active_scalars(
         self, name: Optional[str], preference='cell'
-    ) -> Tuple[FieldAssociation, Optional[np.ndarray]]:
+    ) -> Tuple[FieldAssociation, Optional[NumpyArray[float]]]:
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -844,7 +846,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.cell_data.active_normals
 
     def get_data_range(
-        self, arr_var: Optional[Union[str, np.ndarray]] = None, preference='cell'
+        self, arr_var: Optional[Union[str, NumpyArray[float]]] = None, preference='cell'
     ) -> Tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -887,7 +889,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: Vector = (0.0, 0.0, 0.0),
+        point: Vector[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -945,7 +947,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: Vector = (0.0, 0.0, 0.0),
+        point: Vector[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1002,7 +1004,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_z(
         self,
         angle: float,
-        point: Vector = (0.0, 0.0, 0.0),
+        point: Vector[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1059,9 +1061,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: Vector,
+        vector: Vector[float],
         angle: float,
-        point: Vector = (0.0, 0.0, 0.0),
+        point: Vector[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1122,7 +1124,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_axes(
         self,
-        axes: Vector,
+        axes: Vector[float],
         point=(0.0, 0.0, 0.0),
         transform_all_input_vectors=False,
         inplace=False,
@@ -1194,7 +1196,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def translate(
-        self, xyz: Vector, transform_all_input_vectors: bool = False, inplace: bool = False
+        self, xyz: Vector[float], transform_all_input_vectors: bool = False, inplace: bool = False
     ):
         """Translate the mesh.
 
@@ -1242,7 +1244,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def scale(
         self,
-        xyz: Union[Number, Vector],
+        xyz: Union[Number, Vector[float]],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1293,14 +1295,14 @@ class DataSet(DataSetFilters, DataObject):
             xyz = [xyz] * 3
 
         transform = _vtk.vtkTransform()
-        transform.Scale(xyz)  # type: ignore
+        transform.Scale(xyz)
         return self.transform(
             transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
         )
 
     def flip_x(
         self,
-        point: Optional[Vector] = None,
+        point: Optional[Vector[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1356,7 +1358,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_y(
         self,
-        point: Optional[Vector] = None,
+        point: Optional[Vector[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1412,7 +1414,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_z(
         self,
-        point: Optional[Vector] = None,
+        point: Optional[Vector[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1468,8 +1470,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_normal(
         self,
-        normal: Vector,
-        point: Optional[Vector] = None,
+        normal: Vector[float],
+        point: Optional[Vector[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1814,7 +1816,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> Vector:  # numpydoc ignore=RT01
+    def center(self) -> List[int]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
@@ -1912,7 +1914,7 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Area'].sum()
 
     @property
-    def principal_axes(self) -> np.ndarray:
+    def principal_axes(self) -> NumpyArray[float]:
         """Return the mesh's principal axes.
 
         The mesh's principal axes are orthonormal vectors that best fit
@@ -2064,7 +2066,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self, index: Union[Iterable, str]) -> np.ndarray:
+    def __getitem__(self, index: Union[Iterable[Any], str]) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
         if isinstance(index, Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
@@ -2083,7 +2085,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.array_names
 
     def __setitem__(
-        self, name: str, scalars: Union[np.ndarray, Sequence, float]
+        self, name: str, scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float]
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2457,9 +2459,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(
         self,
-        point: Union[Vector, Matrix],
+        point: Union[Vector[float], Matrix[float]],
         return_closest_point: bool = False,
-    ) -> Union[int, np.ndarray, Tuple[Union[int, np.ndarray], np.ndarray]]:
+    ) -> Union[int, NumpyArray[int], Tuple[Union[int, NumpyArray[int]], NumpyArray[int]]]:
         """Find index of closest cell in this mesh to the given point.
 
         Parameters
@@ -2579,7 +2581,7 @@ class DataSet(DataSetFilters, DataObject):
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
-        out_cells: Union[int, np.ndarray] = (
+        out_cells: Union[int, NumpyArray[int]] = (
             closest_cells[0] if singular else np.array(closest_cells)
         )
         out_points = np.array(closest_points[0]) if singular else np.array(closest_points)
@@ -2588,7 +2590,9 @@ class DataSet(DataSetFilters, DataObject):
             return out_cells, out_points
         return out_cells
 
-    def find_containing_cell(self, point: Union[Vector, Matrix]) -> Union[int, np.ndarray]:
+    def find_containing_cell(
+        self, point: Union[Vector[float], Matrix[float]]
+    ) -> Union[int, NumpyArray[int]]:
         """Find index of a cell that contains the given point.
 
         Parameters
@@ -2653,10 +2657,10 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_along_line(
         self,
-        pointa: Vector,
-        pointb: Vector,
+        pointa: Vector[float],
+        pointb: Vector[float],
         tolerance: float = 0.0,
-    ) -> np.ndarray:
+    ) -> NumpyArray[int]:
         """Find the index of cells whose bounds intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.
@@ -2719,10 +2723,10 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_intersecting_line(
         self,
-        pointa: Vector,
-        pointb: Vector,
+        pointa: Vector[float],
+        pointb: Vector[float],
         tolerance: float = 0.0,
-    ) -> np.ndarray:
+    ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
 
         Line is defined from ``pointa`` to ``pointb``.  This
@@ -2784,7 +2788,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: BoundsLike) -> np.ndarray:
+    def find_cells_within_bounds(self, bounds: BoundsLike) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
@@ -3300,7 +3304,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
-        self, ind: int, n_levels: int, method: Callable
+        self, ind: int, n_levels: int, method: Callable[[Any], Any]
     ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
         """Provide helper method that yields neighbors ids."""
         neighbors = set(method(ind))
@@ -3389,7 +3393,9 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointCells(ind, ids)
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
-    def point_is_inside_cell(self, ind: int, point: Vector | Matrix) -> Union[int, np.ndarray]:
+    def point_is_inside_cell(
+        self, ind: int, point: Union[Vector[float] | Matrix[float]]
+    ) -> Union[bool, NumpyArray[np.bool_]]:
         """Return whether one or more points are inside a cell.
 
         .. versionadded:: 0.35.0
@@ -3476,7 +3482,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.point_data.active_texture_coordinates
 
     @active_texture_coordinates.setter
-    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
+    def active_texture_coordinates(
+        self, texture_coordinates: NumpyArray[float]
+    ):  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters

@@ -6,6 +6,7 @@ Streamlines
 
 Integrate a vector field to generate streamlines.
 """
+
 ###############################################################################
 # This example generates streamlines of blood velocity. An isosurface of speed
 # provides context. The starting positions for the streamtubes were determined

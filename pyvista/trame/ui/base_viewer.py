@@ -257,7 +257,7 @@ class BaseViewer:
 
     def ui(self):
         """Implement in derived classes."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def make_layout(self, *args, **kwargs) -> AbstractLayout:  # pragma: no cover
         """Create an instance of an AbstractLayout which is appropriate for a concrete viewer.
@@ -275,4 +275,4 @@ class BaseViewer:
         AbstractLayout
             A layout this viewer can be embedded in.
         """
-        raise NotImplementedError()
+        raise NotImplementedError

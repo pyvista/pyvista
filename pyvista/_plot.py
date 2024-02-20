@@ -7,6 +7,7 @@ This is necessary for future versions of PyVista that will fully
 decouple the ``core`` and ``plotting`` APIs.
 
 """
+
 import numpy as np
 
 import pyvista

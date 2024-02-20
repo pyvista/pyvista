@@ -13,6 +13,7 @@ to clip by a surface, and preserve the original geometry of the given mesh,
 but many folks leverage the ``clip_surface`` filter to triangulate/tessellate
 the mesh geometries along the clip.
 """
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4

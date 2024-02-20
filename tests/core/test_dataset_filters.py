@@ -54,7 +54,7 @@ class GetOutput:
         return self._mock.call_args_list[-1][0][0]
 
 
-@pytest.fixture
+@pytest.fixture()
 def composite(datasets):
     return pv.MultiBlock(datasets)
 
@@ -181,7 +181,7 @@ def test_clip_box(datasets):
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5, progress_bar=True)
     assert result.n_cells
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.clip_box(bounds=(5, 6), progress_bar=True)
     # allow Sequence but not Iterable bounds
     with pytest.raises(TypeError):
@@ -195,7 +195,7 @@ def test_clip_box(datasets):
     result = mesh.clip_box(box, invert=True, progress_bar=True)
     assert result.n_cells
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.clip_box(bounds=pv.Sphere(), progress_bar=True)
 
     # crinkle clip
@@ -239,7 +239,7 @@ def test_clip_closed_surface():
     clipped = closed_surface.clip_closed_surface(progress_bar=True)
     assert clipped.n_open_edges == 0
     open_surface = closed_surface.clip(progress_bar=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = open_surface.clip_closed_surface()
 
 
@@ -308,7 +308,7 @@ def test_slice_along_axis(datasets):
         for slc in slices:
             assert isinstance(slc, pv.PolyData)
     dataset = examples.load_uniform()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.slice_along_axis(axis='u')
 
 
@@ -339,18 +339,18 @@ def test_threshold(datasets):
         dataset.threshold({100, 500}, progress_bar=True)
 
     # Now test DataSet without arrays
-    with pytest.raises(ValueError):
-        dataset = datasets[3]  # polydata with no arrays
+    dataset = datasets[3]  # polydata with no arrays
+    with pytest.raises(ValueError):  # noqa: PT011
         thresh = dataset.threshold()
 
     dataset = examples.load_uniform()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold([10, 100, 300], progress_bar=True)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold(100, method='between')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold((2, 1))
 
 
@@ -405,13 +405,13 @@ def test_threshold_multicomponent():
     thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
     assert thresh.n_cells == 4
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
 
     with pytest.raises(TypeError):
@@ -430,9 +430,9 @@ def test_threshold_percent(datasets):
         assert isinstance(thresh, pv.UnstructuredGrid)
     dataset = examples.load_uniform()
     _ = dataset.threshold_percent(0.75, scalars='Spatial Cell Data', progress_bar=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold_percent(20000)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         dataset.threshold_percent(0.0)
     # allow Sequence but not Iterable
     with pytest.raises(TypeError):
@@ -645,9 +645,9 @@ def test_contour_errors(uniform):
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces={100, 300, 500})
     uniform = examples.load_airplane()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform.contour()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform.contour(method='invalid method')
     with pytest.raises(TypeError, match='Invalid type for `scalars`'):
         uniform.contour(scalars=1)
@@ -691,7 +691,7 @@ def test_elevation():
     # test errors
     with pytest.raises(TypeError):
         elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
     with pytest.raises(TypeError):
         elev = dataset.elevation(scalar_range={1, 2}, progress_bar=True)
@@ -741,11 +741,13 @@ def test_texture_map_to_sphere():
 
 def test_compute_cell_sizes(datasets):
     for dataset in datasets:
-        result = dataset.compute_cell_sizes(progress_bar=True)
+        result = dataset.compute_cell_sizes(progress_bar=True, vertex_count=True)
         assert result is not None
         assert isinstance(result, type(dataset))
+        assert 'Length' in result.array_names
         assert 'Area' in result.array_names
         assert 'Volume' in result.array_names
+        assert 'VertexCount' in result.array_names
     # Test the volume property
     grid = pv.ImageData(dimensions=(10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
@@ -826,7 +828,7 @@ def test_glyph(datasets, sphere):
     with pytest.raises(TypeError):
         # wrong type for the indices
         sphere.glyph(geom=geoms, indices=set(indices))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # wrong length for the indices
         sphere.glyph(geom=geoms, indices=indices[:-1])
 
@@ -839,9 +841,9 @@ def test_glyph_cell_point_data(sphere):
 
     assert sphere.glyph(orient='vectors_cell', scale='arr_cell', progress_bar=True)
     assert sphere.glyph(orient='vectors_points', scale='arr_points', progress_bar=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.glyph(orient='vectors_cell', scale='arr_points', progress_bar=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.glyph(orient='vectors_points', scale='arr_cell', progress_bar=True)
 
 
@@ -992,13 +994,17 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
     glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds[4] == geom.bounds[0] * scale and glyph1.bounds[5] == geom.bounds[1] * scale
-    assert glyph2.bounds[0] == geom.bounds[0] * scale and glyph2.bounds[1] == geom.bounds[1] * scale
-    assert glyph3.bounds[4] == geom.bounds[0] and glyph3.bounds[5] == geom.bounds[1]
-    assert glyph4.bounds[0] == geom.bounds[0] and glyph4.bounds[1] == geom.bounds[1]
+    assert glyph1.bounds[4] == geom.bounds[0] * scale
+    assert glyph1.bounds[5] == geom.bounds[1] * scale
+    assert glyph2.bounds[0] == geom.bounds[0] * scale
+    assert glyph2.bounds[1] == geom.bounds[1] * scale
+    assert glyph3.bounds[4] == geom.bounds[0]
+    assert glyph3.bounds[5] == geom.bounds[1]
+    assert glyph4.bounds[0] == geom.bounds[0]
+    assert glyph4.bounds[1] == geom.bounds[1]
 
 
-@pytest.fixture
+@pytest.fixture()
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
@@ -1010,12 +1016,12 @@ def connected_datasets():
     ]
 
 
-@pytest.fixture
+@pytest.fixture()
 def foot_bones():
     return examples.download_foot_bones()
 
 
-@pytest.fixture
+@pytest.fixture()
 def connected_datasets_single_disconnected_cell(connected_datasets):
     # Create datasets of MultiBlocks with either 'point' or 'cell' scalar
     # data, where a single cell (or its points) has a completely different
@@ -1280,7 +1286,7 @@ def test_connectivity_specified(foot_bones):
     assert conn.n_cells == foot_bones.n_cells
 
     # test irrelevant region IDs
-    test_regions = all_regions + [77, 99]
+    test_regions = [*all_regions, 77, 99]
     conn = foot_bones.connectivity('specified', test_regions)
     assert conn.n_cells == foot_bones.n_cells
 
@@ -1415,12 +1421,12 @@ def test_invalid_warp_scalar_inplace(uniform):
 def test_invalid_warp_vector(sphere):
     # bad vectors
     sphere.point_data['Normals'] = np.empty((sphere.n_points, 2))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.warp_by_vector('Normals')
 
     # no vectors
     sphere.point_data.clear()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.warp_by_vector()
 
 
@@ -1516,7 +1522,7 @@ def test_sample():
     sample_test(locator=_vtk_core.vtkStaticCellLocator())
     for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
         sample_test(locator=locator)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sample_test(locator="invalid")
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
@@ -1638,21 +1644,21 @@ def test_streamlines_start_position(uniform_vec):
 
 
 def test_streamlines_errors(uniform_vec):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', integration_direction='not valid')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', integrator_type=42)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', interpolator_type='not valid')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', step_unit='not valid')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', pointa=(0, 0, 0))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uniform_vec.streamlines('vectors', pointb=(0, 0, 0))
 
 
@@ -1729,17 +1735,17 @@ def test_streamlines_evenly_spaced_2D_interpolator_type():
 def test_streamlines_evenly_spaced_2D_errors():
     mesh = mesh_2D_velocity()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(integrator_type=45)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail()
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
@@ -1998,16 +2004,16 @@ def test_slice_along_line():
     b = [model.bounds[1], model.bounds[2], model.bounds[5]]
     line2 = pv.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         slc = model.slice_along_line(line, progress_bar=True)
 
+    one_cell = model.extract_cells(0, progress_bar=True)
     with pytest.raises(TypeError):
-        one_cell = model.extract_cells(0, progress_bar=True)
         model.slice_along_line(one_cell, progress_bar=True)
 
 
 def extract_points_invalid(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.extract_points('invalid')
 
     with pytest.raises(TypeError):
@@ -2222,8 +2228,17 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo', progress_bar=True)
 
 
-def test_compute_derivatives():
-    mesh = examples.load_random_hills()
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_compute_boundary_mesh_quality():
+    mesh = examples.download_can_crushed_vtu()
+    qual = mesh.compute_boundary_mesh_quality()
+    assert 'DistanceFromCellCenterToFaceCenter' in qual.array_names
+    assert 'DistanceFromCellCenterToFacePlane' in qual.array_names
+    assert 'AngleFaceNormalAndCellCenterToFaceCenterVector' in qual.array_names
+
+
+def test_compute_derivatives(random_hills):
+    mesh = random_hills
     vector = np.zeros((mesh.n_points, 3))
     vector[:, 1] = np.ones(mesh.n_points)
     mesh['vector'] = vector
@@ -2292,7 +2307,7 @@ def test_compute_derivatives():
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 9
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grad = mesh.compute_derivative(scalars='Elevation', gradient=False, progress_bar=True)
 
     with pytest.raises(TypeError):
@@ -2343,7 +2358,7 @@ def test_gaussian_smooth_cell_data_specified():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         volume.gaussian_smooth(scalars='cell_data')
 
 
@@ -2354,7 +2369,7 @@ def test_gaussian_smooth_cell_data_active():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         volume.gaussian_smooth()
 
 
@@ -2432,7 +2447,7 @@ def test_image_dilate_erode_cell_data_specified():
     volume = pv.ImageData(dimensions=(10, 10, 10))
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         volume.image_dilate_erode(scalars='cell_data')
 
 
@@ -2443,7 +2458,7 @@ def test_image_dilate_erode_cell_data_active():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume.cell_data['cell_data'] = cell_data.flatten(order='F')
     volume.set_active_scalars('cell_data')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         volume.image_dilate_erode()
 
 
@@ -2459,7 +2474,7 @@ def test_image_threshold_output_type():
 def test_image_threshold_wrong_threshold_length():
     threshold = (10, 10, 10)  # tuple with too many values
     volume = examples.load_uniform()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         volume.image_threshold(threshold)
 
 
@@ -2527,7 +2542,7 @@ def test_extract_subset_structured():
     assert voi.dimensions == (4, 4, 1)
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_grids_split_coincident():
     """Two structured grids which are coincident along second axis (axis=1), and
     the grid from which they were extracted."""
@@ -2541,7 +2556,7 @@ def structured_grids_split_coincident():
     return voi_1, voi_2, structured
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_grids_split_disconnected():
     """Two structured grids which are disconnected."""
     structured = examples.load_structured()
@@ -2569,10 +2584,10 @@ def test_concatenate_structured_bad_dimensions(structured_grids_split_coincident
     voi_1, voi_2, structured = structured_grids_split_coincident
 
     # test invalid dimensions
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         voi_1.concatenate(voi_2, axis=0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         voi_1.concatenate(voi_2, axis=2)
 
 
@@ -2650,12 +2665,14 @@ def test_tessellate():
     assert tessellated.n_points > ugrid.n_points
     assert ugrid.tessellate(max_n_subdivide=6).n_cells > tessellated.n_cells
     assert ugrid.tessellate(merge_points=False).n_points > tessellated.n_points
+    pdata = pv.PolyData()
     with pytest.raises(TypeError):
-        pdata = pv.PolyData()
         tessellated = pdata.tessellate(progress_bar=True)
 
 
-@pytest.mark.parametrize('num_cell_arrays,num_point_data', itertools.product([0, 1, 2], [0, 1, 2]))
+@pytest.mark.parametrize(
+    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2])
+)
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
@@ -2694,7 +2711,9 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
             assert not np.array_equal(dataset.cell_connectivity, transformed.cell_connectivity)
 
 
-@pytest.mark.parametrize('num_cell_arrays,num_point_data', itertools.product([0, 1, 2], [0, 1, 2]))
+@pytest.mark.parametrize(
+    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2])
+)
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         # rotate about x-axis by 90 degrees
@@ -2744,7 +2763,9 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
 
-@pytest.mark.parametrize("num_cell_arrays,num_point_data", itertools.product([0, 1, 2], [0, 1, 2]))
+@pytest.mark.parametrize(
+    ("num_cell_arrays", "num_point_data"), itertools.product([0, 1, 2], [0, 1, 2])
+)
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
@@ -2867,7 +2888,7 @@ def test_extrude_rotate():
     resolution = 4
     line = pv.Line(pointa=(0, 0, 0), pointb=(1, 0, 0))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(resolution=0, capping=True)
 
     poly = line.extrude_rotate(resolution=resolution, progress_bar=True, capping=True)
@@ -2892,12 +2913,10 @@ def test_extrude_rotate():
     xmax = poly.bounds[1]
     ymin = poly.bounds[2]
     ymax = poly.bounds[3]
-    assert (
-        (xmin == line.bounds[0])
-        and (xmax == line.bounds[1])
-        and (ymin == line.bounds[0])
-        and (ymax == line.bounds[1])
-    )
+    assert xmin == line.bounds[0]
+    assert xmax == line.bounds[1]
+    assert ymin == line.bounds[0]
+    assert ymax == line.bounds[1]
 
     rotation_axis = (0, 1, 0)
     if not pv.vtk_version_info >= (9, 1, 0):
@@ -2910,7 +2929,7 @@ def test_extrude_rotate():
         assert poly.n_cells == line.n_points - 1
         assert poly.n_points == (resolution + 1) * line.n_points
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         line.extrude_rotate(rotation_axis=[1, 2], capping=True)
 
 
@@ -2957,11 +2976,11 @@ def test_extrude_trim_catch():
     direction = (0, 0, 1)
     mesh = pv.Plane()
     trim_surface = pv.Plane()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
     with pytest.raises(TypeError, match='Invalid type'):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
     with pytest.raises(TypeError, match='Invalid type'):
         _ = mesh.extrude_trim(direction, trim_surface, capping=0)
@@ -3117,7 +3136,7 @@ def test_merge_points():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def labeled_image():
     image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
@@ -3129,7 +3148,7 @@ def test_sort_labels(labeled_image):
     assert np.array_equal(sorted_['packed_labels'], [2, 0, 0, 0, 0, 2, 1, 1])
 
     # test no data
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.ImageData(dimensions=(2, 2, 2)).sort_labels()
 
     # test single label

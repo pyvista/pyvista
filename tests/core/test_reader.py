@@ -11,7 +11,7 @@ from pyvista.examples.downloads import download_file
 
 HAS_IMAGEIO = True
 try:
-    import imageio  # noqa: F401
+    import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
@@ -23,7 +23,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 
 def test_get_reader_fail():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
 
 
@@ -250,6 +250,30 @@ def test_ensightreader_timepoints():
 
     with pytest.raises(ValueError, match="Not a valid time"):
         reader.set_active_time_value(1000.0)
+
+
+def test_ensightreader_time_sets():
+    filename = examples.download_lshape(load=False)
+
+    reader = pv.get_reader(filename)
+    assert reader.active_time_set == 0
+
+    reader.set_active_time_set(1)
+    assert reader.number_time_points == 11
+
+    mesh = reader.read()["all"]
+    assert reader.number_time_points == 11
+    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+
+    reader.set_active_time_value(reader.time_values[-1])
+    mesh = reader.read()["all"]
+    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+
+    reader.set_active_time_set(0)
+    assert reader.number_time_points == 1
+
+    with pytest.raises(IndexError, match="Time set index"):
+        reader.set_active_time_set(2)
 
 
 def test_dcmreader(tmpdir):
@@ -513,7 +537,7 @@ def test_pvdreader_no_part_group():
 
     reader.set_active_time_value(1.0)
     assert len(reader.active_datasets) == 2
-    for i, dataset in enumerate(reader.active_datasets):
+    for dataset in reader.active_datasets:
         assert dataset.time == 1.0
         assert dataset.group == ""
         assert dataset.part == 0
@@ -609,6 +633,9 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+)
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
     reader.decompose_polyhedra = False

@@ -1,4 +1,5 @@
 """Module implementing point transformations and their matrices."""
+
 from collections.abc import Sequence
 
 import numpy as np

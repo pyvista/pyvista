@@ -1,4 +1,5 @@
 """Miscellaneous core utilities."""
+
 from collections.abc import Sequence
 import enum
 from functools import lru_cache
@@ -52,14 +53,15 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(vector: Vector, name: str = '') -> None:
+def check_valid_vector(point: Vector[float], name: str = '') -> None:
     """
     Check if a vector contains three numerical elements.
 
     Parameters
     ----------
-    vector : Vector
+    point : Vector[float]
         Input vector to check. Must be a sequence with exactly three numeric elements.
+
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
 
@@ -75,13 +77,13 @@ def check_valid_vector(vector: Vector, name: str = '') -> None:
         name = 'Vector'
     error_msg = f'{name} must be a sequence with three numbers.'
 
-    if isinstance(vector, np.ndarray):
-        if np.size(vector) != 3:
+    if isinstance(point, np.ndarray):
+        if np.size(point) != 3:
             raise ValueError(error_msg)
-    elif isinstance(vector, Sequence):
-        if len(vector) != 3:
+    elif isinstance(point, Sequence):
+        if len(point) != 3:
             raise ValueError(error_msg)
-        for element in vector:
+        for element in point:
             if not isinstance(element, Number):
                 raise ValueError(error_msg)
     else:
@@ -288,7 +290,7 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
                 f'{self.__class__.__name__}'
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls
 
 

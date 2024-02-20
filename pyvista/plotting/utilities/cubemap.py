@@ -1,4 +1,5 @@
 """Cubemap utilities."""
+
 import os
 
 import pyvista

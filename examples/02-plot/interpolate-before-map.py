@@ -16,6 +16,7 @@ For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
 <https://www.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
 
 """
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 

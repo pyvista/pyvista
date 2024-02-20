@@ -1,4 +1,5 @@
 """Points related utilities."""
+
 import random
 import warnings
 
@@ -587,7 +588,7 @@ def principal_axes_vectors(
     # Compare all direction vectors with each other
     directions = [axis_0_direction, axis_1_direction, axis_2_direction]
     for i, vec1 in enumerate(directions):
-        for j, vec2 in enumerate(directions[i + 1 : :]):
+        for vec2 in directions[i + 1 : :]:
             if vec1 is not None and vec2 is not None and np.allclose(vec1, vec2):
                 raise ValueError("Direction vectors must be distinct.")
 
@@ -1115,10 +1116,9 @@ def vector_poly_data(orig, vec):
     vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
-    cells[:, 0] = 1
-    cells[:, 1] = np.arange(npts, dtype=pyvista.ID_TYPE)
-    vcells = pyvista.core.cell.CellArray(cells, npts)
+    vcells = pyvista.core.cell.CellArray.from_regular_cells(
+        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1))
+    )
 
     # Create vtkPolyData object
     pdata = _vtk.vtkPolyData()
