@@ -930,11 +930,6 @@ def validate_array(
                 f"Return type {return_type} is not compatible with dtype_out={dtype_out}.\n"
                 f"A list or tuple can only be returned if dtype_out is float, int, or bool."
             )
-    # # Make sure return type is set if reshape or broadcast
-    # if reshape_to is not None and and broadcast_to is not None and return_type is None:
-    #     raise ValueError(
-    #         f"Return type cannot be {None} when reshaping or broadcasting arrays."
-    #     )
 
     do_reshape = reshape_to is not None and wrapped.shape != reshape_to
     do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
