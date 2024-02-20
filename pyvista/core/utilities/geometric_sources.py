@@ -517,6 +517,28 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.SetCapping(capping)
 
     @property
+    def capsule_cap(self) -> bool:
+        """Get whether the capping should make the cylinder a capsule.
+
+        Returns
+        -------
+        bool
+            Capsule cap.
+        """
+        return bool(self.GetCapsuleCap())
+
+    @capsule_cap.setter
+    def capsule_cap(self, capsule_cap: bool):
+        """Set whether the capping should make the cylinder a capsule.
+
+        Parameters
+        ----------
+        capsule_cap : bool
+            Capsule cap.
+        """
+        self.SetCapsuleCap(capsule_cap)
+
+    @property
     def output(self):
         """Get the output data object for a port on this algorithm.
 
