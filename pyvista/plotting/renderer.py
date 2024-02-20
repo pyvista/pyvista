@@ -697,7 +697,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def mpl_charts(self):  # numpydoc ignore=RT01
-        """Return a list of all matplotlib charts in this renderer."""
+        """Return a list of all matplotlib charts in this renderer.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> import pyvista as pv
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot([1, 2, 3], [4, 5, 6])
+        >>> chart = pv.ChartMPL(fig)
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.add_mesh(pv.Sphere())
+        >>> pl.subplot(0, 1)
+        >>> pl.add_chart(chart)
+        >>> ax = pl.renderer.mpl_charts[0].figure.axes[0]
+        >>> ax.get_lines()[0].set_ydata([6, 5, 4])
+        >>> pl.show()
+
+        """
         return self._charts.charts
 
     @wraps(Charts.set_interaction)
