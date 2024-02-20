@@ -33,7 +33,7 @@ from pyvista.core._typing_core._array_like import (
     _NumberType,
     _NumberUnion,
 )
-from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper, _BuiltinWrapper
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
 from pyvista.core._validation.check import (
     check_contains,
     check_finite,
@@ -936,13 +936,7 @@ def validate_array(
 
     # Check if re-casting is needed in case subclasses are not allowed
     rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
-
-    # Check if built-in types need to be cast to numpy in case broadcasting
-    # or reshaping is needed (these are only supported for numpy arrays)
-    is_builtin = isinstance(wrapped, _BuiltinWrapper)
-    rewrap_builtin = is_builtin and (do_reshape or do_broadcast)
-
-    if rewrap_numpy or rewrap_builtin or return_type in ("numpy", np.ndarray):
+    if rewrap_numpy or return_type in ("numpy", np.ndarray):
         wrapped = (
             _ArrayLikeWrapper(np.asanyarray(array))
             if as_any
@@ -958,10 +952,10 @@ def validate_array(
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
     if do_reshape or do_broadcast:
-        wrapped._array = np.reshape(wrapped._array, reshape_to)  # type: ignore[arg-type]
+        wrapped = _ArrayLikeWrapper(np.reshape(wrapped._array, reshape_to))  # type: ignore[arg-type]
 
     if do_broadcast:
-        wrapped._array = np.broadcast_to(wrapped._array, broadcast_to, subok=True)  # type: ignore[arg-type]
+        wrapped = _ArrayLikeWrapper(np.broadcast_to(wrapped._array, broadcast_to, subok=True))  # type: ignore[arg-type]
 
     # Check length _after_ reshaping otherwise length may be wrong
     if (
@@ -1017,6 +1011,7 @@ def validate_array(
         elif isinstance(array, list) or (
             isinstance(array, (float, int, bool)) and wrapped.ndim == 0
         ):
+            # this case also covers scalar -> scalar mapping
             return_type = list
         else:
             return_type = np.ndarray
@@ -1555,7 +1550,7 @@ def validate_arrayN(
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
     >>> _validation.validate_arrayN(42.0)
-    [42.0]
+    array([42.0])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
@@ -1644,7 +1639,7 @@ def validate_arrayN_unsigned(
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
     >>> _validation.validate_arrayN_unsigned(42)
-    [42]
+    array([42])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
@@ -1743,7 +1738,7 @@ def validate_array3(
     a 3-element 1D array.
 
     >>> _validation.validate_array3(42.0, broadcast=True)
-    [42.0, 42.0, 42.0]
+    arra([42.0, 42.0, 42.0])
 
     Add additional constraints if needed.
 
