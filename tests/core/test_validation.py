@@ -525,7 +525,6 @@ def test_validate_array(
     numpy_expected = (
         has_numpy_dtype
         or return_type is np.ndarray
-        or (np.array(array_in).ndim > 2 and return_type is None)
         or (isinstance(array_in, np.ndarray) and return_type is None)
     )
     if numpy_expected:

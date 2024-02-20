@@ -83,8 +83,6 @@ class _TypedKwargs(TypedDict, total=False):
     must_be_in_range: Optional[Vector[float]]
     strict_lower_bound: bool
     strict_upper_bound: bool
-    reshape_to: Optional[_ShapeLike]
-    broadcast_to: Optional[_ShapeLike]
     as_any: bool
     copy: bool
     get_flags: bool
@@ -106,6 +104,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[Union[_TupleReturnType, _ListReturnType]] = ...,
+    reshape_to: Optional[Tuple[()]] = ...,
+    broadcast_to: Optional[Tuple[()]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> _NumberType: ...
 
@@ -118,6 +118,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[Union[_TupleReturnType, _ListReturnType]] = ...,
+    reshape_to: Optional[Tuple[()]] = ...,
+    broadcast_to: Optional[Tuple[()]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> __NumberType: ...
 
@@ -130,6 +132,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _NumpyReturnType,
+    reshape_to: Optional[Tuple[()]] = ...,
+    broadcast_to: Optional[Tuple[()]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
@@ -142,6 +146,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _NumpyReturnType,
+    reshape_to: Optional[Tuple[()]] = ...,
+    broadcast_to: Optional[Tuple[()]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
 
@@ -155,6 +161,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[_NumberType]]: ...
 
@@ -179,6 +187,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _TupleReturnType,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[_NumberType]]: ...
 
@@ -191,6 +201,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _TupleReturnType,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[__NumberType]]: ...
 
@@ -203,6 +215,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[_NumberType]: ...
 
@@ -215,6 +229,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[__NumberType]: ...
 
@@ -227,6 +243,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _TupleReturnType,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[_NumberType]: ...
 
@@ -239,8 +257,38 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _TupleReturnType,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[__NumberType]: ...
+
+
+# FiniteNestedList[T] -> FiniteNestedList[T]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: _FiniteNestedList[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Union[_NumberType, _FiniteNestedList[_NumberType]]: ...
+
+
+# FiniteNestedList[T1] -> FiniteNestedList[T2]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: _FiniteNestedList[_NumberType],
+    /,
+    *,
+    dtype_out: Type[__NumberType],
+    return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Union[__NumberType, _FiniteNestedList[__NumberType]]: ...
 
 
 # """TUPLE OVERLOADS"""
@@ -252,6 +300,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[_NumberType]]: ...
 
@@ -264,6 +314,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _ListReturnType,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[_NumberType]]: ...
 
@@ -276,6 +328,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[Tuple[__NumberType]]: ...
 
@@ -288,6 +342,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _ListReturnType,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[__NumberType]]: ...
 
@@ -300,6 +356,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[_NumberType]: ...
 
@@ -312,6 +370,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _ListReturnType,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[_NumberType]: ...
 
@@ -324,6 +384,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Tuple[__NumberType]: ...
 
@@ -336,8 +398,38 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _ListReturnType,
+    reshape_to: Optional[Union[int, Tuple[int]]] = ...,
+    broadcast_to: Optional[Union[int, Tuple[int]]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[__NumberType]: ...
+
+
+# FiniteNestedTuple[T] -> FiniteNestedTuple[T]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: _FiniteNestedTuple[_NumberType],
+    /,
+    *,
+    dtype_out: None = None,
+    return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]: ...
+
+
+# ArrayLike[T1] -> FiniteNestedTuple[T2]
+@overload
+def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
+    array: _FiniteNestedTuple[_NumberType],
+    /,
+    *,
+    dtype_out: Type[__NumberType],
+    return_type: Optional[_TupleReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
+    **kwargs: Unpack[_TypedKwargs],
+) -> Union[__NumberType, _FiniteNestedTuple[__NumberType]]: ...
 
 
 # """NUMPY OVERLOADS"""
@@ -349,6 +441,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_NumpyReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
@@ -361,11 +455,13 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_NumpyReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
 
 
-# NDArray[T] -> NestedList[T]
+# NDArray[T] -> FiniteNestedList[T]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -373,11 +469,13 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _ListReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[_NumberType, _FiniteNestedList[_NumberType]]: ...
 
 
-# NDArray[T1] -> NestedList[T2]
+# NDArray[T1] -> FiniteNestedList[T2]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -385,6 +483,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _ListReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[__NumberType, _FiniteNestedList[__NumberType]]: ...
 
@@ -397,11 +497,13 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _TupleReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]: ...
 
 
-# NDArray[T1] -> NestedTuple[T2]
+# NDArray[T1] -> FiniteNestedTuple[T2]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: NumpyArray[_NumberType],
@@ -409,12 +511,14 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _TupleReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[__NumberType, _FiniteNestedTuple[__NumberType]]: ...
 
 
 # """ARRAY-LIKE OVERLOADS"""
-# These are general catch-all validation_cases for anything not overloaded explicitly
+# These are general catch-all cases for anything not overloaded explicitly
 # ArrayLike[T] -> FiniteNestedList[T]
 @overload
 def validate_array(  # numpydoc ignore=GL08
@@ -423,6 +527,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _ListReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[_NumberType, _FiniteNestedList[_NumberType]]: ...
 
@@ -435,6 +541,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _ListReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[__NumberType, _FiniteNestedList[__NumberType]]: ...
 
@@ -447,6 +555,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: _TupleReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]: ...
 
@@ -459,6 +569,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: _TupleReturnType,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> Union[__NumberType, _FiniteNestedTuple[__NumberType]]: ...
 
@@ -471,6 +583,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: None = None,
     return_type: Optional[_NumpyReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
@@ -483,6 +597,8 @@ def validate_array(  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_NumpyReturnType] = ...,
+    reshape_to: Optional[_ShapeLike] = ...,
+    broadcast_to: Optional[_ShapeLike] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[__NumberType]: ...
 
@@ -523,7 +639,7 @@ def validate_array(
 
     By default, this function is generic and returns an array with the
     same type and dtype as the input array, i.e. ``Array[T] -> Array[T]``
-    for the common validation_cases below. In most validation_cases, it will also return the
+    In most cases, it will also return the
     array as-is without copying its data wherever possible.
 
     - Scalars: ``T`` -> ``T``
@@ -720,7 +836,7 @@ def validate_array(
 
             Array validation can fail or result in silent integer overflow
             if ``dtype_out`` is integral and the input has infinity values.
-            Consider setting ``must_be_finite=True`` for these validation_cases.
+            Consider setting ``must_be_finite=True`` for these cases.
 
     return_type : str | type, optional
         Control the return type of the array. Must be one of:
@@ -740,9 +856,9 @@ def validate_array(
         making a copy. Has no effect if the input is not a NumPy array.
 
     copy : bool, default: False
-        If ``True``, a copy of the array is returned. In some validation_cases, a copy may be
+        If ``True``, a copy of the array is returned. In some cases, a copy may be
         returned even if ``copy=False`` (e.g. to convert array type/dtype, reshape,
-        etc.). In validation_cases where the array is immutable (e.g. tuple) the returned array
+        etc.). In cases where the array is immutable (e.g. tuple) the returned array
         may not be a copy, even if ``copy=True``.
 
     get_flags : bool, default: False
@@ -814,6 +930,11 @@ def validate_array(
                 f"Return type {return_type} is not compatible with dtype_out={dtype_out}.\n"
                 f"A list or tuple can only be returned if dtype_out is float, int, or bool."
             )
+    # # Make sure return type is set if reshape or broadcast
+    # if reshape_to is not None and and broadcast_to is not None and return_type is None:
+    #     raise ValueError(
+    #         f"Return type cannot be {None} when reshaping or broadcasting arrays."
+    #     )
 
     # Check if re-casting is needed in case subclasses are not allowed
     rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
@@ -895,12 +1016,11 @@ def validate_array(
                 )
     # Cast array to desired output
     if return_type is None:
-        if is_builtin:
-            if isinstance(array, tuple):
-                return_type = tuple
-            else:
-                # to-list will handle scalars and lists
-                return_type = list
+        if isinstance(array, tuple):
+            return_type = tuple
+        elif is_builtin or isinstance(array, list):
+            # to-list will handle scalars and lists
+            return_type = list
         else:
             return_type = np.ndarray
 
