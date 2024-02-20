@@ -4069,7 +4069,6 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
-        'Capsule',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -4103,7 +4102,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
 
     major, minor, patch = pv._version.version_info
     if major == 0 and minor >= 43:
-        expected_names += ['SolidSphere', 'SolidSphereGeneric', 'Text3D']
+        expected_names += ['Capsule', 'SolidSphere', 'SolidSphereGeneric', 'Text3D']
     assert sorted(actual_names) == sorted(expected_names)
     return list(functions.items())
 
