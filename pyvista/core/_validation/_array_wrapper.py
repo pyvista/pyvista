@@ -30,7 +30,7 @@ from pyvista.core._typing_core._type_guards import (
     _is_Number,
     _is_NumberSequence,
 )
-from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
+from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
 
 
 class _ArrayLikeWrapper(Generic[_NumberType]):
@@ -323,14 +323,20 @@ class _NestedSequenceWrapper(_BuiltinWrapper[_NumberType]):
     def to_list(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
     ) -> List[List[_NumberType]]:
-        # TODO: implement
-        return _cast_to_list(self._array)
+        return (
+            self._array
+            if isinstance(self._array, list)
+            else [list(sub_array) for sub_array in self._array]
+        )
 
     def to_tuple(
         self, input_array: _ArrayLikeOrScalar[_NumberType], copy: bool
     ) -> Tuple[Tuple[_NumberType, ...]]:
-        # TODO: implement
-        return _cast_to_tuple(self._array)
+        return (
+            self._array
+            if isinstance(self._array, tuple)
+            else tuple(tuple(sub_array) for sub_array in self._array)
+        )
 
     def change_dtype(self, dtype):
         out = self._array.__class__(
