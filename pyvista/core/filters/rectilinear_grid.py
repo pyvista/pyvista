@@ -108,8 +108,8 @@ class RectilinearGridFilters:
             # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18650
             if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore
                 raise RuntimeError(
-                    'Cannot split cells into 12 tetrahedrals when at least '  # type: ignore
-                    f'one dimension is 1. Dimensions are {self.dimensions}.'
+                    'Cannot split cells into 12 tetrahedrals when at least '
+                    f'one dimension is 1. Dimensions are {self.dimensions}.'  # type: ignore[attr-defined]
                 )
 
             alg.SetTetraPerCell(tetra_per_cell)

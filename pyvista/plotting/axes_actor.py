@@ -1,4 +1,5 @@
 """Axes actor module."""
+
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from functools import wraps
@@ -8,7 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -362,7 +363,7 @@ class _AxesProp(ABC, Prop3D):
         return self._total_length
 
     @total_length.setter
-    def total_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+    def total_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, float('inf')), 'total_length')
             length = (length, length, length)
@@ -404,7 +405,7 @@ class _AxesProp(ABC, Prop3D):
         return self._shaft_length
 
     @shaft_length.setter
-    def shaft_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+    def shaft_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, 1), 'shaft_length')
             length = (length, length, length)
@@ -454,7 +455,7 @@ class _AxesProp(ABC, Prop3D):
         return self._tip_length
 
     @tip_length.setter
-    def tip_length(self, length: Union[float, Vector]):  # numpydoc ignore=GL08
+    def tip_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, 1), 'tip_length')
             length = (length, length, length)
@@ -499,7 +500,7 @@ class _AxesProp(ABC, Prop3D):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: Union[float, Vector]):  # numpydoc ignore=GL08
+    def label_position(self, position: Union[float, Vector[float]]):  # numpydoc ignore=GL08
         if isinstance(position, (int, float)):
             _check_range(position, (0, float('inf')), 'label_position')
             position = [position, position, position]
@@ -1120,8 +1121,7 @@ class _AxesProp(ABC, Prop3D):
 
     @property
     @abstractmethod
-    def labels_off(self):
-        ...
+    def labels_off(self): ...
 
 
 def _validate_color_sequence(color: Union[ColorLike, Sequence[ColorLike]], num_colors):
@@ -1914,7 +1914,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @_total_length.setter
-    def _total_length(self, length: Vector):  # numpydoc ignore=GL08
+    def _total_length(self, length: Vector[float]):  # numpydoc ignore=GL08
         self.SetTotalLength(length)
 
     @property
@@ -1927,6 +1927,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         -----
         Setting this property will automatically change the :attr:`tip_length` to
         ``1 - shaft_length`` if :attr:`auto_shaft_type` is ``True``.
+
 
         Examples
         --------
@@ -1945,7 +1946,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @_shaft_length.setter
-    def _shaft_length(self, length: Vector):  # numpydoc ignore=GL08
+    def _shaft_length(self, length: Vector[float]):  # numpydoc ignore=GL08
         self.SetNormalizedShaftLength(length)
 
     @property
@@ -1976,7 +1977,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @_tip_length.setter
-    def _tip_length(self, length: Vector):  # numpydoc ignore=GL08
+    def _tip_length(self, length: Vector[float]):  # numpydoc ignore=GL08
         self.SetNormalizedTipLength(length)
 
     @property
@@ -2002,7 +2003,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @_label_position.setter
-    def _label_position(self, position: Vector):  # numpydoc ignore=GL08
+    def _label_position(self, position: Vector[float]):  # numpydoc ignore=GL08
         self.SetNormalizedLabelPosition(position)
 
     @property
@@ -2684,11 +2685,13 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         self._update_actor_transformations()
 
     @property
-    def _implicit_matrix(self) -> Union[np.ndarray, _vtk.vtkMatrix4x4]:  # numpydoc ignore=GL08
+    def _implicit_matrix(
+        self,
+    ) -> Union[NumpyArray[float], _vtk.vtkMatrix4x4]:  # numpydoc ignore=GL08
         """Compute the transformation matrix implicitly defined by 3D parameters."""
         return self._compute_scaled_implicit_matrix(scale=(1, 1, 1))
 
-    def _compute_true_to_scale_factors(self) -> np.ndarray:
+    def _compute_true_to_scale_factors(self) -> NumpyArray[float]:
         """Compute radial scale factors for axes shaft and tip actors.
 
         The scaling factors can be applied to the actors to make it so
@@ -2759,7 +2762,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             super().SetUserMatrix(matrix)
             [actor.SetUserMatrix(matrix) for actor in self._actors]
 
-    def _concatenate_implicit_matrix_and_user_matrix(self, scale=(1, 1, 1)) -> np.ndarray:
+    def _concatenate_implicit_matrix_and_user_matrix(self, scale=(1, 1, 1)) -> NumpyArray[float]:
         """Get transformation matrix similar to vtkProp3D::GetMatrix().
 
         Additional scaling may be passed to the implicit matrix.
@@ -2788,7 +2791,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
 
     def _compute_scaled_implicit_matrix(
         self, scale: Sequence[float] = (1.0, 1.0, 1.0)
-    ) -> np.ndarray:
+    ) -> NumpyArray[float]:
         old_scale = self.GetScale()
         new_scale = old_scale[0] * scale[0], old_scale[1] * scale[1], old_scale[2] * scale[2]
         temp_actor = _vtk.vtkActor()

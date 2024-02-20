@@ -117,7 +117,7 @@ points = [
     [1.0, -1.0, 0.0],
     [0.0, 0.0, 1.60803807],
 ]
-cells = [len(points)] + list(range(len(points)))
+cells = [len(points), *list(range(len(points)))]
 pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
 example_cells.plot_cell(pyrmaid)
 

@@ -1,4 +1,5 @@
 """This module contains the Property class."""
+
 from typing import Union
 import warnings
 

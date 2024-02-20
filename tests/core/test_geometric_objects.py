@@ -83,7 +83,7 @@ def test_solid_sphere():
     assert np.any(sphere.points)
 
     # make sure cell creation gives positive volume.
-    for i, cell in enumerate(sphere.cell):
+    for cell in sphere.cell:
         assert cell.cast_to_unstructured_grid().volume > 0
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=100, phi_resolution=100)
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3, rel=1e-3)
@@ -284,7 +284,7 @@ def test_solid_sphere_tol_radius():
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
 
-@pytest.mark.parametrize("radians", (True, False))
+@pytest.mark.parametrize("radians", [True, False])
 def test_solid_sphere_tol_angle(radians):
     max_phi = np.pi if radians else 180.0
 
@@ -351,7 +351,7 @@ def test_line():
     assert line.n_points == 11
     assert line.n_cells == 1
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Line(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
@@ -373,10 +373,10 @@ def test_multiple_lines():
     points = np.array([[0, 0, 0], [1, 1 * np.sqrt(3), 0], [2, 0, 0], [3, 3 * np.sqrt(3), 0]])
     multiple_lines = pv.MultipleLines(points=points)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultipleLines(points[:, :1])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultipleLines(points[0, :])
 
 
@@ -391,7 +391,7 @@ def test_tube():
     assert tube.n_points == 165
     assert tube.n_cells == 15
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Tube(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
@@ -490,10 +490,10 @@ def test_text_3d():
         bnds[3] - bnds[2],
         bnds[5] - bnds[4],
     )
-    assert actual_width == 2
-    assert actual_height == 3
-    assert actual_depth == 0.5
-    assert mesh.center == [1.0, 2.0, 3.0]
+    assert np.isclose(actual_width, 2.0)
+    assert np.isclose(actual_height, 3.0)
+    assert np.isclose(actual_depth, 0.5)
+    assert np.allclose(mesh.center, [1.0, 2.0, 3.0])
 
     # Test setting empty string returns empty mesh with zeros as bounds
     mesh = pv.Text3D(string="")
@@ -520,7 +520,7 @@ def test_circular_arc():
     assert np.allclose(mesh['Distance'], distance)
 
     # pointa and pointb are not equidistant from center
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
 
 
@@ -670,7 +670,7 @@ def test_ellipse():
 
 
 @pytest.mark.parametrize(
-    'kind_str, kind_int, n_vertices, n_faces',
+    ('kind_str', 'kind_int', 'n_vertices', 'n_faces'),
     zip(
         ['tetrahedron', 'cube', 'octahedron', 'icosahedron', 'dodecahedron'],
         range(5),
@@ -690,11 +690,11 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
 
 def test_platonic_invalids():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind='invalid')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind=42)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind=[])
 
 

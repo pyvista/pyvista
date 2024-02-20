@@ -1,4 +1,5 @@
 """PyVista plotting module."""
+
 import collections.abc
 from contextlib import contextmanager
 from copy import deepcopy
@@ -706,7 +707,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 array.SetName('NORMAL')
                                 renamed_arrays.append(array)
 
-                        except:  # noqa: E722
+                        except:  # pragma: no cover
                             pass
 
         exporter = vtkGLTFExporter()
@@ -2119,6 +2120,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.enable_trackball_style."""
         self.iren.enable_trackball_style()
 
+    @wraps(RenderWindowInteractor.enable_custom_trackball_style)
+    def enable_custom_trackball_style(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap RenderWindowInteractor.enable_custom_trackball_style."""
+        self.iren.enable_custom_trackball_style(*args, **kwargs)
+
     @wraps(RenderWindowInteractor.enable_trackball_actor_style)
     def enable_trackball_actor_style(self):  # numpydoc ignore=PR01,RT01
         """Wrap RenderWindowInteractor.enable_trackball_actor_style."""
@@ -3486,7 +3492,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
-                if scalars.endswith('_rgb') or scalars.endswith('_rgba'):
+                if scalars.endswith(('_rgb', '_rgba')):
                     rgb = True
 
             original_scalar_name = scalars
@@ -3499,6 +3505,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # the mapper. This should be refactored by 0.36.0
             field = get_array_association(mesh, original_scalar_name, preference=preference)
             self.mapper.scalar_map_mode = field.name
+
+            # set preference for downstream use with actual
+            if field == FieldAssociation.POINT:
+                preference = 'point'
+            elif field == FieldAssociation.CELL:
+                preference = 'cell'
 
             if algo is not None:
                 # Ensures that the right scalars are set as active on
@@ -3706,11 +3718,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
-        geom = pyvista.Triangle()
-        if scalars is not None:
-            geom = pyvista.Box()
-            color = Color('black')
+
+        if (
+            hasattr(self.mesh, '_glyph_geom')
+            and self.mesh._glyph_geom is not None
+            and self.mesh._glyph_geom[0] is not None
+        ):
+            # Using only the first geometry
+            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
+        else:
+            geom = pyvista.Triangle()
+            if scalars is not None:
+                geom = pyvista.Box()
+
         geom.points -= geom.center
+
         addr = actor.GetAddressAsString("")
         self.renderer._labels[addr] = [geom, label, color]
 
@@ -5987,7 +6009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         center = np.array(self.center)
         bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
@@ -6082,7 +6104,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if focus is None:
             focus = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
@@ -6573,6 +6595,11 @@ class Plotter(BasePlotter):
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
             self.enable_anti_aliasing(self.theme.anti_aliasing)
+
+        if self.theme.camera.parallel_projection:
+            self.enable_parallel_projection()
+
+        self.parallel_scale = self.theme.camera.parallel_scale
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True

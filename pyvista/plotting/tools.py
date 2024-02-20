@@ -138,6 +138,7 @@ def create_axes_orientation_box(
     label_color=None,
     labels_off=False,
     opacity=0.5,
+    show_text_edges=False,
 ):
     """Create a Box axes orientation actor with labels.
 
@@ -190,6 +191,9 @@ def create_axes_orientation_box(
 
     opacity : float, optional
         Opacity in the range of ``[0, 1]`` of the orientation box.
+
+    show_text_edges : bool, optional
+        Enable or disable drawing the vector text edges.
 
     Returns
     -------

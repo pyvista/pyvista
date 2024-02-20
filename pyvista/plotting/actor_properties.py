@@ -4,6 +4,8 @@
 
     This class is deprecated. Use :class:`pyvista.Property` instead.
 """
+
+from typing import Tuple
 import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -59,7 +61,7 @@ class ActorProperties:
         return self.properties.GetColor()  # pragma:no cover
 
     @color.setter
-    def color(self, color: tuple):  # numpydoc ignore=GL08
+    def color(self, color: Tuple[float, float, float]):  # numpydoc ignore=GL08
         self.properties.SetColor(color[0], color[1], color[2])  # pragma:no cover
 
     @property

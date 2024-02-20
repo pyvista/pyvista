@@ -1,9 +1,10 @@
 """Prop3D module."""
+
 from typing import Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, TransformLike, Vector
 from pyvista.core.utilities.arrays import (
     _coerce_transformlike_arg,
     array_from_vtkmatrix,
@@ -55,7 +56,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Union[float, Vector]):  # numpydoc ignore=GL08
+    def scale(self, value: Union[float, Vector[float]]):  # numpydoc ignore=GL08
         self.SetScale(value)
 
     @property
@@ -80,7 +81,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector):  # numpydoc ignore=GL08
+    def position(self, value: Vector[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -247,7 +248,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Vector):  # numpydoc ignore=GL08
+    def orientation(self, value: Vector[float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -262,7 +263,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: Vector):  # numpydoc ignore=GL08
+    def origin(self, value: Vector[float]):  # numpydoc ignore=GL08
         self.SetOrigin(value)
 
     @property
@@ -298,7 +299,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetCenter()
 
     @property
-    def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the user matrix.
 
         In addition to the instance variables such as position and orientation, the user
@@ -353,9 +354,7 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(
-        self, value: Union[_vtk.vtkMatrix4x4, np.ndarray, _vtk.vtkMatrix3x3, _vtk.vtkTransform]
-    ):  # numpydoc ignore=GL08
+    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
         array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 

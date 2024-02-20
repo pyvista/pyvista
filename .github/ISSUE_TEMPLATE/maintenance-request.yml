@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-          Thanks for taking the time to open this issue to help improve PyVista!
+        Thanks for taking the time to open this issue to help improve PyVista!
   - type: textarea
     id: maintenance-request
     attributes:
