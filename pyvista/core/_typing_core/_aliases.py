@@ -10,9 +10,10 @@ from ._array_like import NumberType, _ArrayLike1D, _ArrayLike2D, _ArrayLike3D, _
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
-# To document an alias as-is without expansion, the alias should be added to
-# the "autodoc_type_aliases" dictionary in /doc/source/conf.py and added
-# to /doc/core/typing.rst
+# To document an alias as-is without expansion, the alias should be:
+#   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
+#   (2) added to /doc/core/typing.rst
+#   (3) added to the "numpydoc_validation" excludes in pyproject.toml
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
