@@ -430,15 +430,15 @@ def Capsule(
     radius : float, default: 0.5
         The radius of the sphere before defomration; capsule's girth.
 
+    direction : sequence[float], default: (0.0, 0.0, 1.0)
+        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
+        the sphere's north pole at zero degrees ``phi``.
+
     fromto : sequence[sequence[float]], default: ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0))
         The two points that define the capsule's axis.
         ``fromto=(a, b)`` specifies the length to be ||b - a|| and the hemisphere
         centers to be at ``a`` and ``b``.
         The center the capsule is computed as ``(a + b) / 2``.
-
-    direction : sequence[float], default: (0.0, 0.0, 1.0)
-        Direction coordinate vector in ``[x, y, z]`` pointing from ``center`` to
-        the sphere's north pole at zero degrees ``phi``.
 
     theta_resolution : int, default: 30
         Set the number of points in the azimuthal direction (ranging
