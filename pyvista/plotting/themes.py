@@ -30,12 +30,11 @@ pyvista.
 
 """
 
-from enum import Enum
 from itertools import chain
 import json
 import os
 import pathlib
-from typing import Callable, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 import warnings
 
 import pyvista
@@ -56,7 +55,7 @@ def _set_plot_theme_from_env() -> None:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(Theme._defaults)
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
@@ -125,9 +124,11 @@ def set_plot_theme(theme):
     if isinstance(theme, str):
         theme = theme.lower()
         try:
-            new_theme_type = getattr(Theme, _NATIVE_THEMES[theme].value)()
+            new_theme_type = Theme.from_default(theme)
         except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
+            raise ValueError(
+                f"Theme '{theme}' not found in PyVista's default themes: {pyvista.global_theme.defaults}"
+            )
         pyvista.global_theme.load_theme(new_theme_type)
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
@@ -152,6 +153,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
     __slots__: List[str] = []
+
+    _defaults: Dict[str, str] = {}
 
     @classmethod
     def from_dict(cls, dict_):
@@ -220,6 +223,29 @@ class _ThemeConfig(metaclass=_ForceSlots):
         """Get all slots including parent classes."""
         mro = cls.mro()
         return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))
+
+    @classmethod
+    def register_default(cls, name, dict_, doc=None):
+        @classmethod
+        def return_theme(cls):
+            return cls.from_dict(dict_)
+
+        setattr(cls, name, return_theme)
+        attr = getattr(cls, name)
+        attr.__func__.__name__ = name
+        if doc is not None:
+            attr.__func__.__doc__ = doc
+
+        cls._defaults[name] = name
+
+    @classmethod
+    def from_default(cls, name):
+        theme = getattr(cls, cls._defaults[name])
+        return theme()
+
+    @property
+    def defaults(self):
+        return list(self._defaults.keys())
 
 
 class _LightingConfig(_ThemeConfig):
@@ -1092,6 +1118,11 @@ class _SliderStyleConfig(_ThemeConfig):
         '_cap_width',
     ]
 
+    _defaults = {
+        "classic": "classic",
+        "modern": "modern",
+    }
+
     def __init__(self):
         """Initialize the slider style configuration."""
         self._name = None
@@ -1542,6 +1573,16 @@ class Theme(_ThemeConfig):
         '_logo_file',
         '_edge_opacity',
     ]
+
+    _defaults = {
+        "dark": "dark_theme",
+        "default": "document_theme",
+        "document": "document_theme",
+        "document_pro": "document_pro_theme",
+        "paraview": "paraview_theme",
+        "testing": "testing_theme",
+        "vtk": "vtk_theme",
+    }
 
     def __init__(self):
         """Initialize the theme."""
@@ -3400,15 +3441,3 @@ class _TestingTheme(Theme):
         self.window_size = [400, 400]
         self.axes.show = False
         self.return_cpos = False
-
-
-class _NATIVE_THEMES(Enum):
-    """Global built-in themes available to PyVista."""
-
-    paraview = "paraview_theme"
-    document = "document_theme"
-    document_pro = "document_pro_theme"
-    dark = "dark_theme"
-    default = "document_theme"
-    testing = "testing_theme"
-    vtk = "vtk_theme"

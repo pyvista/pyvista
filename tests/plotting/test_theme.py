@@ -224,11 +224,11 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
-def test_themes(theme):
+@pytest.mark.parametrize('theme_name', pv.plotting.themes.Theme().defaults)
+def test_themes(theme_name):
     try:
-        pv.set_plot_theme(theme.name)
-        assert pv.global_theme == getattr(Theme, theme.value)()
+        pv.set_plot_theme(theme_name)
+        assert pv.global_theme == pv.plotting.themes.Theme.from_default(theme_name)
     finally:
         # always return to testing theme
         pv.set_plot_theme('testing')
