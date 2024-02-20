@@ -1,7 +1,7 @@
 """Test static type annotations revealed by Mypy.
 
 This test will automatically analyze all files in the test validation_cases directory.
-To add new test validation_cases, simply add a new .py file with each test case following
+To add new test cases, simply add a new .py file with each test case following
 the format:
 
     reveal_type(arg)  # EXPECTED_TYPE: "<T>"
@@ -86,14 +86,14 @@ def _get_expected_types():
 
 
 def _generate_test_cases():
-    """Generate a list of line-by-line test validation_cases from the typing test directory.
+    """Generate a list of line-by-line test cases from the typing test directory.
 
     This function:
         (1) calls mypy to get the revealed types, and
         (2) parses the code files to get the `reveal_type(arg)` argument and the
             expected type.
 
-    The two outputs are then merged to create individual test validation_cases.
+    The two outputs are then merged to create individual test cases.
     """
     test_cases_dict = {}
 
@@ -151,9 +151,10 @@ def pytest_generate_tests(metafunc):
         all_cases = [x for y in zip(test_cases_runtime, test_cases_static) for x in y]
         all_cases = all_cases[::-1]
 
-        # Name test validation_cases with file line number
+        # Name test cases with file line number
         ids = [f"{file.split('.py')[0]} : line {line} : {static_or_runtime}" for file, line, _, _, _, static_or_runtime in all_cases]
         metafunc.parametrize('test_case', all_cases, ids=ids)
+
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="Type subscription requires python >= 3.9")
 def test_typing(test_case):
