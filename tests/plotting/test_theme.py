@@ -78,25 +78,23 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
         ('cap_width', 0.04),
     ],
 )
-@pytest.mark.parametrize('style', ('modern', 'classic'))
-def test_slider_style_config(default_theme, parm, style):
+def test_slider_style_config(default_theme, parm):
     attr, value = parm
 
-    slider_style = getattr(default_theme.slider_styles, style)
-    assert hasattr(slider_style, attr)
-    setattr(slider_style, attr, value)
-    assert getattr(slider_style, attr) == value
+    assert hasattr(default_theme.slider_style, attr)
+    setattr(default_theme.slider_style, attr, value)
+    assert getattr(default_theme.slider_style, attr) == value
 
 
 def test_slider_style_config_eq(default_theme):
-    assert default_theme.slider_styles.modern != default_theme.slider_styles.classic
-    assert default_theme.slider_styles.modern != 1
+    assert default_theme.slider_style.modern() != default_theme.slider_style.classic()
+    assert default_theme.slider_style.modern() != 1
 
 
 def test_slider_style_eq(default_theme):
     my_theme = pv.plotting.themes.Theme()
-    my_theme.slider_styles.modern.slider_length *= 2
-    assert default_theme.slider_styles != my_theme.slider_styles
+    my_theme.slider_style.slider_length *= 2
+    assert default_theme.slider_style != my_theme.slider_style
 
 
 def test_invalid_color_str_single_char():
@@ -177,11 +175,7 @@ def test_theme_wrong_type(default_theme):
     with pytest.raises(TypeError):
         default_theme.silhouette = None
     with pytest.raises(TypeError):
-        default_theme.slider_styles = None
-    with pytest.raises(TypeError):
-        default_theme.slider_styles.classic = None
-    with pytest.raises(TypeError):
-        default_theme.slider_styles.modern = None
+        default_theme.slider_style = None
     with pytest.raises(TypeError):
         default_theme.axes = None
 
