@@ -98,7 +98,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        _new_attr_exceptions = ['_direction']
+        _new_attr_exceptions = ['_center', '_direction']
 
         def __init__(
             self,
@@ -111,7 +111,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
         ):
             """Initialize the capsule source class."""
             super().__init__()
-            self.center = center
+            self._center = center
             self._direction = direction
             self.radius = radius
             self.cylinder_length = cylinder_length
@@ -128,7 +128,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
             """
-            return self.GetCenter()
+            return self._center
 
         @center.setter
         def center(self, center: Sequence[float]):
@@ -140,7 +140,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
             """
-            self.SetCenter(center)
+            self._center = center
 
         @property
         def direction(self) -> Sequence[float]:
