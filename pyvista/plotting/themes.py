@@ -3015,7 +3015,7 @@ class Theme(_ThemeConfig):
         self._allow_empty_mesh = bool(allow_empty_mesh)
 
     def restore_defaults(self):  # numpydoc ignore=GL08
-        """Restore the theme defaults.
+        """Restore the theme to PyVista default theme.
 
         Examples
         --------
@@ -3023,7 +3023,7 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.restore_defaults()
 
         """
-        self.__init__()
+        self.from_default("default")
 
     def __repr__(self):
         """User friendly representation of the current theme."""
