@@ -936,13 +936,14 @@ def validate_array(
     #         f"Return type cannot be {None} when reshaping or broadcasting arrays."
     #     )
 
+    do_reshape = reshape_to is not None and wrapped.shape != reshape_to
+    do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
+
     # Check if re-casting is needed in case subclasses are not allowed
     rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
 
     # Check if built-in types need to be cast to numpy in case broadcasting
     # or reshaping is needed (these are only supported for numpy arrays)
-    do_reshape = reshape_to is not None and wrapped.shape != reshape_to
-    do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
     is_builtin = isinstance(wrapped, _BuiltinWrapper)
     rewrap_builtin = is_builtin and (do_reshape or do_broadcast)
 
@@ -1018,8 +1019,9 @@ def validate_array(
     if return_type is None:
         if isinstance(array, tuple):
             return_type = tuple
-        elif is_builtin or isinstance(array, list):
-            # to-list will handle scalars and lists
+        elif isinstance(array, list) or (
+            isinstance(array, (float, int, bool)) and wrapped.ndim == 0
+        ):
             return_type = list
         else:
             return_type = np.ndarray

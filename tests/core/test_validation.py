@@ -346,7 +346,7 @@ def test_validate_arrayN_unsigned(reshape):
     arr = validate_arrayN_unsigned(0.0)
     assert np.shape(arr) == (1,)
     assert np.array_equal(arr, [0])
-    assert isinstance(arr[0], int)
+    assert isinstance(arr, np.ndarray)
 
     arr = validate_arrayN_unsigned(0.0, dtype_out='uint8')
     assert arr.dtype.type is np.uint8
