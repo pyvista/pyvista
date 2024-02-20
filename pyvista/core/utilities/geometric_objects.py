@@ -501,8 +501,8 @@ def Capsule(
     length = np.linalg.norm(displacement)
 
     # Y-axis displacements applied to the two hemispheres according to the length
-    surf.points[:surf.n_points // 2, 1] += length / 2
-    surf.points[surf.n_points // 2:, 1] -= length / 2
+    surf.points[: surf.n_points // 2, 1] += length / 2
+    surf.points[surf.n_points // 2 :, 1] -= length / 2
     surf.rotate_z(90, inplace=True)  # capsule points towards north pole
 
     # Then we apply rotation to match the displacement vector
