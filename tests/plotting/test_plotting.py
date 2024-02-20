@@ -4069,6 +4069,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
+        'Capsule',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
