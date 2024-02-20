@@ -37,6 +37,12 @@ def test_cylinder_source():
     assert np.array_equal(algo.direction, direction)
 
 
+def test_cylinder_capsule_cap():
+    algo = pv.CylinderSource()
+    algo.capsule_cap = True
+    assert algo.capsule_cap
+
+
 def test_multiple_lines_source():
     algo = pv.MultipleLinesSource()
     points = np.array([[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]])
