@@ -9,20 +9,20 @@ Numeric Array-Like Types
 
 .. autotypevar:: pyvista.core._typing_core.NumberType
 
-.. autoclass:: pyvista.core._typing_core.Array
+.. autofunction:: pyvista.core._typing_core.Array
 
-.. autoclass:: pyvista.core._typing_core.Vector
+.. autofunction:: pyvista.core._typing_core.Vector
 
-.. autoclass:: pyvista.core._typing_core.Matrix
+.. autofunction:: pyvista.core._typing_core.Matrix
 
 
 VTK Related Types
 -----------------
 
-.. autoclass:: pyvista.core._typing_core.BoundsLike
+.. autofunction:: pyvista.core._typing_core.BoundsLike
 
-.. autoclass:: pyvista.core._typing_core.CellsLike
+.. autofunction:: pyvista.core._typing_core.CellsLike
 
-.. autoclass:: pyvista.core._typing_core.CellArrayLike
+.. autofunction:: pyvista.core._typing_core.CellArrayLike
 
-.. autoclass:: pyvista.core._typing_core.TransformLike
+.. autofunction:: pyvista.core._typing_core.TransformLike
