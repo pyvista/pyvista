@@ -61,7 +61,7 @@ def test_modifying_modifies_dataset():
 
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
-@pytest.mark.skip
+@pytest.mark.skip()
 def test_slices_are_associated_single_index():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)
