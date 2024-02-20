@@ -316,6 +316,7 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import (
     vtkArcSource,
     vtkArrowSource,
+    vtkCapsuleSource,
     vtkConeSource,
     vtkCubeSource,
     vtkCylinderSource,

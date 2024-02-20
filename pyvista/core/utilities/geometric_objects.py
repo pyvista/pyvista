@@ -41,6 +41,12 @@ from .geometric_sources import (
     Text3DSource,
     translate,
 )
+
+try:
+    from .geometric_sources import CapsuleSource
+except ImportError:
+    pass
+
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -52,6 +58,84 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def Capsule(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    cylinder_length=1.0,
+    theta_resolution=30,
+    phi_resolution=30,
+):
+    """Create the surface of a capsule.
+
+    .. warning::
+       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Location of the centroid in ``[x, y, z]``.
+
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction the capsule points to in ``[x, y, z]``.
+
+    radius : float, default: 0.5
+        Radius of the capsule.
+
+    cylinder_length : float, default: 1.0
+        Cylinder length of the capsule.
+
+    theta_resolution : int, default: 30
+        Set the number of points in the azimuthal direction (ranging
+        from ``start_theta`` to ``end_theta``).
+
+    phi_resolution : int, default: 30
+        Set the number of points in the polar direction (ranging from
+        ``start_phi`` to ``end_phi``).
+
+    Returns
+    -------
+    pyvista.PolyData
+        Capsule surface.
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    """
+    if pyvista.vtk_version_info.major >= 9:
+        if pyvista.vtk_version_info.minor >= 3:
+            algo = CylinderSource(
+                center=center,
+                direction=direction,
+                radius=radius,
+                height=cylinder_length,
+                capping=True,
+                resolution=theta_resolution,
+            )
+            algo.capsule_cap = True
+        else:
+            algo = CapsuleSource(
+                center=center,
+                radius=radius,
+                cylinder_length=cylinder_length,
+                theta_resolution=theta_resolution,
+                phi_resolution=phi_resolution,
+            )
+    else:
+        raise RuntimeError("The Capsule object is available only with VTK 9.0 or later.")
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def Cylinder(
