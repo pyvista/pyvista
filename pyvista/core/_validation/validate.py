@@ -418,7 +418,7 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
 ) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]: ...
 
 
-# ArrayLike[T1] -> FiniteNestedTuple[T2]
+# FiniteNestedTuple[T1] -> FiniteNestedTuple[T2]
 @overload
 def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     array: _FiniteNestedTuple[_NumberType],
@@ -639,8 +639,8 @@ def validate_array(
 
     By default, this function is generic and returns an array with the
     same type and dtype as the input array, i.e. ``Array[T] -> Array[T]``
-    In most cases, it will also return the
-    array as-is without copying its data wherever possible.
+    It is specifically designed to return the following array types as-is
+    without copying its data where possible:
 
     - Scalars: ``T`` -> ``T``
     - Lists: ``List[T]`` -> ``List[T]``
@@ -649,9 +649,10 @@ def validate_array(
     - Nested tuples: ``Tuple[Tuple[T]]`` -> ``Tuple[Tuple[T]]``
     - NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
 
-    For all other input types, (e.g. ``range`` objects, nested lists with
-    depth > 2, NumPy protocol arrays, etc.), the returned array is a NumPy
-    array.
+    All other inputs may first be copied to a numpy array for processing
+    internally. For ``range`` objects, NumPy protocol arrays (e.g.
+    ``pandas`` arrays), and other array-like inputs the returned array
+    is a NumPy array.
 
     Optionally, use ``return_type`` and/or ``dtype_out`` for non-generic
     behavior to ensure the output array has a consistent type.
@@ -662,12 +663,6 @@ def validate_array(
         numeric arrays with a regular shape. Any other array-like
         inputs (e.g. structured arrays, string arrays) are not
         supported.
-
-    .. note::
-
-        This function is very general. For common validation workflows, it is
-        recommended to use a wrapper function instead with pre-set default
-        parameters, or use one of the specialized functions below.
 
     See Also
     --------
@@ -1738,7 +1733,7 @@ def validate_array3(
     a 3-element 1D array.
 
     >>> _validation.validate_array3(42.0, broadcast=True)
-    arra([42.0, 42.0, 42.0])
+    array([42.0, 42.0, 42.0])
 
     Add additional constraints if needed.
 
