@@ -695,6 +695,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
+    @property
+    def mpl_charts(self):  # numpydoc ignore=RT01
+        """Return a list of all matplotlib charts in this renderer."""
+        return self._charts.charts
+
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""

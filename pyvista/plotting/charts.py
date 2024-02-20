@@ -4742,6 +4742,11 @@ class Charts:
         """Return the weakly dereferenced renderer, maybe None."""
         return self.__renderer()
 
+    @property
+    def charts(self):  # numpydoc ignore=RT01
+        """Return the list of charts in this collection."""
+        return self._charts
+
     def _setup_scene(self):
         """Set up a new context scene and actor for these charts."""
         self._scene = _vtk.vtkContextScene()
