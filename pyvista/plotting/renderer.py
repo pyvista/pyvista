@@ -697,7 +697,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def charts(self):  # numpydoc ignore=RT01
-        """Return a list of all Matplotlib charts in this renderer.
+        """Return a list of all charts in this renderer.
 
         Examples
         --------
