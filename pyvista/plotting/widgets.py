@@ -1549,7 +1549,7 @@ class WidgetHelper:
                 raise TypeError(
                     f"Expected type for ``style`` is str but {type(style).__name__} was given."
                 )
-            slider_style = getattr(pyvista.global_theme.slider_style, style)()
+            slider_style = pyvista.global_theme.slider_style.from_default(style)
         else:
             slider_style = pyvista.global_theme.slider_style
 
