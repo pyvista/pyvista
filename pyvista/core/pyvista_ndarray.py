@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array, NumpyArray
+from ._typing_core import ArrayLike, NumpyArray
 from .utilities.arrays import FieldAssociation, convert_array
 
 
@@ -46,7 +46,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     def __new__(
         cls,
-        array: Union[Array[float], _vtk.vtkAbstractArray],
+        array: Union[ArrayLike[float], _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):

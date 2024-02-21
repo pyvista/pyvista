@@ -39,7 +39,7 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
     Sequence[Sequence[Sequence[Sequence[_T]]]],
 ]
 
-_ArrayLike = Union[
+ArrayLike = Union[
     NumpyArray[_NumType],
     _FiniteNestedSequence[_NumType],
     _FiniteNestedSequence[NumpyArray[_NumType]],
