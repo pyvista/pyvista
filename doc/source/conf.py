@@ -181,6 +181,8 @@ overloads_location = ["bottom"]
 # Helps make annotated signatures more readable.
 maximum_signature_line_length = 88
 
+python_display_short_literal_types = True
+
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
 numpydoc_show_class_members = False
