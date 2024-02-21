@@ -3150,7 +3150,7 @@ class Theme(_ThemeConfig):
         Export and then load back in a theme.
 
         >>> import pyvista as pv
-        >>> theme = pv.themes.DocumentTheme()
+        >>> theme = pv.themes.Theme.document_theme()
         >>> theme.background = 'white'
         >>> theme.save('my_theme.json')  # doctest:+SKIP
         >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -3282,7 +3282,7 @@ class DarkTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.DarkTheme())
+    >>> pv.set_plot_theme(themes.DarkTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
@@ -3318,7 +3318,7 @@ class ParaViewTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.ParaViewTheme())
+    >>> pv.set_plot_theme(themes.ParaViewTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
@@ -3366,7 +3366,7 @@ class DocumentTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.DocumentTheme())
+    >>> pv.set_plot_theme(themes.DocumentTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
