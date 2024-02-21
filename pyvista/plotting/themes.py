@@ -1119,8 +1119,9 @@ class _SliderStyleConfig(_ThemeConfig):
     ]
 
     _defaults = {
-        "classic": "classic",
-        "modern": "modern",
+        "default": "default_theme",
+        "classic": "classic_theme",
+        "modern": "modern_theme",
     }
 
     def __init__(self):
@@ -1290,7 +1291,11 @@ class _SliderStyleConfig(_ThemeConfig):
         return '\n'.join(txt)
 
     @classmethod
-    def classic(cls):
+    def default_theme(cls):
+        return cls()
+
+    @classmethod
+    def classic_theme(cls):
         return cls.from_dict(
             {
                 "slider_length": 0.02,
@@ -1305,7 +1310,7 @@ class _SliderStyleConfig(_ThemeConfig):
         )
 
     @classmethod
-    def modern(cls):
+    def modern_theme(cls):
         return cls.from_dict(
             {
                 "slider_length": 0.02,
@@ -2948,7 +2953,7 @@ class Theme(_ThemeConfig):
     @slider_style.setter
     def slider_style(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`.')
+            raise TypeError('Configuration type must be `_SliderStyleConfig`.')
         self._slider_style = config
 
     @property

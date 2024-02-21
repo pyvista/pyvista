@@ -7,7 +7,7 @@ import pyvista as pv
 from pyvista import colors
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import Theme, _set_plot_theme_from_env, _SliderStyleConfig
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -637,3 +637,37 @@ def test_trame_config():
     trame_config.jupyter_extension_enabled = False
     assert not trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
+
+
+def test_theme_defaults():
+    assert isinstance(pv.global_theme.defaults, list)
+    for name in pv.global_theme.defaults:
+        assert isinstance(name, str)
+        theme = getattr(Theme, Theme._defaults[name])
+        assert Theme.from_default(name) == theme()
+
+    my_theme = Theme.dark_theme()
+    Theme.register_default("my_theme", my_theme.to_dict())
+    assert Theme.my_theme() == Theme.dark_theme()
+
+    my_theme.show_edges = True
+    Theme.register_default("my_theme", my_theme.to_dict())
+    assert Theme.my_theme() != Theme.dark_theme()
+
+
+def test_slider_style_defaults():
+    slider_theme = pv.global_theme.slider_style
+    assert isinstance(slider_theme.defaults, list)
+    for name in slider_theme.defaults:
+        assert isinstance(name, str)
+        theme = getattr(slider_theme, slider_theme._defaults[name])
+        assert slider_theme.from_default(name) == theme()
+
+    assert slider_theme == _SliderStyleConfig.default_theme()
+
+    my_slider_theme = _SliderStyleConfig.classic_theme()
+    _SliderStyleConfig.register_default("my_slider_theme", my_slider_theme.to_dict())
+
+    theme = _SliderStyleConfig.my_slider_theme()
+
+    assert theme == my_slider_theme
