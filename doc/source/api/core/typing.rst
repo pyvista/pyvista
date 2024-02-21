@@ -7,22 +7,22 @@ Type alias and type variable definitions used by PyVista.
 Numeric Array-Like Types
 ------------------------
 
-.. autosummary::
-   :toctree: _autosummary
+.. autodata:: NumberType
 
-   NumberType
-   Array
-   Vector
-   Matrix
+.. autodata:: NumberTypeArray
+
+.. autodata:: NumberTypeVector
+
+.. autodata:: NumberTypeMatrix
 
 
 VTK Related Types
 -----------------
 
-.. autosummary::
-   :toctree: _autosummary
+.. autodata:: NumberTypeBoundsLike
 
-   BoundsLike
-   TransformLike
-   CellsLike
-   CellArrayLike
+.. autodata:: NumberTypeTransformLike
+
+.. autodata:: NumberTypeCellsLike
+
+.. autodata:: NumberTypeCellArrayLike
