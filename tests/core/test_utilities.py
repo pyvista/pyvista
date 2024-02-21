@@ -6,6 +6,7 @@ import pathlib
 import pickle
 import platform
 import random
+from re import escape
 import shutil
 import unittest.mock as mock
 import warnings
@@ -903,10 +904,10 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-@pytest.mark.parametrize('normal_direction', [('z',), ('-z',)])
-@pytest.mark.parametrize('is_double', [(True,), (False,)])
-@pytest.mark.parametrize('i_resolution', [(2,), (10,), (20,)])
-@pytest.mark.parametrize('j_resolution', [(2,), (10,), (20,)])
+@pytest.mark.parametrize('normal_direction', ['z', '-z'])
+@pytest.mark.parametrize('is_double', [True, False])
+@pytest.mark.parametrize('i_resolution', [2, 10, 20])
+@pytest.mark.parametrize('j_resolution', [2, 10, 20])
 def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution, j_resolution):
     # set up
     if is_double:
@@ -1134,7 +1135,7 @@ def test_principal_axes_vectors_return_transforms(airplane):
     assert np.allclose(np.mean(points, axis=0), (1, 2, 3))
 
     msg = "Expected one of ['origin', 'centroid'], got abc instead."
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=escape(msg)):
         principal_axes_vectors(initial_points, transformed_center="abc", return_transforms=True)
 
     # test returns default values
