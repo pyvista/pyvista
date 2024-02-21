@@ -2502,7 +2502,7 @@ def test_charts_property():
     chart = pv.ChartMPL(fig)
     pl = pv.Plotter()
     pl.add_chart(chart)
-    assert len(pl.renderer.mpl_charts) == 1
+    assert len(pl.renderer.charts) == 1
 
 
 def test_add_remove_background(sphere):
