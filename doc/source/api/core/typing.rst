@@ -10,20 +10,20 @@ Numeric Array-Like Types
 
 .. autotypevar:: NumberType
 
-.. autodata:: NumberTypeArray
+.. autodata:: Array
 
-.. autodata:: NumberTypeVector
+.. autodata:: Vector
 
-.. autodata:: NumberTypeMatrix
+.. autodata:: Matrix
 
 
 VTK Related Types
 -----------------
 
-.. autodata:: NumberTypeBoundsLike
+.. autodata:: BoundsLike
 
-.. autodata:: NumberTypeTransformLike
+.. autodata:: TransformLike
 
-.. autodata:: NumberTypeCellsLike
+.. autodata:: CellsLike
 
-.. autodata:: NumberTypeCellArrayLike
+.. autodata:: CellArrayLike
