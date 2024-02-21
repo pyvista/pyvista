@@ -374,6 +374,8 @@ def test_superquadric_source():
     assert algo.phi_resolution == 16
     assert not algo.toroidal
     assert algo.thickness == 1 / 3
+
+
 def test_arrow_source():
     algo = pv.ArrowSource()
     assert algo.tip_length == 0.25

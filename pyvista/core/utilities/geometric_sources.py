@@ -2227,6 +2227,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
 @no_new_attr
 class SuperquadricSource(_vtk.vtkSuperquadricSource):
     """Create superquadric source.
