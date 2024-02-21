@@ -690,7 +690,7 @@ def test_check_type():
         check_type("str", int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
-        check_type(0, Union[int, float])
+    check_type(0, Union[int, float])
 
 
 @pytest.mark.skipif(
@@ -895,7 +895,7 @@ def test_check_sorted(shape, axis, ascending, strict, as_list):
 
     if axis is None and not as_list and arr_ascending.ndim > 1:
         # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             _check_sorted_params(arr_ascending)
         return
 
@@ -1167,7 +1167,7 @@ def test_cast_to_list():
 
 
 @pytest.mark.parametrize(
-    ['cls', 'shape'],
+    ('cls', 'shape'),
     [
         (vtkMatrix3x3, (3, 3)),
         (vtkMatrix4x4, (4, 4)),

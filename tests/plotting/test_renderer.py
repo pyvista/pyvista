@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from pytest import raises
 
 import pyvista as pv
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
@@ -47,20 +46,20 @@ def test_show_bounds_invalid_axes_ranges():
     plotter = pv.Plotter()
 
     # send incorrect axes_ranges types
-    with raises(TypeError, match='numeric sequence'):
-        axes_ranges = 1
+    axes_ranges = 1
+    with pytest.raises(TypeError, match='numeric sequence'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
-    with raises(TypeError, match='All of the elements'):
-        axes_ranges = [0, 1, 'a', 'b', 2, 3]
+    axes_ranges = [0, 1, 'a', 'b', 2, 3]
+    with pytest.raises(TypeError, match='All of the elements'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
-    with raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
-        axes_ranges = [0, 1, 2, 3, 4]
+    axes_ranges = [0, 1, 2, 3, 4]
+    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_camera_position():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
@@ -68,7 +67,7 @@ def test_camera_position():
     assert isinstance(plotter.camera_position, pv.CameraPosition)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_plotter_camera_position():
     plotter = pv.Plotter()
     plotter.set_position([1, 1, 1], render=True)
@@ -101,7 +100,7 @@ def test_layer():
     assert plotter.renderer.layer == 0
 
 
-@pytest.mark.parametrize('has_border', (True, False))
+@pytest.mark.parametrize('has_border', [True, False])
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
@@ -273,9 +272,9 @@ def test_legend_add_entry_exception():
     pl = pv.Plotter()
     legend_entries = np.array([1, 2])  # Not allowed type
 
-    with raises(ValueError, match="The object passed to the legend"):
+    with pytest.raises(ValueError, match="The object passed to the legend"):
         pl.add_legend(legend_entries)
-        pl.show()
+    pl.show()
 
 
 def test_add_legend_background_opacity(sphere):
