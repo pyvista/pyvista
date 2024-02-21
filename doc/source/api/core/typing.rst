@@ -7,7 +7,7 @@ Type alias and type variable definitions used by PyVista.
 Numeric Array-Like Types
 ------------------------
 
-.. autodata:: NumberType
+.. autotypevar:: NumberType
 
 .. autodata:: NumberTypeArray
 
