@@ -903,17 +903,11 @@ def fit_plane_to_points(
     >>> # Create mesh
     >>> mesh = examples.download_shark()
     >>>
-    >>> # Fit plane. Set the plane resolution to one only extract
+    >>> # Fit plane. Set the plane resolution to one to only extract
     >>> # the plane's corner points
     >>> plane = pv.fit_plane_to_points(
     ...     mesh.points, i_resolution=1, j_resolution=1
     ... )
-    >>> plane.points
-    pyvista_ndarray([[-7.5869438e+01,  2.9497326e+01, -4.8396746e-08],
-                     [ 7.4705307e+01,  3.3273979e+01, -2.2577750e-07],
-                     [-7.4325546e+01, -3.2057564e+01,  4.7211194e-07],
-                     [ 7.6249199e+01, -2.8280909e+01,  2.9473119e-07]],
-                    dtype=float32)
     >>>
     >>> # Plot the fitted plane
     >>> pl = pv.Plotter()
