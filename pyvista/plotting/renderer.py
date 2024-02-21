@@ -695,8 +695,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
-    @property
-    def charts(self):  # numpydoc ignore=RT01
+    def get_charts(self):  # numpydoc ignore=RT01
         """Return a list of all charts in this renderer.
 
         Examples
@@ -714,7 +713,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
            >>> _ = pl.add_mesh(pv.Sphere())
            >>> pl.subplot(0, 1)
            >>> _ = pl.add_chart(chart)
-           >>> ax = pl.renderer.charts[0].figure.axes[0]
+           >>> ax = pl.renderer.get_charts()[0].figure.axes[0]
            >>> ax.get_lines()[0].set_ydata([6, 5, 4])
            >>> pl.show()
 
