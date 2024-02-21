@@ -2494,15 +2494,15 @@ def test_chart_matplotlib_plot(verify_image_cache):
     pl.show()
 
 
-def test_get_charts_property():
+def test_get_charts():
     """Test that the get_charts method is retuning a list of charts"""
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    chart = pv.ChartMPL(fig)
+    chart = pv.Chart2D()
     pl = pv.Plotter()
     pl.add_chart(chart)
-    assert len(pl.renderer.get_charts()) == 1
+
+    charts = pl.renderer.get_charts()
+    assert len(charts) == 1
+    assert chart is charts[0]
 
 
 def test_add_remove_background(sphere):

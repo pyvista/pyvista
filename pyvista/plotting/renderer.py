@@ -703,19 +703,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         .. pyvista-plot::
            :force_static:
 
-           >>> import matplotlib.pyplot as plt
            >>> import pyvista as pv
-           >>> fig, ax = plt.subplots()
-           >>> _ = ax.plot([1, 2, 3], [4, 5, 6])
-           >>> chart = pv.ChartMPL(fig)
-           >>> pl = pv.Plotter(shape=(1, 2))
-           >>> pl.subplot(0, 0)
-           >>> _ = pl.add_mesh(pv.Sphere())
-           >>> pl.subplot(0, 1)
-           >>> _ = pl.add_chart(chart)
-           >>> ax = pl.renderer.get_charts()[0].figure.axes[0]
-           >>> ax.get_lines()[0].set_ydata([6, 5, 4])
-           >>> pl.show()
+           >>> chart = pv.Chart2D()
+           >>> chart.line([1, 2, 3], [0, 1, 0])
+           >>> pl = pv.Plotter()
+           >>> pl.add_chart(chart)
+           >>> print(chart is pl.renderer.get_charts()[0])  # True
 
         """
         return [*self._charts] if self.has_charts else []
