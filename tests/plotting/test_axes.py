@@ -1132,9 +1132,9 @@ def test_axes_actor_auto_length(apply_to, decimals, enabled):
     axes_actor.shaft_length = 0.9
     expected = (0.1, 0.1, 0.1)
     if enabled:
-        assert np.array_equal(axes_actor.tip_length, expected)
+        assert np.allclose(axes_actor.tip_length, expected)
     else:
-        assert not np.array_equal(axes_actor.tip_length, expected)
+        assert not np.allclose(axes_actor.tip_length, expected)
         axes_actor.tip_length = expected
 
     axes_actor.tip_length = 0.9
