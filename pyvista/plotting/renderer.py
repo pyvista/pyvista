@@ -708,7 +708,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
            >>> chart.line([1, 2, 3], [0, 1, 0])
            >>> pl = pv.Plotter()
            >>> pl.add_chart(chart)
-           >>> print(chart is pl.renderer.get_charts()[0])  # True
+           >>> print(chart is pl.renderer.get_charts()[0])
+           True
 
         """
         return [*self._charts] if self.has_charts else []
