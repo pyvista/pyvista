@@ -718,7 +718,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
            >>> pl.show()
 
         """
-        return self._charts
+        return [*self._charts] if self.has_charts else []
 
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
