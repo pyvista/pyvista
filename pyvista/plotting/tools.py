@@ -123,6 +123,7 @@ def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
 
 
 def create_axes_orientation_box(
+    line_width=1,
     text_scale=0.366667,
     edge_color='black',
     x_color=None,
@@ -144,6 +145,9 @@ def create_axes_orientation_box(
 
     Parameters
     ----------
+    line_width : float, optional
+        The width of the marker lines.
+
     text_scale : float, optional
         Size of the text relative to the faces.
 
@@ -214,6 +218,7 @@ def create_axes_orientation_box(
 
     >>> import pyvista as pv
     >>> actor = pv.create_axes_orientation_box(
+    ...     line_width=1,
     ...     text_scale=0.53,
     ...     edge_color='black',
     ...     x_color='k',
@@ -250,9 +255,10 @@ def create_axes_orientation_box(
         axes_actor.SetZPlusFaceText(f"+{zlabel}")
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
-    axes_actor.SetTextEdgesVisibility(False)
+    axes_actor.SetTextEdgesVisibility(show_text_edges)
+    # https://github.com/pyvista/pyvista/pull/5382
     # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -261,7 +267,7 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
+    axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
