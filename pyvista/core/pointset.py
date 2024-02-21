@@ -105,7 +105,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        ind : VectorLike[int] | Vector[bool]
+        ind : VectorLike[int] | VectorLike[bool]
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
@@ -1014,7 +1014,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         points : MatrixLike[float]
             A (n_points, 3) array of points.
 
-        faces : Matrix[int]
+        faces : MatrixLike[int]
             A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
 
         deep : bool, default: False
@@ -2578,7 +2578,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         Parameters
         ----------
-        ind : Vector[bool] | VectorLike[int]
+        ind : VectorLike[bool] | VectorLike[int]
             Vector of point indices to be hidden. The vector can also be a
             boolean array of the same size as the number of points.
 
