@@ -1292,10 +1292,48 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @classmethod
     def default_theme(cls):
+        """Return the default slider theme.
+
+        Examples
+        --------
+        The default slider configuration.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.default_theme()
+        <BLANKLINE>
+                Slider length    : 0.05
+                Slider width     : 0.05
+                Slider color     : Color(name='black', hex='#000000ff', opacity=255)
+                Tube width       : 0.04
+                Tube color       : Color(name='black', hex='#000000ff', opacity=255)
+                Cap opacity      : 1.0
+                Cap length       : 0.01
+                Cap width        : 0.05
+
+        """
         return cls()
 
     @classmethod
     def classic_theme(cls):
+        """Return a classic slider theme.
+
+        Examples
+        --------
+        The classic slider configuration.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.classic_theme()
+        <BLANKLINE>
+                Slider length    : 0.02
+                Slider width     : 0.04
+                Slider color     : Color(name='gray', hex='#808080ff', opacity=255)
+                Tube width       : 0.005
+                Tube color       : Color(name='white', hex='#ffffffff', opacity=255)
+                Cap opacity      : 1.0
+                Cap length       : 0.01
+                Cap width        : 0.02
+
+        """
         return cls.from_dict(
             {
                 "slider_length": 0.02,
@@ -1311,6 +1349,25 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @classmethod
     def modern_theme(cls):
+        """Return a modern slider theme.
+
+        Examples
+        --------
+        The modern slider configuration.
+
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.modern_theme()
+        <BLANKLINE>
+                Slider length    : 0.02
+                Slider width     : 0.04
+                Slider color     : Color(hex='#6e7175ff', opacity=255)
+                Tube width       : 0.04
+                Tube color       : Color(hex='#b2b3b5ff', opacity=255)
+                Cap opacity      : 0.0
+                Cap length       : 0.01
+                Cap width        : 0.02
+
+        """
         return cls.from_dict(
             {
                 "slider_length": 0.02,
