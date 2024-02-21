@@ -3,16 +3,17 @@
 Also includes some pure-python helpers.
 
 """
+
 from __future__ import annotations
 
-from typing import Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, Matrix, Vector
+from pyvista.core._typing_core import BoundsLike, Matrix, NumpyArray, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -57,7 +58,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
     surf.transform(trans)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center)
+        surf.points += np.array(center, dtype=surf.points.dtype)
 
 
 @no_new_attr
@@ -230,7 +231,7 @@ class ConeSource(_vtk.vtkConeSource):
             Enable or disable the capping the base of the cone with a
             polygon.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -428,7 +429,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self._direction = direction
 
     @property
-    def radius(self) -> bool:
+    def radius(self) -> float:
         """Get radius of the cylinder.
 
         Returns
@@ -502,7 +503,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         bool
             Cap cylinder ends with polygons.
         """
-        return self.GetCapping()
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -546,7 +547,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         self.points = points
 
     @property
-    def points(self) -> np.ndarray:
+    def points(self) -> NumpyArray[float]:
         """Return the points defining a broken line.
 
         Returns
@@ -557,12 +558,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[Matrix, Vector]):
+    def points(self, points: Union[Matrix[float], Vector[float]]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : array_like[float]
+        points : Vector[float] | Matrix[float]
             List of points defining a broken line.
         """
         points, _ = _coerce_pointslike_arg(points)
@@ -695,6 +696,11 @@ class Text3DSource(vtkVectorText):
                     f'{self.__class__.__name__}'
                 )
 
+    def __del__(self):
+        """Delete filters."""
+        self._tri_filter = None
+        self._extrude_filter = None
+
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""
@@ -764,9 +770,11 @@ class Text3DSource(vtkVectorText):
 
     @height.setter
     def height(self, height: float):  # numpydoc ignore=GL08
-        _check_range(
-            height, rng=(0, float('inf')), parm_name='height'
-        ) if height is not None else None
+        (
+            _check_range(height, rng=(0, float('inf')), parm_name='height')
+            if height is not None
+            else None
+        )
         self._height = height
 
     @property
@@ -1754,7 +1762,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         bool
             Enable or disable producing filled polygons.
         """
-        return self.GetGeneratePolygon()
+        return bool(self.GetGeneratePolygon())
 
     @fill.setter
     def fill(self, fill: bool):
@@ -1812,10 +1820,10 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     _new_attr_exceptions = ['_kinds']
 
-    def __init__(self, kind='tetrahedron'):
+    def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
-        self._kinds = {
+        self._kinds: Dict[str, int] = {
             'tetrahedron': 0,
             'cube': 1,
             'octahedron': 2,
@@ -1943,6 +1951,274 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Number of points on the plane in the j direction.
         """
         self.SetYResolution(j_resolution)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ArrowSource(_vtk.vtkArrowSource):
+    """Create a arrow source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    tip_length : float, default: 0.25
+        Length of the tip.
+
+    tip_radius : float, default: 0.1
+        Radius of the tip.
+
+    tip_resolution : int, default: 20
+        Number of faces around the tip.
+
+    shaft_radius : float, default: 0.05
+        Radius of the shaft.
+
+    shaft_resolution : int, default: 20
+        Number of faces around the shaft.
+    """
+
+    def __init__(
+        self,
+        tip_length=0.25,
+        tip_radius=0.1,
+        tip_resolution=20,
+        shaft_radius=0.05,
+        shaft_resolution=20,
+    ):
+        """Initialize source."""
+        self.tip_length = tip_length
+        self.tip_radius = tip_radius
+        self.tip_resolution = tip_resolution
+        self.shaft_radius = shaft_radius
+        self.shaft_resolution = shaft_resolution
+
+    @property
+    def tip_length(self) -> int:
+        """Get the length of the tip.
+
+        Returns
+        -------
+        int
+            The length of the tip.
+        """
+        return self.GetTipLength()
+
+    @tip_length.setter
+    def tip_length(self, tip_length: int):
+        """Set the length of the tip.
+
+        Parameters
+        ----------
+        tip_length : int
+            The length of the tip.
+        """
+        self.SetTipLength(tip_length)
+
+    @property
+    def tip_radius(self) -> int:
+        """Get the radius of the tip.
+
+        Returns
+        -------
+        int
+            The radius of the tip.
+        """
+        return self.GetTipRadius()
+
+    @tip_radius.setter
+    def tip_radius(self, tip_radius: int):
+        """Set the radius of the tip.
+
+        Parameters
+        ----------
+        tip_radius : int
+            The radius of the tip.
+        """
+        self.SetTipRadius(tip_radius)
+
+    @property
+    def tip_resolution(self) -> int:
+        """Get the number of faces around the tip.
+
+        Returns
+        -------
+        int
+            The number of faces around the tip.
+        """
+        return self.GetTipResolution()
+
+    @tip_resolution.setter
+    def tip_resolution(self, tip_resolution: int):
+        """Set the number of faces around the tip.
+
+        Parameters
+        ----------
+        tip_resolution : int
+            The number of faces around the tip.
+        """
+        self.SetTipResolution(tip_resolution)
+
+    @property
+    def shaft_resolution(self) -> int:
+        """Get the number of faces around the shaft.
+
+        Returns
+        -------
+        int
+            The number of faces around the shaft.
+        """
+        return self.GetShaftResolution()
+
+    @shaft_resolution.setter
+    def shaft_resolution(self, shaft_resolution: int):
+        """Set the number of faces around the shaft.
+
+        Parameters
+        ----------
+        shaft_resolution : int
+            The number of faces around the shaft.
+        """
+        self.SetShaftResolution(shaft_resolution)
+
+    @property
+    def shaft_radius(self) -> int:
+        """Get the radius of the shaft.
+
+        Returns
+        -------
+        int
+            The radius of the shaft.
+        """
+        return self.GetShaftRadius()
+
+    @shaft_radius.setter
+    def shaft_radius(self, shaft_radius: int):
+        """Set the radius of the shaft.
+
+        Parameters
+        ----------
+        shaft_radius : int
+            The radius of the shaft.
+        """
+        self.SetShaftRadius(shaft_radius)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class BoxSource(_vtk.vtkTessellatedBoxSource):
+    """Create a box source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounding box of the cube.
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    level : int, default: 0
+        Level of subdivision of the faces.
+
+    quads : bool, default: True
+        Flag to tell the source to generate either a quad or two
+        triangle for a set of four points.
+
+    """
+
+    _new_attr_exceptions = [
+        "bounds",
+        "_bounds",
+    ]
+
+    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+        """Initialize source."""
+        super().__init__()
+        self.bounds = bounds
+        self.level = level
+        self.quads = quads
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounding box of the cube."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        if np.array(bounds).size != 6:
+            raise TypeError(
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            )
+        self._bounds = bounds
+        self.SetBounds(bounds)
+
+    @property
+    def level(self) -> int:
+        """Get level of subdivision of the faces.
+
+        Returns
+        -------
+        int
+            Level of subdivision of the faces.
+        """
+        return self.GetLevel()
+
+    @level.setter
+    def level(self, level: int):
+        """Set level of subdivision of the faces.
+
+        Parameters
+        ----------
+        level : int
+            Level of subdivision of the faces.
+        """
+        self.SetLevel(level)
+
+    @property
+    def quads(self) -> bool:
+        """Flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Returns
+        -------
+        bool
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        return bool(self.GetQuads())
+
+    @quads.setter
+    def quads(self, quads: bool):
+        """Set flag to tell the source to generate either a quad or two triangle for a set of four points.
+
+        Parameters
+        ----------
+        quads : bool, optional
+            Flag to tell the source to generate either a quad or two
+            triangle for a set of four points.
+        """
+        self.SetQuads(quads)
 
     @property
     def output(self):

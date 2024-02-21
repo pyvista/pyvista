@@ -15,7 +15,7 @@ def test_cone_source():
     assert algo.radius == 0.5
     assert algo.capping
     assert algo.resolution == 6
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         algo = pv.ConeSource(angle=0.0, radius=0.0)
     algo = pv.ConeSource(angle=0.0)
     assert algo.angle == 0.0
@@ -52,11 +52,11 @@ def test_multiple_lines_source():
 
 @pytest.fixture()
 def bunny():
-    return examples.download_bunny()
+    return examples.download_bunny_coarse()
 
 
-@pytest.mark.parametrize("is_negative", (True, False))
-@pytest.mark.parametrize("delta", ([0, 0, 0], [1e-8, 0, 0], [0, 0, 1e-8]))
+@pytest.mark.parametrize("is_negative", [True, False])
+@pytest.mark.parametrize("delta", [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
 def test_translate_direction_collinear(is_negative, delta, bunny):
     mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta
@@ -75,6 +75,26 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
         assert np.allclose(points_in[:, 0], points_out[:, 1])
         assert np.allclose(points_in[:, 1], -points_out[:, 0])
         assert np.allclose(points_in[:, 2], points_out[:, 2])
+
+
+def test_translate_precision():
+    """
+    Test that specifying a 64bit float as an arg, will not
+    introduce precision error for 32bit meshes.
+    """
+    val = np.float64(29380 / 18)
+
+    # test indirectly using Plane, which will yield a float32 mesh
+    mesh = pv.Plane(center=[0, val / 2, 0], j_size=val, i_resolution=1, j_resolution=1)
+    assert mesh.points.dtype == np.float32
+
+    expected = np.array(
+        [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0], [-0.5, 1632.2222, 0.0], [0.5, 1632.2222, 0.0]],
+        dtype=np.float32,
+    )
+
+    # DO NOT USE np.all_close. This should match exactly
+    assert np.array_equal(mesh.points, expected)
 
 
 def test_text3d_source_empty_string():
@@ -173,7 +193,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture
+@pytest.fixture()
 def text3d_source_with_text():
     return pv.Text3DSource("TEXT")
 
@@ -341,3 +361,19 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+
+
+def test_arrow_source():
+    algo = pv.ArrowSource()
+    assert algo.tip_length == 0.25
+    assert algo.tip_radius == 0.1
+    assert algo.tip_resolution == 20
+    assert algo.shaft_radius == 0.05
+    assert algo.shaft_resolution == 20
+
+
+def test_box_source():
+    algo = pv.BoxSource()
+    assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
+    assert algo.level == 0
+    assert algo.quads

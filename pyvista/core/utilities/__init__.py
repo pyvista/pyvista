@@ -1,4 +1,5 @@
 """Utilities routines."""
+
 # flake8: noqa: F401
 
 from .arrays import (
@@ -84,6 +85,8 @@ from .geometric_objects import (
     translate,
 )
 from .geometric_sources import (
+    ArrowSource,
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,

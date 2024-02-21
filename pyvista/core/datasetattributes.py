@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array, Matrix
+from ._typing_core import Array, Matrix, NumpyArray
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
@@ -158,7 +158,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
 
-                line = f'{name[:23]:<24}{str(array.dtype):<11}{str(array.shape):<20} {arr_type}'.strip()
+                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -218,7 +218,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: Array):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key: str, value: Array[Any]):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -299,7 +299,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def active_vectors(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
+    def active_vectors(self) -> Optional[NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return the active vectors as a pyvista_ndarray.
 
         .. versionchanged:: 0.32.0
@@ -390,7 +390,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: np.ndarray):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -506,18 +506,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
         if name in self.dataset._association_bitarray_names[self.association.name]:
-            narray = narray.view(np.bool_)  # type: ignore
+            narray = narray.view(np.bool_)
         elif name in self.dataset._association_complex_names[self.association.name]:
             if narray.dtype == np.float32:
-                narray = narray.view(np.complex64)  # type: ignore
+                narray = narray.view(np.complex64)
             if narray.dtype == np.float64:
-                narray = narray.view(np.complex128)  # type: ignore
+                narray = narray.view(np.complex128)
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
         return narray
 
-    def set_array(self, data: Array, name: str, deep_copy=False) -> None:
+    def set_array(self, data: Array[float], name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -580,7 +580,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: Array, name='scalars', deep_copy=False):
+    def set_scalars(self, scalars: Array[float], name='scalars', deep_copy=False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -632,7 +632,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: Matrix, name: str, deep_copy=False):
+    def set_vectors(self, vectors: Matrix[float], name: str, deep_copy=False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
@@ -704,7 +704,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: Array, name: str, deep_copy: bool
+        self, data: Array[float], name: str, deep_copy: bool
     ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
@@ -1000,7 +1000,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: Union[Dict[str, np.ndarray], 'DataSetAttributes']):
+    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], 'DataSetAttributes']):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
@@ -1241,7 +1241,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Matrix):  # numpydoc ignore=GL08
+    def active_normals(self, normals: Matrix[float]):  # numpydoc ignore=GL08
         """Set the normals.
 
         Parameters
@@ -1351,7 +1351,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_texture_coordinates.setter
-    def active_texture_coordinates(self, texture_coordinates: np.ndarray):  # numpydoc ignore=GL08
+    def active_texture_coordinates(
+        self, texture_coordinates: NumpyArray[float]
+    ):  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
 
         Parameters

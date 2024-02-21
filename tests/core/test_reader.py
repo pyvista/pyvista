@@ -23,7 +23,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 
 def test_get_reader_fail():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
 
 
