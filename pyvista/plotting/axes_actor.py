@@ -15,7 +15,6 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.plotting import _vtk
 from pyvista.plotting._property import Property, _check_range
-from pyvista.plotting.actor_properties import ActorProperties
 from pyvista.plotting.colors import Color, ColorLike
 from pyvista.plotting.prop3d import Prop3D
 
@@ -2474,7 +2473,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `x_axis_shaft_properties` is deprecated. Use `x_shaft_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetXAxisShaftProperty())
+        return self.x_shaft_prop
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
@@ -2490,7 +2489,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `y_axis_shaft_properties` is deprecated. Use `y_shaft_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetYAxisShaftProperty())
+        return self.y_shaft_prop
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
@@ -2506,7 +2505,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `z_axis_shaft_properties` is deprecated. Use `z_shaft_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetZAxisShaftProperty())
+        return self.z_shaft_prop
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
@@ -2522,7 +2521,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `x_axis_tip_properties` is deprecated. Use `x_tip_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetXAxisTipProperty())
+        return self.x_tip_prop
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
@@ -2538,7 +2537,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `y_axis_tip_properties` is deprecated. Use `y_tip_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetYAxisTipProperty())
+        return self.y_tip_prop
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
@@ -2554,7 +2553,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             "Use of `z_axis_tip_properties` is deprecated. Use `z_tip_prop` instead.",
             PyVistaDeprecationWarning,
         )
-        return ActorProperties(self.GetZAxisTipProperty())
+        return self.z_tip_prop
 
     @property
     def labels_off(self) -> bool:  # numpydoc ignore=RT01
