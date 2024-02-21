@@ -98,12 +98,12 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        # _new_attr_exceptions = ['_center', '_direction']
+        _new_attr_exceptions = ['_direction']
 
         def __init__(
             self,
             center=(0.0, 0.0, 0.0),
-            # direction=(1.0, 0.0, 0.0),
+            direction=(1.0, 0.0, 0.0),
             radius=0.5,
             cylinder_length=1.0,
             theta_resolution=30,
@@ -112,7 +112,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
             """Initialize the capsule source class."""
             super().__init__()
             self.center = center
-            # self._direction = direction
+            self._direction = direction
             self.radius = radius
             self.cylinder_length = cylinder_length
             self.theta_resolution = theta_resolution
@@ -142,29 +142,29 @@ if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMino
             """
             self.SetCenter(center)
 
-        # @property
-        # def direction(self) -> Sequence[float]:
-        #     """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
+        @property
+        def direction(self) -> Sequence[float]:
+            """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
 
-        #     Returns
-        #     -------
-        #     sequence[float]
-        #         Direction vector in ``[x, y, z]``. Orientation vector of the
-        #         capsule.
-        #     """
-        #     return self._direction
+            Returns
+            -------
+            sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            return self._direction
 
-        # @direction.setter
-        # def direction(self, direction: Sequence[float]):
-        #     """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
+        @direction.setter
+        def direction(self, direction: Sequence[float]):
+            """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
 
-        #     Parameters
-        #     ----------
-        #     direction : sequence[float]
-        #         Direction vector in ``[x, y, z]``. Orientation vector of the
-        #         capsule.
-        #     """
-        #     self._direction = direction
+            Parameters
+            ----------
+            direction : sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            self._direction = direction
 
         @property
         def cylinder_length(self) -> float:
