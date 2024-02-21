@@ -356,11 +356,12 @@ def test_theme_colorbar_orientation(default_theme):
         default_theme.colorbar_orientation = 'invalid'
 
 
-def test_restore_defaults(default_theme):
-    orig_value = default_theme.show_edges
-    default_theme.show_edges = not orig_value
-    default_theme.restore_defaults()
-    assert default_theme.show_edges == orig_value
+def test_restore_defaults():
+    theme = Theme.document_theme()
+    orig_value = theme.show_edges
+    theme.show_edges = not orig_value
+    theme.restore_defaults()
+    assert theme.show_edges == orig_value
 
 
 def test_repr(default_theme):

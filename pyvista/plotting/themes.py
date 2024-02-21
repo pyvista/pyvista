@@ -3085,7 +3085,7 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.restore_defaults()
 
         """
-        self.from_default("default")
+        self.load_theme(self.from_default("default"))
 
     def __repr__(self):
         """User friendly representation of the current theme."""
