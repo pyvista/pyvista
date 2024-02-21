@@ -705,10 +705,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> chart.line([1, 2, 3], [0, 1, 0])
+           >>> _ = chart.line([1, 2, 3], [0, 1, 0])
            >>> pl = pv.Plotter()
            >>> pl.add_chart(chart)
-           >>> print(chart is pl.renderer.get_charts()[0])
+           >>> chart is pl.renderer.get_charts()[0]
            True
 
         """
