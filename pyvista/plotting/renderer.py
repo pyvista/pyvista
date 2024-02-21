@@ -703,7 +703,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         --------
         >>> import matplotlib.pyplot as plt
         >>> import pyvista as pv
-        >>> fig, _ = plt.subplots()
+        >>> fig, ax = plt.subplots()
+        >>> _ = ax.plot([1, 2, 3], [4, 5, 6])
         >>> chart = pv.ChartMPL(fig)
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
