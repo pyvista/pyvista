@@ -374,3 +374,17 @@ def test_superquadric_source():
     assert algo.phi_resolution == 16
     assert not algo.toroidal
     assert algo.thickness == 1 / 3
+def test_arrow_source():
+    algo = pv.ArrowSource()
+    assert algo.tip_length == 0.25
+    assert algo.tip_radius == 0.1
+    assert algo.tip_resolution == 20
+    assert algo.shaft_radius == 0.05
+    assert algo.shaft_resolution == 20
+
+
+def test_box_source():
+    algo = pv.BoxSource()
+    assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
+    assert algo.level == 0
+    assert algo.quads
