@@ -156,6 +156,10 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
     _defaults: Dict[str, str] = {}
 
+    def _handle_kwargs(self, **kwargs):
+        for key, value in kwargs.items():
+            self[key] = value
+
     @classmethod
     def from_dict(cls, dict_):
         """Create from a dictionary."""
@@ -276,7 +280,7 @@ class _LightingConfig(_ThemeConfig):
         '_emissive',
     ]
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
@@ -285,6 +289,8 @@ class _LightingConfig(_ThemeConfig):
         self._specular = 0.0
         self._specular_power = 100.0
         self._emissive = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
@@ -504,10 +510,12 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._number_of_peels = 4
         self._occlusion_ratio = 0.0
         self._enabled = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def number_of_peels(self) -> int:  # numpydoc ignore=RT01
@@ -587,13 +595,15 @@ class _SilhouetteConfig(_ThemeConfig):
 
     __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = None
         self._enabled = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def enabled(self) -> bool:  # numpydoc ignore=RT01
@@ -720,11 +730,13 @@ class _ColorbarConfig(_ThemeConfig):
 
     __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -827,12 +839,14 @@ class _AxesConfig(_ThemeConfig):
 
     __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
+
+        self._handle_kwargs(**kwargs)
 
     def __repr__(self):
         txt = ['Axes configuration']
@@ -964,13 +978,15 @@ class _Font(_ThemeConfig):
 
     __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._family = 'arial'
         self._size = 12
         self._title_size = None
         self._label_size = None
         self._color = Color('white')
         self._fmt = None
+
+        self._handle_kwargs(**kwargs)
 
     def __repr__(self):
         txt = ['']
@@ -1124,7 +1140,7 @@ class _SliderStyleConfig(_ThemeConfig):
         "modern": "modern_theme",
     }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Initialize the slider style configuration."""
         self._name = None
         self.slider_length = 0.05
@@ -1135,6 +1151,8 @@ class _SliderStyleConfig(_ThemeConfig):
         self.cap_opacity = 1.0
         self.cap_length = 0.01
         self.cap_width = 0.05
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
@@ -1407,7 +1425,7 @@ class _TrameConfig(_ThemeConfig):
         '_jupyter_extension_enabled',
     ]
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
@@ -1426,6 +1444,8 @@ class _TrameConfig(_ThemeConfig):
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
         self._default_mode = 'trame'
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
@@ -1556,6 +1576,11 @@ class _TrameConfig(_ThemeConfig):
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
+    Parameters
+    ----------
+    **kwargs : keyword args
+        Keyword args that set attributes.
+
     Examples
     --------
     Change the global default background color to white.
@@ -1573,6 +1598,12 @@ class Theme(_ThemeConfig):
     >>> my_theme = Theme.document_theme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
+    >>> pv.global_theme.load_theme(my_theme)
+
+    Create a Theme through keyword args.
+
+    >>> from pyvista.plotting.themes import Theme
+    >>> my_theme = Theme(show_edges=True)
     >>> pv.global_theme.load_theme(my_theme)
 
     """
@@ -1646,7 +1677,7 @@ class Theme(_ThemeConfig):
         "vtk": "vtk_theme",
     }
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Initialize the theme."""
         self._name = 'default'
         self._background = Color([0.3, 0.3, 0.3])
@@ -1730,6 +1761,8 @@ class Theme(_ThemeConfig):
         self._edge_opacity = 1.0
 
         self._logo_file = None
+
+        self._handle_kwargs(**kwargs)
 
     @classmethod
     def dark_theme(cls):
