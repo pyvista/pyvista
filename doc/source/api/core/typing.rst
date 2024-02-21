@@ -1,5 +1,6 @@
 Typing
 ======
+.. currentmodule:: pyvista
 
 Type alias and type variable definitions used by PyVista.
 
