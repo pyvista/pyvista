@@ -87,8 +87,8 @@ def test_slider_style_config(default_theme, parm):
 
 
 def test_slider_style_config_eq(default_theme):
-    assert default_theme.slider_style.modern() != default_theme.slider_style.classic()
-    assert default_theme.slider_style.modern() != 1
+    assert default_theme.slider_style.modern_theme() != default_theme.slider_style.classic_theme()
+    assert default_theme.slider_style.modern_theme() != 1
 
 
 def test_slider_style_eq(default_theme):
