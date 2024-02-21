@@ -1,4 +1,5 @@
 """Contains the pyvista.Cell class."""
+
 from __future__ import annotations
 
 from typing import List, Optional, Sequence, Tuple, cast
@@ -192,7 +193,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:   0
 
         """
-        cells = [len(self.point_ids)] + list(range(len(self.point_ids)))
+        cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
             return pyvista.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
@@ -237,7 +238,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                 cell_ids.extend(self.point_ids.index(i) for i in face.point_ids)
             cell_ids.insert(0, len(cell_ids))
         else:
-            cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
+            cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
         return pyvista.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
@@ -339,7 +340,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Get the point coordinates of the cell.
 
         Returns
@@ -815,7 +816,7 @@ def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
+def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 

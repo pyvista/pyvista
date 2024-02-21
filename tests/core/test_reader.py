@@ -23,7 +23,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 
 def test_get_reader_fail():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
 
 
@@ -633,6 +633,9 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+)
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
     reader.decompose_polyhedra = False

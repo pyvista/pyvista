@@ -2460,11 +2460,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(self._theme.camera['position']).astype(float)
+        position = np.array(self._theme.camera.position).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
         return cpos
 
     def update_bounds_axes(self):
@@ -2591,7 +2591,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         focal_pt = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
         self.reset_camera(render=render)
@@ -3278,12 +3278,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_legend(
         self,
         labels=None,
-        bcolor=(0.5, 0.5, 0.5),
+        bcolor=None,
         border=False,
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
         font_family=None,
         background_opacity=1.0,
     ):
@@ -3302,9 +3302,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
+            legend. Each entry can contain one of the following:
+
+            * Two strings ([label, color]), where ``label`` is the name of the
+              item to add, and ``color`` is the color of the label to add.
+            * Three strings ([label, color, face]) where ``label`` is the name
+              of the item to add, ``color`` is the color of the label to add,
+              and ``face`` is a string which defines the face (i.e. ``circle``,
+              ``triangle``, ``box``, etc.).
+              ``face`` could be also ``None`` (there is no face then), or a
+              :class:`pyvista.PolyData`.
+            * A dict with the key ``label``. Optionally you can add the
+              keys ``color`` and ``face``. The values of these keys can be
+              strings. For the ``face`` key, it can be also a
+              :class:`pyvista.PolyData`.
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
@@ -3410,17 +3421,50 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is None:
-                    # dummy vtk object
-                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
-
+                if face is not None:
+                    vtk_object = make_legend_face(face)
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
-            legend_face = make_legend_face(face)
-            for i, (text, color) in enumerate(labels):
+            for i, args in enumerate(labels):
+                face_ = None
+                if isinstance(args, (list, tuple)):
+                    if len(args) == 2:
+                        # format labels =  [[ text1, color1], [ text2, color2], etc]
+                        text, color = args
+                    else:
+                        # format labels =  [[ text1, color1, face1], [ text2, color2, face2], etc]
+                        # Pikcing only the first 3 elements
+                        text, color, face_ = args[:3]
+                elif isinstance(args, dict):
+                    # it is using a dict
+                    text = args.pop('label')
+                    color = args.pop('color', None)
+                    face_ = args.pop('face', None)
+
+                    if args:
+                        warnings.warn(
+                            f"Some of the arguments given to legend are not used.\n{args}"
+                        )
+                elif isinstance(args, str):
+                    # Only passing label
+                    text = args
+                    # taking the currents (if any)
+                    try:
+                        face_, _, color = list(self._labels.values())[i]
+                    except (AttributeError, IndexError):
+                        # There are no values
+                        face_ = None
+                        color = None
+
+                else:
+                    raise ValueError(
+                        f"The object passed to the legend ({type(args)}) is not valid."
+                    )
+
+                legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:

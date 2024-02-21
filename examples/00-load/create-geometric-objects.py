@@ -6,6 +6,7 @@ Geometric Objects
 
 The "Hello, world!" of VTK
 """
+
 import pyvista as pv
 
 ###############################################################################

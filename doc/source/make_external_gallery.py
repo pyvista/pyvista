@@ -1,4 +1,5 @@
 """A helper script to generate the external examples gallery."""
+
 from io import StringIO
 import os
 
@@ -183,6 +184,11 @@ articles = dict(
         title="Air Racing Trajectory Optimization",
         link="https://github.com/peterdsharpe/air-racing-optimization",
         image="air_racing_optimization.png",
+    ),
+    felupe=Example(
+        title="FElupe",
+        link="https://felupe.readthedocs.io/en/latest/",
+        image="felupe.png",
     ),
     # entry=Example(title="",
     #     link="",

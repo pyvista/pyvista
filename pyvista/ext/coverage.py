@@ -24,7 +24,7 @@ from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.locale import __
 from sphinx.util import logging
-from sphinx.util.console import red  # type: ignore
+from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class CoverageBuilder(Builder):
 
     def build_c_coverage(self) -> None:
         # Fetch all the info from the header files
-        c_objects = self.env.domaindata['c']['objects']  # type: ignore
+        c_objects = self.env.domaindata['c']['objects']
         for filename in self.c_sourcefiles:
             undoc: Set[Tuple[str, str]] = set()
             with open(filename) as f:
@@ -165,7 +165,7 @@ class CoverageBuilder(Builder):
         return False
 
     def build_py_coverage(self) -> None:
-        objects = self.env.domaindata['py']['objects']  # type: ignore
+        objects = self.env.domaindata['py']['objects']
 
         # objects are sometimes not referenced in the docs as they are
         # in the source.  Here we simply grab the method and class of
@@ -175,7 +175,7 @@ class CoverageBuilder(Builder):
             # only include method and class
             abbr_names.add(method_from_obj(obj_name))
 
-        modules = self.env.domaindata['py']['modules']  # type: ignore
+        modules = self.env.domaindata['py']['modules']
         for mod_name in self.add_modules:
             modules[mod_name] = None
 

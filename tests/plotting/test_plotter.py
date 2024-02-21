@@ -4,6 +4,7 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+
 import os
 
 import numpy as np
@@ -170,7 +171,8 @@ def test_get_datasets(sphere, hexbeam):
     pl.add_mesh(hexbeam)
     datasets = pl._datasets
     assert len(datasets) == 2
-    assert sphere in datasets and hexbeam in datasets
+    assert sphere in datasets
+    assert hexbeam in datasets
 
 
 def test_remove_scalars_single(sphere, hexbeam):
@@ -287,7 +289,7 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-@pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
+@pytest.mark.parametrize(("connected", "n_lines"), [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
     pl = pv.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
@@ -418,7 +420,7 @@ def test_multi_block_color_cycler():
     assert mapper.block_attr[3].color.name == 'red'
 
     # test wrong args
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mapper.set_unique_colors('foo')
 
     with pytest.raises(TypeError):
@@ -426,7 +428,7 @@ def test_multi_block_color_cycler():
 
 
 @pytest.mark.parametrize(
-    'face, normal',
+    ('face', 'normal'),
     [
         ('-Z', (0, 0, 1)),
         ('-Y', (0, 1, 0)),

@@ -1,4 +1,5 @@
 """Plotting routines."""
+
 # flake8: noqa: F401
 
 from pyvista import MAX_N_COLOR_BARS

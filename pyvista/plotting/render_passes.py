@@ -1,4 +1,5 @@
 """Render passes module for PyVista."""
+
 import weakref
 
 from . import _vtk

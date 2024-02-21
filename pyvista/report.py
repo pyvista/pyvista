@@ -1,4 +1,5 @@
 """Module managing errors."""
+
 from collections import namedtuple
 import re
 import subprocess

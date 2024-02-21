@@ -10,6 +10,7 @@ set default plotting parameters.
 See also :ref:`userguide_themes` and :ref:`theme_api`.
 
 """
+
 import pyvista as pv
 from pyvista import examples
 
