@@ -4056,7 +4056,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions = {**geo_functions, **para_functions}
+    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param
@@ -4097,12 +4097,12 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         'ParametricTorus',
         'Plane',
         'Polygon',
+        'SolidSphere',
+        'SolidSphereGeneric',
         'Sphere',
+        'Text3D',
     ]
 
-    major, minor, patch = pv._version.version_info
-    if major == 0 and minor >= 43:
-        expected_names += ['SolidSphere', 'SolidSphereGeneric', 'Text3D']
     assert sorted(actual_names) == sorted(expected_names)
     return list(functions.items())
 
