@@ -157,6 +157,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
     _defaults: Dict[str, str] = {}
 
     def _handle_kwargs(self, **kwargs):
+        """Set config values from **kwargs."""
         for key, value in kwargs.items():
             self[key] = value
 
