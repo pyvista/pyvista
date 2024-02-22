@@ -4066,7 +4066,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
     }
 
-    actual_names = functions.keys()
+    actual_names = list(functions.keys())
     expected_names = [
         'Arrow',
         'CircularArcFromNormal',
@@ -4112,7 +4112,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         # Add a separate test for vtk < 9.3
         expected_names.append('Capsule_legacy')
         actual_names.append('Capsule_legacy')
-    
+
     assert sorted(actual_names) == sorted(expected_names)
     return list(functions.items())
 
@@ -4129,6 +4129,13 @@ def test_direction_objects(object_function, positive_dir):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
+    # Test Capsule separately based on vtk version
+    if 'Capsule' in name:
+        legacy_vtk = pv.vtk_version_info.major < 9 and pv.vtk_version_info.minor < 3
+        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+            pytest.xfail(
+                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
+            )
 
     direction_param_name = None
 
