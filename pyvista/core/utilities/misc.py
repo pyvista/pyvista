@@ -4,6 +4,7 @@ from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
+from numbers import Number
 import sys
 import threading
 import traceback
@@ -54,30 +55,39 @@ def assert_empty_kwargs(**kwargs):
 
 def check_valid_vector(point: Vector[float], name: str = '') -> None:
     """
-    Check if a vector contains three components.
+    Check if a vector contains three numerical elements.
 
     Parameters
     ----------
     point : Vector[float]
-        Input vector to check. Must be an iterable with exactly three components.
+        Input vector to check. Must be a sequence with exactly three numeric elements.
+
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
 
     Raises
     ------
     TypeError
-        If the input is not an iterable.
+        If the vector is not a Sequence or np.ndarray
     ValueError
-        If the input does not have exactly three components.
+        If the vector is not numeric or does not have exactly three elements.
 
     """
-    if not isinstance(point, (Sequence, np.ndarray)):
-        raise TypeError(f'{name} must be a length three iterable of floats.')
-    if len(point) != 3:
-        if name == '':
-            name = 'Vector'
-        raise ValueError(f'{name} must be a length three iterable of floats.')
-    return None
+    if name == '':
+        name = 'Vector'
+    error_msg = f'{name} must be a sequence with three numbers.'
+
+    if isinstance(point, np.ndarray):
+        if np.size(point) != 3:
+            raise ValueError(error_msg)
+    elif isinstance(point, Sequence):
+        if len(point) != 3:
+            raise ValueError(error_msg)
+        for element in point:
+            if not isinstance(element, Number):
+                raise ValueError(error_msg)
+    else:
+        raise TypeError(error_msg)
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01

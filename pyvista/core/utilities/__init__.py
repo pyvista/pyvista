@@ -100,7 +100,14 @@ from .geometric_sources import (
     SuperquadricSource,
     Text3DSource,
 )
-from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
+from .helpers import (
+    axes_rotation,
+    axis_rotation,
+    generate_plane,
+    is_inside_bounds,
+    is_pyvista_dataset,
+    wrap,
+)
 from .misc import (
     AnnotatedIntEnum,
     abstract_class,
@@ -150,6 +157,9 @@ from .points import (
     line_segments_from_points,
     lines_from_points,
     make_tri_mesh,
+    principal_axes_transform,
+    principal_axes_vectors,
+    random_sample_points,
     vector_poly_data,
     vtk_points,
 )
