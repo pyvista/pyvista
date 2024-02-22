@@ -4065,10 +4065,13 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         for name, func in functions.items()
         if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
     }
-
+    # Add a separate test for vtk < 9.3
+    functions['Capsule_legacy'] = functions['Capsule']
     actual_names = list(functions.keys())
     expected_names = [
         'Arrow',
+        'Capsule',
+        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -4099,19 +4102,6 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         'Polygon',
         'Sphere',
     ]
-
-    major, minor, patch = pv._version.version_info
-    if major == 0 and minor >= 43:
-        expected_names += [
-            'Capsule',
-            'SolidSphere',
-            'SolidSphereGeneric',
-            'Text3D',
-        ]
-
-        # Add a separate test for vtk < 9.3
-        expected_names.append('Capsule_legacy')
-        actual_names.append('Capsule_legacy')
 
     assert sorted(actual_names) == sorted(expected_names)
     return list(functions.items())

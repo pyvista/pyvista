@@ -61,7 +61,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
-if _vtk.vtkVersion.GetVTKMajorVersion() >= 9 and 0 <= _vtk.vtkVersion.GetVTKMinorVersion() <= 2:
+if pyvista.vtk_version_info <= (9, 2):
 
     @no_new_attr
     class CapsuleSource(_vtk.vtkCapsuleSource):
