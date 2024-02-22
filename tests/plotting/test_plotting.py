@@ -4108,13 +4108,18 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
             'SolidSphereGeneric',
             'Text3D',
         ]
+
+        # Add a separate test for vtk < 9.3
+        expected_names.append('Capsule_legacy')
+        actual_names.append('Capsule_legacy')
+    
     assert sorted(actual_names) == sorted(expected_names)
     return list(functions.items())
 
 
 @pytest.mark.parametrize('positive_dir', [True, False])
 @pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function, positive_dir, verify_image_cache):
+def test_direction_objects(object_function, positive_dir):
     name, func = object_function
 
     # Add required args if needed
