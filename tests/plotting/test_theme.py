@@ -16,6 +16,15 @@ def default_theme():
     return pv.plotting.themes.Theme()
 
 
+def test_update_from_dict(default_theme):
+    assert not default_theme.show_edges
+    assert default_theme.slider_style.cap_opacity == 1
+
+    default_theme.update_from_dict({"show_edges": True, "slider_style": {"cap_opacity": 0}})
+    assert default_theme.show_edges
+    assert default_theme.slider_style.cap_opacity == 0
+
+
 @pytest.mark.parametrize(
     'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
 )

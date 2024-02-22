@@ -172,6 +172,15 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 setattr(inst, key, value)
         return inst
 
+    def update_from_dict(self, dict_):
+        """Update theme in place with dictionary."""
+        for key, value in dict_.items():
+            attr = getattr(self, key)
+            if hasattr(attr, 'update_from_dict'):
+                attr.update_from_dict(value)
+            else:
+                setattr(self, key, value)
+
     def to_dict(self) -> Dict[str, Any]:
         """Return theme config parameters as a dictionary.
 
@@ -2018,8 +2027,8 @@ class Theme(_ThemeConfig):
             Document pro theme.
 
         """
-        dict = cls.document_theme().to_dict()
-        dict.update(
+        theme = cls.document_theme()
+        theme.update_from_dict(
             {
                 'anti_aliasing': 'ssaa',
                 'color_cycler': get_cycler('default'),
@@ -2032,7 +2041,7 @@ class Theme(_ThemeConfig):
                 },
             }
         )
-        return cls.from_dict(dict)
+        return theme
 
     @classmethod
     def testing_theme(cls):
