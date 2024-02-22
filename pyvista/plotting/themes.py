@@ -55,7 +55,7 @@ def _set_plot_theme_from_env() -> None:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join(Theme._defaults)
+            allowed = ', '.join(Theme.defaults())
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
@@ -127,7 +127,7 @@ def set_plot_theme(theme):
             new_theme_type = Theme.from_default(theme)
         except KeyError:
             raise ValueError(
-                f"Theme '{theme}' not found in PyVista's default themes: {pyvista.global_theme.defaults}"
+                f"Theme '{theme}' not found in PyVista's default themes: {Theme.defaults()}"
             )
         pyvista.global_theme.load_theme(new_theme_type)
     elif isinstance(theme, Theme):
@@ -239,6 +239,29 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
     @classmethod
     def register_default(cls, name, dict_, doc=None):
+        """Register a default theme from a dictionary.
+
+        Parameters
+        ----------
+        name : str
+            Name of theme for attribute.
+        dict_ : dict
+            Theme dictionary
+        doc : str, optional
+            Docstring to add to attribute.
+
+        Examples
+        --------
+        Register a default theme for downstream use.
+
+        >>> from pyvista.plotting.themes import Theme
+        >>> Theme.register_default("my_theme", {"show_edges": True})
+        >>> my_theme = Theme.my_theme()
+        >>> my_theme.show_edges
+        True
+
+        """
+
         @classmethod
         def return_theme(cls):
             return cls.from_dict(dict_)
@@ -253,11 +276,31 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
     @classmethod
     def from_default(cls, name):
+        """Return a default theme.
+
+        Examples
+        --------
+        >>> from pyvista.plotting.themes import Theme
+        >>> theme = Theme.from_default("vtk")
+
+        See Also
+        --------
+        Theme.defaults
+
+        """
         theme = getattr(cls, cls._defaults[name])
         return theme()
 
-    @property
+    @classmethod
     def defaults(self):
+        """Return list of default themes.
+
+        Examples
+        --------
+        >>> from pyvista.plotting.themes import Theme
+        >>> theme = Theme.defaults()
+
+        """
         return list(self._defaults.keys())
 
 
