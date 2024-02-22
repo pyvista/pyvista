@@ -107,28 +107,25 @@ def Capsule(
     >>> capsule.plot(show_edges=True)
 
     """
-    if pyvista.vtk_version_info.major >= 9:
-        if pyvista.vtk_version_info.minor >= 3:
-            algo = CylinderSource(
-                center=center,
-                direction=direction,
-                radius=radius,
-                height=cylinder_length,
-                capping=True,
-                resolution=resolution,
-            )
-            algo.capsule_cap = True
-        else:
-            algo = CapsuleSource(
-                center=center,
-                direction=direction,
-                radius=radius,
-                cylinder_length=cylinder_length,
-                theta_resolution=resolution,
-                phi_resolution=resolution,
-            )
+    if pyvista.vtk_version_info >= (9, 3):
+        algo = CylinderSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            height=cylinder_length,
+            capping=True,
+            resolution=resolution,
+        )
+        algo.capsule_cap = True
     else:
-        raise RuntimeError("The Capsule object is available only with VTK 9.0 or later.")
+        algo = CapsuleSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            cylinder_length=cylinder_length,
+            theta_resolution=resolution,
+            phi_resolution=resolution,
+        )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)

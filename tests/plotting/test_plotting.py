@@ -4067,7 +4067,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     }
     # Add a separate test for vtk < 9.3
     functions['Capsule_legacy'] = functions['Capsule']
-    actual_names = list(functions.keys())
+    actual_names = functions.keys()
     expected_names = [
         'Arrow',
         'Capsule',
@@ -4100,7 +4100,10 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         'ParametricTorus',
         'Plane',
         'Polygon',
+        'SolidSphere',
+        'SolidSphereGeneric',
         'Sphere',
+        'Text3D',
     ]
 
     assert sorted(actual_names) == sorted(expected_names)
