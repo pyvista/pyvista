@@ -57,6 +57,15 @@ plot_example()
 
 
 ###############################################################################
+# A full list of available default themes can be viewed using
+# :class:`pyvista.plotting.themes.Theme`.
+
+from pyvista.plotting.themes import Theme
+
+Theme.defaults()
+
+
+###############################################################################
 # Demo the ``'dark'`` theme.
 
 pv.set_plot_theme("dark")
@@ -168,6 +177,44 @@ pl = pv.Plotter(theme=my_theme)
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 
+###############################################################################
+# An alternative to setting theme configurations via attributes is to use
+# dictionaries.
+
+my_theme = Theme.from_dict(
+    {'color': 'red', 'lighting': False, 'show_edges': True, 'axes': {'box': True}}
+)
+
+pv.global_theme.load_theme(my_theme)
+cpos = pv.Sphere().plot()
+
+###############################################################################
+# An alternative to setting theme configurations via attributes is to use
+# dictionaries.  This example uses the base
+# :func:`pyvista.plotting.themes.Theme` like ``Theme()`` and modifies using the
+# dictionary.
+
+my_theme = Theme.from_dict(
+    {'color': 'red', 'lighting': False, 'show_edges': True, 'axes': {'box': True}}
+)
+
+pv.global_theme.load_theme(my_theme)
+cpos = pv.Sphere().plot()
+
+###############################################################################
+# An another alternative is setting the values via keyword args.
+
+my_theme = Theme(color='blue', show_edges=True)
+
+pv.global_theme.load_theme(my_theme)
+cpos = pv.Sphere().plot()
+
+###############################################################################
+# A theme can also be updated using a dictionary.  Here the global theme is
+# directly updated.
+
+pv.global_theme.update_from_dict({'show_edges': False})
+cpos = pv.Sphere().plot()
 
 ###############################################################################
 # Reset to use the document theme
