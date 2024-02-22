@@ -4124,7 +4124,6 @@ def test_direction_objects(object_function, positive_dir, verify_image_cache):
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
 
-    verify_image_cache.skip = name == 'Capsule' and pv.vtk_version_info < (9, 3, 0)
 
     direction_param_name = None
 
