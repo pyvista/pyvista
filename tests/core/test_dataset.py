@@ -81,7 +81,7 @@ def test_point_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_data['new_array'] = None
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_data['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -121,7 +121,7 @@ def test_cell_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_data['new_array'] = None
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
@@ -162,11 +162,11 @@ def test_field_data(grid):
     assert isinstance(grid.field_data['foo'], np.ndarray)
     assert np.allclose(grid.field_data['foo'], foo)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_scalars('foo')
 
 
-@pytest.mark.parametrize('field', (range(5), np.ones((3, 3))[:, 0]))
+@pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(grid, field):
     grid.add_field_data(field, 'foo')
     assert isinstance(grid.field_data['foo'], np.ndarray)
@@ -290,10 +290,10 @@ def test_translate_should_fail_bad_points_or_transform(grid):
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))
     bad_trans = np.random.default_rng().random((2, 4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
@@ -304,7 +304,7 @@ def test_translate_should_fail_bad_points_or_transform(grid):
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape != (4, 4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.transform(array)
 
 
@@ -322,7 +322,7 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     max_examples=HYPOTHESIS_MAX_EXAMPLES,
 )
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-@pytest.mark.parametrize('axis', ('x', 'y', 'z'))
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     trans = vtk.vtkTransform()
     getattr(trans, f'Rotate{axis.upper()}')(angle)
@@ -475,8 +475,8 @@ def test_html_repr(grid):
     assert grid._repr_html_() is not None
 
 
-@pytest.mark.parametrize('html', (True, False))
-@pytest.mark.parametrize('display', (True, False))
+@pytest.mark.parametrize('html', [True, False])
+@pytest.mark.parametrize('display', [True, False])
 def test_print_repr(grid, display, html):
     """
     This just tests to make sure no errors are thrown on the text friendly
@@ -490,13 +490,13 @@ def test_print_repr(grid, display, html):
 
 
 def test_invalid_vector(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty(10)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty((3, 2))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty((3, 3))
 
 
@@ -577,18 +577,18 @@ def test_set_texture_coordinates(grid):
     with pytest.raises(TypeError):
         grid.active_texture_coordinates = [1, 2, 3]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty(10)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty((3, 3))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty((grid.n_points, 1))
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_vectors('not a vector')
 
     active_component_consistency_check(grid, "vectors", "point")
@@ -599,7 +599,7 @@ def test_set_active_vectors_fail(grid):
 
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_vectors('scalar_arr')
 
     assert grid.active_vectors_name == 'vector_arr'
@@ -607,7 +607,7 @@ def test_set_active_vectors_fail(grid):
 
 
 def test_set_active_tensors_fail(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('not a tensor')
 
     active_component_consistency_check(grid, "tensors", "point")
@@ -619,10 +619,10 @@ def test_set_active_tensors_fail(grid):
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
     grid.point_data['vector_arr'] = np.zeros([grid.n_points, 3])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('scalar_arr')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('vector_arr')
 
     assert grid.active_tensors_name == 'tensor_arr'
@@ -725,7 +725,7 @@ def test_set_item(grid):
         grid['tmp'] = None
 
     # field data
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid['bad_field'] = range(5)
 
 
@@ -748,7 +748,7 @@ def test_set_cell_vectors(grid):
 
 
 def test_axis_rotation_invalid():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
@@ -876,7 +876,7 @@ def test_find_closest_point():
     with pytest.raises(TypeError):
         sphere.find_closest_point([1, 2])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.find_closest_point([0, 0, 0], n=0)
 
     with pytest.raises(TypeError):
@@ -976,7 +976,6 @@ def test_find_cells_intersecting_line():
     else:
         with pytest.raises(VTKVersionError):
             indices = mesh.find_cells_intersecting_line(linea, lineb)
-            assert len(indices) == 1
 
 
 def test_find_cells_within_bounds():
@@ -1097,9 +1096,9 @@ def test_point_is_inside_cell():
     assert grid.point_is_inside_cell(0, np.array([0.5, 0.5, 0.5]))
 
     # cell ind out of range
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(100000, [0.5, 0.5, 0.5])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
 
     # cell ind wrong type
@@ -1109,7 +1108,7 @@ def test_point_is_inside_cell():
     # point not well formed
     with pytest.raises(TypeError):
         grid.point_is_inside_cell(0, 0.5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(0, [0.5, 0.5])
 
     # multi-dimensional
@@ -1212,7 +1211,7 @@ def test_rotate_x():
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_x(30, point=[1, 3])
 
 
@@ -1223,7 +1222,7 @@ def test_rotate_y():
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_y(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_y(30, point=[1, 3])
 
 
@@ -1234,7 +1233,7 @@ def test_rotate_z():
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
         out = mesh.rotate_z(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_z(30, point=[1, 3])
 
 
@@ -1243,7 +1242,7 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_vector([1, 1], 33)
     with pytest.raises(TypeError):
         out = mesh.rotate_vector(30, 33)
@@ -1725,12 +1724,12 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        for i, ids in enumerate(cell_ids):
+        assert len(list(cell_ids)) == n_levels
+        for ids in cell_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id, int) for id in ids)
             assert all(0 <= id < grid.n_cells for id in ids)
             assert len(ids) > 0
-        assert i == n_levels - 1
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -1749,12 +1748,12 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        for i, ids in enumerate(point_ids):
+        assert len(list(point_ids)) == n_levels
+        for ids in point_ids:
             assert isinstance(ids, list)
             assert all(isinstance(id, int) for id in ids)
             assert all(0 <= id < grid.n_points for id in ids)
             assert len(ids) > 0
-        assert i == n_levels - 1
 
 
 @pytest.fixture()

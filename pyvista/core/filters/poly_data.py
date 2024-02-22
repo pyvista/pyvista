@@ -1,4 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
+
 import collections.abc
 import warnings
 
@@ -410,7 +411,7 @@ class PolyDataFilters(DataSetFilters):
         merged = _get_output(append_filter)
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore
+            self.deep_copy(merged)
             return self
 
         return merged
@@ -532,7 +533,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
-                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                    merged.points, faces=merged.GetCells(), deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
                 # case. Store values to restore after updating.
@@ -2265,7 +2266,7 @@ class PolyDataFilters(DataSetFilters):
         try:
             import pyembree  # noqa: F401
             import rtree  # noqa: F401
-            import trimesh  # noqa: F401
+            import trimesh
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"

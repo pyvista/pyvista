@@ -385,7 +385,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
 def test_invalid_arg():
     with pytest.raises(TypeError):
         pv.MultiBlock(np.empty(10))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultiBlock(np.empty(10), np.empty(10))
 
 
@@ -394,7 +394,7 @@ def test_multi_io_erros(tmpdir):
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.npy'))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         multi.save(bad_ext_name)
     arr = np.random.default_rng().random((10, 10))
     np.save(bad_ext_name, arr)
@@ -402,7 +402,7 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = MultiBlock(bad_ext_name)
 
 
@@ -691,7 +691,7 @@ def test_set_active_scalars_components(multiblock_poly):
     multiblock_poly.set_active_scalars(None)
     multiblock_poly.set_active_scalars('data')
     for block in multiblock_poly:
-        assert multiblock_poly[0].point_data.active_scalars_name == 'data'
+        assert block.point_data.active_scalars_name == 'data'
 
     data = np.zeros((multiblock_poly[2].n_points, 3))
     multiblock_poly[2].point_data['data'] = data

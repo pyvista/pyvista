@@ -7,6 +7,7 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+
 # flake8: noqa: F401
 
 from vtkmodules.vtkCommonCore import vtkVersion
@@ -308,7 +309,7 @@ from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
 
 try:
     from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
-except ModuleNotFoundError:  # pragma: no cover
+except ImportError:  # pragma: no cover
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
     pass
 from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
@@ -335,6 +336,11 @@ from vtkmodules.vtkFiltersSources import (
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
+
+try:
+    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (

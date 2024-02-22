@@ -10,6 +10,7 @@ The :func:`pyvista.PolyDataFilters.subdivide` filter utilizes three different
 subdivision algorithms to subdivide a mesh's cells: `butterfly`, `loop`,
 or `linear`.
 """
+
 import pyvista as pv
 from pyvista import examples
 
