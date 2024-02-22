@@ -695,6 +695,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
+    def get_charts(self):  # numpydoc ignore=RT01
+        """Return a list of all charts in this renderer.
+
+        Examples
+        --------
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([1, 2, 3], [0, 1, 0])
+           >>> pl = pv.Plotter()
+           >>> pl.add_chart(chart)
+           >>> chart is pl.renderer.get_charts()[0]
+           True
+
+        """
+        return [*self._charts] if self.has_charts else []
+
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
