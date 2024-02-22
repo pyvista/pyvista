@@ -67,8 +67,7 @@ def Capsule(
     direction=(1.0, 0.0, 0.0),
     radius=0.5,
     cylinder_length=1.0,
-    theta_resolution=30,
-    phi_resolution=30,
+    resolution=30,
 ):
     """Create the surface of a capsule.
 
@@ -91,13 +90,8 @@ def Capsule(
     cylinder_length : float, default: 1.0
         Cylinder length of the capsule.
 
-    theta_resolution : int, default: 30
-        Set the number of points in the azimuthal direction (ranging
-        from ``start_theta`` to ``end_theta``).
-
-    phi_resolution : int, default: 30
-        Set the number of points in the polar direction (ranging from
-        ``start_phi`` to ``end_phi``).
+    resolution : int, default: 30
+        Number of points on the circular face of the cylinder.
 
     Returns
     -------
@@ -121,17 +115,17 @@ def Capsule(
                 radius=radius,
                 height=cylinder_length,
                 capping=True,
-                resolution=theta_resolution,
+                resolution=resolution,
             )
             algo.capsule_cap = True
         else:
             algo = CapsuleSource(
                 center=center,
-                # direction=direction,
+                direction=direction,
                 radius=radius,
                 cylinder_length=cylinder_length,
-                theta_resolution=theta_resolution,
-                phi_resolution=phi_resolution,
+                theta_resolution=resolution,
+                phi_resolution=resolution,
             )
     else:
         raise RuntimeError("The Capsule object is available only with VTK 9.0 or later.")

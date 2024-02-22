@@ -4114,7 +4114,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
 
 @pytest.mark.parametrize('positive_dir', [True, False])
 @pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function, positive_dir):
+def test_direction_objects(object_function, positive_dir, verify_image_cache):
     name, func = object_function
 
     # Add required args if needed
@@ -4123,6 +4123,8 @@ def test_direction_objects(object_function, positive_dir):
         kwargs['center'] = (0, 0, 0)
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
+
+    verify_image_cache.skip = name == 'Capsule' and pv.vtk_version_info < (9, 3, 0)
 
     direction_param_name = None
 
