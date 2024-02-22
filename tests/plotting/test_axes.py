@@ -1119,7 +1119,7 @@ def test_axes_actor_auto_length(apply_to, decimals, enabled):
     elif apply_to == 'tip':
         kwargs = dict(tip_length=length)
     else:
-        kwargs = dict(shaft_length=length, tip_length=1 - length)
+        kwargs = dict(shaft_length=length, tip_length=1 - length, auto_shaft_length=enabled)
     axes_actor = AxesActor(auto_length=True, **kwargs)
     shaft_length = np.array(axes_actor.shaft_length)
     tip_length = np.array(axes_actor.tip_length)
@@ -1131,10 +1131,11 @@ def test_axes_actor_auto_length(apply_to, decimals, enabled):
         axes_actor.auto_length = False
     axes_actor.shaft_length = 0.9
     expected = (0.1, 0.1, 0.1)
+    actual = axes_actor.tip_length
     if enabled:
-        assert np.allclose(axes_actor.tip_length, expected)
+        assert np.allclose(actual, expected)
     else:
-        assert not np.allclose(axes_actor.tip_length, expected)
+        assert not np.allclose(actual, expected)
         axes_actor.tip_length = expected
 
     axes_actor.tip_length = 0.9
