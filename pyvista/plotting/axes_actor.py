@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista as pv
-from pyvista.core._typing_core import BoundsLike, NumpyArray, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.core.utilities.geometric_sources import Text3DSource
@@ -380,7 +380,7 @@ class _AxesActorBase(ABC, Prop3D):
         return self._total_length
 
     @total_length.setter
-    def total_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
+    def total_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, float('inf')), 'total_length')
             length = (length, length, length)
@@ -422,7 +422,7 @@ class _AxesActorBase(ABC, Prop3D):
         return self._shaft_length
 
     @shaft_length.setter
-    def shaft_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
+    def shaft_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, 1), 'shaft_length')
             length = (length, length, length)
@@ -472,7 +472,7 @@ class _AxesActorBase(ABC, Prop3D):
         return self._tip_length
 
     @tip_length.setter
-    def tip_length(self, length: Union[float, Vector[float]]):  # numpydoc ignore=GL08
+    def tip_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
         if isinstance(length, (int, float)):
             _check_range(length, (0, 1), 'tip_length')
             length = (length, length, length)
@@ -517,7 +517,7 @@ class _AxesActorBase(ABC, Prop3D):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: Union[float, Vector[float]]):  # numpydoc ignore=GL08
+    def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
         if isinstance(position, (int, float)):
             _check_range(position, (0, float('inf')), 'label_position')
             position = [position, position, position]
@@ -1246,7 +1246,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         The width and height of the axes labels expressed as a fraction
         of the viewport. Values must be in range ``[0, 1]``.
 
-    label_position : float | Vector, default: 1
+    label_position : float | VectorLike, default: 1
         Normalized label position along the axes shafts. If a number,
         the label position for all axes is set to this value. Values
         should be non-negative.
@@ -1273,7 +1273,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         non-negative. Only has an effect on the rendered axes if
         ``shaft_type`` is ``'line'``.
 
-    shaft_length : float | Vector, default: 0.8
+    shaft_length : float | VectorLike, default: 0.8
         Normalized length of the shaft for each axis. If a number, the shaft
         length for all axes is set to this value. Values should be in range
         ``[0, 1]``.
@@ -1288,7 +1288,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
     tip_radius : float, default: 0.4
         Radius of the axes tips. Value must be non-negative.
 
-    tip_length : float | Vector, default: 0.2
+    tip_length : float | VectorLike, default: 0.2
         Normalized length of the axes tips. If a number, the shaft
         length for all axes is set to this value. Values should be in range
         ``[0, 1]``.
@@ -1296,25 +1296,25 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
     tip_resolution : int , default: 16
         Resolution of the axes tips. Value must be a positive integer.
 
-    total_length : float | Vector, default: (1, 1, 1)
+    total_length : float | VectorLike, default: (1, 1, 1)
         Total length of each axis (shaft plus tip). Values must be
         non-negative.
 
-    position : Vector, default: (0, 0, 0)
+    position : VectorLike, default: (0, 0, 0)
         Position of the axes.
 
-    orientation : Vector, default: (0, 0, 0)
+    orientation : VectorLike, default: (0, 0, 0)
         Orientation angles of the axes which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
         following order: :func:`~rotate_y` first, then :func:`~rotate_x`
         and finally :func:`~rotate_z`.
 
-    origin : Vector, default: (0, 0, 0)
+    origin : VectorLike, default: (0, 0, 0)
         Origin of the axes. This is the point about which all
         rotations take place.
 
-    scale : float | Vector, default: (1, 1, 1)
+    scale : float | VectorLike, default: (1, 1, 1)
         Scaling factor for the axes.
 
     user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
@@ -1955,7 +1955,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return self.GetTotalLength()
 
     @_total_length.setter
-    def _total_length(self, length: Vector[float]):  # numpydoc ignore=GL08
+    def _total_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetTotalLength(length)
 
     @property
@@ -1987,7 +1987,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return self.GetNormalizedShaftLength()
 
     @_shaft_length.setter
-    def _shaft_length(self, length: Vector[float]):  # numpydoc ignore=GL08
+    def _shaft_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetNormalizedShaftLength(length)
 
     @property
@@ -2018,7 +2018,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return self.GetNormalizedTipLength()
 
     @_tip_length.setter
-    def _tip_length(self, length: Vector[float]):  # numpydoc ignore=GL08
+    def _tip_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetNormalizedTipLength(length)
 
     @property
@@ -2044,7 +2044,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return self.GetNormalizedLabelPosition()
 
     @_label_position.setter
-    def _label_position(self, position: Vector[float]):  # numpydoc ignore=GL08
+    def _label_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetNormalizedLabelPosition(position)
 
     @property

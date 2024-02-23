@@ -2495,6 +2495,17 @@ def test_chart_matplotlib_plot(verify_image_cache):
     pl.show()
 
 
+def test_get_charts():
+    """Test that the get_charts method is retuning a list of charts"""
+    chart = pv.Chart2D()
+    pl = pv.Plotter()
+    pl.add_chart(chart)
+
+    charts = pl.renderer.get_charts()
+    assert len(charts) == 1
+    assert chart is charts[0]
+
+
 def test_add_remove_background(sphere):
     plotter = pv.Plotter(shape=(1, 2))
     plotter.add_mesh(sphere, color='w')

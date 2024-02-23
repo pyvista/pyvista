@@ -1,10 +1,10 @@
 """Prop3D module."""
 
-from typing import Tuple, Union
+from typing import Tuple
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.utilities.arrays import (
     _coerce_transformlike_arg,
     array_from_vtkmatrix,
@@ -56,8 +56,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Union[float, Vector[float]]):  # numpydoc ignore=GL08
-        self.SetScale(value)
+    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        return self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -81,7 +81,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -248,7 +248,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Vector[float]):  # numpydoc ignore=GL08
+    def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -263,7 +263,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: Vector[float]):  # numpydoc ignore=GL08
+    def origin(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetOrigin(value)
 
     @property
