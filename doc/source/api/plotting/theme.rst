@@ -28,7 +28,6 @@ PyVista.
    themes._Font
    themes._LightingConfig
    themes._SilhouetteConfig
-   themes._SliderConfig
    themes._SliderStyleConfig
    themes._TrameConfig
    themes.load_theme

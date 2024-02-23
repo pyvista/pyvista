@@ -20,7 +20,7 @@ Theme.defaults()
 # Make a plot for comparison later.
 
 pv.set_plot_theme("vtk")
-pv.plot(pv.sphere())
+pv.plot(pv.Sphere())
 
 
 ###############################################################################
