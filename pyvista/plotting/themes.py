@@ -3495,7 +3495,7 @@ class Theme(_ThemeConfig):
 
 def _deprecated_subtheme_msg(class_name, obj_name):
     return f"""{class_name} is deprecated.
-    Use Theme.{obj_name} instead of {class_name}()
+    Use Theme.{obj_name}() instead of {class_name}()
     """
 
 
@@ -3638,7 +3638,13 @@ class DocumentProTheme(DocumentTheme):
 
     def __init__(self):
         """Initialize the theme."""
-        super().__init__()
+        # This Theme subclasses from DocumentTheme, only give one warning
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", "DocumentTheme is deprecated.", PyVistaDeprecationWarning
+            )
+            super().__init__()
+
         warnings.warn(
             _deprecated_subtheme_msg("DocumentProTheme", "document_pro_theme"),
             PyVistaDeprecationWarning,
