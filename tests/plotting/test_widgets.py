@@ -170,7 +170,7 @@ def test_widget_slider(uniform):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=interaction_event)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
-    with pytest.raises(AttributeError):
+    with pytest.raises(KeyError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
     with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
