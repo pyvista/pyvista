@@ -618,6 +618,13 @@ def test_set_plot_theme_from_env():
 
 
 def test_deprecation_theme_classes():
+
+    if pv._version.version_info >= (0, 48):
+        raise RuntimeError("Convert Theme subclass warnings to error")
+
+    if pv._version.version_info >= (0, 49):
+        raise RuntimeError("Remove Theme subclasses")
+
     with pytest.warns(PyVistaDeprecationWarning, match="DarkTheme is deprecated."):
         depr_theme = pv.plotting.themes.DarkTheme()
     assert Theme.dark_theme() == depr_theme

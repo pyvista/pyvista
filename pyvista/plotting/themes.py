@@ -3493,6 +3493,7 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
+# deprecated v0.44.0, make error in v0.48.0, remove in v0.49.0
 def _deprecated_subtheme_msg(class_name, obj_name):
     return f"""{class_name} is deprecated.
     Use Theme.{obj_name}() instead of {class_name}()
