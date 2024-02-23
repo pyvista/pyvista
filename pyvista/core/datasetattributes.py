@@ -533,7 +533,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : Array
+        data : ArrayLike[float]
             Array of data.
 
         name : str
@@ -595,7 +595,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : Array
+        scalars : ArrayLike[float]
             Array of data.
 
         name : str, default: 'scalars'
@@ -645,7 +645,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        vectors : Matrix
+        vectors : MatrixLike
             Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
@@ -1248,7 +1248,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        normals : Matrix
+        normals : MatrixLike
             Normals of this dataset attribute.
 
         """
