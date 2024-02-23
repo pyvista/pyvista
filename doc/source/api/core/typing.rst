@@ -2,7 +2,7 @@ Typing
 ======
 .. currentmodule:: pyvista
 
-Type alias and type variable definitions used by PyVista.
+Type aliases and type variable used by PyVista.
 
 
 Numeric Array-Like Types
@@ -10,11 +10,11 @@ Numeric Array-Like Types
 
 .. autotypevar:: NumberType
 
-.. autodata:: Array
+.. autodata:: ArrayLike
 
-.. autodata:: Vector
+.. autodata:: MatrixLike
 
-.. autodata:: Matrix
+.. autodata:: VectorLike
 
 
 VTK Related Types
@@ -22,8 +22,8 @@ VTK Related Types
 
 .. autodata:: BoundsLike
 
-.. autodata:: TransformLike
-
 .. autodata:: CellsLike
 
 .. autodata:: CellArrayLike
+
+.. autodata:: TransformLike

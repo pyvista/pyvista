@@ -176,13 +176,13 @@ coverage_ignore_modules = [
 autodoc_type_aliases = {
     "Chart": "pyvista.Chart",
     "ColorLike": "pyvista.ColorLike",
-    "Array": "pyvista.core._typing_core.Array",
-    "Vector": "pyvista.core._typing_core.Vector",
-    "Matrix": "pyvista.core._typing_core.Matrix",
-    "BoundsLike": "pyvista.core._typing_core.BoundsLike",
-    "CellsLike": "pyvista.core._typing_core.CellsLike",
-    "CellArrayLike": "pyvista.core._typing_core.CellArrayLike",
-    "TransformLike": "pyvista.core._typing_core.TransformLike",
+    "ArrayLike": "pyvista.ArrayLike",
+    "VectorLike": "pyvista.VectorLike",
+    "MatrixLike": "pyvista.MatrixLike",
+    "BoundsLike": "pyvista.BoundsLike",
+    "CellsLike": "pyvista.CellsLike",
+    "CellArrayLike": "pyvista.CellArrayLike",
+    "TransformLike": "pyvista.TransformLike",
 }
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
