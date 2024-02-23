@@ -1108,41 +1108,68 @@ def test_axes_actor_symmetric_bounds(axes_actor):
 #     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
 
 
-@pytest.mark.parametrize('apply_to', ['shaft', 'tip', 'both'])
+@pytest.mark.parametrize(
+    'test_prop_other_prop', [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')]
+)
 @pytest.mark.parametrize('decimals', list(range(8)))
-@pytest.mark.parametrize('enabled', [True, False])
-def test_axes_actor_auto_length(apply_to, decimals, enabled):
-    length = np.random.random()
-    length = np.round(length, decimals=decimals)
-    if apply_to == 'shaft':
-        kwargs = dict(shaft_length=length)
-    elif apply_to == 'tip':
-        kwargs = dict(tip_length=length)
-    else:
-        kwargs = dict(shaft_length=length, tip_length=1 - length, auto_shaft_length=enabled)
-    axes_actor = AxesActor(auto_length=True, **kwargs)
-    shaft_length = np.array(axes_actor.shaft_length)
-    tip_length = np.array(axes_actor.tip_length)
-    total = shaft_length + tip_length
-    assert np.array_equal(total, (1, 1, 1))
+@pytest.mark.parametrize('auto_length', [True, False])
+def test_axes_actor_auto_length(test_prop_other_prop, decimals, auto_length):
+    test_prop, other_prop = test_prop_other_prop
 
-    # test dynamic update
-    if not enabled:
-        axes_actor.auto_length = False
-    axes_actor.shaft_length = 0.9
-    expected = (0.1, 0.1, 0.1)
-    actual = axes_actor.tip_length
-    if enabled:
-        assert np.allclose(actual, expected)
-    else:
-        assert not np.allclose(actual, expected)
-        axes_actor.tip_length = expected
+    # Get default value
+    axes_actor = AxesActor()
+    other_prop_default = np.array(getattr(axes_actor, other_prop))
 
-    axes_actor.tip_length = 0.9
-    if enabled:
-        assert np.array_equal(axes_actor.shaft_length, expected)
+    # Initialize actor with a random length for test prop
+    random_length = np.round(np.random.random(), decimals=decimals)
+    var_kwargs = {}
+    var_kwargs[test_prop] = random_length
+    axes_actor = AxesActor(auto_length=auto_length, **var_kwargs)
+
+    actual_test_prop = np.array(getattr(axes_actor, test_prop))
+    actual_other_prop = np.array(getattr(axes_actor, other_prop))
+
+    expected = np.array([random_length] * 3)
+    assert np.array_equal(actual_test_prop, expected)
+    if auto_length:
+        # Test lengths sum to 1
+        actual = actual_test_prop + actual_other_prop
+        expected = (1, 1, 1)
+        assert np.array_equal(actual, expected)
     else:
-        assert not np.array_equal(axes_actor.shaft_length, expected)
+        # Test other length is unchanged
+        actual = actual_other_prop
+        expected = other_prop_default
+        assert np.array_equal(actual, expected)
+
+    # Test setting both does not raise error if they sum to one
+    _ = AxesActor(shaft_length=random_length, tip_length=1 - random_length)
+    assert axes_actor
+    _ = AxesActor(shaft_length=1 - random_length, tip_length=random_length)
+    assert axes_actor
+
+    # test enabling auto_length after object has been created
+    axes_actor.auto_length = True
+    setattr(axes_actor, test_prop, 0.9)
+    expected = (0.9, 0.9, 0.9)
+    actual = getattr(axes_actor, test_prop)
+    assert np.array_equal(actual, expected)
+
+    value_unchanged = (0.1, 0.1, 0.1)
+    expected = value_unchanged
+    actual = getattr(axes_actor, other_prop)
+    assert np.array_equal(actual, expected)
+
+    # test disabling auto_length after object has been created
+    axes_actor.auto_length = False
+    setattr(axes_actor, test_prop, 0.7)
+    expected = (0.7, 0.7, 0.7)
+    actual = getattr(axes_actor, test_prop)
+    assert np.array_equal(actual, expected)
+
+    expected = value_unchanged
+    actual = getattr(axes_actor, other_prop)
+    assert np.array_equal(actual, expected)
 
 
 @pytest.mark.parametrize('enabled', [True, False])
