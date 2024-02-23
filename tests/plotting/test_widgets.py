@@ -153,7 +153,7 @@ def test_widget_text_slider(uniform):
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    for style in pv.global_theme.slider_styles:
+    for style in pv.global_theme.slider_style.defaults():
         p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 
