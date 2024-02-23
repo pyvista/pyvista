@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array, Matrix, NumpyArray
+from ._typing_core import ArrayLike, MatrixLike, NumpyArray
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
@@ -218,7 +218,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: Array[Any]):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key: str, value: ArrayLike[Any]):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -517,7 +517,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             narray = narray.squeeze()
         return narray
 
-    def set_array(self, data: Array[float], name: str, deep_copy=False) -> None:
+    def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -580,7 +580,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: Array[float], name='scalars', deep_copy=False):
+    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -632,7 +632,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: Matrix[float], name: str, deep_copy=False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy=False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
@@ -704,7 +704,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: Array[float], name: str, deep_copy: bool
+        self, data: ArrayLike[float], name: str, deep_copy: bool
     ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
@@ -1241,7 +1241,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Matrix[float]):  # numpydoc ignore=GL08
+    def active_normals(self, normals: MatrixLike[float]):  # numpydoc ignore=GL08
         """Set the normals.
 
         Parameters
