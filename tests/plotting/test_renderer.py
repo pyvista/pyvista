@@ -31,6 +31,16 @@ def test_show_bounds_axes_ranges():
     ]
     assert test_ranges == axes_ranges
 
+    x_axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(0)
+    y_axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(1)
+    z_axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(2)
+    assert float(x_axis_labels.GetValue(0)) == axes_ranges[0]
+    assert float(x_axis_labels.GetValue(x_axis_labels.GetNumberOfValues() - 1)) == axes_ranges[1]
+    assert float(y_axis_labels.GetValue(0)) == axes_ranges[2]
+    assert float(y_axis_labels.GetValue(y_axis_labels.GetNumberOfValues() - 1)) == axes_ranges[3]
+    assert float(z_axis_labels.GetValue(0)) == axes_ranges[4]
+    assert float(z_axis_labels.GetValue(z_axis_labels.GetNumberOfValues() - 1)) == axes_ranges[5]
+
 
 def test_show_bounds_with_scaling(sphere):
     plotter = pv.Plotter()
