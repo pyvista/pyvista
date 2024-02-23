@@ -38,7 +38,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import warnings
 
 import pyvista
-from pyvista.core._typing_core import Number, Vector
+from pyvista.core._typing_core import Number, VectorLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
 
@@ -1653,7 +1653,7 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = 1.0
 
     @property
-    def position(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera position.
 
         Examples
@@ -1667,11 +1667,11 @@ class _CameraConfig(_ThemeConfig):
         return self._position
 
     @position.setter
-    def position(self, position: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         self._position = position
 
     @property
-    def viewup(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera viewup.
 
         Examples
@@ -1685,7 +1685,7 @@ class _CameraConfig(_ThemeConfig):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
+    def viewup(self, viewup: VectorLike[float]):  # numpydoc ignore=GL08
         self._viewup = viewup
 
     @property
