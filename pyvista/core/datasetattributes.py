@@ -1,7 +1,5 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
@@ -133,7 +131,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def __init__(
         self,
         vtkobject: _vtk.vtkFieldData,
-        dataset: Union[_vtk.vtkDataSet, DataSet],
+        dataset: Union[_vtk.vtkDataSet, 'DataSet'],
         association: FieldAssociation,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
@@ -1002,7 +1000,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], DataSetAttributes]):
+    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], 'DataSetAttributes']):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
