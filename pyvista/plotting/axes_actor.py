@@ -8,14 +8,17 @@ import warnings
 
 import numpy as np
 
-import pyvista
+import pyvista as pv
 from pyvista.core._typing_core import BoundsLike, NumpyArray, Vector
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.geometric_sources import Text3DSource
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.plotting import _vtk
 from pyvista.plotting._property import Property, _check_range
+from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color, ColorLike
+from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 from pyvista.plotting.prop3d import Prop3D
 
 AxesPropTuple = namedtuple(
@@ -34,8 +37,8 @@ def _as_nested(obj: Sequence[Any]) -> Tuple3D:
     )
 
 
-class _AxesProp(ABC, Prop3D):
-    """Abstract class for axes-like scene props.
+class _AxesActorBase(ABC, Prop3D):
+    """Abstract base class for axes-like scene props.
 
     This class defines a common interface for manipulating the
     geometry and properties of six Prop3D Actors representing
@@ -101,9 +104,6 @@ class _AxesProp(ABC, Prop3D):
         else:
             raise TypeError('`properties` must be a property object or a dictionary.')
         [actor.SetProperty(_new_property()) for actor in self._actors]
-
-        # Disable text shadows
-        [prop.SetShadow(False) for prop in self._label_text_properties]
 
         self.visibility = _set_default(visibility, True)
 
@@ -213,7 +213,7 @@ class _AxesProp(ABC, Prop3D):
 
     @property
     @abstractmethod
-    def _actors(self) -> AxesPropTuple:
+    def _actors(self) -> Tuple[Actor, ...]:
         """Return axes shaft and tip actors."""
         ...
 
@@ -225,33 +225,51 @@ class _AxesProp(ABC, Prop3D):
 
     @property
     @abstractmethod
-    def _label_text_properties(self) -> Tuple3D:
-        """Return axes label text property objects."""
+    def _label_color_getters(self) -> Tuple3D:
+        """Return label color getter functions."""
         ...
 
     @property
     @abstractmethod
-    def _label_setters(self) -> Tuple3D:
+    def _label_color_setters(self) -> Tuple3D:
+        """Return label color setter functions."""
+        ...
+
+    @property
+    @abstractmethod
+    def _label_text_setters(self) -> Tuple3D:
         """Return label text setter functions."""
         ...
 
     @property
     @abstractmethod
-    def _label_getters(self) -> Tuple3D:
+    def _label_text_getters(self) -> Tuple3D:
         """Return label text getter functions."""
         ...
 
     @property
-    def _actor_properties(self) -> AxesPropTuple:
-        return AxesPropTuple(*[actor.GetProperty() for actor in self._actors])
+    @abstractmethod
+    def _shaft_color_getters(self) -> Tuple3D:
+        """Return axes shaft color getter functions."""
+        ...
 
     @property
-    def _actor_properties_nested(self) -> Tuple3D:
-        return _as_nested(self._actor_properties)
+    @abstractmethod
+    def _shaft_color_setters(self) -> Tuple3D:
+        """Return axes shaft color setter functions."""
+        ...
 
     @property
-    def _actors_nested(self) -> Tuple3D:
-        return _as_nested(self._actors)
+    @abstractmethod
+    def _tip_color_getters(self) -> Tuple3D:
+        """Return axes tip color getter functions."""
+        ...
+
+    @property
+    @abstractmethod
+    def _tip_color_setters(self) -> Tuple3D:
+        """Return axes ip color setter functions."""
+        ...
 
     @property
     def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
@@ -464,7 +482,7 @@ class _AxesProp(ABC, Prop3D):
         self._tip_length = float(length[0]), float(length[1]), float(length[2])
 
         if self.auto_length:
-            # Calc 1-length and round to nearest 1e-8
+            # Calc 1 minus length and round to nearest 1e-8
             def calc(x):
                 return round(1.0 - x, 8)
 
@@ -697,7 +715,7 @@ class _AxesProp(ABC, Prop3D):
     @shaft_type.setter
     def shaft_type(self, shaft_type: str):  # numpydoc ignore=GL08
         if shaft_type is None:
-            shaft_type = pyvista.global_theme.axes.shaft_type
+            shaft_type = pv.global_theme.axes.shaft_type
         self._shaft_type = shaft_type
 
     # @property
@@ -725,7 +743,7 @@ class _AxesProp(ABC, Prop3D):
     @tip_type.setter
     def tip_type(self, tip_type: str):  # numpydoc ignore=GL08
         if tip_type is None:
-            tip_type = pyvista.global_theme.axes.tip_type
+            tip_type = pv.global_theme.axes.tip_type
         self._tip_type = tip_type
 
     # @property
@@ -780,11 +798,11 @@ class _AxesProp(ABC, Prop3D):
         'This axis'
 
         """
-        return self._label_getters.x()
+        return self._label_text_getters.x()
 
     @x_label.setter
     def x_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_setters.x(label)
+        self._label_text_setters.x(label)
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
@@ -799,11 +817,11 @@ class _AxesProp(ABC, Prop3D):
         'This axis'
 
         """
-        return self._label_getters.y()
+        return self._label_text_getters.y()
 
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_setters.y(label)
+        self._label_text_setters.y(label)
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
@@ -818,11 +836,11 @@ class _AxesProp(ABC, Prop3D):
         'This axis'
 
         """
-        return self._label_getters.z()
+        return self._label_text_getters.z()
 
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_setters.z(label)
+        self._label_text_setters.z(label)
 
     @property
     def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
@@ -1004,69 +1022,18 @@ class _AxesProp(ABC, Prop3D):
 
         return props
 
-    def plot(self, **kwargs):
-        """Plot just the axes actor.
-
-        This may be useful when interrogating or debugging the axes.
-
-        Parameters
-        ----------
-        **kwargs : dict, optional
-            Optional keyword arguments passed to :func:`pyvista.Plotter.show`.
-
-        Examples
-        --------
-        Create an axes actor without the :class:`pyvista.Plotter`,
-        and replace its shaft and tip properties with default
-        :class:`pyvista.Property` objects.
-
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor()
-        >>> axes_actor.x_shaft_prop = pv.Property()
-        >>> axes_actor.y_shaft_prop = pv.Property()
-        >>> axes_actor.z_shaft_prop = pv.Property()
-        >>> axes_actor.x_tip_prop = pv.Property()
-        >>> axes_actor.y_tip_prop = pv.Property()
-        >>> axes_actor.z_tip_prop = pv.Property()
-        >>> axes_actor.plot()
-
-        Restore the default colors.
-
-        >>> axes_actor.x_color = pv.global_theme.axes.x_color
-        >>> axes_actor.y_color = pv.global_theme.axes.y_color
-        >>> axes_actor.z_color = pv.global_theme.axes.z_color
-        >>> axes_actor.plot()
-        """
-        pl = pyvista.Plotter()
-        pl.add_actor(self)
-        pl.show(**kwargs)
-
     @property
     def label_color(self) -> Tuple[Color, Color, Color]:  # numpydoc ignore=RT01
         """Color of the label text for all axes."""
-        props = self._label_text_properties
-        colors = [prop.GetColor() for prop in props]
-        opacities = [prop.GetOpacity() for prop in props]
-        return (
-            Color(colors[0], opacity=opacities[0]),
-            Color(colors[1], opacity=opacities[1]),
-            Color(colors[2], opacity=opacities[2]),
-        )
+        return tuple([color() for color in self._label_color_getters])
 
     @label_color.setter
     def label_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
         if color is None:
-            color = Color(color, default_color=pyvista.global_theme.font.color)
+            color = Color(color, default_color=pv.global_theme.font.color)
         colors = _validate_color_sequence(color, num_colors=3)
-        props = self._label_text_properties
-
-        props[0].SetColor(colors[0].float_rgb)
-        props[1].SetColor(colors[1].float_rgb)
-        props[2].SetColor(colors[2].float_rgb)
-
-        props[0].SetOpacity(colors[0].float_rgba[3])
-        props[1].SetOpacity(colors[1].float_rgba[3])
-        props[2].SetOpacity(colors[2].float_rgba[3])
+        setters = self._label_color_setters
+        [setter(color) for color, setter in zip(colors, setters)]
 
     @property
     def x_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -1104,19 +1071,16 @@ class _AxesProp(ABC, Prop3D):
     def _set_axis_color(self, axis, color):
         if color is None:
             if axis == 0:
-                color = pyvista.global_theme.axes.x_color
+                color = pv.global_theme.axes.x_color
             elif axis == 1:
-                color = pyvista.global_theme.axes.y_color
+                color = pv.global_theme.axes.y_color
             else:
-                color = pyvista.global_theme.axes.z_color
+                color = pv.global_theme.axes.z_color
             colors = [Color(color)] * 2
         else:
             colors = _validate_color_sequence(color, num_colors=2)
-
-        self._actor_properties_nested[axis].shaft.color = colors[0].float_rgb
-        self._actor_properties_nested[axis].shaft.opacity = colors[0].float_rgba[3]
-        self._actor_properties_nested[axis].tip.color = colors[1].float_rgb
-        self._actor_properties_nested[axis].tip.opacity = colors[1].float_rgba[3]
+        self._shaft_color_setters[axis](colors[0])
+        self._tip_color_setters[axis](colors[1])
 
     @property
     @abstractmethod
@@ -1146,7 +1110,7 @@ def _validate_color_sequence(color: Union[ColorLike, Sequence[ColorLike]], num_c
     return color
 
 
-class AxesActor(_AxesProp, _vtk.vtkAxesActor):
+class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
     """Create a hybrid 2D/3D actor to represent 3D axes in a scene.
 
     The axes colors, labels, and shaft/tip geometry can all be customized.
@@ -1613,14 +1577,17 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
             user_matrix=user_matrix,
         )
 
+        # Disable text shadows
+        # [prop.SetShadow(False) for prop in self._label_color_getters]
+
         # Enable workaround to make axes orientable in space.
         # Use undocumented keyword `_make_orientable=False` to disable it
         # and restore the default vtkAxesActor orientation behavior.
         self._cached_matrix = None
 
         def _init_make_orientable(kwargs):
-            # Execute this line inside a function to prevent some dev
-            # environments from hinting this param
+            # The following line is executing inside a local function to prevent
+            # some dev environments from hinting this param
             self.__make_orientable = kwargs.pop('_make_orientable', True)
 
         _init_make_orientable(kwargs)
@@ -1692,6 +1659,18 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         return AxesPropTuple(*(collection.GetItemAsObject(i) for i in range(6)))
 
     @property
+    def _actor_properties(self) -> AxesPropTuple:
+        return AxesPropTuple(*[actor.GetProperty() for actor in self._actors])
+
+    @property
+    def _actor_properties_nested(self) -> Tuple3D:
+        return _as_nested(self._actor_properties)
+
+    @property
+    def _actors_nested(self) -> Tuple3D:
+        return _as_nested(self._actors)
+
+    @property
     def _label_actors(self) -> Tuple3D:
         return Tuple3D(
             x=self.GetXAxisCaptionActor2D(),
@@ -1700,7 +1679,7 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         )
 
     @property
-    def _label_text_properties(self) -> Tuple3D:
+    def _label_props(self) -> Tuple3D:
         return Tuple3D(
             x=self._label_actors.x.GetCaptionTextProperty(),
             y=self._label_actors.y.GetCaptionTextProperty(),
@@ -1708,12 +1687,75 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         )
 
     @property
-    def _label_setters(self) -> Tuple3D:
+    def _label_color_getters(self) -> Tuple3D:
+        props = self._label_props
+        colors = [prop.GetColor() for prop in props]
+        opacities = [prop.GetOpacity() for prop in props]
+        return Tuple3D(
+            x=lambda: Color(colors[0], opacity=opacities[0]),
+            y=lambda: Color(colors[1], opacity=opacities[1]),
+            z=lambda: Color(colors[2], opacity=opacities[2]),
+        )
+
+    @property
+    def _label_color_setters(self) -> Tuple3D:
+        props = self._label_props
+
+        return Tuple3D(
+            x=lambda c: props.x.SetColor(c.float_rgb) and props.x.SetOpacity(c.float_rgba[3]),
+            y=lambda c: props.y.SetColor(c.float_rgb) and props.y.SetOpacity(c.float_rgba[3]),
+            z=lambda c: props.z.SetColor(c.float_rgb) and props.z.SetOpacity(c.float_rgba[3]),
+        )
+
+    @property
+    def _label_text_setters(self) -> Tuple3D:
         return Tuple3D(x=self.SetXAxisLabelText, y=self.SetYAxisLabelText, z=self.SetZAxisLabelText)
 
     @property
-    def _label_getters(self) -> Tuple3D:
+    def _label_text_getters(self) -> Tuple3D:
         return Tuple3D(x=self.GetXAxisLabelText, y=self.GetYAxisLabelText, z=self.GetZAxisLabelText)
+
+    @property
+    def _shaft_color_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda: self.mapper.block_attr[1].color,
+            y=lambda: self.mapper.block_attr[2].color,
+            z=lambda: self.mapper.block_attr[3].color,
+        )
+
+    @property
+    def _shaft_color_setters(self) -> Tuple3D:
+        props = self._actor_properties
+
+        return Tuple3D(
+            x=lambda c: props.x_shaft.SetColor(c.float_rgb)
+            and props.x_shaft.SetOpacity(c.float_rgba[3]),
+            y=lambda c: props.y_shaft.SetColor(c.float_rgb)
+            and props.y_shaft.SetOpacity(c.float_rgba[3]),
+            z=lambda c: props.z_shaft.SetColor(c.float_rgb)
+            and props.z_shaft.SetOpacity(c.float_rgba[3]),
+        )
+
+    @property
+    def _tip_color_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda: self.mapper.block_attr[4].color,
+            y=lambda: self.mapper.block_attr[5].color,
+            z=lambda: self.mapper.block_attr[6].color,
+        )
+
+    @property
+    def _tip_color_setters(self) -> Tuple3D:
+        props = self._actor_properties
+
+        return Tuple3D(
+            x=lambda c: props.x_tip.SetColor(c.float_rgb)
+            and props.x_tip.SetOpacity(c.float_rgba[3]),
+            y=lambda c: props.y_tip.SetColor(c.float_rgb)
+            and props.y_tip.SetOpacity(c.float_rgba[3]),
+            z=lambda c: props.z_tip.SetColor(c.float_rgb)
+            and props.z_tip.SetOpacity(c.float_rgba[3]),
+        )
 
     @property
     def true_to_scale(self) -> bool:  # numpydoc ignore=RT01
@@ -2830,8 +2872,45 @@ class AxesActor(_AxesProp, _vtk.vtkAxesActor):
         self.__make_orientable = value
         self._update_actor_transformations(reset=not value)
 
+    def plot(self, **kwargs):
+        """Plot just the axes actor.
 
-class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
+        This may be useful when interrogating or debugging the axes.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Optional keyword arguments passed to :func:`pyvista.Plotter.show`.
+
+        Examples
+        --------
+        Create an axes actor without the :class:`pyvista.Plotter`,
+        and replace its shaft and tip properties with default
+        :class:`pyvista.Property` objects.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.x_shaft_prop = pv.Property()
+        >>> axes_actor.y_shaft_prop = pv.Property()
+        >>> axes_actor.z_shaft_prop = pv.Property()
+        >>> axes_actor.x_tip_prop = pv.Property()
+        >>> axes_actor.y_tip_prop = pv.Property()
+        >>> axes_actor.z_tip_prop = pv.Property()
+        >>> axes_actor.plot()
+
+        Restore the default colors.
+
+        >>> axes_actor.x_color = pv.global_theme.axes.x_color
+        >>> axes_actor.y_color = pv.global_theme.axes.y_color
+        >>> axes_actor.z_color = pv.global_theme.axes.z_color
+        >>> axes_actor.plot()
+        """
+        pl = pv.Plotter()
+        pl.add_actor(self)
+        pl.show(**kwargs)
+
+
+class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
     """Assembly of axes actors."""
 
     def __init__(
@@ -2865,19 +2944,42 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         auto_length=True,
         properties=None,
     ):
-        # Init shaft and tip actors
-        # Use pyvista namespace to avoid circular import
-        self.__actors = AxesPropTuple(*[pyvista.Actor() for _ in range(6)])
-
-        # Init text label actors
-        self.__label_actors = Tuple3D(
-            x=_vtk.vtkBillboardTextActor3D(),
-            y=_vtk.vtkBillboardTextActor3D(),
-            z=_vtk.vtkBillboardTextActor3D(),
+        # Init text label sources
+        self._label_sources = Tuple3D(
+            x=Text3DSource(),
+            y=Text3DSource(),
+            z=Text3DSource(),
+        )
+        # Init text label sources
+        self._label_polydata = Tuple3D(
+            x=self._label_sources.x.output,
+            y=self._label_sources.x.output,
+            z=self._label_sources.x.output,
         )
 
-        # Add actors to assembly
-        [self.AddPart(actor) for actor in (*self.__actors, *self.__label_actors)]
+        self._datasets = pv.MultiBlock()
+        self._datasets['x_shaft'] = pv.PolyData()
+        self._datasets['y_shaft'] = pv.PolyData()
+        self._datasets['z_shaft'] = pv.PolyData()
+        self._datasets['x_tip'] = pv.PolyData()
+        self._datasets['y_tip'] = pv.PolyData()
+        self._datasets['z_tip'] = pv.PolyData()
+        self._datasets['x_label'] = self._label_sources.x.output
+        self._datasets['y_label'] = self._label_sources.y.output
+        self._datasets['z_label'] = self._label_sources.z.output
+
+        self._shaft_polydata = Tuple3D(
+            x=self._datasets['x_shaft'],
+            y=self._datasets['y_shaft'],
+            z=self._datasets['z_shaft'],
+        )
+        self._tip_polydata = Tuple3D(
+            x=self._datasets['x_tip'],
+            y=self._datasets['y_tip'],
+            z=self._datasets['z_tip'],
+        )
+
+        self.mapper = CompositePolyDataMapper(self._datasets)
 
         self._shaft_resolution = shaft_resolution
         self._tip_resolution = tip_resolution
@@ -2915,48 +3017,87 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
         self._update_geometry()
 
     @property
-    def _actors(self) -> AxesPropTuple:
-        return self.__actors
+    def _actors(self) -> Tuple[Actor]:
+        return (self,)
+
+    # @property
+    # def _label_actors(self) -> Tuple3D:
+    #     return self._label_actors
 
     @property
-    def _label_actors(self) -> Tuple3D:
-        return self.__label_actors
-
-    @property
-    def _label_text_properties(self) -> Tuple3D:
+    def _label_color_getters(self) -> Tuple3D:
         return Tuple3D(
-            x=self._label_actors.x.GetTextProperty(),
-            y=self._label_actors.y.GetTextProperty(),
-            z=self._label_actors.z.GetTextProperty(),
+            x=lambda: self.mapper.block_attr[7].color,
+            y=lambda: self.mapper.block_attr[8].color,
+            z=lambda: self.mapper.block_attr[9].color,
         )
 
     @property
-    def _label_setters(self) -> Tuple3D:
+    def _label_color_setters(self) -> Tuple3D:
         return Tuple3D(
-            x=lambda val: self._label_actors.x.SetInput(val),
-            y=lambda val: self._label_actors.y.SetInput(val),
-            z=lambda val: self._label_actors.z.SetInput(val),
+            x=lambda c: setattr(self.mapper.block_attr[7], 'color', c),
+            y=lambda c: setattr(self.mapper.block_attr[8], 'color', c),
+            z=lambda c: setattr(self.mapper.block_attr[9], 'color', c),
         )
 
     @property
-    def _label_getters(self) -> Tuple3D:
+    def _label_text_setters(self) -> Tuple3D:
         return Tuple3D(
-            x=self._label_actors.x.GetInput,
-            y=self._label_actors.y.GetInput,
-            z=self._label_actors.z.GetInput,
+            x=lambda val: setattr(self._label_sources.x, 'string', val),
+            y=lambda val: setattr(self._label_sources.y, 'string', val),
+            z=lambda val: setattr(self._label_sources.z, 'string', val),
+        )
+
+    @property
+    def _label_text_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda: self._label_sources.x.string,
+            y=lambda: self._label_sources.y.string,
+            z=lambda: self._label_sources.z.string,
+        )
+
+    @property
+    def _shaft_color_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda: self.mapper.block_attr[1].color,
+            y=lambda: self.mapper.block_attr[2].color,
+            z=lambda: self.mapper.block_attr[3].color,
+        )
+
+    @property
+    def _shaft_color_setters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda c: setattr(self.mapper.block_attr[1], 'color', c),
+            y=lambda c: setattr(self.mapper.block_attr[2], 'color', c),
+            z=lambda c: setattr(self.mapper.block_attr[3], 'color', c),
+        )
+
+    @property
+    def _tip_color_getters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda: self.mapper.block_attr[4].color,
+            y=lambda: self.mapper.block_attr[5].color,
+            z=lambda: self.mapper.block_attr[6].color,
+        )
+
+    @property
+    def _tip_color_setters(self) -> Tuple3D:
+        return Tuple3D(
+            x=lambda c: setattr(self.mapper.block_attr[4], 'color', c),
+            y=lambda c: setattr(self.mapper.block_attr[5], 'color', c),
+            z=lambda c: setattr(self.mapper.block_attr[6], 'color', c),
         )
 
     @property
     def labels_off(self) -> bool:  # numpydoc ignore=RT01
         """Enable or disable the text labels for the axes."""
-        # Get visibility for x actor and assume others have the same value
-        return self._label_actors.x.GetVisibility()
+        # TODO: implement
+        return False
 
     @labels_off.setter
     def labels_off(self, value: bool):  # numpydoc ignore=GL08
-        self._label_actors.x.SetVisibility(not value)
-        self._label_actors.y.SetVisibility(not value)
-        self._label_actors.z.SetVisibility(not value)
+        # TODO: implement
+        ...
 
     # @property
     # def _total_length(self):
@@ -2984,27 +3125,35 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
     @_shaft_type.setter
     def _shaft_type(self, shaft_type: str):
-        self.__shaft_type = self._init_mappers(part=0, geometry=shaft_type)
+        self.__shaft_type = self._set_geometry(part=0, geometry=shaft_type)
 
-    @property
-    def _datasets(self) -> Tuple3D:
-        return _as_nested([actor.mapper.dataset for actor in self._actors])
+    # @property
+    # def _datasets(self) -> Tuple3D:
+    #     return _as_nested([actor.mapper.dataset for actor in self._actors])
 
     @property
     def _tip_type(self) -> str:
         return self.__tip_type
 
     @_tip_type.setter
-    def _tip_type(self, tip_type: Union[str, pyvista.DataSet]):
-        self.__tip_type = self._init_mappers(part=1, geometry=tip_type)
+    def _tip_type(self, tip_type: Union[str, pv.DataSet]):
+        self.__tip_type = self._set_geometry(part=1, geometry=tip_type)
 
-    def _init_mappers(self, part: int, geometry: Union[str, pyvista.DataSet]):
+    def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
         resolution = self._shaft_resolution if part == 0 else self._tip_resolution
         geometry_name, datasets = AxesAssembly._make_axes_parts(geometry, resolution)
-        actors = _as_nested(self._actors)
-        actors[0][part].mapper = pyvista.DataSetMapper(datasets.x)
-        actors[1][part].mapper = pyvista.DataSetMapper(datasets.y)
-        actors[2][part].mapper = pyvista.DataSetMapper(datasets.z)
+        if part == 0:
+            polydata = self._shaft_polydata
+            polydata.x.copy_from(datasets.x)
+            polydata.y.copy_from(datasets.y)
+            polydata.z.copy_from(datasets.z)
+        elif part == 1:
+            polydata = self._tip_polydata
+            polydata.x.copy_from(datasets.x)
+            polydata.y.copy_from(datasets.y)
+            polydata.z.copy_from(datasets.z)
+        else:
+            raise ValueError
         return geometry_name
 
     def _update_geometry(self):
@@ -3014,7 +3163,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
             self._true_tip_length,
         )
 
-        parts = self._datasets
+        parts = _as_nested([*self._shaft_polydata, *self._tip_polydata])
         for axis in range(3):
             for part_num in range(2):
                 # Reset geometry
@@ -3037,40 +3186,40 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
                     part.points[:, axis] += shaft_length[axis]
 
     @staticmethod
-    def _make_default_part(geometry: str, resolution: Optional[int]) -> pyvista.DataSet:
+    def _make_default_part(geometry: str, resolution: Optional[int]) -> pv.PolyData:
         """Create part geometry with its length axis pointing in the +z direction."""
         if geometry == 'cylinder':
-            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+            return pv.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            return pyvista.Sphere(theta_resolution=resolution, phi_resolution=resolution)
+            return pv.Sphere(theta_resolution=resolution, phi_resolution=resolution)
         elif geometry == 'cone':
-            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+            return pv.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pyvista.Pyramid()
+            return pv.Pyramid().extract_surface()
         elif geometry == 'cuboid':
-            return pyvista.Cube()
+            return pv.Cube()
         else:
             raise NotImplementedError(f'Geometry for {geometry} is not implemented.')
 
     @staticmethod
-    def _make_any_part(geometry: Union[str, pyvista.DataSet], resolution=None):
+    def _make_any_part(geometry: Union[str, pv.DataSet], resolution=None):
         if isinstance(geometry, str):
             name = geometry
             part = AxesAssembly._make_default_part(
                 geometry, resolution=_set_default(resolution, 16)
             )
-        elif isinstance(geometry, pyvista.DataSet) and not isinstance(
-            geometry, (pyvista.PolyData, pyvista.UnstructuredGrid)
-        ):
-            part = geometry.cast_to_unstructured_grid()
+        elif isinstance(geometry, pv.DataSet):
             name = 'custom'
+            if not isinstance(geometry, pv.PolyData):
+                part = geometry.cast_to_unstructured_grid().extract_surface()
+
         else:
             raise TypeError("Geometry must be a string, PolyData, or castable as UnstructuredGrid")
         part = AxesAssembly._normalize_part(part)
         return name, part
 
     @staticmethod
-    def _normalize_part(part: pyvista.DataSet) -> pyvista.DataSet:
+    def _normalize_part(part: pv.PolyData) -> pv.PolyData:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
@@ -3086,7 +3235,7 @@ class AxesAssembly(_AxesProp, _vtk.vtkAssembly):  # numpydoc ignore=PR01
 
     @staticmethod
     def _make_axes_parts(
-        geometry: Union[str, pyvista.DataSet], resolution, right_handed=True
+        geometry: Union[str, pv.DataSet], resolution, right_handed=True
     ) -> Tuple[str, Tuple3D]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesAssembly._make_any_part(geometry, resolution)

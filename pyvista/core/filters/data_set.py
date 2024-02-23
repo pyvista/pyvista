@@ -5076,7 +5076,7 @@ class DataSetFilters:
 
     def extract_surface(
         self, pass_pointid=True, pass_cellid=True, nonlinear_subdivision=1, progress_bar=False
-    ):
+    ) -> 'pyvista.PolyData':
         """Extract surface mesh of the grid.
 
         Parameters

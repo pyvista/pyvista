@@ -5,7 +5,6 @@ from typing import Optional
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
@@ -13,7 +12,7 @@ from .mapper import _BaseMapper
 from .prop3d import Prop3D
 
 
-@no_new_attr
+# @no_new_attr
 class Actor(Prop3D, _vtk.vtkActor):
     """Wrap vtkActor.
 

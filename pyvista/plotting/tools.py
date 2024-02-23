@@ -12,7 +12,6 @@ import numpy as np
 
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting.axes_actor import AxesActor
 
 from . import _vtk
 from .colors import Color
@@ -114,6 +113,9 @@ def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
        This method is deprecated. Use :func:`pyvista.AxesActor` instead.
 
     """
+    # Avoid circular import
+    from pyvista.plotting.axes_actor import AxesActor
+
     # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
     warnings.warn(
         '`create_axes_actor` has been deprecated. Use `pyvista.AxesActor` instead',
