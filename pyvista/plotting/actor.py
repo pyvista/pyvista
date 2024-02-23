@@ -1,10 +1,11 @@
 """Wrap vtkActor module."""
 
-from typing import Optional
+from typing import Optional, Sequence
 
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
@@ -12,7 +13,7 @@ from .mapper import _BaseMapper
 from .prop3d import Prop3D
 
 
-# @no_new_attr
+@no_new_attr
 class Actor(Prop3D, _vtk.vtkActor):
     """Wrap vtkActor.
 
@@ -77,7 +78,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions = ['_name']
+    _new_attr_exceptions: Sequence[str] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
