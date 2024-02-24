@@ -76,7 +76,7 @@ def button_play():
 
 
 ###############################################################################
-# We will do a simple rendering of a Cone using the vtk `vtkConeSouce`
+# We will do a simple rendering of a Cone using the `ConeSouce`
 # algorithm.
 #
 # When using the ``pl.show`` method. The function we created ``custom_tools``
