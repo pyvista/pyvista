@@ -904,6 +904,10 @@ class CubeSource(_vtk.vtkCubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     Examples
     --------
     Create a default CubeSource.
@@ -919,7 +923,13 @@ class CubeSource(_vtk.vtkCubeSource):
     ]
 
     def __init__(
-        self, center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None
+        self,
+        center=(0.0, 0.0, 0.0),
+        x_length=1.0,
+        y_length=1.0,
+        z_length=1.0,
+        bounds=None,
+        point_dtype='float32',
     ):
         """Initialize the cube source class."""
         super().__init__()
@@ -930,6 +940,7 @@ class CubeSource(_vtk.vtkCubeSource):
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
+        self.point_dtype = point_dtype
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
@@ -1044,6 +1055,46 @@ class CubeSource(_vtk.vtkCubeSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+    @property
+    def point_dtype(self) -> str:
+        """Get the desired output point types.
+
+        Returns
+        -------
+        str
+            Desired output point types.
+            It must be either 'float32' or 'float64'.
+        """
+        precision = self.GetOutputPointsPrecision()
+        point_dtype = {
+            _vtk.vtkAlgorithm.SINGLE_PRECISION: 'float32',
+            _vtk.vtkAlgorithm.DOUBLE_PRECISION: 'float64',
+        }[precision]
+        return point_dtype
+
+    @point_dtype.setter
+    def point_dtype(self, point_dtype: str):
+        """Set the desired output point types.
+
+        Parameters
+        ----------
+        point_dtype : str, default: 'float32'
+            Set the desired output point types.
+            It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        point_dtype: str
+            Desired output point types.
+        """
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
+            'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+        }[point_dtype]
+        self.SetOutputPointsPrecision(precision)
 
 
 class DiscSource(_vtk.vtkDiskSource):
