@@ -8,7 +8,7 @@ import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 from pyvista.plotting.axes import Axes
-from pyvista.plotting.axes_actor import AxesActor
+from pyvista.plotting.axes_actor import AxesActor, AxesActorComposite
 from pyvista.plotting.tools import create_axes_marker
 
 
@@ -30,6 +30,19 @@ def axes_actor():
 @pytest.fixture()
 def vtk_axes_actor():
     return vtk.vtkAxesActor()
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'AxesActor_from_base' in metafunc.fixturenames:
+        classes = [AxesActor, AxesActorComposite]
+        ids = [clas.__name__ for clas in classes]
+
+        # Make sure classes can be initialized
+        assert AxesActor()
+        assert AxesActorComposite()
+
+        metafunc.parametrize('AxesActor_from_base', classes, ids=ids)
 
 
 def test_actor_visibility(axes):
@@ -63,57 +76,59 @@ def test_axes_symmetric(axes):
     assert not axes.GetSymmetric()
 
 
-def test_axes_actor_visibility(axes_actor):
+def test_axes_actor_visibility(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
     assert axes_actor.visibility
-    axes_actor.visibility = False
+
+    axes_actor = AxesActor_from_base(visibility=False)
     assert not axes_actor.visibility
 
-    actor_init = AxesActor(visibility=False)
-    assert actor_init.visibility is False
+    axes_actor.visibility = True
+    assert axes_actor.visibility
 
 
-def test_axes_actor_total_length(axes_actor):
-    axes_actor.total_length = 2
+def test_axes_actor_total_length(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.total_length == (1, 1, 1)
+
+    axes_actor = AxesActor_from_base(total_length=2)
     assert axes_actor.total_length == (2, 2, 2)
 
     axes_actor.total_length = (1, 2, 3)
     assert axes_actor.total_length == (1, 2, 3)
 
-    actor_init = AxesActor(total_length=9)
-    assert actor_init.total_length == (9, 9, 9)
 
+def test_axes_actor_shaft_length(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.shaft_length == (0.8, 0.8, 0.8)
 
-def test_axes_actor_shaft_length(axes_actor):
-    axes_actor.shaft_length = 1
-    assert axes_actor.shaft_length == (1, 1, 1)
+    axes_actor = AxesActor_from_base(shaft_length=0.9)
+    assert axes_actor.shaft_length == (0.9, 0.9, 0.9)
 
     axes_actor.shaft_length = (0.1, 0.2, 0.3)
     assert axes_actor.shaft_length == (0.1, 0.2, 0.3)
 
-    actor_init = AxesActor(shaft_length=0.9)
-    assert actor_init.shaft_length == (0.9, 0.9, 0.9)
 
+def test_axes_actor_tip_length(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.tip_length == (0.2, 0.2, 0.2)
 
-def test_axes_actor_tip_length(axes_actor):
-    axes_actor.tip_length = 1
-    assert axes_actor.tip_length == (1, 1, 1)
+    axes_actor = AxesActor_from_base(tip_length=0.9)
+    assert axes_actor.tip_length == (0.9, 0.9, 0.9)
 
     axes_actor.tip_length = (0.1, 0.2, 0.3)
     assert axes_actor.tip_length == (0.1, 0.2, 0.3)
 
-    actor_init = AxesActor(tip_length=0.9)
-    assert actor_init.tip_length == (0.9, 0.9, 0.9)
 
-
-def test_axes_actor_label_position(axes_actor):
-    axes_actor.label_position = 1
+def test_axes_actor_label_position(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
     assert axes_actor.label_position == (1, 1, 1)
+
+    axes_actor = AxesActor_from_base(label_position=2)
+    assert axes_actor.label_position == (2, 2, 2)
 
     axes_actor.label_position = (1, 2, 3)
     assert axes_actor.label_position == (1, 2, 3)
-
-    actor_init = AxesActor(label_position=9)
-    assert actor_init.label_position == (9, 9, 9)
 
 
 def test_axes_actor_tip_resolution(axes_actor):
