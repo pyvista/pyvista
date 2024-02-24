@@ -3872,6 +3872,11 @@ def test_axes_actor():
     plot.show()
 
 
+def test_axes_actor_composite():
+    ax = pv.AxesActorComposite()
+    ax.plot()
+
+
 def test_axes_marker():
     position = np.array((-3, 2, -1))
     orientation = np.array((10, 20, 30))

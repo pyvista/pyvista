@@ -2914,8 +2914,8 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
     """Axes actor created from a composite dataset."""
 
     _new_attr_exceptions = (
-        '_AxesAssembly__shaft_type',
-        '_AxesAssembly__tip_type',
+        '_AxesActorComposite__shaft_type',
+        '_AxesActorComposite__tip_type',
         '_auto_length',
         '_datasets',
         '_label_actors',
