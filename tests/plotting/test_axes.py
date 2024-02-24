@@ -76,7 +76,7 @@ def test_axes_symmetric(axes):
     assert not axes.GetSymmetric()
 
 
-def test_axes_actor_visibility(AxesActor_from_base):
+def test_axes_actor_base_visibility(AxesActor_from_base):
     axes_actor = AxesActor_from_base()
     assert axes_actor.visibility
 
@@ -87,7 +87,7 @@ def test_axes_actor_visibility(AxesActor_from_base):
     assert axes_actor.visibility
 
 
-def test_axes_actor_total_length(AxesActor_from_base):
+def test_axes_actor_base_total_length(AxesActor_from_base):
     axes_actor = AxesActor_from_base()
     assert axes_actor.total_length == (1, 1, 1)
 
@@ -98,7 +98,7 @@ def test_axes_actor_total_length(AxesActor_from_base):
     assert axes_actor.total_length == (1, 2, 3)
 
 
-def test_axes_actor_shaft_length(AxesActor_from_base):
+def test_axes_actor_base_shaft_length(AxesActor_from_base):
     axes_actor = AxesActor_from_base()
     assert axes_actor.shaft_length == (0.8, 0.8, 0.8)
 
@@ -109,7 +109,7 @@ def test_axes_actor_shaft_length(AxesActor_from_base):
     assert axes_actor.shaft_length == (0.1, 0.2, 0.3)
 
 
-def test_axes_actor_tip_length(AxesActor_from_base):
+def test_axes_actor_base_tip_length(AxesActor_from_base):
     axes_actor = AxesActor_from_base()
     assert axes_actor.tip_length == (0.2, 0.2, 0.2)
 
@@ -120,7 +120,7 @@ def test_axes_actor_tip_length(AxesActor_from_base):
     assert axes_actor.tip_length == (0.1, 0.2, 0.3)
 
 
-def test_axes_actor_label_position(AxesActor_from_base):
+def test_axes_actor_base_label_position(AxesActor_from_base):
     axes_actor = AxesActor_from_base()
     assert axes_actor.label_position == (1, 1, 1)
 
@@ -131,12 +131,15 @@ def test_axes_actor_label_position(AxesActor_from_base):
     assert axes_actor.label_position == (1, 2, 3)
 
 
-def test_axes_actor_tip_resolution(axes_actor):
-    axes_actor.tip_resolution = 42
-    assert axes_actor.tip_resolution == 42
+def test_axes_actor_base_tip_resolution(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.tip_resolution == 24
 
-    actor_init = AxesActor(tip_resolution=42)
+    actor_init = AxesActor_from_base(tip_resolution=42)
     assert actor_init.tip_resolution == 42
+
+    axes_actor.tip_resolution = 99
+    assert axes_actor.tip_resolution == 99
 
 
 def test_axes_actor_deprecated_parameters(axes_actor):
@@ -231,18 +234,27 @@ def test_axes_actor_deprecated_enums(axes_actor):
     # assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_shaft_resolution(axes_actor):
-    axes_actor.shaft_resolution = 42
-    assert axes_actor.shaft_resolution == 42
+def test_axes_actor_base_shaft_resolution(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.shaft_resolution == 24
 
-    actor_init = AxesActor(shaft_resolution=42)
+    actor_init = AxesActor_from_base(shaft_resolution=42)
     assert actor_init.shaft_resolution == 42
 
+    axes_actor.shaft_resolution = 99
+    assert axes_actor.shaft_resolution == 99
 
-def test_axes_actor_tip_radius(axes_actor):
-    actor_init = AxesActor(tip_radius=9)
-    assert actor_init.tip_radius == 9
 
+def test_axes_actor_base_tip_radius(AxesActor_from_base):
+    axes_actor = AxesActor_from_base(tip_radius=9)
+    assert axes_actor.tip_radius == 9
+
+    axes_actor.tip_radius = 0.8
+    assert axes_actor.tip_radius == 0.8
+
+
+def test_axes_actor_tip_radius():
+    axes_actor = AxesActor()
     axes_actor.tip_radius = 0.8
     assert axes_actor.tip_radius == 0.8
     assert axes_actor.GetConeRadius() == 0.8
@@ -257,49 +269,59 @@ def test_axes_actor_tip_radius(axes_actor):
     assert np.allclose(axes_actor.bounds, (-6, 6, -6, 6, -6, 6))
 
 
-def test_axes_actor_shaft_type(axes_actor):
+def test_axes_actor_base_shaft_type(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.shaft_type == "cylinder"
+
+    axes_actor = AxesActor_from_base(shaft_type="cylinder")
+    assert axes_actor.shaft_type == "cylinder"
+
+
+def test_axes_actor_shaft_type():
+    axes_actor = AxesActor(shaft_type="line")
+    assert axes_actor.shaft_type == "line"
+
+    axes_actor.shaft_type = 'cylinder'
     assert axes_actor.shaft_type == 'cylinder'
     axes_actor.shaft_type = 'line'
     assert axes_actor.shaft_type == 'line'
-    axes_actor.shaft_type = 'cylinder'
-    assert axes_actor.shaft_type == 'cylinder'
-
-    actor_init = AxesActor(shaft_type="cylinder")
-    assert actor_init.shaft_type == "cylinder"
-    actor_init = AxesActor(shaft_type="line")
-    assert actor_init.shaft_type == "line"
 
 
-def test_axes_actor_tip_type(axes_actor):
+def test_axes_actor_tip_type(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
     assert axes_actor.tip_type == 'cone'
+
+    axes_actor = AxesActor_from_base(tip_type='cone')
+    assert axes_actor.tip_type == 'cone'
+
     axes_actor.tip_type = "sphere"
     assert axes_actor.tip_type == 'sphere'
     axes_actor.tip_type = "cone"
     assert axes_actor.tip_type == 'cone'
 
-    actor_init = AxesActor(tip_type="cone")
-    assert actor_init.tip_type == "cone"
-    actor_init = AxesActor(tip_type="sphere")
-    assert actor_init.tip_type == "sphere"
 
+def test_axes_actor_labels(AxesActor_from_base):
+    axes_actor = AxesActor_from_base()
+    assert axes_actor.x_label == 'X'
+    assert axes_actor.y_label == 'Y'
+    assert axes_actor.z_label == 'Z'
 
-def test_axes_actor_labels(axes_actor):
-    axes_actor.x_label = 'A'
+    axes_actor = AxesActor_from_base(x_label='A', y_label='B', z_label='C')
     assert axes_actor.x_label == 'A'
-    axes_actor.y_label = 'B'
     assert axes_actor.y_label == 'B'
-    axes_actor.z_label = 'C'
     assert axes_actor.z_label == 'C'
 
-    actor_init = AxesActor(x_label='A', y_label='B', z_label='C')
-    assert actor_init.x_label == 'A'
-    assert actor_init.y_label == 'B'
-    assert actor_init.z_label == 'C'
+    axes_actor = AxesActor_from_base(x_label='A', y_label='B', z_label='C', labels='UVW')
+    assert axes_actor.x_label == 'U'
+    assert axes_actor.y_label == 'V'
+    assert axes_actor.z_label == 'W'
 
-    actor_init = AxesActor(xlabel='A', ylabel='B', z_label='C')
-    assert actor_init.x_label == 'A'
-    assert actor_init.y_label == 'B'
-    assert actor_init.z_label == 'C'
+    axes_actor.x_label = '1'
+    assert axes_actor.x_label == '1'
+    axes_actor.y_label = '2'
+    assert axes_actor.y_label == '2'
+    axes_actor.z_label = '3'
+    assert axes_actor.z_label == '3'
 
     axes_actor.labels = ('U', 'V', 'W')
     assert axes_actor.x_label == 'U'
@@ -312,16 +334,16 @@ def test_axes_actor_labels(axes_actor):
     assert axes_actor.y_label == 'V'
     assert axes_actor.z_label == 'W'
 
-    actor_init = AxesActor(x_label='A', y_label='B', z_label='C', labels='UVW')
-    assert actor_init.x_label == 'U'
-    assert actor_init.y_label == 'V'
-    assert actor_init.z_label == 'W'
-
     with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
         axes_actor.labels = 'abcd'
 
 
-def test_axes_actor_label_color(axes_actor):
+def test_axes_actor_base_label_color(AxesActor_from_base):
+    axes_actor = AxesActor_from_base(label_color='yellow')
+    assert axes_actor.label_color[0].name == 'yellow'
+    assert axes_actor.label_color[1].name == 'yellow'
+    assert axes_actor.label_color[2].name == 'yellow'
+
     axes_actor.label_color = 'purple'
     assert len(axes_actor.label_color) == 3
     assert axes_actor.label_color[0].name == 'purple'
@@ -346,13 +368,16 @@ def test_axes_actor_label_color(axes_actor):
     assert np.array_equal(axes_actor.label_color[1].int_rgb, [1, 2, 3])
     assert np.array_equal(axes_actor.label_color[2].int_rgb, [1, 2, 3])
 
-    actor_init = AxesActor(label_color='yellow')
-    assert actor_init.label_color[0].name == 'yellow'
-    assert actor_init.label_color[1].name == 'yellow'
-    assert actor_init.label_color[2].name == 'yellow'
 
+def test_axes_actor_base_axis_color(AxesActor_from_base):
+    axes_actor = AxesActor_from_base(x_color='yellow', y_color='orange', z_color='purple')
+    assert axes_actor.x_color[0].name == 'yellow'
+    assert axes_actor.x_color[1].name == 'yellow'
+    assert axes_actor.y_color[0].name == 'orange'
+    assert axes_actor.y_color[1].name == 'orange'
+    assert axes_actor.z_color[0].name == 'purple'
+    assert axes_actor.z_color[1].name == 'purple'
 
-def test_axes_actor_axis_color(axes_actor):
     axes_actor.x_color = 'purple'
     assert len(axes_actor.x_color) == 2
     assert axes_actor.x_color[0].name == 'purple'
@@ -376,16 +401,10 @@ def test_axes_actor_axis_color(axes_actor):
     assert np.array_equal(axes_actor.z_color[0].int_rgb, [1, 2, 3])
     assert np.array_equal(axes_actor.z_color[1].int_rgb, [1, 2, 3])
 
-    actor_init = AxesActor(x_color='yellow', y_color='orange', z_color='purple')
-    assert actor_init.x_color[0].name == 'yellow'
-    assert actor_init.x_color[1].name == 'yellow'
-    assert actor_init.y_color[0].name == 'orange'
-    assert actor_init.y_color[1].name == 'orange'
-    assert actor_init.z_color[0].name == 'purple'
-    assert actor_init.z_color[1].name == 'purple'
 
-
-def test_axes_actor_shaft_width(axes_actor):
+def test_axes_actor_shaft_width():
+    axes_actor = AxesActor(shaft_width=50)
+    assert axes_actor.shaft_width == 50
     # test setting width automatically changes type to 'line'
     axes_actor.shaft_type = 'cylinder'
     axes_actor.shaft_width = 100
@@ -396,13 +415,18 @@ def test_axes_actor_shaft_width(axes_actor):
     assert axes_actor.GetYAxisShaftProperty().GetLineWidth() == 100
     assert axes_actor.GetZAxisShaftProperty().GetLineWidth() == 100
 
-    actor_init = AxesActor(shaft_width=50)
-    assert actor_init.shaft_width == 50
+
+def test_axes_actor_base_shaft_radius(AxesActor_from_base):
+    axes_actor = AxesActor_from_base(shaft_radius=3)
+    assert axes_actor.shaft_radius == 3
+
+    axes_actor.shaft_radius = 0.1
+    assert axes_actor.shaft_radius == 0.1
 
 
-def test_axes_actor_shaft_radius(axes_actor):
-    actor_init = AxesActor(shaft_radius=50)
-    assert actor_init.shaft_radius == 50
+def test_axes_actor_shaft_radius():
+    axes_actor = AxesActor(shaft_radius=50)
+    assert axes_actor.shaft_radius == 50
 
     # test setting width automatically changes type to 'cylinder'
     axes_actor.shaft_type = 'line'

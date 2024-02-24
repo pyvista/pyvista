@@ -130,10 +130,10 @@ class _AxesActorBase(ABC, Prop3D):
         self.label_position = _set_default(label_position, 1.0)
         self.shaft_type = shaft_type
         self.shaft_radius = _set_default(shaft_radius, 0.01)
-        self.shaft_resolution = _set_default(shaft_resolution, 16)
+        self.shaft_resolution = _set_default(shaft_resolution, 24)
         self.tip_type = tip_type
         self.tip_radius = _set_default(tip_radius, 0.4)
-        self.tip_resolution = _set_default(tip_resolution, 16)
+        self.tip_resolution = _set_default(tip_resolution, 24)
         self.total_length = _set_default(total_length, 1.0)
 
         self.position = _set_default(position, (0.0, 0.0, 0.0))
@@ -1063,10 +1063,7 @@ class _AxesActorBase(ABC, Prop3D):
         self._set_axis_color(axis=2, color=color)
 
     def _get_axis_color(self, axis):
-        prop = self._actor_properties_nested[axis]
-        shaft = Color(color=prop.shaft.color, opacity=prop.shaft.opacity)
-        tip = Color(color=prop.tip.color, opacity=prop.tip.opacity)
-        return AxisPartTuple(shaft, tip)
+        return AxisPartTuple(self._shaft_color_getters[axis](), self._tip_color_getters[axis]())
 
     def _set_axis_color(self, axis, color):
         if color is None:
@@ -1491,7 +1488,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         tip_type=None,
         tip_radius=0.4,
         tip_length=None,
-        tip_resolution=16,
+        tip_resolution=None,
         total_length=(1, 1, 1),
         position=(0, 0, 0),
         orientation=(0, 0, 0),
@@ -1717,10 +1714,13 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def _shaft_color_getters(self) -> Tuple3D:
+        props = self._actor_properties
+        colors = [prop.GetColor() for prop in props]
+        opacities = [prop.GetOpacity() for prop in props]
         return Tuple3D(
-            x=lambda: self.mapper.block_attr[1].color,
-            y=lambda: self.mapper.block_attr[2].color,
-            z=lambda: self.mapper.block_attr[3].color,
+            x=lambda: Color(colors[0], opacity=opacities[0]),
+            y=lambda: Color(colors[1], opacity=opacities[1]),
+            z=lambda: Color(colors[2], opacity=opacities[2]),
         )
 
     @property
@@ -1738,10 +1738,13 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def _tip_color_getters(self) -> Tuple3D:
+        props = self._actor_properties
+        colors = [prop.GetColor() for prop in props]
+        opacities = [prop.GetOpacity() for prop in props]
         return Tuple3D(
-            x=lambda: self.mapper.block_attr[4].color,
-            y=lambda: self.mapper.block_attr[5].color,
-            z=lambda: self.mapper.block_attr[6].color,
+            x=lambda: Color(colors[0], opacity=opacities[0]),
+            y=lambda: Color(colors[1], opacity=opacities[1]),
+            z=lambda: Color(colors[2], opacity=opacities[2]),
         )
 
     @property
@@ -2961,11 +2964,11 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         shaft_type=None,
         shaft_radius=0.05,
         shaft_length=None,
-        shaft_resolution=24,
+        shaft_resolution=None,
         tip_type=None,
         tip_radius=0.2,
         tip_length=None,
-        tip_resolution=24,
+        tip_resolution=None,
         total_length=(1, 1, 1),
         position=(0, 0, 0),
         orientation=(0, 0, 0),
