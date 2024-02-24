@@ -13,7 +13,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, Matrix, NumpyArray, Vector
+from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
@@ -786,12 +786,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[Matrix[float], Vector[float]]):
+    def points(self, points: Union[MatrixLike[float], VectorLike[float]]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : Vector[float] | Matrix[float]
+        points : VectorLike[float] | MatrixLike[float]
             List of points defining a broken line.
         """
         points, _ = _coerce_pointslike_arg(points)
@@ -2443,6 +2443,285 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
             triangle for a set of four points.
         """
         self.SetQuads(quads)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class SuperquadricSource(_vtk.vtkSuperquadricSource):
+    """Create superquadric source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center of the superquadric in ``[x, y, z]``.
+
+    scale : sequence[float], default: (1.0, 1.0, 1.0)
+        Scale factors of the superquadric in ``[x, y, z]``.
+
+    size : float, default: 0.5
+        Superquadric isotropic size.
+
+    theta_roundness : float, default: 1.0
+        Superquadric east/west roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    phi_roundness : float, default: 1.0
+        Superquadric north/south roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    theta_resolution : int, default: 16
+        Number of points in the longitude direction.
+        Values are rounded to nearest multiple of 4.
+
+    phi_resolution : int, default: 16
+        Number of points in the latitude direction.
+        Values are rounded to nearest multiple of 8.
+
+    toroidal : bool, default: False
+        Whether or not the superquadric is toroidal (``True``)
+        or ellipsoidal (``False``).
+
+    thickness : float, default: 0.3333333333
+        Superquadric ring thickness.
+        Only applies if toroidal is set to ``True``.
+    """
+
+    def __init__(
+        self,
+        center=(0.0, 0.0, 0.0),
+        scale=(1.0, 1.0, 1.0),
+        size=0.5,
+        theta_roundness=1.0,
+        phi_roundness=1.0,
+        theta_resolution=16,
+        phi_resolution=16,
+        toroidal=False,
+        thickness=1 / 3,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.center = center
+        self.scale = scale
+        self.size = size
+        self.theta_roundness = theta_roundness
+        self.phi_roundness = phi_roundness
+        self.theta_resolution = theta_resolution
+        self.phi_resolution = phi_resolution
+        self.toroidal = toroidal
+        self.thickness = thickness
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Center of the superquadric in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center of the superquadric in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set center of the superquadric in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center of the superquadric in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def scale(self) -> Sequence[float]:
+        """Scale factors of the superquadric in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Scale factors of the superquadric in ``[x, y, z]``.
+        """
+        return self.GetScale()
+
+    @scale.setter
+    def scale(self, scale: Sequence[float]):
+        """Set scale factors of the superquadric in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        scale : sequence[float]
+           Scale factors of the superquadric in ``[x, y, z]``.
+        """
+        self.SetScale(scale)
+
+    @property
+    def size(self) -> float:
+        """Superquadric isotropic size.
+
+        Returns
+        -------
+        float
+            Superquadric isotropic size.
+        """
+        return self.GetSize()
+
+    @size.setter
+    def size(self, size: float):
+        """Set superquadric isotropic size.
+
+        Parameters
+        ----------
+        size : float
+            Superquadric isotropic size.
+        """
+        self.SetSize(size)
+
+    @property
+    def theta_roundness(self) -> float:
+        """Superquadric east/west roundness.
+
+        Returns
+        -------
+        float
+            Superquadric east/west roundness.
+        """
+        return self.GetThetaRoundness()
+
+    @theta_roundness.setter
+    def theta_roundness(self, theta_roundness: float):
+        """Set superquadric east/west roundness.
+
+        Parameters
+        ----------
+        theta_roundness : float
+            Superquadric east/west roundness.
+        """
+        self.SetThetaRoundness(theta_roundness)
+
+    @property
+    def phi_roundness(self) -> float:
+        """Superquadric north/south roundness.
+
+        Returns
+        -------
+        float
+            Superquadric north/south roundness.
+        """
+        return self.GetPhiRoundness()
+
+    @phi_roundness.setter
+    def phi_roundness(self, phi_roundness: float):
+        """Set superquadric north/south roundness.
+
+        Parameters
+        ----------
+        phi_roundness : float
+            Superquadric north/south roundness.
+        """
+        self.SetPhiRoundness(phi_roundness)
+
+    @property
+    def theta_resolution(self) -> float:
+        """Number of points in the longitude direction.
+
+        Returns
+        -------
+        float
+            Number of points in the longitude direction.
+        """
+        return self.GetThetaResolution()
+
+    @theta_resolution.setter
+    def theta_resolution(self, theta_resolution: float):
+        """Set number of points in the longitude direction.
+
+        Parameters
+        ----------
+        theta_resolution : float
+            Number of points in the longitude direction.
+        """
+        self.SetThetaResolution(round(theta_resolution / 4) * 4)
+
+    @property
+    def phi_resolution(self) -> float:
+        """Number of points in the latitude direction.
+
+        Returns
+        -------
+        float
+            Number of points in the latitude direction.
+        """
+        return self.GetPhiResolution()
+
+    @phi_resolution.setter
+    def phi_resolution(self, phi_resolution: float):
+        """Set number of points in the latitude direction.
+
+        Parameters
+        ----------
+        phi_resolution : float
+            Number of points in the latitude direction.
+        """
+        self.SetPhiResolution(round(phi_resolution / 8) * 8)
+
+    @property
+    def toroidal(self) -> bool:
+        """Whether or not the superquadric is toroidal (``True``) or ellipsoidal (``False``).
+
+        Returns
+        -------
+        bool
+            Whether or not the superquadric is toroidal (``True``)
+            or ellipsoidal (``False``).
+        """
+        return self.GetToroidal()
+
+    @toroidal.setter
+    def toroidal(self, toroidal: bool):
+        """Set whether or not the superquadric is toroidal (``True``) or ellipsoidal (``False``).
+
+        Parameters
+        ----------
+        toroidal : bool
+            Whether or not the superquadric is toroidal (``True``)
+            or ellipsoidal (``False``).
+        """
+        self.SetToroidal(toroidal)
+
+    @property
+    def thickness(self):
+        """Superquadric ring thickness.
+
+        Returns
+        -------
+        float
+            Superquadric ring thickness.
+        """
+        return self.GetThickness()
+
+    @thickness.setter
+    def thickness(self, thickness: float):
+        """Set superquadric ring thickness.
+
+        Parameters
+        ----------
+        thickness : float
+            Superquadric ring thickness.
+        """
+        self.SetThickness(thickness)
 
     @property
     def output(self):

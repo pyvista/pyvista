@@ -98,6 +98,7 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
 )
 

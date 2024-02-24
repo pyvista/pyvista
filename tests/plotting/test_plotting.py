@@ -2494,6 +2494,17 @@ def test_chart_matplotlib_plot(verify_image_cache):
     pl.show()
 
 
+def test_get_charts():
+    """Test that the get_charts method is retuning a list of charts"""
+    chart = pv.Chart2D()
+    pl = pv.Plotter()
+    pl.add_chart(chart)
+
+    charts = pl.renderer.get_charts()
+    assert len(charts) == 1
+    assert chart is charts[0]
+
+
 def test_add_remove_background(sphere):
     plotter = pv.Plotter(shape=(1, 2))
     plotter.add_mesh(sphere, color='w')
@@ -4056,7 +4067,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions = {**geo_functions, **para_functions}
+    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param
@@ -4110,10 +4121,22 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     return list(functions.items())
 
 
-@pytest.mark.parametrize('positive_dir', [True, False])
-@pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function, positive_dir):
-    name, func = object_function
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'direction_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_direction_object_functions()
+        positive_cases = [(name, func, 'pos') for name, func in functions]
+        negative_cases = [(name, func, 'neg') for name, func in functions]
+        test_cases = [*positive_cases, *negative_cases]
+
+        # Name test cases using object name and direction
+        ids = [f"{case[0]}-{case[2]}" for case in test_cases]
+        metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
+
+
+def test_direction_objects(direction_obj_test_case):
+    name, func, direction = direction_obj_test_case
+    positive_dir = direction == 'pos'
 
     # Add required args if needed
     kwargs = {}
