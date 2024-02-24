@@ -65,7 +65,7 @@ def _cast_to_numpy(
     copy: bool = False,
     must_be_real=False,
     name: str = "Array",
-) -> NumpyArray[float]:
+) -> NumpyArray[_NumberType]:
     """Cast array to a NumPy ndarray.
 
     Object arrays are not allowed but the dtype is otherwise unchecked by default.

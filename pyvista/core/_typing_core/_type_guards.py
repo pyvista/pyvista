@@ -1,5 +1,6 @@
 """Type guards for checking array-like type definitions."""
 
+from itertools import islice
 from typing import Any, Iterable, Sequence, Tuple, Type, cast
 
 import numpy as np
@@ -31,6 +32,14 @@ def _is_NestedNumberSequence(array: _ArrayLikeOrScalar[_NumberType]) -> bool:
     return False
 
 
-def _has_element_types(array: Iterable[Any], types: Tuple[Type[Any], ...]) -> bool:
-    """Check that iterable elements have the specified type."""
-    return all(isinstance(item, types) for item in array)
+def _has_element_types(array: Iterable[Any], types: Tuple[Type[Any], ...], N=100) -> bool:
+    """Check that iterable elements have the specified type.
+
+    Parameters
+    ----------
+    N : int, default: 100
+        Only check the first `N` elements. Can be used to reduce the
+        performance cost of this check. Set to `None` to check all elements.
+    """
+    iterator = islice(array, N)
+    return all(isinstance(item, types) for item in iterator)

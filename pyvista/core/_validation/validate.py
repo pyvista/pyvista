@@ -33,7 +33,8 @@ from pyvista.core._typing_core._array_like import (
     _NumberType,
     _NumberUnion,
 )
-from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper, _NumpyArrayWrapper
+from pyvista.core._validation._cast_array import _cast_to_numpy
 from pyvista.core._validation.check import (
     check_contains,
     check_finite,
@@ -907,7 +908,14 @@ def validate_array(
     """
     type_in = type(array)
     id_in = id(array)
-    wrapped = _ArrayLikeWrapper(array)
+    if return_type in [np.ndarray, 'numpy']:
+        # Wrap directly as numpy to bypass sequence checks
+        wrapped: _ArrayLikeWrapper[_NumberType] = _NumpyArrayWrapper(
+            _cast_to_numpy(array, as_any=as_any)
+        )
+    else:
+        # Wrap array generically
+        wrapped = _ArrayLikeWrapper(array)
 
     # Check dtype
     if must_be_real:
