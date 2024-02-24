@@ -12,8 +12,8 @@ updates:
           - "trame-*"
       sphinx:
         patterns:
-          - "sphinx"
-          - "sphinx-*"
+          - "*sphinx*"
+          - "pypandoc"
     labels:
       - "maintenance"
       - "dependencies"
