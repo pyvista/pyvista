@@ -19,6 +19,9 @@ from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
+SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
+DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     """Translate and orient a mesh to a new center and direction.
@@ -1068,8 +1071,8 @@ class CubeSource(_vtk.vtkCubeSource):
         """
         precision = self.GetOutputPointsPrecision()
         point_dtype = {
-            _vtk.vtkAlgorithm.SINGLE_PRECISION: 'float32',
-            _vtk.vtkAlgorithm.DOUBLE_PRECISION: 'float64',
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
         }[precision]
         return point_dtype
 
@@ -1091,8 +1094,8 @@ class CubeSource(_vtk.vtkCubeSource):
         if point_dtype not in ['float32', 'float64']:
             raise ValueError("Point dtype must be either 'float32' or 'float64'")
         precision = {
-            'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
-            'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
         }[point_dtype]
         self.SetOutputPointsPrecision(precision)
 
