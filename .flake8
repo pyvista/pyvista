@@ -22,4 +22,4 @@ ignore =
     # we already check black
     BLK100,
     # let black auto-format statements on one line
-    E704
+    E701, E702, E704

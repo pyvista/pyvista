@@ -97,11 +97,11 @@ _ArrayLike4D = Union[
     Sequence[Sequence[Sequence[Sequence[_NumberType]]]],
     Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]],
 ]
-_ArrayLike = Union[
+ArrayLike = Union[
     _ArrayLike1D[_NumberType],
     _ArrayLike2D[_NumberType],
     _ArrayLike3D[_NumberType],
     _ArrayLike4D[_NumberType],
 ]
 
-_ArrayLikeOrScalar = Union[_NumberType, _ArrayLike[_NumberType]]
+_ArrayLikeOrScalar = Union[_NumberType, ArrayLike[_NumberType]]

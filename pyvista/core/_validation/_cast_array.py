@@ -1,36 +1,46 @@
 """Array casting functions."""
 
-from typing import Any, List, Optional, Tuple
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._typing_core import Array, NumpyArray
-from pyvista.core._typing_core._array_like import _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core import ArrayLike, NumpyArray
+from pyvista.core._typing_core._array_like import (
+    _ArrayLikeOrScalar,
+    _FiniteNestedList,
+    _FiniteNestedTuple,
+    _NumberType,
+)
 
 
-def _cast_to_list(arr: _ArrayLikeOrScalar[_NumberType]) -> List[Any]:
+def _cast_to_list(
+    arr: _ArrayLikeOrScalar[_NumberType],
+) -> Union[_NumberType, _FiniteNestedList[_NumberType]]:
     """Cast an array to a nested list.
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayLike[float]
         Array to cast.
 
     Returns
     -------
     list
         List or nested list array.
+
     """
     return _cast_to_numpy(arr).tolist()
 
 
-def _cast_to_tuple(arr: Array[_NumberType]) -> Tuple[Any]:
+def _cast_to_tuple(
+    arr: ArrayLike[_NumberType],
+) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]:
     """Cast an array to a nested tuple.
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : ArrayLike[float]
         Array to cast.
 
     Returns
@@ -46,33 +56,6 @@ def _cast_to_tuple(arr: Array[_NumberType]) -> Tuple[Any]:
     return _to_tuple(arr)
 
 
-# from typing import overload
-
-
-# @overload  # number -> array
-# def cast_to_ndarray(  # numpydoc ignore=GL08
-#     arr: _NumberType,
-#     /,
-#     *,
-#     as_any: bool = ...,
-#     dtype: Optional[npt.DTypeLike] = ...,
-#     copy: bool = ...,
-# ) -> NumpyArray[_NumberType]:
-#     ...
-#
-#
-# @overload  # array -> array
-# def cast_to_ndarray(  # numpydoc ignore=GL08
-#     arr: Array[_NumberType],
-#     /,
-#     *,
-#     as_any: bool = ...,
-#     dtype: Optional[npt.DTypeLike] = ...,
-#     copy: bool = ...,
-# ) -> NumpyArray[_NumberType]:
-#     ...
-
-
 def _cast_to_numpy(
     arr: _ArrayLikeOrScalar[_NumberType],
     /,
@@ -82,7 +65,7 @@ def _cast_to_numpy(
     copy: bool = False,
     must_be_real=False,
     name: str = "Array",
-) -> NumpyArray[_NumberType]:
+) -> NumpyArray[float]:
     """Cast array to a NumPy ndarray.
 
     Object arrays are not allowed but the dtype is otherwise unchecked by default.
@@ -96,7 +79,7 @@ def _cast_to_numpy(
 
     Parameters
     ----------
-    arr : ArrayLike
+    arr : float | ArrayLike[float]
         Array to cast.
 
     as_any : bool, default: True

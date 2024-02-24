@@ -24,7 +24,7 @@ import numpy as np
 from typing_extensions import TypedDict, Unpack
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core._typing_core._array_like import (
     __NumberType,
     _ArrayLikeOrScalar,
@@ -72,7 +72,7 @@ _ArrayReturnType = Union[_NumpyReturnType, _ListReturnType, _TupleReturnType]
 class _TypedKwargs(TypedDict, total=False):
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
     must_have_dtype: Optional[_NumberUnion]
-    must_have_length: Optional[Union[int, Vector[int]]]
+    must_have_length: Optional[Union[int, VectorLike[int]]]
     must_have_min_length: Optional[int]
     must_have_max_length: Optional[int]
     must_be_nonnegative: bool
@@ -80,7 +80,7 @@ class _TypedKwargs(TypedDict, total=False):
     must_be_real: bool
     must_be_integer: bool
     must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
-    must_be_in_range: Optional[Vector[float]]
+    must_be_in_range: Optional[VectorLike[float]]
     strict_lower_bound: bool
     strict_upper_bound: bool
     as_any: bool
@@ -175,6 +175,8 @@ def validate_array(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
     *,
     dtype_out: Type[__NumberType],
     return_type: Optional[_ListReturnType] = ...,
+    reshape_to: Optional[Tuple[int, int]] = ...,
+    broadcast_to: Optional[Tuple[int, int]] = ...,
     **kwargs: Unpack[_TypedKwargs],
 ) -> List[List[__NumberType]]: ...
 
@@ -609,7 +611,7 @@ def validate_array(
     *,
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]] = None,
     must_have_dtype: Optional[_NumberUnion] = None,
-    must_have_length: Optional[Union[int, Vector[int]]] = None,
+    must_have_length: Optional[Union[int, VectorLike[int]]] = None,
     must_have_min_length: Optional[int] = None,
     must_have_max_length: Optional[int] = None,
     must_be_nonnegative: bool = False,
@@ -617,7 +619,7 @@ def validate_array(
     must_be_real: bool = True,
     must_be_integer: bool = False,
     must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
-    must_be_in_range: Optional[Vector[float]] = None,
+    must_be_in_range: Optional[VectorLike[float]] = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
     reshape_to: Optional[_ShapeLike] = None,
@@ -649,7 +651,7 @@ def validate_array(
     - Nested tuples: ``Tuple[Tuple[T]]`` -> ``Tuple[Tuple[T]]``
     - NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
 
-    All other inputs may first be copied to a numpy array for processing
+    All other inputs may first be copied to a NumPy array for processing
     internally. For ``range`` objects, NumPy protocol arrays (e.g.
     ``pandas`` arrays), and other array-like inputs the returned array
     is a NumPy array.
@@ -708,7 +710,7 @@ def validate_array(
         array's data must be a subtype of. If a sequence, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | Vector[int], optional
+    must_have_length : int | VectorLike[int], optional
         :func:`Check <pyvista.core._validation.check.check_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
@@ -774,7 +776,7 @@ def validate_array(
         along a different axis, use a ``dict`` with keyword arguments that
         will be passed to :func:`Check <pyvista.core._validation.check.check_sorted>`.
 
-    must_be_in_range : Vector[float], optional
+    must_be_in_range : VectorLike[float], optional
         :func:`Check <pyvista.core._validation.check.check_range>`
         if the array's values are all within a specific range. Range
         must be a vector with two elements specifying the minimum and
@@ -1038,7 +1040,7 @@ def validate_array(
 
 
 def validate_axes(
-    *axes: Union[Matrix[float], Vector[float]],
+    *axes: Union[MatrixLike[float], VectorLike[float]],
     normalize: bool = True,
     must_be_orthogonal: bool = True,
     must_have_orientation: Optional[str] = 'right',
@@ -1051,7 +1053,7 @@ def validate_axes(
 
     Parameters
     ----------
-    *axes : Matrix[float] | Vector[float]
+    *axes : MatrixLike[float] | VectorLike[float]
         Axes to be validated. Axes may be specified as a single array of row vectors
         or as separate arguments for each 3-element axis vector.
         If only two vectors are given and ``must_have_orientation`` is not ``None``,
@@ -1190,7 +1192,7 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
 
     Parameters
     ----------
-    transform : Matrix[float] | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
+    transform : TransformLike
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
@@ -1247,13 +1249,13 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
 
 
 def validate_transform3x3(
-    transform: Union[Matrix[float], _vtk.vtkMatrix3x3], /, *, name="Transform"
+    transform: Union[MatrixLike[float], _vtk.vtkMatrix3x3], /, *, name="Transform"
 ):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
     ----------
-    transform : Matrix[float] | vtkMatrix3x3
+    transform : MatrixLike[float] | vtkMatrix3x3
         Transformation matrix as a 3x3 array or vtkMatrix3x3.
 
     name : str, default: "Transform"
@@ -1301,7 +1303,7 @@ def _array_from_vtkmatrix(
 
 
 def validate_number(
-    num: Union[_NumberType, Vector[_NumberType]], /, *, reshape=True, **kwargs
+    num: Union[_NumberType, VectorLike[_NumberType]], /, *, reshape=True, **kwargs
 ) -> _NumberType:
     """Validate a real, finite scalar number.
 
@@ -1313,7 +1315,7 @@ def validate_number(
 
     Parameters
     ----------
-    num : float | int | Vector[float] | Vector[int]
+    num : float | VectorLike[float]
         Number to validate.
 
     reshape : bool, default: True
@@ -1369,7 +1371,7 @@ def validate_number(
     return validate_array(num, **kwargs)
 
 
-def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
+def validate_data_range(rng: VectorLike[_NumberType], /, **kwargs):
     """Validate a data range.
 
     By default, the data range is checked to ensure:
@@ -1380,7 +1382,7 @@ def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
 
     Parameters
     ----------
-    rng : Vector[float]
+    rng : VectorLike[float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
@@ -1418,7 +1420,7 @@ def validate_data_range(rng: Vector[_NumberType], /, **kwargs):
 
 
 def validate_arrayNx3(
-    array: Union[Matrix[_NumberType], Vector[_NumberType]], /, *, reshape=True, **kwargs
+    array: Union[MatrixLike[_NumberType], VectorLike[_NumberType]], /, *, reshape=True, **kwargs
 ) -> NumpyArray[_NumberType]:
     """Validate an array is numeric and has shape Nx3.
 
@@ -1433,7 +1435,7 @@ def validate_arrayNx3(
 
     Parameters
     ----------
-    array : Vector[float] | Matrix[float]
+    array : VectorLike[float] | MatrixLike[float]
         1D or 2D array to validate.
 
     reshape : bool, default: True
@@ -1490,7 +1492,7 @@ def validate_arrayNx3(
 
 
 def validate_arrayN(
-    array: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
+    array: Union[_NumberType, VectorLike[_NumberType], MatrixLike[_NumberType]],
     /,
     *,
     reshape=True,
@@ -1509,7 +1511,7 @@ def validate_arrayN(
 
     Parameters
     ----------
-    array : float | Vector[float] | Matrix[float]
+    array : float | VectorLike[float] | MatrixLike[float]
         Array-like input to validate.
 
     reshape : bool, default: True
@@ -1570,7 +1572,7 @@ def validate_arrayN(
 
 
 def validate_arrayN_unsigned(
-    array: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
+    array: Union[_NumberType, VectorLike[_NumberType], MatrixLike[_NumberType]],
     /,
     *,
     reshape=True,
@@ -1591,7 +1593,7 @@ def validate_arrayN_unsigned(
 
     Parameters
     ----------
-    array : float | Vector[float] | Matrix[float]
+    array : float | VectorLike[float] | MatrixLike[float]
         0D, 1D, or 2D array to validate.
 
     reshape : bool, default: True
@@ -1666,7 +1668,7 @@ def validate_arrayN_unsigned(
 
 
 def validate_array3(
-    array: Union[_NumberType, Vector[_NumberType], Matrix[_NumberType]],
+    array: Union[_NumberType, VectorLike[_NumberType], MatrixLike[_NumberType]],
     /,
     *,
     reshape=True,
@@ -1684,7 +1686,7 @@ def validate_array3(
 
     Parameters
     ----------
-    array : float | Vector[float] | Matrix[float]
+    array : float | VectorLike[float] | MatrixLike[float]
         Array to validate.
 
     reshape : bool, default: True

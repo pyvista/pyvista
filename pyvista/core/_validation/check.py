@@ -31,13 +31,8 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._typing_core import NumpyArray, Vector
-from pyvista.core._typing_core._array_like import (
-    __NumberType,
-    _ArrayLike,
-    _ArrayLikeOrScalar,
-    _NumberType,
-)
+from pyvista.core._typing_core import ArrayLike, NumpyArray, VectorLike
+from pyvista.core._typing_core._array_like import __NumberType, _ArrayLikeOrScalar, _NumberType
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
     _NestedSequenceWrapper,
@@ -135,7 +130,7 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
 
     Parameters
     ----------
-    array : float | Array[float] | NDArray[float]
+    array : float | ArrayLike[float] | NDArray[float]
         Number or array to check.
 
     name : str, default: "Array"
@@ -184,7 +179,7 @@ def check_sorted(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     ascending : bool, default: True
@@ -295,7 +290,7 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
 
     Parameters
     ----------
-    array : float | int | bool | Array[float] | Array[int] | Array[bool]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     name : str, default: "Array"
@@ -335,7 +330,7 @@ def check_integer(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     strict : bool, default: False
@@ -391,7 +386,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = 
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     name : str, default: "Array"
@@ -433,7 +428,7 @@ def check_greater_than(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     value : float
@@ -493,7 +488,7 @@ def check_less_than(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     value : float
@@ -545,7 +540,7 @@ def check_less_than(
 def check_range(
     array: _ArrayLikeOrScalar[_NumberType],
     /,
-    rng: Vector[__NumberType],
+    rng: VectorLike[__NumberType],
     *,
     strict_lower: bool = False,
     strict_upper: bool = False,
@@ -555,10 +550,10 @@ def check_range(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
-    rng : Vector[float], optional
+    rng : VectorLike[float], optional
         Vector with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= min
@@ -617,7 +612,7 @@ def check_shape(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     shape : ShapeLike | list[ShapeLike], optional
@@ -694,7 +689,7 @@ def check_ndim(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     ndim : int | Sequence[int], optional
@@ -1232,7 +1227,7 @@ def check_length(
     array: _ArrayLikeOrScalar[_NumberType],
     /,
     *,
-    exact_length: Union[int, Vector[int], None] = None,
+    exact_length: Union[int, VectorLike[int], None] = None,
     min_length: Optional[int] = None,
     max_length: Optional[int] = None,
     must_be_1d: bool = False,
@@ -1250,10 +1245,10 @@ def check_length(
 
     Parameters
     ----------
-    array : float | Array[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
-    exact_length : int | Vector[int], optional
+    exact_length : int | VectorLike[int], optional
         Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
@@ -1314,7 +1309,7 @@ def check_length(
 
     if must_be_1d:
         check_ndim(wrapped(), ndim=1)
-    array_len = len(cast(_ArrayLike[_NumberType], wrapped._array))
+    array_len = len(cast(ArrayLike[_NumberType], wrapped._array))
 
     if exact_length is not None:
         wrapped_exact_len = _ArrayLikeWrapper(exact_length)

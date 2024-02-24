@@ -4,15 +4,14 @@ from typing import Tuple, Union
 
 from pyvista.core._vtk_core import vtkCellArray, vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
-from ._array_like import _ArrayLike, _ArrayLike1D, _ArrayLike2D, _NumberType
+from ._array_like import _ArrayLike1D, _ArrayLike2D, _NumberType
 
 Number = Union[int, float]
 
-Vector = _ArrayLike1D[_NumberType]
-Matrix = _ArrayLike2D[_NumberType]
-Array = _ArrayLike[_NumberType]
+VectorLike = _ArrayLike1D[_NumberType]
+MatrixLike = _ArrayLike2D[_NumberType]
 
-TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
+TransformLike = Union[MatrixLike[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
-CellsLike = Union[Matrix[int], Vector[int]]
+CellsLike = Union[MatrixLike[int], VectorLike[int]]
 CellArrayLike = Union[CellsLike, vtkCellArray]
