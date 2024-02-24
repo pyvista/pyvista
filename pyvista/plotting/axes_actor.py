@@ -2910,8 +2910,8 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         pl.show(**kwargs)
 
 
-class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
-    """Assembly of axes actors."""
+class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
+    """Axes actor created from a composite dataset."""
 
     _new_attr_exceptions = (
         '_AxesAssembly__shaft_type',
@@ -3221,7 +3221,7 @@ class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
 
     def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
         resolution = self._shaft_resolution if part == 0 else self._tip_resolution
-        geometry_name, datasets = AxesAssembly._make_axes_parts(geometry, resolution)
+        geometry_name, datasets = AxesActorComposite._make_axes_parts(geometry, resolution)
         if part == 0:
             polydata = self._shaft_polydata
             polydata.x.copy_from(datasets.x)
@@ -3247,7 +3247,7 @@ class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         for axis in range(3):
             for part_num in range(2):
                 # Reset geometry
-                part = AxesAssembly._normalize_part(parts[axis][part_num])
+                part = AxesActorComposite._normalize_part(parts[axis][part_num])
 
                 # Offset so axis bounds are [0, 1]
                 part.points[:, axis] += 0.5
@@ -3285,7 +3285,7 @@ class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
     def _make_any_part(geometry: Union[str, pv.DataSet], resolution=None):
         if isinstance(geometry, str):
             name = geometry
-            part = AxesAssembly._make_default_part(
+            part = AxesActorComposite._make_default_part(
                 geometry, resolution=_set_default(resolution, 16)
             )
         elif isinstance(geometry, pv.DataSet):
@@ -3295,7 +3295,7 @@ class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
 
         else:
             raise TypeError("Geometry must be a string, PolyData, or castable as UnstructuredGrid")
-        part = AxesAssembly._normalize_part(part)
+        part = AxesActorComposite._normalize_part(part)
         return name, part
 
     @staticmethod
@@ -3318,7 +3318,7 @@ class AxesAssembly(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         geometry: Union[str, pv.DataSet], resolution, right_handed=True
     ) -> Tuple[str, Tuple3D]:
         """Return three axis-aligned normalized parts centered at the origin."""
-        name, part_z = AxesAssembly._make_any_part(geometry, resolution)
+        name, part_z = AxesActorComposite._make_any_part(geometry, resolution)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         if not right_handed:

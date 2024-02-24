@@ -11,7 +11,7 @@ from ._typing import Chart, ColorLike
 from .actor import Actor
 from .actor_properties import ActorProperties
 from .axes import Axes
-from .axes_actor import AxesActor, AxesAssembly
+from .axes_actor import AxesActor, AxesActorComposite
 from .camera import Camera
 from .charts import Chart2D, ChartBox, ChartMPL, ChartPie
 from .colors import PARAVIEW_BACKGROUND, Color, color_char_to_word, get_cmap_safe, hexcolors
