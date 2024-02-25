@@ -24,6 +24,7 @@ from .errors import (
 )
 from .filters import (
     CompositeFilters,
+    ContourFilter,
     DataSetFilters,
     ImageDataFilters,
     PolyDataFilters,

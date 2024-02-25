@@ -1,7 +1,6 @@
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageLayout
 from trame.widgets import vuetify
-from vtkmodules.vtkFiltersCore import vtkContourFilter
 
 import pyvista as pv
 from pyvista import examples
@@ -28,7 +27,7 @@ ctrl.on_server_ready.add(ctrl.view_update)
 
 volume = examples.download_head_2()
 
-contour = vtkContourFilter()
+contour = pv.ContourFilter()
 contour.SetInputDataObject(volume)
 # contour.SetComputeNormals(True)
 # contour.SetComputeScalars(False)
@@ -60,7 +59,7 @@ actor = pl.add_mesh(contour, cmap="viridis", clim=data_range)
 
 @state.change("contour_value")
 def update_contour(contour_value, **kwargs):
-    contour.SetValue(0, contour_value)
+    contour.isosurfaces = [contour_value]
     ctrl.view_update_image()
 
 
