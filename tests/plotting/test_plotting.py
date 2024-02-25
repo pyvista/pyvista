@@ -4118,7 +4118,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     ]
 
     assert sorted(actual_names) == sorted(expected_names)
-    return list(functions.items())
+    return functions.items()
 
 
 def pytest_generate_tests(metafunc):
@@ -4147,7 +4147,7 @@ def test_direction_objects(direction_obj_test_case):
 
     # Test Capsule separately based on vtk version
     if 'Capsule' in name:
-        legacy_vtk = pv.vtk_version_info.major < 9 and pv.vtk_version_info.minor < 3
+        legacy_vtk = pv.vtk_version_info.major == 9 and pv.vtk_version_info.minor < 3
         if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
             pytest.xfail(
                 'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
