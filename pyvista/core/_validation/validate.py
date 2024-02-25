@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections import namedtuple
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, cast, overload
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, overload
 
 import numpy as np
 from typing_extensions import TypedDict, Unpack
@@ -1333,11 +1333,48 @@ def _array_from_vtkmatrix(
 #     name: str
 
 
-def validate_number(  # numpydoc ignore=PR07
+class _KwargsValidateNumber(TypedDict):
+    reshape: bool
+    must_be_finite: bool
+    must_be_real: bool
+    must_have_dtype: Optional[_NumberUnion]
+    must_be_nonnegative: bool
+    must_be_integer: bool
+    must_be_in_range: Optional[VectorLike[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    get_flags: bool
+    name: str
+
+
+# Many type ignores needed to make overloads work here but the tests should still pass
+@overload
+def validate_number(  # type: ignore[misc]  # numpydoc ignore=GL08
     num: Union[_NumberType, VectorLike[_NumberType]],
     /,
     *,
-    reshape=True,
+    reshape: bool = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateNumber],
+) -> _NumberType: ...
+
+
+@overload
+def validate_number(  # type: ignore[misc]  # numpydoc ignore=GL08
+    num: Union[_NumberType, VectorLike[_NumberType]],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: Type[__NumberType],
+    **kwargs: Unpack[_KwargsValidateNumber],
+) -> __NumberType: ...
+
+
+def validate_number(  # type: ignore[misc]
+    num: Union[_NumberType, VectorLike[_NumberType]],
+    /,
+    *,
+    reshape: bool = True,
     must_be_finite: bool = True,
     must_be_real: bool = True,
     must_have_dtype: Optional[_NumberUnion] = None,
@@ -1346,7 +1383,7 @@ def validate_number(  # numpydoc ignore=PR07
     must_be_in_range: Optional[VectorLike[float]] = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
-    dtype_out=None,
+    dtype_out: Optional[Type[__NumberType]] = None,
     get_flags: bool = False,
     name: str = 'Number',
 ):
@@ -1367,26 +1404,37 @@ def validate_number(  # numpydoc ignore=PR07
         and are reshaped to be 0-dimensional.
 
     must_be_finite : bool, default: True
+        See :func:~validate_array for details.
 
     must_be_real : bool, default: True
+        See :func:~validate_array for details.
 
     must_have_dtype : type, optional
+        See :func:~validate_array for details.
 
     must_be_nonnegative : bool, default: False
+        See :func:~validate_array for details.
 
     must_be_integer : bool, default: False
+        See :func:~validate_array for details.
 
     must_be_in_range : VectorLike[float], optional
+        See :func:~validate_array for details.
 
     strict_lower_bound : bool, default: False
+        See :func:~validate_array for details.
 
     strict_upper_bound : bool, default: False
+        See :func:~validate_array for details.
 
     dtype_out : dtype, optional
+        See :func:~validate_array for details.
 
     get_flags : bool, default: False
+        See :func:~validate_array for details.
 
     name : str = 'Number'
+        See :func:~validate_array for details.
 
     Returns
     -------
@@ -1422,33 +1470,37 @@ def validate_number(  # numpydoc ignore=PR07
 
     """
     must_have_shape: Union[_ShapeLike, List[_ShapeLike]]
+
     if reshape:
         must_have_shape = [(), (1,)]
-        reshape_to = ()
     else:
         must_have_shape = ()
-        reshape_to = None
+    reshape_to = ()
     return_type = list
 
-    if dtype_out is None:
-        dtype_out = cast(_NumberType, dtype_out)
-
-    return validate_array(
+    return validate_array(  # type: ignore[type-var, misc]
         num,
+        dtype_out=dtype_out,  # type: ignore[arg-type]
+        return_type=return_type,
+        reshape_to=reshape_to,
+        broadcast_to=None,
         must_have_shape=must_have_shape,
+        must_have_dtype=must_have_dtype,
+        must_have_length=None,
+        must_have_min_length=None,
+        must_have_max_length=None,
+        must_be_nonnegative=must_be_nonnegative,
         must_be_finite=must_be_finite,
         must_be_real=must_be_real,
-        must_have_dtype=must_have_dtype,
-        must_be_nonnegative=must_be_nonnegative,
         must_be_integer=must_be_integer,
+        must_be_sorted=False,
         must_be_in_range=must_be_in_range,
         strict_lower_bound=strict_lower_bound,
         strict_upper_bound=strict_upper_bound,
-        dtype_out=dtype_out,
+        as_any=False,
+        copy=False,
         get_flags=get_flags,
         name=name,
-        return_type=return_type,
-        reshape_to=reshape_to,
     )
 
 

@@ -182,7 +182,7 @@ def test_typing(test_case):
         from numpy import dtype, ndarray
 
         from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
-        from pyvista.core._validation.validate import validate_array
+        from pyvista.core._validation.validate import validate_array, validate_number
         try:
             revealed_type = eval(revealed)
             runtime_val = eval(arg)

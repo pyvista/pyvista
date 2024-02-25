@@ -23,14 +23,14 @@ Some key differences include:
 
 import sys
 import typing
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
 # TODO: remove # type: ignore once support for 3.8 is dropped
-_NumberUnion = Union[np.floating, np.integer, np.bool_, float, int, bool]  # type: ignore[type-arg]
+_NumberUnion = Union[Type[np.floating], Type[np.integer], Type[np.bool_], Type[float], Type[int], Type[bool]]  # type: ignore[type-arg]
 _NumberType = TypeVar(
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
