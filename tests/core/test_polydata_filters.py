@@ -11,7 +11,7 @@ def test_contour_banded_raise(sphere):
         sphere.contour_banded(5)
 
     sphere['data'] = sphere.points[:, 2]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.contour_banded(5, scalar_mode='foo')
 
     sphere.clear_data()

@@ -85,6 +85,8 @@ from .geometric_objects import (
     translate,
 )
 from .geometric_sources import (
+    ArrowSource,
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
@@ -95,6 +97,7 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
 )
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap

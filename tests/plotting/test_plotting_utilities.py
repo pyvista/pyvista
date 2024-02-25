@@ -16,13 +16,15 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
-    assert isinstance(_repr, str) and len(_repr) > 1
-    assert isinstance(_repr_html, str) and len(_repr_html) > 1
+    assert isinstance(_repr, str)
+    assert len(_repr) > 1
+    assert isinstance(_repr_html, str)
+    assert len(_repr_html) > 1
 
     # test corrupted internal infos
     gpuinfo._gpu_info = 'foo'
@@ -31,7 +33,7 @@ def test_gpuinfo():
             getattr(gpuinfo, func_name)()
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_ray_trace_plot():
     sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
@@ -41,25 +43,25 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_plot_curvature(skip_check_gc):
     sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_curvature(off_screen=True)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_plot_curvature_pointset(skip_check_gc):
     grid = examples.load_structured()
     grid.plot_curvature(off_screen=True)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_plot_boundaries():
     # make sure to plot an object that has boundaries
     pv.Cube().plot_boundaries(off_screen=True)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 @pytest.mark.parametrize('flip', [True, False])
 @pytest.mark.parametrize('faces', [True, False])
 def test_plot_normals(flip, faces):

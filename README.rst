@@ -88,6 +88,10 @@ Status badges
   :target: https://github.com/psf/black
   :alt: black
 
+.. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
+  :target: https://github.com/prettier/prettier
+  :alt: prettier
+
 .. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
    :target: https://www.python.org/downloads/
 
@@ -119,6 +123,8 @@ Status badges
 | Community            | |slack|                | |discuss|   |
 +----------------------+------------------------+-------------+
 | Formatter            | |black|                | |isort|     |
+|                      +------------------------+-------------+
+|                      | |prettier|             |             |
 +----------------------+------------------------+-------------+
 | Linter               | |Ruff|                               |
 +----------------------+------------------------+-------------+

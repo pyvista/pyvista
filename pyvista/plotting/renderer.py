@@ -695,6 +695,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
+    def get_charts(self):  # numpydoc ignore=RT01
+        """Return a list of all charts in this renderer.
+
+        Examples
+        --------
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([1, 2, 3], [0, 1, 0])
+           >>> pl = pv.Plotter()
+           >>> pl.add_chart(chart)
+           >>> chart is pl.renderer.get_charts()[0]
+           True
+
+        """
+        return [*self._charts] if self.has_charts else []
+
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
@@ -2460,11 +2479,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(self._theme.camera['position']).astype(float)
+        position = np.array(self._theme.camera.position).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
         return cpos
 
     def update_bounds_axes(self):
@@ -2591,7 +2610,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         focal_pt = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
         self.reset_camera(render=render)
