@@ -13,7 +13,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -4063,7 +4063,7 @@ def _get_default_param_value(call: Callable, param: str) -> Any:
     return _get_default_kwargs(call)[param]
 
 
-def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
+def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
