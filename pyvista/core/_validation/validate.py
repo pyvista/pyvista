@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections import namedtuple
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, cast, overload
 
 import numpy as np
 from typing_extensions import TypedDict, Unpack
@@ -578,7 +578,7 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> Union[__NumberType, _FiniteNestedTuple[__NumberType]]: ...
 
 
-# ArrayLike[T] -> NDArray[T2]
+# ArrayLike[T] -> NDArray[T]
 @overload
 def validate_array(  # numpydoc ignore=GL08
     array: _ArrayLikeOrScalar[_NumberType],
@@ -1195,7 +1195,7 @@ def validate_axes(
     return axes_norm if normalize else axes_array
 
 
-def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
+def validate_transform4x4(transform: TransformLike, /, *, name="Transform") -> NumpyArray[float]:
     """Validate transform-like input as a 4x4 ndarray.
 
     Parameters
@@ -1238,7 +1238,6 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
                 name=name,
                 return_type='numpy',
             )
-            # reveal_type(valid_array)
             if valid_array.shape == (3, 3):
                 array[:3, :3] = valid_array
             else:
@@ -1258,7 +1257,7 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform"):
 
 def validate_transform3x3(
     transform: Union[MatrixLike[float], _vtk.vtkMatrix3x3], /, *, name="Transform"
-):
+) -> NumpyArray[float]:
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -1310,16 +1309,53 @@ def _array_from_vtkmatrix(
     return array
 
 
-def validate_number(
-    num: Union[_NumberType, VectorLike[_NumberType]], /, *, reshape=True, **kwargs
-) -> _NumberType:
-    """Validate a real, finite scalar number.
+# class _ALLKWARGS(TypedDict, total=False):
+#     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
+#     must_have_dtype: Optional[_NumberUnion]
+#     must_have_length: Optional[Union[int, VectorLike[int]]]
+#     must_have_min_length: Optional[int]
+#     must_have_max_length: Optional[int]
+#     must_be_nonnegative: bool
+#     must_be_finite: bool
+#     must_be_real: bool
+#     must_be_integer: bool
+#     must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+#     must_be_in_range: Optional[VectorLike[float]]
+#     strict_lower_bound: bool
+#     strict_upper_bound: bool
+#     dtype_out: Optional[Type[_NumberType]]
+#     return_type: Optional[Union[_TupleReturnType, _ListReturnType]]
+#     reshape_to: Optional[Tuple[()]]
+#     broadcast_to: Optional[Tuple[()]]
+#     as_any: bool
+#     copy: bool
+#     get_flags: bool
+#     name: str
 
-    By default, the number is checked to ensure it:
 
-    * is scalar or is an array with one element
-    * is a real number
-    * is finite
+def validate_number(  # numpydoc ignore=PR07
+    num: Union[_NumberType, VectorLike[_NumberType]],
+    /,
+    *,
+    reshape=True,
+    must_be_finite: bool = True,
+    must_be_real: bool = True,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_be_nonnegative: bool = False,
+    must_be_integer: bool = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out=None,
+    get_flags: bool = False,
+    name: str = 'Number',
+):
+    """Validate a number is real and finite.
+
+    By default, this function accepts scalar or array-like inputs with a
+    single numerical element, and returns a ``float``, ``int``, or ``bool``
+    type. The return type matches the same data type as the input. The
+    number is also checked to ensure it is real and finite.
 
     Parameters
     ----------
@@ -1330,8 +1366,27 @@ def validate_number(
         If ``True``, 1D arrays with 1 element are considered valid input
         and are reshaped to be 0-dimensional.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
+    must_be_finite : bool, default: True
+
+    must_be_real : bool, default: True
+
+    must_have_dtype : type, optional
+
+    must_be_nonnegative : bool, default: False
+
+    must_be_integer : bool, default: False
+
+    must_be_in_range : VectorLike[float], optional
+
+    strict_lower_bound : bool, default: False
+
+    strict_upper_bound : bool, default: False
+
+    dtype_out : dtype, optional
+
+    get_flags : bool, default: False
+
+    name : str = 'Number'
 
     Returns
     -------
@@ -1342,6 +1397,8 @@ def validate_number(
     --------
     validate_array
         Generic array validation function.
+    check_number
+        Similar function with fewer options and no return value.
 
     Examples
     --------
@@ -1364,19 +1421,35 @@ def validate_number(
     10
 
     """
-    kwargs.setdefault('name', 'Number')
-    kwargs.setdefault('must_be_finite', True)
-    kwargs.setdefault('must_be_real', True)
-
-    shape: Union[_ShapeLike, List[_ShapeLike]]
+    must_have_shape: Union[_ShapeLike, List[_ShapeLike]]
     if reshape:
-        shape = [(), (1,)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
+        must_have_shape = [(), (1,)]
+        reshape_to = ()
     else:
-        shape = ()
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+        must_have_shape = ()
+        reshape_to = None
+    return_type = list
 
-    return validate_array(num, **kwargs)
+    if dtype_out is None:
+        dtype_out = cast(_NumberType, dtype_out)
+
+    return validate_array(
+        num,
+        must_have_shape=must_have_shape,
+        must_be_finite=must_be_finite,
+        must_be_real=must_be_real,
+        must_have_dtype=must_have_dtype,
+        must_be_nonnegative=must_be_nonnegative,
+        must_be_integer=must_be_integer,
+        must_be_in_range=must_be_in_range,
+        strict_lower_bound=strict_lower_bound,
+        strict_upper_bound=strict_upper_bound,
+        dtype_out=dtype_out,
+        get_flags=get_flags,
+        name=name,
+        return_type=return_type,
+        reshape_to=reshape_to,
+    )
 
 
 def validate_data_range(rng: VectorLike[_NumberType], /, **kwargs):

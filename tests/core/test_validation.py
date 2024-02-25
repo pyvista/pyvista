@@ -134,22 +134,31 @@ def test_check_subdtype_changes_type():
 
 
 def test_validate_number():
-    validate_number([2.0])
-    num = validate_number(1)
-    assert num == 1
+    num, flags = validate_number(
+        [2.0],
+        reshape=True,
+        must_be_finite=True,
+        must_be_real=True,
+        must_have_dtype=None,
+        must_be_nonnegative=True,
+        must_be_integer=True,
+        must_be_in_range=[0, 3],
+        strict_lower_bound=True,
+        strict_upper_bound=True,
+        dtype_out=int,
+        get_flags=True,
+        name='_number',
+    )
+    assert num == 2
     assert isinstance(num, int)
 
-    num = validate_number(2.0, return_type='numpy', must_have_shape=(), reshape=False)
-    assert num == 2.0
-    assert type(num) is np.ndarray
-    assert num.dtype.type is np.float64
+    num = validate_number(np.array([3.0]))
+    assert num == 3.0
+    assert isinstance(num, float)
 
-    msg = (
-        "Parameter 'must_have_shape' cannot be set for function `validate_number`.\n"
-        "Its value is automatically set to `()`."
-    )
+    msg = 'Number has shape (1,) which is not allowed. Shape must be ().'
     with pytest.raises(ValueError, match=escape(msg)):
-        validate_number(1, must_have_shape=2, reshape=False)
+        validate_number([1], reshape=False)
 
 
 def test_validate_data_range():
