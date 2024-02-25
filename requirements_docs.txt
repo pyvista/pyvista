@@ -13,7 +13,7 @@ mypy-extensions==1.0.0
 numpydoc==1.6.0
 osmnx==1.9.1
 pydata-sphinx-theme==0.15.2
-pypandoc==1.12
+pypandoc==1.13
 pytest-sphinx==0.6.0
 scipy==1.12.0
 sphinx==7.1.2
