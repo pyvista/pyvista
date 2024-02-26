@@ -370,6 +370,28 @@ def test_validate_arrayN_unsigned(reshape):
 
 @pytest.mark.parametrize('reshape', [True, False])
 def test_validate_array3(reshape):
+    arr, flags = validate_array3(
+        (1, 2, 3),
+        reshape=reshape,
+        broadcast=True,
+        must_have_dtype=int,
+        must_be_finite=True,
+        must_be_real=True,
+        must_be_integer=True,
+        must_be_nonnegative=True,
+        must_be_sorted=True,
+        must_be_in_range=[0, 4],
+        strict_lower_bound=True,
+        strict_upper_bound=True,
+        dtype_out=int,
+        as_any=True,
+        copy=True,
+        get_flags=True,
+        name='_array',
+    )
+    assert np.array_equal(arr, (1, 2, 3))
+    assert isinstance(arr, np.ndarray)
+
     # test 0D input is reshaped to len-3 1D vector with broadcasting enabled
     arr = validate_array3(0, broadcast=True)
     assert np.shape(arr) == (3,)
@@ -399,14 +421,6 @@ def test_validate_array3(reshape):
         msg = "Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]"
         with pytest.raises(ValueError, match=escape(msg)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
-
-    # test shape cannot be overridden
-    msg = (
-        "Parameter 'must_have_shape' cannot be set for function `validate_array3`.\n"
-        "Its value is automatically set to `[(3,), (1, 3), (3, 1)]`."
-    )
-    with pytest.raises(ValueError, match=escape(msg)):
-        validate_array3((1, 2, 3), must_have_shape=3)
 
 
 def test_check_range():

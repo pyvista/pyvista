@@ -615,10 +615,10 @@ def validate_array(
     must_have_length: Optional[Union[int, VectorLike[int]]] = None,
     must_have_min_length: Optional[int] = None,
     must_have_max_length: Optional[int] = None,
-    must_be_nonnegative: bool = False,
     must_be_finite: bool = False,
     must_be_real: bool = True,
     must_be_integer: bool = False,
+    must_be_nonnegative: bool = False,
     must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
     must_be_in_range: Optional[VectorLike[float]] = None,
     strict_lower_bound: bool = False,
@@ -734,10 +734,6 @@ def validate_array(
         if the array' length is this value or less. See note in
         ``must_have_length`` for details.
 
-    must_be_nonnegative : bool, default: False
-        :func:`Check <pyvista.core._validation.check.check_nonnegative>`
-        if all elements of the array are nonnegative.
-
     must_be_finite : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
@@ -758,6 +754,10 @@ def validate_array(
         :func:`Check <pyvista.core._validation.check.check_integer>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
+
+    must_be_nonnegative : bool, default: False
+        :func:`Check <pyvista.core._validation.check.check_nonnegative>`
+        if all elements of the array are nonnegative.
 
         .. note::
 
@@ -1335,11 +1335,11 @@ def _array_from_vtkmatrix(
 
 class _KwargsValidateNumber(TypedDict):
     reshape: bool
+    must_have_dtype: Optional[_NumberUnion]
     must_be_finite: bool
     must_be_real: bool
-    must_have_dtype: Optional[_NumberUnion]
-    must_be_nonnegative: bool
     must_be_integer: bool
+    must_be_nonnegative: bool
     must_be_in_range: Optional[VectorLike[float]]
     strict_lower_bound: bool
     strict_upper_bound: bool
@@ -1347,7 +1347,7 @@ class _KwargsValidateNumber(TypedDict):
     name: str
 
 
-# Many type ignores needed to make overloads work here but the tests should still pass
+# Many type ignores needed to make overloads work here but the typing tests should still pass
 @overload
 def validate_number(  # type: ignore[misc]  # numpydoc ignore=GL08
     num: Union[_NumberType, VectorLike[_NumberType]],
@@ -1378,8 +1378,8 @@ def validate_number(  # type: ignore[misc]
     must_be_finite: bool = True,
     must_be_real: bool = True,
     must_have_dtype: Optional[_NumberUnion] = None,
-    must_be_nonnegative: bool = False,
     must_be_integer: bool = False,
+    must_be_nonnegative: bool = False,
     must_be_in_range: Optional[VectorLike[float]] = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
@@ -1412,10 +1412,10 @@ def validate_number(  # type: ignore[misc]
     must_have_dtype : type, optional
         See :func:~validate_array for details.
 
-    must_be_nonnegative : bool, default: False
+    must_be_integer : bool, default: False
         See :func:~validate_array for details.
 
-    must_be_integer : bool, default: False
+    must_be_nonnegative : bool, default: False
         See :func:~validate_array for details.
 
     must_be_in_range : VectorLike[float], optional
@@ -1470,37 +1470,37 @@ def validate_number(  # type: ignore[misc]
 
     """
     must_have_shape: Union[_ShapeLike, List[_ShapeLike]]
-
     if reshape:
         must_have_shape = [(), (1,)]
     else:
         must_have_shape = ()
-    reshape_to = ()
-    return_type = list
 
     return validate_array(  # type: ignore[type-var, misc]
         num,
-        dtype_out=dtype_out,  # type: ignore[arg-type]
-        return_type=return_type,
-        reshape_to=reshape_to,
-        broadcast_to=None,
+        # Override default vales for these params:
+        return_type=list,
+        reshape_to=(),
         must_have_shape=must_have_shape,
+        # Allow these params to be set by user:
+        dtype_out=dtype_out,  # type: ignore[arg-type]
         must_have_dtype=must_have_dtype,
-        must_have_length=None,
-        must_have_min_length=None,
-        must_have_max_length=None,
         must_be_nonnegative=must_be_nonnegative,
         must_be_finite=must_be_finite,
         must_be_real=must_be_real,
         must_be_integer=must_be_integer,
-        must_be_sorted=False,
         must_be_in_range=must_be_in_range,
         strict_lower_bound=strict_lower_bound,
         strict_upper_bound=strict_upper_bound,
-        as_any=False,
-        copy=False,
         get_flags=get_flags,
         name=name,
+        # These params are irrelevant for this function:
+        must_be_sorted=False,
+        must_have_length=None,
+        must_have_min_length=None,
+        must_have_max_length=None,
+        broadcast_to=None,
+        as_any=False,
+        copy=False,
     )
 
 
@@ -1804,9 +1804,22 @@ def validate_array3(
     array: Union[_NumberType, VectorLike[_NumberType], MatrixLike[_NumberType]],
     /,
     *,
-    reshape=True,
-    broadcast=False,
-    **kwargs,
+    reshape: bool = True,
+    broadcast: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_be_integer: bool = False,
+    must_be_nonnegative: bool = False,
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out: Optional[Type[__NumberType]] = None,
+    as_any: bool = True,
+    copy: bool = False,
+    get_flags: bool = False,
+    name: str = 'Array',
 ):
     """Validate a numeric 1D array with 3 elements.
 
@@ -1832,8 +1845,47 @@ def validate_array3(
         are considered valid input and the single value is broadcast to
         a length 3 array.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
+    must_be_finite : bool, default: True
+        See :func:~validate_array for details.
+
+    must_be_real : bool, default: True
+        See :func:~validate_array for details.
+
+    must_have_dtype : type, optional
+        See :func:~validate_array for details.
+
+    must_be_integer : bool, default: False
+        See :func:~validate_array for details.
+
+    must_be_nonnegative : bool, default: False
+        See :func:~validate_array for details.
+
+    must_be_sorted : bool | dict, default: False
+        See :func:~validate_array for details.
+
+    must_be_in_range : VectorLike[float], optional
+        See :func:~validate_array for details.
+
+    strict_lower_bound : bool, default: False
+        See :func:~validate_array for details.
+
+    strict_upper_bound : bool, default: False
+        See :func:~validate_array for details.
+
+    dtype_out : dtype, optional
+        See :func:~validate_array for details.
+
+    as_any : bool, default: True
+        See :func:~validate_array for details.
+
+    copy : bool, default: False
+        See :func:~validate_array for details.
+
+    get_flags : bool, default: False
+        See :func:~validate_array for details.
+
+    name : str = 'Array'
+        See :func:~validate_array for details.
 
     Returns
     -------
@@ -1857,12 +1909,12 @@ def validate_array3(
 
     >>> from pyvista import _validation
     >>> _validation.validate_array3((1, 2, 3))
-    (1, 2, 3)
+    array([1, 2, 3])
 
     2D 3-element arrays are automatically reshaped to be 1D.
 
     >>> _validation.validate_array3([[1, 2, 3]])
-    [1, 2, 3]
+    array([1, 2, 3])
 
     Scalar 0-dimensional values can be automatically broadcast as
     a 3-element 1D array.
@@ -1873,22 +1925,48 @@ def validate_array3(
     Add additional constraints if needed.
 
     >>> _validation.validate_array3((1, 2, 3), must_be_nonnegative=True)
-    (1, 2, 3)
+    array([1, 2, 3])
 
     """
-    shape: List[tuple[int, ...]]
-    shape = [(3,)]
+    must_have_shape: List[_ShapeLike] = [(3,)]
+    reshape_to: Optional[Tuple[int]] = None
     if reshape:
-        shape.append((1, 3))
-        shape.append((3, 1))
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
+        must_have_shape.append((1, 3))
+        must_have_shape.append((3, 1))
+        reshape_to = (-1,)
+    broadcast_to: Optional[Tuple[int]] = None
     if broadcast:
-        shape.append(())  # allow 0D scalars
-        shape.append((1,))  # 1D 1-element vectors
-        _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+        must_have_shape.append(())  # allow 0D scalars
+        must_have_shape.append((1,))  # 1D 1-element vectors
+        broadcast_to = (3,)
 
-    return validate_array(array, **kwargs)
+    return validate_array(
+        array,
+        # Override default vales for these params:
+        return_type='numpy',
+        reshape_to=reshape_to,
+        broadcast_to=broadcast_to,
+        must_have_shape=must_have_shape,
+        # # Allow these params to be set by user:
+        # dtype_out=dtype_out,  TODO: Fix mypy errors, add overloads
+        must_have_dtype=must_have_dtype,
+        must_be_nonnegative=must_be_nonnegative,
+        must_be_finite=must_be_finite,
+        must_be_real=must_be_real,
+        must_be_integer=must_be_integer,
+        must_be_sorted=must_be_sorted,
+        must_be_in_range=must_be_in_range,
+        strict_lower_bound=strict_lower_bound,
+        strict_upper_bound=strict_upper_bound,
+        as_any=as_any,
+        copy=copy,
+        get_flags=get_flags,
+        name=name,
+        # These params are irrelevant for this function:
+        must_have_length=None,
+        must_have_min_length=None,
+        must_have_max_length=None,
+    )
 
 
 def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
