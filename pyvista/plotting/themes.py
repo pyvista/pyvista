@@ -30,6 +30,7 @@ pyvista.
 
 """
 
+from collections.abc import MutableMapping
 from itertools import chain
 import json
 import os
@@ -159,7 +160,10 @@ class _ThemeConfig(metaclass=_ForceSlots):
     def _handle_kwargs(self, **kwargs):
         """Set config values from **kwargs."""
         for key, value in kwargs.items():
-            self[key] = value
+            if isinstance(value, MutableMapping):
+                self[key].update_from_dict(value)
+            else:
+                self[key] = value
 
     @classmethod
     def from_dict(cls, dict_):

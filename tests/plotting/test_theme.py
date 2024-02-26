@@ -7,7 +7,7 @@ import pyvista as pv
 from pyvista import colors
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import Theme, _set_plot_theme_from_env, _SliderStyleConfig
+from pyvista.plotting.themes import Theme, _AxesConfig, _set_plot_theme_from_env, _SliderStyleConfig
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -710,3 +710,20 @@ def test_slider_style_defaults():
     theme = _SliderStyleConfig.my_slider_theme()
 
     assert theme == my_slider_theme
+
+
+def test_kwargs_setting():
+
+    # first show the default settings
+    my_theme = Theme()
+    assert not my_theme.show_edges
+    assert not my_theme.axes.box
+
+    # next show that kwargs change the settings
+    my_theme = Theme(show_edges=True, axes={'box': True})
+    assert my_theme.show_edges
+    assert my_theme.axes.box
+
+    # next set kwarg via class
+    my_theme = Theme(axes=_AxesConfig(box=False))
+    assert not my_theme.axes.box
