@@ -6,12 +6,8 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista.core._typing_core import ArrayLike, NumpyArray
-from pyvista.core._typing_core._array_like import (
-    NumberType,
-    _ArrayLikeOrScalar,
-    _FiniteNestedList,
-    _FiniteNestedTuple,
-)
+from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList, _FiniteNestedTuple
 
 
 def _cast_to_list(

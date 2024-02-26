@@ -24,7 +24,8 @@ from typing import (
 import numpy as np
 
 from pyvista.core._typing_core import NumpyArray
-from pyvista.core._typing_core._array_like import NumberType, _ArrayLikeOrScalar, _FiniteNestedList
+from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList
 from pyvista.core._typing_core._type_guards import (
     _is_NestedNumberSequence,
     _is_Number,

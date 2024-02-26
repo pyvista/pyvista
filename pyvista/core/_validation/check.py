@@ -31,8 +31,9 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._typing_core import ArrayLike, NumpyArray, VectorLike
-from pyvista.core._typing_core._array_like import NumberType, _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core import ArrayLike, NumberType, NumpyArray, VectorLike
+from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+from pyvista.core._typing_core._array_like import _NumberType
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
     _NestedSequenceWrapper,

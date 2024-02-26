@@ -24,10 +24,9 @@ import numpy as np
 from typing_extensions import TypedDict, Unpack
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
+from pyvista.core._typing_core import MatrixLike, NumberType, NumpyArray, TransformLike, VectorLike
+from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 from pyvista.core._typing_core._array_like import (
-    NumberType,
-    _ArrayLikeOrScalar,
     _FiniteNestedList,
     _FiniteNestedTuple,
     _NumberType,

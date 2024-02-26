@@ -6,7 +6,8 @@ from typing import Any, Iterable, Sequence, Tuple, Type, cast
 import numpy as np
 from typing_extensions import TypeGuard
 
-from ._array_like import NumberType, _ArrayLikeOrScalar, _PyNumberType
+from ._aliases import _ArrayLikeOrScalar
+from ._array_like import NumberType, _PyNumberType
 
 
 def _is_Number(array: _ArrayLikeOrScalar[NumberType]) -> TypeGuard[NumberType]:

@@ -108,5 +108,3 @@ _ArrayLike = Union[
     _ArrayLike3D[NumberType],
     _ArrayLike4D[NumberType],
 ]
-
-_ArrayLikeOrScalar = Union[NumberType, _ArrayLike[NumberType]]
