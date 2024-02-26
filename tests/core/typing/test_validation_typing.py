@@ -182,13 +182,28 @@ def test_typing(test_case):
         from numpy import dtype, ndarray
 
         from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
-        from pyvista.core._validation.validate import validate_array, validate_number
+        from pyvista.core._validation.validate import (
+            validate_array,
+            validate_array3,
+            validate_number,
+        )
         try:
             revealed_type = eval(revealed)
+        except Exception as e:
+            pytest.fail(
+                f"Test setup failed for runtime test case in {file}:{line_num}.\n"
+                f"Could not evaluate revealed type:\n "
+                f"\t{revealed}\n"
+                f"An exception was raised:\n{repr(e)}"
+
+            )
+        try:
             runtime_val = eval(arg)
         except Exception as e:
             pytest.fail(
                 f"Test setup failed for runtime test case in {file}:{line_num}.\n"
+                f"Could not evaluate runtime argument:\n "
+                f"\t{arg}\n"
                 f"An exception was raised:\n{repr(e)}"
 
             )

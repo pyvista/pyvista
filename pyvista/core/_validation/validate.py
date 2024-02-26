@@ -1800,6 +1800,94 @@ def validate_arrayN_unsigned(
     return validate_arrayN(array, reshape=reshape, **kwargs)
 
 
+class _KwargsValidateArray3(TypedDict, total=False):
+    must_have_dtype: Optional[_NumberUnion]
+    must_be_nonnegative: bool
+    must_be_finite: bool
+    must_be_real: bool
+    must_be_integer: bool
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+    must_be_in_range: Optional[VectorLike[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    as_any: bool
+    copy: bool
+    get_flags: bool
+    name: str
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: _NumberType,
+    /,
+    *,
+    reshape: bool = ...,
+    broadcast: Literal[True],
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: _NumberType,
+    /,
+    *,
+    reshape: bool = ...,
+    broadcast: Literal[True],
+    dtype_out: Type[__NumberType],
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[__NumberType]: ...
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: MatrixLike[_NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    broadcast: bool = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: MatrixLike[_NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    broadcast: bool = ...,
+    dtype_out: Type[__NumberType],
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[__NumberType]: ...
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: VectorLike[_NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    broadcast: bool = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_array3(  # numpydoc ignore=GL08
+    array: VectorLike[_NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    broadcast: bool = ...,
+    dtype_out: Type[__NumberType],
+    **kwargs: Unpack[_KwargsValidateArray3],
+) -> NumpyArray[__NumberType]: ...
+
+
 def validate_array3(
     array: Union[_NumberType, VectorLike[_NumberType], MatrixLike[_NumberType]],
     /,
@@ -1934,21 +2022,21 @@ def validate_array3(
         must_have_shape.append((1, 3))
         must_have_shape.append((3, 1))
         reshape_to = (-1,)
-    broadcast_to: Optional[Tuple[int]] = None
+    broadcast_to: Optional[Tuple[int, ...]] = None
     if broadcast:
         must_have_shape.append(())  # allow 0D scalars
         must_have_shape.append((1,))  # 1D 1-element vectors
         broadcast_to = (3,)
 
-    return validate_array(
+    return validate_array(  # type: ignore[call-overload, misc]
         array,
         # Override default vales for these params:
         return_type='numpy',
         reshape_to=reshape_to,
         broadcast_to=broadcast_to,
         must_have_shape=must_have_shape,
-        # # Allow these params to be set by user:
-        # dtype_out=dtype_out,  TODO: Fix mypy errors, add overloads
+        # Allow these params to be set by user:
+        dtype_out=dtype_out,
         must_have_dtype=must_have_dtype,
         must_be_nonnegative=must_be_nonnegative,
         must_be_finite=must_be_finite,
