@@ -104,7 +104,7 @@ from .geometric_sources import (
 
 try:
     from .geometric_sources import CapsuleSource
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap

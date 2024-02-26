@@ -47,7 +47,7 @@ from .geometric_sources import (
 
 try:
     from .geometric_sources import CapsuleSource
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
 
 from .helpers import wrap
@@ -108,7 +108,7 @@ def Capsule(
     >>> capsule.plot(show_edges=True)
 
     """
-    if pyvista.vtk_version_info >= (9, 3):
+    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
         algo = CylinderSource(
             center=center,
             direction=direction,
