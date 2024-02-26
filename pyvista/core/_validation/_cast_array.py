@@ -7,16 +7,16 @@ import numpy.typing as npt
 
 from pyvista.core._typing_core import ArrayLike, NumpyArray
 from pyvista.core._typing_core._array_like import (
+    NumberType,
     _ArrayLikeOrScalar,
     _FiniteNestedList,
     _FiniteNestedTuple,
-    _NumberType,
 )
 
 
 def _cast_to_list(
-    arr: _ArrayLikeOrScalar[_NumberType],
-) -> Union[_NumberType, _FiniteNestedList[_NumberType]]:
+    arr: _ArrayLikeOrScalar[NumberType],
+) -> Union[NumberType, _FiniteNestedList[NumberType]]:
     """Cast an array to a nested list.
 
     Parameters
@@ -34,8 +34,8 @@ def _cast_to_list(
 
 
 def _cast_to_tuple(
-    arr: ArrayLike[_NumberType],
-) -> Union[_NumberType, _FiniteNestedTuple[_NumberType]]:
+    arr: ArrayLike[NumberType],
+) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
     """Cast an array to a nested tuple.
 
     Parameters
@@ -57,7 +57,7 @@ def _cast_to_tuple(
 
 
 def _cast_to_numpy(
-    arr: _ArrayLikeOrScalar[_NumberType],
+    arr: _ArrayLikeOrScalar[NumberType],
     /,
     *,
     as_any: bool = True,
@@ -65,7 +65,7 @@ def _cast_to_numpy(
     copy: bool = False,
     must_be_real=False,
     name: str = "Array",
-) -> NumpyArray[_NumberType]:
+) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
     Object arrays are not allowed but the dtype is otherwise unchecked by default.

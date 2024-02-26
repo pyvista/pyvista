@@ -6,27 +6,27 @@ from typing import Any, Iterable, Sequence, Tuple, Type, cast
 import numpy as np
 from typing_extensions import TypeGuard
 
-from ._array_like import _ArrayLikeOrScalar, _NumberType, _PyNumberType
+from ._array_like import NumberType, _ArrayLikeOrScalar, _PyNumberType
 
 
-def _is_Number(array: _ArrayLikeOrScalar[_NumberType]) -> TypeGuard[_NumberType]:
+def _is_Number(array: _ArrayLikeOrScalar[NumberType]) -> TypeGuard[NumberType]:
     return isinstance(array, (float, int, bool, np.floating, np.integer, np.bool_))
 
 
 def _is_NumberSequence(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
 ) -> TypeGuard[Sequence[_PyNumberType]]:
     return isinstance(array, (tuple, list)) and _has_element_types(array, (float, int))
 
 
-def _is_NestedNumberSequence(array: _ArrayLikeOrScalar[_NumberType]) -> bool:
+def _is_NestedNumberSequence(array: _ArrayLikeOrScalar[NumberType]) -> bool:
     if (
         isinstance(array, (tuple, list))
         and len(array) > 0
         and all(_is_NumberSequence(subarray) for subarray in array)
     ):
         # We have the correct type, now check all subarray shapes are equal
-        array = cast(Sequence[Sequence[_NumberType]], array)
+        array = cast(Sequence[Sequence[NumberType]], array)
         sub_shape = len(array[0])
         return all(len(sub_array) == sub_shape for sub_array in array)
     return False

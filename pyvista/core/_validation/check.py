@@ -32,7 +32,7 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista.core._typing_core import ArrayLike, NumpyArray, VectorLike
-from pyvista.core._typing_core._array_like import __NumberType, _ArrayLikeOrScalar, _NumberType
+from pyvista.core._typing_core._array_like import NumberType, __NumberType, _ArrayLikeOrScalar
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
     _NestedSequenceWrapper,
@@ -46,7 +46,7 @@ _ShapeLike = Union[int, _Shape]
 
 
 def check_subdtype(
-    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[_NumberType]],
+    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
     base_dtype: Union[npt.DTypeLike, Tuple[npt.DTypeLike, ...], List[npt.DTypeLike]],
     *,
@@ -117,7 +117,7 @@ def check_subdtype(
         raise TypeError(msg)
 
 
-def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
+def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
     ``numpy.bool`` and ``bool`` are considered real numbers for this check.
@@ -167,7 +167,7 @@ def check_real(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"
 
 
 def check_sorted(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     *,
     ascending: bool = True,
@@ -263,7 +263,7 @@ def check_sorted(
             ndim = 1
             axis = 0
         else:
-            array_check = cast(NumpyArray[_NumberType], wrapped._array)
+            array_check = cast(NumpyArray[NumberType], wrapped._array)
 
         # Slicers for numpy arrays
         first = [slice(None)] * ndim
@@ -285,7 +285,7 @@ def check_sorted(
         )
 
 
-def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
+def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -324,7 +324,7 @@ def check_finite(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Arra
 
 
 def check_integer(
-    array: _ArrayLikeOrScalar[_NumberType], /, *, strict: bool = False, name: str = "Array"
+    array: _ArrayLikeOrScalar[NumberType], /, *, strict: bool = False, name: str = "Array"
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -381,7 +381,7 @@ def check_integer(
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = "Array"):
+def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -417,7 +417,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[_NumberType], /, *, name: str = 
 
 
 def check_greater_than(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     value: float,
     *,
@@ -477,7 +477,7 @@ def check_greater_than(
 
 
 def check_less_than(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     value: float,
     *,
@@ -538,7 +538,7 @@ def check_less_than(
 
 
 def check_range(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     rng: VectorLike[__NumberType],
     *,
@@ -602,7 +602,7 @@ def check_range(
 
 
 def check_shape(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     shape: Union[_ShapeLike, List[_ShapeLike]],
     *,
@@ -677,7 +677,7 @@ def check_shape(
 
 
 def check_ndim(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     ndim: Union[int, Sequence[int]],
     *,
@@ -1224,7 +1224,7 @@ def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input')
 
 
 def check_length(
-    array: _ArrayLikeOrScalar[_NumberType],
+    array: _ArrayLikeOrScalar[NumberType],
     /,
     *,
     exact_length: Union[int, VectorLike[int], None] = None,
@@ -1300,7 +1300,7 @@ def check_length(
     wrapped = _ArrayLikeWrapper(array)
     if wrapped.ndim == 0:
         if allow_scalar:
-            wrapped = _ArrayLikeWrapper(cast(Sequence[_NumberType], [wrapped._array]))
+            wrapped = _ArrayLikeWrapper(cast(Sequence[NumberType], [wrapped._array]))
         else:
             try:
                 len(wrapped._array)
@@ -1309,7 +1309,7 @@ def check_length(
 
     if must_be_1d:
         check_ndim(wrapped(), ndim=1)
-    array_len = len(cast(ArrayLike[_NumberType], wrapped._array))
+    array_len = len(cast(ArrayLike[NumberType], wrapped._array))
 
     if exact_length is not None:
         wrapped_exact_len = _ArrayLikeWrapper(exact_length)

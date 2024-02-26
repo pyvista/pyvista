@@ -31,8 +31,8 @@ import numpy.typing as npt
 # Create alias of npt.NDArray bound to numeric types only
 # TODO: remove # type: ignore once support for 3.8 is dropped
 _NumberUnion = Union[Type[np.floating], Type[np.integer], Type[np.bool_], Type[float], Type[int], Type[bool]]  # type: ignore[type-arg]
-_NumberType = TypeVar(
-    '_NumberType',
+NumberType = TypeVar(
+    'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
 __NumberType = TypeVar(
@@ -51,57 +51,57 @@ if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
     # which makes it incompatible with built-in generic alias types, e.g.
     # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
     # the private typing._GenericAlias type instead
-    np_dtype = typing._GenericAlias(np.dtype, _NumberType)
+    np_dtype = typing._GenericAlias(np.dtype, NumberType)
     _np_floating = typing._GenericAlias(np.floating, _T)
     _np_integer = typing._GenericAlias(np.integer, _T)
     np_dtype_floating = typing._GenericAlias(np.dtype, _np_floating[_T])
     np_dtype_integer = typing._GenericAlias(np.dtype, _np_integer[_T])
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[_NumberType]))
+    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[NumberType]))
 else:
-    np_dtype = np.dtype[_NumberType]
+    np_dtype = np.dtype[NumberType]
     np_dtype_floating = np.dtype[np.floating[Any]]
     np_dtype_integer = np.dtype[np.integer[Any]]
-    NumpyArray = npt.NDArray[_NumberType]
+    NumpyArray = npt.NDArray[NumberType]
 
 _FiniteNestedList = Union[
-    List[_NumberType],
-    List[List[_NumberType]],
-    List[List[List[_NumberType]]],
-    List[List[List[List[_NumberType]]]],
+    List[NumberType],
+    List[List[NumberType]],
+    List[List[List[NumberType]]],
+    List[List[List[List[NumberType]]]],
 ]
 
 _FiniteNestedTuple = Union[
-    Tuple[_NumberType],
-    Tuple[Tuple[_NumberType]],
-    Tuple[Tuple[Tuple[_NumberType]]],
-    Tuple[Tuple[Tuple[Tuple[_NumberType]]]],
+    Tuple[NumberType],
+    Tuple[Tuple[NumberType]],
+    Tuple[Tuple[Tuple[NumberType]]],
+    Tuple[Tuple[Tuple[Tuple[NumberType]]]],
 ]
 
 _ArrayLike1D = Union[
-    NumpyArray[_NumberType],
-    Sequence[_NumberType],
-    Sequence[NumpyArray[_NumberType]],
+    NumpyArray[NumberType],
+    Sequence[NumberType],
+    Sequence[NumpyArray[NumberType]],
 ]
 _ArrayLike2D = Union[
-    NumpyArray[_NumberType],
-    Sequence[Sequence[_NumberType]],
-    Sequence[Sequence[NumpyArray[_NumberType]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[NumberType]],
+    Sequence[Sequence[NumpyArray[NumberType]]],
 ]
 _ArrayLike3D = Union[
-    NumpyArray[_NumberType],
-    Sequence[Sequence[Sequence[_NumberType]]],
-    Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[Sequence[NumberType]]],
+    Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
 ]
 _ArrayLike4D = Union[
-    NumpyArray[_NumberType],
-    Sequence[Sequence[Sequence[Sequence[_NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumberType]]]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[Sequence[Sequence[NumberType]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
 ]
 ArrayLike = Union[
-    _ArrayLike1D[_NumberType],
-    _ArrayLike2D[_NumberType],
-    _ArrayLike3D[_NumberType],
-    _ArrayLike4D[_NumberType],
+    _ArrayLike1D[NumberType],
+    _ArrayLike2D[NumberType],
+    _ArrayLike3D[NumberType],
+    _ArrayLike4D[NumberType],
 ]
 
-_ArrayLikeOrScalar = Union[_NumberType, ArrayLike[_NumberType]]
+_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
