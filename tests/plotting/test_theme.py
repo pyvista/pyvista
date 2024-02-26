@@ -687,11 +687,11 @@ def test_theme_defaults():
         assert Theme.from_default(name) == theme()
 
     my_theme = Theme.dark_theme()
-    Theme.register_default("my_theme", my_theme.to_dict())
+    Theme.register_default("my_theme", my_theme.to_dict(), """My theme documentation.""")
     assert Theme.my_theme() == Theme.dark_theme()
 
     my_theme.show_edges = True
-    Theme.register_default("my_theme", my_theme.to_dict())
+    Theme.register_default("my_theme", my_theme.to_dict(), """My theme documentation.""")
     assert Theme.my_theme() != Theme.dark_theme()
 
 
@@ -705,7 +705,9 @@ def test_slider_style_defaults():
     assert Theme().slider_style == _SliderStyleConfig.default_theme()
 
     my_slider_theme = _SliderStyleConfig.classic_theme()
-    _SliderStyleConfig.register_default("my_slider_theme", my_slider_theme.to_dict())
+    _SliderStyleConfig.register_default(
+        "my_slider_theme", my_slider_theme.to_dict(), """My theme documentation."""
+    )
 
     theme = _SliderStyleConfig.my_slider_theme()
 
