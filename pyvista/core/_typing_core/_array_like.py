@@ -38,8 +38,8 @@ NumberType = TypeVar(
 NumberType.__doc__ = """Type variable for numeric data types."""
 
 # Create a copy of the typevar
-__NumberType = TypeVar(
-    '__NumberType',
+_NumberType = TypeVar(
+    '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
 _PyNumberType = TypeVar('_PyNumberType', float, int, bool)
