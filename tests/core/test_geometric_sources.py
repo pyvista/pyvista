@@ -38,7 +38,7 @@ def test_cylinder_source():
 
 
 def test_cylinder_capsule_cap():
-    if pv.vtk_version_info.major >= 9 and pv.vtk_version_info.minor >= 3:
+    if pv.vtk_version_info >= (9, 3):
         algo = pv.CylinderSource()
         algo.capsule_cap = True
         assert algo.capsule_cap
