@@ -65,6 +65,7 @@ Geometric Objects
    Triangle
    Tube
    Wavelet
+   Capsule
 
 
 Geometric Sources
@@ -87,3 +88,4 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    ConeSource
    CylinderSource
    MultipleLinesSource
+   CapsuleSource
