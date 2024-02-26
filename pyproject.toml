@@ -259,6 +259,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
