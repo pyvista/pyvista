@@ -36,6 +36,7 @@ Geometric Objects
 
    Arrow
    Box
+   Capsule
    Circle
    CircularArc
    CircularArcFromNormal
@@ -65,7 +66,6 @@ Geometric Objects
    Triangle
    Tube
    Wavelet
-   Capsule
 
 
 Geometric Sources
@@ -85,7 +85,7 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
 .. autosummary::
    :toctree: _autosummary
 
+   CapsuleSource
    ConeSource
    CylinderSource
    MultipleLinesSource
-   CapsuleSource
