@@ -317,5 +317,7 @@ class Viewer(BaseViewer):
                 view = PyVistaLocalView(self.plotter, **kwargs)
 
             self._html_views.add(view)
+            if add_menu:
+                view.menu = self.menu
 
         return view
