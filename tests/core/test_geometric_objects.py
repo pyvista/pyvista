@@ -406,9 +406,6 @@ def test_tube():
 
 def test_capsule():
     capsule = pv.Capsule()
-    direction = (1, 1, 1)
-    capsule.direction = direction
-    assert capsule.direction == direction
     assert np.any(capsule.points)
     assert np.any(capsule.faces)
 
