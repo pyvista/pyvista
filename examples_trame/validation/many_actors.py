@@ -1,6 +1,6 @@
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
@@ -30,7 +30,7 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text(state.trame__title)
 
     with layout.toolbar:
-        vuetify.VSpacer()
+        vuetify3.VSpacer()
 
     with layout.content:
         # Use PyVista UI template for Plotters
