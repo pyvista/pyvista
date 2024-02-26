@@ -28,19 +28,23 @@ from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Type, TypeVar, Uni
 import numpy as np
 import numpy.typing as npt
 
-# Create alias of npt.NDArray bound to numeric types only
+# Define numeric types
 # TODO: remove # type: ignore once support for 3.8 is dropped
 _NumberUnion = Union[Type[np.floating], Type[np.integer], Type[np.bool_], Type[float], Type[int], Type[bool]]  # type: ignore[type-arg]
 NumberType = TypeVar(
     'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
+NumberType.__doc__ = """Type variable for numeric data types."""
+
+# Create a copy of the typevar
 __NumberType = TypeVar(
     '__NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
 _PyNumberType = TypeVar('_PyNumberType', float, int, bool)
 _NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)
+
 
 _T = TypeVar('_T')
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
@@ -61,6 +65,7 @@ else:
     np_dtype = np.dtype[NumberType]
     np_dtype_floating = np.dtype[np.floating[Any]]
     np_dtype_integer = np.dtype[np.integer[Any]]
+    # Create alias of npt.NDArray bound to numeric types only
     NumpyArray = npt.NDArray[NumberType]
 
 _FiniteNestedList = Union[
@@ -97,11 +102,11 @@ _ArrayLike4D = Union[
     Sequence[Sequence[Sequence[Sequence[NumberType]]]],
     Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
 ]
-ArrayLike = Union[
+_ArrayLike = Union[
     _ArrayLike1D[NumberType],
     _ArrayLike2D[NumberType],
     _ArrayLike3D[NumberType],
     _ArrayLike4D[NumberType],
 ]
 
-_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+_ArrayLikeOrScalar = Union[NumberType, _ArrayLike[NumberType]]
