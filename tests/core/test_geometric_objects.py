@@ -431,6 +431,16 @@ def test_cone():
     assert np.any(cone.faces)
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_cone_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cone = pv.Cone(point_dtype=point_dtype)
+        assert cone.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cone(point_dtype=point_dtype)
+
+
 def test_box():
     geom = pv.Box()
     assert np.any(geom.points)
