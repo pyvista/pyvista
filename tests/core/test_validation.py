@@ -319,23 +319,16 @@ def test_validate_arrayN(reshape):
     assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
-        msg = 'Array has shape () which is not allowed. Shape must be -1.'
+        msg = 'Array has shape () which is not allowed. Shape must be (-1,).'
         with pytest.raises(ValueError, match=escape(msg)):
             validate_arrayN(0, reshape=False)
 
-        msg = 'Array has shape (1, 3) which is not allowed. Shape must be -1.'
+        msg = 'Array has shape (1, 3) which is not allowed. Shape must be (-1,).'
         with pytest.raises(ValueError, match=escape(msg)):
             validate_arrayN([[1, 2, 3]], reshape=False)
 
     arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
     assert np.shape(arr) == (6,)
-
-    msg = (
-        "Parameter 'must_have_shape' cannot be set for function `validate_arrayN`.\n"
-        "Its value is automatically set to `[(), -1, (1, -1), (-1, 1)]`."
-    )
-    with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayN((1, 2, 3), must_have_shape=1)
 
     msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1), (-1, 1)].'
     with pytest.raises(ValueError, match=escape(msg)):
@@ -355,7 +348,7 @@ def test_validate_arrayN_unsigned(reshape):
     arr = validate_arrayN_unsigned(0.0, dtype_out='uint8')
     assert arr.dtype.type is np.uint8
 
-    with pytest.raises(ValueError, match="Shape must be -1."):
+    with pytest.raises(ValueError, match=escape('Shape must be (-1,).')):
         validate_arrayN_unsigned(0.0, reshape=False)
 
     msg = '_input values must all be greater than or equal to 0.'

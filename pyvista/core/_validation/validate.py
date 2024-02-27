@@ -1386,7 +1386,7 @@ def validate_number(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
     get_flags: bool = False,
     name: str = 'Number',
 ):
-    """Return a real, finite, validated number.
+    """Validate a real number.
 
     This function is similar to :func:`~validate_array`, but is configured
     to only allow inputs with one element. The number is checked to be finite
@@ -1611,7 +1611,7 @@ def validate_arrayNx3(  # numpydoc ignore=PR01  # numpydoc ignore=PR01,PR02
     get_flags: bool = False,
     name: str = 'Array',
 ):
-    """Return a validated numeric array with shape Nx3.
+    """Validate a numeric array with N rows and 3 columns.
 
     This function is similar to :func:`~validate_array`, but is configured
     to only allow inputs with shape ``(N, 3)`` or which can be reshaped to
@@ -1704,23 +1704,119 @@ def validate_arrayNx3(  # numpydoc ignore=PR01  # numpydoc ignore=PR01,PR02
     )
 
 
-def validate_arrayN(
+class _KwargsValidateArrayN(TypedDict, total=False):
+    must_have_dtype: Optional[_NumberUnion]
+    must_have_length: Optional[Union[int, VectorLike[int]]]
+    must_have_min_length: Optional[int]
+    must_have_max_length: Optional[int]
+    must_be_nonnegative: bool
+    must_be_finite: bool
+    must_be_real: bool
+    must_be_integer: bool
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+    must_be_in_range: Optional[VectorLike[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    as_any: bool
+    copy: bool
+    get_flags: bool
+    name: str
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: NumberType,
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[NumberType]: ...
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: NumberType,
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[_NumberType],
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[NumberType]: ...
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[_NumberType],
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[NumberType]: ...
+
+
+@overload
+def validate_arrayN(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: Type[_NumberType],
+    **kwargs: Unpack[_KwargsValidateArrayN],
+) -> NumpyArray[_NumberType]: ...
+
+
+def validate_arrayN(  # numpydoc ignore=PR01,PR02
     array: Union[NumberType, VectorLike[NumberType], MatrixLike[NumberType]],
     /,
     *,
-    reshape=True,
-    **kwargs,
+    reshape: bool = True,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_have_length: Optional[Union[int, VectorLike[int]]] = None,
+    must_have_min_length: Optional[int] = None,
+    must_have_max_length: Optional[int] = None,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out: Optional[Type[_NumberType]] = None,
+    as_any: bool = True,
+    copy: bool = False,
+    get_flags: bool = False,
+    name: str = 'Array',
 ):
-    """Validate a numeric 1D array.
+    """Validate a flat array with N elements.
 
-    The array is checked to ensure its input values:
-
-    * have shape ``(N,)`` or can be reshaped to ``(N,)``
-    * are numeric
-
-    The returned array is formatted so that its values:
-
-    * have shape ``(N,)``
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with shape ``(N,)`` or which can be reshaped to
+    ``(N,)``. The return type is also fixed to always return a NumPy array.
 
     Parameters
     ----------
@@ -1733,8 +1829,11 @@ def validate_arrayN(
         output is consistently one-dimensional. Otherwise, all scalar and
         2D inputs are not considered valid.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
@@ -1766,22 +1865,48 @@ def validate_arrayN(
     reshaped to be 1D.
 
     >>> _validation.validate_arrayN([[1, 2]])
-    [1, 2]
+    array([1, 2])
 
     Add additional constraints if needed.
 
     >>> _validation.validate_arrayN((1, 2, 3), must_have_length=3)
-    (1, 2, 3)
+    array([1, 2, 3])
 
     """
-    shape: Union[_ShapeLike, List[_ShapeLike]]
+    must_have_shape: Union[_ShapeLike, List[_ShapeLike]]
+    reshape_to: Optional[Tuple[int]] = None
     if reshape:
-        shape = [(), (-1), (1, -1), (-1, 1)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
+        must_have_shape = [(), (-1), (1, -1), (-1, 1)]
+        reshape_to = (-1,)
     else:
-        shape = -1
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
-    return validate_array(array, **kwargs)
+        must_have_shape = (-1,)
+    return validate_array(  # type: ignore[call-overload, misc]
+        array,
+        # Override default vales for these params:
+        return_type='numpy',
+        reshape_to=reshape_to,
+        must_have_shape=must_have_shape,
+        # Allow these params to be set by user:
+        must_have_dtype=must_have_dtype,
+        must_have_length=must_have_length,
+        must_have_min_length=must_have_min_length,
+        must_have_max_length=must_have_max_length,
+        must_be_nonnegative=must_be_nonnegative,
+        must_be_finite=must_be_finite,
+        must_be_real=must_be_real,
+        must_be_integer=must_be_integer,
+        must_be_sorted=must_be_sorted,
+        must_be_in_range=must_be_in_range,
+        strict_lower_bound=strict_lower_bound,
+        strict_upper_bound=strict_upper_bound,
+        dtype_out=dtype_out,
+        as_any=as_any,
+        copy=copy,
+        get_flags=get_flags,
+        name=name,
+        # This parameter is not available
+        broadcast_to=None,
+    )
 
 
 def validate_arrayN_unsigned(
@@ -1989,7 +2114,7 @@ def validate_array3(  # numpydoc ignore=PR01,PR02
     get_flags: bool = False,
     name: str = 'Array',
 ):
-    """Return a validated numeric array with three values.
+    """Validate an array with three numbers.
 
     This function is similar to :func:`~validate_array`, but is configured
     to only allow inputs with shape ``(3,)`` or which can be reshaped to
