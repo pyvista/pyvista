@@ -364,6 +364,16 @@ def test_line():
         pv.Line(pointa, (10, 1.0))
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_line_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        line = pv.Line(point_dtype=point_dtype)
+        assert line.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Line(point_dtype=point_dtype)
+
+
 def test_multiple_lines():
     points = np.array([[0, 0, 0], [1, 1, 0], [2, 2, 2], [3, 3, 0]])
     multiple_lines = pv.MultipleLines(points=points)

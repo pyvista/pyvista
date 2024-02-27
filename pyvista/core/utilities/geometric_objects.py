@@ -981,7 +981,7 @@ def Plane(
     return surf
 
 
-def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
+def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, point_dtype='float32'):
     """Create a line.
 
     Parameters
@@ -994,6 +994,10 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     resolution : int, default: 1
         Number of pieces to divide line into.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
 
     Returns
     -------
@@ -1009,7 +1013,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    src = LineSource(pointa, pointb, resolution)
+    src = LineSource(pointa, pointb, resolution, point_dtype=point_dtype)
     line = src.output
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
