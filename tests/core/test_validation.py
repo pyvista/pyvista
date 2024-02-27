@@ -294,13 +294,7 @@ def test_validate_arrayNx3(reshape):
     arr = validate_arrayNx3([(1, 2, 3), (4, 5, 6)], reshape=reshape)
     assert np.shape(arr) == (2, 3)
 
-    msg = (
-        "Parameter 'must_have_shape' cannot be set for function `validate_arrayNx3`.\n"
-        "Its value is automatically set to `[3, (-1, 3)]`."
-    )
-    with pytest.raises(ValueError, match=escape(msg)):
-        validate_arrayNx3((1, 2, 3), must_have_shape=1)
-    msg = "Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)]."
+    msg = "Array has shape () which is not allowed. Shape must be one of [(-1, 3), (3,)]."
     with pytest.raises(ValueError, match=escape(msg)):
         validate_arrayNx3(0)
     with pytest.raises(ValueError, match="_input"):

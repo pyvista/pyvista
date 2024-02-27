@@ -185,6 +185,7 @@ def test_typing(test_case):
         from pyvista.core._validation.validate import (
             validate_array,
             validate_array3,
+            validate_arrayNx3,
             validate_number,
         )
         try:

@@ -1551,9 +1551,92 @@ def validate_data_range(rng: VectorLike[NumberType], /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(
-    array: Union[MatrixLike[NumberType], VectorLike[NumberType]], /, *, reshape=True, **kwargs
-) -> NumpyArray[NumberType]:
+class _KwargsValidateArrayNx3(TypedDict, total=False):
+    must_have_dtype: Optional[_NumberUnion]
+    must_have_length: Optional[Union[int, VectorLike[int]]]
+    must_have_min_length: Optional[int]
+    must_have_max_length: Optional[int]
+    must_be_nonnegative: bool
+    must_be_finite: bool
+    must_be_real: bool
+    must_be_integer: bool
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+    must_be_in_range: Optional[VectorLike[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    as_any: bool
+    copy: bool
+    get_flags: bool
+    name: str
+
+
+@overload
+def validate_arrayNx3(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArrayNx3],
+) -> NumpyArray[NumberType]: ...
+
+
+@overload
+def validate_arrayNx3(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[_NumberType],
+    **kwargs: Unpack[_KwargsValidateArrayNx3],
+) -> NumpyArray[_NumberType]: ...
+
+
+@overload
+def validate_arrayNx3(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: None = None,
+    **kwargs: Unpack[_KwargsValidateArrayNx3],
+) -> NumpyArray[NumberType]: ...
+
+
+@overload
+def validate_arrayNx3(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: Type[_NumberType],
+    **kwargs: Unpack[_KwargsValidateArrayNx3],
+) -> NumpyArray[_NumberType]: ...
+
+
+def validate_arrayNx3(  # numpydoc ignore=PR01
+    array: Union[MatrixLike[NumberType], VectorLike[NumberType]],
+    /,
+    *,
+    reshape: bool = True,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_have_length: Optional[Union[int, VectorLike[int]]] = None,
+    must_have_min_length: Optional[int] = None,
+    must_have_max_length: Optional[int] = None,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out: Optional[Type[_NumberType]] = None,
+    as_any: bool = True,
+    copy: bool = False,
+    get_flags: bool = False,
+    name: str = 'Array',
+):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -1575,9 +1658,6 @@ def validate_arrayNx3(
         input and are reshaped to ``(1, 3)`` to ensure the output is
         two-dimensional.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
-
     Returns
     -------
     np.ndarray
@@ -1597,30 +1677,56 @@ def validate_arrayNx3(
 
     >>> from pyvista import _validation
     >>> _validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)))
-    ((1, 2, 3), (4, 5, 6))
+    array([[1, 2, 3],
+           [4, 5, 6]])
 
     One-dimensional 3-element arrays are automatically reshaped to 2D.
 
     >>> _validation.validate_arrayNx3([1, 2, 3])
-    [[1, 2, 3]]
+    array([[1, 2, 3]])
 
     Add additional constraints.
 
     >>> _validation.validate_arrayNx3(
     ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
     ... )
-    ((1, 2, 3), (4, 5, 6))
+    array([[1, 2, 3],
+           [4, 5, 6]])
 
     """
-    shape: Union[_ShapeLike, List[_ShapeLike]]
+    must_have_shape: List[_ShapeLike] = [(-1, 3)]
+    reshape_to: Optional[_ShapeLike] = None
     if reshape:
-        shape = [3, (-1, 3)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
-    else:
-        shape = (-1, 3)
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+        must_have_shape.append((3,))
+        reshape_to = (-1, 3)
 
-    return validate_array(array, **kwargs)
+    return validate_array(  # type: ignore[call-overload, misc]
+        array,
+        # Override default vales for these params:
+        return_type='numpy',
+        reshape_to=reshape_to,
+        must_have_shape=must_have_shape,
+        # Allow these params to be set by user:
+        must_have_dtype=must_have_dtype,
+        must_have_length=must_have_length,
+        must_have_min_length=must_have_min_length,
+        must_have_max_length=must_have_max_length,
+        must_be_nonnegative=must_be_nonnegative,
+        must_be_finite=must_be_finite,
+        must_be_real=must_be_real,
+        must_be_integer=must_be_integer,
+        must_be_sorted=must_be_sorted,
+        must_be_in_range=must_be_in_range,
+        strict_lower_bound=strict_lower_bound,
+        strict_upper_bound=strict_upper_bound,
+        dtype_out=dtype_out,
+        as_any=as_any,
+        copy=copy,
+        get_flags=get_flags,
+        name=name,
+        # This parameter is not available
+        broadcast_to=None,
+    )
 
 
 def validate_arrayN(
