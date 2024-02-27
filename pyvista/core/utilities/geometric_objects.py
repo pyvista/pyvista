@@ -319,6 +319,7 @@ def Sphere(
     end_theta=360.0,
     start_phi=0.0,
     end_phi=180.0,
+    point_dtype='float32',
 ):
     """Create a sphere.
 
@@ -365,6 +366,10 @@ def Sphere(
     end_phi : float, default: 180.0
         Ending polar angle in degrees ``[0, 180]``.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -402,6 +407,7 @@ def Sphere(
         end_theta=end_theta,
         start_phi=start_phi,
         end_phi=end_phi,
+        point_dtype=point_dtype,
     )
     surf = sphere.output
     surf.rotate_y(90, inplace=True)
