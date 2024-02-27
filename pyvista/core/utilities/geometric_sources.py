@@ -1946,17 +1946,23 @@ class PlaneSource(_vtk.vtkPlaneSource):
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     """
 
     def __init__(
         self,
         i_resolution=10,
         j_resolution=10,
+        point_dtype='float32',
     ):
         """Initialize source."""
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
+        self.point_dtype = point_dtype
 
     @property
     def i_resolution(self) -> int:
@@ -2013,6 +2019,46 @@ class PlaneSource(_vtk.vtkPlaneSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+    @property
+    def point_dtype(self) -> str:
+        """Get the desired output point types.
+
+        Returns
+        -------
+        str
+            Desired output point types.
+            It must be either 'float32' or 'float64'.
+        """
+        precision = self.GetOutputPointsPrecision()
+        point_dtype = {
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
+        }[precision]
+        return point_dtype
+
+    @point_dtype.setter
+    def point_dtype(self, point_dtype: str):
+        """Set the desired output point types.
+
+        Parameters
+        ----------
+        point_dtype : str, default: 'float32'
+            Set the desired output point types.
+            It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        point_dtype: str
+            Desired output point types.
+        """
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
+        }[point_dtype]
+        self.SetOutputPointsPrecision(precision)
 
 
 @no_new_attr
