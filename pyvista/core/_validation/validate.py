@@ -1854,7 +1854,7 @@ def validate_arrayN(  # numpydoc ignore=PR01,PR02
 
     >>> from pyvista import _validation
     >>> _validation.validate_arrayN((1, 2, 3, 4))
-    (1, 2, 3, 4)
+    array([1, 2, 3, 4])
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
@@ -1962,11 +1962,11 @@ def validate_arrayN_unsigned(
     >>> from pyvista import _validation
     >>> array = _validation.validate_arrayN_unsigned((1.0, 2.0, 3.0, 4.0))
     >>> array
-    (1, 2, 3, 4)
+    array([1, 2, 3, 4])
 
     Verify that the output data type is integral.
 
-    >>> isinstance(array[0], int)
+    >>> np.issubdtype(array.dtype, int)
     True
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
@@ -1978,14 +1978,14 @@ def validate_arrayN_unsigned(
     reshaped to be 1D.
 
     >>> _validation.validate_arrayN_unsigned([[1, 2]])
-    [1, 2]
+    array([1, 2])
 
     Add additional constraints if needed.
 
     >>> _validation.validate_arrayN_unsigned(
     ...     (1, 2, 3), must_be_in_range=[1, 3]
     ... )
-    (1, 2, 3)
+    array([1, 2, 3])
 
     """
     # Set default dtype out but allow overriding as long as the dtype
