@@ -1018,13 +1018,17 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]], point_dtype='float32'):
     """Create multiple lines.
 
     Parameters
     ----------
     points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
 
     Returns
     -------
@@ -1043,7 +1047,7 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
-    return MultipleLinesSource(points=points).output
+    return MultipleLinesSource(points=points, point_dtype=point_dtype).output
 
 
 def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
