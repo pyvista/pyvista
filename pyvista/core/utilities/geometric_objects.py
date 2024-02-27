@@ -1160,7 +1160,15 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
 
 
-def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
+def Cube(
+    center=(0.0, 0.0, 0.0),
+    x_length=1.0,
+    y_length=1.0,
+    z_length=1.0,
+    bounds=None,
+    clean=True,
+    point_dtype='float32',
+):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
@@ -1202,6 +1210,10 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
         .. versionadded:: 0.33.0
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1217,7 +1229,12 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     """
     algo = CubeSource(
-        center=center, x_length=x_length, y_length=y_length, z_length=z_length, bounds=bounds
+        center=center,
+        x_length=x_length,
+        y_length=y_length,
+        z_length=z_length,
+        bounds=bounds,
+        point_dtype=point_dtype,
     )
     cube = algo.output
 

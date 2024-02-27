@@ -421,6 +421,16 @@ def test_cube():
     assert np.allclose(cube.bounds, bounds)
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cube = pv.Cube(point_dtype=point_dtype)
+        assert cube.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(point_dtype=point_dtype)
+
+
 def test_cone():
     cone = pv.Cone()
     assert np.any(cone.points)
