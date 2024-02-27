@@ -1,11 +1,12 @@
 from collections import namedtuple
 from copy import deepcopy
 from enum import Enum, auto
+import inspect
 import itertools
 from numbers import Real
 from re import escape
 import sys
-from typing import Union, get_args, get_origin
+from typing import Any, Callable, Dict, Union, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -1413,3 +1414,79 @@ def test_array_wrapper_ragged_array(ragged_array):
     msg = 'The following array is not valid:\n\t['
     with pytest.raises(ValueError, match=escape(msg)):
         _ArrayLikeWrapper(ragged_array)
+
+
+def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
+    """Get all args/kwargs and their default value"""
+    params = dict(inspect.signature(call).parameters)
+    # Get default value for positional or keyword args
+    return {
+        key: val.default
+        for key, val in params.items()
+        if val.kind is inspect.Parameter.KEYWORD_ONLY
+    }
+
+
+@pytest.fixture()
+def validate_array_kwargs() -> Dict[str, Any]:
+    return _get_default_kwargs(validate_array)
+
+
+@pytest.mark.parametrize('func', [validate_number, validate_array3, validate_arrayNx3])
+def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
+    """Test that validate_array wrappers have the same default kwargs as validate_array.
+
+    This test is needed since the wrapper functions list all kwargs explicitly
+    instead of using **kwargs.
+    """
+
+    actual_kwargs = _get_default_kwargs(func)
+    expected_kwargs = validate_array_kwargs
+
+    if func is validate_number:
+        # Remove unused kwargs
+        expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('reshape_to')
+        expected_kwargs.pop('broadcast_to')
+        expected_kwargs.pop('return_type')
+        expected_kwargs.pop('must_be_sorted')
+        expected_kwargs.pop('must_have_length')
+        expected_kwargs.pop('must_have_max_length')
+        expected_kwargs.pop('must_have_min_length')
+        expected_kwargs.pop('as_any')
+        expected_kwargs.pop('copy')
+
+        # Change default values
+        assert expected_kwargs['must_be_finite'] is not True
+        expected_kwargs['must_be_finite'] = True
+        assert expected_kwargs['name'] != 'Number'
+        expected_kwargs['name'] = 'Number'
+
+        # Remove wrapper-specific kwargs
+        actual_kwargs.pop('reshape')
+
+    elif func is validate_array3:
+        # Remove unused kwargs
+        expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('reshape_to')
+        expected_kwargs.pop('broadcast_to')
+        expected_kwargs.pop('return_type')
+        expected_kwargs.pop('must_have_length')
+        expected_kwargs.pop('must_have_max_length')
+        expected_kwargs.pop('must_have_min_length')
+
+        # Remove wrapper-specific kwargs
+        actual_kwargs.pop('reshape')
+        actual_kwargs.pop('broadcast')
+
+    elif func is validate_arrayNx3:
+        # Remove unused kwargs
+        expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('reshape_to')
+        expected_kwargs.pop('broadcast_to')
+        expected_kwargs.pop('return_type')
+
+        # Remove wrapper-specific kwargs
+        actual_kwargs.pop('reshape')
+
+    assert actual_kwargs == expected_kwargs

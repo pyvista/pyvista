@@ -785,7 +785,7 @@ def validate_array(
         maximum. Use ``strict_lower_bound`` and/or ``strict_upper_bound``
         to further restrict the allowable range.
 
-        ..note ::
+        .. note::
 
             Use infinity (``np.inf`` or ``float('inf')``) to check for open
             intervals, e.g.:
@@ -1369,7 +1369,7 @@ def validate_number(  # type: ignore[misc]  # numpydoc ignore=GL08
 ) -> _NumberType: ...
 
 
-def validate_number(  # type: ignore[misc]
+def validate_number(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
     num: Union[NumberType, VectorLike[NumberType]],
     /,
     *,
@@ -1386,12 +1386,12 @@ def validate_number(  # type: ignore[misc]
     get_flags: bool = False,
     name: str = 'Number',
 ):
-    """Validate a number is real and finite.
+    """Return a real, finite, validated number.
 
-    By default, this function accepts scalar or array-like inputs with a
-    single numerical element, and returns a ``float``, ``int``, or ``bool``
-    type. The return type matches the same data type as the input. The
-    number is also checked to ensure it is real and finite.
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with one element. The number is checked to be finite
+    by default, and the return type is fixed to always return a ``float``,
+    ``int``, or ``bool`` type.
 
     Parameters
     ----------
@@ -1402,48 +1402,22 @@ def validate_number(  # type: ignore[misc]
         If ``True``, 1D arrays with 1 element are considered valid input
         and are reshaped to be 0-dimensional.
 
-    must_be_finite : bool, default: True
-        See :func:~validate_array for details.
-
-    must_be_real : bool, default: True
-        See :func:~validate_array for details.
-
-    must_have_dtype : type, optional
-        See :func:~validate_array for details.
-
-    must_be_integer : bool, default: False
-        See :func:~validate_array for details.
-
-    must_be_nonnegative : bool, default: False
-        See :func:~validate_array for details.
-
-    must_be_in_range : VectorLike[float], optional
-        See :func:~validate_array for details.
-
-    strict_lower_bound : bool, default: False
-        See :func:~validate_array for details.
-
-    strict_upper_bound : bool, default: False
-        See :func:~validate_array for details.
-
-    dtype_out : dtype, optional
-        See :func:~validate_array for details.
-
-    get_flags : bool, default: False
-        See :func:~validate_array for details.
-
-    name : str = 'Number'
-        See :func:~validate_array for details.
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
-    int | float
+    float | int | bool
         Validated number.
 
     See Also
     --------
     validate_array
         Generic array validation function.
+
     check_number
         Similar function with fewer options and no return value.
 
@@ -1614,7 +1588,7 @@ def validate_arrayNx3(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-def validate_arrayNx3(  # numpydoc ignore=PR01
+def validate_arrayNx3(  # numpydoc ignore=PR01  # numpydoc ignore=PR01,PR02
     array: Union[MatrixLike[NumberType], VectorLike[NumberType]],
     /,
     *,
@@ -1637,16 +1611,11 @@ def validate_arrayNx3(  # numpydoc ignore=PR01
     get_flags: bool = False,
     name: str = 'Array',
 ):
-    """Validate an array is numeric and has shape Nx3.
+    """Return a validated numeric array with shape Nx3.
 
-    The array is checked to ensure its input values:
-
-    * have shape ``(N, 3)`` or can be reshaped to ``(N, 3)``
-    * are numeric
-
-    The returned array is formatted so that its values:
-
-    * have shape ``(N, 3)``.
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with shape ``(N, 3)`` or which can be reshaped to
+    ``(N, 3)``. The return type is also fixed to always return a NumPy array.
 
     Parameters
     ----------
@@ -1657,6 +1626,12 @@ def validate_arrayNx3(  # numpydoc ignore=PR01
         If ``True``, 1D arrays with 3 elements are considered valid
         input and are reshaped to ``(1, 3)`` to ensure the output is
         two-dimensional.
+
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
@@ -1993,7 +1968,7 @@ def validate_array3(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-def validate_array3(
+def validate_array3(  # numpydoc ignore=PR01,PR02
     array: Union[NumberType, VectorLike[NumberType], MatrixLike[NumberType]],
     /,
     *,
@@ -2014,14 +1989,11 @@ def validate_array3(
     get_flags: bool = False,
     name: str = 'Array',
 ):
-    """Validate a numeric 1D array with 3 elements.
+    """Return a validated numeric array with three values.
 
-    The array is checked to ensure its input values:
-
-    * have shape ``(3,)`` or can be reshaped to ``(3,)``
-    * are numeric and real
-
-    The returned array is formatted so that it has shape ``(3,)``.
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with shape ``(3,)`` or which can be reshaped to
+    ``(3,)``. The return type is also fixed to always return a NumPy array.
 
     Parameters
     ----------
@@ -2038,47 +2010,11 @@ def validate_array3(
         are considered valid input and the single value is broadcast to
         a length 3 array.
 
-    must_be_finite : bool, default: True
-        See :func:~validate_array for details.
-
-    must_be_real : bool, default: True
-        See :func:~validate_array for details.
-
-    must_have_dtype : type, optional
-        See :func:~validate_array for details.
-
-    must_be_integer : bool, default: False
-        See :func:~validate_array for details.
-
-    must_be_nonnegative : bool, default: False
-        See :func:~validate_array for details.
-
-    must_be_sorted : bool | dict, default: False
-        See :func:~validate_array for details.
-
-    must_be_in_range : VectorLike[float], optional
-        See :func:~validate_array for details.
-
-    strict_lower_bound : bool, default: False
-        See :func:~validate_array for details.
-
-    strict_upper_bound : bool, default: False
-        See :func:~validate_array for details.
-
-    dtype_out : dtype, optional
-        See :func:~validate_array for details.
-
-    as_any : bool, default: True
-        See :func:~validate_array for details.
-
-    copy : bool, default: False
-        See :func:~validate_array for details.
-
-    get_flags : bool, default: False
-        See :func:~validate_array for details.
-
-    name : str = 'Array'
-        See :func:~validate_array for details.
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
