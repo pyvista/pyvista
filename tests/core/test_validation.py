@@ -1425,7 +1425,9 @@ def validate_array_kwargs() -> Dict[str, Any]:
     return _get_default_kwargs(validate_array)
 
 
-@pytest.mark.parametrize('func', [validate_number, validate_array3, validate_arrayNx3])
+@pytest.mark.parametrize(
+    'func', [validate_number, validate_array3, validate_arrayNx3, validate_arrayN]
+)
 def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
     """Test that validate_array wrappers have the same default kwargs as validate_array.
 
@@ -1472,7 +1474,7 @@ def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
         actual_kwargs.pop('reshape')
         actual_kwargs.pop('broadcast')
 
-    elif func is validate_arrayNx3:
+    elif func is validate_arrayNx3 or validate_arrayN:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
         expected_kwargs.pop('reshape_to')

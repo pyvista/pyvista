@@ -1916,18 +1916,13 @@ def validate_arrayN_unsigned(
     reshape=True,
     **kwargs,
 ):
-    """Validate a numeric 1D array of non-negative (unsigned) integers.
+    """Validate a flat array with N non-negative (unsigned) integers.
 
-    The array is checked to ensure its input values:
-
-    * have shape ``(N,)`` or can be reshaped to ``(N,)``
-    * are integer-like
-    * are non-negative
-
-    The returned array is formatted so that its values:
-
-    * have shape ``(N,)``
-    * have an integer data type
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with shape ``(N,)`` or which can be reshaped to
+    ``(N,)``. The input is also checked to ensure the values are int-like,
+    finite, and non-negative. The return type is also fixed to always return
+    a NumPy array with an integer data type.
 
     Parameters
     ----------
@@ -1940,8 +1935,11 @@ def validate_arrayN_unsigned(
         output is consistently one-dimensional. Otherwise, all scalar and
         2D inputs are not considered valid.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
@@ -1951,7 +1949,7 @@ def validate_arrayN_unsigned(
     See Also
     --------
     validate_arrayN
-        Similar function for numeric one-dimensional arrays.
+        More general function for any numeric one-dimensional array.
 
     validate_array
         Generic array validation function.
