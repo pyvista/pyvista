@@ -218,6 +218,10 @@ class ColorSchemeTable(DocTable):
     path = f"{CHARTS_TABLE_DIR}/plot_color_schemes.rst"
     header = _aligned_dedent(
         """
+        |..
+        |   Mark as orphan since it's not used explicitly in any toctree
+        |:orphan:
+        |
         |.. list-table:: Color schemes
         |   :widths: 15 50 5 30
         |   :header-rows: 1
@@ -294,6 +298,10 @@ class ColorTable(DocTable):
     path = f"{COLORS_TABLE_DIR}/colors.rst"
     header = _aligned_dedent(
         """
+        |..
+        |   Mark as orphan since it's not used explicitly in any toctree
+        |:orphan:
+        |
         |.. list-table::
         |   :widths: 50 20 30
         |   :header-rows: 1
