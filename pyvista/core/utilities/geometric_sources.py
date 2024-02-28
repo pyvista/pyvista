@@ -731,7 +731,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     def capsule_cap(self) -> bool:
         """Get whether the capping should make the cylinder a capsule.
 
-.. versionadded:: 0.44.0
+        .. versionadded:: 0.44.0
 
         Returns
         -------
