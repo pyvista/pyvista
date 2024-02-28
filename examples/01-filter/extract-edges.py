@@ -52,7 +52,7 @@ p.show()
 
 
 ###############################################################################
-# We can leverage the :any:`pyvista.PolyData.n_open_edges` property and
+# We can leverage the :attr:`pyvista.PolyData.n_open_edges` property and
 # :func:`pyvista.DataSetFilters.extract_feature_edges` filter to count and
 # extract the open edges on a :class:`pyvista.PolyData` mesh.
 
