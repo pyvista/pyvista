@@ -78,8 +78,8 @@ def Capsule(
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
-       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions 
-       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but 
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
        not identical.
 
     .. versionadded:: 0.44.0
