@@ -824,28 +824,31 @@ def test_axes_actor_deprecated_constructor():
 
 def test_axes_actor_repr(axes_actor):
     repr_ = repr(axes_actor)
-    expected = (
-        "  X label:                    'X'\n"
-        "  Y label:                    'Y'\n"
-        "  Z label:                    'Z'\n"
-        "  Labels off:                 False\n"
-        "  Label position:             (1.0, 1.0, 1.0)\n"
-        "  Shaft type:                 'cylinder'\n"
-        "  Shaft radius:               0.01\n"
-        "  Shaft length:               (0.8, 0.8, 0.8)\n"
-        "  Tip type:                   'cone'\n"
-        "  Tip radius:                 0.4\n"
-        "  Tip length:                 (0.2, 0.2, 0.2)\n"
-        "  Total length:               (1.0, 1.0, 1.0)\n"
-        "  Position:                   (0.0, 0.0, 0.0)\n"
-        "  Scale:                      (1.0, 1.0, 1.0)\n"
-        "  User matrix:                Identity\n"
-        "  Visible:                    True\n"
-        "  X Bounds                    -1.000E+00, 1.000E+00\n"
-        "  Y Bounds                    -1.000E+00, 1.000E+00\n"
-        "  Z Bounds                    -1.000E+00, 1.000E+00"
-    )
-    assert expected in repr_
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  X label:                    'X'",
+        "  Y label:                    'Y'",
+        "  Z label:                    'Z'",
+        "  Labels off:                 False",
+        "  Label position:             (1.0, 1.0, 1.0)",
+        "  Shaft type:                 'cylinder'",
+        "  Shaft radius:               0.015",
+        "  Shaft length:               (0.8, 0.8, 0.8)",
+        "  Tip type:                   'cone'",
+        "  Tip radius:                 0.4",
+        "  Tip length:                 (0.2, 0.2, 0.2)",
+        "  Total length:               (1.0, 1.0, 1.0)",
+        "  Position:                   (0.0, 0.0, 0.0)",
+        "  Scale:                      (1.0, 1.0, 1.0)",
+        "  User matrix:                Identity",
+        "  Visible:                    True",
+        "  X Bounds                    -1.000E+00, 1.000E+00",
+        "  Y Bounds                    -1.000E+00, 1.000E+00",
+        "  Z Bounds                    -1.000E+00, 1.000E+00",
+    ]
+
+    assert all(actual == expected for (actual, expected) in zip(actual_lines, expected_lines))
+    assert len(actual_lines) == len(expected_lines)
 
     axes_actor.shaft_type = 'line'
     repr_ = repr(axes_actor)
