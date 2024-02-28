@@ -345,7 +345,7 @@ def test_validate_arrayN_unsigned(reshape):
     assert np.array_equal(arr, [0])
     assert isinstance(arr, np.ndarray)
 
-    arr = validate_arrayN_unsigned(0.0, dtype_out='uint8')
+    arr = validate_arrayN_unsigned(0.0, dtype_out=np.uint8)
     assert arr.dtype.type is np.uint8
 
     with pytest.raises(ValueError, match=escape('Shape must be (-1,).')):
@@ -1474,7 +1474,7 @@ def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
         actual_kwargs.pop('reshape')
         actual_kwargs.pop('broadcast')
 
-    elif func is validate_arrayNx3 or validate_arrayN:
+    elif func is validate_arrayNx3 or validate_arrayN or validate_arrayN_unsigned:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
         expected_kwargs.pop('reshape_to')
@@ -1483,5 +1483,10 @@ def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
 
         # Remove wrapper-specific kwargs
         actual_kwargs.pop('reshape')
+
+        if func is validate_arrayN_unsigned:
+            expected_kwargs.pop('must_be_finite')
+            expected_kwargs.pop('must_be_integer')
+            expected_kwargs.pop('must_be_nonnegative')
 
     assert actual_kwargs == expected_kwargs

@@ -1909,20 +1909,120 @@ def validate_arrayN(  # numpydoc ignore=PR01,PR02
     )
 
 
-def validate_arrayN_unsigned(
+class _KwargsValidateArrayNUnsigned(TypedDict, total=False):
+    must_have_dtype: Optional[_NumberUnion]
+    must_have_length: Optional[Union[int, VectorLike[int]]]
+    must_have_min_length: Optional[int]
+    must_have_max_length: Optional[int]
+    must_be_real: bool
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
+    must_be_in_range: Optional[VectorLike[float]]
+    strict_lower_bound: bool
+    strict_upper_bound: bool
+    as_any: bool
+    copy: bool
+    get_flags: bool
+    name: str
+
+
+_IntegerType = TypeVar('_IntegerType', bound=Union[np.integer, int, np.bool_], covariant=True)  # type: ignore[type-arg]
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: NumberType,
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[int] = int,
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[int]: ...
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: NumberType,
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[_IntegerType],
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[_IntegerType]: ...
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[int] = int,
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[int]: ...
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: MatrixLike[NumberType],
+    /,
+    *,
+    reshape: Literal[True] = ...,
+    dtype_out: Type[_IntegerType],
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[_IntegerType]: ...
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: Type[int] = int,
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[int]: ...
+
+
+@overload
+def validate_arrayN_unsigned(  # numpydoc ignore=GL08
+    array: VectorLike[NumberType],
+    /,
+    *,
+    reshape: bool = ...,
+    dtype_out: Type[_IntegerType],
+    **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
+) -> NumpyArray[_IntegerType]: ...
+
+
+def validate_arrayN_unsigned(  # numpydoc ignore=PR01,PR02
     array: Union[NumberType, VectorLike[NumberType], MatrixLike[NumberType]],
     /,
     *,
-    reshape=True,
-    **kwargs,
+    reshape: bool = True,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_have_length: Optional[Union[int, VectorLike[int]]] = None,
+    must_have_min_length: Optional[int] = None,
+    must_have_max_length: Optional[int] = None,
+    must_be_real: bool = True,
+    must_be_sorted: Union[bool, Dict[str, Union[bool, int]]] = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out: Type[_IntegerType] = int,  # type: ignore[assignment]
+    as_any: bool = True,
+    copy: bool = False,
+    get_flags: bool = False,
+    name: str = 'Array',
 ):
     """Validate a flat array with N non-negative (unsigned) integers.
 
     This function is similar to :func:`~validate_array`, but is configured
     to only allow inputs with shape ``(N,)`` or which can be reshaped to
-    ``(N,)``. The input is also checked to ensure the values are int-like,
-    finite, and non-negative. The return type is also fixed to always return
-    a NumPy array with an integer data type.
+    ``(N,)``. The return type is fixed to always return a NumPy array with
+     an integer data type.
+
+    By default, the input is also checked to ensure the values are finite,
+    non-negative, and have integer values.
 
     Parameters
     ----------
@@ -1966,7 +2066,7 @@ def validate_arrayN_unsigned(
 
     Verify that the output data type is integral.
 
-    >>> np.issubdtype(array.dtype, int)
+    >>> np.issubdtype(array.dtype, np.integer)
     True
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
@@ -1988,19 +2088,30 @@ def validate_arrayN_unsigned(
     array([1, 2, 3])
 
     """
-    # Set default dtype out but allow overriding as long as the dtype
-    # is also integral
-    kwargs.setdefault('dtype_out', int)
-    if kwargs['dtype_out'] is not int:
-        check_subdtype(kwargs['dtype_out'], np.integer)
-
-    # can overflow if not finite
-    kwargs.setdefault('must_be_finite', True)
-
-    _set_default_kwarg_mandatory(kwargs, 'must_be_integer', True)
-    _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)
-
-    return validate_arrayN(array, reshape=reshape, **kwargs)
+    check_subdtype(dtype_out, (np.integer, np.bool_), name='dtype_out')
+    return validate_arrayN(  # type: ignore[misc]
+        array,  # type: ignore[arg-type]
+        reshape=reshape,
+        # Override default vales for these params:
+        must_be_integer=True,
+        must_be_nonnegative=True,
+        must_be_finite=True,
+        # Allow these params to be set by user:
+        must_have_dtype=must_have_dtype,
+        must_have_length=must_have_length,
+        must_have_min_length=must_have_min_length,
+        must_have_max_length=must_have_max_length,
+        must_be_real=must_be_real,
+        must_be_sorted=must_be_sorted,
+        must_be_in_range=must_be_in_range,
+        strict_lower_bound=strict_lower_bound,
+        strict_upper_bound=strict_upper_bound,
+        dtype_out=dtype_out,
+        as_any=as_any,
+        copy=copy,
+        get_flags=get_flags,
+        name=name,
+    )
 
 
 class _KwargsValidateArray3(TypedDict, total=False):
