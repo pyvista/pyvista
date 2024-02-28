@@ -129,7 +129,7 @@ class _AxesActorBase(ABC, Prop3D):
         # Set geometry-dependent params
         self.label_position = _set_default(label_position, 1.0)
         self.shaft_type = shaft_type
-        self.shaft_radius = _set_default(shaft_radius, 0.01)
+        self.shaft_radius = _set_default(shaft_radius, 0.015)
         self.shaft_resolution = _set_default(shaft_resolution, 24)
         self.tip_type = tip_type
         self.tip_radius = _set_default(tip_radius, 0.4)
@@ -1575,7 +1575,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         )
 
         # Disable text shadows
-        # [prop.SetShadow(False) for prop in self._label_color_getters]
+        [prop.SetShadow(False) for prop in self._label_props]
 
         # Enable workaround to make axes orientable in space.
         # Use undocumented keyword `_make_orientable=False` to disable it
