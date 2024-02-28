@@ -70,7 +70,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVers
     class CapsuleSource(_vtk.vtkCapsuleSource):
         """Capsule source algorithm class.
 
-.. versionadded:: 0.44.0
+        .. versionadded:: 0.44.0
 
         Parameters
         ----------
