@@ -1101,7 +1101,9 @@ def _validate_color_sequence(color: Union[ColorLike, Sequence[ColorLike]], num_c
                 pass
     if not is_valid:
         raise ValueError(
-            f"Invalid color(s). Input must be a single ColorLike color \n"
+            f"Invalid color(s):\n"
+            f"\t{color}\n"
+            f"Input must be a single ColorLike color \n"
             f"or a sequence of {num_colors} ColorLike colors."
         )
     return color
