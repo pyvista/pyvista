@@ -120,7 +120,7 @@ class Property(_vtk.vtkProperty):
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
             available, `edge_opacity` is set to 1.
 
-    shading : bool, default: True
+    shading : bool, default: False
         Flag to enable or disable shading.
 
     Examples
@@ -183,7 +183,7 @@ class Property(_vtk.vtkProperty):
         line_width=None,
         culling=None,
         edge_opacity=None,
-        shading=True,
+        shading=False,
     ):
         """Initialize this property."""
         self._theme = pyvista.themes.Theme()
