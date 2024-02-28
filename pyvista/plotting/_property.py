@@ -120,6 +120,9 @@ class Property(_vtk.vtkProperty):
             requires VTK version 9.3 or higher. If ``SetEdgeOpacity`` is not
             available, `edge_opacity` is set to 1.
 
+    shading : bool, default: True
+        Flag to enable or disable shading.
+
     Examples
     --------
     Create a :class:`pyvista.Actor` and assign properties to it.
@@ -180,6 +183,7 @@ class Property(_vtk.vtkProperty):
         line_width=None,
         culling=None,
         edge_opacity=None,
+        shading=True,
     ):
         """Initialize this property."""
         self._theme = pyvista.themes.Theme()
@@ -254,6 +258,8 @@ class Property(_vtk.vtkProperty):
         if edge_opacity is None:
             edge_opacity = self._theme.edge_opacity
         self.edge_opacity = edge_opacity
+
+        self.shading = shading
 
     @property
     def style(self) -> str:  # numpydoc ignore=RT01
