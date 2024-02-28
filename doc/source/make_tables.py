@@ -217,9 +217,8 @@ class ColorSchemeTable(DocTable):
 
     path = f"{CHARTS_TABLE_DIR}/plot_color_schemes.rst"
     header = _aligned_dedent(
+        # Add orphan to suppress sphinx toctree warnings
         """
-        |..
-        |   Mark as orphan since it's not used explicitly in any toctree
         |:orphan:
         |
         |.. list-table:: Color schemes
@@ -297,9 +296,8 @@ class ColorTable(DocTable):
 
     path = f"{COLORS_TABLE_DIR}/colors.rst"
     header = _aligned_dedent(
+        # Add orphan to suppress sphinx toctree warnings
         """
-        |..
-        |   Mark as orphan since it's not used explicitly in any toctree
         |:orphan:
         |
         |.. list-table::
