@@ -642,10 +642,10 @@ class _AxesActorBase(ABC, Prop3D):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.tip_resolution
-        16
-        >>> axes_actor.tip_resolution = 24
-        >>> axes_actor.tip_resolution
         24
+        >>> axes_actor.tip_resolution = 48
+        >>> axes_actor.tip_resolution
+        48
 
         """
         # Get cone resolution and assume value is the same for sphere
@@ -677,10 +677,10 @@ class _AxesActorBase(ABC, Prop3D):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.shaft_resolution
-        16
-        >>> axes_actor.shaft_resolution = 24
-        >>> axes_actor.shaft_resolution
         24
+        >>> axes_actor.shaft_resolution = 48
+        >>> axes_actor.shaft_resolution
+        48
 
         """
         return self._shaft_resolution
@@ -2079,10 +2079,10 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.tip_resolution
-        16
-        >>> axes_actor.tip_resolution = 24
-        >>> axes_actor.tip_resolution
         24
+        >>> axes_actor.tip_resolution = 48
+        >>> axes_actor.tip_resolution
+        48
 
         """
         # Get cone resolution and assume value is the same for sphere
@@ -2159,10 +2159,10 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.shaft_resolution
-        16
-        >>> axes_actor.shaft_resolution = 24
-        >>> axes_actor.shaft_resolution
         24
+        >>> axes_actor.shaft_resolution = 48
+        >>> axes_actor.shaft_resolution
+        48
 
         """
         return self.GetCylinderResolution()
