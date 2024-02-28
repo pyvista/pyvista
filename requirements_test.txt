@@ -3,8 +3,8 @@
 -r requirements.txt
 cmocean<3.1.4
 colorcet<3.1.0
-hypothesis<6.97.5
-imageio<2.34.0
+hypothesis<6.98.13
+imageio<2.35.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
 ipywidgets<9.0.0
@@ -18,7 +18,7 @@ pytest-cov<4.2.0
 pytest-memprof<0.3.0
 pytest-xdist<3.6.0
 pytest_pyvista==0.1.8
-Sphinx<7.2.0
+sphinx<7.2.0
 sphinx-gallery<0.16.0
 sphinx_design<0.6.0
 sympy<1.13.0

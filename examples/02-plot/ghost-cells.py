@@ -24,7 +24,7 @@ mesh = vol.cast_to_unstructured_grid()
 ghosts = np.argwhere(mesh["facies"] < 1.0)
 
 # This will act on the mesh inplace to mark those cell indices as ghosts
-mesh.remove_cells(ghosts)
+mesh.remove_cells(ghosts, inplace=True)
 
 ###############################################################################
 # Now we can plot the mesh and those cells will be hidden
