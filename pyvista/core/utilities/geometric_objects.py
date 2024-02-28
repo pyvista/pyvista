@@ -77,12 +77,12 @@ def Capsule(
        It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
-.. note::
-   A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions 
-   below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but 
-   not identical.
+    .. note::
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions 
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but 
+       not identical.
 
-.. versionadded:: 0.44.0
+    .. versionadded:: 0.44.0
 
     Parameters
     ----------
