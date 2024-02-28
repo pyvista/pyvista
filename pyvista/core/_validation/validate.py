@@ -18,10 +18,23 @@ from __future__ import annotations
 from collections import namedtuple
 import inspect
 from itertools import product
-from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, Union, overload
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    TypedDict,
+    TypeVar,
+    Union,
+    cast,
+    overload,
+)
 
 import numpy as np
-from typing_extensions import TypedDict, Unpack
+from typing_extensions import Unpack
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import MatrixLike, NumberType, NumpyArray, TransformLike, VectorLike
@@ -1477,22 +1490,41 @@ def validate_number(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
     )
 
 
-def validate_data_range(rng: VectorLike[NumberType], /, **kwargs):
+def validate_data_range(  # numpydoc ignore=PR01,PR02
+    rng: VectorLike[NumberType],
+    /,
+    *,
+    must_have_dtype: Optional[_NumberUnion] = None,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_in_range: Optional[VectorLike[float]] = None,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
+    dtype_out: Optional[Type[_NumberType]] = None,
+    as_any: bool = True,
+    copy: bool = False,
+    get_flags: bool = False,
+    name: str = 'Data Range',
+) -> Tuple[_NumberType, _NumberType]:
     """Validate a data range.
 
-    By default, the data range is checked to ensure:
-
-    * it has two values
-    * it has real numbers
-    * the lower bound is not more than the upper bound
+    This function is similar to :func:`~validate_array`, but is configured
+    to only allow inputs with two values and checks that the first value is
+    not greater than the second. The return type is also fixed to always
+    return a tuple.
 
     Parameters
     ----------
     rng : VectorLike[float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
-    **kwargs : dict, optional
-        Additional keyword arguments passed to :func:`~validate_array`.
+    Other Parameters
+    ----------------
+    **kwargs
+        See :func:`~validate_array` for documentation on all other keyword
+        arguments.
 
     Returns
     -------
@@ -1510,19 +1542,45 @@ def validate_data_range(rng: VectorLike[NumberType], /, **kwargs):
 
     >>> from pyvista import _validation
     >>> _validation.validate_data_range([-5, 5.0])
-    [-5, 5.0]
+    (-5, 5.0)
 
     Add additional constraints if needed, e.g. to ensure the output
     only contains floats.
 
     >>> _validation.validate_data_range([-5, 5.0], dtype_out=float)
-    [-5.0, 5.0]
+    (-5.0, 5.0)
 
     """
-    kwargs.setdefault('name', 'Data Range')
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', 2)
-    _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
-    return validate_array(rng, **kwargs)
+    return cast(
+        Tuple[_NumberType, _NumberType],
+        validate_array(
+            rng,
+            # Override default vales for these params:
+            return_type=tuple,
+            must_have_shape=2,
+            must_be_sorted=True,
+            # Allow these params to be set by user:
+            dtype_out=dtype_out,
+            must_have_dtype=must_have_dtype,
+            must_be_nonnegative=must_be_nonnegative,
+            must_be_finite=must_be_finite,
+            must_be_real=must_be_real,
+            must_be_integer=must_be_integer,
+            must_be_in_range=must_be_in_range,
+            strict_lower_bound=strict_lower_bound,
+            strict_upper_bound=strict_upper_bound,
+            as_any=as_any,
+            copy=copy,
+            get_flags=get_flags,
+            name=name,
+            # These params are irrelevant for this function:
+            must_have_length=None,
+            must_have_min_length=None,
+            must_have_max_length=None,
+            reshape_to=None,
+            broadcast_to=None,
+        ),
+    )
 
 
 class _KwargsValidateArrayNx3(TypedDict, total=False):
@@ -1925,7 +1983,7 @@ class _KwargsValidateArrayNUnsigned(TypedDict, total=False):
     name: str
 
 
-_IntegerType = TypeVar('_IntegerType', bound=Union[np.integer, int, np.bool_], covariant=True)  # type: ignore[type-arg]
+_IntegerType = TypeVar('_IntegerType', bound=Union[np.integer, int, np.bool_])  # type: ignore[type-arg]
 
 
 @overload
@@ -1934,7 +1992,7 @@ def validate_arrayN_unsigned(  # numpydoc ignore=GL08
     /,
     *,
     reshape: Literal[True] = ...,
-    dtype_out: Type[int] = int,
+    dtype_out: int = ...,
     **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
 ) -> NumpyArray[int]: ...
 
@@ -1956,7 +2014,7 @@ def validate_arrayN_unsigned(  # numpydoc ignore=GL08
     /,
     *,
     reshape: Literal[True] = ...,
-    dtype_out: Type[int] = int,
+    dtype_out: int = ...,
     **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
 ) -> NumpyArray[int]: ...
 
@@ -1978,7 +2036,7 @@ def validate_arrayN_unsigned(  # numpydoc ignore=GL08
     /,
     *,
     reshape: bool = ...,
-    dtype_out: Type[int] = int,
+    dtype_out: int = ...,
     **kwargs: Unpack[_KwargsValidateArrayNUnsigned],
 ) -> NumpyArray[int]: ...
 
@@ -1994,7 +2052,7 @@ def validate_arrayN_unsigned(  # numpydoc ignore=GL08
 ) -> NumpyArray[_IntegerType]: ...
 
 
-def validate_arrayN_unsigned(  # numpydoc ignore=PR01,PR02
+def validate_arrayN_unsigned(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
     array: Union[NumberType, VectorLike[NumberType], MatrixLike[NumberType]],
     /,
     *,
@@ -2008,7 +2066,7 @@ def validate_arrayN_unsigned(  # numpydoc ignore=PR01,PR02
     must_be_in_range: Optional[VectorLike[float]] = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
-    dtype_out: Type[_IntegerType] = int,  # type: ignore[assignment]
+    dtype_out: Type[Union[_IntegerType]] = int,  # type: ignore[assignment]
     as_any: bool = True,
     copy: bool = False,
     get_flags: bool = False,

@@ -164,29 +164,19 @@ def test_validate_number():
 
 def test_validate_data_range():
     rng = validate_data_range([0, 1])
-    assert rng == [0, 1]
+    assert rng == (0, 1)
 
-    rng = validate_data_range((0, 2.5), return_type=list)
-    assert rng == [0.0, 2.5]
+    rng = validate_data_range((0, 2.5))
+    assert rng == (0, 2.5)
     assert isinstance(rng[0], int)
     assert isinstance(rng[1], float)
 
     rng = validate_data_range((0, 2.5), dtype_out=float)
     assert rng == (0.0, 2.5)
 
-    rng = validate_data_range((-10, -10), return_type='numpy', must_have_shape=2)
-    assert type(rng) is np.ndarray
-
     msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
     with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
-
-    msg = (
-        "Parameter 'must_have_shape' cannot be set for function `validate_data_range`.\n"
-        "Its value is automatically set to `2`."
-    )
-    with pytest.raises(ValueError, match=msg):
-        validate_data_range((0, 1), must_have_shape=3)
 
 
 def test_set_default_kwarg_mandatory():
@@ -1426,13 +1416,14 @@ def validate_array_kwargs() -> Dict[str, Any]:
 
 
 @pytest.mark.parametrize(
-    'func', [validate_number, validate_array3, validate_arrayNx3, validate_arrayN]
+    'func',
+    [validate_number, validate_array3, validate_arrayNx3, validate_arrayN, validate_data_range],
 )
-def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
-    """Test that validate_array wrappers have the same default kwargs as validate_array.
+def test_validate_array_specialized_kwargs(func, validate_array_kwargs):
+    """Test kwargs for functions which call validate_array
 
-    This test is needed since the wrapper functions list all kwargs explicitly
-    instead of using **kwargs.
+    This test is used to ensure specialized validate_array functions do
+    not modify the values of kwargs which are intended to be passed-through
     """
 
     actual_kwargs = _get_default_kwargs(func)
@@ -1473,6 +1464,20 @@ def test_validate_array_wrapper_kwargs(func, validate_array_kwargs):
         # Remove wrapper-specific kwargs
         actual_kwargs.pop('reshape')
         actual_kwargs.pop('broadcast')
+
+    elif func is validate_data_range:
+        # Remove unused kwargs
+        expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('reshape_to')
+        expected_kwargs.pop('broadcast_to')
+        expected_kwargs.pop('return_type')
+        expected_kwargs.pop('must_have_length')
+        expected_kwargs.pop('must_have_max_length')
+        expected_kwargs.pop('must_have_min_length')
+        expected_kwargs.pop('must_be_sorted')
+
+        assert expected_kwargs['name'] != 'Data Range'
+        expected_kwargs['name'] = 'Data Range'
 
     elif func is validate_arrayNx3 or validate_arrayN or validate_arrayN_unsigned:
         # Remove unused kwargs
