@@ -16,10 +16,8 @@ A ``validate`` function typically:
 from __future__ import annotations
 
 from collections import namedtuple
-import inspect
 from itertools import product
 from typing import (
-    Any,
     Dict,
     List,
     Literal,
@@ -1321,30 +1319,6 @@ def _array_from_vtkmatrix(
     return array
 
 
-# class _ALLKWARGS(TypedDict, total=False):
-#     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
-#     must_have_dtype: Optional[_NumberUnion]
-#     must_have_length: Optional[Union[int, VectorLike[int]]]
-#     must_have_min_length: Optional[int]
-#     must_have_max_length: Optional[int]
-#     must_be_nonnegative: bool
-#     must_be_finite: bool
-#     must_be_real: bool
-#     must_be_integer: bool
-#     must_be_sorted: Union[bool, Dict[str, Union[bool, int]]]
-#     must_be_in_range: Optional[VectorLike[float]]
-#     strict_lower_bound: bool
-#     strict_upper_bound: bool
-#     dtype_out: Optional[Type[_NumberType]]
-#     return_type: Optional[Union[_TupleReturnType, _ListReturnType]]
-#     reshape_to: Optional[Tuple[()]]
-#     broadcast_to: Optional[Tuple[()]]
-#     as_any: bool
-#     copy: bool
-#     get_flags: bool
-#     name: str
-
-
 class _KwargsValidateNumber(TypedDict):
     reshape: bool
     must_have_dtype: Optional[_NumberUnion]
@@ -2388,16 +2362,3 @@ def validate_array3(  # numpydoc ignore=PR01,PR02
         must_have_min_length=None,
         must_have_max_length=None,
     )
-
-
-def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
-    """Set a kwarg and raise ValueError if not set to its default value."""
-    val = kwargs.pop(key, default)
-    if val != default:
-        calling_fname = inspect.stack()[1].function
-        msg = (
-            f"Parameter '{key}' cannot be set for function `{calling_fname}`.\n"
-            f"Its value is automatically set to `{default}`."
-        )
-        raise ValueError(msg)
-    kwargs[key] = default

@@ -54,7 +54,7 @@ from pyvista.core._validation._array_wrapper import (
 )
 from pyvista.core._validation._cast_array import _cast_to_list, _cast_to_numpy, _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
-from pyvista.core._validation.validate import _array_from_vtkmatrix, _set_default_kwarg_mandatory
+from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
@@ -177,32 +177,6 @@ def test_validate_data_range():
     msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
     with pytest.raises(ValueError, match=escape(msg)):
         validate_data_range((1, 0))
-
-
-def test_set_default_kwarg_mandatory():
-    default_value = 1
-    default_key = 'k'
-
-    # Test parameter unset
-    kwargs = {}
-    _set_default_kwarg_mandatory(kwargs, default_key, default_value)
-    assert kwargs[default_key] == default_value
-
-    # Test parameter already set to default
-    kwargs = {}
-    kwargs[default_key] = default_value
-    _set_default_kwarg_mandatory(kwargs, default_key, default_value)
-    assert kwargs[default_key] == default_value
-
-    # Test parameter set to non-default
-    kwargs = {}
-    kwargs[default_key] = default_value * 2
-    msg = (
-        "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"
-        "Its value is automatically set to `1`."
-    )
-    with pytest.raises(ValueError, match=msg):
-        _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
 
 def test_check_shape():
