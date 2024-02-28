@@ -70,6 +70,8 @@ if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVers
     class CapsuleSource(_vtk.vtkCapsuleSource):
         """Capsule source algorithm class.
 
+.. versionadded:: 0.44.0
+
         Parameters
         ----------
         center : sequence[float], default: (0.0, 0.0, 0.0)
@@ -728,6 +730,8 @@ class CylinderSource(_vtk.vtkCylinderSource):
     @property
     def capsule_cap(self) -> bool:
         """Get whether the capping should make the cylinder a capsule.
+
+.. versionadded:: 0.44.0
 
         Returns
         -------
