@@ -106,9 +106,9 @@ def Capsule(
     pyvista.PolyData
         Capsule surface.
 
-See Also
---------
-pyvista.Cylinder
+    See Also
+    --------
+    pyvista.Cylinder
 
     Examples
     --------
