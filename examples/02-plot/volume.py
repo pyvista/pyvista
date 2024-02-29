@@ -123,6 +123,39 @@ pl.show()
 
 
 ###############################################################################
+# Frog Tissue Dataset
+# """"""""""""
+
+frog_tissue = examples.download_frog_tissue()
+
+# Configure colors / color bar
+clim = frog_tissue.get_data_range()  # Set color bar limits to match data
+cmap = 'glasbey'  # Use a categorical colormap
+categories = True  # Ensure n_colors matches number of labels
+opacity = 'foreground'  # Make foreground opaque, background transparent
+opacity_unit_distance = 1
+
+# Define rendering parameters
+mapper = 'gpu'
+shade = True
+
+# Make and show plot
+p = pv.Plotter()
+_ = p.add_volume(
+    frog_tissue,
+    clim=clim,
+    shade=shade,
+    mapper=mapper,
+    opacity=opacity,
+    opacity_unit_distance=opacity_unit_distance,
+    categories=categories,
+    cmap=cmap,
+)
+p.camera_position = 'yx'  # Set camera to provide a dorsal view
+p.show()
+
+
+###############################################################################
 # Extracting a VOI
 # ++++++++++++++++
 #
