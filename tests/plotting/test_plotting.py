@@ -4201,8 +4201,8 @@ def test_direction_objects(direction_obj_test_case):
 
 @pytest.mark.parametrize('shade', [True, False])
 def test_plot_volume_frog_tissue(shade):
-    if shade:
-        pytest.mark.xfail("Shading fails on CI machine (may still pass on other Windows machines)")
+    if shade is True:
+        pytest.skip("Shading fails on CI machine (may still pass on other Windows machines)")
 
     data = examples.download_frog_tissue()
 
