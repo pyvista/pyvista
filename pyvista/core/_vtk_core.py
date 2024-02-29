@@ -342,6 +342,16 @@ try:
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
 except ImportError:  # pragma: no cover
     pass
+from vtkmodules.vtkImagingCore import (
+    vtkExtractVOI,
+    vtkImageDifference,
+    vtkImageExtractComponents,
+    vtkImageFlip,
+    vtkImageThreshold,
+    vtkRTAnalyticSource,
+)
+from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
+from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
@@ -381,16 +391,6 @@ from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridWriter,
     vtkXMLWriter,
 )
-from vtkmodules.vtkImagingCore import (
-    vtkExtractVOI,
-    vtkImageDifference,
-    vtkImageExtractComponents,
-    vtkImageFlip,
-    vtkImageThreshold,
-    vtkRTAnalyticSource,
-)
-from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
-from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
 
 try:
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
