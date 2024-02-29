@@ -414,6 +414,12 @@ def test_tube():
         pv.Tube(pointa, (10, 1.0))
 
 
+def test_capsule():
+    capsule = pv.Capsule()
+    assert np.any(capsule.points)
+    assert np.any(capsule.faces)
+
+
 def test_cube():
     cube = pv.Cube()
     assert np.any(cube.points)

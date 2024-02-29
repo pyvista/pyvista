@@ -44,6 +44,12 @@ from .geometric_sources import (
     Text3DSource,
     translate,
 )
+
+try:
+    from .geometric_sources import CapsuleSource
+except ImportError:  # pragma: no cover
+    pass
+
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -55,6 +61,87 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def Capsule(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    cylinder_length=1.0,
+    resolution=30,
+):
+    """Create the surface of a capsule.
+
+    .. warning::
+       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
+    .. note::
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
+       not identical.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Location of the centroid in ``[x, y, z]``.
+
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction the capsule points to in ``[x, y, z]``.
+
+    radius : float, default: 0.5
+        Radius of the capsule.
+
+    cylinder_length : float, default: 1.0
+        Cylinder length of the capsule.
+
+    resolution : int, default: 30
+        Number of points on the circular face of the cylinder.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Capsule surface.
+
+    See Also
+    --------
+    pyvista.Cylinder
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    """
+    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        algo = CylinderSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            height=cylinder_length,
+            capping=True,
+            resolution=resolution,
+        )
+        algo.capsule_cap = True
+    else:
+        algo = CapsuleSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            cylinder_length=cylinder_length,
+            theta_resolution=resolution,
+            phi_resolution=resolution,
+        )
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def Cylinder(
