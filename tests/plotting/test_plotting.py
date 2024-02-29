@@ -4201,9 +4201,8 @@ def test_direction_objects(direction_obj_test_case):
 
 
 @pytest.mark.xfail(
-    sys.platform == 'linux'
-    and (pv.vtk_version_info == (9, 2, 2) or pv.vtk_version_info == (9, 0, 3)),
-    reason="Fails for specific vtk versions",
+    sys.platform == 'linux' and pv.vtk_version_info < (9, 3),
+    reason="Fails for older vtk versions",
 )
 @pytest.mark.parametrize('shade', [True, False])
 def test_plot_volume_frog_tissue(shade):
