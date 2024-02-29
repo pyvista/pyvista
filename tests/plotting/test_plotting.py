@@ -13,7 +13,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -4063,11 +4063,11 @@ def _get_default_param_value(call: Callable, param: str) -> Any:
     return _get_default_kwargs(call)[param]
 
 
-def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
+def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions = {**geo_functions, **para_functions}
+    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param
@@ -4076,10 +4076,13 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         for name, func in functions.items()
         if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
     }
-
+    # Add a separate test for vtk < 9.3
+    functions['Capsule_legacy'] = functions['Capsule']
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
+        'Capsule',
+        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -4108,20 +4111,32 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         'ParametricTorus',
         'Plane',
         'Polygon',
+        'SolidSphere',
+        'SolidSphereGeneric',
         'Sphere',
+        'Text3D',
     ]
 
-    major, minor, patch = pv._version.version_info
-    if major == 0 and minor >= 43:
-        expected_names += ['SolidSphere', 'SolidSphereGeneric', 'Text3D']
     assert sorted(actual_names) == sorted(expected_names)
-    return list(functions.items())
+    return functions.items()
 
 
-@pytest.mark.parametrize('positive_dir', [True, False])
-@pytest.mark.parametrize('object_function', _generate_direction_object_functions())
-def test_direction_objects(object_function, positive_dir):
-    name, func = object_function
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'direction_obj_test_case' in metafunc.fixturenames:
+        functions = _generate_direction_object_functions()
+        positive_cases = [(name, func, 'pos') for name, func in functions]
+        negative_cases = [(name, func, 'neg') for name, func in functions]
+        test_cases = [*positive_cases, *negative_cases]
+
+        # Name test cases using object name and direction
+        ids = [f"{case[0]}-{case[2]}" for case in test_cases]
+        metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
+
+
+def test_direction_objects(direction_obj_test_case):
+    name, func, direction = direction_obj_test_case
+    positive_dir = direction == 'pos'
 
     # Add required args if needed
     kwargs = {}
@@ -4129,6 +4144,14 @@ def test_direction_objects(object_function, positive_dir):
         kwargs['center'] = (0, 0, 0)
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
+
+    # Test Capsule separately based on vtk version
+    if 'Capsule' in name:
+        legacy_vtk = pv.vtk_version_info < (9, 3)
+        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+            pytest.xfail(
+                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
+            )
 
     direction_param_name = None
 

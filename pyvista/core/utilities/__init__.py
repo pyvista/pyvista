@@ -52,6 +52,7 @@ from .geometric_objects import (
     NORMALS,
     Arrow,
     Box,
+    Capsule,
     Circle,
     CircularArc,
     CircularArcFromNormal,
@@ -100,6 +101,12 @@ from .geometric_sources import (
     SuperquadricSource,
     Text3DSource,
 )
+
+try:
+    from .geometric_sources import CapsuleSource
+except ImportError:  # pragma: no cover
+    pass
+
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,
