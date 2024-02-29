@@ -194,7 +194,7 @@ class Viewer(BaseViewer):
             with vuetify.VRow(
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center fill-height',
-                style="flex-wrap: nowrap",
+                style="flex-wrap: nowrap; flex: unset",
             ):
 
                 def attach_screenshot():
@@ -328,6 +328,7 @@ class Viewer(BaseViewer):
                 view = PyVistaLocalView(self.plotter, **kwargs)
 
             self._html_views.add(view)
-            view.menu = self.menu
+            if add_menu:
+                view.menu = self.menu
 
         return view
