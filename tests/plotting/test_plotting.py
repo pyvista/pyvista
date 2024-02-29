@@ -4200,7 +4200,6 @@ def test_direction_objects(direction_obj_test_case):
 
 
 def test_frog_tissue_plot():
-    import numpy as np
 
     import pyvista as pv
     from pyvista import examples
@@ -4220,16 +4219,16 @@ def test_frog_tissue_plot():
 
     # Set plotting resolution to half the image's spacing
 
-    res = np.array(data.spacing) / 2
+    # res = np.array(data.spacing) / 2
 
     # Define rendering parameters
 
     mapper = 'gpu'
-    shade = True
-    ambient = 0.3
-    diffuse = 0.6
-    specular = 0.5
-    specular_power = 40
+    # shade = True
+    # ambient = 0.3
+    # diffuse = 0.6
+    # specular = 0.5
+    # specular_power = 40
 
     # Make and show plot
 
@@ -4237,17 +4236,17 @@ def test_frog_tissue_plot():
     _ = p.add_volume(
         data,
         clim=clim,
-        ambient=ambient,
-        shade=shade,
-        diffuse=diffuse,
-        specular=specular,
-        specular_power=specular_power,
+        # ambient=ambient,
+        # shade=shade,
+        # diffuse=diffuse,
+        # specular=specular,
+        # specular_power=specular_power,
         mapper=mapper,
         opacity=opacity,
         opacity_unit_distance=opacity_unit_distance,
         categories=categories,
         cmap=cmap,
-        resolution=res,
+        # resolution=res,
     )
     p.camera_position = 'yx'  # Set camera to provide a dorsal view
     p.show()
