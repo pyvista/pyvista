@@ -13,7 +13,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
+from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -4063,7 +4063,7 @@ def _get_default_param_value(call: Callable, param: str) -> Any:
     return _get_default_kwargs(call)[param]
 
 
-def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
+def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
@@ -4076,10 +4076,13 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
         for name, func in functions.items()
         if name[0].isupper() and (_has_param(func, 'direction') or _has_param(func, 'normal'))
     }
-
+    # Add a separate test for vtk < 9.3
+    functions['Capsule_legacy'] = functions['Capsule']
     actual_names = functions.keys()
     expected_names = [
         'Arrow',
+        'Capsule',
+        'Capsule_legacy',
         'CircularArcFromNormal',
         'Cone',
         'Cylinder',
@@ -4115,7 +4118,7 @@ def _generate_direction_object_functions() -> List[Tuple[str, FunctionType]]:
     ]
 
     assert sorted(actual_names) == sorted(expected_names)
-    return list(functions.items())
+    return functions.items()
 
 
 def pytest_generate_tests(metafunc):
@@ -4141,6 +4144,14 @@ def test_direction_objects(direction_obj_test_case):
         kwargs['center'] = (0, 0, 0)
     elif name == 'Text3D':
         kwargs['string'] = 'Text3D'
+
+    # Test Capsule separately based on vtk version
+    if 'Capsule' in name:
+        legacy_vtk = pv.vtk_version_info < (9, 3)
+        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+            pytest.xfail(
+                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
+            )
 
     direction_param_name = None
 
