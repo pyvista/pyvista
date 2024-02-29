@@ -4223,7 +4223,7 @@ def test_frog_tissue_plot():
     #
     # # Define rendering parameters
 
-    mapper = 'gpu'
+    mapper = 'smart'
     shade = True
     # ambient = 0.3
     # diffuse = 0.6
