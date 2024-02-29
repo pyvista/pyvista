@@ -4224,7 +4224,7 @@ def test_frog_tissue_plot():
     # Define rendering parameters
 
     mapper = 'gpu'
-    # shade = True
+    shade = True
     # ambient = 0.3
     # diffuse = 0.6
     # specular = 0.5
@@ -4237,7 +4237,7 @@ def test_frog_tissue_plot():
         data,
         clim=clim,
         # ambient=ambient,
-        # shade=shade,
+        shade=shade,
         # diffuse=diffuse,
         # specular=specular,
         # specular_power=specular_power,
