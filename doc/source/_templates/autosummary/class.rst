@@ -3,6 +3,7 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
+   :show-inheritance:
 
    {% block methods %}
 
