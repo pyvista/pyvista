@@ -11,6 +11,7 @@ import os
 import pathlib
 import platform
 import re
+import sys
 import time
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
@@ -4202,7 +4203,11 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.parametrize('shade', [True, False])
 def test_plot_volume_frog_tissue(shade):
     if shade is True:
-        pytest.skip("Shading fails on CI machine (may still pass on other Windows machines)")
+        if os.name == 'nt':
+            pytest.skip("Shading fails on CI machine (may still pass on other Windows machines)")
+        if sys.platform == 'linux':
+            if pv.vtk_version_info == (9, 2, 2) or pv.vtk_version_info == (9, 0, 3):
+                pytest.xfail("Fails for some vtk versions.")
 
     data = examples.download_frog_tissue()
 
