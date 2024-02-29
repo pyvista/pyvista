@@ -65,7 +65,6 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
 
 
 if _vtk.vtk_version_info < (9, 3):
-# if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVersion() <= 2:
 
     @no_new_attr
     class CapsuleSource(_vtk.vtkCapsuleSource):
