@@ -32,6 +32,13 @@ def set_mpl():  # noqa: PT004
         matplotlib.use('agg', force=True)
 
 
+@pytest.fixture(autouse=True)
+def delete_downloads():  # noqa: PT004
+    """Always clean up any downloads after every test."""
+    yield
+    examples.delete_downloads()
+
+
 @pytest.fixture()
 def cube():
     return pyvista.Cube()
