@@ -924,3 +924,18 @@ should not wait until a minor release. The steps for a patch release
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+
+
+Dependency version policy
+-------------------------
+
+Python and VTK dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We support all `Supported Python versions`_ and `VTK versions`_ that
+support those python versions. As much as we would prefer to follow
+`NEP 29`_, we follow the VTK version policy as a interface library of VTK.
+
+.. _Supported Python versions: https://endoflife.date/python
+.. _VTK_versions: https://pypi.org/project/vtk/
+.. _NEP 29: https://numpy.org/neps/nep-0029-deprecation_policy.html
