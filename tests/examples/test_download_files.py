@@ -273,6 +273,7 @@ def test_download_frog():
 def test_download_frog_tissue():
     data = examples.download_frog_tissue()
     assert data.n_cells
+    assert data.get_data_range() == (0, 29)
 
 
 def test_download_chest():
