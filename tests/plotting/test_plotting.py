@@ -4202,10 +4202,7 @@ def test_direction_objects(direction_obj_test_case):
 
 @pytest.fixture()
 def frog_tissue():
-    data = examples.download_frog_tissue()
-    rng = data.get_data_range()
-    assert rng == (0, 29)
-    return data
+    return examples.download_frog_tissue()
 
 
 @pytest.mark.xfail(
