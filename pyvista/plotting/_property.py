@@ -1220,7 +1220,7 @@ class Property(_vtk.vtkProperty):
         before_close_callback = kwargs.pop('before_close_callback', None)
 
         pl = pyvista.Plotter(**kwargs)
-        actor = pl.add_mesh(examples.download_bunny_coarse())  # type: ignore[attr-defined]
+        actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
         if self.interpolation == 'Physically based rendering':
             cubemap = examples.download_sky_box_cube_map()

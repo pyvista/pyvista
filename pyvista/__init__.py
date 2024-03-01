@@ -63,13 +63,8 @@ MAX_N_COLOR_BARS = 10
 
 # Import all modules for type checkers and linters
 if TYPE_CHECKING:  # pragma: no cover
-    import demos
-    import ext
-    from plotting import *
-    import trame
-    import utilities
-
-    import examples
+    from pyvista import demos, examples, ext, trame, utilities
+    from pyvista.plotting import *
 
 
 # Lazily import/access the plotting module
