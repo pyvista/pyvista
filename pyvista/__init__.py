@@ -64,7 +64,7 @@ MAX_N_COLOR_BARS = 10
 
 
 # Import all modules for type checkers and linters
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import demos
     import ext
     from plotting import *
