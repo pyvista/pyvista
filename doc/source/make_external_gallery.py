@@ -185,6 +185,11 @@ articles = dict(
         link="https://github.com/peterdsharpe/air-racing-optimization",
         image="air_racing_optimization.png",
     ),
+    felupe=Example(
+        title="FElupe",
+        link="https://felupe.readthedocs.io/en/latest/",
+        image="felupe.png",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),

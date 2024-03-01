@@ -284,7 +284,7 @@ def test_solid_sphere_tol_radius():
     assert np.array_equal(solid_sphere.points[0, :], [0.0, 0.0, 1.0e-10])
 
 
-@pytest.mark.parametrize("radians", (True, False))
+@pytest.mark.parametrize("radians", [True, False])
 def test_solid_sphere_tol_angle(radians):
     max_phi = np.pi if radians else 180.0
 
@@ -351,7 +351,7 @@ def test_line():
     assert line.n_points == 11
     assert line.n_cells == 1
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Line(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
@@ -373,10 +373,10 @@ def test_multiple_lines():
     points = np.array([[0, 0, 0], [1, 1 * np.sqrt(3), 0], [2, 0, 0], [3, 3 * np.sqrt(3), 0]])
     multiple_lines = pv.MultipleLines(points=points)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultipleLines(points[:, :1])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultipleLines(points[0, :])
 
 
@@ -391,7 +391,7 @@ def test_tube():
     assert tube.n_points == 165
     assert tube.n_cells == 15
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Tube(pointa, pointb, -1)
 
     with pytest.raises(TypeError):
@@ -404,6 +404,12 @@ def test_tube():
         pv.Tube(pointa, (10, 1.0))
 
 
+def test_capsule():
+    capsule = pv.Capsule()
+    assert np.any(capsule.points)
+    assert np.any(capsule.faces)
+
+
 def test_cube():
     cube = pv.Cube()
     assert np.any(cube.points)
@@ -413,6 +419,16 @@ def test_cube():
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
+
+
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cube = pv.Cube(point_dtype=point_dtype)
+        assert cube.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(point_dtype=point_dtype)
 
 
 def test_cone():
@@ -520,7 +536,7 @@ def test_circular_arc():
     assert np.allclose(mesh['Distance'], distance)
 
     # pointa and pointb are not equidistant from center
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh = pv.CircularArc([-1, 0, 0], [-0.99, 0.001, 0], [0, 0, 0], 100)
 
 
@@ -670,7 +686,7 @@ def test_ellipse():
 
 
 @pytest.mark.parametrize(
-    'kind_str, kind_int, n_vertices, n_faces',
+    ('kind_str', 'kind_int', 'n_vertices', 'n_faces'),
     zip(
         ['tetrahedron', 'cube', 'octahedron', 'icosahedron', 'dodecahedron'],
         range(5),
@@ -690,11 +706,11 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
 
 def test_platonic_invalids():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind='invalid')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind=42)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind=[])
 
 

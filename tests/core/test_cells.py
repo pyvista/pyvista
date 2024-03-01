@@ -173,7 +173,7 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize("cell,type", zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "type"), zip(cells, types), ids=cell_ids)
 def test_cell_type(cell, type):
     assert cell.type == type
 
@@ -183,22 +183,22 @@ def test_cell_is_linear(cell):
     assert cell.is_linear
 
 
-@pytest.mark.parametrize("cell, dim", zip(cells, dims), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "dim"), zip(cells, dims), ids=cell_ids)
 def test_cell_dimension(cell, dim):
     assert cell.dimension == dim
 
 
-@pytest.mark.parametrize("cell, np", zip(cells, npoints), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "np"), zip(cells, npoints), ids=cell_ids)
 def test_cell_n_points(cell, np):
     assert cell.n_points == np
 
 
-@pytest.mark.parametrize("cell, nf", zip(cells, nfaces), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "nf"), zip(cells, nfaces), ids=cell_ids)
 def test_cell_n_faces(cell, nf):
     assert cell.n_faces == nf
 
 
-@pytest.mark.parametrize("cell, ne", zip(cells, nedges), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "ne"), zip(cells, nedges), ids=cell_ids)
 def test_cell_n_edges(cell, ne):
     assert cell.n_edges == ne
 
@@ -299,12 +299,12 @@ def test_cell_center_value():
     assert np.allclose(mesh.get_cell(0).center, [0.5, np.sqrt(3) / 6, 0.0], rtol=1e-8, atol=1e-8)
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
 def test_str(cell, type_):
     assert str(type_) in str(cell)
 
 
-@pytest.mark.parametrize("cell,type_", zip(cells, types), ids=cell_ids)
+@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
 def test_repr(cell, type_):
     assert str(type_) in repr(cell)
 
@@ -507,7 +507,7 @@ def test_n_cells_deprecated():
             raise RuntimeError("Remove `n_cells` constructor kwarg")
 
 
-@pytest.mark.parametrize('deep', (True, False))
+@pytest.mark.parametrize('deep', [True, False])
 def test_deep_deprecated(deep: bool):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)

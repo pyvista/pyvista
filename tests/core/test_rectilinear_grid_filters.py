@@ -4,7 +4,7 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture
+@pytest.fixture()
 def tiny_rectilinear():
     xrng = np.linspace(0, 3, 4)
     yrng = np.linspace(0, 3, 5)

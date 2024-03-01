@@ -22,6 +22,7 @@ PyVista.
    themes.DocumentTheme
    themes.ParaViewTheme
    themes._AxesConfig
+   themes._CameraConfig
    themes._ColorbarConfig
    themes._DepthPeelingConfig
    themes._Font

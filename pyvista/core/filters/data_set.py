@@ -2275,8 +2275,10 @@ class DataSetFilters:
             geom = [geom]
         if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
             raise TypeError('Only PolyData objects can be used as glyphs.')
+
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
+
         if len(geom) == 1:
             # use a single glyph, ignore indices
             alg.SetSourceData(geom[0])
@@ -2378,7 +2380,13 @@ class DataSetFilters:
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar, 'Computing Glyphs')
-        return _get_output(alg)
+
+        output = _get_output(alg)
+
+        # Storing geom on the algorithm, for later use in legends.
+        output._glyph_geom = geom
+
+        return output
 
     def connectivity(
         self,
@@ -5512,6 +5520,59 @@ class DataSetFilters:
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
+        return _get_output(alg)
+
+    def compute_boundary_mesh_quality(self, *, progress_bar=False):
+        """Compute metrics on the boundary faces of a mesh.
+
+        The metrics that can be computed on the boundary faces of the mesh and are:
+
+        - Distance from cell center to face center
+        - Distance from cell center to face plane
+        - Angle of faces plane normal and cell center to face center vector
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed metrics on the boundary faces of a mesh.
+            ``cell_data`` as the ``"CellQuality"`` array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_can_crushed_vtu()
+        >>> cqual = mesh.compute_boundary_mesh_quality()
+        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> _ = plotter.add_mesh(mesh, show_edges=True)
+        >>> plotter.subplot(1, 0)
+        >>> _ = plotter.add_mesh(
+        ...     cqual, scalars="DistanceFromCellCenterToFaceCenter"
+        ... )
+        >>> plotter.subplot(0, 1)
+        >>> _ = plotter.add_mesh(
+        ...     cqual, scalars="DistanceFromCellCenterToFacePlane"
+        ... )
+        >>> plotter.subplot(1, 1)
+        >>> _ = plotter.add_mesh(
+        ...     cqual,
+        ...     scalars="AngleFaceNormalAndCellCenterToFaceCenterVector",
+        ... )
+        >>> plotter.show()
+
+        """
+        if pyvista.vtk_version_info < (9, 3, 0):
+            raise VTKVersionError(
+                '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
+            )  # pragma: no cover
+        alg = _vtk.vtkBoundaryMeshQuality()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
         return _get_output(alg)
 
     def compute_derivative(

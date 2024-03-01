@@ -14,23 +14,23 @@ from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutu
 radius = 0.5
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere():
     # this shadows the main sphere fixture from conftest!
     return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_shifted():
     return pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sphere_dense():
     return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_dense():
     return pv.Cube()
 
@@ -60,7 +60,7 @@ def test_init_from_pdata(sphere):
     assert not np.allclose(sphere.points[0], mesh.points[0])
 
 
-@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+@pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
@@ -80,7 +80,7 @@ def test_init_from_arrays(faces_is_cell_array):
         mesh = pv.PolyData(vertices.astype(np.int32), faces)
 
     # array must be immutable
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mesh.faces[0] += 1
 
     # attribute is mutable
@@ -89,7 +89,7 @@ def test_init_from_arrays(faces_is_cell_array):
     assert np.allclose(faces, mesh.faces)
 
 
-@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+@pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
 
@@ -105,7 +105,7 @@ def test_init_from_arrays_with_vert(faces_is_cell_array):
     assert mesh.n_cells == 4
 
 
-@pytest.mark.parametrize('faces_is_cell_array', (False, True))
+@pytest.mark.parametrize('faces_is_cell_array', [False, True])
 def test_init_from_arrays_triangular(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
@@ -156,17 +156,17 @@ def test_init_as_points_from_list():
 
 
 def test_invalid_init():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PolyData(np.array([1.0]))
 
     with pytest.raises(TypeError):
         pv.PolyData([1.0, 2.0, 3.0], 'woa')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PolyData('woa', 'woa')
 
     poly = pv.PolyData()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.PolyData(poly, 'woa')
 
     with pytest.raises(TypeError):
@@ -177,13 +177,13 @@ def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pv.PolyData('file.bad')
 
-    with pytest.raises(IOError):
-        filename = os.path.join(test_path, 'test_polydata.py')
+    filename = os.path.join(test_path, 'test_polydata.py')
+    with pytest.raises(IOError):  # noqa: PT011
         pv.PolyData(filename)
 
 
 @pytest.mark.parametrize(
-    "arr,value",
+    ("arr", "value"),
     [
         ("faces", [3, 1, 2, 3, 3, 0, 1]),
         ("strips", np.array([5, 4, 3, 2, 0])),
@@ -204,7 +204,7 @@ def test_invalid_connectivity_arrays(arr, value):
         _ = pv.PolyData(points, **{arr: value})
 
 
-@pytest.mark.parametrize('lines_is_cell_array', (False, True))
+@pytest.mark.parametrize('lines_is_cell_array', [False, True])
 def test_lines_on_init(lines_is_cell_array):
     points = np.random.default_rng().random((5, 3))
     lines = [2, 0, 1, 3, 2, 3, 4]
@@ -226,7 +226,7 @@ def _assert_verts_equal(
         assert mesh.get_cell(i).type == expected_typ
 
 
-@pytest.mark.parametrize('verts_is_cell_array', (False, True))
+@pytest.mark.parametrize('verts_is_cell_array', [False, True])
 def test_verts(verts_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
     verts = [1, 0, 1, 1, 1, 2, 1, 3, 1, 4]
@@ -249,10 +249,10 @@ def test_verts(verts_is_cell_array):
     )
 
 
-@pytest.mark.parametrize('verts', ([1, 0], pv.CellArray([1, 0])))
-@pytest.mark.parametrize('lines', ([2, 1, 2], pv.CellArray([2, 1, 2])))
-@pytest.mark.parametrize('faces', ([3, 3, 4, 5], pv.CellArray([3, 3, 4, 5])))
-@pytest.mark.parametrize('strips', ([4, 6, 7, 8, 9], pv.CellArray([4, 6, 7, 8, 9])))
+@pytest.mark.parametrize('verts', [([1, 0]), (pv.CellArray([1, 0]))])
+@pytest.mark.parametrize('lines', [([2, 1, 2]), (pv.CellArray([2, 1, 2]))])
+@pytest.mark.parametrize('faces', [([3, 3, 4, 5]), (pv.CellArray([3, 3, 4, 5]))])
+@pytest.mark.parametrize('strips', [([4, 6, 7, 8, 9]), (pv.CellArray([4, 6, 7, 8, 9]))])
 def test_mixed_cell_polydata(verts, lines, faces, strips):
     points = np.zeros((10, 3))
     points[:, 0] = np.linspace(0, 9, 10)
@@ -323,7 +323,8 @@ def test_ray_trace_origin():
     # https://github.com/pyvista/pyvista/issues/5372
     plane = pv.Plane(i_resolution=1, j_resolution=1)
     pts, cells = plane.ray_trace([0, 0, 1], [0, 0, -1])
-    assert len(cells) == 1 and cells[0] == 0
+    assert len(cells) == 1
+    assert cells[0] == 0
 
 
 def test_multi_ray_trace(sphere):
@@ -566,7 +567,7 @@ def test_curvature(sphere, curv_type):
 
 
 def test_invalid_curvature(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.curvature('not valid')
 
 
@@ -608,7 +609,7 @@ def test_pathlib_read_write(tmpdir, sphere):
 
 
 def test_invalid_save(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.save('file.abc')
 
 
@@ -635,7 +636,7 @@ def test_subdivision(sphere, subfilter):
 
 
 def test_invalid_subdivision(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.subdivide(1, 'not valid')
 
     # check non-triangulated
@@ -840,7 +841,7 @@ def test_remove_points_fail(sphere, plane):
         plane.remove_points([0])
 
     # invalid bool mask size
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.remove_points(np.ones(10, np.bool_))
 
     # invalid mask type
@@ -900,7 +901,8 @@ def test_tube(spline):
     # Simple
     line = pv.Line()
     tube = line.tube(n_sides=2, progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     # inplace
     line.tube(n_sides=2, inplace=True, progress_bar=True)
@@ -908,11 +910,13 @@ def test_tube(spline):
 
     # Complicated
     tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     # Complicated with absolute radius
     tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
-    assert tube.n_points and tube.n_cells
+    assert tube.n_points
+    assert tube.n_cells
 
     with pytest.raises(TypeError):
         spline.tube(scalars=range(10))
@@ -1061,8 +1065,8 @@ def test_n_faces_strict():
     assert mesh.n_faces_strict == 1
 
 
-@pytest.fixture
-def default_n_faces():
+@pytest.fixture()
+def default_n_faces():  # noqa: PT004
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield

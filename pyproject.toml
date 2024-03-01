@@ -259,6 +259,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -287,12 +294,12 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
-external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
+external = ["E131", "D102", "D105"]
 ignore = [
     # whitespace before ':'
     "E203",
@@ -325,9 +332,14 @@ extend-select = [
     "B010",
     "C4",
     "F",
+    "FLY",
     "NPY",
     "PGH004",
+    "PIE",
+    "PT",
     "RSE",
+    "RUF005",
+    "RUF010",
     "RUF100",
 ]
 

@@ -6,12 +6,12 @@ import pyvista as pv
 from pyvista import Color, LookupTable
 
 
-@pytest.fixture
+@pytest.fixture()
 def lut():
     return LookupTable()
 
 
-@pytest.fixture
+@pytest.fixture()
 def lut_w_cmap():
     return LookupTable('viridis')
 
