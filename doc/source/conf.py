@@ -583,7 +583,24 @@ copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
 
 
+def delete_downloads_before_docstrings(app, what, name, obj, options, lines) -> None:
+    """Delete downloads before executing docstrings.
+
+    Function hook for a "autodoc-process-docstring" event.
+
+    This function is similar to having a test fixture with set-up code, and
+    ensures the downloads are clean before executing the docs.
+
+    """
+    for line in lines:
+        if 'download_' in line:
+            from pyvista import examples
+
+            examples.delete_downloads()
+
+
 def setup(app):
+    app.connect("autodoc-process-docstring", delete_downloads_before_docstrings)
     app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
