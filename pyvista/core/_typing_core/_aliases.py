@@ -1,6 +1,6 @@
 """Core type aliases."""
 
-# flake8: noqa: F401, F403
+# flake8: noqa: F401
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Tuple, Union
@@ -8,6 +8,9 @@ from typing import TYPE_CHECKING, Tuple, Union
 from pyvista.core import _vtk_core as _vtk
 
 from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..pointset import PolyData
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
@@ -50,10 +53,3 @@ Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
-
-
-if TYPE_CHECKING:  # pragma: no cover
-    from .. import *
-    from .._validation import *
-    from ..filters import *
-    from ..utilities import *
