@@ -275,7 +275,11 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name) or name in cls._new_attr_exceptions:
+        if (
+            hasattr(self, name)
+            or name in cls._new_attr_exceptions
+            or name in self._new_attr_exceptions
+        ):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(

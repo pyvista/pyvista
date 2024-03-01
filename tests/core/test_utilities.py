@@ -32,6 +32,7 @@ from pyvista.core.utilities.misc import (
     assert_empty_kwargs,
     check_valid_vector,
     has_module,
+    no_new_attr,
 )
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
@@ -948,3 +949,26 @@ def test_set_default_kwarg_mandatory():
     )
     with pytest.raises(ValueError, match=msg):
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
+
+        
+@pytest.fixture()
+def no_new_attr_subclass():
+    @no_new_attr
+    class A: ...
+
+    class B(A):
+        _new_attr_exceptions = 'eggs'
+
+        def __init__(self):
+            self.eggs = 'ham'
+
+    return B
+
+
+def test_no_new_attr_subclass(no_new_attr_subclass):
+    obj = no_new_attr_subclass()
+    assert obj
+    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
+    with pytest.raises(AttributeError, match=msg):
+        obj._eggs = 'ham'
+
