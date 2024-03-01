@@ -2739,7 +2739,7 @@ class WidgetHelper:
             # Fallback to PyVista logo
             from pyvista import examples
 
-            logo = examples.logofile
+            logo = examples.logofile  # type: ignore[attr-defined]
         if isinstance(logo, (str, pathlib.Path)):
             logo = pyvista.read(logo)
         if not isinstance(logo, pyvista.ImageData):
