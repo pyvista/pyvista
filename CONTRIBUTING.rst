@@ -921,21 +921,18 @@ should not wait until a minor release. The steps for a patch release
    from conda and follow the directions in step 10 in the minor release
    section.
 
-
-.. _pre-commit: https://pre-commit.com/
-.. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
-
-
 Dependency version policy
 -------------------------
 
 Python and VTK dependencies
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We support all `supported Python versions`_ and `VTK versions`_ that
+We support all supported `Python versions`_ and `VTK versions`_ that
 support those Python versions. As much as we would prefer to follow
 `NEP 29`_, we follow the VTK version policy as an interface library of VTK.
 
-.. _supported Python versions: https://endoflife.date/python
-.. _VTK_versions: https://pypi.org/project/vtk/
+.. _pre-commit: https://pre-commit.com/
+.. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _Python versions: https://endoflife.date/python
+.. _VTK versions: https://pypi.org/project/vtk/
 .. _NEP 29: https://numpy.org/neps/nep-0029-deprecation_policy.html
