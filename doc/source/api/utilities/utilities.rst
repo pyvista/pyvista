@@ -122,3 +122,15 @@ way of getting the version of VTK in your environment.
 
    >>> pyvista.vtk_version_info.major
    9
+
+PyVista Version Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Get the version of PyVista installed in your environment.
+
+.. code:: python
+
+   Output the version of PyVista.
+
+   >>> import pyvista
+   >>> pyvista.version_info
+   (0, 44, 0)
