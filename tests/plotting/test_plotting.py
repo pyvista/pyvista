@@ -11,6 +11,7 @@ import os
 import pathlib
 import platform
 import re
+import sys
 import time
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, List, Tuple, Type, TypeVar
@@ -4199,10 +4200,6 @@ def test_direction_objects(direction_obj_test_case):
     plot.show()
 
 
-# @pytest.mark.xfail(
-#     sys.platform == 'linux' and pv.vtk_version_info < (9, 3),
-#     reason="Fails for older vtk versions",
-# )
 @pytest.fixture()
 def frog_tissue():
     data = examples.download_frog_tissue()
@@ -4211,6 +4208,10 @@ def frog_tissue():
     return data
 
 
+@pytest.mark.xfail(
+    sys.platform == 'linux' and pv.vtk_version_info == (9, 0, 3),
+    reason="Fails for older vtk versions",
+)
 @pytest.mark.parametrize('shade', [True, False])
 def test_plot_volume_frog_tissue(shade, frog_tissue):
     if shade is True and os.name == 'nt':
