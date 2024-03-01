@@ -1,16 +1,12 @@
 """Core type aliases."""
 
-# flake8: noqa: F401
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import Tuple, Union
 
 from pyvista.core import _vtk_core as _vtk
 
 from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
-
-if TYPE_CHECKING:  # pragma: no cover
-    from ..pointset import PolyData
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
