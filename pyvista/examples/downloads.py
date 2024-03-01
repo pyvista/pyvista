@@ -1706,6 +1706,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
         out = _download_and_read('froggy/frogtissue.mhd', load=load)
         if out.get_data_range() != (0, 29):
             warnings.warn("Frog tissue data was not read correctly by VTK.")
+    return out
 
 
 def download_chest(load=True):  # pragma: no cover
