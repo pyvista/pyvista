@@ -14,8 +14,8 @@ import pyvista as pv
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 BUILD_DIR = os.path.join(ROOT_DIR, 'doc', '_build')
 BUILD_IMAGE_DIR = os.path.join(BUILD_DIR, 'html', '_images')
-TEST_IMAGE_DIR = os.path.join(ROOT_DIR, '_images_test')
-BUILD_IMAGE_CACHE = os.path.join(os.path.dirname(__file__), 'build_image_cache')
+DEBUG_IMAGE_DIR = os.path.join(ROOT_DIR, '_doc_debug_images')
+BUILD_IMAGE_CACHE = os.path.join(os.path.dirname(__file__), 'doc_image_cache')
 
 
 _TestCaseTuple = namedtuple('_TestCaseTuple', ['filename', 'docs_image_path', 'cached_image_path'])
@@ -76,7 +76,7 @@ def _generate_test_cases():
         test_cases_dict[filename].setdefault(key, filepath)
 
     # process test images
-    test_image_paths = _preprocess_build_images(BUILD_IMAGE_DIR, TEST_IMAGE_DIR)
+    test_image_paths = _preprocess_build_images(BUILD_IMAGE_DIR, DEBUG_IMAGE_DIR)
     [add_to_dict(path, 'docs') for path in test_image_paths]
 
     # process cached images
