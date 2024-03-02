@@ -53,8 +53,6 @@ repos:
             "--style {numpydoc,pep257}",
             "--no-strip-whitespace",
             "--no-capitalize-first-letter",
-            "--enable-error-code",
-            "ignore-without-code",
           ]
 
   - repo: https://github.com/numpy/numpydoc
@@ -73,6 +71,8 @@ repos:
             --pretty,
             --show-error-context,
             --warn-unused-ignores,
+            --enable-error-code,
+            ignore-without-code,
           ]
         exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
