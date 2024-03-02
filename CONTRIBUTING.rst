@@ -935,4 +935,4 @@ support those Python versions. As much as we would prefer to follow
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
 .. _Python versions: https://endoflife.date/python
 .. _VTK versions: https://pypi.org/project/vtk/
-.. _NEP 29: https://numpy.org/neps/nep-0029-deprecation_policy.html
+.. _SPEC 0: https://scientific-python.org/specs/spec-0000/
