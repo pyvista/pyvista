@@ -164,6 +164,10 @@ pretty = true
 show_error_context = true
 warn_unused_ignores = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
+enable_error_code = [
+    "ignore-without-code",
+]
+
 
 [tool.numpydoc_validation]
 checks = [
