@@ -96,6 +96,13 @@ jobs:
       - name: Test Documentation Images
         run: pytest tests/doc/tst_doc_images.py
 
+      - name: Upload Test Debug Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-debug-images
+          path: _doc_debug_images
+
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v4
