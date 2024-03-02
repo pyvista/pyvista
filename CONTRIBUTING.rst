@@ -929,7 +929,7 @@ Python and VTK dependencies
 
 We support all supported `Python versions`_ and `VTK versions`_ that
 support those Python versions. As much as we would prefer to follow
-`SPEC 0`_, we follow the VTK version policy as an interface library of VTK.
+`SPEC 0`_, we follow VTK versions as an interface library of VTK.
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
