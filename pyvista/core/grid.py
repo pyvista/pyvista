@@ -251,7 +251,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         """
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
-    @property  # type: ignore
+    @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
@@ -412,7 +412,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
         self.Modified()
 
-    @Grid.dimensions.setter  # type: ignore
+    @Grid.dimensions.setter  # type: ignore[attr-defined]
     def dimensions(self, _dims):  # numpydoc ignore=GL08
         """Set Dimensions.
 
@@ -637,7 +637,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.SetOrigin(xo, yo, zo)
         self.spacing = (spacing[0], spacing[1], spacing[2])
 
-    @property  # type: ignore
+    @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Build a copy of the implicitly defined points as a numpy array.
 

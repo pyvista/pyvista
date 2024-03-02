@@ -53,6 +53,8 @@ repos:
             "--style {numpydoc,pep257}",
             "--no-strip-whitespace",
             "--no-capitalize-first-letter",
+            "--enable-error-code",
+            "ignore-without-code",
           ]
 
   - repo: https://github.com/numpy/numpydoc
