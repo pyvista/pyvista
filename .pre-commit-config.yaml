@@ -73,6 +73,8 @@ repos:
             --pretty,
             --show-error-context,
             --warn-unused-ignores,
+            --enable-error-code,
+            ignore-without-code,
           ]
         exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:

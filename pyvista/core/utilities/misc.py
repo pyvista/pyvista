@@ -163,7 +163,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         if isinstance(value, cls):
             return value
         elif isinstance(value, int):
-            return cls(value)  # type: ignore
+            return cls(value)  # type: ignore[call-arg]
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
