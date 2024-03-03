@@ -2628,11 +2628,11 @@ class DataSetFilters:
             return _output
 
         # Store active scalars info to restore later if needed
-        active_field, active_name = self.active_scalars_info  # type: ignore
+        active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
 
         # Set scalars
         if scalar_range is None:
-            input_mesh = self.copy(deep=False)  # type: ignore
+            input_mesh = self.copy(deep=False)  # type: ignore[attr-defined]
         else:
             if isinstance(scalar_range, np.ndarray):
                 num_elements = scalar_range.size
@@ -2648,7 +2648,7 @@ class DataSetFilters:
                 )
 
             # Input will be modified, so copy first
-            input_mesh = self.copy()  # type: ignore
+            input_mesh = self.copy()  # type: ignore[attr-defined]
             if scalars is None:
                 set_default_active_scalars(input_mesh)
             else:
@@ -2809,7 +2809,7 @@ class DataSetFilters:
 
         if inplace:
             try:
-                self.copy_from(output, deep=False)  # type: ignore
+                self.copy_from(output, deep=False)  # type: ignore[attr-defined]
                 return self
             except:
                 pass

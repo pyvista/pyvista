@@ -172,7 +172,7 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)  # type: ignore
+            self.points = self.points.astype(np.double)  # type: ignore[assignment]
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
@@ -211,7 +211,7 @@ class _PointSet(DataSet):
 
         """
         if inplace:
-            self.points += np.asarray(xyz)  # type: ignore
+            self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
         return super().translate(
             xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
@@ -2355,7 +2355,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput  # type: ignore
+            self.points = uinput  # type: ignore[assignment]
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2740,7 +2740,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         for c in range(ncells):
             i, j, k = np.unravel_index(c, shape0, order='F')
             coord = (2 * i + connectivity[0], 2 * j + connectivity[1], 2 * k + connectivity[2])
-            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore
+            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore[call-overload]
             cells[c, 1:] = indices[cinds]
         cells = cells.flatten()
         points = vtk_points(points)
@@ -3036,7 +3036,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore[call-overload]
         except ValueError:
             return None
         else:
