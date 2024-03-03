@@ -9,7 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -57,13 +57,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[Matrix[float], Vector[float]], copy: bool = False
+    points: Union[MatrixLike[float], VectorLike[float]], copy: bool = False
 ) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : Matrix[float] | Vector[float]
+    points : MatrixLike[float] | VectorLike[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False

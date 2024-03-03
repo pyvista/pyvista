@@ -12,7 +12,7 @@ DiscSource
 PolygonSource
 vtkPyramid
 PlatonicSolidSource
-vtkSuperquadricSource
+SuperquadricSource
 Text3DSource
 
 as well as some pure-python helpers.
@@ -40,9 +40,16 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
     translate,
 )
+
+try:
+    from .geometric_sources import CapsuleSource
+except ImportError:  # pragma: no cover
+    pass
+
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -54,6 +61,87 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def Capsule(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    cylinder_length=1.0,
+    resolution=30,
+):
+    """Create the surface of a capsule.
+
+    .. warning::
+       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
+    .. note::
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
+       not identical.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Location of the centroid in ``[x, y, z]``.
+
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction the capsule points to in ``[x, y, z]``.
+
+    radius : float, default: 0.5
+        Radius of the capsule.
+
+    cylinder_length : float, default: 1.0
+        Cylinder length of the capsule.
+
+    resolution : int, default: 30
+        Number of points on the circular face of the cylinder.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Capsule surface.
+
+    See Also
+    --------
+    pyvista.Cylinder
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    """
+    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        algo = CylinderSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            height=cylinder_length,
+            capping=True,
+            resolution=resolution,
+        )
+        algo.capsule_cap = True
+    else:
+        algo = CapsuleSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            cylinder_length=cylinder_length,
+            theta_resolution=resolution,
+            phi_resolution=resolution,
+        )
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def Cylinder(
@@ -1083,7 +1171,15 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
 
 
-def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
+def Cube(
+    center=(0.0, 0.0, 0.0),
+    x_length=1.0,
+    y_length=1.0,
+    z_length=1.0,
+    bounds=None,
+    clean=True,
+    point_dtype='float32',
+):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
@@ -1125,6 +1221,10 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
         .. versionadded:: 0.33.0
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1140,7 +1240,12 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
     """
     algo = CubeSource(
-        center=center, x_length=x_length, y_length=y_length, z_length=z_length, bounds=bounds
+        center=center,
+        x_length=x_length,
+        y_length=y_length,
+        z_length=z_length,
+        bounds=bounds,
+        point_dtype=point_dtype,
     )
     cube = algo.output
 
@@ -2013,18 +2118,18 @@ def Superquadric(
     >>> superquadric.plot(show_edges=True)
 
     """
-    superquadricSource = _vtk.vtkSuperquadricSource()
-    superquadricSource.SetCenter(center)
-    superquadricSource.SetScale(scale)
-    superquadricSource.SetSize(size)
-    superquadricSource.SetThetaRoundness(theta_roundness)
-    superquadricSource.SetPhiRoundness(phi_roundness)
-    superquadricSource.SetThetaResolution(round(theta_resolution / 4) * 4)
-    superquadricSource.SetPhiResolution(round(phi_resolution / 8) * 8)
-    superquadricSource.SetToroidal(toroidal)
-    superquadricSource.SetThickness(thickness)
-    superquadricSource.Update()
-    return wrap(superquadricSource.GetOutput())
+    source = SuperquadricSource(
+        center=center,
+        scale=scale,
+        size=size,
+        theta_roundness=theta_roundness,
+        phi_roundness=phi_roundness,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        toroidal=toroidal,
+        thickness=thickness,
+    )
+    return source.output
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):

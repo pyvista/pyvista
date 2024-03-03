@@ -27,7 +27,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, Matrix, Number, NumpyArray, Vector
+from ._typing_core import BoundsLike, MatrixLike, Number, NumpyArray, VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning, VTKVersionError
@@ -395,7 +395,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore
+    @property  # type: ignore[explicit-override, override]
     def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the active scalars.
 
@@ -496,12 +496,12 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: Union[Matrix[float], _vtk.vtkPoints]):  # numpydoc ignore=GL08
+    def points(self, points: Union[MatrixLike[float], _vtk.vtkPoints]):  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
         ----------
-        points : Matrix[float] | vtk.vtkPoints
+        points : MatrixLike[float] | vtk.vtkPoints
             Points as a array object.
 
         """
@@ -597,7 +597,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore
+        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
         self, name: Optional[str], preference='cell'
@@ -889,7 +889,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: Vector[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -947,7 +947,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: Vector[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1004,7 +1004,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_z(
         self,
         angle: float,
-        point: Vector[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1061,9 +1061,9 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate_vector(
         self,
-        vector: Vector[float],
+        vector: VectorLike[float],
         angle: float,
-        point: Vector[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1123,7 +1123,10 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     def translate(
-        self, xyz: Vector[float], transform_all_input_vectors: bool = False, inplace: bool = False
+        self,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
     ):
         """Translate the mesh.
 
@@ -1171,7 +1174,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def scale(
         self,
-        xyz: Union[Number, Vector[float]],
+        xyz: Union[Number, VectorLike[float]],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1229,7 +1232,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_x(
         self,
-        point: Optional[Vector[float]] = None,
+        point: Optional[VectorLike[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1285,7 +1288,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_y(
         self,
-        point: Optional[Vector[float]] = None,
+        point: Optional[VectorLike[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1341,7 +1344,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_z(
         self,
-        point: Optional[Vector[float]] = None,
+        point: Optional[VectorLike[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1397,8 +1400,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def flip_normal(
         self,
-        normal: Vector[float],
-        point: Optional[Vector[float]] = None,
+        normal: VectorLike[float],
+        point: Optional[VectorLike[float]] = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -2338,7 +2341,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_closest_cell(
         self,
-        point: Union[Vector[float], Matrix[float]],
+        point: Union[VectorLike[float], MatrixLike[float]],
         return_closest_point: bool = False,
     ) -> Union[int, NumpyArray[int], Tuple[Union[int, NumpyArray[int]], NumpyArray[int]]]:
         """Find index of closest cell in this mesh to the given point.
@@ -2470,7 +2473,7 @@ class DataSet(DataSetFilters, DataObject):
         return out_cells
 
     def find_containing_cell(
-        self, point: Union[Vector[float], Matrix[float]]
+        self, point: Union[VectorLike[float], MatrixLike[float]]
     ) -> Union[int, NumpyArray[int]]:
         """Find index of a cell that contains the given point.
 
@@ -2536,8 +2539,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_along_line(
         self,
-        pointa: Vector[float],
-        pointb: Vector[float],
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
         tolerance: float = 0.0,
     ) -> NumpyArray[int]:
         """Find the index of cells whose bounds intersect a line.
@@ -2602,8 +2605,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def find_cells_intersecting_line(
         self,
-        pointa: Vector[float],
-        pointb: Vector[float],
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
         tolerance: float = 0.0,
     ) -> NumpyArray[int]:
         """Find the index of cells that intersect a line.
@@ -3273,7 +3276,7 @@ class DataSet(DataSetFilters, DataObject):
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
     def point_is_inside_cell(
-        self, ind: int, point: Union[Vector[float] | Matrix[float]]
+        self, ind: int, point: Union[VectorLike[float] | MatrixLike[float]]
     ) -> Union[bool, NumpyArray[np.bool_]]:
         """Return whether one or more points are inside a cell.
 
@@ -3371,4 +3374,4 @@ class DataSet(DataSetFilters, DataObject):
         texture_coordinates : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]

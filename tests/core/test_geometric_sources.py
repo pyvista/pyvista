@@ -7,6 +7,20 @@ from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
 
+def test_capsule_source():
+    if pv.vtk_version_info < (9, 3):
+        algo = pv.CapsuleSource()
+        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+        assert algo.radius == 0.5
+        assert algo.cylinder_length == 1.0
+        assert algo.theta_resolution == 30
+        assert algo.phi_resolution == 30
+        direction = np.random.default_rng().random(3)
+        algo.direction = direction
+        assert np.array_equal(algo.direction, direction)
+
+
 def test_cone_source():
     algo = pv.ConeSource()
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
@@ -35,6 +49,13 @@ def test_cylinder_source():
     algo.direction = direction
     assert np.array_equal(algo.center, center)
     assert np.array_equal(algo.direction, direction)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_cylinder_capsule_cap():
+    algo = pv.CylinderSource()
+    algo.capsule_cap = True
+    assert algo.capsule_cap
 
 
 def test_multiple_lines_source():
@@ -361,6 +382,19 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+
+
+def test_superquadric_source():
+    algo = pv.SuperquadricSource()
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.scale == (1.0, 1.0, 1.0)
+    assert algo.size == 0.5
+    assert algo.theta_roundness == 1.0
+    assert algo.phi_roundness == 1.0
+    assert algo.theta_resolution == 16
+    assert algo.phi_resolution == 16
+    assert not algo.toroidal
+    assert algo.thickness == 1 / 3
 
 
 def test_arrow_source():

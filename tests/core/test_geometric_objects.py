@@ -404,6 +404,12 @@ def test_tube():
         pv.Tube(pointa, (10, 1.0))
 
 
+def test_capsule():
+    capsule = pv.Capsule()
+    assert np.any(capsule.points)
+    assert np.any(capsule.faces)
+
+
 def test_cube():
     cube = pv.Cube()
     assert np.any(cube.points)
@@ -413,6 +419,16 @@ def test_cube():
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
+
+
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_cube_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cube = pv.Cube(point_dtype=point_dtype)
+        assert cube.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cube(point_dtype=point_dtype)
 
 
 def test_cone():
