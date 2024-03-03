@@ -3492,7 +3492,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
-                if scalars.endswith('_rgb') or scalars.endswith('_rgba'):
+                if scalars.endswith(('_rgb', '_rgba')):
                     rgb = True
 
             original_scalar_name = scalars
@@ -3718,11 +3718,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
-        geom = pyvista.Triangle()
-        if scalars is not None:
-            geom = pyvista.Box()
-            color = Color('black')
+
+        if (
+            hasattr(self.mesh, '_glyph_geom')
+            and self.mesh._glyph_geom is not None
+            and self.mesh._glyph_geom[0] is not None
+        ):
+            # Using only the first geometry
+            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
+        else:
+            geom = pyvista.Triangle()
+            if scalars is not None:
+                geom = pyvista.Box()
+
         geom.points -= geom.center
+
         addr = actor.GetAddressAsString("")
         self.renderer._labels[addr] = [geom, label, color]
 
@@ -5999,7 +6009,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         center = np.array(self.center)
         bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
@@ -6094,7 +6104,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if focus is None:
             focus = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
@@ -6578,6 +6588,11 @@ class Plotter(BasePlotter):
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
             self.enable_anti_aliasing(self.theme.anti_aliasing)
+
+        if self.theme.camera.parallel_projection:
+            self.enable_parallel_projection()
+
+        self.parallel_scale = self.theme.camera.parallel_scale
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True

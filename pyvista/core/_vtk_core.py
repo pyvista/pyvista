@@ -316,6 +316,7 @@ from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import (
     vtkArcSource,
     vtkArrowSource,
+    vtkCapsuleSource,
     vtkConeSource,
     vtkCubeSource,
     vtkCylinderSource,
@@ -336,6 +337,11 @@ from vtkmodules.vtkFiltersSources import (
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
+
+try:
+    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
@@ -396,7 +402,7 @@ try:
 except ImportError:  # pragma: no cover
     # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
 
-    class vtkPythonItem:  # type: ignore
+    class vtkPythonItem:  # type: ignore[no-redef]
         """Empty placeholder."""
 
         def __init__(self):  # pragma: no cover

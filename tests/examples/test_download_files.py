@@ -214,6 +214,13 @@ def test_download_can_crushed_hdf():
     assert isinstance(dataset, pv.UnstructuredGrid)
 
 
+def test_download_can_crushed_vtu():
+    path = examples.download_can_crushed_vtu(load=False)
+    assert os.path.isfile(path)
+    dataset = examples.download_can_crushed_vtu()
+    assert isinstance(dataset, pv.UnstructuredGrid)
+
+
 def test_download_rectilinear_grid():
     data = examples.download_rectilinear_grid()
     assert data.n_cells

@@ -41,9 +41,8 @@ def test_load_spline():
     assert mesh.n_points
 
 
-def test_load_random_hills():
-    mesh = examples.load_random_hills()
-    assert mesh.n_cells
+def test_load_random_hills(random_hills):
+    assert random_hills.n_cells
 
 
 def test_load_tetbeam():

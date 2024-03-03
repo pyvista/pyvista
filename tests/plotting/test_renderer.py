@@ -1,5 +1,5 @@
+import numpy as np
 import pytest
-from pytest import raises
 
 import pyvista as pv
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
@@ -31,6 +31,14 @@ def test_show_bounds_axes_ranges():
     ]
     assert test_ranges == axes_ranges
 
+    # make sure that the axes labels match the axes ranges
+    labels_ranges = []
+    for axis in range(3):
+        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        labels_ranges.append(float(axis_labels.GetValue(0)))
+        labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
+    assert labels_ranges == axes_ranges
+
 
 def test_show_bounds_with_scaling(sphere):
     plotter = pv.Plotter()
@@ -46,20 +54,20 @@ def test_show_bounds_invalid_axes_ranges():
     plotter = pv.Plotter()
 
     # send incorrect axes_ranges types
-    with raises(TypeError, match='numeric sequence'):
-        axes_ranges = 1
+    axes_ranges = 1
+    with pytest.raises(TypeError, match='numeric sequence'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
-    with raises(TypeError, match='All of the elements'):
-        axes_ranges = [0, 1, 'a', 'b', 2, 3]
+    axes_ranges = [0, 1, 'a', 'b', 2, 3]
+    with pytest.raises(TypeError, match='All of the elements'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
-    with raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
-        axes_ranges = [0, 1, 2, 3, 4]
+    axes_ranges = [0, 1, 2, 3, 4]
+    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_camera_position():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
@@ -67,7 +75,7 @@ def test_camera_position():
     assert isinstance(plotter.camera_position, pv.CameraPosition)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_plotter_camera_position():
     plotter = pv.Plotter()
     plotter.set_position([1, 1, 1], render=True)
@@ -100,7 +108,7 @@ def test_layer():
     assert plotter.renderer.layer == 0
 
 
-@pytest.mark.parametrize('has_border', (True, False))
+@pytest.mark.parametrize('has_border', [True, False])
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
@@ -173,10 +181,108 @@ def test_add_remove_legend(sphere):
 
 
 @pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
-def test_legend_face(sphere, face):
+def test_legend_face(sphere, face, verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
-    pl.add_legend(face=face)
+    pl.add_legend(face=face, size=(0.5, 0.5))
+
+
+def test_legend_from_glyph(sphere, verify_image_cache):
+    pl = pv.Plotter()
+    x = sphere.face_normals[:, 0] ** 2
+    y = sphere.face_normals[:, 1] ** 2
+    z = sphere.face_normals[:, 2] ** 2
+
+    sphere['scale'] = (x**2 + y**2 + z**2) ** (1 / 2)
+    sphere['normals'] = sphere.face_normals * 0.1
+
+    arrows = sphere.glyph(scale='scale', orient='normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='red', label='Magnitude')
+    pl.add_mesh(sphere)
+    pl.add_legend(size=(0.5, 0.5))
+
+
+def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
+    pl = pv.Plotter()
+
+    random_hills["Normals2"] = -1 * random_hills["Normals"].copy()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    arrows2 = random_hills.glyph(scale="Normals", orient="Normals2", tolerance=0.05)
+    pl.add_mesh(arrows2, color="red", label="label 2")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    pl.add_legend(size=(0.5, 0.5))
+    pl.show()
+
+
+def test_legend_using_add_legend(random_hills, verify_image_cache):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = []
+    legend_entries.append(['my label 1', 'g'])
+    legend_entries.append(['my label 2', 'blue'])
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.show()
+
+
+def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = []
+    legend_entries.append(['my label 1', 'g'])
+    legend_entries.append(['my label 2', 'blue', pv.Circle()])
+    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
+    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
+    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
+
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.show()
+
+
+def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
+    pl = pv.Plotter()
+
+    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="black", label="label 1")
+
+    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+
+    legend_entries = ["label 1", "label 2"]
+
+    pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.show()
+
+
+def test_legend_add_entry_warning(verify_image_cache):
+    pl = pv.Plotter()
+    legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
+
+    with pytest.warns(UserWarning, match="Some of the arguments given to legend are not used"):
+        pl.add_legend(legend_entries, size=(0.5, 0.5))
+        pl.show()
+
+
+def test_legend_add_entry_exception():
+    pl = pv.Plotter()
+    legend_entries = np.array([1, 2])  # Not allowed type
+
+    with pytest.raises(ValueError, match="The object passed to the legend"):
+        pl.add_legend(legend_entries)
+    pl.show()
 
 
 def test_add_legend_background_opacity(sphere):

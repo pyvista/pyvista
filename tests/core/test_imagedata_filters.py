@@ -76,7 +76,7 @@ def test_contour_labeled_with_invalid_output_mesh_type():
     label_map = examples.download_frog_tissue()
 
     # Extract surface for each label
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         label_map.contour_labeled(output_mesh_type='invalid')
 
 
@@ -89,7 +89,7 @@ def test_contour_labeled_with_invalid_output_style():
     with pytest.raises(NotImplementedError):
         label_map.contour_labeled(output_style='selected')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         label_map.contour_labeled(output_style='invalid')
 
 

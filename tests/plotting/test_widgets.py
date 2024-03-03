@@ -261,7 +261,7 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_measurement_widget():
+def test_measurement_widget(random_hills):
     class DistanceCallback:
         def __init__(self):
             self.called = False
@@ -275,7 +275,7 @@ def test_measurement_widget():
             self.count += 1
 
     p = pv.Plotter(window_size=[1000, 1000])
-    p.add_mesh(examples.load_random_hills())
+    p.add_mesh(random_hills)
     distance_callback = DistanceCallback()
     p.add_measurement_widget(callback=distance_callback)
     p.view_xy()
@@ -467,8 +467,8 @@ def test_affine_widget(sphere):
     with pytest.raises(ValueError, match='(3, 3)'):
         pl.add_affine_transform_widget(actor, axes=np.eye(5))
 
+    axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
     with pytest.raises(ValueError, match='right hand'):
-        axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
         pl.add_affine_transform_widget(actor, axes=axes)
 
     widget = pl.add_affine_transform_widget(
@@ -498,8 +498,10 @@ def test_affine_widget(sphere):
     assert actor.user_matrix[0, 3] < 0
 
     # test callback called
-    assert len(interact_calls) == 2 and interact_calls[0].shape == (4, 4)
-    assert len(release_calls) == 1 and release_calls[0].shape == (4, 4)
+    assert len(interact_calls) == 2
+    assert interact_calls[0].shape == (4, 4)
+    assert len(release_calls) == 1
+    assert release_calls[0].shape == (4, 4)
 
     # test Y axis translation
     pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
@@ -525,7 +527,8 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert x_r > 0 and np.allclose([y_r, z_r], 0)
+    assert x_r > 0
+    assert np.allclose([y_r, z_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
@@ -537,7 +540,8 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert y_r > 0 and np.allclose([x_r, z_r], 0)
+    assert y_r > 0
+    assert np.allclose([x_r, z_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
@@ -548,7 +552,8 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r > 0 and np.allclose([x_r, y_r], 0)
+    assert z_r > 0
+    assert np.allclose([x_r, y_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
@@ -622,7 +627,7 @@ def test_camera3d_widget(verify_image_cache):
     plotter.show(cpos=plotter.camera_position)
 
 
-@pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng(0).random()))
+@pytest.mark.parametrize("outline_opacity", [True, False, np.random.default_rng(0).random()])
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
