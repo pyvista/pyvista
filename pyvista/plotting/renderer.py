@@ -1063,6 +1063,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
 
+            .. deprecated:: 0.43.0
+                The is deprecated. Use `add_box_axes` method instead.",
+
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
@@ -1115,6 +1118,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if box is None:
             box = self._theme.axes.box
         if box:
+            warnings.warn(
+                "`box` is deprecated. Use `add_box_axes` method instead.",
+                PyVistaDeprecationWarning,
+            )
             if box_args is None:
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
