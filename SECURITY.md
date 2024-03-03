@@ -7,7 +7,8 @@ Security vulnerability reports will be accepted and acted upon for all supported
 
 | Version | Supported          |
 | ------- | ------------------ |
-| < 0.44  | :white_check_mark: |
+| 0.43.x  | :white_check_mark: |
+| < 0.43  | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
