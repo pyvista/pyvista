@@ -950,7 +950,7 @@ def test_set_default_kwarg_mandatory():
     with pytest.raises(ValueError, match=msg):
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
-        
+
 @pytest.fixture()
 def no_new_attr_subclass():
     @no_new_attr
@@ -971,4 +971,3 @@ def test_no_new_attr_subclass(no_new_attr_subclass):
     msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
     with pytest.raises(AttributeError, match=msg):
         obj._eggs = 'ham'
-
