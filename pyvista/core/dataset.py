@@ -395,7 +395,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_vectors(name)
 
-    @property  # type: ignore
+    @property  # type: ignore[explicit-override, override]
     def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
         """Return the name of the active scalars.
 
@@ -597,7 +597,7 @@ class DataSet(DataSetFilters, DataObject):
             "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore
+        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
         self, name: Optional[str], preference='cell'
@@ -3374,4 +3374,4 @@ class DataSet(DataSetFilters, DataObject):
         texture_coordinates : np.ndarray
             Active texture coordinates on the points.
         """
-        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore
+        self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
