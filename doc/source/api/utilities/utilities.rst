@@ -106,7 +106,7 @@ Miscellaneous
 
 PyVista Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The PyVista provides a way of getting the version installed in your
+The PyVista library provides a way of getting the version installed in your
 environment.
 
 .. code:: python
