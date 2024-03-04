@@ -3313,8 +3313,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Plot spheres using `points_gaussian` style and scale them by radius.
 
         >>> N_SPHERES = 1_000_000
-        >>> pos = np.random.random((N_SPHERES, 3))
-        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> rng = np.random.default_rng(seed=0)
+        >>> pos = rng.random((N_SPHERES, 3))
+        >>> rad = rng.random(N_SPHERES) * 0.01
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
         >>> pdata.plot(
