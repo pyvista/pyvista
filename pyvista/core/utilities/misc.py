@@ -12,7 +12,7 @@ import warnings
 
 import numpy as np
 
-from .._typing_core import Vector
+from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
@@ -52,13 +52,13 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(point: Vector[float], name: str = '') -> None:
+def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
     """
     Check if a vector contains three components.
 
     Parameters
     ----------
-    point : Vector[float]
+    point : VectorLike[float]
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
@@ -160,7 +160,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         if isinstance(value, cls):
             return value
         elif isinstance(value, int):
-            return cls(value)  # type: ignore
+            return cls(value)  # type: ignore[call-arg]
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
@@ -272,7 +272,11 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name) or name in cls._new_attr_exceptions:
+        if (
+            hasattr(self, name)
+            or name in cls._new_attr_exceptions
+            or name in self._new_attr_exceptions
+        ):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(

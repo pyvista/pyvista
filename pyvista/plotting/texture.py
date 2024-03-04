@@ -582,7 +582,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
 
-        return Texture.WrapType(self.GetWrap())  # type: ignore
+        return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
     def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08

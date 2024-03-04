@@ -36,6 +36,7 @@ Geometric Objects
 
    Arrow
    Box
+   Capsule
    Circle
    CircularArc
    CircularArcFromNormal
@@ -84,6 +85,17 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
 .. autosummary::
    :toctree: _autosummary
 
+   ArrowSource
+   BoxSource
    ConeSource
+   CubeSource
    CylinderSource
+   DiscSource
+   LineSource
    MultipleLinesSource
+   PlaneSource
+   PlatonicSolidSource
+   PolygonSource
+   SphereSource
+   SuperquadricSource
+   Text3DSource
