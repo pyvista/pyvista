@@ -10,6 +10,9 @@ the entire library.
 
 # flake8: noqa: F401
 
+from collections import namedtuple
+import warnings
+
 from vtkmodules.vtkCommonCore import vtkVersion
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
@@ -435,3 +438,29 @@ try:
     from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 except ImportError:  # pragma: no cover
     pass
+
+
+def VTKVersionInfo():
+    """Return the vtk version as a namedtuple.
+
+    Returns
+    -------
+    collections.namedtuple
+        Version information as a named tuple.
+
+    """
+    version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
+
+    try:
+        ver = vtkVersion()
+        major = ver.GetVTKMajorVersion()
+        minor = ver.GetVTKMinorVersion()
+        micro = ver.GetVTKBuildVersion()
+    except AttributeError:  # pragma: no cover
+        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        major, minor, micro = (4, 0, 0)
+
+    return version_info(major, minor, micro)
+
+
+vtk_version_info = VTKVersionInfo()
