@@ -5679,8 +5679,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import numpy as np
         >>> import pyvista as pv
         >>>
-        >>> rng_generator = np.random.default_rng(seed=0)
-        >>> points = rng_generator.random((10, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5689,7 +5689,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = rng_generator.random((10, 3))
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5732,9 +5732,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import numpy as np
         >>> import pyvista as pv
 
-        >>> rng_generator = np.random.default_rng(seed=0)
-        >>> cent = rng_generator.random((10, 3))
-        >>> direction = rng_generator.random((10, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> cent = rng.random((10, 3))
+        >>> direction = rng.random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()

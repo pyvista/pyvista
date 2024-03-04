@@ -38,8 +38,8 @@ def glyphs(grid_sz=3):
     values = np.arange(n)  # values for scalars to look up glyphs by
 
     # taken from:
-    rng_generator = np.random.default_rng(seed=0)
-    params = rng_generator.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
+    rng = np.random.default_rng(seed=0)
+    params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
     geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
 
@@ -49,7 +49,7 @@ def glyphs(grid_sz=3):
     mesh = pyvista.StructuredGrid(x, y, z)
 
     # add random scalars
-    rng_int = rng_generator.integers(0, n, size=x.size)
+    rng_int = rng.integers(0, n, size=x.size)
     mesh.point_data['scalars'] = rng_int
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
