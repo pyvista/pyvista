@@ -163,7 +163,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
                 exec(example.source, globs)
             except Exception as exc:
                 if verbose:
-                    print(f'FAILED: {dt.name} -- {repr(exc)}')
+                    print(f'FAILED: {dt.name} -- {exc!r}')
                 erroring_code = ''.join([example.source for example in dt.examples[:iline]])
                 failures[dt_name] = exc, erroring_code
                 break

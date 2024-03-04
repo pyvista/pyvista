@@ -2750,7 +2750,7 @@ class WidgetHelper:
         representation.SetPosition2(size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
-        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
         widget.On()
         self.logo_widgets.append(widget)

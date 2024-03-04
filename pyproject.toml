@@ -164,6 +164,10 @@ pretty = true
 show_error_context = true
 warn_unused_ignores = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
+enable_error_code = [
+    "ignore-without-code",
+]
+
 
 [tool.numpydoc_validation]
 checks = [
@@ -259,6 +263,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -325,9 +336,14 @@ extend-select = [
     "B010",
     "C4",
     "F",
+    "FLY",
     "NPY",
     "PGH004",
+    "PIE",
+    "PT",
     "RSE",
+    "RUF005",
+    "RUF010",
     "RUF100",
 ]
 

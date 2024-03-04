@@ -32,7 +32,7 @@ def test_set_jupyter_backend_static():
 
 
 @skip_no_ipython
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 @pytest.mark.parametrize('return_viewer', [True, False])
 def test_static_from_show(sphere, return_viewer):
     window_size = (100, 100)
@@ -48,7 +48,7 @@ def test_static_from_show(sphere, return_viewer):
 
 
 @skip_no_ipython
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_show_return_values(sphere: pv.PolyData):
     # Three possible return values: (cpos, image, widget)
     img, viewer = sphere.plot(

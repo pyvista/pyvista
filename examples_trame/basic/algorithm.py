@@ -1,6 +1,6 @@
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista.trame.ui import plotter_ui
@@ -48,18 +48,19 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text("Cone")
 
     with layout.toolbar:
-        vuetify.VSpacer()
-        vuetify.VSlider(
+        vuetify3.VSpacer()
+        vuetify3.VSlider(
+            label="Resolution",
             v_model=("resolution", 15),
             min=5,
             max=30,
             hide_details=True,
-            dense=True,
+            density="compact",
             style="max-width: 300px",
             change=ctrl.view_update,
         )
 
-        vuetify.VProgressLinear(
+        vuetify3.VProgressLinear(
             indeterminate=True,
             absolute=True,
             bottom=True,
@@ -67,7 +68,7 @@ with SinglePageLayout(server) as layout:
         )
 
     with layout.content:
-        with vuetify.VContainer(
+        with vuetify3.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):

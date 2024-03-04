@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray
+from pyvista.core._typing_core import MatrixLike, NumpyArray
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:
@@ -31,12 +31,12 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))  # type: ignore
+        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 
 def numpy_to_idarr(
-    ind: Matrix[int], deep: bool = False, return_ind: bool = False
+    ind: MatrixLike[int], deep: bool = False, return_ind: bool = False
 ) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
     """Safely convert a numpy array to a vtkIdTypeArray.
 

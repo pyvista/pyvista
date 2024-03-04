@@ -302,7 +302,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore
+    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore[explicit-override, override]
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -734,7 +734,7 @@ class MultiBlock(
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
-            self._refs.pop(dataset.memory_address, None)  # type: ignore
+            self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
     def __iter__(self) -> 'MultiBlock':
         """Return the iterator across all blocks."""
@@ -981,7 +981,6 @@ class MultiBlock(
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
-        pass
 
     def copy(self, deep=True):
         """Return a copy of the multiblock.
