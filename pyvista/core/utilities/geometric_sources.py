@@ -819,7 +819,6 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return wrap(self.GetOutput())
 
 
-@no_new_attr
 class Text3DSource(vtkVectorText):
     """3D text from a string.
 
