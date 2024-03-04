@@ -8,9 +8,9 @@ import weakref
 import numpy as np
 
 import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .colors import Color, get_cycler
