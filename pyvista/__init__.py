@@ -7,14 +7,15 @@ from typing import TYPE_CHECKING
 import warnings
 
 from pyvista._plot import plot
-from pyvista._version import __version__
+from pyvista._version import __version__, version_info
 from pyvista.core import *
 import pyvista.core._validation as _validation
+from pyvista.core._vtk_core import vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
 from pyvista.jupyter import set_jupyter_backend
-from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
+from pyvista.report import GPUInfo, Report, get_gpu_info
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
