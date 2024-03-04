@@ -622,8 +622,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
-    >>> points = np.random.default_rng().random((n_points, 3))
-    >>> lines = np.random.default_rng().integers(
+    >>> rng_generator = np.random.default_rng(seed=0)
+    >>> points = rng_generator.random((n_points, 3))
+    >>> lines = rng_generator.integers(
     ...     low=0, high=n_points, size=(n_lines, 2)
     ... )
     >>> mesh = pv.PolyData(
@@ -638,13 +639,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     the ``strips`` cell array.
 
     >>> n_strips = 4
-    >>> n_verts_per_strip = np.random.default_rng().integers(
+    >>> n_verts_per_strip = rng_generator.integers(
     ...     low=3, high=7, size=n_strips
     ... )
     >>> n_points = 10 * sum(n_verts_per_strip)
-    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> points = rng_generator((n_points, 3))
     >>> strips = [
-    ...     np.random.default_rng().integers(low=0, high=n_points, size=nv)
+    ...     rng_generator.integers(low=0, high=n_points, size=nv)
     ...     for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
