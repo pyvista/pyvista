@@ -639,7 +639,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> n_strips = 4
     >>> n_verts_per_strip = rng.integers(low=3, high=7, size=n_strips)
     >>> n_points = 10 * sum(n_verts_per_strip)
-    >>> points = rng((n_points, 3))
+    >>> points = rng.random((n_points, 3))
     >>> strips = [
     ...     rng.integers(low=0, high=n_points, size=nv)
     ...     for nv in n_verts_per_strip
