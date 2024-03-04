@@ -1138,7 +1138,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             box = self._theme.axes.box
         if box:
             warnings.warn(
-                "`box` is deprecated. Use `add_box_axes` method instead.",
+                "`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.",
                 PyVistaDeprecationWarning,
             )
             if box_args is None:
