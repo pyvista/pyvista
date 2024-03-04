@@ -2,13 +2,7 @@
 
 ## Supported Versions
 
-The following table lists versions and whether they are supported.
-Security vulnerability reports will be accepted and acted upon for all supported versions.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.43.x  | :white_check_mark: |
-| < 0.43  | :white_check_mark: |
+Security vulnerability reports will be accepted and acted upon for all released versions.
 
 ## Reporting a Vulnerability
 
