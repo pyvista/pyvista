@@ -3,6 +3,7 @@
 # flake8: noqa: F401
 import os
 import sys
+from typing import TYPE_CHECKING
 import warnings
 
 from pyvista._plot import plot
@@ -59,6 +60,12 @@ PICKLE_FORMAT = 'xml'
 DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
+
+
+# Import all modules for type checkers and linters
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import demos, examples, ext, trame, utilities
+    from pyvista.plotting import *
 
 
 # Lazily import/access the plotting module
