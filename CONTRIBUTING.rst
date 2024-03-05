@@ -463,7 +463,7 @@ changes any given branch is introducing before looking at the code.
    addition
 -  ``junk/``: for any experimental changes that can be deleted if gone
    stale
--  ``maint/``, ``testing/`` and ``ci/``: for general maintenance of the repository or CI routines
+-  ``maint/`` and ``ci/``: for general maintenance of the repository or CI routines
 -  ``doc/``: for any changes only pertaining to documentation
 -  ``no-ci/``: for low impact activity that should NOT trigger the CI
    routines
