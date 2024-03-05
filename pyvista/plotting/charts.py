@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.report import vtk_version_info
+from pyvista import vtk_version_info
 
 from . import _vtk
 from ._typing import Chart
