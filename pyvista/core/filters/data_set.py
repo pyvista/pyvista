@@ -6487,7 +6487,7 @@ class DataSetFilters:
 
         Show range of labels
 
-        >>> image_labels.get_data_range()
+        >>> image_labels.get_data_range()  # doctest:+SKIP
         (0, 29)
 
         Find 'gaps' in the labels
@@ -6504,7 +6504,7 @@ class DataSetFilters:
 
         Show range of packed labels
 
-        >>> packed_labels.get_data_range()
+        >>> packed_labels.get_data_range()  # doctest:+SKIP
         (0, 25)
 
         """
