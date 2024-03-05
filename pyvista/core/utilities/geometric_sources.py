@@ -64,7 +64,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
-if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVersion() <= 2:
+if _vtk.vtk_version_info < (9, 3):
 
     @no_new_attr
     class CapsuleSource(_vtk.vtkCapsuleSource):
@@ -1332,6 +1332,7 @@ class CubeSource(_vtk.vtkCubeSource):
         self.SetOutputPointsPrecision(precision)
 
 
+@no_new_attr
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
 
@@ -1508,6 +1509,7 @@ class DiscSource(_vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
@@ -1904,6 +1906,7 @@ class SphereSource(_vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class PolygonSource(_vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
