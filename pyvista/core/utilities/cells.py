@@ -31,7 +31,7 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))  # type: ignore
+        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 

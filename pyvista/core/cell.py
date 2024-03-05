@@ -627,7 +627,7 @@ class CellArray(_vtk.vtkCellArray):
         self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
         self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
         if cells is not None:
-            self.cells = cells  # type: ignore
+            self.cells = cells  # type: ignore[assignment]
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
