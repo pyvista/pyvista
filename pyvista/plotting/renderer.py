@@ -1269,7 +1269,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
-        >>> _ = pl.add_color_box_axes()
+        >>> _ = pl.add_box_axes()
         >>> pl.show()
 
         """
