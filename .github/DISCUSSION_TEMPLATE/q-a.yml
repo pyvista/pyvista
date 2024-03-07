@@ -2,7 +2,7 @@ body:
   - type: markdown
     attributes:
       value: |
-          Thanks for taking the time to open this discussion to help improve PyVista!
+        Thanks for taking the time to open this discussion to help improve PyVista!
   - type: checkboxes
     id: checks
     attributes:
