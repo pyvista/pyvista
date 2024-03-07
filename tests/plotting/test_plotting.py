@@ -1125,14 +1125,32 @@ def test_axes():
 
 def test_box_axes():
     plotter = pv.Plotter()
-    plotter.add_axes(box=True)
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        plotter.add_axes(box=True)
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError("Convert error this function")
+    if pv._version.version_info >= (0, 48):
+        raise RuntimeError("Remove this function")
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
 
 def test_box_axes_color_box():
     plotter = pv.Plotter()
-    plotter.add_axes(box=True, box_args={'color_box': True})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        plotter.add_axes(box=True, box_args={'color_box': True})
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError("Convert error this function")
+    if pv._version.version_info >= (0, 48):
+        raise RuntimeError("Remove this function")
+    plotter.add_mesh(pv.Sphere())
+    plotter.show()
+
+
+def test_add_box_axes():
+    plotter = pv.Plotter()
+    plotter.add_orientation_widget(pv.Sphere(), color='b')
+    plotter.add_box_axes()
     plotter.add_mesh(pv.Sphere())
     plotter.show()
 
