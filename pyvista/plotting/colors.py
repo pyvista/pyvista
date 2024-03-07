@@ -180,6 +180,8 @@ except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
+from typing import Any
+
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -809,7 +811,9 @@ class Color:
         return h
 
     @staticmethod
-    def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
+    def convert_color_channel(
+        val: Union[int, np.integer[Any], float, np.floating[Any], str]
+    ) -> int:
         """Convert the given color channel value to the integer representation.
 
         Parameters

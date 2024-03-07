@@ -1,4 +1,5 @@
 """Points related utilities."""
+
 import warnings
 
 import numpy as np
@@ -35,7 +36,7 @@ def vtk_points(points, deep=True, force_float=False):
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> points = np.random.random((10, 3))
+    >>> points = np.random.default_rng().random((10, 3))
     >>> vpoints = pv.vtk_points(points)
     >>> vpoints  # doctest:+SKIP
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
@@ -213,7 +214,7 @@ def fit_plane_to_points(points, return_meta=False):
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> cloud = np.random.random((10, 3))
+    >>> cloud = np.random.default_rng().random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane
@@ -430,10 +431,9 @@ def vector_poly_data(orig, vec):
     vpts.SetData(_vtk.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
-    cells[:, 0] = 1
-    cells[:, 1] = np.arange(npts, dtype=pyvista.ID_TYPE)
-    vcells = pyvista.core.cell.CellArray(cells, npts)
+    vcells = pyvista.core.cell.CellArray.from_regular_cells(
+        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1))
+    )
 
     # Create vtkPolyData object
     pdata = _vtk.vtkPolyData()

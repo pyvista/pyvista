@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkCamera."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -220,7 +221,7 @@ class Camera(_vtk.vtkCamera):
             tmp.attrib["index"] = "0"
 
             val = getattr(self, attr)
-            if type(val) is not bool:
+            if not isinstance(val, bool):
                 tmp.attrib["value"] = str(val)
                 e.append(tmp)
             else:

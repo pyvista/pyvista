@@ -18,6 +18,7 @@ example from the awesome `magpylib <https://github.com/magpylib/magpylib>`_
 library.
 
 """
+
 # sphinx_gallery_thumbnail_number = 3
 
 import numpy as np
@@ -88,6 +89,12 @@ scalars = np.linalg.norm(grid['B'], axis=1)
 # Customize the opacity to make it easier to visualize the strength of the
 # field nearby the coil
 opacity = 1 - np.geomspace(1.0, 0.05, 10)
+
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 # Add this all to the plotter
 pl = pv.Plotter()

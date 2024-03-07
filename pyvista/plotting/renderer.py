@@ -286,7 +286,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
-        self.__charts = None
+        self._charts = None
 
         self._border_actor = None
         if border:
@@ -356,15 +356,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return next(self._color_cycle)['color']
 
     @property
-    def _charts(self):
-        """Return the charts collection."""
-        # lazy instantiation here to avoid creating the charts object unless needed.
-        if self.__charts is None:
-            self.__charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
-        return self.__charts
-
-    @property
     def camera_position(self):  # numpydoc ignore=RT01
         """Return or set the camera position of active render window.
 
@@ -404,7 +395,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if not isinstance(camera_location, CameraPosition):
                 if not len(camera_location) == 3:
                     raise InvalidCameraError
-                elif any([len(item) != 3 for item in camera_location]):
+                elif any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
             # everything is set explicitly
@@ -693,23 +684,44 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             raise VTKVersionError(
                 "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
             )
+        # lazy instantiation here to avoid creating the charts object unless needed.
+        if self._charts is None:
+            self._charts = Charts(self)
+            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
         self._charts.add_chart(chart, *charts)
 
     @property
     def has_charts(self):  # numpydoc ignore=RT01
         """Return whether this renderer has charts."""
-        return self.__charts is not None
+        return self._charts is not None and len(self._charts) > 0
+
+    def get_charts(self):  # numpydoc ignore=RT01
+        """Return a list of all charts in this renderer.
+
+        Examples
+        --------
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([1, 2, 3], [0, 1, 0])
+           >>> pl = pv.Plotter()
+           >>> pl.add_chart(chart)
+           >>> chart is pl.renderer.get_charts()[0]
+           True
+
+        """
+        return [*self._charts] if self.has_charts else []
 
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
 
     @wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []
 
     def remove_chart(self, chart_or_index):
@@ -752,7 +764,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        # Make sure we don't create the __charts object if this renderer has no charts yet.
         if self.has_charts:
             self._charts.remove_chart(chart_or_index)
 
@@ -1898,7 +1909,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
+        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
@@ -2091,7 +2102,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def clear(self):
         """Remove all actors and properties."""
         self.clear_actors()
-        if self.__charts is not None:
+        if self._charts is not None:
             self._charts.deep_clean()
         self.remove_all_lights()
         self.RemoveAllViewProps()
@@ -2207,6 +2218,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         The camera will have a parallel projection. Parallel projection is
         often useful when viewing images or 2D datasets.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_2d_style
 
         Examples
         --------
@@ -2464,11 +2479,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(self._theme.camera['position']).astype(float)
+        position = np.array(self._theme.camera.position).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
         return cpos
 
     def update_bounds_axes(self):
@@ -2595,7 +2610,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         focal_pt = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
         self.reset_camera(render=render)
@@ -3173,8 +3188,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def on_plotter_render(self):
         """Notify renderer components of explicit plotter render call."""
-        if self.__charts is not None:
-            for chart in self.__charts:
+        if self._charts is not None:
+            for chart in self._charts:
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
@@ -3198,9 +3213,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
             self.disable_shadows()
         try:
-            if self.__charts is not None:
-                self.__charts.deep_clean()
-                self.__charts = None
+            if self._charts is not None:
+                self._charts.deep_clean()
+                self._charts = None
         except AttributeError:  # pragma: no cover
             pass
 
@@ -3282,12 +3297,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_legend(
         self,
         labels=None,
-        bcolor=(0.5, 0.5, 0.5),
+        bcolor=None,
         border=False,
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
+        font_family=None,
+        background_opacity=1.0,
     ):
         """Add a legend to render window.
 
@@ -3304,9 +3321,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
+            legend. Each entry can contain one of the following:
+
+            * Two strings ([label, color]), where ``label`` is the name of the
+              item to add, and ``color`` is the color of the label to add.
+            * Three strings ([label, color, face]) where ``label`` is the name
+              of the item to add, ``color`` is the color of the label to add,
+              and ``face`` is a string which defines the face (i.e. ``circle``,
+              ``triangle``, ``box``, etc.).
+              ``face`` could be also ``None`` (there is no face then), or a
+              :class:`pyvista.PolyData`.
+            * A dict with the key ``label``. Optionally you can add the
+              keys ``color`` and ``face``. The values of these keys can be
+              strings. For the ``face`` key, it can be also a
+              :class:`pyvista.PolyData`.
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
@@ -3354,6 +3382,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Passing ``None`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
+
+        font_family : str, optional
+            Font family.  Must be either ``'courier'``, ``'times'``,
+            or ``'arial'``. Defaults to :attr:`pyvista.global_theme.font.family
+            <pyvista.plotting.themes._Font.family>`.
+
+        background_opacity : float, default: 1.0
+            Set background opacity.
 
         Returns
         -------
@@ -3404,17 +3440,50 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is None:
-                    # dummy vtk object
-                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
-
+                if face is not None:
+                    vtk_object = make_legend_face(face)
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
-            legend_face = make_legend_face(face)
-            for i, (text, color) in enumerate(labels):
+            for i, args in enumerate(labels):
+                face_ = None
+                if isinstance(args, (list, tuple)):
+                    if len(args) == 2:
+                        # format labels =  [[ text1, color1], [ text2, color2], etc]
+                        text, color = args
+                    else:
+                        # format labels =  [[ text1, color1, face1], [ text2, color2, face2], etc]
+                        # Pikcing only the first 3 elements
+                        text, color, face_ = args[:3]
+                elif isinstance(args, dict):
+                    # it is using a dict
+                    text = args.pop('label')
+                    color = args.pop('color', None)
+                    face_ = args.pop('face', None)
+
+                    if args:
+                        warnings.warn(
+                            f"Some of the arguments given to legend are not used.\n{args}"
+                        )
+                elif isinstance(args, str):
+                    # Only passing label
+                    text = args
+                    # taking the currents (if any)
+                    try:
+                        face_, _, color = list(self._labels.values())[i]
+                    except (AttributeError, IndexError):
+                        # There are no values
+                        face_ = None
+                        color = None
+
+                else:
+                    raise ValueError(
+                        f"The object passed to the legend ({type(args)}) is not valid."
+                    )
+
+                legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
@@ -3432,6 +3501,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._legend.SetBackgroundColor(Color(bcolor).float_rgb)
 
         self._legend.SetBorder(border)
+
+        if font_family is None:
+            font_family = self._theme.font.family
+
+        font_family = parse_font_family(font_family)
+        self._legend.GetEntryTextProperty().SetFontFamily(font_family)
+
+        self._legend.SetBackgroundOpacity(background_opacity)
 
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend

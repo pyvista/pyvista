@@ -1,6 +1,7 @@
 """
 Tests for text objects
 """
+
 import os
 
 import numpy as np
@@ -40,7 +41,7 @@ def test_text_prop(text):
 
 
 def test_text_position(text):
-    position = np.random.random(2)
+    position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
 
@@ -67,7 +68,7 @@ def test_property_opacity(prop):
     opacity = 0.5
     prop.opacity = opacity
     assert prop.opacity == opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.opacity = 2
 
 
@@ -80,7 +81,7 @@ def test_property_background_opacity(prop):
     background_opacity = 0.5
     prop.background_opacity = background_opacity
     assert prop.background_opacity == background_opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.background_opacity = 2
 
 
@@ -156,7 +157,21 @@ def test_property_justification_vertical(prop, justification):
 
 
 def test_property_justification_invalid(prop):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_horizontal = "invalid"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_vertical = "invalid"
+
+
+@pytest.mark.parametrize('italic', [True, False])
+def test_property_italic(prop, italic):
+    prop.italic = italic
+    assert prop.GetItalic() == italic
+    assert prop.italic == italic
+
+
+@pytest.mark.parametrize('bold', [True, False])
+def test_property_bold(prop, bold):
+    prop.bold = bold
+    assert prop.GetBold() == bold
+    assert prop.bold == bold

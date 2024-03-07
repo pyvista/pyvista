@@ -8,7 +8,6 @@ See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived
 import io
 
 from trame.app import get_server
-from trame.widgets import html
 from trame_client.ui.core import AbstractLayout
 
 import pyvista
@@ -258,7 +257,7 @@ class BaseViewer:
 
     def ui(self):
         """Implement in derived classes."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def make_layout(self, *args, **kwargs) -> AbstractLayout:  # pragma: no cover
         """Create an instance of an AbstractLayout which is appropriate for a concrete viewer.
@@ -276,4 +275,4 @@ class BaseViewer:
         AbstractLayout
             A layout this viewer can be embedded in.
         """
-        raise NotImplementedError()
+        raise NotImplementedError

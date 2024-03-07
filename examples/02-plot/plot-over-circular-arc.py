@@ -10,6 +10,11 @@ Interpolate the scalars of a dataset over a circular arc.
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# labels are not supported in vtk-js
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Volumetric Mesh
 # +++++++++++++++

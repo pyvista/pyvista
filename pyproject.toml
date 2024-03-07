@@ -159,7 +159,15 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
-plugins = ['numpy.typing.mypy_plugin']
+disallow_any_generics = true
+pretty = true
+show_error_context = true
+warn_unused_ignores = true
+plugins = ['numpy.typing.mypy_plugin','npt_promote']
+enable_error_code = [
+    "ignore-without-code",
+]
+
 
 [tool.numpydoc_validation]
 checks = [
@@ -167,6 +175,8 @@ checks = [
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
+    "GL06",  # Found unknown section
+    "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
     "GL09",  # Deprecation warning should precede extended summary (check broken)
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
@@ -253,6 +263,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -271,3 +288,64 @@ exclude = [  # don't report on objects that match any of these regex
     '\.PyVistaRemoteLocalView(\.|$)',
     '\.Texture(\.|$)',  # awaiting Texture refactor
 ]
+
+[tool.ruff]
+exclude = [
+    '.git',
+    'pycache__',
+    'build',
+    'dist',
+    'doc/examples',
+    'doc/_build',
+]
+line-length = 100
+indent-width = 4
+target-version = 'py39'
+
+[tool.ruff.lint]
+external = ["E131", "D102", "D105"]
+ignore = [
+    # whitespace before ':'
+    "E203",
+    # line break before binary operator
+    # "W503",
+    # line length too long
+    "E501",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # too many leading '#' for block comment
+    "E266",
+    # ambiguous variable name
+    "E741",
+    # module level import not at top of file
+    "E402",
+    # Quotes (temporary)
+    "Q0",
+    # bare excepts (temporary)
+    # "B001", "E722",
+    "E722",
+    # we already check black
+    # "BLK100",
+    # 'from module import *' used; unable to detect undefined names
+    "F403",
+]
+fixable = ["ALL"]
+unfixable = []
+extend-select = [
+    "B007",
+    "B010",
+    "C4",
+    "F",
+    "FLY",
+    "NPY",
+    "PGH004",
+    "PIE",
+    "PT",
+    "RSE",
+    "RUF005",
+    "RUF010",
+    "RUF100",
+]
+
+[tool.ruff.lint.flake8-comprehensions]
+allow-dict-calls-with-keyword-arguments = true

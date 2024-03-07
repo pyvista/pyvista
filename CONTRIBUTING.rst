@@ -208,17 +208,8 @@ the exception rather than the norm. A uniform code style is enforced
 by `black <https://github.com/psf/black>`_ to prevent energy wasted on
 style disagreements.
 
-As for docstrings, follow the guidelines specified in `PEP 8 Maximum
-Line
-Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`_
-of limiting docstrings to 72 characters per line. This follows the
-directive:
-
-   Some teams strongly prefer a longer line length. For code maintained
-   exclusively or primarily by a team that can reach agreement on this
-   issue, it is okay to increase the line length limit up to 99
-   characters, provided that comments and docstrings are still wrapped
-   at 72 characters.
+As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
+Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
@@ -472,7 +463,7 @@ changes any given branch is introducing before looking at the code.
    addition
 -  ``junk/``: for any experimental changes that can be deleted if gone
    stale
--  ``maint/``: for general maintenance of the repository or CI routines
+-  ``maint/`` and ``ci/``: for general maintenance of the repository or CI routines
 -  ``doc/``: for any changes only pertaining to documentation
 -  ``no-ci/``: for low impact activity that should NOT trigger the CI
    routines
@@ -671,6 +662,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -782,12 +779,7 @@ branch.
 Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once you have make a Pull Request from the pyvista organization repository branch.
-This will automatically deploy the Preview Documentation.
-Please check the documentation that is deployed by your Pull Request
-before merging.
-
-Once you have make a Pull Request from the forked repository. You can comment
+Once you have make a Pull Request. You can comment
 `github-actions preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
@@ -929,6 +921,18 @@ should not wait until a minor release. The steps for a patch release
    from conda and follow the directions in step 10 in the minor release
    section.
 
+Dependency version policy
+-------------------------
+
+Python and VTK dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support all supported `Python versions`_ and `VTK versions`_ that
+support those Python versions. As much as we would prefer to follow
+`SPEC 0`_, we follow VTK versions as an interface library of VTK.
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _Python versions: https://endoflife.date/python
+.. _VTK versions: https://pypi.org/project/vtk/
+.. _SPEC 0: https://scientific-python.org/specs/spec-0000/

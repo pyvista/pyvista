@@ -9,8 +9,13 @@ Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f4
 and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
+
 import pyvista as pv
 from pyvista.demos import logo
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
+# sphinx_gallery_end_ignore
 
 ###############################################################################
 # Convert pixel art to an array

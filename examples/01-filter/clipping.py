@@ -6,9 +6,14 @@ Clipping with Planes & Boxes
 
 Clip/cut any dataset using planes or boxes.
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 
 ###############################################################################
 # Clip with Plane

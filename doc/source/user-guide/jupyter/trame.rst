@@ -16,7 +16,7 @@ the hood by the ``vtkRemoteView`` in ``trame-vtk``.
 For example, both sections of code will display an interactive canvas
 within Jupyter:
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     sphere = pv.Sphere()
@@ -31,7 +31,7 @@ within Jupyter:
 
 For convenience, you can enable ``trame`` by default with:
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     pv.set_jupyter_backend('trame')
@@ -50,7 +50,7 @@ as three separate backend choices):
 You can choose your backend either by using :func:`set_jupyter_backend() <pyvista.set_jupyter_backend>`
 or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call.
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     pv.set_jupyter_backend('client')
@@ -58,7 +58,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
     pv.Cone().plot()
 
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     pv.set_jupyter_backend('trame')
@@ -73,7 +73,7 @@ Installation
 
 Using pip, you can set up your jupyter environment with:
 
-.. code::
+.. code-block:: bash
 
     pip install 'jupyterlab>=3' ipywidgets 'pyvista[all,trame]'
 
@@ -107,7 +107,7 @@ for most remote Jupyter environment and use within Docker.
 
 This can also be set with an environment variable:
 
-.. code::
+.. code-block:: bash
 
     export PYVISTA_TRAME_SERVER_PROXY_PREFIX='/proxy/'
 
@@ -133,13 +133,13 @@ Using this extension removes the need for a secondary web server and thus
 
 Using pip, you can install the extension:
 
-.. code::
+.. code-block:: bash
 
     pip install trame_jupyter_extension
 
 If using Jupyter Lab 3.x, make sure to install the version 1.x of the extension:
 
-.. code::
+.. code-block:: bash
 
     pip install "trame_jupyter_extension<2"
 

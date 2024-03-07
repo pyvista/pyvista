@@ -3,6 +3,7 @@
 The data objects does not have any sort of spatial reference.
 
 """
+
 from typing import Optional, Tuple
 
 import numpy as np
@@ -25,7 +26,7 @@ class Table(_vtk.vtkTable, DataObject):
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> arrays = np.random.rand(100, 3)
+    >>> arrays = np.random.default_rng().random((100, 3))
     >>> table = pv.Table(arrays)
 
     """

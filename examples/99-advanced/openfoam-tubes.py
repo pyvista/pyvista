@@ -99,6 +99,11 @@ pl.show()
 # :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 bounds = np.array(air.bounds) * 1.2
 origin = (bounds[0], bounds[2], bounds[4])
 spacing = (0.003, 0.003, 0.003)

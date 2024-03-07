@@ -1,17 +1,21 @@
 """PyVista package for 3D plotting and mesh analysis."""
+
 # flake8: noqa: F401
 import os
 import sys
+from typing import TYPE_CHECKING
 import warnings
 
 from pyvista._plot import plot
-from pyvista._version import __version__
+from pyvista._version import __version__, version_info
 from pyvista.core import *
+import pyvista.core._validation as _validation
+from pyvista.core._vtk_core import vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers
 from pyvista.jupyter import set_jupyter_backend
-from pyvista.report import GPUInfo, Report, get_gpu_info, vtk_version_info
+from pyvista.report import GPUInfo, Report, get_gpu_info
 
 # get the int type from vtk
 ID_TYPE = _get_vtk_id_type()
@@ -58,6 +62,12 @@ DEFAULT_SCALARS_NAME = 'Data'
 MAX_N_COLOR_BARS = 10
 
 
+# Import all modules for type checkers and linters
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import demos, examples, ext, trame, utilities
+    from pyvista.plotting import *
+
+
 # Lazily import/access the plotting module
 def __getattr__(name):
     """Fetch an attribute ``name`` from ``globals()`` or the ``pyvista.plotting`` module.
@@ -90,7 +100,7 @@ def __getattr__(name):
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
-    except AttributeError as e:
+    except AttributeError:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 
     return feature

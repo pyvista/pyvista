@@ -88,7 +88,7 @@ p.show()
 ###############################################################################
 # Visualize vectors in spherical coordinates
 # Vertical wind
-w_vec = np.random.rand(*u_vec.shape)
+w_vec = np.random.default_rng().random(u_vec.shape)
 
 wind_level = [RADIUS * 1.2]
 

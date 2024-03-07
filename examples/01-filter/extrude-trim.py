@@ -33,6 +33,11 @@ extruded_hills
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the resulting :class:`pyvista.PolyData`.
 
+# sphinx_gallery_start_ignore
+# add_text does not show up in interactive
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(mesh)
 pl.add_text('Original Mesh')
@@ -76,6 +81,10 @@ print(f'Extrusion has {extruded_disc_all.n_faces_strict} faces with all_edges')
 # ~~~~
 # Show the additional interior faces by plotting with ``style='wireframe'``.
 
+# sphinx_gallery_start_ignore
+# add_text does not show up in interactive
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(extruded_disc, style='wireframe', line_width=5)
 pl.add_text('Extrude with boundary_edges')

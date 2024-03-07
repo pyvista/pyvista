@@ -1,4 +1,5 @@
 """Core error utilities."""
+
 import collections
 import logging
 import os
@@ -106,7 +107,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:  # noqa: E722
+        except:
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -135,7 +136,7 @@ class Observer:
         except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
-                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                    message = f'{message[:100]!r} ... ({len(message)} characters)'
                 else:
                     message = repr(message)
                 print(
@@ -208,7 +209,7 @@ class ProgressMonitor:
     def __init__(self, algorithm, message=""):
         """Initialize observer."""
         try:
-            from tqdm import tqdm  # noqa
+            from tqdm import tqdm  # noqa: F401
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent

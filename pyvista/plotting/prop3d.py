@@ -1,9 +1,10 @@
 """Prop3D module."""
+
 from typing import Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 from . import _vtk
@@ -41,7 +42,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector):  # numpydoc ignore=GL08
+    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         return self.SetScale(value)
 
     @property
@@ -66,7 +67,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector):  # numpydoc ignore=GL08
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -163,7 +164,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> tuple:  # numpydoc ignore=RT01
+    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity orientation.
 
         Orientation is defined as the rotation from the global axes in degrees
@@ -210,7 +211,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: tuple):  # numpydoc ignore=GL08
+    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -232,7 +233,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> tuple:  # numpydoc ignore=RT01
+    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples
@@ -246,7 +247,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetCenter()
 
     @property
-    def user_matrix(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the user matrix.
 
         In addition to the instance variables such as position and orientation, the user
@@ -301,7 +302,9 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
+    def user_matrix(
+        self, value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]]
+    ):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             if value.shape != (4, 4):
                 raise ValueError('User matrix array must be 4x4.')

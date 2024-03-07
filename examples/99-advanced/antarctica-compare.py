@@ -19,6 +19,12 @@ software.
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
+
+# sphinx_gallery_start_ignore
+# labels are not supported in vtk-js
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 from pyvista import examples
 

@@ -11,11 +11,17 @@ To learn more, please see `this blog post`_.
 .. _this blog post: https://blog.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
 
 """
+
 ###############################################################################
 
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
+
+# sphinx_gallery_start_ignore
+# lighting does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 
 ###############################################################################
 # Statue

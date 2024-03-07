@@ -16,6 +16,11 @@ This also explores how to extract a volume of interest (VOI) from a
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # Download a volumetric dataset
 vol = examples.download_knee_full()
 vol

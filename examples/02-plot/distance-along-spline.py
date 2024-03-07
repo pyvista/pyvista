@@ -64,6 +64,11 @@ labels
 # ~~~~~~~~~~~~~~~~
 # Plot the spline with labeled points
 
+# sphinx_gallery_start_ignore
+# depth field modification does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 pl.add_mesh(spline, scalars='arc_length', render_lines_as_tubes=True, line_width=10)
 pl.add_point_labels(

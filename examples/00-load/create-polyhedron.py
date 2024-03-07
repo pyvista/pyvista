@@ -11,6 +11,10 @@ are building.
 First, we import the required libraries.
 """
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 
 ###############################################################################
@@ -144,7 +148,7 @@ polyhedron_connectivity = [
 ]
 
 # note how we retroactively add NItems
-polyhedron = [len(polyhedron_connectivity)] + polyhedron_connectivity
+polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 
 ###############################################################################

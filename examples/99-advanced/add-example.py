@@ -36,6 +36,34 @@ Example file names should be hyphen separated snake case:
 After this preamble is complete, the first code block begins. This is where you
 typically set up your imports.
 
+.. note::
+   By default, the documentation scrapper will generate both a static image and
+   an interactive widget for each plot. If you want to turn this feature off
+   define at the top of your file:
+
+
+   ``# sphinx_gallery_start_ignore``
+
+   ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True``
+
+   ``# sphinx_gallery_end_ignore``
+
+   If you want to use static images only for some of your plots. Define
+   ``PYVISTA_GALLERY_FORCE_STATIC`` before the ``plot``/``show`` command that
+   produces the image you want to turn into static.
+
+   .. code-block::
+
+       ...
+       pl.show()  # this will be interactive plot
+
+       # sphinx_gallery_start_ignore
+       PYVISTA_GALLERY_FORCE_STATIC = True
+       # sphinx_gallery_end_ignore
+       ...
+       pl.show()  # this will be static plot
+
+
 """
 
 import pyvista as pv

@@ -15,6 +15,11 @@ For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
 
 """
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista as pv
@@ -112,7 +117,7 @@ points = [
     [1.0, -1.0, 0.0],
     [0.0, 0.0, 1.60803807],
 ]
-cells = [len(points)] + list(range(len(points)))
+cells = [len(points), *list(range(len(points)))]
 pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
 example_cells.plot_cell(pyrmaid)
 

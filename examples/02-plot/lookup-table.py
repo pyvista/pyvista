@@ -13,6 +13,11 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# big figures of colormaps and widgets show better in static images
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 # download an example dataset
 bracket = examples.download_fea_bracket().cell_data_to_point_data()
 bracket

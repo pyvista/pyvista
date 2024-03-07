@@ -10,6 +10,7 @@ This demonstrates how to use
 function that projects points to a plane.
 
 """
+
 import numpy as np
 
 import pyvista as pv
@@ -20,7 +21,7 @@ import pyvista as pv
 # Create a point cloud and project it to a plane.
 
 num_points = 100
-point_cloud = np.random.random((num_points, 3))
+point_cloud = np.random.default_rng().random((num_points, 3))
 
 # Define a plane
 origin = [0, 0, 0]

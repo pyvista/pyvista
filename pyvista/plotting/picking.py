@@ -1,4 +1,5 @@
 """Module managing picking events."""
+
 from functools import partial, wraps
 from typing import Tuple, cast
 import warnings
@@ -161,7 +162,7 @@ class PointPickingElementHandler:
         """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
-            for i, face in enumerate(cell.faces):
+            for face in cell.faces:
                 contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
                 if contains > -1:
                     break
@@ -169,7 +170,7 @@ class PointPickingElementHandler:
                 # this shouldn't happen
                 raise RuntimeError('Trouble aligning point with face.')
             face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([i])
+            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
