@@ -160,13 +160,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
                 # special treatment for string field data
-                if isinstance(array, str):
+                if self.association == FieldAssociation.NONE and isinstance(array, str):
                     dtype = 'str'
-                    if len(array) > 19:
-                        val = f'\"{array[:16]}...\"'
+                    # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
+                    if len(array) > 18:
+                        val = f'{array[:15]}...'
                     else:
                         val = array
-                    line = f'{name[:23]:<24}{dtype!s:<11}{val!s:<20} {arr_type}'.strip()
+                    line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
                 else:
                     line = (
                         f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
