@@ -585,7 +585,7 @@ def convert_string_array(arr, name=None):
             # distinguish scalar inputs from array inputs by
             # setting the name of information object
             arr = arr.reshape((1,))
-            vtkarr.GetInformation().SetObjectName('scalar')
+            vtkarr.SetObjectName('scalar')
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -597,7 +597,7 @@ def convert_string_array(arr, name=None):
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
-    if arr.GetInformation().GetObjectName() == 'scalar':
+    if arr.GetObjectName() == 'scalar':
         return np.array("".join(arr_out))
     return arr_out
     ########################################
