@@ -192,7 +192,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
-        VTK array type ID as specified in specified in ``vtkType.h``.
+        VTK array type ID as specified in ``vtkType.h``.
 
     Returns
     -------
@@ -204,14 +204,17 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
-    if isinstance(arr, (list, tuple)):
+    if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
-        arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
+            if arr.ndim > 0:
+                # Do not call ascontiguousarray for scalar strings since this will reshape to 1D
+                # and scalars are already contiguous anyway
+                arr = np.ascontiguousarray(arr)
             vtk_data = convert_string_array(arr)
         else:
             # This will handle numerical data
@@ -227,7 +230,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
     # Handle string arrays
-    if isinstance(arr, _vtk.vtkStringArray):
+    elif isinstance(arr, (_vtk.vtkStringArray, _vtk.vtkCharArray)):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
     return _vtk.vtk_to_numpy(arr)
@@ -547,9 +550,11 @@ def vtk_id_list_to_array(vtk_id_list):
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
+    If a scalar string is provided, it is converted to a vtkCharArray
+
     Parameters
     ----------
-    arr : numpy.ndarray
+    arr : numpy.ndarray | str
         Numpy string array to convert.
 
     name : str, optional
@@ -566,13 +571,20 @@ def convert_string_array(arr, name=None):
     to make this faster, please consider opening a pull request.
 
     """
+    arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+        if (
+            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+        ):  # avoids segfault
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
             )
-        vtkarr = _vtk.vtkStringArray()
+        if arr.ndim == 0:
+            arr = arr.tolist()
+            vtkarr = _vtk.vtkCharArray()
+        else:
+            vtkarr = _vtk.vtkStringArray()
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -583,7 +595,10 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    if isinstance(arr, _vtk.vtkCharArray):
+        return np.array("".join(arr_out))
+    return arr_out
     ########################################
 
 
