@@ -1996,7 +1996,7 @@ class DataSet(DataSetFilters, DataObject):
         elif scalars.shape[0] == self.n_cells:
             self.cell_data[name] = scalars
         else:
-            # Numeric field data must be set explicitly as it could be a point of
+            # Field data must be set explicitly as it could be a point of
             # confusion for new users
             raise_not_matching(scalars, self)
         return

@@ -230,7 +230,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
     # Handle string arrays
-    elif isinstance(arr, (_vtk.vtkStringArray, _vtk.vtkCharArray)):
+    if isinstance(arr, _vtk.vtkStringArray):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
     return _vtk.vtk_to_numpy(arr)
@@ -580,11 +580,12 @@ def convert_string_array(arr, name=None):
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
             )
+        vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
-            arr = arr.tolist()
-            vtkarr = _vtk.vtkCharArray()
-        else:
-            vtkarr = _vtk.vtkStringArray()
+            # distinguish scalar inputs from array inputs by
+            # setting the name of information object
+            arr = arr.reshape((1,))
+            vtkarr.GetInformation().SetObjectName('scalar')
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -596,7 +597,7 @@ def convert_string_array(arr, name=None):
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
-    if isinstance(arr, _vtk.vtkCharArray):
+    if arr.GetInformation().GetObjectName() == 'scalar':
         return np.array("".join(arr_out))
     return arr_out
     ########################################
