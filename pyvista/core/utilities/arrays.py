@@ -583,9 +583,13 @@ def convert_string_array(arr, name=None):
         vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
             # distinguish scalar inputs from array inputs by
-            # setting the name of information object
+            # setting the object name
             arr = arr.reshape((1,))
-            vtkarr.SetObjectName('scalar')
+            try:
+                vtkarr.SetObjectName('scalar')
+            except AttributeError:
+                vtkarr.GetObjectName = lambda: 'scalar'
+
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -597,8 +601,11 @@ def convert_string_array(arr, name=None):
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
-    if arr.GetObjectName() == 'scalar':
-        return np.array("".join(arr_out))
+    try:
+        if arr.GetObjectName() == 'scalar':
+            return np.array("".join(arr_out))
+    except AttributeError:
+        pass
     return arr_out
     ########################################
 
