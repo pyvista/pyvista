@@ -193,7 +193,7 @@ articles = dict(
     drilldown=Example(
         title="DrillDown",
         link="https://github.com/cardinalgeo/drilldown",
-        image="drilldown.png",
+        image="drilldown.jpg",
     ),
     # entry=Example(title="",
     #     link="",
