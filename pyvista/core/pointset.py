@@ -1424,7 +1424,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            self.compute_normals(inplace=True)
+            try:
+                self.compute_normals(inplace=True)
+            except TypeError:
+                pass
 
         # validate texture
         if ftype == '.ply' and texture is not None:
