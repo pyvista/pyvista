@@ -1,6 +1,7 @@
 from math import pi
 import os
 import pathlib
+import re
 from typing import Dict, List
 import warnings
 
@@ -701,6 +702,23 @@ def test_compute_normals(sphere):
     cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
+
+
+def test_compute_normals_raises(sphere):
+    msg = (
+        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+        'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+    )
+
+    point_cloud = pv.PolyData(sphere.points)
+    assert point_cloud.n_verts == point_cloud.n_cells
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        point_cloud.compute_normals()
+
+    lines = pv.MultipleLines()
+    assert lines.n_lines == lines.n_cells
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        lines.compute_normals()
 
 
 def test_compute_normals_inplace(sphere):
