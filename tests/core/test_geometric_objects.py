@@ -77,6 +77,16 @@ def test_sphere_theta():
     assert np.all(quadrant4.points[:, 1] <= atol)  # -Y
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_sphere_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cone = pv.Sphere(point_dtype=point_dtype)
+        assert cone.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Sphere(point_dtype=point_dtype)
+
+
 def test_solid_sphere():
     sphere = pv.SolidSphere()
     assert isinstance(sphere, pv.UnstructuredGrid)
