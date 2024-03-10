@@ -2703,11 +2703,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
-            dataset = dataset._compute_normals(
-                cell_normals=False,
-                split_vertices=True,
-                feature_angle=feature_angle,
-            )
+            try:
+                dataset = dataset._compute_normals(
+                    cell_normals=False,
+                    split_vertices=True,
+                    feature_angle=feature_angle,
+                )
+            except TypeError:
+                pass
 
         self.mapper = CompositePolyDataMapper(
             dataset,
