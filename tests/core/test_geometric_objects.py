@@ -597,11 +597,20 @@ def test_quadrilateral():
     assert np.allclose(mesh.points, points)
 
 
-def test_rectangle():
-    pointa = [3.0, 1.0, 1.0]
-    pointb = [3.0, 2.0, 1.0]
-    pointc = [1.0, 2.0, 1.0]
-    pointd = [1.0, 1.0, 1.0]
+@pytest.mark.parametrize(
+    "points",
+    [
+        ([3.0, 1.0, 1.0], [3.0, 2.0, 1.0], [1.0, 2.0, 1.0], [1.0, 1.0, 1.0]),
+        (
+            [0.043, 0.0359, 0.0001],
+            [0.044, 0.0359, 0.0001],
+            [0.043, 0.036, 0.0001],
+            [0.044, 0.036, 0.0001],
+        ),
+    ],
+)
+def test_rectangle(points):
+    pointa, pointb, pointc, pointd = points
 
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)

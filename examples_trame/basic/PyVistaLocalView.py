@@ -12,7 +12,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.trame import PyVistaLocalView
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "PyVistaLocalView"

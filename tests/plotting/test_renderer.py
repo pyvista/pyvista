@@ -91,6 +91,41 @@ def test_reset_camera():
     plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
 
 
+def test_view_isometric():
+    plotter = pv.Plotter()
+    plotter.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_xy():
+    plotter = pv.Plotter()
+    plotter.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_yx():
+    plotter = pv.Plotter()
+    plotter.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_xz():
+    plotter = pv.Plotter()
+    plotter.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_zx():
+    plotter = pv.Plotter()
+    plotter.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_yz():
+    plotter = pv.Plotter()
+    plotter.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_zy():
+    plotter = pv.Plotter()
+    plotter.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
+
+
 def test_camera_is_set():
     plotter = pv.Plotter()
     assert not plotter.camera_set
