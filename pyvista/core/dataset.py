@@ -1982,8 +1982,12 @@ class DataSet(DataSetFilters, DataObject):
         else:
             scalars = np.asanyarray(scalars)
 
-        # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
         if scalars.ndim == 0:
+            if np.issubdtype(scalars.dtype, np.str_):
+                # Always set scalar strings as field data
+                self.field_data[name] = scalars
+                return
+            # reshape single scalar values from 0D to 1D so that shape[0] can be indexed
             scalars = scalars.reshape((1,))
 
         # Now check array size to determine which field to place array
