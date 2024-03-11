@@ -166,6 +166,32 @@ def test_field_data(grid):
         grid.set_active_scalars('foo')
 
 
+def test_field_data_string(grid):
+    # test `mesh.field_data`
+    field_name = 'foo'
+    field_value = 'bar'
+    grid.field_data[field_name] = field_value
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+    # test `mesh.add_field_data`
+    field_name = 'eggs'
+    field_value = 'ham'
+    grid.add_field_data(array=field_value, name=field_name)
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+    # test `mesh[name] = data`
+    field_name = 'baz'
+    field_value = 'a' * grid.n_points
+    grid[field_name] = field_value
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(grid, field):
     grid.add_field_data(field, 'foo')
