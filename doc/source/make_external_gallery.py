@@ -190,6 +190,11 @@ articles = dict(
         link="https://felupe.readthedocs.io/en/latest/",
         image="felupe.png",
     ),
+    drilldown=Example(
+        title="DrillDown",
+        link="https://github.com/cardinalgeo/drilldown",
+        image="drilldown.jpg",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),

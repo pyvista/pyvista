@@ -1082,6 +1082,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
 
+            .. deprecated:: 0.43.0
+                The is deprecated. Use `add_box_axes` method instead.",
+
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
@@ -1109,13 +1112,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
-        Use the axes orientation widget instead of the default arrows.
-
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
-        >>> _ = pl.add_axes(box=True)
-        >>> pl.show()
-
         Specify more parameters for the axes marker.
 
         >>> import pyvista as pv
@@ -1141,6 +1137,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if box is None:
             box = self._theme.axes.box
         if box:
+            warnings.warn(
+                "`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.",
+                PyVistaDeprecationWarning,
+            )
             if box_args is None:
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
@@ -1168,6 +1168,136 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 labels_off=labels_off,
                 **kwargs,
             )
+        axes_widget = self.add_orientation_widget(
+            self.axes_actor, interactive=interactive, color=None
+        )
+        axes_widget.SetViewport(viewport)
+        return self.axes_actor
+
+    def add_box_axes(
+        self,
+        *,
+        interactive=None,
+        line_width=2,
+        text_scale=0.366667,
+        edge_color='black',
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        x_face_color='white',
+        y_face_color='white',
+        z_face_color='white',
+        label_color=None,
+        labels_off=False,
+        opacity=0.5,
+        show_text_edges=False,
+        viewport=(0, 0, 0.2, 0.2),
+    ):
+        """Add an interactive color box axes widget in the bottom left corner.
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Enable this orientation widget to be moved by the user.
+
+        line_width : float, optional
+            The width of the marker lines.
+
+        text_scale : float, optional
+            Size of the text relative to the faces.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        x_color : ColorLike, optional
+            Color of the x axis text.
+
+        y_color : ColorLike, optional
+            Color of the y axis text.
+
+        z_color : ColorLike, optional
+            Color of the z axis text.
+
+        xlabel : str, optional
+            Text used for the x axis.
+
+        ylabel : str, optional
+            Text used for the y axis.
+
+        zlabel : str, optional
+            Text used for the z axis.
+
+        x_face_color : ColorLike, optional
+            Color used for the x axis arrow.  Defaults to theme axes
+            parameters.
+
+        y_face_color : ColorLike, optional
+            Color used for the y axis arrow.  Defaults to theme axes
+            parameters.
+
+        z_face_color : ColorLike, optional
+            Color used for the z axis arrow.  Defaults to theme axes
+            parameters.
+
+        label_color : ColorLike, optional
+            Color of the labels.
+
+        labels_off : bool, optional
+            Enable or disable the text labels for the axes.
+
+        opacity : float, optional
+            Opacity in the range of ``[0, 1]`` of the orientation box.
+
+        show_text_edges : bool, optional
+            Enable or disable drawing the vector text edges.
+
+        viewport : sequence[float], default: (0, 0, 0.2, 0.2)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkAxesActor
+            Axes actor.
+
+        Examples
+        --------
+        Use the axes orientation widget instead of the default arrows.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_box_axes()
+        >>> pl.show()
+
+        """
+        if interactive is None:
+            interactive = self._theme.interactive
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+        self.axes_actor = create_axes_orientation_box(
+            line_width=line_width,
+            text_scale=text_scale,
+            edge_color=edge_color,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            x_face_color=x_face_color,
+            y_face_color=y_face_color,
+            z_face_color=z_face_color,
+            color_box=True,
+            label_color=label_color,
+            labels_off=labels_off,
+            opacity=opacity,
+            show_text_edges=show_text_edges,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor, interactive=interactive, color=None
         )

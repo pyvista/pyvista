@@ -105,6 +105,9 @@ Status badges
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
 
+.. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/nschloe/awesome-scientific-computing
+
 +----------------------+------------------------+-------------+
 | Deployment           | |pypi|                 | |conda|     |
 +----------------------+------------------------+-------------+
@@ -129,6 +132,8 @@ Status badges
 | Linter               | |Ruff|                               |
 +----------------------+------------------------+-------------+
 | Affiliated           | |NumFOCUS Affiliated|                |
++----------------------+------------------------+-------------+
+| Mentioned            | |Awesome Scientific Computing|       |
 +----------------------+------------------------+-------------+
 
 
