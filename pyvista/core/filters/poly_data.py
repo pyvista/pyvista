@@ -1587,10 +1587,13 @@ class PolyDataFilters(DataSetFilters):
         present, the edges are split and new points generated to
         prevent blurry edges (due to Phong shading).
 
+        An array named ``"Normals"`` is stored with the mesh.
+
         .. warning::
 
            - Normals can only be computed for polygons and triangle strips. Point clouds are not supported.
            - Triangle strips are broken up into triangle polygons. You may want to restrip the triangles.
+           - Previous arrays named ``"Normals"`` will be overwritten.
 
         Parameters
         ----------
@@ -1651,20 +1654,12 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Updated mesh with cell and point normals.
 
-        Notes
-        -----
-        Previous arrays named ``"Normals"`` will be overwritten.
-
-        Normals are computed only for polygons and triangle
-        strips. Normals are not computed for lines or vertices.
-
-        Triangle strips are broken up into triangle polygons. You may
-        want to restrip the triangles.
-
-        It may be easier to run
-        :func:`pyvista.PolyData.point_normals` or
-        :func:`pyvista.PolyData.cell_normals` if you would just
-        like the array of point or cell normals.
+        See Also
+        --------
+        point_normals
+            Returns the array of point normals.
+        cell_normals
+            Returns the array of cell normals.
 
         Examples
         --------
