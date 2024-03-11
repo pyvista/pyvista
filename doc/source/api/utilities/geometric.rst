@@ -36,6 +36,7 @@ Geometric Objects
 
    Arrow
    Box
+   Capsule
    Circle
    CircularArc
    CircularArcFromNormal

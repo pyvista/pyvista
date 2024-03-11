@@ -64,6 +64,214 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
+if _vtk.vtk_version_info < (9, 3):
+
+    @no_new_attr
+    class CapsuleSource(_vtk.vtkCapsuleSource):
+        """Capsule source algorithm class.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        center : sequence[float], default: (0.0, 0.0, 0.0)
+            Center in ``[x, y, z]``.
+
+        direction : sequence[float], default: (1.0, 0.0, 0.0)
+            Direction of the capsule in ``[x, y, z]``.
+
+        radius : float, default: 0.5
+            Radius of the capsule.
+
+        cylinder_length : float, default: 1.0
+            Cylinder length of the capsule.
+
+        theta_resolution : int, default: 30
+            Set the number of points in the azimuthal direction (ranging
+            from ``start_theta`` to ``end_theta``).
+
+        phi_resolution : int, default: 30
+            Set the number of points in the polar direction (ranging from
+            ``start_phi`` to ``end_phi``).
+
+        Examples
+        --------
+        Create a default CapsuleSource.
+
+        >>> import pyvista as pv
+        >>> source = pv.CapsuleSource()
+        >>> source.output.plot(show_edges=True, line_width=5)
+        """
+
+        _new_attr_exceptions = ['_direction']
+
+        def __init__(
+            self,
+            center=(0.0, 0.0, 0.0),
+            direction=(1.0, 0.0, 0.0),
+            radius=0.5,
+            cylinder_length=1.0,
+            theta_resolution=30,
+            phi_resolution=30,
+        ):
+            """Initialize the capsule source class."""
+            super().__init__()
+            self.center = center
+            self._direction = direction
+            self.radius = radius
+            self.cylinder_length = cylinder_length
+            self.theta_resolution = theta_resolution
+            self.phi_resolution = phi_resolution
+
+        @property
+        def center(self) -> Sequence[float]:
+            """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Returns
+            -------
+            sequence[float]
+                Center in ``[x, y, z]``. Axis of the capsule passes through this
+                point.
+            """
+            return self.GetCenter()
+
+        @center.setter
+        def center(self, center: Sequence[float]):
+            """Set the center in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Parameters
+            ----------
+            center : sequence[float]
+                Center in ``[x, y, z]``. Axis of the capsule passes through this
+                point.
+            """
+            self.SetCenter(center)
+
+        @property
+        def direction(self) -> Sequence[float]:
+            """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
+
+            Returns
+            -------
+            sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            return self._direction
+
+        @direction.setter
+        def direction(self, direction: Sequence[float]):
+            """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Parameters
+            ----------
+            direction : sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            self._direction = direction
+
+        @property
+        def cylinder_length(self) -> float:
+            """Get the cylinder length along the capsule in its specified direction.
+
+            Returns
+            -------
+            float
+                Cylinder length along the capsule in its specified direction.
+            """
+            return self.GetCylinderLength()
+
+        @cylinder_length.setter
+        def cylinder_length(self, length: float):
+            """Set the cylinder length of the capsule.
+
+            Parameters
+            ----------
+            length : float
+                Cylinder length of the capsule.
+            """
+            self.SetCylinderLength(length)
+
+        @property
+        def radius(self) -> float:
+            """Get base radius of the capsule.
+
+            Returns
+            -------
+            float
+                Base radius of the capsule.
+            """
+            return self.GetRadius()
+
+        @radius.setter
+        def radius(self, radius: float):
+            """Set base radius of the capsule.
+
+            Parameters
+            ----------
+            radius : float
+                Base radius of the capsule.
+            """
+            self.SetRadius(radius)
+
+        @property
+        def theta_resolution(self) -> int:
+            """Get the number of points in the azimuthal direction.
+
+            Returns
+            -------
+            int
+                The number of points in the azimuthal direction.
+            """
+            return self.GetThetaResolution()
+
+        @theta_resolution.setter
+        def theta_resolution(self, theta_resolution: int):
+            """Set the number of points in the azimuthal direction.
+
+            Parameters
+            ----------
+            theta_resolution : int
+                The number of points in the azimuthal direction.
+            """
+            self.SetThetaResolution(theta_resolution)
+
+        @property
+        def phi_resolution(self) -> int:
+            """Get the number of points in the polar direction.
+
+            Returns
+            -------
+            int
+                The number of points in the polar direction.
+            """
+            return self.GetPhiResolution()
+
+        @phi_resolution.setter
+        def phi_resolution(self, phi_resolution: int):
+            """Set the number of points in the polar direction.
+
+            Parameters
+            ----------
+            phi_resolution : int
+                The number of points in the polar direction.
+            """
+            self.SetPhiResolution(phi_resolution)
+
+        @property
+        def output(self):
+            """Get the output data object for a port on this algorithm.
+
+            Returns
+            -------
+            pyvista.PolyData
+                Capsule surface.
+            """
+            self.Update()
+            return wrap(self.GetOutput())
+
+
 @no_new_attr
 class ConeSource(_vtk.vtkConeSource):
     """Cone source algorithm class.
@@ -518,6 +726,30 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Cap cylinder ends with polygons.
         """
         self.SetCapping(capping)
+
+    @property
+    def capsule_cap(self) -> bool:
+        """Get whether the capping should make the cylinder a capsule.
+
+        .. versionadded:: 0.44.0
+
+        Returns
+        -------
+        bool
+            Capsule cap.
+        """
+        return bool(self.GetCapsuleCap())
+
+    @capsule_cap.setter
+    def capsule_cap(self, capsule_cap: bool):
+        """Set whether the capping should make the cylinder a capsule.
+
+        Parameters
+        ----------
+        capsule_cap : bool
+            Capsule cap.
+        """
+        self.SetCapsuleCap(capsule_cap)
 
     @property
     def output(self):
@@ -1146,6 +1378,7 @@ class CubeSource(_vtk.vtkCubeSource):
         self.SetOutputPointsPrecision(precision)
 
 
+@no_new_attr
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
 
@@ -1322,6 +1555,7 @@ class DiscSource(_vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
@@ -1718,6 +1952,7 @@ class SphereSource(_vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class PolygonSource(_vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 

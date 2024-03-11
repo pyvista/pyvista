@@ -408,7 +408,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore
+        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     @property
     def active_t_coords_name(self) -> Optional[str]:  # numpydoc ignore=RT01
