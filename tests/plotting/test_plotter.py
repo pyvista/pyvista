@@ -146,6 +146,17 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
 
 
+@pytest.mark.parametrize('split_sharp_edges', [True, False])
+def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
+    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
+    assert point_cloud.n_verts == point_cloud.n_cells
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        point_cloud, None, True, split_sharp_edges, False, None
+    )
+    assert scalars is None
+    assert "Normals" not in mesh.point_data
+
+
 def test_smooth_shading_shallow_copy(sphere):
     """See also ``test_compute_normals_inplace``."""
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
