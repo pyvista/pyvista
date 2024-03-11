@@ -2686,7 +2686,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_isometric()
 
-    def view_isometric(self, negative=False, render=True):
+    def view_isometric(self, negative=False, render=True, bounds=None):
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -2699,6 +2699,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2720,9 +2724,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         position = self.get_default_cam_pos(negative=negative)
         self.camera_position = CameraPosition(*position)
         self.camera_set = negative
-        self.reset_camera(render=render)
+        self.reset_camera(render=render, bounds=bounds)
 
-    def view_vector(self, vector, viewup=None, render=True):
+    def view_vector(self, vector, viewup=None, render=True, bounds=None):
         """Point the camera in the direction of the given vector.
 
         Parameters
@@ -2737,15 +2741,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after setting the camera position.
 
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+
         """
         focal_pt = self.center
         if viewup is None:
             viewup = self._theme.camera.viewup
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
-        self.reset_camera(render=render)
+        self.reset_camera(render=render, bounds=bounds)
 
-    def view_xy(self, negative=False, render=True):
+    def view_xy(self, negative=False, render=True, bounds=None):
         """View the XY plane.
 
         Parameters
@@ -2756,6 +2764,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2770,9 +2782,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy', negative=negative), render=render)
+        self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
 
-    def view_yx(self, negative=False, render=True):
+    def view_yx(self, negative=False, render=True, bounds=None):
         """View the YX plane.
 
         Parameters
@@ -2783,6 +2795,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2797,9 +2813,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yx', negative=negative), render=render)
+        self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
 
-    def view_xz(self, negative=False, render=True):
+    def view_xz(self, negative=False, render=True, bounds=None):
         """View the XZ plane.
 
         Parameters
@@ -2810,6 +2826,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2824,9 +2844,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xz', negative=negative), render=render)
+        self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
 
-    def view_zx(self, negative=False, render=True):
+    def view_zx(self, negative=False, render=True, bounds=None):
         """View the ZX plane.
 
         Parameters
@@ -2837,6 +2857,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2851,9 +2875,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zx', negative=negative), render=render)
+        self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
 
-    def view_yz(self, negative=False, render=True):
+    def view_yz(self, negative=False, render=True, bounds=None):
         """View the YZ plane.
 
         Parameters
@@ -2864,6 +2888,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2878,9 +2906,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yz', negative=negative), render=render)
+        self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
 
-    def view_zy(self, negative=False, render=True):
+    def view_zy(self, negative=False, render=True, bounds=None):
         """View the ZY plane.
 
         Parameters
@@ -2891,6 +2919,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2905,7 +2937,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zy', negative=negative), render=render)
+        self.view_vector(*view_vectors('zy', negative=negative), render=render, bounds=bounds)
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
