@@ -101,6 +101,25 @@ def test_repr(hexbeam_point_attributes):
     assert 'VECTOR' in str(hexbeam_point_attributes)
 
 
+def test_repr_field_attributes_with_string(hexbeam_field_attributes):
+    repr_str = str(hexbeam_field_attributes)
+    assert 'DataSetAttributes' in repr_str
+    assert 'Contains arrays : None' in repr_str
+
+    # Add string data
+    str_len_18 = 'stringlength18char'
+    assert len(str_len_18) == 18
+    str_len_19 = 'stringlength19chars'
+    assert len(str_len_19) == 19
+
+    hexbeam_field_attributes['string_data_18'] = str_len_18
+    hexbeam_field_attributes['string_data_19'] = str_len_19
+
+    repr_str = str(hexbeam_field_attributes)
+    assert 'string_data_18          str        "stringlength18char"' in repr_str
+    assert 'string_data_19          str        "stringlength19c..."' in repr_str
+
+
 def test_empty_active_vectors(hexbeam):
     assert hexbeam.active_vectors is None
 

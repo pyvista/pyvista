@@ -159,8 +159,19 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
-
-                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
+                # special treatment for string field data
+                if self.association == FieldAssociation.NONE and isinstance(array, str):
+                    dtype = 'str'
+                    # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
+                    if len(array) > 18:
+                        val = f'{array[:15]}...'
+                    else:
+                        val = array
+                    line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
+                else:
+                    line = (
+                        f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
+                    )
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -517,6 +528,14 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
+        elif (
+            narray.association == FieldAssociation.NONE
+            and np.issubdtype(narray.dtype, np.str_)
+            and narray.ndim == 0
+        ):
+            # For field data with a string scalar, return the string itself instead of a scalar array
+            narray = narray.tolist()
+
         return narray
 
     def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
@@ -730,13 +749,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        # Fixup input array length for scalar input
-        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
-            tmparray = np.empty(array_len)
-            tmparray.fill(data)
-            data = tmparray
-        if data.shape[0] != array_len:
-            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+        if np.issubdtype(data.dtype, np.str_) and data.ndim == 0:
+            pass  # Do not reshape string scalars
+        else:
+            # Fixup input array length for scalar input
+            if np.ndim(data) == 0:
+                tmparray = np.empty(array_len, dtype=data.dtype)
+                tmparray.fill(data)
+                data = tmparray
+            if data.shape[0] != array_len:
+                raise ValueError(
+                    f'data length of ({data.shape[0]}) != required length ({array_len})'
+                )
 
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
