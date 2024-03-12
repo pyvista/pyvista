@@ -585,7 +585,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
                 else cell[[0, 1, 3, 2]] if cell_type == 8 else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-            cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else "polygon"
+            cell_type = vtk_to_meshio_type[cell_type]
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
