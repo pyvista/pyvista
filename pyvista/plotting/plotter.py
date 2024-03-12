@@ -2700,7 +2700,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             interpolate_before_map=interpolate_before_map,
         )
 
-        actor, _ = self.add_actor(self.mapper)
+        actor, _ = self.add_actor(self.mapper, render=False)
 
         prop = Property(
             self._theme,
