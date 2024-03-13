@@ -2068,7 +2068,7 @@ class _MultiCompPlot(_Plot):
         self.labels = None if val is None else [val]
 
 
-class LinePlot2D(_vtk.vtkPlotLine, _Plot):
+class LinePlot2D(_Plot, _vtk.vtkPlotLine):
     """Class representing a 2D line plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2217,7 +2217,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
             self.visible = False
 
 
-class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
+class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
     """Class representing a 2D scatter plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2440,7 +2440,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
             raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
 
 
-class AreaPlot(_vtk.vtkPlotArea, _Plot):
+class AreaPlot(_Plot, _vtk.vtkPlotArea):
     """Class representing a 2D area plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2625,7 +2625,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
             self.visible = False
 
 
-class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
+class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
     """Class representing a 2D bar plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2829,7 +2829,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             )
 
 
-class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
+class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
     """Class representing a 2D stack plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2993,7 +2993,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
             self.visible = False
 
 
-class Chart2D(_vtk.vtkChartXY, _Chart):
+class Chart2D(_Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
@@ -3790,7 +3790,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             axis.grid = False
 
 
-class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
+class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
     """Class representing a box plot.
 
     Users should typically not directly create new plot instances, but
@@ -3924,7 +3924,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         self._quartiles.Update()
 
 
-class ChartBox(_vtk.vtkChartBox, _Chart):
+class ChartBox(_Chart, _vtk.vtkChartBox):
     """Dedicated chart for drawing box plots.
 
     Parameters
@@ -4123,7 +4123,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
             _Chart.loc.fset(self, val)
 
 
-class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
+class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     """Class representing a pie plot.
 
     Users should typically not directly create new plot instances, but
@@ -4230,7 +4230,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         self._table.update(data)
 
 
-class ChartPie(_vtk.vtkChartPie, _Chart):
+class ChartPie(_Chart, _vtk.vtkChartPie):
     """Dedicated chart for drawing pie plots.
 
     Parameters
@@ -4438,7 +4438,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 # endregion
 
 
-class ChartMPL(_vtk.vtkImageItem, _Chart):
+class ChartMPL(_Chart, _vtk.vtkImageItem):
     """Create new chart from an existing matplotlib figure.
 
     Parameters

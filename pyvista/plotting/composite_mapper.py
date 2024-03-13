@@ -517,12 +517,12 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
+    _BaseMapper,
     (
         _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
         if vtk_version_info >= (9, 3)
         else _vtk.vtkCompositePolyDataMapper2
     ),
-    _BaseMapper,
 ):
     """Composite PolyData mapper.
 
@@ -816,7 +816,7 @@ class CompositePolyDataMapper(
 
         self.scalar_visibility = True
         if rgb:
-            self.scalar_mode = 'direct'
+            self.scalar_map_mode = 'direct'
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()

@@ -93,12 +93,12 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
 
     """
 
-    def __new__(cls, *args, **kwargs):
-        if cls is cls_:
-            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
-        return object.__new__(cls)
+    # def __new__(cls, *args, **kwargs):
+    #     if cls is cls_:
+    #         raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
+    #     return object.__new__(cls)
 
-    cls_.__new__ = __new__
+    # cls_.__new__ = __new__
     return cls_
 
 

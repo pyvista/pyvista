@@ -15,7 +15,7 @@ from pyvista.core.utilities.misc import AnnotatedIntEnum
 from . import _vtk
 
 
-class Texture(_vtk.vtkTexture, DataObject):
+class Texture(DataObject, _vtk.vtkTexture):
     """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of

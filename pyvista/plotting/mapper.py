@@ -360,7 +360,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
 
 @no_new_attr
-class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
+class DataSetMapper(_BaseMapper, _vtk.vtkDataSetMapper):
     """Wrap _vtk.vtkDataSetMapper.
 
     Parameters
@@ -809,7 +809,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
 
 @no_new_attr
-class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
+class PointGaussianMapper(DataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap vtkPointGaussianMapper.
 
     Parameters
@@ -967,6 +967,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
 
+
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
@@ -1069,23 +1070,23 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = None
 
 
-class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
+class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
 
-class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
+class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
 
-class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
+class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
 
-class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
+class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
 
 class UnstructuredGridVolumeRayCastMapper(
-    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+    _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""

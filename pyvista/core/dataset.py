@@ -140,7 +140,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self._last_active_scalars_name: Optional[str] = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)

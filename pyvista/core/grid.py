@@ -22,10 +22,6 @@ from .utilities.misc import abstract_class, assert_empty_kwargs
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
-    def __init__(self, *args, **kwargs):
-        """Initialize the grid."""
-        super().__init__()
-
     @property
     def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the grid's dimensions.
@@ -68,7 +64,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
+class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -134,7 +130,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self, *args, check_duplicates=False, deep=False, **kwargs
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
-        super().__init__()
+        super().__init__(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
@@ -442,7 +438,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return _get_output(alg)
 
 
-class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
+class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
@@ -536,7 +532,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         **kwargs,
     ):
         """Initialize the uniform grid."""
-        super().__init__()
+        super().__init__(**kwargs)
 
         # permit old behavior
         if isinstance(uinput, Sequence) and not isinstance(uinput, str):
