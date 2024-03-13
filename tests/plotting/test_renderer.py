@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
@@ -326,3 +327,13 @@ def test_add_legend_background_opacity(sphere):
     pl.add_mesh(sphere, label='sphere')
     actor = pl.add_legend(background_opacity=background_opacity)
     assert actor.GetBackgroundOpacity() == background_opacity
+
+
+def test_add_axes_at_origin_deprecated():
+    if pv._version.version_info >= (0, 46):
+        raise RuntimeError('Convert this deprecation warning to an error.')
+    if pv._version.version_info >= (0, 47):
+        raise RuntimeError('Remove deprecated method `add_axes_at_origin`')
+    p = pv.Plotter()
+    with pytest.warns(PyVistaDeprecationWarning, match='`add_axes_at_origin` is deprecated'):
+        p.add_axes_at_origin()

@@ -6,6 +6,7 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
+import pyvista.plotting
 from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
@@ -189,6 +190,38 @@ def test_axes_box(default_theme):
     new_value = not default_theme.axes.box
     default_theme.axes.box = new_value
     assert default_theme.axes.box == new_value
+
+
+def test_axes_color(default_theme):
+    new_value = pyvista.plotting.Color('black')
+    assert default_theme.axes.x_color != new_value
+    default_theme.axes.x_color = new_value
+    assert default_theme.axes.x_color == new_value
+
+    assert default_theme.axes.y_color != new_value
+    default_theme.axes.y_color = new_value
+    assert default_theme.axes.y_color == new_value
+
+    new_value = pyvista.plotting.Color('black')
+    assert default_theme.axes.z_color != new_value
+    default_theme.axes.z_color = new_value
+    assert default_theme.axes.z_color == new_value
+
+
+def test_axes_shaft_type(default_theme):
+    default_theme.axes.shaft_type = 'line'
+    assert default_theme.axes.shaft_type == 'line'
+
+    default_theme.axes.shaft_type = 'cylinder'
+    assert default_theme.axes.shaft_type == 'cylinder'
+
+
+def test_axes_tip_type(default_theme):
+    default_theme.axes.tip_type = 'cone'
+    assert default_theme.axes.tip_type == 'cone'
+
+    default_theme.axes.tip_type = 'sphere'
+    assert default_theme.axes.tip_type == 'sphere'
 
 
 def test_axes_show(default_theme):
