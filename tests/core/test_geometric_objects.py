@@ -13,6 +13,16 @@ def test_cylinder():
     assert np.any(surf.faces)
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_cylinder_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cylinder = pv.Cylinder(point_dtype=point_dtype)
+        assert cylinder.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Cylinder(point_dtype=point_dtype)
+
+
 def test_cylinder_structured():
     cyl = pv.CylinderStructured()
     assert np.any(cyl.points)
