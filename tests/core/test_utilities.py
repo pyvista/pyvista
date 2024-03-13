@@ -697,6 +697,13 @@ def test_convert_array():
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
+    # test string scalar is converted to string array with length on
+    my_str = 'abc'
+    arr5 = pv.core.utilities.arrays.convert_array(my_str)
+    assert arr5.GetNumberOfValues() == 1
+    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
+    assert arr6.GetNumberOfValues() == 1
+
 
 def test_has_duplicates():
     assert not has_duplicates(np.arange(100))
