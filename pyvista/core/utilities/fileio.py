@@ -437,7 +437,11 @@ def from_meshio(mesh):
         else:
             vtk_type = meshio_to_vtk_type[c.type]
             numnodes = vtk_type_to_numnodes[vtk_type]
-            fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+            if numnodes == -1:
+                # Count nodes in each cell
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+            else:
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
             cells.append(np.hstack((fill_values, c.data)).ravel())
 
         cell_type += [vtk_type] * len(c.data)
@@ -581,7 +585,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
                 else cell[[0, 1, 3, 2]] if cell_type == 8 else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-            cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
+            cell_type = vtk_to_meshio_type[cell_type]
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
