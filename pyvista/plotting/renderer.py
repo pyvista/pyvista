@@ -3444,6 +3444,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         return self.GetViewport()
 
+    @viewport.setter
+    def viewport(self, viewport):  # numpydoc ignore=GL08
+        self.SetViewport(viewport)
+
     @property
     def width(self):  # numpydoc ignore=RT01
         """Width of the renderer."""
