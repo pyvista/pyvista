@@ -212,7 +212,7 @@ jobs:
         run: |
           pip uninstall numpy matplotlib -y
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
-          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+          pip install --pre --no-deps numpy==2.0.0b1
 
       - name: Core Testing (no GL)
         if: always()
