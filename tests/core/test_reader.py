@@ -25,7 +25,7 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 def test_get_reader_fail(tmp_path):
     with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
-    match= "`pyvista.get_reader` does not support reading from directory:\n\t"
+    match = "`pyvista.get_reader` does not support reading from directory:\n\t"
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
 
