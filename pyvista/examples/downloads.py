@@ -32,7 +32,6 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.core.utilities.reader import DICOMReader
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -4538,8 +4537,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
     fnames = _download_archive('DICOM_Stack/data.zip')
     path = os.path.dirname(fnames[0])
     if load:
-        reader = DICOMReader(path)
-        return reader.read()
+        return pyvista.read(path)
     return path
 
 

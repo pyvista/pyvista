@@ -191,7 +191,7 @@ def get_reader(filename, force_ext=None):
         Reader = CLASS_READERS[ext]
     except KeyError:
         if os.path.isdir(filename):
-            if len(files := os.listdir()) > 0 and all(
+            if len(files := os.listdir(filename)) > 0 and all(
                 pathlib.Path(f).suffix == '.dcm' for f in files
             ):
                 Reader = DICOMReader
