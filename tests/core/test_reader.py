@@ -22,9 +22,12 @@ pytestmark = pytest.mark.skipif(
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
-def test_get_reader_fail():
+def test_get_reader_fail(tmp_path):
     with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
+    match = "`pyvista.get_reader` does not support reading from directory:\n\t"
+    with pytest.raises(ValueError, match=match):
+        pv.get_reader(str(tmp_path))
 
 
 def test_reader_invalid_file():
@@ -279,7 +282,7 @@ def test_ensightreader_time_sets():
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
-    reader = pv.DICOMReader(directory)  # ``get_reader`` doesn't support directories
+    reader = pv.get_reader(directory)
     assert directory in str(reader)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == directory
