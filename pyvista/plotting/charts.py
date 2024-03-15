@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.report import vtk_version_info
+from pyvista import vtk_version_info
 
 from . import _vtk
 from ._typing import Chart
@@ -69,7 +69,7 @@ class DocSubs:
     # The substitutions to use for this (sub)class
     _DOC_SUBS: Optional[Dict[str, str]] = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
-    _DOC_STORE = {}  # type: ignore
+    _DOC_STORE = {}  # type: ignore[var-annotated]
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
@@ -130,9 +130,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
     setters or deleters), hence this decorator should be applied
-    before the property decorator. And 'type: ignore' comments are
-    necessary because mypy cannot handle decorated properties (see
-    https://github.com/python/mypy/issues/1362)
+    before the property decorator.
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
@@ -1185,7 +1183,7 @@ class _Chart(DocSubs):
         l, b, w, h = self._geometry
         return l <= pos[0] <= l + w and b <= pos[1] <= b + h
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
@@ -1215,7 +1213,7 @@ class _Chart(DocSubs):
             raise ValueError(f'Invalid size {val}.')
         self._size = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
@@ -1245,7 +1243,7 @@ class _Chart(DocSubs):
             raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color.
@@ -1271,7 +1269,7 @@ class _Chart(DocSubs):
     def border_color(self, val):  # numpydoc ignore=GL08
         self._background.BorderPen.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_width(self):  # numpydoc ignore=RT01
         """Return or set the chart's border width.
@@ -1298,7 +1296,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.width = val
         self._background.ActiveBorderPen.width = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_style(self):  # numpydoc ignore=RT01
         """Return or set the chart's border style.
@@ -1325,7 +1323,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def active_border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color in interactive mode.
@@ -1356,7 +1354,7 @@ class _Chart(DocSubs):
     def active_border_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBorderPen.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color.
@@ -1380,7 +1378,7 @@ class _Chart(DocSubs):
     def background_color(self, val):  # numpydoc ignore=GL08
         self._background.BackgroundBrush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def background_texture(self):  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
@@ -1406,7 +1404,7 @@ class _Chart(DocSubs):
         self._background.BackgroundBrush.texture = val
         self._background.ActiveBackgroundBrush.texture = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def active_background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color in interactive mode.
@@ -1435,7 +1433,7 @@ class _Chart(DocSubs):
     def active_background_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBackgroundBrush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the chart's visibility.
@@ -1486,7 +1484,7 @@ class _Chart(DocSubs):
         """
         self.visible = not self.visible
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
@@ -1510,7 +1508,7 @@ class _Chart(DocSubs):
     def title(self, val):  # numpydoc ignore=GL08
         self.SetTitle(val)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
@@ -1644,7 +1642,7 @@ class _Plot(DocSubs):
         if hasattr(self, "SetBrush"):
             self.SetBrush(self._brush)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
@@ -1672,7 +1670,7 @@ class _Plot(DocSubs):
         self.pen.color = val
         self.brush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def pen(self):  # numpydoc ignore=RT01
         """Pen object controlling how lines in this plot are drawn.
@@ -1699,7 +1697,7 @@ class _Plot(DocSubs):
         """
         return self._pen
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def brush(self):  # numpydoc ignore=RT01
         """Brush object controlling how shapes in this plot are filled.
@@ -1726,7 +1724,7 @@ class _Plot(DocSubs):
         """
         return self._brush
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def line_width(self):  # numpydoc ignore=RT01
         """Return or set the line width of all lines drawn in this plot.
@@ -1754,7 +1752,7 @@ class _Plot(DocSubs):
     def line_width(self, val):  # numpydoc ignore=GL08
         self.pen.width = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def line_style(self):  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
@@ -1781,7 +1779,7 @@ class _Plot(DocSubs):
     def line_style(self, val):  # numpydoc ignore=GL08
         self.pen.style = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
@@ -1807,7 +1805,7 @@ class _Plot(DocSubs):
         self._label = "" if val is None else val
         self.SetLabel(self._label)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the this plot's visibility.
@@ -1880,7 +1878,7 @@ class _MultiCompPlot(_Plot):
         self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color_scheme(self):  # numpydoc ignore=RT01
         """Return or set the plot's color scheme.
@@ -1920,7 +1918,7 @@ class _MultiCompPlot(_Plot):
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def colors(self):  # numpydoc ignore=RT01
         """Return or set the plot's colors.
@@ -1970,7 +1968,7 @@ class _MultiCompPlot(_Plot):
                     "Invalid colors specified, falling back to default color scheme."
                 ) from e
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
@@ -2000,7 +1998,7 @@ class _MultiCompPlot(_Plot):
         # (and their internal representations through color series, lookup tables and brushes) stay synchronized.
         self.colors = [val]
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def labels(self):  # numpydoc ignore=RT01
         """Return or set the this plot's labels, as shown in the chart's legend.
@@ -2037,7 +2035,7 @@ class _MultiCompPlot(_Plot):
         except TypeError:
             raise ValueError("Invalid labels specified.")
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.

@@ -22,7 +22,7 @@ jobs:
         with:
           labels: docker
       - uses: actions-ecosystem/action-add-labels@v1
-        if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
+        if: startsWith(github.event.pull_request.head.ref, 'maint') || startsWith(github.event.pull_request.head.ref, 'testing') || startsWith(github.event.pull_request.head.ref, 'no-ci') || startsWith(github.event.pull_request.head.ref, 'ci')
         with:
           labels: maintenance
       - uses: actions-ecosystem/action-add-labels@v1

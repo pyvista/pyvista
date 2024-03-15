@@ -1,6 +1,7 @@
 """
 Tests for non-spatially referenced objects
 """
+
 import numpy as np
 import pytest
 import vtk
@@ -30,7 +31,7 @@ def test_table_init(tmpdir):
     for i in range(nc):
         assert np.allclose(arrays[:, i], table[i])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.Table(np.random.default_rng().random((100, 2, 3)))
 
     # Create from 1D array

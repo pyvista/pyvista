@@ -1,4 +1,5 @@
 """Internal array utilities."""
+
 import collections.abc
 import enum
 from itertools import product
@@ -8,7 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -56,13 +57,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[Matrix, Vector], copy: bool = False
-) -> Tuple[np.ndarray, bool]:
+    points: Union[MatrixLike[float], VectorLike[float]], copy: bool = False
+) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : Matrix, Vector
+    points : MatrixLike[float] | VectorLike[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -191,7 +192,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
-        VTK array type ID as specified in specified in ``vtkType.h``.
+        VTK array type ID as specified in ``vtkType.h``.
 
     Returns
     -------
@@ -203,14 +204,17 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
-    if isinstance(arr, (list, tuple)):
+    if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
-        arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
+            if arr.ndim > 0:
+                # Do not call ascontiguousarray for scalar strings since this will reshape to 1D
+                # and scalars are already contiguous anyway
+                arr = np.ascontiguousarray(arr)
             vtk_data = convert_string_array(arr)
         else:
             # This will handle numerical data
@@ -546,9 +550,11 @@ def vtk_id_list_to_array(vtk_id_list):
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
+    If a scalar string is provided, it is converted to a vtkCharArray
+
     Parameters
     ----------
-    arr : numpy.ndarray
+    arr : numpy.ndarray | str
         Numpy string array to convert.
 
     name : str, optional
@@ -565,13 +571,25 @@ def convert_string_array(arr, name=None):
     to make this faster, please consider opening a pull request.
 
     """
+    arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+        if (
+            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+        ):  # avoids segfault
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
             )
         vtkarr = _vtk.vtkStringArray()
+        if arr.ndim == 0:
+            # distinguish scalar inputs from array inputs by
+            # setting the object name
+            arr = arr.reshape((1,))
+            try:
+                vtkarr.SetObjectName('scalar')
+            except AttributeError:
+                vtkarr.GetObjectName = lambda: 'scalar'
+
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -582,7 +600,13 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    try:
+        if arr.GetObjectName() == 'scalar':
+            return np.array("".join(arr_out))
+    except AttributeError:
+        pass
+    return arr_out
     ########################################
 
 
@@ -792,101 +816,3 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
             '\t3x3 np.ndarray\n'
         )
     return transform_array
-
-
-def cast_to_list_array(arr):
-    """Cast an array to a nested list.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    Returns
-    -------
-    list
-        List or nested list array.
-    """
-    return cast_to_ndarray(arr).tolist()
-
-
-def cast_to_tuple_array(arr):
-    """Cast an array to a nested tuple.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    Returns
-    -------
-    tuple
-        Tuple or nested tuple array.
-    """
-    arr = cast_to_ndarray(arr).tolist()
-
-    def _to_tuple(s):
-        return tuple(_to_tuple(i) for i in s) if isinstance(s, list) else s
-
-    return _to_tuple(arr)
-
-
-def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
-    """Cast array to a NumPy ndarray.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    as_any : bool, default: True
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
-
-    dtype : dtype_like
-        The data-type of the returned array.
-
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-    Raises
-    ------
-    ValueError
-        If input cannot be cast as a NumPy ndarray.
-
-    Returns
-    -------
-    np.ndarray
-        NumPy ndarray.
-
-    """
-    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
-        return arr
-
-    # needed to support numpy <1.25
-    # needed to support vtk 9.0.3
-    # check for removal when support for vtk 9.0.3 is removed
-    try:
-        VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
-
-    try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
-        if out.dtype.name == 'object':
-            # NumPy will normally raise ValueError automatically for
-            # object arrays, but on some systems it will not, so raise
-            # error manually
-            raise ValueError
-    except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    return out

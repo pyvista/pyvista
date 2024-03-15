@@ -1,22 +1,51 @@
 """Core type aliases."""
+
+from __future__ import annotations
+
 from typing import Tuple, Union
 
-from pyvista.core._vtk_core import vtkCellArray, vtkMatrix3x3, vtkMatrix4x4, vtkTransform
+from pyvista.core import _vtk_core as _vtk
 
-from ._array_like import _ArrayLike1D, _ArrayLike2D, _ArrayLike3D, _ArrayLike4D, _NumType
+from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
 
+# NOTE:
+# Type aliases are automatically expanded in the documentation.
+# To document an alias as-is without expansion, the alias should be:
+#   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
+#   (2) added to /doc/core/typing.rst
+#   (3) added to the "numpydoc_validation" excludes in pyproject.toml
+#
+# Long or complex type aliases (e.g. a union of 4 or more base types) should
+# always be added to the dictionary and documented
 Number = Union[int, float]
 
-# TODO: add --disallow-any-generics option to mypy config to prevent use of
-#  type unbound aliases. E.g. the use of `Vector`, which will default to
-#  `Vector[Any]` should not be allowed.
-Vector = _ArrayLike1D[_NumType]
-Matrix = _ArrayLike2D[_NumType]
-Array = Union[
-    _ArrayLike1D[_NumType], _ArrayLike2D[_NumType], _ArrayLike3D[_NumType], _ArrayLike4D[_NumType]
-]
+VectorLike = _ArrayLike1D[NumberType]
+VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
 
-TransformLike = Union[Matrix[float], vtkMatrix3x3, vtkMatrix4x4, vtkTransform]
+Includes sequences and numpy arrays.
+"""
+
+MatrixLike = _ArrayLike2D[NumberType]
+MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
+
+Includes singly-nested sequences and numpy arrays.
+"""
+
+ArrayLike = _ArrayLike[NumberType]
+ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
+
+Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
+"""
+
+TransformLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
+TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
+
 BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
-CellsLike = Union[Matrix[int], Vector[int]]
-CellArrayLike = Union[CellsLike, vtkCellArray]
+BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
+
+Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
+"""
+
+CellsLike = Union[MatrixLike[int], VectorLike[int]]
+
+CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]

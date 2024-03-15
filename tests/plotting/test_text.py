@@ -1,6 +1,7 @@
 """
 Tests for text objects
 """
+
 import os
 
 import numpy as np
@@ -67,7 +68,7 @@ def test_property_opacity(prop):
     opacity = 0.5
     prop.opacity = opacity
     assert prop.opacity == opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.opacity = 2
 
 
@@ -80,7 +81,7 @@ def test_property_background_opacity(prop):
     background_opacity = 0.5
     prop.background_opacity = background_opacity
     assert prop.background_opacity == background_opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.background_opacity = 2
 
 
@@ -156,9 +157,9 @@ def test_property_justification_vertical(prop, justification):
 
 
 def test_property_justification_invalid(prop):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_horizontal = "invalid"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_vertical = "invalid"
 
 

@@ -12,6 +12,7 @@ version_info = 0, 28, '0rc1'
 Denotes the first release candidate.
 
 """
+
 # major, minor, patch
 version_info = 0, 44, 'dev0'
 

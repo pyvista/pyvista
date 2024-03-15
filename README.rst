@@ -88,6 +88,10 @@ Status badges
   :target: https://github.com/psf/black
   :alt: black
 
+.. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
+  :target: https://github.com/prettier/prettier
+  :alt: prettier
+
 .. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
    :target: https://www.python.org/downloads/
 
@@ -100,6 +104,9 @@ Status badges
 .. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
+
+.. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/nschloe/awesome-scientific-computing
 
 +----------------------+------------------------+-------------+
 | Deployment           | |pypi|                 | |conda|     |
@@ -119,10 +126,14 @@ Status badges
 | Community            | |slack|                | |discuss|   |
 +----------------------+------------------------+-------------+
 | Formatter            | |black|                | |isort|     |
+|                      +------------------------+-------------+
+|                      | |prettier|             |             |
 +----------------------+------------------------+-------------+
 | Linter               | |Ruff|                               |
 +----------------------+------------------------+-------------+
 | Affiliated           | |NumFOCUS Affiliated|                |
++----------------------+------------------------+-------------+
+| Mentioned            | |Awesome Scientific Computing|       |
 +----------------------+------------------------+-------------+
 
 

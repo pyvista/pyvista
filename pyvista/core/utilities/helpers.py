@@ -1,4 +1,5 @@
 """Core helper utilities."""
+
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
@@ -10,13 +11,14 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import NumpyArray
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[np.ndarray, _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
+    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
 ) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -108,7 +110,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        return dataset  # type: ignore
+        return dataset  # type: ignore[return-value]
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -155,7 +157,7 @@ def wrap(
         )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
-            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)  # type: ignore
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object

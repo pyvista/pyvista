@@ -1,4 +1,5 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
+
 import collections.abc
 from typing import Literal, Optional, Sequence, Union
 import warnings
@@ -7,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -702,10 +704,10 @@ class DataSetFilters:
         >>> slice = mesh.slice_implicit(sphere)
         >>> slice.plot(show_edges=True, line_width=5)
 
-        >>> sphere = vtk.vtkCylinder()
-        >>> sphere.SetRadius(10)
+        >>> cylinder = vtk.vtkCylinder()
+        >>> cylinder.SetRadius(10)
         >>> mesh = pv.Wavelet()
-        >>> slice = mesh.slice_implicit(sphere)
+        >>> slice = mesh.slice_implicit(cylinder)
         >>> slice.plot(show_edges=True, line_width=5)
 
         """
@@ -2273,8 +2275,10 @@ class DataSetFilters:
             geom = [geom]
         if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
             raise TypeError('Only PolyData objects can be used as glyphs.')
+
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
+
         if len(geom) == 1:
             # use a single glyph, ignore indices
             alg.SetSourceData(geom[0])
@@ -2376,7 +2380,13 @@ class DataSetFilters:
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar, 'Computing Glyphs')
-        return _get_output(alg)
+
+        output = _get_output(alg)
+
+        # Storing geom on the algorithm, for later use in legends.
+        output._glyph_geom = geom
+
+        return output
 
     def connectivity(
         self,
@@ -2618,11 +2628,11 @@ class DataSetFilters:
             return _output
 
         # Store active scalars info to restore later if needed
-        active_field, active_name = self.active_scalars_info  # type: ignore
+        active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
 
         # Set scalars
         if scalar_range is None:
-            input_mesh = self.copy(deep=False)  # type: ignore
+            input_mesh = self.copy(deep=False)  # type: ignore[attr-defined]
         else:
             if isinstance(scalar_range, np.ndarray):
                 num_elements = scalar_range.size
@@ -2638,7 +2648,7 @@ class DataSetFilters:
                 )
 
             # Input will be modified, so copy first
-            input_mesh = self.copy()  # type: ignore
+            input_mesh = self.copy()  # type: ignore[attr-defined]
             if scalars is None:
                 set_default_active_scalars(input_mesh)
             else:
@@ -2710,7 +2720,8 @@ class DataSetFilters:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(cell_ids)]
+            for i in _unravel_and_validate_ids(cell_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'point_seed':
             if point_ids is None:
@@ -2722,7 +2733,8 @@ class DataSetFilters:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
-            [alg.AddSeed(i) for i in _unravel_and_validate_ids(point_ids)]
+            for i in _unravel_and_validate_ids(point_ids):
+                alg.AddSeed(i)
 
         elif extraction_mode == 'closest':
             if closest_point is None:
@@ -2797,7 +2809,7 @@ class DataSetFilters:
 
         if inplace:
             try:
-                self.copy_from(output, deep=False)  # type: ignore
+                self.copy_from(output, deep=False)  # type: ignore[attr-defined]
                 return self
             except:
                 pass
@@ -5510,6 +5522,59 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
         return _get_output(alg)
 
+    def compute_boundary_mesh_quality(self, *, progress_bar=False):
+        """Compute metrics on the boundary faces of a mesh.
+
+        The metrics that can be computed on the boundary faces of the mesh and are:
+
+        - Distance from cell center to face center
+        - Distance from cell center to face plane
+        - Angle of faces plane normal and cell center to face center vector
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with the computed metrics on the boundary faces of a mesh.
+            ``cell_data`` as the ``"CellQuality"`` array.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_can_crushed_vtu()
+        >>> cqual = mesh.compute_boundary_mesh_quality()
+        >>> plotter = pv.Plotter(shape=(2, 2))
+        >>> _ = plotter.add_mesh(mesh, show_edges=True)
+        >>> plotter.subplot(1, 0)
+        >>> _ = plotter.add_mesh(
+        ...     cqual, scalars="DistanceFromCellCenterToFaceCenter"
+        ... )
+        >>> plotter.subplot(0, 1)
+        >>> _ = plotter.add_mesh(
+        ...     cqual, scalars="DistanceFromCellCenterToFacePlane"
+        ... )
+        >>> plotter.subplot(1, 1)
+        >>> _ = plotter.add_mesh(
+        ...     cqual,
+        ...     scalars="AngleFaceNormalAndCellCenterToFaceCenterVector",
+        ... )
+        >>> plotter.show()
+
+        """
+        if pyvista.vtk_version_info < (9, 3, 0):
+            raise VTKVersionError(
+                '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
+            )  # pragma: no cover
+        alg = _vtk.vtkBoundaryMeshQuality()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
+        return _get_output(alg)
+
     def compute_derivative(
         self,
         scalars=None,
@@ -5746,7 +5811,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, np.ndarray],
+        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, NumpyArray[float]],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -5922,7 +5987,7 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if isinstance(self, pyvista.Grid):
-            output = pyvista.StructuredGrid()
+            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
         else:
             output = self.__class__()
         output.copy_from(res, deep=True)

@@ -1,4 +1,7 @@
 """Fine-grained control of reading data files."""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import enum
@@ -195,9 +198,9 @@ def get_reader(filename, force_ext=None):
 class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
-    def __init__(self):
+    def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable]] = []
+        self._observers: List[Union[int, Callable[[Any], Any]]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -205,7 +208,6 @@ class BaseVTKReader(ABC):
 
     def UpdateInformation(self):
         """Update Information from file."""
-        pass
 
     def AddObserver(self, event_type, callback):
         """Add Observer that can be triggered during Update."""
@@ -393,11 +395,9 @@ class BaseReader:
 
     def _set_defaults(self):
         """Set defaults on reader, if needed."""
-        pass
 
     def _set_defaults_post(self):
         """Set defaults on reader post setting file, if needed."""
-        pass
 
 
 class PointCellDataSelection:
@@ -882,7 +882,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
+            raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -2434,10 +2434,6 @@ class GIFReader(BaseReader):
 
 class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
-
-    Notes
-    -----
-    We currently can't inspect the time values for this reader.
 
     Parameters
     ----------

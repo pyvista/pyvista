@@ -343,7 +343,7 @@ def test_trame_int64():
     assert isinstance(widget, Widget)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_trame_export_html(tmpdir):
     filename = str(tmpdir.join('tmp.html'))
     plotter = pv.Plotter()
