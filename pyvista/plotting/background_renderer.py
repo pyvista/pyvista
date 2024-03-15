@@ -40,7 +40,7 @@ class BackgroundRenderer(Renderer):
         self._modified_observer = None
         self._prior_window_size = None
         if view_port is not None:
-            self.SetViewport(view_port)
+            self.viewport = view_port
 
         # create image actor
         image_actor = _vtk.vtkImageActor()
