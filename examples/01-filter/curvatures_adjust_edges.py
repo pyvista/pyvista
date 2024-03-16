@@ -36,7 +36,7 @@ curvature_name = 'Gauss_Curvature'
 plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
 
-source.GetPointData().SetActiveScalars(curvature_name)
+source.set_active_scalars(curvature_name)
 scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
 
 mapper = pv.DataSetMapper()
@@ -75,7 +75,7 @@ curvature_name = 'Mean_Curvature'
 plotter.subplot(0, 1)
 curvature_title = curvature_name.replace('_', '\n')
 
-source.GetPointData().SetActiveScalars(curvature_name)
+source.set_active_scalars(curvature_name)
 scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
 
 mapper = pv.DataSetMapper()
