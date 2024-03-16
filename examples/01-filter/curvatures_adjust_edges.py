@@ -32,7 +32,7 @@ text_property.font_size = 24
 text_property.justification_horizontal = "center"
 text_property.color = "white"
 
-lut = pv.LookupTable('coolwarm', n_values=256)
+lookup_table = pv.LookupTable('coolwarm', n_values=256)
 
 curvature_name = 'Gauss_Curvature'
 plotter.subplot(0, 0)
@@ -44,7 +44,7 @@ mapper = pv.DataSetMapper(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = (np.min(source.active_scalars), np.max(source.active_scalars))
-mapper.lookup_table = lut
+mapper.lookup_table = lookup_table
 
 actor = pv.Actor(mapper=mapper)
 
@@ -81,7 +81,7 @@ mapper = pv.DataSetMapper(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = (np.min(source.active_scalars), np.max(source.active_scalars))
-mapper.lookup_table = lut
+mapper.lookup_table = lookup_table
 
 actor = pv.Actor(mapper=mapper)
 
