@@ -746,6 +746,67 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         """Colormap assigned to this mapper."""
         return self._cmap
 
+    @property
+    def resolve(self) -> str:
+        """Set or return global flag to avoid z-buffer resolution.
+
+        A global flag that controls whether coincident topology
+        (e.g., a line on top of a polygon) is shifted to avoid
+        z-buffer resolution (and hence rendering problems).
+
+        If not off, there are two methods to choose from.
+        `polygon_offset` uses graphics systems calls to shift polygons,
+        lines and points from each other.
+        `shift_z_buffer` is a legacy method that used to remap the z-buffer
+        to distinguish vertices, lines, and polygons,
+        but does not always produce acceptable results.
+        You should only use the polygon_offset method (or none) at this point.
+
+        Returns
+        -------
+        str
+            Global flag to avoid z-buffer resolution.
+            Must be either `off`, `polygon_offset` or `shift_z_buffer`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+
+        >>> mesh = examples.download_tri_quadratic_hexahedron()
+        >>> surface_sep = mesh.separate_cells().extract_surface(
+        ...     nonlinear_subdivision=4
+        ... )
+        >>> edges = surface_sep.extract_feature_edges()
+        >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
+
+        >>> plotter = pv.Plotter()
+        >>> plotter.add_mesh(
+        ...     surface, smooth_shading=True, split_sharp_edges=True
+        ... )
+        >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
+        >>> actor.mapper.resolve = "polygon_offset"
+        >>> plotter.show()
+
+        """
+        vtk_to_pv = {
+            _vtk.VTK_RESOLVE_OFF: 'off',
+            _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
+            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_z_buffer',
+        }
+        return vtk_to_pv[self.GetResolveCoincidentTopology()]
+
+    @resolve.setter
+    def resolve(self, resolve):  # numpydoc ignore=GL08
+        if resolve == 'off':
+            self.SetResolveCoincidentTopologyToOff()
+        elif resolve == 'polygon_offset':
+            self.SetResolveCoincidentTopologyToPolygonOffset()
+        elif resolve == 'shift_z_buffer':
+            self.SetResolveCoincidentTopologyToShiftZBuffer()
+        else:
+            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_z_buffer"')
+
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
 
