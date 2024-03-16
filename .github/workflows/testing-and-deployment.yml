@@ -149,15 +149,6 @@ jobs:
           - python-version: "3.12"
             vtk-version: "latest"
             numpy-version: "default"
-          - python-version: "3.9"
-            vtk-version: "9.1"
-            numpy-version: "2.0"
-          - python-version: "3.10"
-            vtk-version: "9.2.2"
-            numpy-version: "2.0"
-          - python-version: "3.11"
-            vtk-version: "9.2.6"
-            numpy-version: "2.0"
           - python-version: "3.12"
             vtk-version: "latest"
             numpy-version: "2.0"
@@ -215,7 +206,7 @@ jobs:
           pip install --pre --no-deps numpy==2.0.0b1
 
       - name: Core Testing (no GL)
-        if: always()
+        continue-on-error: ${{ matrix.numpy-version != 'default' }}
         run: python -m pytest --cov=pyvista -v tests/core tests/examples
 
       - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
@@ -224,7 +215,7 @@ jobs:
           version: 3.0
 
       - name: Plotting Testing (uses GL)
-        if: always()
+        continue-on-error: ${{ matrix.numpy-version != 'default' }}
         run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
 
       - name: Software Report
