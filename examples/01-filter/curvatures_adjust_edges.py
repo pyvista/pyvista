@@ -115,7 +115,7 @@ renderer = plotter.renderers[1]
 
 
 renderer.camera = camera
-renderer.SetViewport(xmins[1], ymins[1], xmaxs[1], ymaxs[1])
+renderer.viewport = (xmins[1], ymins[1], xmaxs[1], ymaxs[1])
 renderer.reset_camera()
 
 plotter.add_camera_orientation_widget()
