@@ -32,12 +32,6 @@ text_property.color = "white"
 
 lut = pv.LookupTable('coolwarm', n_values=256)
 
-# Define viewport ranges
-xmins = [0, 0.5]
-xmaxs = [0.5, 1]
-ymins = [0, 0]
-ymaxs = [1.0, 1.0]
-
 curvature_name = 'Gauss_Curvature'
 plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
@@ -75,7 +69,6 @@ renderer = plotter.renderers[0]
 
 camera = renderer.camera
 camera.elevation = 60
-renderer.viewport = (xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 renderer.reset_camera()
 
 curvature_name = 'Mean_Curvature'
@@ -115,7 +108,6 @@ renderer = plotter.renderers[1]
 
 
 renderer.camera = camera
-renderer.viewport = (xmins[1], ymins[1], xmaxs[1], ymaxs[1])
 renderer.reset_camera()
 
 plotter.add_camera_orientation_widget()
