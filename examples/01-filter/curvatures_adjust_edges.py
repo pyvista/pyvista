@@ -44,7 +44,7 @@ mapper.SetInputData(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = scalar_range
-mapper.SetLookupTable(lut)
+mapper.lookup_table = lut
 
 actor = pv.Actor(mapper=mapper)
 
@@ -83,7 +83,7 @@ mapper.SetInputData(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = scalar_range
-mapper.SetLookupTable(lut)
+mapper.lookup_table = lut
 
 actor = pv.Actor(mapper=mapper)
 
