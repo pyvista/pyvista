@@ -41,7 +41,7 @@ scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
 
 mapper = pv.DataSetMapper()
 mapper.SetInputData(source)
-mapper.SetScalarModeToUsePointFieldData()
+mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.SetScalarRange(scalar_range)
 mapper.SetLookupTable(lut)
