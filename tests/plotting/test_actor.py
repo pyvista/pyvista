@@ -44,7 +44,7 @@ def test_actor_init_empty():
     assert actor.memory_address == actor.GetAddressAsString("")
 
 
-def test_actor_from_args():
+def test_actor_from_argument():
     mapper = pv.DataSetMapper()
     prop = pv.Property()
     name = 'Actor'
