@@ -44,6 +44,16 @@ def test_actor_init_empty():
     assert actor.memory_address == actor.GetAddressAsString("")
 
 
+def test_actor_from_argument():
+    mapper = pv.DataSetMapper()
+    prop = pv.Property()
+    name = 'Actor'
+    actor = pv.Actor(mapper=mapper, prop=prop, name=name)
+    assert actor.mapper is mapper
+    assert actor.prop is prop
+    assert actor.name == name
+
+
 def test_actor_from_plotter():
     mesh = pv.Sphere()
     actor = pv.Plotter().add_mesh(mesh, lighting=False)
