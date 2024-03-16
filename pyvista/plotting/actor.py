@@ -85,6 +85,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        else:
+            self.prop = prop
         self._name = name
 
     @property
