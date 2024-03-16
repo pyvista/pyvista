@@ -222,7 +222,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @pickable.setter
     def pickable(self, value):  # numpydoc ignore=GL08
-        return self.SetPickable(value)
+        self.SetPickable(value)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -245,7 +245,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @visibility.setter
     def visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetVisibility(value)
+        self.SetVisibility(value)
 
     def plot(self, **kwargs):
         """Plot just the actor.
