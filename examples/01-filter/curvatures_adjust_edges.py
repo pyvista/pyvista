@@ -40,8 +40,7 @@ curvature_title = curvature_name.replace('_', '\n')
 
 source.set_active_scalars(curvature_name)
 
-mapper = pv.DataSetMapper()
-mapper.SetInputData(source)
+mapper = pv.DataSetMapper(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = (np.min(source.active_scalars), np.max(source.active_scalars))
@@ -78,8 +77,7 @@ curvature_title = curvature_name.replace('_', '\n')
 
 source.set_active_scalars(curvature_name)
 
-mapper = pv.DataSetMapper()
-mapper.SetInputData(source)
+mapper = pv.DataSetMapper(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
 mapper.scalar_range = (np.min(source.active_scalars), np.max(source.active_scalars))
