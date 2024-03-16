@@ -1,4 +1,5 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
+
 import collections.abc
 from typing import Literal, Optional, cast
 
@@ -865,12 +866,12 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore
-            field, scalars = self.active_scalars_info  # type: ignore
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f'Can only process point data, given `scalars` are {field.name.lower()} data.'

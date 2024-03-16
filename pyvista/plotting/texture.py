@@ -1,12 +1,13 @@
 """This module provides a wrapper for vtk.vtkTexture."""
 
 from collections.abc import Sequence
-from typing import Union
+from typing import Tuple, Union
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.dataset import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
@@ -305,7 +306,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         return self.GetInput()
 
-    def to_array(self) -> np.ndarray:
+    def to_array(self) -> NumpyArray[float]:
         """Return the texture as an array.
 
         Notes
@@ -441,7 +442,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> tuple:  # numpydoc ignore=RT01
+    def dimensions(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -581,7 +582,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
 
-        return Texture.WrapType(self.GetWrap())  # type: ignore
+        return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
     def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08

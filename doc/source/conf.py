@@ -84,6 +84,8 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
+    "sphinx_toolbox.more_autodoc.overloads",
+    "sphinx_toolbox.more_autodoc.typevars",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -171,8 +173,24 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
+autodoc_type_aliases = {
+    "Chart": "pyvista.Chart",
+    "ColorLike": "pyvista.ColorLike",
+    "ArrayLike": "pyvista.ArrayLike",
+    "VectorLike": "pyvista.VectorLike",
+    "MatrixLike": "pyvista.MatrixLike",
+    "BoundsLike": "pyvista.BoundsLike",
+    "CellsLike": "pyvista.CellsLike",
+    "CellArrayLike": "pyvista.CellArrayLike",
+    "TransformLike": "pyvista.TransformLike",
+}
 
+# Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
+overloads_location = ["bottom"]
+
+# Display long function signatures with each param on a new line.
+# Helps make annotated signatures more readable.
+maximum_signature_line_length = 88
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
@@ -436,7 +454,7 @@ def get_version_match(semver):
     if semver.endswith("dev0"):
         return "dev"
     major, minor, _ = semver.split(".")
-    return ".".join([major, minor])
+    return f"{major}.{minor}"
 
 
 # Theme options are theme-specific and customize the look and feel of a theme

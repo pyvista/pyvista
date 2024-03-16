@@ -1,4 +1,5 @@
 """This module contains the Property class."""
+
 from typing import Union
 
 import pyvista
@@ -298,7 +299,7 @@ class Property(_vtk.vtkProperty):
         if new_style == 'wireframe':
             self.SetRepresentationToWireframe()
             if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore
+                self.color = self._theme.outline_color  # type: ignore[attr-defined]
         elif new_style == 'points':
             self.SetRepresentationToPoints()
         elif new_style == 'surface':

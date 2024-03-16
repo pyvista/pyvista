@@ -10,6 +10,10 @@ updates:
         patterns:
           - "trame"
           - "trame-*"
+      sphinx:
+        patterns:
+          - "*sphinx*"
+          - "pypandoc"
     labels:
       - "maintenance"
       - "dependencies"
@@ -22,6 +26,13 @@ updates:
         patterns:
           - "actions/upload-artifact"
           - "actions/download-artifact"
+    labels:
+      - "maintenance"
+      - "dependencies"
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "monthly"
     labels:
       - "maintenance"
       - "dependencies"

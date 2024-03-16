@@ -519,7 +519,7 @@ def sample_function(
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,
-    output_type: np.dtype = np.double,  # type: ignore
+    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = "scalars",

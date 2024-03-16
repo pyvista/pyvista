@@ -170,7 +170,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
             multi.append(read(each, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
-    if not os.path.isfile(filename):
+    if not os.path.isfile(filename) and not os.path.isdir(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present
@@ -423,10 +423,27 @@ def from_meshio(mesh):
     cells = []
     cell_type = []
     for c in mesh.cells:
-        vtk_type = meshio_to_vtk_type[c.type]
-        numnodes = vtk_type_to_numnodes[vtk_type]
-        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-        cells.append(np.hstack((fill_values, c.data)).ravel())
+        if c.type.startswith("polyhedron"):
+            vtk_type = meshio_to_vtk_type["polyhedron"]
+
+            for cell in c.data:
+                connectivity = [len(cell)]
+                for face in cell:
+                    connectivity += [len(face), *face]
+
+                connectivity.insert(0, len(connectivity))
+                cells.append(connectivity)
+
+        else:
+            vtk_type = meshio_to_vtk_type[c.type]
+            numnodes = vtk_type_to_numnodes[vtk_type]
+            if numnodes == -1:
+                # Count nodes in each cell
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+            else:
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+            cells.append(np.hstack((fill_values, c.data)).ravel())
+
         cell_type += [vtk_type] * len(c.data)
 
     # Extract cell data from meshio.Mesh object
@@ -435,7 +452,7 @@ def from_meshio(mesh):
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
 
-    # convert to 3D if points are 2D
+    # Convert to 3D if points are 2D
     if points.shape[1] == 2:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
@@ -552,36 +569,40 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     # Get cells
     cells = []
     c = 0
-    for offset, cell_type in zip(vtk_offset, vtk_cell_type):
-        numnodes = vtk_cells[offset + c]
-        cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
-        c += 1
-        cell = (
-            cell
-            if cell_type not in pixel_voxel
-            else cell[[0, 1, 3, 2]]
-            if cell_type == 8
-            else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
-        )
-        cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-        cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
+    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+        if cell_type == 42:
+            cell_ = mesh.get_cell(i)
+            cell = [face.point_ids for face in cell_.faces]
+            cell_type = f"polyhedron{cell_.n_points}"
+
+        else:
+            numnodes = vtk_cells[offset + c]
+            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
+            c += 1
+            cell = (
+                cell
+                if cell_type not in pixel_voxel
+                else cell[[0, 1, 3, 2]] if cell_type == 8 else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+            )
+            cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
+            cell_type = vtk_to_meshio_type[cell_type]
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
         else:
             cells.append((cell_type, [cell]))
 
-    for k, c in enumerate(cells):
-        cells[k] = (c[0], np.array(c[1]))
-
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
 
     # Get cell data
     vtk_cell_data = mesh.cell_data
-    n_cells = np.cumsum([len(c[1]) for c in cells[:-1]])
+    indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = (
-        {k.replace(" ", "_"): np.split(v, n_cells) for k, v in vtk_cell_data.items()}
+        {
+            k.replace(" ", "_"): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+            for k, v in vtk_cell_data.items()
+        }
         if vtk_cell_data
         else {}
     )
