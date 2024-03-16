@@ -39,13 +39,12 @@ plotter.subplot(0, 0)
 curvature_title = curvature_name.replace('_', '\n')
 
 source.set_active_scalars(curvature_name)
-scalar_range = source.GetPointData().GetScalars(curvature_name).GetRange()
 
 mapper = pv.DataSetMapper()
 mapper.SetInputData(source)
 mapper.scalar_map_mode = 'point_field'
 mapper.SelectColorArray(curvature_name)
-mapper.scalar_range = scalar_range
+mapper.scalar_range = (np.min(source.active_scalars), np.max(source.active_scalars))
 mapper.lookup_table = lut
 
 actor = pv.Actor(mapper=mapper)
