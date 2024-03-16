@@ -781,7 +781,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
 
         >>> plotter = pv.Plotter()
-        >>> plotter.add_mesh(
+        >>> _ = plotter.add_mesh(
         ...     surface, smooth_shading=True, split_sharp_edges=True
         ... )
         >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
