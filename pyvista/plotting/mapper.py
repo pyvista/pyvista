@@ -352,7 +352,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @scalar_visibility.setter
     def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetScalarVisibility(value)
+        self.SetScalarVisibility(value)
 
     def update(self):
         """Update this mapper."""
@@ -842,7 +842,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @emissive.setter
     def emissive(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetEmissive(value)
+        self.SetEmissive(value)
 
     @property
     def scale_factor(self) -> float:  # numpydoc ignore=RT01
@@ -856,7 +856,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @scale_factor.setter
     def scale_factor(self, value: float):  # numpydoc ignore=GL08
-        return self.SetScaleFactor(value)
+        self.SetScaleFactor(value)
 
     @property
     def scale_array(self) -> str:  # numpydoc ignore=RT01
@@ -905,7 +905,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             )
 
         self.scale_factor = 1.0
-        return self.SetScaleArray(name)
+        self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
         """Set the fragment shader code to create a circular splat.
