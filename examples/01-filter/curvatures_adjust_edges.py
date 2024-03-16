@@ -75,7 +75,7 @@ renderer = plotter.renderers[0]
 
 camera = renderer.camera
 camera.elevation = 60
-renderer.SetViewport(xmins[0], ymins[0], xmaxs[0], ymaxs[0])
+renderer.viewport = (xmins[0], ymins[0], xmaxs[0], ymaxs[0])
 renderer.reset_camera()
 
 curvature_name = 'Mean_Curvature'
