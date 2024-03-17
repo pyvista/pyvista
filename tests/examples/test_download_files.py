@@ -15,7 +15,6 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
@@ -808,18 +807,6 @@ def test_download_drill():
 def test_download_action_figure():
     dataset = examples.download_action_figure()
     assert isinstance(dataset, pv.PolyData)
-
-
-def test_download_mars_jpg():
-    with pytest.warns(PyVistaDeprecationWarning):
-        filename = examples.download_mars_jpg()
-        assert os.path.isfile(filename)
-
-
-def test_download_stars_jpg():
-    with pytest.warns(PyVistaDeprecationWarning):
-        filename = examples.download_stars_jpg()
-        assert os.path.isfile(filename)
 
 
 def test_download_notch_stress():
