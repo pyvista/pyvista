@@ -26,12 +26,6 @@ source['Mean_Curvature'] = source.curvature("mean", adjust_edges=True)
 
 plotter = pv.Plotter(shape=(1, 2), window_size=(1024, 512))
 
-# Create a common text property.
-text_property = pv.TextProperty()
-text_property.font_size = 24
-text_property.justification_horizontal = "center"
-text_property.color = "white"
-
 lookup_table = pv.LookupTable('coolwarm', n_values=256)
 
 curvature_name = 'Gauss_Curvature'
@@ -51,7 +45,9 @@ actor = pv.Actor(mapper=mapper)
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
 text_actor = plotter.add_text(curvature_title, position=(250, 16))
-text_actor.prop = text_property
+text_actor.prop.font_size = 24
+text_actor.prop.justification_horizontal = "center"
+text_actor.prop.color = "white"
 plotter.add_scalar_bar(
     title=curvature_title,
     unconstrained_font_size=True,
@@ -85,7 +81,9 @@ actor = pv.Actor(mapper=mapper)
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
 text_actor = plotter.add_text(curvature_title, position=(250, 16))
-text_actor.prop = text_property
+text_actor.prop.font_size = 24
+text_actor.prop.justification_horizontal = "center"
+text_actor.prop.color = "white"
 plotter.add_scalar_bar(
     title=curvature_title,
     unconstrained_font_size=True,
