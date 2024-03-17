@@ -48,13 +48,10 @@ mapper.lookup_table = lookup_table
 
 actor = pv.Actor(mapper=mapper)
 
-text_actor = pv.Text(text=curvature_title)
-text_actor.prop = text_property
-text_actor.position = (250, 16)
-
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
-plotter.add_actor(text_actor)
+text_actor = plotter.add_text(curvature_title, position=(250, 16))
+text_actor.prop = text_property
 plotter.add_scalar_bar(
     title=curvature_title,
     unconstrained_font_size=True,
@@ -85,13 +82,10 @@ mapper.lookup_table = lookup_table
 
 actor = pv.Actor(mapper=mapper)
 
-text_actor = pv.Text(text=curvature_title)
-text_actor.prop = text_property
-text_actor.position = (250, 16)
-
 plotter.add_actor(actor)
 plotter.set_background([82, 87, 110])
-plotter.add_actor(text_actor)
+text_actor = plotter.add_text(curvature_title, position=(250, 16))
+text_actor.prop = text_property
 plotter.add_scalar_bar(
     title=curvature_title,
     unconstrained_font_size=True,
