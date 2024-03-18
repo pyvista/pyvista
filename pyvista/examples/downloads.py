@@ -1130,7 +1130,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
     return _download_example(_example_blood_vessels, load=load)
 
 
-def _blood_vessels_load_func(obj):
+def _blood_vessels_load_func(obj):  # pragma: no cover
     obj.set_active_vectors('velocity')
     return obj
 
@@ -2621,7 +2621,7 @@ def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
     return _download_example(_example_tri_quadratic_hexahedron, load=load)
 
 
-def _tri_quadratic_hexahedron_load_func(dataset):
+def _tri_quadratic_hexahedron_load_func(dataset):  # pragma: no cover
     dataset.clear_data()
     return dataset
 
@@ -3054,7 +3054,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
     return _download_example(_example_tetra_dc_mesh)
 
 
-def _tetra_dc_mesh_files_func():
+def _tetra_dc_mesh_files_func():  # pragma: no cover
     def _fwd_load_func(mesh):
         mesh.set_active_scalars('Resistivity(log10)-fwd')
         return mesh
@@ -3418,7 +3418,7 @@ def download_embryo(load=True):  # pragma: no cover
     return _download_example(_example_embryo, load=load)
 
 
-def _embryo_load_func(dataset):
+def _embryo_load_func(dataset):  # pragma: no cover
     # cleanup artifact
     mask = dataset['SLCImage'] == 255
     dataset['SLCImage'][mask] = 0
@@ -4287,7 +4287,7 @@ def download_lshape(load=True):  # pragma: no cover
     return _download_example(_example_lshape, load=load)
 
 
-def _lshape_files_func():
+def _lshape_files_func():  # pragma: no cover
     def read_func(filename):
         reader = pyvista.get_reader(filename)
         reader.set_active_time_set(1)
@@ -4473,7 +4473,7 @@ def download_osmnx_graph():  # pragma: no cover
     return _download_example(_example_osmnx_graph)
 
 
-def _osmnx_graph_read_func(filename):
+def _osmnx_graph_read_func(filename):  # pragma: no cover
     import pickle
 
     return pickle.load(open(filename, 'rb'))
@@ -5019,7 +5019,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
     return _download_example(_example_cgns_multi, load=load)
 
 
-def _cgns_multi_read_func(filename):
+def _cgns_multi_read_func(filename):  # pragma: no cover
     reader = pyvista.get_reader(filename)
     # disable reading the boundary patch. As of VTK 9.1.0 this generates
     # messages like "Skipping BC_t node: BC_t type 'BCFarfield' not supported
