@@ -30,9 +30,8 @@ from pooch.utils import get_logger
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
+from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.core.utilities.reader import DICOMReader
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -3564,40 +3563,6 @@ def download_action_figure(load=True):  # pragma: no cover
     return _download_and_read('tigerfighter.obj', load=load)
 
 
-def download_mars_jpg():
-    """Download and return the path of ``'mars.jpg'``.
-
-    Returns
-    -------
-    str
-        Filename of the JPEG.
-    """
-    # Deprecated on v0.37.0, estimated removal on v0.40.0
-    warnings.warn(
-        "examples.download_mars_jpg is deprecated.  Use examples.planets.download_mars_surface with"
-        " load=False",
-        PyVistaDeprecationWarning,
-    )
-    return pyvista.examples.planets.download_mars_surface(load=False)
-
-
-def download_stars_jpg():
-    """Download and return the path of ``'stars.jpg'``.
-
-    Returns
-    -------
-    str
-        Filename of the JPEG.
-    """
-    # Deprecated on v0.37.0, estimated removal on v0.40.0
-    warnings.warn(
-        "examples.download_stars_jpg is deprecated.  Use"
-        " examples.planets.download_stars_sky_background with load=False",
-        PyVistaDeprecationWarning,
-    )
-    return pyvista.examples.planets.download_stars_sky_background(load=False)
-
-
 def download_notch_stress(load=True):  # pragma: no cover
     """Download the FEA stress result from a notched beam.
 
@@ -4538,8 +4503,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
     fnames = _download_archive('DICOM_Stack/data.zip')
     path = os.path.dirname(fnames[0])
     if load:
-        reader = DICOMReader(path)
-        return reader.read()
+        return pyvista.read(path)
     return path
 
 

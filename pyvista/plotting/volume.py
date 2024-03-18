@@ -39,7 +39,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
-        return self.SetMapper(obj)
+        self.SetMapper(obj)
 
     @property
     def prop(self):  # numpydoc ignore=RT01

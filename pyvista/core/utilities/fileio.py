@@ -170,7 +170,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
             multi.append(read(each, file_format=file_format), name)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
-    if not os.path.isfile(filename):
+    if not os.path.isfile(filename) and not os.path.isdir(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present

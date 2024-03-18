@@ -1223,6 +1223,7 @@ def Cube(
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
+
         .. versionadded:: 0.44.0
 
     Returns

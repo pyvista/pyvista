@@ -113,7 +113,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @visibility.setter
     def visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetVisibility(value)
+        self.SetVisibility(value)
 
     @property
     def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
