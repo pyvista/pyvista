@@ -23,7 +23,7 @@ class ExampleTestCaseData:
     load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
 
 
-def _generate_example_loader_test_cases() -> list[ExampleTestCaseData]:
+def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
     """Generate a list of test cases with all download functions and file loaders"""
 
     test_cases_dict: Dict = {}
