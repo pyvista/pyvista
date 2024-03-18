@@ -75,6 +75,9 @@ except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
     vtkHardwarePicker = None
 from vtkmodules.vtkRenderingCore import (
+    VTK_RESOLVE_OFF,
+    VTK_RESOLVE_POLYGON_OFFSET,
+    VTK_RESOLVE_SHIFT_ZBUFFER,
     vtkAbstractMapper,
     vtkActor,
     vtkActor2D,
