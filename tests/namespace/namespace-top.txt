@@ -173,7 +173,6 @@ XMLRectilinearGridReader, <class 'pyvista.utilities.reader.XMLRectilinearGridRea
 XMLStructuredGridReader, <class 'pyvista.utilities.reader.XMLStructuredGridReader'>
 XMLUnstructuredGridReader, <class 'pyvista.utilities.reader.XMLUnstructuredGridReader'>
 XdmfReader, <class 'pyvista.utilities.reader.XdmfReader'>
-_GlobalTheme, <class 'pyvista.themes.DefaultTheme'>
 __builtins__, None
 __cached__, pyvista/pyvista/__pycache__/__init__.cpython-39.pyc
 __doc__, PyVista package for 3D plotting and mesh analysis.
