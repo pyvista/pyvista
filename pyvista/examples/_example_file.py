@@ -270,9 +270,26 @@ def _load_as_multiblock(
     return block
 
 
-def _load_as_cubemap(files: Sequence[_SingleFilename]) -> pyvista.Texture:
-    """Load multiple files as a cubemap."""
-    return pyvista.cubemap_from_filenames([file.filename for file in files])
+def _load_as_cubemap(
+    files: Union[str, _SingleFilename, Sequence[_SingleFilename]]
+) -> pyvista.Texture:
+    """Load multiple files as a cubemap.
+
+    Input may be a single directory with 6 cubemap files, or a sequence
+    of 6 files
+    """
+    filename = (
+        files
+        if isinstance(files, str)
+        else (
+            files.filename
+            if isinstance(files, _SingleFilename)
+            else [file.filename for file in files]
+        )
+    )
+    if isinstance(files, str) and os.path.isdir(files):
+        return pyvista.cubemap(filename)
+    return pyvista.cubemap_from_filenames(filename)
 
 
 def _load_all(files: Sequence[_SingleFilename]):

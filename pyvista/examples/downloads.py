@@ -229,12 +229,11 @@ def _download_archive_file_or_folder(filename, target_file=None):
     try:
         # Return file(s)
         return _download_archive(filename, target_file=target_file)
-    except FileNotFoundError:
-        # Return folder
-        folder = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
-        if not os.path.isdir(folder):
-            raise
-        return folder
+    except (FileNotFoundError, RuntimeError):
+        pass
+    # Return folder, or re-raise error by calling function again
+    folder = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
+    return folder if os.path.isdir(folder) else _download_archive(filename, target_file=target_file)
 
 
 def delete_downloads():
@@ -3603,7 +3602,7 @@ def download_sky_box_cube_map():  # pragma: no cover
 
 
 def _sky_box_cube_map_files_func():
-    posx = _SingleFileDownloadableLoadable(
+    posx = _SingleFileDownloadable(
         'skybox2-posx.jpg',
     )
     negx = _SingleFileDownloadable('skybox2-negx.jpg')
@@ -3653,19 +3652,8 @@ def download_cubemap_park():  # pragma: no cover
     return _download_example(_example_cubemap_park)
 
 
-def _cubemap_park_files_func():
-    archive = 'cubemap_park/cubemap_park.zip'
-    posx = _SingleFileDownloadable(archive, target_file='posx.jpg')
-    negx = _SingleFileDownloadable(archive, target_file='negx.jpg')
-    posy = _SingleFileDownloadable(archive, target_file='posy.jpg')
-    negy = _SingleFileDownloadable(archive, target_file='negy.jpg')
-    posz = _SingleFileDownloadable(archive, target_file='posz.jpg')
-    negz = _SingleFileDownloadable(archive, target_file='negz.jpg')
-    return posx, negx, posy, negy, posz, negz
-
-
-_example_cubemap_park = _MultiFileDownloadableLoadable(
-    files_func=_cubemap_park_files_func, load_func=_load_as_cubemap
+_example_cubemap_park = _SingleFileDownloadableLoadable(
+    'cubemap_park/cubemap_park.zip', target_file='', read_func=_load_as_cubemap
 )
 
 
@@ -3706,19 +3694,8 @@ def download_cubemap_space_4k():  # pragma: no cover
     return _download_example(_example_cubemap_space_4k)
 
 
-def _cubemap_space_4k_files_func():
-    archive = 'cubemap_park/cubemap_park.zip'
-    posx = _SingleFileDownloadable(archive, target_file='posx.jpg')
-    negx = _SingleFileDownloadable(archive, target_file='negx.jpg')
-    posy = _SingleFileDownloadable(archive, target_file='posy.jpg')
-    negy = _SingleFileDownloadable(archive, target_file='negy.jpg')
-    posz = _SingleFileDownloadable(archive, target_file='posz.jpg')
-    negz = _SingleFileDownloadable(archive, target_file='negz.jpg')
-    return posx, negx, posy, negy, posz, negz
-
-
-_example_cubemap_space_4k = _MultiFileDownloadableLoadable(
-    files_func=_cubemap_space_4k_files_func, load_func=_load_as_cubemap
+_example_cubemap_space_4k = _SingleFileDownloadableLoadable(
+    'cubemap_space/4k.zip', target_file='', read_func=_load_as_cubemap
 )
 
 
@@ -3765,19 +3742,8 @@ def download_cubemap_space_16k():  # pragma: no cover
     return _download_example(_example_cubemap_space_16k)
 
 
-def _cubemap_space_16k_files_func():
-    archive = 'cubemap_space/16k.zip'
-    posx = _SingleFileDownloadable(archive, target_file='posx.jpg')
-    negx = _SingleFileDownloadable(archive, target_file='negx.jpg')
-    posy = _SingleFileDownloadable(archive, target_file='posy.jpg')
-    negy = _SingleFileDownloadable(archive, target_file='negy.jpg')
-    posz = _SingleFileDownloadable(archive, target_file='posz.jpg')
-    negz = _SingleFileDownloadable(archive, target_file='negz.jpg')
-    return posx, negx, posy, negy, posz, negz
-
-
-_example_cubemap_space_16k = _MultiFileDownloadableLoadable(
-    files_func=_cubemap_space_16k_files_func, load_func=_load_as_cubemap
+_example_cubemap_space_16k = _SingleFileDownloadableLoadable(
+    'cubemap_space/16k.zip', target_file='', read_func=_load_as_cubemap
 )
 
 
