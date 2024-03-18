@@ -1261,9 +1261,9 @@ def download_sparse_points(load=True):  # pragma: no cover
     return _download_example(_example_sparse_points, load=load)
 
 
-def _sparse_points_reader(text_file):
+def _sparse_points_reader(saved_file):
     points_reader = _vtk.vtkDelimitedTextReader()
-    points_reader.SetFileName(text_file)
+    points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
     points_reader.SetFieldDelimiterCharacters('\t')
     points_reader.SetHaveHeaders(True)
@@ -3314,11 +3314,9 @@ def download_dolfin(load=True):  # pragma: no cover
     return _download_example(_example_dolphin, load=load)
 
 
-def _dolphin_read_func(filename):
-    return read(filename, file_format='dolfin-xml')
-
-
-_example_dolphin = _SingleFileDownloadableLoadable('dolfin_fine.xml', read_func=_dolphin_read_func)
+_example_dolphin = _SingleFileDownloadableLoadable(
+    'dolfin_fine.xml', read_func=functools.partial(read, file_format='dolfin-xml')
+)
 
 
 def download_damavand_volcano(load=True):  # pragma: no cover

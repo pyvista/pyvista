@@ -28,22 +28,19 @@ _FilenameType = TypeVar('_FilenameType', str, Tuple[str, ...], covariant=True)
 class _Filename(Protocol[_FilenameType]):
     @property
     @abstractmethod
-    def filename(self) -> _FilenameType:
-        raise NotImplementedError
+    def filename(self) -> _FilenameType: ...
 
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilenameType]):
     @abstractmethod
-    def download(self) -> _FilenameType:
-        raise NotImplementedError
+    def download(self) -> _FilenameType: ...
 
 
 @runtime_checkable
 class _Loadable(Protocol):
     @abstractmethod
-    def load(self) -> Any:
-        raise NotImplementedError
+    def load(self) -> Any: ...
 
 
 class _MultiFilename(_Filename[Tuple[str, ...]]): ...
