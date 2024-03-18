@@ -3,7 +3,7 @@ import inspect
 import os
 from pathlib import PureWindowsPath
 from types import FunctionType
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pytest
 
@@ -28,7 +28,7 @@ def _generate_example_loader_test_cases() -> list[ExampleTestCaseData]:
 
     test_cases_dict: Dict = {}
 
-    def add_to_dict(func_name: str, func: Callable[[], ...]) -> List[ExampleTestCaseData]:
+    def add_to_dict(func_name: str, func: Callable[[], Any]) -> List[ExampleTestCaseData]:
         # Function for stuffing example functions into a dict.
         # We use a dict to allow for any entry to be made based on example name alone.
         # This way, we can defer checking for any mismatch between the download functions
