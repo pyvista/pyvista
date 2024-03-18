@@ -3215,10 +3215,10 @@ def download_pine_roots(load=True):  # pragma: no cover
     See :ref:`connectivity_example` for an example using this dataset.
 
     """
-    return _download_example(_example_pine_root, load=load)
+    return _download_example(_example_pine_roots, load=load)
 
 
-_example_pine_root = _SingleFileDownloadableLoadable('pine_root.tri')
+_example_pine_roots = _SingleFileDownloadableLoadable('pine_root.tri')
 
 
 def download_crater_topo(load=True):  # pragma: no cover
@@ -3310,10 +3310,10 @@ def download_dolfin(load=True):  # pragma: no cover
     >>> dataset.plot(cpos="xy", show_edges=True)
 
     """
-    return _download_example(_example_dolphin, load=load)
+    return _download_example(_example_dolfin, load=load)
 
 
-_example_dolphin = _SingleFileDownloadableLoadable(
+_example_dolfin = _SingleFileDownloadableLoadable(
     'dolfin_fine.xml', read_func=functools.partial(read, file_format='dolfin-xml')
 )
 
@@ -3487,10 +3487,10 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
     See :ref:`depth_peeling_example` for an example using this dataset.
 
     """
-    return _download_example(_example_aroom_surface_mesh, load=load)
+    return _download_example(_example_room_surface_mesh, load=load)
 
 
-_example_aroom_surface_mesh = _SingleFileDownloadableLoadable('room_surface_mesh.obj')
+_example_room_surface_mesh = _SingleFileDownloadableLoadable('room_surface_mesh.obj')
 
 
 def download_beach(load=True):  # pragma: no cover
@@ -4866,10 +4866,10 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
     >>> dataset.plot(smooth_shading=True)
 
     """
-    return _download_example(ex_can_crushed_hdf, load=load)
+    return _download_example(_example_can_crushed_hdf, load=load)
 
 
-ex_can_crushed_hdf = _SingleFileDownloadableLoadable('hdf/can-vtu.hdf')
+_example_can_crushed_hdf = _SingleFileDownloadableLoadable('hdf/can-vtu.hdf')
 
 
 def download_can_crushed_vtu(load=True):  # pragma: no cover
@@ -4901,10 +4901,10 @@ def download_can_crushed_vtu(load=True):  # pragma: no cover
     >>> dataset.plot(smooth_shading=True)
 
     """
-    return _download_example(ex_can_crushed_vtu, load=load)
+    return _download_example(_example_can_crushed_vtu, load=load)
 
 
-ex_can_crushed_vtu = _SingleFileDownloadableLoadable('can.vtu')
+_example_can_crushed_vtu = _SingleFileDownloadableLoadable('can.vtu')
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -5707,10 +5707,10 @@ def download_ivan_angel(load=True):  # pragma: no cover
       N Arrays:   0
 
     """
-    return _download_example(_example_ivan_angle, load=load)
+    return _download_example(_example_ivan_angel, load=load)
 
 
-_example_ivan_angle = _SingleFileDownloadableLoadable(
+_example_ivan_angel = _SingleFileDownloadableLoadable(
     'ivan-nikolov/Angel.zip', target_file='Angel.vtp'
 )
 

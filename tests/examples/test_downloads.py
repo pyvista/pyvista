@@ -1,11 +1,110 @@
+from dataclasses import dataclass
+import inspect
 import os
 from pathlib import PureWindowsPath
+from types import FunctionType
+from typing import Callable, Dict, List, Tuple, Union
 
 import pytest
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
+from pyvista.examples._example_loader import (
+    _MultiFileDownloadableLoadable,
+    _SingleFileDownloadableLoadable,
+)
+
+
+@dataclass
+class ExampleTestCaseData:
+    name: str
+    download_func: Tuple[str, FunctionType]
+    load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
+
+
+def _generate_example_loader_test_cases() -> list[ExampleTestCaseData]:
+    """Generate a list of test cases with all download functions and file loaders"""
+
+    test_cases_dict: Dict = {}
+
+    def add_to_dict(func_name: str, func: Callable[[], ...]) -> List[ExampleTestCaseData]:
+        # Function for stuffing example functions into a dict.
+        # We use a dict to allow for any entry to be made based on example name alone.
+        # This way, we can defer checking for any mismatch between the download functions
+        # and file loaders to test time.
+        nonlocal test_cases_dict
+        if func_name.startswith('_example_'):
+            case_name = func_name.split('_example_')[1]
+            key = 'load_func'
+        elif func_name.startswith('download_'):
+            case_name = func_name.split('download_')[1]
+            key = 'download_func'
+        else:
+            raise RuntimeError(f'Invalid case specified: {(func_name, func)}')
+        test_cases_dict.setdefault(case_name, {})
+        test_cases_dict[case_name][key] = (func_name, func)
+
+    module_members = dict(inspect.getmembers(pv.examples.downloads))
+
+    # Collect all `download_<name>` functions
+    download_example_functions = {
+        name: item
+        for name, item in module_members.items()
+        if name.startswith('download_') and isinstance(item, FunctionType)
+    }
+    del download_example_functions['download_file']
+    [add_to_dict(name, func) for name, func in download_example_functions.items()]
+
+    # Collect all `_example_<name>` file loaders
+    example_file_loaders = {
+        name: item
+        for name, item in module_members.items()
+        if name.startswith('_example_')
+        and isinstance(item, (_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable))
+    }
+    [add_to_dict(name, func) for name, func in example_file_loaders.items()]
+
+    # Flatten dict
+    test_cases_list: List[ExampleTestCaseData] = []
+    for name, content in sorted(test_cases_dict.items()):
+        download_func = content.setdefault('download_func', None)
+        load_func = content.setdefault('load_func', None)
+        test_case = ExampleTestCaseData(name=name, download_func=download_func, load_func=load_func)
+        test_cases_list.append(test_case)
+
+    return test_cases_list
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'test_case' in metafunc.fixturenames:
+        # Generate a separate test case for each downloadable example
+        test_cases = _generate_example_loader_test_cases()
+        ids = [case.name for case in test_cases]
+        metafunc.parametrize('test_case', test_cases, ids=ids)
+
+
+def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
+    if test_case.download_func is None:
+        return (
+            f"A file loader:\n\t\'{test_case.load_func[0]}\'\n\t{test_case.load_func[1]}\n"
+            f"was found but is missing a corresponding download function.\n\n"
+            f"Expected to find a function named:\n\t\'download_{test_case.name}\'\nGot: {test_case.download_func}"
+        )
+    elif test_case.load_func is None:
+        return (
+            f"A download function:\n\t\'{test_case.download_func[0]}\'\n\t{test_case.download_func[1]}\n"
+            f"was found but is missing a corresponding file loader.\n\n"
+            f"Expected to find a loader named:\n\t\'_example_{test_case.name}\'\nGot: {test_case.load_func}"
+        )
+    else:
+        return None
+
+
+def test_example_loader_name_matches_download_name(test_case: ExampleTestCaseData):
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+        pytest.fail(msg)
 
 
 def test_delete_downloads(tmpdir):
