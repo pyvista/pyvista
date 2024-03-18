@@ -118,6 +118,7 @@ def test_download_blood_vessels():
 
     data = examples.download_blood_vessels()
     assert isinstance(data, pv.UnstructuredGrid)
+    assert data.active_vectors_name == 'velocity'
 
 
 def test_download_bunny_coarse():
@@ -142,7 +143,10 @@ def test_download_iron_protein():
 
 def test_download_tetra_dc_mesh():
     data = examples.download_tetra_dc_mesh()
-    assert data.n_blocks
+    assert data.n_blocks == 2
+    assert data.keys() == ['forward', 'inverse']
+    assert data['forward'].active_scalars_name == 'Resistivity(log10)-fwd'
+    assert data['inverse'].active_scalars_name == 'Resistivity(log10)'
 
 
 def test_download_tetrahedron():
@@ -371,7 +375,10 @@ def test_download_motor():
 
 def test_download_tri_quadratic_hexahedron():
     data = examples.download_tri_quadratic_hexahedron()
+    path = examples.download_tri_quadratic_hexahedron(load=False)
     assert data.n_cells
+    assert data.n_arrays == 0
+    assert pv.read(path).n_arrays != 0
 
 
 def test_download_human():
@@ -731,6 +738,7 @@ def test_download_embryo():
 
     dataset = examples.download_embryo()
     assert isinstance(dataset, pv.ImageData)
+    assert not np.any(dataset['SLCImage'] == 255)
 
 
 def test_download_antarctica_velocity():
