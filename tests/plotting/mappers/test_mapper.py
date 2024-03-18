@@ -90,7 +90,7 @@ def test_copy(dataset_mapper, sphere):
     assert map_cp.scalar_range != dataset_mapper.scalar_range
 
 
-@pytest.mark.parametrize('resolve', ["off", "polygon_offset", "shift_zbuffer"])
+@pytest.mark.parametrize('resolve', ["off", "polygon_offset", "shift_zbuffer", "default"])
 def test_resolve(dataset_mapper, resolve):
     dataset_mapper.resolve = resolve
     assert dataset_mapper.resolve == resolve
