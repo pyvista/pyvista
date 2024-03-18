@@ -757,7 +757,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         If not off, there are two methods to choose from.
         `polygon_offset` uses graphics systems calls to shift polygons,
         lines and points from each other.
-        `shift_z_buffer` is a legacy method that used to remap the z-buffer
+        `shift_zbuffer` is a legacy method that used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
         You should only use the polygon_offset method (or none) at this point.
@@ -766,7 +766,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         -------
         str
             Global flag to avoid z-buffer resolution.
-            Must be either `off`, `polygon_offset` or `shift_z_buffer`.
+            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
 
         Examples
         --------
@@ -792,7 +792,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         vtk_to_pv = {
             _vtk.VTK_RESOLVE_OFF: 'off',
             _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
-            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_z_buffer',
+            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
         }
         return vtk_to_pv[self.GetResolveCoincidentTopology()]
 
@@ -802,10 +802,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.SetResolveCoincidentTopologyToOff()
         elif resolve == 'polygon_offset':
             self.SetResolveCoincidentTopologyToPolygonOffset()
-        elif resolve == 'shift_z_buffer':
+        elif resolve == 'shift_zbuffer':
             self.SetResolveCoincidentTopologyToShiftZBuffer()
         else:
-            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_z_buffer"')
+            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
 
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
