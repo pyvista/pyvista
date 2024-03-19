@@ -232,7 +232,7 @@ def examples_local_cache_path(tmp_path):
     ]
 
     # create zip file with examples
-    shutil.make_archive('archive', 'zip', root_dir=tmp_path, base_dir=tmp_path)
+    shutil.make_archive('archive', 'zip')
     shutil.move('archive.zip', tmp_path)
     downloadable_basenames.append('archive.zip')
 
