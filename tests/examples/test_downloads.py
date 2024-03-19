@@ -351,21 +351,26 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     assert len(dataset) == 2
 
 
-def test_file_loader_file_size():
+def test_file_loader_file_props():
     # test single file
     example = downloads._example_cow
     example.download()
     assert os.path.isfile(example.filename)
     assert example.total_size == '59.0 KiB'
+    assert example.extensions == '.vtp'
 
     # test multiple files
     example = downloads._example_head
     example.download()
     assert all(os.path.isfile(file) for file in example.filename)
     assert example.total_size == '122.3 KiB'
+    assert example.extensions == ('.mhd', '.raw')
+    assert pv.get_ext(example.filename[0]) == '.mhd'
+    assert pv.get_ext(example.filename[1]) == '.raw'
 
     # test directory
     example = downloads._example_cubemap_park
     example.download()
     assert os.path.isdir(example.filename)
-    assert example.total_size == '592.3 KiB'
+    assert example.total_size == '591.9 KiB'
+    assert example.extensions == '.jpg'

@@ -19,6 +19,7 @@ from typing import (
 
 import pyvista
 from pyvista.core._typing_core import NumpyArray
+from pyvista.core.utilities.fileio import get_ext
 
 # The following classes define an API for working with either
 # a single filename or multiple filenames
@@ -33,6 +34,35 @@ class _FileProps(Protocol[_FilePropStrType]):
     def filename(self) -> _FilePropStrType:
         """Return the filename(s) of all files."""
         ...
+
+    @property
+    def extensions(self) -> Union[str, Tuple[str, ...]]:
+        """Return the file extension(s) of all files."""
+        ext_set = set()
+        fname = [self.filename] if isinstance(self.filename, str) else self.filename
+
+        # Add all file extensions to the set
+        for file in fname:
+            ext = _get_file_or_folder_ext(file)
+            if isinstance(ext, str):
+                ext_set.add(ext)
+            else:
+                ext_set.update(ext)
+
+        # Format output
+        ext_output = list(ext_set)
+        if len(ext_output) == 1:
+            return ext_output[0]
+        elif (
+            len(ext_output) == len(fname)
+            and isinstance(self.filename, str)
+            and not os.path.isdir(self.filename)
+        ):
+            # If num extensions matches num files, make
+            # sure the extension order matches the fname order
+            return tuple([get_ext(name) for name in self.filename])
+        else:
+            return tuple(sorted(ext_output))
 
     @property
     @abstractmethod
@@ -405,10 +435,8 @@ def _get_file_or_folder_size(filepath) -> int:
     if os.path.isfile(filepath):
         return os.path.getsize(filepath)
     assert os.path.isdir(filepath), 'Expected a file or folder path.'
-    all_filepaths = [
-        [os.path.join(path, name) for name in files] for path, _, files in os.walk(filepath)
-    ][0]
-    return sum(os.path.getsize(path) for path in all_filepaths)
+    all_filepaths = _get_all_nested_filepaths(filepath)
+    return sum(os.path.getsize(file) for file in all_filepaths)
 
 
 def _format_file_size(size):
@@ -417,3 +445,26 @@ def _format_file_size(size):
             return f"{size:3.1f} {unit}"
         size /= 1024.0
     return f"{size:.1f} GiB"
+
+
+def _get_file_or_folder_ext(filepath):
+    """Wrap the `get_ext` function to handle special cases for directories."""
+    if os.path.isfile(filepath):
+        return get_ext(filepath)
+    assert os.path.isdir(filepath), 'Expected a file or folder path.'
+    all_filepaths = _get_all_nested_filepaths(filepath)
+    ext = [get_ext(file) for file in all_filepaths]
+    assert len(ext) != 0, f'No files with extensions were found in"\n\t{filepath}'
+    return ext
+
+
+def _get_all_nested_filepaths(filepath, exclude_readme=True):
+    """Walk through directory and get all file paths.
+
+    Optionally any readme files (if any)
+    """
+    condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
+    return [
+        [os.path.join(path, name) for name in files if condition(name)]
+        for path, _, files in os.walk(filepath)
+    ][0]
