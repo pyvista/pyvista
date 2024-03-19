@@ -61,7 +61,7 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
 
     Specify the read function and/or load functions for reading and processing the
     dataset. The read function is called on the filename first, then, if a load
-    unction is specified, the load function is called on the output from the read
+    function is specified, the load function is called on the output from the read
     function.
 
     Parameters
@@ -321,9 +321,12 @@ def _load_as_cubemap(
             else [file.filename for file in files]
         )
     )
-    if isinstance(files, str) and os.path.isdir(files):
-        return pyvista.cubemap(filename)
-    return pyvista.cubemap_from_filenames(filename)
+
+    return (
+        pyvista.cubemap(filename)
+        if isinstance(files, str) and os.path.isdir(files)
+        else pyvista.cubemap_from_filenames(filename)
+    )
 
 
 def _load_all(files: Sequence[_SingleFilename]):
