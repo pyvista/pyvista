@@ -21,10 +21,11 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          author: pyvista-bot <53544751+pyvista-bot@users.noreply.github.com>
           commit-message: "[create-pull-request] update local intersphinx"
           labels: |
             maintenance
           body: |
             Automated changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
-            These changes update all the intersphinx mappings. To run CI close and reopen PR.
+            These changes update all the intersphinx mappings.
           title: "Automated PR: Update Local Intersphinx"
