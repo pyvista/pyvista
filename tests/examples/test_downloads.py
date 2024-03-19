@@ -209,10 +209,7 @@ def examples_local_cache_path(tmp_path):
     """Populate local cache with a bunch of examples for download."""
 
     # setup
-    current_dir = os.curdir
-
     EXAMPLES_DIR = pyvista.examples.dir_path
-
     downloadable_basenames = [
         'airplane.ply',
         'hexbeam.vtk',
@@ -231,9 +228,8 @@ def examples_local_cache_path(tmp_path):
         for base in downloadable_basenames
     ]
 
-    # create zip file with examples
-    shutil.make_archive('archive', 'zip')
-    shutil.move('archive.zip', tmp_path)
+    # make zip file
+    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip')
     downloadable_basenames.append('archive.zip')
 
     for base in downloadable_basenames:
@@ -256,7 +252,6 @@ def examples_local_cache_path(tmp_path):
 
     # make sure files are cleared afterward
     [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
-    os.chdir(current_dir)
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
