@@ -20,6 +20,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           commit-message: "[create-pull-request] update local intersphinx"
           labels: |
             maintenance
