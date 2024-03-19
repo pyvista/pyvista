@@ -22,19 +22,41 @@ from pyvista.core._typing_core import NumpyArray
 
 # The following classes define an API for working with either
 # a single filename or multiple filenames
-_FilenameType = TypeVar('_FilenameType', str, Tuple[str, ...], covariant=True)
+
+_T = TypeVar('_T')
+_FilePropStrType = TypeVar('_FilePropStrType', str, Tuple[str, ...], covariant=True)
 
 
-class _Filename(Protocol[_FilenameType]):
+class _FileProps(Protocol[_FilePropStrType]):
     @property
     @abstractmethod
-    def filename(self) -> _FilenameType: ...
+    def filename(self) -> _FilePropStrType:
+        """Return the filename(s) of all files."""
+        ...
+
+    @property
+    @abstractmethod
+    def _filesize_bytes(self):
+        """Return the file size(s) of all files in bytes."""
+        ...
+
+    @property
+    @abstractmethod
+    def _filesize_format(self) -> _FilePropStrType:
+        """Return the formatted size of all file(s)."""
+        ...
+
+    @property
+    @abstractmethod
+    def total_size(self) -> str:
+        """Return the total size of all files."""
+        ...
 
 
 @runtime_checkable
-class _Downloadable(Protocol[_FilenameType]):
+class _Downloadable(Protocol[_FilePropStrType]):
     @abstractmethod
-    def download(self) -> _FilenameType: ...
+    def download(self) -> _FilePropStrType: ...
 
 
 @runtime_checkable
@@ -43,7 +65,7 @@ class _Loadable(Protocol):
     def load(self) -> Any: ...
 
 
-class _SingleFilename(_Filename[str]):
+class _SingleFilename(_FileProps[str]):
     def __init__(self, filename):
         from pyvista.examples.downloads import USER_DATA_PATH
 
@@ -52,8 +74,20 @@ class _SingleFilename(_Filename[str]):
         )
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return self._filename
+
+    @property
+    def _filesize_bytes(self) -> int:
+        return _get_file_or_folder_size(self.filename)
+
+    @property
+    def _filesize_format(self) -> str:
+        return _format_file_size(self._filesize_bytes)
+
+    @property
+    def total_size(self) -> str:
+        return self._filesize_format
 
 
 class _SingleFileLoadable(_SingleFilename, _Loadable):
@@ -120,7 +154,12 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
     ):
         _SingleFilename.__init__(self, filename)
 
-        from pyvista.examples.downloads import _download_archive_file_or_folder, download_file
+        from pyvista.examples.downloads import (
+            USER_DATA_PATH,
+            _download_archive_file_or_folder,
+            download_file,
+            file_from_files,
+        )
 
         self._download_source = filename
         self._download_func = download_file
@@ -129,7 +168,21 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
             self._download_func = functools.partial(
                 _download_archive_file_or_folder, target_file=target_file
             )
-            self._filename = target_file
+            # The filename currently points to the archive, not the target file itself
+            # Try to resolve the full path to the target file (without downloading) if
+            # the archive already exists in the cache
+            fullpath = None
+            if os.path.isfile(self.filename):
+                try:
+                    # Get file path
+                    fullpath = file_from_files(target_file, self.filename)
+                except (FileNotFoundError, RuntimeError):
+                    # Get folder path
+                    fullpath = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
+                    fullpath = fullpath if os.path.isdir(fullpath) else None
+            # set the filename as the relative path of the target file if
+            # the fullpath could not be resolved (i.e. not yet downloaded)
+            self._filename = target_file if fullpath is None else fullpath
 
     def download(self) -> str:
         filename = self._download_func(self._download_source)
@@ -169,7 +222,7 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         return filename
 
 
-class _MultiFilename(_Filename[Tuple[str, ...]]): ...
+class _MultiFilename(_FileProps[Tuple[str, ...]]): ...
 
 
 class _MultiFileLoadable(_MultiFilename, _Loadable):
@@ -221,6 +274,18 @@ class _MultiFileLoadable(_MultiFilename, _Loadable):
         return tuple(
             [file.filename for file in self._files if isinstance(file, _SingleFileLoadable)]
         )
+
+    @property
+    def _filesize_bytes(self) -> Tuple[int, ...]:
+        return tuple([file._filesize_bytes for file in self._files])
+
+    @property
+    def _filesize_format(self) -> Tuple[str, ...]:
+        return tuple([_format_file_size(size) for size in self._filesize_bytes])
+
+    @property
+    def total_size(self) -> str:
+        return _format_file_size(sum(self._filesize_bytes))
 
     def load(self):
         return self._load_func(self._files)
@@ -334,3 +399,21 @@ def _load_all(files: Sequence[_SingleFilename]):
     loaded = [file.load() for file in files if isinstance(file, _Loadable)]
     assert len(loaded) > 0
     return loaded[0] if len(loaded) == 1 else tuple(loaded)
+
+
+def _get_file_or_folder_size(filepath) -> int:
+    if os.path.isfile(filepath):
+        return os.path.getsize(filepath)
+    assert os.path.isdir(filepath), 'Expected a file or folder path.'
+    all_filepaths = [
+        [os.path.join(path, name) for name in files] for path, _, files in os.walk(filepath)
+    ][0]
+    return sum(os.path.getsize(path) for path in all_filepaths)
+
+
+def _format_file_size(size):
+    for unit in ("B", "KiB", "MiB"):
+        if abs(size) < 1024.0:
+            return f"{size:3.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} GiB"

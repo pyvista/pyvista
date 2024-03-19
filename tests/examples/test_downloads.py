@@ -349,3 +349,23 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     assert isinstance(dataset[0], pv.PolyData)
     assert isinstance(dataset[1], pv.ImageData)
     assert len(dataset) == 2
+
+
+def test_file_loader_file_size():
+    # test single file
+    example = downloads._example_cow
+    example.download()
+    assert os.path.isfile(example.filename)
+    assert example.total_size == '59.0 KiB'
+
+    # test multiple files
+    example = downloads._example_head
+    example.download()
+    assert all(os.path.isfile(file) for file in example.filename)
+    assert example.total_size == '122.3 KiB'
+
+    # test directory
+    example = downloads._example_cubemap_park
+    example.download()
+    assert os.path.isdir(example.filename)
+    assert example.total_size == '592.3 KiB'
