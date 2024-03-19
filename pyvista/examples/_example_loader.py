@@ -36,33 +36,9 @@ class _FileProps(Protocol[_FilePropStrType]):
         ...
 
     @property
-    def extensions(self) -> Union[str, Tuple[str, ...]]:
+    def extension(self) -> Union[str, Tuple[str, ...]]:
         """Return the file extension(s) of all files."""
-        ext_set = set()
-        fname = [self.filename] if isinstance(self.filename, str) else self.filename
-
-        # Add all file extensions to the set
-        for file in fname:
-            ext = _get_file_or_folder_ext(file)
-            if isinstance(ext, str):
-                ext_set.add(ext)
-            else:
-                ext_set.update(ext)
-
-        # Format output
-        ext_output = list(ext_set)
-        if len(ext_output) == 1:
-            return ext_output[0]
-        elif (
-            len(ext_output) == len(fname)
-            and isinstance(self.filename, str)
-            and not os.path.isdir(self.filename)
-        ):
-            # If num extensions matches num files, make
-            # sure the extension order matches the fname order
-            return tuple([get_ext(name) for name in self.filename])
-        else:
-            return tuple(sorted(ext_output))
+        return _get_extension_from_filename(self.filename)
 
     @property
     @abstractmethod
@@ -80,6 +56,12 @@ class _FileProps(Protocol[_FilePropStrType]):
     @abstractmethod
     def total_size(self) -> str:
         """Return the total size of all files."""
+        ...
+
+    @property
+    @abstractmethod
+    def reader(self):
+        """Return the base file reader(s) used to read the files."""
         ...
 
 
@@ -118,6 +100,10 @@ class _SingleFilename(_FileProps[str]):
     @property
     def total_size(self) -> str:
         return self._filesize_format
+
+    @property
+    def reader(self) -> Optional[pyvista.BaseReader]:
+        return None
 
 
 class _SingleFileLoadable(_SingleFilename, _Loadable):
@@ -160,6 +146,14 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
         _SingleFilename.__init__(self, filename)
         self._read_func = pyvista.read if read_func is None else read_func
         self._load_func = load_func
+
+    @property
+    def reader(self) -> Optional[pyvista.BaseReader]:
+        try:
+            return pyvista.get_reader(self.filename)
+        except ValueError:
+            # Cannot be read directly (requires custom reader)
+            return None
 
     def load(self):
         if self._load_func is None:
@@ -317,6 +311,16 @@ class _MultiFileLoadable(_MultiFilename, _Loadable):
     def total_size(self) -> str:
         return _format_file_size(sum(self._filesize_bytes))
 
+    @property
+    def reader(
+        self,
+    ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
+        # Get reader for loadable files only
+        readers = tuple(
+            {file.reader for file in self._files if isinstance(file, _SingleFileLoadable)}
+        )
+        return readers[0] if len(readers) == 1 else tuple(readers)
+
     def load(self):
         return self._load_func(self._files)
 
@@ -461,10 +465,38 @@ def _get_file_or_folder_ext(filepath):
 def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """Walk through directory and get all file paths.
 
-    Optionally any readme files (if any)
+    Optionally exclude any readme files (if any).
     """
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
         [os.path.join(path, name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
     ][0]
+
+
+def _get_extension_from_filename(filename: Union[str, Sequence[str]]):
+    ext_set = set()
+    fname_sequence = [filename] if isinstance(filename, str) else filename
+
+    # Add all file extensions to the set
+    for file in fname_sequence:
+        ext = _get_file_or_folder_ext(file)
+        if isinstance(ext, str):
+            ext_set.add(ext)
+        else:
+            ext_set.update(ext)
+
+    # Format output
+    ext_output = list(ext_set)
+    if len(ext_output) == 1:
+        return ext_output[0]
+    elif (
+        len(ext_output) == len(fname_sequence)
+        and isinstance(filename, str)
+        and not os.path.isdir(filename)
+    ):
+        # If num extensions matches num files, make
+        # sure the extension order matches the fname order
+        return tuple([get_ext(name) for name in filename])
+    else:
+        return tuple(sorted(ext_output))

@@ -357,20 +357,31 @@ def test_file_loader_file_props():
     example.download()
     assert os.path.isfile(example.filename)
     assert example.total_size == '59.0 KiB'
-    assert example.extensions == '.vtp'
+    assert example.extension == '.vtp'
+    assert type(example.reader) is pv.XMLPolyDataReader
 
-    # test multiple files
+    # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
     assert all(os.path.isfile(file) for file in example.filename)
     assert example.total_size == '122.3 KiB'
-    assert example.extensions == ('.mhd', '.raw')
+    assert example.extension == ('.mhd', '.raw')
     assert pv.get_ext(example.filename[0]) == '.mhd'
     assert pv.get_ext(example.filename[1]) == '.raw'
+    assert type(example.reader) is pv.MetaImageReader
 
-    # test directory
+    # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
     assert os.path.isdir(example.filename)
     assert example.total_size == '591.9 KiB'
-    assert example.extensions == '.jpg'
+    assert example.extension == '.jpg'
+    assert example.reader is None
+
+    # test directory (dicom stack)
+    example = downloads._example_dicom_stack
+    example.download()
+    assert os.path.isdir(example.filename)
+    assert example.total_size == '1.5 MiB'
+    assert example.extension == '.dcm'
+    assert type(example.reader) is pv.DICOMReader
