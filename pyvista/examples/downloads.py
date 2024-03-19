@@ -192,7 +192,7 @@ def _download_file(filename):
     )
 
 
-def _download_archive(filename, target_file=None):
+def _download_archive(filename, target_file=None):  # pragma: no cover
     """Download an archive.
 
     Return the path to a single file when set.
