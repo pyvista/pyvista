@@ -43,9 +43,6 @@ class _Loadable(Protocol):
     def load(self) -> Any: ...
 
 
-class _MultiFilename(_Filename[Tuple[str, ...]]): ...
-
-
 class _SingleFilename(_Filename[str]):
     def __init__(self, filename):
         from pyvista.examples.downloads import USER_DATA_PATH
@@ -60,7 +57,33 @@ class _SingleFilename(_Filename[str]):
 
 
 class _SingleFileLoadable(_SingleFilename, _Loadable):
-    """Wrap a single file for loading."""
+    """Wrap a single file for loading.
+
+    Specify the read function and/or load functions for reading and processing the
+    dataset. The read function is called on the filename first, then, if a load
+    unction is specified, the load function is called on the output from the read
+    function.
+
+    Parameters
+    ----------
+    filename
+        Path of the file to be loaded.
+
+    read_func
+        Specify the function used to read the file. Defaults to :func:`pyvista.read`.
+        This can be used for customizing the reader's properties, or using another
+        read function (e.g. :func:`pyvista.read_texture` for textures). The function
+        must have the filename as the first argument and should return a dataset.
+        If default arguments are required by your desired read function, consider
+        using :class:`functools.partial` to pre-set the arguments before passing it
+        as an argument to the loader.
+
+    load_func
+        Specify the function used to load the file. Defaults to `None`. This is typically
+        used to specify any processing of the dataset after reading. The load function
+        typically will accept a dataset as an input and return a dataset.
+
+    """
 
     def __init__(
         self,
@@ -80,52 +103,15 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
         return self._load_func(self._read_func(self.filename))
 
 
-class _MultiFileLoadable(_MultiFilename, _Loadable):
-    """Wrap multiple files for loading.
+class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
+    """Wrap a single file which must be downloaded.
 
-    Some use cases for loading multi-file examples include:
-
-    1. Multiple input files, and each file is read/loaded independently
-       E.g.: loading two separate datasets for the example
-       See ``download_bolt_nut`` for a reference implementation.
-
-    2. Multiple input files, but only one is read or loaded directly
-       E.g.: loading a single dataset from a file format where data and metadata are
-       stored in separate files, such as ``.raw`` and ``.mhd``.
-       See ``download_frog`` for a reference implementation.
-
-    3. Multiple input files, all of which make up part of the loaded dataset
-       E.g.: loading six separate image files for cubemaps
-       See ``download_sky_box_cube_map`` for a reference implementation.
+    If downloading a file from an archive, set the `.zip` as the filename
+    and set ``target_file`` as the file to extract. Set ``target_file=''``
+    (empty string) to download the entire archive and return the directory
+    path to the entire extracted archive.
 
     """
-
-    def __init__(
-        self,
-        files_func: Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]],
-        load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
-    ):
-        self._files = files_func()
-        if load_func is None:
-            load_func = _load_all
-        self._load_func = load_func
-
-    @property
-    def filename(self) -> Tuple[str, ...]:
-        return tuple([file.filename for file in self._files])
-
-    @property
-    def filename_loadable(self) -> Tuple[str, ...]:
-        return tuple(
-            [file.filename for file in self._files if isinstance(file, _SingleFileLoadable)]
-        )
-
-    def load(self):
-        return self._load_func(self._files)
-
-
-class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
-    """Wrap a single file which must downloaded."""
 
     def __init__(
         self,
@@ -153,7 +139,7 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
 
 
 class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadable):
-    """Wrap a single file which must downloaded and which can be loaded.
+    """Wrap a single file which must first be downloaded and which can also be loaded.
 
     .. warning::
 
@@ -181,6 +167,63 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         # isn't known until after downloading
         self._filename = filename
         return filename
+
+
+class _MultiFilename(_Filename[Tuple[str, ...]]): ...
+
+
+class _MultiFileLoadable(_MultiFilename, _Loadable):
+    """Wrap multiple files for loading.
+
+    Some use cases for loading multi-file examples include:
+
+    1. Multiple input files, and each file is read/loaded independently
+       E.g.: loading two separate datasets for the example
+       See ``download_bolt_nut`` for a reference implementation.
+
+    2. Multiple input files, but only one is read or loaded directly
+       E.g.: loading a single dataset from a file format where data and metadata are
+       stored in separate files, such as ``.raw`` and ``.mhd``.
+       See ``download_frog`` for a reference implementation.
+
+    3. Multiple input files, all of which make up part of the loaded dataset
+       E.g.: loading six separate image files for cubemaps
+       See ``download_sky_box_cube_map`` for a reference implementation.
+
+    Parameters
+    ----------
+    files_func
+        Specify the function which will return a sequence of :class:`_SingleFilename`
+        objects which are used by an example.
+
+    load_func
+        Specify the function used to load the files. By default, :meth:`load()` is called
+        on all the files (if loadable) and a tuple containing the loaded datasets is returned.
+
+    """
+
+    def __init__(
+        self,
+        files_func: Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]],
+        load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
+    ):
+        self._files = files_func()
+        if load_func is None:
+            load_func = _load_all
+        self._load_func = load_func
+
+    @property
+    def filename(self) -> Tuple[str, ...]:
+        return tuple([file.filename for file in self._files])
+
+    @property
+    def filename_loadable(self) -> Tuple[str, ...]:
+        return tuple(
+            [file.filename for file in self._files if isinstance(file, _SingleFileLoadable)]
+        )
+
+    def load(self):
+        return self._load_func(self._files)
 
 
 class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str, ...]]):
@@ -240,7 +283,12 @@ def _download_example(
 def _load_as_multiblock(
     files: Sequence[_SingleFilename], names: Optional[Sequence[str]] = None
 ) -> pyvista.MultiBlock:
-    """Load multiple files as a MultiBlock."""
+    """Load multiple files as a MultiBlock.
+
+    This function can be used as a loading function for :class:`MultiFileLoadable`
+    If the use of the ``names`` parameter is needed, use :class:`functools.partial`
+    to partially specify the names parameter before passing it as loading function.
+    """
     block = pyvista.MultiBlock()
     names = (
         [os.path.splitext(os.path.basename(file.filename))[0] for file in files]

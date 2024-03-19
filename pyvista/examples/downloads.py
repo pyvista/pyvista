@@ -192,7 +192,7 @@ def _download_file(filename):
     )
 
 
-def _download_archive(filename, target_file=None):  # pragma: no cover
+def _download_archive(filename, target_file=None):
     """Download an archive.
 
     Return the path to a single file when set.
@@ -224,6 +224,10 @@ def _download_archive_file_or_folder(filename, target_file=None):
     This function is similar to _download_archive, but also allows
     setting `target_file` as a folder. The target folder path must be
     fully specified relative to the root path of the archive.
+
+    Set ``target_file=''`` (empty string) to download the entire
+    archive and return the directory path to the entire extracted
+    archive.
 
     """
     try:
