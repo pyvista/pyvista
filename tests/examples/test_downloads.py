@@ -309,7 +309,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, None])
-def test_multi_file_loader(examples_local_cache_path, load_func):
+def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     basename_loaded1 = 'airplane.ply'
     basename_loaded2 = 'channels.vti'
     basename_not_loaded = 'pyvista_logo.png'
