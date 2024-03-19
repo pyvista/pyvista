@@ -205,13 +205,13 @@ def test_local_file_cache(tmpdir):
 
 
 @pytest.fixture()
-def examples_local_cache_path(tmp_path):
-    """Create a local repository with a bunch of examples for download."""
+def examples_local_repository_tmp_dir(tmp_path):
+    """Create a local repository with a bunch of examples available for download."""
 
     # setup
     repository_path = os.path.join(tmp_path, 'repo')
     os.mkdir(repository_path)
-    EXAMPLES_DIR = pyvista.examples.dir_path
+
     downloadable_basenames = [
         'airplane.ply',
         'hexbeam.vtk',
@@ -224,23 +224,26 @@ def examples_local_cache_path(tmp_path):
         'pyvista_logo.png',
     ]
 
-    # copy datasets to local repository
+    # copy datasets from the pyvista repo to the local repository
     [
-        shutil.copyfile(os.path.join(EXAMPLES_DIR, base), os.path.join(repository_path, base))
+        shutil.copyfile(
+            os.path.join(pyvista.examples.dir_path, base), os.path.join(repository_path, base)
+        )
         for base in downloadable_basenames
     ]
 
-    # include a zipped copy of the datasets with the repository
+    # create a zipped copy of the datasets and include the zip with repository
     shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
     shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
     downloadable_basenames.append('archive.zip')
 
+    # initialize downloads fetcher
     for base in downloadable_basenames:
         downloads.FETCHER.registry[base] = None
     downloads.FETCHER.base_url = str(repository_path) + '/'
     downloads._FILE_CACHE = True
 
-    # make sure local "downloaded" files from the repository do not yet exist
+    # make sure any "downloaded" files (moved from repo -> cache) are cleared
     cached_filenames = [
         os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames
     ]
@@ -261,11 +264,9 @@ def examples_local_cache_path(tmp_path):
 @pytest.mark.parametrize(
     'FileLoader', [_SingleFileLoadable, _SingleFileDownloadable, _SingleFileDownloadableLoadable]
 )
-def test_single_file_loader(FileLoader, use_archive, examples_local_cache_path):
+def test_single_file_loader(FileLoader, use_archive, examples_local_repository_tmp_dir):
     basename = 'pyvista_logo.png'
-    if use_archive and (
-        FileLoader is _SingleFileDownloadable or FileLoader is _SingleFileDownloadableLoadable
-    ):
+    if use_archive and isinstance(FileLoader, _Downloadable):
         file_loader = FileLoader('archive.zip', target_file=basename)
         expected_path_is_absolute = False
     else:
