@@ -380,6 +380,16 @@ def test_multiple_lines():
         pv.MultipleLines(points[0, :])
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_multiple_lines_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        multiple_lines = pv.MultipleLines(point_dtype=point_dtype)
+        assert multiple_lines.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.MultipleLines(point_dtype=point_dtype)
+
+
 def test_tube():
     pointa = (0, 0, 0)
     pointb = (10, 1.0, 3)
