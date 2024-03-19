@@ -15,8 +15,8 @@ import time
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 

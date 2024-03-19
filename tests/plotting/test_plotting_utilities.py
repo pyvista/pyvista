@@ -1,7 +1,7 @@
 import os
 
-from PIL import Image, ImageSequence
 import numpy as np
+from PIL import Image, ImageSequence
 import pytest
 
 import pyvista as pv
