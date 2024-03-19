@@ -206,9 +206,11 @@ def test_local_file_cache(tmpdir):
 
 @pytest.fixture()
 def examples_local_cache_path(tmp_path):
-    """Populate local cache with a bunch of examples for download."""
+    """Create a local repository with a bunch of examples for download."""
 
     # setup
+    repository_path = os.path.join(tmp_path, 'repo')
+    os.mkdir(repository_path)
     EXAMPLES_DIR = pyvista.examples.dir_path
     downloadable_basenames = [
         'airplane.ply',
@@ -222,35 +224,36 @@ def examples_local_cache_path(tmp_path):
         'pyvista_logo.png',
     ]
 
-    # copy to tmp folder
+    # copy datasets to local repository
     [
-        shutil.copyfile(os.path.join(EXAMPLES_DIR, base), os.path.join(tmp_path, base))
+        shutil.copyfile(os.path.join(EXAMPLES_DIR, base), os.path.join(repository_path, base))
         for base in downloadable_basenames
     ]
 
-    # make zip file
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip')
+    # include a zipped copy of the datasets with the repository
+    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
+    shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
     downloadable_basenames.append('archive.zip')
 
     for base in downloadable_basenames:
         downloads.FETCHER.registry[base] = None
-    downloads.FETCHER.base_url = str(tmp_path) + '/'
+    downloads.FETCHER.base_url = str(repository_path) + '/'
     downloads._FILE_CACHE = True
 
-    # make sure files do not yet exist
+    # make sure local "downloaded" files from the repository do not yet exist
     cached_filenames = [
         os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames
     ]
     [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
 
-    yield tmp_path
+    yield repository_path
 
     # teardown
     downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
     downloads._FILE_CACHE = False
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
-    # make sure files are cleared afterward
+    # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
     [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
 
 
