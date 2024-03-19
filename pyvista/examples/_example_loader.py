@@ -46,7 +46,17 @@ class _Loadable(Protocol):
 class _MultiFilename(_Filename[Tuple[str, ...]]): ...
 
 
-class _SingleFilename(_Filename[str]): ...
+class _SingleFilename(_Filename[str]):
+    def __init__(self, filename):
+        from pyvista.examples.downloads import USER_DATA_PATH
+
+        self._filename = (
+            filename if os.path.isabs(filename) else os.path.join(USER_DATA_PATH, filename)
+        )
+
+    @property
+    def filename(self):
+        return self._filename
 
 
 class _SingleFileLoadable(_SingleFilename, _Loadable):
@@ -60,19 +70,9 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
         ] = None,
         load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
     ):
-        # TODO: Refactor filename stuff into parent class
-        from pyvista.examples.downloads import USER_DATA_PATH
-
-        self._filename = (
-            filename if os.path.isabs(filename) else os.path.join(USER_DATA_PATH, filename)
-        )
-        ######
+        _SingleFilename.__init__(self, filename)
         self._read_func = pyvista.read if read_func is None else read_func
         self._load_func = load_func
-
-    @property
-    def filename(self):
-        return self._filename
 
     def load(self):
         if self._load_func is None:
@@ -105,7 +105,6 @@ class _MultiFileLoadable(_MultiFilename, _Loadable):
         files_func: Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]],
         load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
     ):
-
         self._files = files_func()
         if load_func is None:
             load_func = _load_all
@@ -133,15 +132,8 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
         filename: str,
         target_file: Optional[str] = None,
     ):
-        # TODO: Refactor this into SingleFile class
-        from pyvista.examples.downloads import USER_DATA_PATH
+        _SingleFilename.__init__(self, filename)
 
-        self._filename = (
-            filename if os.path.isabs(filename) else os.path.join(USER_DATA_PATH, filename)
-        )
-        ######
-
-        # TODO: Refactor this into Downloadable class
         from pyvista.examples.downloads import _download_archive_file_or_folder, download_file
 
         self._download_source = filename
@@ -152,11 +144,6 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
                 _download_archive_file_or_folder, target_file=target_file
             )
             self._filename = target_file
-        ######
-
-    @property
-    def filename(self):
-        return self._filename
 
     def download(self) -> str:
         filename = self._download_func(self._download_source)
@@ -165,7 +152,7 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
         return filename
 
 
-class _SingleFileDownloadableLoadable(_SingleFileLoadable, _Downloadable[str]):
+class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadable):
     """Wrap a single file which must downloaded and which can be loaded.
 
     .. warning::
@@ -184,17 +171,8 @@ class _SingleFileDownloadableLoadable(_SingleFileLoadable, _Downloadable[str]):
         load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
         target_file: Optional[str] = None,
     ):
-        from pyvista.examples.downloads import _download_archive_file_or_folder, download_file
-
-        super().__init__(filename, read_func=read_func, load_func=load_func)
-        self._download_source = filename
-        self._download_func = download_file
-        if target_file is not None:
-            # download from archive
-            self._download_func = functools.partial(
-                _download_archive_file_or_folder, target_file=target_file
-            )
-            self._filename = target_file
+        _SingleFileLoadable.__init__(self, filename, read_func=read_func, load_func=load_func)
+        _SingleFileDownloadable.__init__(self, filename, target_file=target_file)
 
     def download(self) -> str:
         filename = self._download_func(self._download_source)
