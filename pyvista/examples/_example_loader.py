@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from functools import partial
+import functools
 import os
 from typing import (
     Any,
@@ -148,7 +148,9 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
         self._download_func = download_file
         if target_file is not None:
             # download from archive
-            self._download_func = partial(_download_archive_file_or_folder, target_file=target_file)
+            self._download_func = functools.partial(
+                _download_archive_file_or_folder, target_file=target_file
+            )
             self._filename = target_file
         ######
 
@@ -189,7 +191,9 @@ class _SingleFileDownloadableLoadable(_SingleFileLoadable, _Downloadable[str]):
         self._download_func = download_file
         if target_file is not None:
             # download from archive
-            self._download_func = partial(_download_archive_file_or_folder, target_file=target_file)
+            self._download_func = functools.partial(
+                _download_archive_file_or_folder, target_file=target_file
+            )
             self._filename = target_file
 
     def download(self) -> str:
@@ -260,7 +264,11 @@ def _load_as_multiblock(
 ) -> pyvista.MultiBlock:
     """Load multiple files as a MultiBlock."""
     block = pyvista.MultiBlock()
-    names = [os.path.basename(file.filename) for file in files] if names is None else names
+    names = (
+        [os.path.splitext(os.path.basename(file.filename))[0] for file in files]
+        if names is None
+        else names
+    )
     assert len(names) == len(files)
     [
         block.append(file.load(), name)

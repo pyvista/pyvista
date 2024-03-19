@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import inspect
 import os
 from pathlib import PureWindowsPath
+import shutil
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -9,10 +10,16 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+import pyvista.examples
 from pyvista.examples import downloads
 from pyvista.examples._example_loader import (
+    _Downloadable,
+    _load_as_multiblock,
+    _Loadable,
     _MultiFileDownloadableLoadable,
+    _SingleFileDownloadable,
     _SingleFileDownloadableLoadable,
+    _SingleFileLoadable,
 )
 
 
@@ -195,3 +202,151 @@ def test_local_file_cache(tmpdir):
         downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)
+
+
+@pytest.fixture()
+def examples_local_cache_path(tmp_path):
+    """Populate local cache with a bunch of examples for download."""
+
+    # setup
+    current_dir = os.curdir
+
+    EXAMPLES_DIR = pyvista.examples.dir_path
+
+    downloadable_basenames = [
+        'airplane.ply',
+        'hexbeam.vtk',
+        'sphere.ply',
+        'uniform.vtk',
+        'rectilinear.vtk',
+        'globe.vtk',
+        '2k_earth_daymap.jpg',
+        'channels.vti',
+        'pyvista_logo.png',
+    ]
+
+    # copy to tmp folder
+    [
+        shutil.copyfile(os.path.join(EXAMPLES_DIR, base), os.path.join(tmp_path, base))
+        for base in downloadable_basenames
+    ]
+
+    # create zip file with examples
+    shutil.make_archive('archive', 'zip', root_dir=tmp_path, base_dir=tmp_path)
+    shutil.move('archive.zip', tmp_path)
+    downloadable_basenames.append('archive.zip')
+
+    for base in downloadable_basenames:
+        downloads.FETCHER.registry[base] = None
+    downloads.FETCHER.base_url = str(tmp_path) + '/'
+    downloads._FILE_CACHE = True
+
+    # make sure files do not yet exist
+    cached_filenames = [
+        os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames
+    ]
+    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+
+    yield tmp_path
+
+    # teardown
+    downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    downloads._FILE_CACHE = False
+    [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
+
+    # make sure files are cleared afterward
+    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+    os.chdir(current_dir)
+
+
+@pytest.mark.parametrize('use_archive', [True, False])
+@pytest.mark.parametrize(
+    'FileLoader', [_SingleFileLoadable, _SingleFileDownloadable, _SingleFileDownloadableLoadable]
+)
+def test_single_file_loader(FileLoader, use_archive, examples_local_cache_path):
+    basename = 'pyvista_logo.png'
+    if use_archive and (
+        FileLoader is _SingleFileDownloadable or FileLoader is _SingleFileDownloadableLoadable
+    ):
+        file_loader = FileLoader('archive.zip', target_file=basename)
+        expected_path_is_absolute = False
+    else:
+        file_loader = FileLoader(basename)
+        expected_path_is_absolute = True
+
+    # test initial filename
+    filename = file_loader.filename
+    assert os.path.basename(filename) == basename
+    assert not os.path.isfile(filename)
+
+    if expected_path_is_absolute:
+        assert os.path.isabs(filename)
+    else:
+        assert not os.path.isabs(filename)
+
+    # test download
+    if isinstance(file_loader, (_SingleFileDownloadable, _SingleFileDownloadableLoadable)):
+        assert isinstance(file_loader, _Downloadable)
+        filename_download = file_loader.download()
+        assert os.path.isfile(filename_download)
+        assert os.path.isabs(filename_download)
+        assert file_loader.filename == filename_download
+    else:
+        with pytest.raises(AttributeError):
+            file_loader.download()
+        # download manually to continue test
+        downloads.download_file(basename)
+
+    # test load
+    if isinstance(file_loader, (_SingleFileLoadable, _SingleFileDownloadableLoadable)):
+        assert isinstance(file_loader, _Loadable)
+        dataset = file_loader.load()
+        assert isinstance(dataset, pv.DataSet)
+    else:
+        with pytest.raises(AttributeError):
+            file_loader.load()
+
+    assert os.path.isfile(file_loader.filename)
+
+
+@pytest.mark.parametrize('load_func', [_load_as_multiblock, None])
+def test_multi_file_loader(examples_local_cache_path, load_func):
+    basename_loaded1 = 'airplane.ply'
+    basename_loaded2 = 'channels.vti'
+    basename_not_loaded = 'pyvista_logo.png'
+
+    file_loaded1 = _SingleFileDownloadableLoadable(basename_loaded1)
+    file_loaded2 = _SingleFileDownloadableLoadable(basename_loaded2)
+    file_not_loaded = _SingleFileDownloadable(basename_not_loaded)
+
+    def files_func():
+        return file_loaded1, file_loaded2, file_not_loaded
+
+    multi_file_loader = _MultiFileDownloadableLoadable(files_func, load_func=load_func)
+
+    filename = multi_file_loader.filename
+    assert isinstance(filename, tuple)
+    assert [os.path.isabs(file) for file in filename]
+    assert len(filename) == 3
+
+    filename_loadable = multi_file_loader.filename_loadable
+    assert isinstance(filename_loadable, tuple)
+    assert [os.path.isabs(file) for file in filename_loadable]
+    assert len(filename_loadable) == 2
+    assert basename_not_loaded not in filename_loadable
+
+    # test download
+    filename_download = multi_file_loader.download()
+    assert filename_download == filename
+    assert [os.path.isfile(file) for file in filename_download]
+
+    # test load
+    dataset = multi_file_loader.load()
+    if load_func is _load_as_multiblock:
+        assert isinstance(dataset, pv.MultiBlock)
+        assert dataset.keys() == ['airplane', 'channels']
+    else:
+        assert isinstance(dataset, tuple)
+    assert isinstance(dataset[0], pv.PolyData)
+    assert isinstance(dataset[1], pv.ImageData)
+    assert len(dataset) == 2
