@@ -155,6 +155,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
+    | ``.step``      | :class:`pyvista.OCCTReader`                 |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -2512,6 +2514,26 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         self.set_active_time_value(self._active_time_value)
 
 
+class OCCTReader(BaseReader):
+    """OCCTReader for .step files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_red_cube_blue_cylinder(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'red_cube_blue_cylinder.step'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(cpos="xy")
+
+    """
+
+    _vtk_module_name = ""
+    _vtk_class_name = "vtkOCCTReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2567,4 +2589,5 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
+    '.step': OCCTReader,
 }
