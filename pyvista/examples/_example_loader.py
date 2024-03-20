@@ -61,7 +61,6 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
     @abstractmethod
     def filename(self) -> _FilePropStrType_co:
         """Return the filename(s) of all files."""
-        ...
 
     @property
     def extension(self) -> Union[str, Tuple[str, ...]]:
@@ -93,6 +92,8 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
+    """Class which implements a 'download' method."""
+
     @abstractmethod
     def download(self) -> _FilePropStrType_co:
         """Download and return the file path(s)."""
@@ -100,12 +101,14 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
 @runtime_checkable
 class _Loadable(Protocol):
+    """Class which implements a 'load' method."""
+
     @abstractmethod
     def load(self) -> Any:
         """Load the dataset."""
 
 
-class _SingleFilename(_FileProps[str, int]):
+class _SingleFile(_FileProps[str, int]):
     """Wrap a single file."""
 
     def __init__(self, filename):
@@ -136,7 +139,7 @@ class _SingleFilename(_FileProps[str, int]):
         return None
 
 
-class _SingleFileLoadable(_SingleFilename, _Loadable):
+class _SingleFileLoadable(_SingleFile, _Loadable):
     """Wrap a single file for loading.
 
     Specify the read function and/or load functions for reading and processing the
@@ -173,7 +176,7 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
         ] = None,
         load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
     ):
-        _SingleFilename.__init__(self, filename)
+        _SingleFile.__init__(self, filename)
         self._read_func = pyvista.read if read_func is None else read_func
         self._load_func = load_func
 
@@ -193,7 +196,7 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
         return self._load_func(self._read_func(self.filename))
 
 
-class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
+class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
     If downloading a file from an archive, set the `.zip` as the filename
@@ -208,7 +211,7 @@ class _SingleFileDownloadable(_SingleFilename, _Downloadable[str]):
         filename: str,
         target_file: Optional[str] = None,
     ):
-        _SingleFilename.__init__(self, filename)
+        _SingleFile.__init__(self, filename)
 
         from pyvista.examples.downloads import (
             USER_DATA_PATH,
@@ -278,10 +281,11 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         return filename
 
 
-class _MultiFilename(_FileProps[Tuple[str, ...], Tuple[int, ...]]): ...
+class _MultiFile(_FileProps[Tuple[str, ...], Tuple[int, ...]]):
+    """Wrap multiple files."""
 
 
-class _MultiFileLoadable(_MultiFilename, _Loadable):
+class _MultiFileLoadable(_MultiFile, _Loadable):
     """Wrap multiple files for loading.
 
     Some use cases for loading multi-file examples include:
@@ -416,7 +420,7 @@ def _download_example(
 
 
 def _load_as_multiblock(
-    files: Sequence[_SingleFilename], names: Optional[Sequence[str]] = None
+    files: Sequence[_SingleFile], names: Optional[Sequence[str]] = None
 ) -> pyvista.MultiBlock:
     """Load multiple files as a MultiBlock.
 
@@ -439,9 +443,7 @@ def _load_as_multiblock(
     return block
 
 
-def _load_as_cubemap(
-    files: Union[str, _SingleFilename, Sequence[_SingleFilename]]
-) -> pyvista.Texture:
+def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pyvista.Texture:
     """Load multiple files as a cubemap.
 
     Input may be a single directory with 6 cubemap files, or a sequence
@@ -451,9 +453,7 @@ def _load_as_cubemap(
         files
         if isinstance(files, str)
         else (
-            files.filename
-            if isinstance(files, _SingleFilename)
-            else [file.filename for file in files]
+            files.filename if isinstance(files, _SingleFile) else [file.filename for file in files]
         )
     )
 
@@ -464,7 +464,7 @@ def _load_as_cubemap(
     )
 
 
-def _load_all(files: Sequence[_SingleFilename]):
+def _load_all(files: Sequence[_SingleFile]):
     """Load all loadable files."""
     loaded = [file.load() for file in files if isinstance(file, _Loadable)]
     assert len(loaded) > 0
