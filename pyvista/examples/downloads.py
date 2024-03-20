@@ -1264,7 +1264,7 @@ def download_sparse_points(load=True):  # pragma: no cover
     return _download_example(_example_sparse_points, load=load)
 
 
-def _sparse_points_reader(saved_file):
+def _sparse_points_reader(saved_file):  # pragma: no cover
     points_reader = _vtk.vtkDelimitedTextReader()
     points_reader.SetFileName(saved_file)
     points_reader.DetectNumericColumnsOn()
@@ -2752,7 +2752,7 @@ def download_carotid(load=True):  # pragma: no cover
     return _download_example(_example_carotid, load=load)
 
 
-def _carotid_load_func(mesh):
+def _carotid_load_func(mesh):  # pragma: no cover
     mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
@@ -3000,7 +3000,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
         return _download_example(_example_kitchen, load=load)
 
 
-def _kitchen_split_load_func(mesh):
+def _kitchen_split_load_func(mesh):  # pragma: no cover
     extents = {
         'door': (27, 27, 14, 18, 0, 11),
         'window1': (0, 0, 9, 18, 6, 12),
@@ -3355,7 +3355,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     return _download_example(_example_damavand_volcano, load=load)
 
 
-def _damavand_volcano_load_func(volume):
+def _damavand_volcano_load_func(volume):  # pragma: no cover
     volume.rename_array("None", "data")
     return volume
 
@@ -4566,7 +4566,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
     return _download_example(_example_openfoam_tubes, load=load)
 
 
-def _openfoam_tubes_read_func(filename):
+def _openfoam_tubes_read_func(filename):  # pragma: no cover
     reader = pyvista.OpenFOAMReader(filename)
     reader.set_active_time_value(1000)
     return reader.read()
@@ -5956,7 +5956,7 @@ def download_dikhololo_night():  # pragma: no cover
     return _download_example(_example_dikhololo_night)
 
 
-def _dikhololo_night_load_func(texture):
+def _dikhololo_night_load_func(texture):  # pragma: no cover
     texture.SetColorModeToDirectScalars()
     texture.SetMipmap(True)
     texture.SetInterpolate(True)
