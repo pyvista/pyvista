@@ -33,7 +33,6 @@ class _FileProps(Protocol[_FilePropStrType]):
     @abstractmethod
     def filename(self) -> _FilePropStrType:
         """Return the filename(s) of all files."""
-        ...
 
     @property
     def extension(self) -> Union[str, Tuple[str, ...]]:
@@ -44,37 +43,39 @@ class _FileProps(Protocol[_FilePropStrType]):
     @abstractmethod
     def _filesize_bytes(self):
         """Return the file size(s) of all files in bytes."""
-        ...
 
     @property
     @abstractmethod
     def _filesize_format(self) -> _FilePropStrType:
         """Return the formatted size of all file(s)."""
-        ...
 
     @property
     @abstractmethod
     def total_size(self) -> str:
         """Return the total size of all files."""
-        ...
 
     @property
     @abstractmethod
     def reader(self):
         """Return the base file reader(s) used to read the files."""
-        ...
 
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType]):
+    """...."""
+
     @abstractmethod
-    def download(self) -> _FilePropStrType: ...
+    def download(self) -> _FilePropStrType:
+        """...."""
 
 
 @runtime_checkable
 class _Loadable(Protocol):
+    """...."""
+
     @abstractmethod
-    def load(self) -> Any: ...
+    def load(self) -> Any:
+        """...."""
 
 
 class _SingleFilename(_FileProps[str]):
@@ -246,7 +247,8 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         return filename
 
 
-class _MultiFilename(_FileProps[Tuple[str, ...]]): ...
+class _MultiFilename(_FileProps[Tuple[str, ...]]):
+    """..."""
 
 
 class _MultiFileLoadable(_MultiFilename, _Loadable):
