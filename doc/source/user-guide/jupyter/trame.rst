@@ -163,7 +163,7 @@ these two flags:
 * :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
-If set, the accepted values for `PYVISTA_TRAME_JUPYTER_MODE` include "extension", "proxy", and "native".
+If set, the accepted values for `PYVISTA_TRAME_JUPYTER_MODE` include ``'extension'``, ``'proxy'``, and ``'native'``.
 The following table shows how each accepted value will affect the two flags, as well as any precondition
 that must be true for the value to be applicable. To meet these prerequisites,
 review the sections above for installation instructions.
