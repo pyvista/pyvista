@@ -11,6 +11,7 @@ import os
 import pathlib
 import platform
 import re
+import sys
 import time
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
@@ -4226,3 +4227,44 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+@pytest.fixture()
+def frog_tissue():
+    return examples.download_frog_tissue()
+
+
+@pytest.mark.xfail(
+    sys.platform == 'linux' and pv.vtk_version_info == (9, 0, 3),
+    reason="Fails for older vtk versions",
+)
+@pytest.mark.parametrize('shade', [True, False])
+def test_plot_volume_frog_tissue(shade, frog_tissue):
+    if shade is True and os.name == 'nt':
+        pytest.skip("Shading fails on CI machine (may still pass on other Windows machines)")
+
+    # Plot tissue labels as a volume
+    # Configure colors / color bar
+    clim = frog_tissue.get_data_range()  # Set color bar limits to match data
+    cmap = 'glasbey'  # Use a categorical colormap
+    categories = True  # Ensure n_colors matches number of labels
+    opacity = 'foreground'  # Make foreground opaque, background transparent
+    opacity_unit_distance = 1
+
+    # Define rendering parameters
+    mapper = 'gpu'
+
+    # Make and show plot
+    p = pv.Plotter()
+    _ = p.add_volume(
+        frog_tissue,
+        clim=clim,
+        shade=shade,
+        mapper=mapper,
+        opacity=opacity,
+        opacity_unit_distance=opacity_unit_distance,
+        categories=categories,
+        cmap=cmap,
+    )
+    p.camera_position = 'yx'  # Set camera to provide a dorsal view
+    p.show()

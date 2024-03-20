@@ -1685,56 +1685,27 @@ def download_frog_tissue(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> data = examples.download_frog_tissue()
 
-    Plot tissue labels as a volume
+    Extract contour meshes of all tissue labels
 
-    First, define plotting parameters
-
-    >>> # Configure colors / color bar
-    >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
-    >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
-    >>> opacity_unit_distance = 1
-
-    Set plotting resolution to half the image's spacing
-
-    >>> res = np.array(data.spacing) / 2
-
-    Define rendering parameters
-
-    >>> mapper = 'gpu'
-    >>> shade = True
-    >>> ambient = 0.3
-    >>> diffuse = 0.6
-    >>> specular = 0.5
-    >>> specular_power = 40
+    >>> contours = data.contour_labeled()
 
     Make and show plot
 
     >>> p = pv.Plotter()
-    >>> _ = p.add_volume(
-    ...     data,
-    ...     clim=clim,
-    ...     ambient=ambient,
-    ...     shade=shade,
-    ...     diffuse=diffuse,
-    ...     specular=specular,
-    ...     specular_power=specular_power,
-    ...     mapper=mapper,
-    ...     opacity=opacity,
-    ...     opacity_unit_distance=opacity_unit_distance,
-    ...     categories=categories,
-    ...     cmap=cmap,
-    ...     resolution=res,
-    ... )
+    >>> _ = p.add_mesh(contours, cmap='glasbey', categories=True)
     >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
     >>> p.show()
 
     """
     download_file('froggy/frogtissue.zraw')
-    return _download_and_read('froggy/frogtissue.mhd', load=load)
+    out = _download_and_read('froggy/frogtissue.mhd', load=load)
+    if load and out.get_data_range() != (0, 29):
+        # Try downloading again
+        # This file is sometimes read incorrectly with incorrect data range of (0, 255)
+        out = _download_and_read('froggy/frogtissue.mhd', load=load)
+        if out.get_data_range() != (0, 29):
+            warnings.warn("Frog tissue data was not read correctly by VTK.")
+    return out
 
 
 def download_chest(load=True):  # pragma: no cover
