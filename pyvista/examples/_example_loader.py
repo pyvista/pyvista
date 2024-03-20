@@ -1,4 +1,32 @@
-"""Abstraction layer for downloading, reading, and loading example files."""
+"""Abstraction layer for downloading, reading, and loading example files.
+
+The classes and methods in this module define an API for working with either
+a single file or multiple files which may be downloaded and/or loaded as an
+example dataset.
+
+Many example datasets have a straightforward input to output mapping:
+    file -> read -> dataset
+
+However, some file formats require multiple input files for reading (e.g.
+separate data and header files):
+    (file1, file1) -> read -> dataset
+
+Or, an example may combine two separate datasets:
+    file1 -> read -> dataset1 ┬─> combined_dataset
+    file2 -> read -> dataset2 ┘
+
+In some cases, the input may be a folder instead of a file (e.g. DICOM):
+    folder -> read -> dataset
+
+In addition, there may be a need to customize the reading function to read
+files with specific options enabled (e.g. set a time value), or perform
+post-read processing to modify the dataset (e.g. set active scalars).
+
+This module aims to serve these use cases and provide a flexible way of
+downloading, reading, and processing files with a generic mapping:
+    file or files or folder -> fully processed dataset(s) in any form
+
+"""
 
 from __future__ import annotations
 
@@ -21,17 +49,17 @@ import pyvista
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
 
-# The following classes define an API for working with either
-# a single filename or multiple filenames
+# define TypeVars for two main class definitions used by this module:
+#   1. classes for single file inputs: T -> T
+#   2. classes for multi-file inputs: (T, ...) -> (T, ...)
+_FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
+_FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
 
-_T = TypeVar('_T')
-_FilePropStrType = TypeVar('_FilePropStrType', str, Tuple[str, ...], covariant=True)
 
-
-class _FileProps(Protocol[_FilePropStrType]):
+class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
     @property
     @abstractmethod
-    def filename(self) -> _FilePropStrType:
+    def filename(self) -> _FilePropStrType_co:
         """Return the filename(s) of all files."""
         ...
 
@@ -42,42 +70,44 @@ class _FileProps(Protocol[_FilePropStrType]):
 
     @property
     @abstractmethod
-    def _filesize_bytes(self):
+    def _filesize_bytes(self) -> _FilePropIntType_co:
         """Return the file size(s) of all files in bytes."""
-        ...
 
     @property
     @abstractmethod
-    def _filesize_format(self) -> _FilePropStrType:
+    def _filesize_format(self) -> _FilePropStrType_co:
         """Return the formatted size of all file(s)."""
-        ...
 
     @property
     @abstractmethod
     def total_size(self) -> str:
         """Return the total size of all files."""
-        ...
 
     @property
     @abstractmethod
-    def reader(self):
+    def reader(
+        self,
+    ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
         """Return the base file reader(s) used to read the files."""
-        ...
 
 
 @runtime_checkable
-class _Downloadable(Protocol[_FilePropStrType]):
+class _Downloadable(Protocol[_FilePropStrType_co]):
     @abstractmethod
-    def download(self) -> _FilePropStrType: ...
+    def download(self) -> _FilePropStrType_co:
+        """Download and return the file path(s)."""
 
 
 @runtime_checkable
 class _Loadable(Protocol):
     @abstractmethod
-    def load(self) -> Any: ...
+    def load(self) -> Any:
+        """Load the dataset."""
 
 
-class _SingleFilename(_FileProps[str]):
+class _SingleFilename(_FileProps[str, int]):
+    """Wrap a single file."""
+
     def __init__(self, filename):
         from pyvista.examples.downloads import USER_DATA_PATH
 
@@ -149,6 +179,8 @@ class _SingleFileLoadable(_SingleFilename, _Loadable):
 
     @property
     def reader(self) -> Optional[pyvista.BaseReader]:
+        # TODO: return the actual reader used, and not just a lookup
+        #       (this will require an update to the 'read_func' API)
         try:
             return pyvista.get_reader(self.filename)
         except ValueError:
@@ -246,7 +278,7 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         return filename
 
 
-class _MultiFilename(_FileProps[Tuple[str, ...]]): ...
+class _MultiFilename(_FileProps[Tuple[str, ...], Tuple[int, ...]]): ...
 
 
 class _MultiFileLoadable(_MultiFilename, _Loadable):
@@ -284,24 +316,24 @@ class _MultiFileLoadable(_MultiFilename, _Loadable):
         files_func: Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]],
         load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
     ):
-        self._files = files_func()
+        self._file_loaders = files_func()
         if load_func is None:
             load_func = _load_all
         self._load_func = load_func
 
     @property
     def filename(self) -> Tuple[str, ...]:
-        return tuple([file.filename for file in self._files])
+        return tuple([file.filename for file in self._file_loaders])
 
     @property
     def filename_loadable(self) -> Tuple[str, ...]:
         return tuple(
-            [file.filename for file in self._files if isinstance(file, _SingleFileLoadable)]
+            [file.filename for file in self._file_loaders if isinstance(file, _SingleFileLoadable)]
         )
 
     @property
     def _filesize_bytes(self) -> Tuple[int, ...]:
-        return tuple([file._filesize_bytes for file in self._files])
+        return tuple([file._filesize_bytes for file in self._file_loaders])
 
     @property
     def _filesize_format(self) -> Tuple[str, ...]:
@@ -315,21 +347,25 @@ class _MultiFileLoadable(_MultiFilename, _Loadable):
     def reader(
         self,
     ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
+        # TODO: return the actual reader used, and not just a lookup
+        #       (this will require an update to the 'read_func' API)
         # Get reader for loadable files only
         readers = tuple(
-            {file.reader for file in self._files if isinstance(file, _SingleFileLoadable)}
+            {file.reader for file in self._file_loaders if isinstance(file, _SingleFileLoadable)}
         )
         return readers[0] if len(readers) == 1 else tuple(readers)
 
     def load(self):
-        return self._load_func(self._files)
+        return self._load_func(self._file_loaders)
 
 
 class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str, ...]]):
     """Wrap multiple files for downloading and loading."""
 
     def download(self) -> Tuple[str, ...]:
-        filename = [file.download() for file in self._files if isinstance(file, _Downloadable)]
+        filename = [
+            file.download() for file in self._file_loaders if isinstance(file, _Downloadable)
+        ]
         assert all(os.path.isfile(file) for file in filename)
         return tuple(filename)
 
