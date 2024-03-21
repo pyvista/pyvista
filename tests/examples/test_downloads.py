@@ -6,6 +6,7 @@ import shutil
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -14,6 +15,7 @@ import pyvista.examples
 from pyvista.examples import downloads
 from pyvista.examples._example_loader import (
     _Downloadable,
+    _load_and_merge,
     _load_as_multiblock,
     _Loadable,
     _MultiFileDownloadableLoadable,
@@ -308,15 +310,18 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
     assert os.path.isfile(file_loader.filename)
 
 
-@pytest.mark.parametrize('load_func', [_load_as_multiblock, None])
+@pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
 def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     basename_loaded1 = 'airplane.ply'
-    basename_loaded2 = 'channels.vti'
+    basename_loaded2 = 'hexbeam.vtk'
     basename_not_loaded = 'pyvista_logo.png'
 
     file_loaded1 = _SingleFileDownloadableLoadable(basename_loaded1)
     file_loaded2 = _SingleFileDownloadableLoadable(basename_loaded2)
     file_not_loaded = _SingleFileDownloadable(basename_not_loaded)
+
+    expected_airplane = examples.load_airplane()
+    expected_hexbeam = examples.load_hexbeam()
 
     def files_func():
         return file_loaded1, file_loaded2, file_not_loaded
@@ -341,14 +346,21 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
 
     # test load
     dataset = multi_file_loader.load()
-    if load_func is _load_as_multiblock:
-        assert isinstance(dataset, pv.MultiBlock)
-        assert dataset.keys() == ['airplane', 'channels']
-    else:
+    if load_func is None:
         assert isinstance(dataset, tuple)
-    assert isinstance(dataset[0], pv.PolyData)
-    assert isinstance(dataset[1], pv.ImageData)
-    assert len(dataset) == 2
+        assert np.array_equal(dataset[0].points, expected_airplane.points)
+        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
+        assert len(dataset) == 2
+    elif load_func is _load_as_multiblock:
+        assert isinstance(dataset, pv.MultiBlock)
+        assert dataset.keys() == ['airplane', 'hexbeam']
+        assert np.array_equal(dataset[0].points, expected_airplane.points)
+        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
+        assert len(dataset) == 2
+    elif load_func is _load_and_merge:
+        assert isinstance(dataset, pv.UnstructuredGrid)
+        expected = pv.merge((expected_airplane, expected_hexbeam))
+        assert np.array_equal(dataset.points, expected.points)
 
 
 def test_file_loader_file_props():

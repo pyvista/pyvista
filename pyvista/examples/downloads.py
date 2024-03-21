@@ -35,6 +35,7 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
 from pyvista.examples._example_loader import (
     _download_example,
+    _load_and_merge,
     _load_as_cubemap,
     _load_as_multiblock,
     _MultiFileDownloadableLoadable,
@@ -4834,7 +4835,7 @@ def _example_can_files_func():
 
 
 _example_can = _MultiFileDownloadableLoadable(
-    files_func=_example_can_files_func, load_func=pyvista.merge
+    files_func=_example_can_files_func, load_func=_load_and_merge
 )
 __can_partial = _SingleFileDownloadableLoadable('hdf/can_0.hdf')
 

@@ -471,6 +471,10 @@ def _load_all(files: Sequence[_SingleFile]):
     return loaded[0] if len(loaded) == 1 else tuple(loaded)
 
 
+def _load_and_merge(files: Sequence[_SingleFile]):
+    return pyvista.merge(_load_all(files))
+
+
 def _get_file_or_folder_size(filepath) -> int:
     if os.path.isfile(filepath):
         return os.path.getsize(filepath)
