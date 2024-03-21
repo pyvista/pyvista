@@ -1,3 +1,5 @@
+.. _geometry_api:
+
 Geometry
 --------
 PyVista includes several functions to generate simple geometric

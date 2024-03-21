@@ -4,7 +4,7 @@
 Geometric Objects
 ~~~~~~~~~~~~~~~~~
 
-The "Hello, world!" of VTK
+The "Hello, world!" of VTK.  Uses objects from :ref:`geometry_api`.
 """
 
 import pyvista as pv
