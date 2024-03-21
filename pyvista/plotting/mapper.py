@@ -352,7 +352,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @scalar_visibility.setter
     def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetScalarVisibility(value)
+        self.SetScalarVisibility(value)
 
     def update(self):
         """Update this mapper."""
@@ -746,6 +746,67 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         """Colormap assigned to this mapper."""
         return self._cmap
 
+    @property
+    def resolve(self) -> str:
+        """Set or return global flag to avoid z-buffer resolution.
+
+        A global flag that controls whether coincident topology
+        (e.g., a line on top of a polygon) is shifted to avoid
+        z-buffer resolution (and hence rendering problems).
+
+        If not off, there are two methods to choose from.
+        `polygon_offset` uses graphics systems calls to shift polygons,
+        lines and points from each other.
+        `shift_zbuffer` is a legacy method that used to remap the z-buffer
+        to distinguish vertices, lines, and polygons,
+        but does not always produce acceptable results.
+        You should only use the polygon_offset method (or none) at this point.
+
+        Returns
+        -------
+        str
+            Global flag to avoid z-buffer resolution.
+            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+
+        >>> mesh = examples.download_tri_quadratic_hexahedron()
+        >>> surface_sep = mesh.separate_cells().extract_surface(
+        ...     nonlinear_subdivision=4
+        ... )
+        >>> edges = surface_sep.extract_feature_edges()
+        >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
+
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(
+        ...     surface, smooth_shading=True, split_sharp_edges=True
+        ... )
+        >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
+        >>> actor.mapper.resolve = "polygon_offset"
+        >>> plotter.show()
+
+        """
+        vtk_to_pv = {
+            _vtk.VTK_RESOLVE_OFF: 'off',
+            _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
+            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
+        }
+        return vtk_to_pv[self.GetResolveCoincidentTopology()]
+
+    @resolve.setter
+    def resolve(self, resolve):  # numpydoc ignore=GL08
+        if resolve == 'off':
+            self.SetResolveCoincidentTopologyToOff()
+        elif resolve == 'polygon_offset':
+            self.SetResolveCoincidentTopologyToPolygonOffset()
+        elif resolve == 'shift_zbuffer':
+            self.SetResolveCoincidentTopologyToShiftZBuffer()
+        else:
+            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
+
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
 
@@ -842,7 +903,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @emissive.setter
     def emissive(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetEmissive(value)
+        self.SetEmissive(value)
 
     @property
     def scale_factor(self) -> float:  # numpydoc ignore=RT01
@@ -856,7 +917,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @scale_factor.setter
     def scale_factor(self, value: float):  # numpydoc ignore=GL08
-        return self.SetScaleFactor(value)
+        self.SetScaleFactor(value)
 
     @property
     def scale_array(self) -> str:  # numpydoc ignore=RT01
@@ -905,7 +966,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             )
 
         self.scale_factor = 1.0
-        return self.SetScaleArray(name)
+        self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
         """Set the fragment shader code to create a circular splat.
