@@ -6,7 +6,8 @@ Unstructured Grid with Polyhedra
 
 This example shows how to build a simple :class:`pyvista.UnstructuredGrid`
 using polyhedra. We will be using VTK types to determine which type of cells we
-are building.  A list of cell types is given in :class:`pyvista.CellType`.
+are building. 
+A list of cell types is given in :class:`pyvista.CellType`.
 
 First, we import the required libraries.
 """
