@@ -4816,18 +4816,18 @@ def download_can(partial=False, load=True):  # pragma: no cover
     >>> dataset.plot(scalars='VEL', smooth_shading=True)  # doctest:+SKIP
 
     """
-    if pyvista.vtk_version_info > (9, 1):  # pragma: no cover
-        raise VTKVersionError(
-            'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
-        )
     if partial:
         return _download_example(__can_partial, load=load)
     else:
         return _download_example(_example_can, load=load)
 
 
-def _example_can_files_func():
+def _example_can_files_func():  # pragma: no cover
+    if pyvista.vtk_version_info > (9, 1):
+        raise VTKVersionError(
+            'This example file is deprecated for VTK v9.2.0 and newer. '
+            'Use `download_can_crushed_hdf` instead.'
+        )
     can_0 = _SingleFileDownloadableLoadable('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableLoadable('hdf/can_1.hdf')
     can_2 = _SingleFileDownloadableLoadable('hdf/can_2.hdf')
