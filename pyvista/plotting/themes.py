@@ -1396,6 +1396,16 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_extension_enabled = (
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
+        # if set, jupyter_mode overwrites defaults
+        jupyter_mode = os.environ.get("PYVISTA_TRAME_JUPYTER_MODE")
+        if jupyter_mode == "extension" and self._jupyter_extension_available:  # pragma: no cover
+            self._server_proxy_enabled = False
+            self._jupyter_extension_enabled = True
+        elif jupyter_mode == "proxy" and self._server_proxy_enabled:  # pragma: no cover
+            self._jupyter_extension_enabled = False
+        elif jupyter_mode == "native":  # pragma: no cover
+            self._jupyter_extension_enabled = False
+            self._server_proxy_enabled = False
         self._default_mode = 'trame'
 
     @property
