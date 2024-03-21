@@ -327,8 +327,11 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
         return file_loaded1, file_loaded2, file_not_loaded
 
     multi_file_loader = _MultiFileDownloadableLoadable(files_func, load_func=load_func)
+    # test files func is not called when initialized
+    assert multi_file_loader._file_loaders_ is None
 
     filename = multi_file_loader.filename
+    assert multi_file_loader._file_loaders_ is not None
     assert isinstance(filename, tuple)
     assert [os.path.isabs(file) for file in filename]
     assert len(filename) == 3

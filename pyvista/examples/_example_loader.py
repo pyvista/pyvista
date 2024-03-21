@@ -320,10 +320,17 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
         files_func: Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]],
         load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
     ):
-        self._file_loaders = files_func()
+        self._files_func = files_func
+        self._file_loaders_ = None
         if load_func is None:
             load_func = _load_all
         self._load_func = load_func
+
+    @property
+    def _file_loaders(self):
+        if self._file_loaders_ is None:
+            self._file_loaders_ = self._files_func()
+        return self._file_loaders_
 
     @property
     def filename(self) -> Tuple[str, ...]:
