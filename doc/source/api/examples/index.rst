@@ -134,6 +134,3 @@ cell types.
    Pyramid
    PentagonalPrism
    HexagonalPrism
-
-
-.. include:: ./downloads_metadata.rst
