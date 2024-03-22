@@ -50,6 +50,7 @@ Geometric Objects
    Dodecahedron
    Icosahedron
    Icosphere
+   KochanekSpline
    Line
    MultipleLines
    Octahedron
