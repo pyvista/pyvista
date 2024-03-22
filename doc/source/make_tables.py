@@ -388,11 +388,11 @@ class DownloadsInfoTable(DocTable):
                 ),
             )
         }
-        new = dict(example_file_loaders)
-        for i, key in enumerate(example_file_loaders):
-            if i < 100:
-                new.pop(key)
-        example_file_loaders = new
+        # new = dict(example_file_loaders)
+        # for i, key in enumerate(example_file_loaders):
+        #     if i < 100:
+        #         new.pop(key)
+        # example_file_loaders = new
         return sorted(example_file_loaders.items())
 
     @classmethod
