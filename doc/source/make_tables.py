@@ -15,7 +15,7 @@ from pyvista.examples import _example_loader, downloads
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
-DOWNLOADS_TABLE_DIR = "examples"
+DOWNLOADS_TABLE_DIR = "api/examples/metadata"
 PREVIEW_EXAMPLES_IMAGES_DIR = "images/preview-examples"
 
 
@@ -346,35 +346,27 @@ class ColorTable(DocTable):
 class DownloadsInfoTable(DocTable):
     """Class to generate info about pyvista downloadable examples."""
 
-    path = f"{DOWNLOADS_TABLE_DIR}/downloads_info.rst"
-    header = _aligned_dedent(
-        """
-        |.. list-table::
-        |   :widths: 100
-        |   :header-rows: 1
-        |
-        |   * - Examples
-        """
-    )
-    # each example has its own sub-table
+    path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata.rst"
+
+    # No hmain eader; each example is its own table
+    header = ""
     row_template = _aligned_dedent(
         """
-        |.. list-table::
+        |.. list-table:: :func:`~{}`
         |   :widths: 50 50
         |   :header-rows: 1
-        |
-        |   * :func:`~{}`
         |
         |   * - Info
         |     - Preview
         |
         |   * - {}
-        |       Size on Disk: {}
-        |       Num Files: {}
-        |       Extension: {}
-        |       Reader: {}
-        |       Representation:
-        |       {}
+        |
+        |       - Size on Disk: {}
+        |       - Num Files: {}
+        |       - Extension: {}
+        |       - Reader: {}
+        |       - Representation: {}
+        |
         |     - {}
         """
     )
@@ -396,11 +388,11 @@ class DownloadsInfoTable(DocTable):
                 ),
             )
         }
-        # new = dict(example_file_loaders)
-        # for i, key in enumerate(example_file_loaders):
-        #     if i < 100:
-        #         new.pop(key)
-        # example_file_loaders = new
+        new = dict(example_file_loaders)
+        for i, key in enumerate(example_file_loaders):
+            if i < 100:
+                new.pop(key)
+        example_file_loaders = new
         return sorted(example_file_loaders.items())
 
     @classmethod
@@ -426,13 +418,23 @@ class DownloadsInfoTable(DocTable):
         # Get file info
         file_size = loader.total_size
         num_files = loader.num_files
-        file_ext = ' '.join(loader.extension)
-        reader_type = loader.reader
+        file_ext = '\'' + str(loader.extension) + '\''
+        file_ext = file_ext if isinstance(file_ext, str) else '\' \''.join('\'' + file_ext)
+        reader_type = (
+            repr(loader.reader_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        )
 
         # Get instance info
         dataset = loader.load()
         # TODO: parse repr string and replace any types with linkable references to the class doc(s)
-        data_repr = repr(dataset)
+        # Format repr
+        repr_rst = '::\n\n' + repr(dataset)
+        repr_rst = repr_rst.replace('\n', '\n|           ')
+        repr_rst = _aligned_dedent(repr_rst)
 
         # Create a preview image of the dataset
         img_path = f"{PREVIEW_EXAMPLES_IMAGES_DIR}/{download_name}.png"
@@ -454,7 +456,7 @@ class DownloadsInfoTable(DocTable):
             num_files,
             file_ext,
             reader_type,
-            data_repr,
+            repr_rst,
             img_rst,
         )
 

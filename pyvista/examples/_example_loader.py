@@ -44,7 +44,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     runtime_checkable,
 )
 
@@ -555,21 +554,23 @@ def _get_reader_type(
     """Return a reader type or tuple of unique reader types."""
     if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):
         return None
-    reader_set: Set[Union[pyvista.BaseReader, None]] = set()
-    reader_sequence = [reader] if not isinstance(reader, Sequence) else reader
+    reader_set: Set[Type[pyvista.BaseReader]] = set()
+    reader_type = (
+        [type(reader)]
+        if not isinstance(reader, Sequence)
+        else [type(r) for r in reader if r is not None]
+    )
 
     # Add all reader types to the set and exclude any 'None' types
-    reader_set.update(reader_sequence)
-    reader_set.discard(None)
-    reader_set = cast(Set[pyvista.BaseReader], reader_set)  # type: ignore[assignment]
+    reader_set.update(reader_type)
+    reader_output = tuple(reader_set)
 
     # Format output
-    reader_type = [type(r) for r in reader_set if r is not None]
-    if len(reader_type) == 1:
-        return reader_type[0]
-    elif len(reader_type) == len(reader_sequence):
+    if len(reader_output) == 1:
+        return reader_output[0]
+    elif len(reader_type) == len(reader_output):
         # If num readers matches num files, make
         # sure the reader order matches the file order
-        return tuple([type(r) for r in reader_sequence if r is not None])
-    else:
         return tuple(reader_type)
+    else:
+        return tuple(reader_output)
