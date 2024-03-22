@@ -6,7 +6,7 @@ import os
 import re
 import textwrap
 from types import FunctionType, ModuleType
-from typing import Dict, Type, TypeVar
+from typing import Dict, Iterable, Type, TypeVar
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -344,7 +344,7 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-class DownloadsInfoTable(DocTable):
+class DownloadsMetadataTable(DocTable):
     """Class to generate info about pyvista downloadable examples."""
 
     path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata_table.rst"
@@ -389,11 +389,11 @@ class DownloadsInfoTable(DocTable):
                 ),
             )
         }
-        new = dict(example_file_loaders)
-        for i, key in enumerate(example_file_loaders):
-            if i < 100:
-                new.pop(key)
-        example_file_loaders = new
+        # new = dict(example_file_loaders)
+        # for i, key in enumerate(example_file_loaders):
+        #     if i < 100:
+        #         new.pop(key)
+        # example_file_loaders = new
         return sorted(example_file_loaders.items())
 
     @classmethod
@@ -466,7 +466,7 @@ class DownloadsInfoTable(DocTable):
         img_path = f"{PREVIEW_EXAMPLES_IMAGES_DIR}/{download_name}.png"
         try:
             cls.generate_img(dataset, img_path)
-            img_rst = '..image:: /' + img_path
+            img_rst = '..image:: ' + img_path
         except NotImplementedError:
             # Cannot generate image for this example (e.g. loading arbitrary numpy array)
             img_rst = na
@@ -491,20 +491,45 @@ class DownloadsInfoTable(DocTable):
         """Generate and save an image of the given download object."""
         p = pv.Plotter(off_screen=True, window_size=[300, 300])
         p.background_color = 'w'
+
+        # Clear any point or cell data except for image data
+        try:
+            if isinstance(dataset, Iterable):
+                [data.clear_data() for data in dataset if not isinstance(dataset, pv.ImageData)]
+            else:
+                dataset.clear_data() if not isinstance(dataset, pv.ImageData) else None
+        except AttributeError:
+            pass
+
         if isinstance(dataset, pv.Texture):
-            p.add_mesh(pv.Plane(), texture=dataset)
+            dims = dataset.dimensions
+            p.add_mesh(pv.Plane(i_size=dims[0], j_size=dims[1]), texture=dataset)
+            p.view_xy()
+        elif isinstance(dataset, pv.ImageData):
+            if any(dim == 1 for dim in dataset.dimensions):
+                p.add_mesh(dataset)
+                p.view_xy()
+            else:
+                try:
+                    p.add_volume(dataset)
+                except Exception:
+                    p.add_mesh(dataset)
         elif isinstance(dataset, (tuple, pv.MultiBlock)):
             p.add_composite(dataset)
         else:
             p.add_mesh(dataset)
-        img = p.show(screenshot=True)
+        img_array = p.show(screenshot=True)
 
         # # exit early if the image already exists and is the same
         # if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
         #     return
         # save it
-        p._save_image(img, img_path, False)
-        return True
+        del p
+        del dataset
+        from PIL import Image
+
+        Image.fromarray(img_array).save(img_path)
+        return
 
 
 _TypeType = TypeVar('_TypeType', bound=Type)
@@ -534,4 +559,4 @@ def make_all_tables():
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
-    DownloadsInfoTable.generate()
+    DownloadsMetadataTable.generate()
