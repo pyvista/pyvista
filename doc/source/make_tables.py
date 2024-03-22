@@ -3,6 +3,7 @@
 import inspect
 import io
 import os
+import re
 import textwrap
 from types import FunctionType, ModuleType
 from typing import Dict, Type, TypeVar
@@ -388,11 +389,11 @@ class DownloadsInfoTable(DocTable):
                 ),
             )
         }
-        # new = dict(example_file_loaders)
-        # for i, key in enumerate(example_file_loaders):
-        #     if i < 100:
-        #         new.pop(key)
-        # example_file_loaders = new
+        new = dict(example_file_loaders)
+        for i, key in enumerate(example_file_loaders):
+            if i < 100:
+                new.pop(key)
+        example_file_loaders = new
         return sorted(example_file_loaders.items())
 
     @classmethod
@@ -409,11 +410,21 @@ class DownloadsInfoTable(DocTable):
         func_fullname = _get_fullname(download_func)
         doc_line = download_func.__doc__.splitlines()[0]
 
+        na = 'Not available'
         try:
             loader.download()
         except VTKVersionError:
-            # Skip example
-            return None
+            file_size, num_files, file_ext, reader_type, repr_rst, img_rst = na, na, na, na, na, na
+            return cls.row_template.format(
+                func_fullname,
+                doc_line,
+                file_size,
+                num_files,
+                file_ext,
+                reader_type,
+                repr_rst,
+                img_rst,
+            )
 
         # Get file info
         file_size = loader.total_size
@@ -430,11 +441,26 @@ class DownloadsInfoTable(DocTable):
 
         # Get instance info
         dataset = loader.load()
-        # TODO: parse repr string and replace any types with linkable references to the class doc(s)
         # Format repr
         repr_rst = '::\n\n' + repr(dataset)
         repr_rst = repr_rst.replace('\n', '\n|           ')
         repr_rst = _aligned_dedent(repr_rst)
+        # Replace any types with linkable references to the class doc(s)
+        class_list = [
+            'PolyData',
+            'ImageData',
+            'MultiBlock',
+            'Texture',
+            'UnstructuredGrid',
+            'RectilinearGrid',
+            'StructuredGrid',
+        ]
+        for _class in class_list:
+            repr_rst = re.sub(
+                pattern=_class + r'.*?\n',
+                repl=r':class:`~pyvista.' + _class + '`\n',
+                string=repr_rst,
+            )
 
         # Create a preview image of the dataset
         img_path = f"{PREVIEW_EXAMPLES_IMAGES_DIR}/{download_name}.png"
@@ -443,7 +469,7 @@ class DownloadsInfoTable(DocTable):
             img_rst = '..image:: /' + img_path
         except NotImplementedError:
             # Cannot generate image for this example (e.g. loading arbitrary numpy array)
-            img_rst = ''
+            img_rst = na
         except (RuntimeError, AttributeError, ValueError, TypeError, FileNotFoundError):
             raise RuntimeError(
                 f"Unable to generate a preview image for example \'{download_name}\'"
