@@ -15,7 +15,7 @@ from pyvista.examples import _example_loader, downloads
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
-DOWNLOADS_TABLE_DIR = "api/examples/metadata"
+DOWNLOADS_TABLE_DIR = "api/examples"
 PREVIEW_EXAMPLES_IMAGES_DIR = "images/preview-examples"
 
 
@@ -346,7 +346,7 @@ class ColorTable(DocTable):
 class DownloadsInfoTable(DocTable):
     """Class to generate info about pyvista downloadable examples."""
 
-    path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata.rst"
+    path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata_table.rst"
 
     # No hmain eader; each example is its own table
     header = ""

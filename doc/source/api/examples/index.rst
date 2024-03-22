@@ -136,4 +136,4 @@ cell types.
    HexagonalPrism
 
 
-.. include:: ../metadata/downloads_metadata.rst
+.. include:: ./downloads_metadata.rst
