@@ -8,6 +8,15 @@ using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
 rendered on this page.
 
+Notes
+-----
+See the downloads metadata page for detailed information about the examples,
+including the size of the downloads, file format(s), and dataset info.
+
+.. toctree::
+
+    metadata
+
 Examples
 --------
 >>> from pyvista import examples
