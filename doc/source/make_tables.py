@@ -1,15 +1,22 @@
 """This is a helper module to generate tables that can be included in the documentation."""
 
+import inspect
 import io
 import os
 import textwrap
+from types import FunctionType, ModuleType
+from typing import Dict, Type, TypeVar
 
 import pyvista as pv
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import _example_loader, downloads
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
+DOWNLOADS_TABLE_DIR = "examples"
+PREVIEW_EXAMPLES_IMAGES_DIR = "images/preview-examples"
 
 
 def _aligned_dedent(txt):
@@ -336,9 +343,167 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
+class DownloadsInfoTable(DocTable):
+    """Class to generate info about pyvista downloadable examples."""
+
+    path = f"{DOWNLOADS_TABLE_DIR}/downloads_info.rst"
+    header = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :widths: 100
+        |   :header-rows: 1
+        |
+        |   * - Examples
+        """
+    )
+    # each example has its own sub-table
+    row_template = _aligned_dedent(
+        """
+        |.. list-table::
+        |   :widths: 50 50
+        |   :header-rows: 1
+        |
+        |   * :func:`~{}`
+        |
+        |   * - Info
+        |     - Preview
+        |
+        |   * - {}
+        |       Size on Disk: {}
+        |       Num Files: {}
+        |       Extension: {}
+        |       Reader: {}
+        |       Representation:
+        |       {}
+        |     - {}
+        """
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        os.makedirs(PREVIEW_EXAMPLES_IMAGES_DIR, exist_ok=True)
+        # Collect all `_example_<name>` file loaders
+        module_members = dict(inspect.getmembers(pv.examples.downloads))
+        example_file_loaders = {
+            name: item
+            for name, item in module_members.items()
+            if name.startswith('_example_')
+            and isinstance(
+                item,
+                (
+                    _example_loader._SingleFileDownloadable,
+                    _example_loader._MultiFileDownloadableLoadable,
+                ),
+            )
+        }
+        # new = dict(example_file_loaders)
+        # for i, key in enumerate(example_file_loaders):
+        #     if i < 100:
+        #         new.pop(key)
+        # example_file_loaders = new
+        return sorted(example_file_loaders.items())
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        loader_name, loader = row_data
+        download_name = loader_name.replace('_example_', 'download_')
+
+        # Get the corresponding 'download' function for the example
+        download_func = getattr(downloads, download_name)
+        func_fullname = _get_fullname(download_func)
+        doc_line = download_func.__doc__.splitlines()[0]
+
+        try:
+            loader.download()
+        except VTKVersionError:
+            # Skip example
+            return None
+
+        # Get file info
+        file_size = loader.total_size
+        num_files = loader.num_files
+        file_ext = ' '.join(loader.extension)
+        reader_type = loader.reader
+
+        # Get instance info
+        dataset = loader.load()
+        # TODO: parse repr string and replace any types with linkable references to the class doc(s)
+        data_repr = repr(dataset)
+
+        # Create a preview image of the dataset
+        img_path = f"{PREVIEW_EXAMPLES_IMAGES_DIR}/{download_name}.png"
+        try:
+            cls.generate_img(dataset, img_path)
+            img_rst = '..image:: /' + img_path
+        except NotImplementedError:
+            # Cannot generate image for this example (e.g. loading arbitrary numpy array)
+            img_rst = ''
+        except (RuntimeError, AttributeError, ValueError, TypeError, FileNotFoundError):
+            raise RuntimeError(
+                f"Unable to generate a preview image for example \'{download_name}\'"
+            )
+
+        return cls.row_template.format(
+            func_fullname,
+            doc_line,
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            data_repr,
+            img_rst,
+        )
+
+    @staticmethod
+    def generate_img(dataset, img_path):
+        """Generate and save an image of the given download object."""
+        p = pv.Plotter(off_screen=True, window_size=[300, 300])
+        p.background_color = 'w'
+        if isinstance(dataset, pv.Texture):
+            p.add_mesh(pv.Plane(), texture=dataset)
+        elif isinstance(dataset, (tuple, pv.MultiBlock)):
+            p.add_composite(dataset)
+        else:
+            p.add_mesh(dataset)
+        img = p.show(screenshot=True)
+
+        # # exit early if the image already exists and is the same
+        # if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        #     return
+        # save it
+        p._save_image(img, img_path, False)
+        return True
+
+
+_TypeType = TypeVar('_TypeType', bound=Type)
+
+
+def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+    """Get all members of a specified type which are defined locally inside a module."""
+
+    def is_local(obj):
+        return type(obj) is typ and obj.__module__ == module.__name__
+
+    return dict(inspect.getmembers(module, predicate=is_local))
+
+
+def _get_module_functions(module: ModuleType):
+    """Get all functions defined locally inside a module."""
+    return _get_module_members(module, typ=FunctionType)
+
+
+def _get_fullname(typ) -> str:
+    return f"{typ.__module__}.{typ.__qualname__}"
+
+
 def make_all_tables():
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
+    DownloadsInfoTable.generate()

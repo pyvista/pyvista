@@ -39,9 +39,12 @@ from typing import (
     Optional,
     Protocol,
     Sequence,
+    Set,
     Tuple,
+    Type,
     TypeVar,
     Union,
+    cast,
     runtime_checkable,
 )
 
@@ -59,13 +62,18 @@ _FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covar
 class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
     @property
     @abstractmethod
-    def filename(self) -> _FilePropStrType_co:
-        """Return the filename(s) of all files."""
+    def path(self) -> _FilePropStrType_co:
+        """Return the path(s) of all files."""
+
+    @property
+    def num_files(self) -> int:
+        """Return the number of files."""
+        return 1 if isinstance(self.path, str) else len(self.path)
 
     @property
     def extension(self) -> Union[str, Tuple[str, ...]]:
         """Return the file extension(s) of all files."""
-        return _get_extension_from_filename(self.filename)
+        return _get_extension(self.path)
 
     @property
     @abstractmethod
@@ -83,11 +91,17 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the total size of all files."""
 
     @property
-    @abstractmethod
     def reader(
         self,
     ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
         """Return the base file reader(s) used to read the files."""
+
+    @property
+    def reader_type(
+        self,
+    ) -> Optional[Union[Type[pyvista.BaseReader], Tuple[Type[pyvista.BaseReader], ...]]]:
+        """Return the file extension(s) of all files."""
+        return _get_reader_type(self.reader)
 
 
 @runtime_checkable
@@ -111,20 +125,18 @@ class _Loadable(Protocol):
 class _SingleFile(_FileProps[str, int]):
     """Wrap a single file."""
 
-    def __init__(self, filename):
+    def __init__(self, path):
         from pyvista.examples.downloads import USER_DATA_PATH
 
-        self._filename = (
-            filename if os.path.isabs(filename) else os.path.join(USER_DATA_PATH, filename)
-        )
+        self._path = path if os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
 
     @property
-    def filename(self) -> str:
-        return self._filename
+    def path(self) -> str:
+        return self._path
 
     @property
     def _filesize_bytes(self) -> int:
-        return _get_file_or_folder_size(self.filename)
+        return _get_file_or_folder_size(self.path)
 
     @property
     def _filesize_format(self) -> str:
@@ -143,20 +155,20 @@ class _SingleFileLoadable(_SingleFile, _Loadable):
     """Wrap a single file for loading.
 
     Specify the read function and/or load functions for reading and processing the
-    dataset. The read function is called on the filename first, then, if a load
+    dataset. The read function is called on the file path first, then, if a load
     function is specified, the load function is called on the output from the read
     function.
 
     Parameters
     ----------
-    filename
+    path
         Path of the file to be loaded.
 
     read_func
         Specify the function used to read the file. Defaults to :func:`pyvista.read`.
         This can be used for customizing the reader's properties, or using another
         read function (e.g. :func:`pyvista.read_texture` for textures). The function
-        must have the filename as the first argument and should return a dataset.
+        must have the file path as the first argument and should return a dataset.
         If default arguments are required by your desired read function, consider
         using :class:`functools.partial` to pre-set the arguments before passing it
         as an argument to the loader.
@@ -170,13 +182,13 @@ class _SingleFileLoadable(_SingleFile, _Loadable):
 
     def __init__(
         self,
-        filename: str,
+        path: str,
         read_func: Optional[
             Callable[[str], pyvista.DataSet | pyvista.Texture | NumpyArray[Any]]
         ] = None,
         load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
     ):
-        _SingleFile.__init__(self, filename)
+        _SingleFile.__init__(self, path)
         self._read_func = pyvista.read if read_func is None else read_func
         self._load_func = load_func
 
@@ -185,22 +197,22 @@ class _SingleFileLoadable(_SingleFile, _Loadable):
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
-            return pyvista.get_reader(self.filename)
+            return pyvista.get_reader(self.path)
         except ValueError:
             # Cannot be read directly (requires custom reader)
             return None
 
     def load(self):
         if self._load_func is None:
-            return self._read_func(self.filename)
-        return self._load_func(self._read_func(self.filename))
+            return self._read_func(self.path)
+        return self._load_func(self._read_func(self.path))
 
 
 class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
-    If downloading a file from an archive, set the `.zip` as the filename
-    and set ``target_file`` as the file to extract. Set ``target_file=''``
+    If downloading a file from an archive, set the filepath of the zip as
+    ``path`` and set ``target_file`` as the file to extract. Set ``target_file=''``
     (empty string) to download the entire archive and return the directory
     path to the entire extracted archive.
 
@@ -208,10 +220,10 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
 
     def __init__(
         self,
-        filename: str,
+        path: str,
         target_file: Optional[str] = None,
     ):
-        _SingleFile.__init__(self, filename)
+        _SingleFile.__init__(self, path)
 
         from pyvista.examples.downloads import (
             USER_DATA_PATH,
@@ -220,34 +232,34 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             file_from_files,
         )
 
-        self._download_source = filename
+        self._download_source = path
         self._download_func = download_file
         if target_file is not None:
             # download from archive
             self._download_func = functools.partial(
                 _download_archive_file_or_folder, target_file=target_file
             )
-            # The filename currently points to the archive, not the target file itself
+            # The file path currently points to the archive, not the target file itself
             # Try to resolve the full path to the target file (without downloading) if
             # the archive already exists in the cache
             fullpath = None
-            if os.path.isfile(self.filename):
+            if os.path.isfile(self.path):
                 try:
                     # Get file path
-                    fullpath = file_from_files(target_file, self.filename)
+                    fullpath = file_from_files(target_file, self.path)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    fullpath = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
+                    fullpath = os.path.join(USER_DATA_PATH, path + '.unzip', target_file)
                     fullpath = fullpath if os.path.isdir(fullpath) else None
-            # set the filename as the relative path of the target file if
+            # set the file path as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
-            self._filename = target_file if fullpath is None else fullpath
+            self._path = target_file if fullpath is None else fullpath
 
     def download(self) -> str:
-        filename = self._download_func(self._download_source)
-        assert os.path.isfile(filename)
-        self._filename = filename
-        return filename
+        path = self._download_func(self._download_source)
+        assert os.path.isfile(path)
+        self._path = path
+        return path
 
 
 class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadable):
@@ -256,29 +268,29 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
     .. warning::
 
        ``download()`` should be called before accessing other attributes. Otherwise,
-       calling ``load()`` or ``filename`` may fail or produce unexpected results.
+       calling ``load()`` or ``path`` may fail or produce unexpected results.
 
     """
 
     def __init__(
         self,
-        filename: str,
+        path: str,
         read_func: Optional[
             Callable[[str], pyvista.DataSet | pyvista.Texture | NumpyArray[Any]]
         ] = None,
         load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
         target_file: Optional[str] = None,
     ):
-        _SingleFileLoadable.__init__(self, filename, read_func=read_func, load_func=load_func)
-        _SingleFileDownloadable.__init__(self, filename, target_file=target_file)
+        _SingleFileLoadable.__init__(self, path, read_func=read_func, load_func=load_func)
+        _SingleFileDownloadable.__init__(self, path, target_file=target_file)
 
     def download(self) -> str:
-        filename = self._download_func(self._download_source)
-        assert os.path.isfile(filename) or os.path.isdir(filename)
-        # Reset the filename since the full path for archive files
+        path = self._download_func(self._download_source)
+        assert os.path.isfile(path) or os.path.isdir(path)
+        # Reset the path since the full path for archive files
         # isn't known until after downloading
-        self._filename = filename
-        return filename
+        self._path = path
+        return path
 
 
 class _MultiFile(_FileProps[Tuple[str, ...], Tuple[int, ...]]):
@@ -306,7 +318,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
     Parameters
     ----------
     files_func
-        Specify the function which will return a sequence of :class:`_SingleFilename`
+        Specify the function which will return a sequence of :class:`_SingleFile`
         objects which are used by an example.
 
     load_func
@@ -333,13 +345,13 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
         return self._file_loaders_
 
     @property
-    def filename(self) -> Tuple[str, ...]:
-        return tuple([file.filename for file in self._file_loaders])
+    def path(self) -> Tuple[str, ...]:
+        return tuple([file.path for file in self._file_loaders])
 
     @property
-    def filename_loadable(self) -> Tuple[str, ...]:
+    def path_loadable(self) -> Tuple[str, ...]:
         return tuple(
-            [file.filename for file in self._file_loaders if isinstance(file, _SingleFileLoadable)]
+            [file.path for file in self._file_loaders if isinstance(file, _SingleFileLoadable)]
         )
 
     @property
@@ -360,11 +372,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
     ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
-        # Get reader for loadable files only
-        readers = tuple(
-            {file.reader for file in self._file_loaders if isinstance(file, _SingleFileLoadable)}
-        )
-        return readers[0] if len(readers) == 1 else tuple(readers)
+        return tuple([file.reader for file in self._file_loaders])
 
     def load(self):
         return self._load_func(self._file_loaders)
@@ -374,11 +382,9 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     """Wrap multiple files for downloading and loading."""
 
     def download(self) -> Tuple[str, ...]:
-        filename = [
-            file.download() for file in self._file_loaders if isinstance(file, _Downloadable)
-        ]
-        assert all(os.path.isfile(file) for file in filename)
-        return tuple(filename)
+        path = [file.download() for file in self._file_loaders if isinstance(file, _Downloadable)]
+        assert all(os.path.isfile(file) for file in path)
+        return tuple(path)
 
 
 def _download_example(
@@ -415,15 +421,15 @@ def _download_example(
 
     """
     # Download all files for the dataset, include any metafiles
-    filename = example.download()
+    path = example.download()
 
     # Exclude non-loadable metafiles from result (if any)
     if not metafiles and isinstance(example, _MultiFileDownloadableLoadable):
-        filename = example.filename_loadable
+        path = example.path_loadable
         # Return scalar if only one loadable file
-        filename = filename[0] if len(filename) == 1 else filename
+        path = path[0] if len(path) == 1 else path
 
-    return example.load() if load else filename
+    return example.load() if load else path
 
 
 def _load_as_multiblock(
@@ -437,7 +443,7 @@ def _load_as_multiblock(
     """
     block = pyvista.MultiBlock()
     names = (
-        [os.path.splitext(os.path.basename(file.filename))[0] for file in files]
+        [os.path.splitext(os.path.basename(file.path))[0] for file in files]
         if names is None
         else names
     )
@@ -456,18 +462,16 @@ def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> p
     Input may be a single directory with 6 cubemap files, or a sequence
     of 6 files
     """
-    filename = (
+    path = (
         files
         if isinstance(files, str)
-        else (
-            files.filename if isinstance(files, _SingleFile) else [file.filename for file in files]
-        )
+        else (files.path if isinstance(files, _SingleFile) else [file.path for file in files])
     )
 
     return (
-        pyvista.cubemap(filename)
+        pyvista.cubemap(path)
         if isinstance(files, str) and os.path.isdir(files)
-        else pyvista.cubemap_from_filenames(filename)
+        else pyvista.cubemap_from_filenames(path)
     )
 
 
@@ -521,29 +525,51 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     ][0]
 
 
-def _get_extension_from_filename(filename: Union[str, Sequence[str]]):
+def _get_extension(path: Union[str, Sequence[str]]):
+    """Return a unique set of file extensions from a path or paths."""
     ext_set = set()
-    fname_sequence = [filename] if isinstance(filename, str) else filename
+    fname_sequence = [path] if isinstance(path, str) else path
 
     # Add all file extensions to the set
     for file in fname_sequence:
         ext = _get_file_or_folder_ext(file)
-        if isinstance(ext, str):
-            ext_set.add(ext)
-        else:
-            ext_set.update(ext)
+        ext_set.add(ext) if isinstance(ext, str) else ext_set.update(ext)
 
     # Format output
     ext_output = list(ext_set)
     if len(ext_output) == 1:
         return ext_output[0]
     elif (
-        len(ext_output) == len(fname_sequence)
-        and isinstance(filename, str)
-        and not os.path.isdir(filename)
+        len(ext_output) == len(fname_sequence) and isinstance(path, str) and not os.path.isdir(path)
     ):
         # If num extensions matches num files, make
         # sure the extension order matches the fname order
-        return tuple([get_ext(name) for name in filename])
+        return tuple([get_ext(name) for name in path])
     else:
         return tuple(sorted(ext_output))
+
+
+def _get_reader_type(
+    reader: Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]
+) -> Optional[Union[Type[pyvista.BaseReader], Tuple[Type[pyvista.BaseReader], ...]]]:
+    """Return a reader type or tuple of unique reader types."""
+    if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):
+        return None
+    reader_set: Set[Union[pyvista.BaseReader, None]] = set()
+    reader_sequence = [reader] if not isinstance(reader, Sequence) else reader
+
+    # Add all reader types to the set and exclude any 'None' types
+    reader_set.update(reader_sequence)
+    reader_set.discard(None)
+    reader_set = cast(Set[pyvista.BaseReader], reader_set)  # type: ignore[assignment]
+
+    # Format output
+    reader_type = [type(r) for r in reader_set if r is not None]
+    if len(reader_type) == 1:
+        return reader_type[0]
+    elif len(reader_type) == len(reader_sequence):
+        # If num readers matches num files, make
+        # sure the reader order matches the file order
+        return tuple([type(r) for r in reader_sequence if r is not None])
+    else:
+        return tuple(reader_type)
