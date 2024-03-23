@@ -300,6 +300,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
     if isinstance(file_loader, (_SingleFileLoadable, _SingleFileDownloadableLoadable)):
         assert isinstance(file_loader, _Loadable)
         dataset = file_loader.load()
+        assert dataset is file_loader.dataset
         assert isinstance(dataset, pv.DataSet)
     else:
         with pytest.raises(AttributeError):
@@ -347,6 +348,7 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
 
     # test load
     dataset = multi_file_loader.load()
+    assert multi_file_loader.dataset is dataset
     if load_func is None:
         assert isinstance(dataset, tuple)
         assert np.array_equal(dataset[0].points, expected_airplane.points)
@@ -370,37 +372,66 @@ def test_file_loader_file_props():
     example.download()
     assert os.path.isfile(example.path)
     assert example.total_size == '59.0 KiB'
-    assert example.extension == '.vtp'
+    assert example.unique_extension == '.vtp'
     assert isinstance(example.reader, pv.XMLPolyDataReader)
-    assert example.reader_type is pv.XMLPolyDataReader
+    assert example.unique_reader_type is pv.XMLPolyDataReader
 
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
     assert all(os.path.isfile(file) for file in example.path)
     assert example.total_size == '122.3 KiB'
-    assert example.extension == ('.mhd', '.raw')
+    assert example.unique_extension == ('.mhd', '.raw')
     assert pv.get_ext(example.path[0]) == '.mhd'
     assert pv.get_ext(example.path[1]) == '.raw'
     assert len(example.reader) == 2
     assert isinstance(example.reader[0], pv.MetaImageReader)
     assert example.reader[1] is None
-    assert example.reader_type is pv.MetaImageReader
+    assert example.unique_reader_type is pv.MetaImageReader
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.ImageData
+    assert example.unique_dataset_type is pv.ImageData
 
     # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
     assert os.path.isdir(example.path)
     assert example.total_size == '591.9 KiB'
-    assert example.extension == '.jpg'
+    assert example.unique_extension == '.jpg'
     assert example.reader is None
-    assert example.reader_type is None
+    assert example.unique_reader_type is None
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.Texture
+    assert example.unique_dataset_type is pv.Texture
 
     # test directory (dicom stack)
     example = downloads._example_dicom_stack
     example.download()
     assert os.path.isdir(example.path)
     assert example.total_size == '1.5 MiB'
-    assert example.extension == '.dcm'
+    assert example.unique_extension == '.dcm'
     assert isinstance(example.reader, pv.DICOMReader)
-    assert example.reader_type is pv.DICOMReader
+    assert example.unique_reader_type is pv.DICOMReader
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.ImageData
+    assert example.unique_dataset_type is pv.ImageData
+
+    # test multiblock dataset
+    example = downloads._example_dual_sphere_animation
+    example.download()
+    assert os.path.isfile(example.path)
+    assert example.total_size == '2.4 KiB'
+    assert example.unique_extension == '.pvd'
+    assert isinstance(example.reader, pv.PVDReader)
+    assert example.unique_reader_type is pv.PVDReader
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.MultiBlock
+    assert set(example.unique_dataset_type) == {pv.MultiBlock, pv.PolyData}

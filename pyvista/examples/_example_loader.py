@@ -47,9 +47,14 @@ from typing import (
     runtime_checkable,
 )
 
-import pyvista
+import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
+
+DatasetType = Union[pv.DataSet, pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
+DatasetTypeType = Union[
+    Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]
+]
 
 # define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -70,9 +75,9 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         return 1 if isinstance(self.path, str) else len(self.path)
 
     @property
-    def extension(self) -> Union[str, Tuple[str, ...]]:
-        """Return the file extension(s) of all files."""
-        return _get_extension(self.path)
+    def unique_extension(self) -> Union[str, Tuple[str, ...]]:
+        """Return the unique file extension(s) from all files."""
+        return _get_unique_extension(self.path)
 
     @property
     @abstractmethod
@@ -90,22 +95,28 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the total size of all files."""
 
     @property
+    @abstractmethod
     def reader(
         self,
-    ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
+    ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         """Return the base file reader(s) used to read the files."""
 
     @property
-    def reader_type(
+    def unique_reader_type(
         self,
-    ) -> Optional[Union[Type[pyvista.BaseReader], Tuple[Type[pyvista.BaseReader], ...]]]:
-        """Return the file extension(s) of all files."""
-        return _get_reader_type(self.reader)
+    ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
+        """Return unique reader type(s) from all file readers."""
+        return _get_unique_reader_type(self.reader)
 
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
     """Class which implements a 'download' method."""
+
+    @property
+    @abstractmethod
+    def path(self) -> _FilePropStrType_co:
+        """Return the file path of downloaded file."""
 
     @abstractmethod
     def download(self) -> _FilePropStrType_co:
@@ -113,11 +124,16 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
 
 @runtime_checkable
-class _Loadable(Protocol):
-    """Class which implements a 'load' method."""
+class _Loadable(Protocol[_FilePropStrType_co]):
+    """Class which loads a dataset from file."""
+
+    @property
+    @abstractmethod
+    def dataset(self) -> Optional[DatasetType]:
+        """Return the loaded dataset object."""
 
     @abstractmethod
-    def load(self) -> Any:
+    def load(self) -> DatasetType:
         """Load the dataset."""
 
 
@@ -146,11 +162,11 @@ class _SingleFile(_FileProps[str, int]):
         return self._filesize_format
 
     @property
-    def reader(self) -> Optional[pyvista.BaseReader]:
+    def reader(self) -> Optional[pv.BaseReader]:
         return None
 
 
-class _SingleFileLoadable(_SingleFile, _Loadable):
+class _SingleFileLoadable(_SingleFile, _Loadable[str]):
     """Wrap a single file for loading.
 
     Specify the read function and/or load functions for reading and processing the
@@ -182,29 +198,39 @@ class _SingleFileLoadable(_SingleFile, _Loadable):
     def __init__(
         self,
         path: str,
-        read_func: Optional[
-            Callable[[str], pyvista.DataSet | pyvista.Texture | NumpyArray[Any]]
-        ] = None,
-        load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
+        read_func: Optional[Callable[[str], DatasetType]] = None,
+        load_func: Optional[Callable[[pv.DataSet], Any]] = None,
     ):
         _SingleFile.__init__(self, path)
-        self._read_func = pyvista.read if read_func is None else read_func
+        self._read_func = pv.read if read_func is None else read_func
         self._load_func = load_func
+        self._dataset = None
 
     @property
-    def reader(self) -> Optional[pyvista.BaseReader]:
+    def dataset(self) -> Optional[DatasetType]:
+        return self._dataset
+
+    @property
+    def unique_dataset_type(self) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+        return _get_unique_dataset_type(self.dataset)
+
+    @property
+    def reader(self) -> Optional[pv.BaseReader]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
-            return pyvista.get_reader(self.path)
+            return pv.get_reader(self.path)
         except ValueError:
             # Cannot be read directly (requires custom reader)
             return None
 
     def load(self):
-        if self._load_func is None:
-            return self._read_func(self.path)
-        return self._load_func(self._read_func(self.path))
+        self._dataset = (
+            self._read_func(self.path)
+            if self._load_func is None
+            else self._load_func(self._read_func(self.path))
+        )
+        return self.dataset
 
 
 class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
@@ -274,10 +300,8 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
     def __init__(
         self,
         path: str,
-        read_func: Optional[
-            Callable[[str], pyvista.DataSet | pyvista.Texture | NumpyArray[Any]]
-        ] = None,
-        load_func: Optional[Callable[[pyvista.DataSet], Any]] = None,
+        read_func: Optional[Callable[[str], DatasetType]] = None,
+        load_func: Optional[Callable[[pv.DataSet], Any]] = None,
         target_file: Optional[str] = None,
     ):
         _SingleFileLoadable.__init__(self, path, read_func=read_func, load_func=load_func)
@@ -296,7 +320,7 @@ class _MultiFile(_FileProps[Tuple[str, ...], Tuple[int, ...]]):
     """Wrap multiple files."""
 
 
-class _MultiFileLoadable(_MultiFile, _Loadable):
+class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     """Wrap multiple files for loading.
 
     Some use cases for loading multi-file examples include:
@@ -336,6 +360,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
         if load_func is None:
             load_func = _load_all
         self._load_func = load_func
+        self._dataset = None
 
     @property
     def _file_loaders(self):
@@ -368,13 +393,25 @@ class _MultiFileLoadable(_MultiFile, _Loadable):
     @property
     def reader(
         self,
-    ) -> Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]:
+    ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         return tuple([file.reader for file in self._file_loaders])
 
+    @property
+    def unique_dataset_type(
+        self,
+    ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+        """Return unique dataset type(s) from all datasets."""
+        return _get_unique_dataset_type(self.dataset)
+
+    @property
+    def dataset(self) -> Optional[DatasetType]:
+        return self._dataset
+
     def load(self):
-        return self._load_func(self._file_loaders)
+        self._dataset = self._load_func(self._file_loaders)
+        return self.dataset
 
 
 class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str, ...]]):
@@ -409,7 +446,7 @@ def _download_example(
         returned. E.g if a file format uses two files to specify the header info
         and file data separately, setting ``metafiles=True`` will return a tuple
         with both file paths, whereas setting ``metafiles=False`` will only return
-        the single path of the data file as a string.
+        the single path of the header file as a string.
 
     Returns
     -------
@@ -433,14 +470,14 @@ def _download_example(
 
 def _load_as_multiblock(
     files: Sequence[_SingleFile], names: Optional[Sequence[str]] = None
-) -> pyvista.MultiBlock:
+) -> pv.MultiBlock:
     """Load multiple files as a MultiBlock.
 
     This function can be used as a loading function for :class:`MultiFileLoadable`
     If the use of the ``names`` parameter is needed, use :class:`functools.partial`
     to partially specify the names parameter before passing it as loading function.
     """
-    block = pyvista.MultiBlock()
+    block = pv.MultiBlock()
     names = (
         [os.path.splitext(os.path.basename(file.path))[0] for file in files]
         if names is None
@@ -448,14 +485,14 @@ def _load_as_multiblock(
     )
     assert len(names) == len(files)
     [
-        block.append(file.load(), name)
+        block.append(file.load(), name)  # type: ignore[arg-type]
         for file, name in zip(files, names)
         if isinstance(file, _Loadable)
     ]
     return block
 
 
-def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pyvista.Texture:
+def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pv.Texture:
     """Load multiple files as a cubemap.
 
     Input may be a single directory with 6 cubemap files, or a sequence
@@ -468,9 +505,9 @@ def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> p
     )
 
     return (
-        pyvista.cubemap(path)
+        pv.cubemap(path)
         if isinstance(files, str) and os.path.isdir(files)
-        else pyvista.cubemap_from_filenames(path)
+        else pv.cubemap_from_filenames(path)
     )
 
 
@@ -482,7 +519,7 @@ def _load_all(files: Sequence[_SingleFile]):
 
 
 def _load_and_merge(files: Sequence[_SingleFile]):
-    return pyvista.merge(_load_all(files))
+    return pv.merge(_load_all(files))
 
 
 def _get_file_or_folder_size(filepath) -> int:
@@ -524,8 +561,8 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     ][0]
 
 
-def _get_extension(path: Union[str, Sequence[str]]):
-    """Return a unique set of file extensions from a path or paths."""
+def _get_unique_extension(path: Union[str, Sequence[str]]):
+    """Return a file extension or unique set of file extensions from a path or paths."""
     ext_set = set()
     fname_sequence = [path] if isinstance(path, str) else path
 
@@ -548,13 +585,13 @@ def _get_extension(path: Union[str, Sequence[str]]):
         return tuple(sorted(ext_output))
 
 
-def _get_reader_type(
-    reader: Optional[Union[pyvista.BaseReader, Tuple[Optional[pyvista.BaseReader], ...]]]
-) -> Optional[Union[Type[pyvista.BaseReader], Tuple[Type[pyvista.BaseReader], ...]]]:
+def _get_unique_reader_type(
+    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]
+) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
     """Return a reader type or tuple of unique reader types."""
     if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):
         return None
-    reader_set: Set[Type[pyvista.BaseReader]] = set()
+    reader_set: Set[Type[pv.BaseReader]] = set()
     reader_type = (
         [type(reader)]
         if not isinstance(reader, Sequence)
@@ -574,3 +611,30 @@ def _get_reader_type(
         return tuple(reader_type)
     else:
         return tuple(reader_output)
+
+
+def _get_unique_dataset_type(
+    dataset: Optional[DatasetType],
+) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+    """Return a dataset type or tuple of unique dataset types."""
+    if dataset is None or (isinstance(dataset, Sequence) and all(d is None for d in dataset)):
+        return None
+    dataset_set: Set[DatasetTypeType] = set()
+    if isinstance(dataset, Sequence):
+        [dataset_set.add(type(d)) for d in dataset if d is not None]  # type: ignore[func-returns-value]
+    else:
+        dataset_set.add(type(dataset))
+
+    dataset_set.add(pv.MultiBlock) if isinstance(dataset, pv.MultiBlock) else None
+
+    dataset_output = tuple(dataset_set)
+
+    # Format output
+    if len(dataset_output) == 1:
+        return dataset_output[0]
+    # elif len(dataset_set) == len(dataset_output):
+    #     # If num datasets matches num files, make
+    #     # sure the dataset order matches the file order
+    #     return tuple(dataset_type)
+    else:
+        return tuple(dataset_output)

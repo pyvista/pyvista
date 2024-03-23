@@ -16,6 +16,7 @@ CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
 DOWNLOADS_TABLE_DIR = "api/examples"
 EXAMPLES_THUMBNAIL_IMAGES_DIR = "images/examples-thumbnails"
+NOT_AVAILABLE_IMG_PATH = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
 
 
 def _aligned_dedent(txt):
@@ -360,10 +361,11 @@ class DownloadsMetadataTable(DocTable):
         |
         |   * - {}
         |
-        |       - Size on Disk: ``{}``
-        |       - Num Files: ``{}``
+        |       - Size on Disk: {}
+        |       - Num Files: {}
         |       - Extension: {}
         |       - Reader: {}
+        |       - Dataset Type: {}
         |       - Representation: {}
         |
         |     - .. image:: /{}
@@ -407,82 +409,90 @@ class DownloadsMetadataTable(DocTable):
             loader.download()
         except VTKVersionError:
             na = 'Not available'
-            file_size, num_files, file_ext, reader_type, repr_rst, img_rst = na, na, na, na, na, na
-            return cls.row_template.format(
-                func_fullname,
-                doc_line,
-                file_size,
-                num_files,
-                file_ext,
-                reader_type,
+            img_path = NOT_AVAILABLE_IMG_PATH
+            (
+                file_size_rst,
+                num_files_rst,
+                file_ext_rst,
+                reader_type_rst,
+                dataset_type_rst,
                 repr_rst,
-                img_rst,
+            ) = (na, na, na, na, na, na)
+        else:
+            # Get file info
+            file_size_rst = '``' + loader.total_size + '``'
+            num_files_rst = '``' + str(loader.num_files) + '``'
+            # Format extension as single str with rst backticks
+            file_ext = loader.unique_extension
+            file_ext_str = (
+                file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
+            )
+            file_ext_rst = '``\'' + file_ext_str.replace(' ', '\'``, ``\'') + '\'``'
+            # Format reader type as rst linked to class
+            reader_type_rst = (
+                repr(loader.unique_reader_type)
+                .replace('<class \'', ':class:`~')
+                .replace('\'>', '`')
+                .replace('(', '')
+                .replace(')', '')
             )
 
-        # Get file info
-        file_size = loader.total_size
-        num_files = loader.num_files
-        # Format extension as single str with rst backticks
-        file_ext = loader.extension
-        file_ext_str = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-        file_ext_rst = '``\'' + file_ext_str.replace(' ', '\'``, ``\'') + '\'``'
-        # Format reader type as rst linked to class
-        reader_type_rst = (
-            repr(loader.reader_type)
-            .replace('<class \'', ':class:`~')
-            .replace('\'>', '`')
-            .replace('(', '')
-            .replace(')', '')
-        )
+            # Get instance info
+            dataset = loader.load()
+            dataset_type_rst = (
+                repr(loader.unique_dataset_type)
+                .replace('<class \'', ':class:`~')
+                .replace('\'>', '`')
+                .replace('(', '')
+                .replace(')', '')
+            )
+            # Format repr as literal block
+            repr_rst = '::\n\n' + repr(dataset)
+            repr_rst = repr_rst.replace('\n', '\n|           ')
+            repr_rst = _aligned_dedent(repr_rst)
+            # Replace any hex code memory addresses with ellipses
+            repr_rst = re.sub(
+                pattern=r'0x[0-9a-f]*',
+                repl='...',
+                string=repr_rst,
+            )
 
-        # Get instance info
-        dataset = loader.load()
-        # Format repr as literal block
-        repr_rst = '::\n\n' + repr(dataset)
-        repr_rst = repr_rst.replace('\n', '\n|           ')
-        repr_rst = _aligned_dedent(repr_rst)
-        # Replace any hex code memory addresses with ellipses
-        repr_rst = re.sub(
-            pattern=r'0x[0-9a-f]*',
-            repl='...',
-            string=repr_rst,
-        )
+            # Search for the file name from all images in the thumbnail directory.
+            # Match:
+            #     any word character(s), then function name, then any non-word character(s),
+            #     then a 3 or 4 character file extension, e.g.:
+            #       'pyvista-examples...download_name...ext'
+            #     or simply:
+            #       'download_name.ext'
+            all_filenames = '\n' + '\n'.join(os.listdir(EXAMPLES_THUMBNAIL_IMAGES_DIR)) + '\n'
+            match = re.search(
+                pattern=r'\n([\w|\-]*' + download_name + r'(\-\w*\.|\.)[a-z]{3})\n',
+                string=all_filenames,
+                flags=re.MULTILINE,
+            )
 
-        # Search for the file name from all images in the thumbnail directory.
-        # Match:
-        #     any word character(s), then function name, then any non-word character(s),
-        #     then a 3 or 4 character file extension, e.g.:
-        #       'pyvista-examples...download_name...ext'
-        #     or simply:
-        #       'download_name.ext'
-        all_filenames = '\n' + '\n'.join(os.listdir(EXAMPLES_THUMBNAIL_IMAGES_DIR)) + '\n'
-        match = re.search(
-            pattern=r'\n([\w|\-]*' + download_name + r'(\-\w*\.|\.)[a-z]{3})\n',
-            string=all_filenames,
-            flags=re.MULTILINE,
-        )
-
-        if match:
-            groups = match.groups()
-            assert (
-                sum(download_name in grp for grp in groups) <= 1
-            ), f"More than one thumbnail image was found for {download_name}, got:\n{groups}"
-            img_fname = groups[0]
-            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
-            assert os.path.isfile(img_path)
-        else:
-            print(f"WARNING: Missing thumbnail image file for \'{download_name}\'")
-            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
+            if match:
+                groups = match.groups()
+                assert (
+                    sum(download_name in grp for grp in groups) <= 1
+                ), f"More than one thumbnail image was found for {download_name}, got:\n{groups}"
+                img_fname = groups[0]
+                img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
+                assert os.path.isfile(img_path)
+            else:
+                print(f"WARNING: Missing thumbnail image file for \'{download_name}\'")
+                img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
 
         cls.process_img(img_path)
 
         return cls.row_template.format(
             func_fullname,
             doc_line,
-            file_size,
-            num_files,
+            file_size_rst,
+            num_files_rst,
             file_ext_rst,
             reader_type_rst,
+            dataset_type_rst,
             repr_rst,
             img_path,
         )
