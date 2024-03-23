@@ -56,9 +56,10 @@ DatasetTypeType = Union[
     Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]
 ]
 
-# define TypeVars for two main class definitions used by this module:
+# Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
 #   2. classes for multi-file inputs: (T, ...) -> (T, ...)
+# Any properties with these typevars should have a one-to-one mapping for all files
 _FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
 _FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
 
@@ -102,6 +103,18 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the base file reader(s) used to read the files."""
 
     @property
+    @abstractmethod
+    def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
+        """Return the loaded dataset object."""
+
+    @property
+    def unique_dataset_type(
+        self,
+    ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+        """Return unique dataset type(s) from all datasets."""
+        return _get_unique_dataset_type(self.dataset)
+
+    @property
     def unique_reader_type(
         self,
     ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
@@ -129,7 +142,7 @@ class _Loadable(Protocol[_FilePropStrType_co]):
 
     @property
     @abstractmethod
-    def dataset(self) -> Optional[DatasetType]:
+    def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
         """Return the loaded dataset object."""
 
     @abstractmethod
@@ -209,10 +222,6 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
     @property
     def dataset(self) -> Optional[DatasetType]:
         return self._dataset
-
-    @property
-    def unique_dataset_type(self) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
-        return _get_unique_dataset_type(self.dataset)
 
     @property
     def reader(self) -> Optional[pv.BaseReader]:
@@ -397,13 +406,6 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         return tuple([file.reader for file in self._file_loaders])
-
-    @property
-    def unique_dataset_type(
-        self,
-    ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
-        """Return unique dataset type(s) from all datasets."""
-        return _get_unique_dataset_type(self.dataset)
 
     @property
     def dataset(self) -> Optional[DatasetType]:
@@ -614,27 +616,26 @@ def _get_unique_reader_type(
 
 
 def _get_unique_dataset_type(
-    dataset: Optional[DatasetType],
+    dataset: Optional[Union[DatasetType, Tuple[DatasetType, ...]]],
 ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
     """Return a dataset type or tuple of unique dataset types."""
     if dataset is None or (isinstance(dataset, Sequence) and all(d is None for d in dataset)):
         return None
     dataset_set: Set[DatasetTypeType] = set()
     if isinstance(dataset, Sequence):
+        # Include all sub-dataset types from tuple[datataset, ...] or MultiBlock[dataset, ...]
         [dataset_set.add(type(d)) for d in dataset if d is not None]  # type: ignore[func-returns-value]
     else:
         dataset_set.add(type(dataset))
 
-    dataset_set.add(pv.MultiBlock) if isinstance(dataset, pv.MultiBlock) else None
-
-    dataset_output = tuple(dataset_set)
-
-    # Format output
-    if len(dataset_output) == 1:
-        return dataset_output[0]
-    # elif len(dataset_set) == len(dataset_output):
-    #     # If num datasets matches num files, make
-    #     # sure the dataset order matches the file order
-    #     return tuple(dataset_type)
+    # Add MultiBlock type itself to output and make sure it's the first entry
+    if isinstance(dataset, pv.MultiBlock):
+        dataset_set.add(pv.MultiBlock)
+        dataset_set.discard(pv.MultiBlock)
+        dataset_list = list(dataset_set)
+        dataset_list.insert(0, pv.MultiBlock)
+        dataset_output = tuple(dataset_list)
     else:
-        return tuple(dataset_output)
+        dataset_output = tuple(dataset_set)
+
+    return dataset_output[0] if len(dataset_output) == 1 else dataset_output

@@ -394,6 +394,24 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
 
+    # test multiple files, both of which are loaded as a multiblock
+    example = downloads._example_bolt_nut
+    example.download()
+    assert len(example.path) == 2
+    assert os.path.isfile(example.path[0])
+    assert os.path.isfile(example.path[1])
+    assert example.total_size == '129.7 KiB'
+    assert example.unique_extension == '.slc'
+    assert len(example.reader) == 2
+    assert isinstance(example.reader[0], pv.SLCReader)
+    assert isinstance(example.reader[1], pv.SLCReader)
+    assert example.unique_reader_type is pv.SLCReader
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.MultiBlock
+    assert example.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
+
     # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
@@ -421,17 +439,3 @@ def test_file_loader_file_props():
     example.load()
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
-
-    # test multiblock dataset
-    example = downloads._example_dual_sphere_animation
-    example.download()
-    assert os.path.isfile(example.path)
-    assert example.total_size == '2.4 KiB'
-    assert example.unique_extension == '.pvd'
-    assert isinstance(example.reader, pv.PVDReader)
-    assert example.unique_reader_type is pv.PVDReader
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.MultiBlock
-    assert set(example.unique_dataset_type) == {pv.MultiBlock, pv.PolyData}
