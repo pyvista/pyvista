@@ -33,7 +33,7 @@ os.listdir(os.path.join(path, "T0000000500"))
 # Note that a ``.pvtu`` file is available alongside a directory. This
 # directory contains all the parallel files or pieces that make the whole mesh.
 # We can simply read the ``.pvtu`` file and VTK will handle putting the mesh
-# together.
+# together. In PyVista, this is accomplished through :func:`pyvista.read`.
 mesh = pv.read(filename)
 mesh
 
