@@ -15,6 +15,7 @@ import pyvista.examples
 from pyvista.examples import downloads
 from pyvista.examples._example_loader import (
     _Downloadable,
+    _format_file_size,
     _load_and_merge,
     _load_as_multiblock,
     _Loadable,
@@ -371,7 +372,7 @@ def test_file_loader_file_props():
     example = downloads._example_cow
     example.download()
     assert os.path.isfile(example.path)
-    assert example.total_size == '59.0 KiB'
+    assert example.total_size == '60.4 KB'
     assert example.unique_extension == '.vtp'
     assert isinstance(example.reader, pv.XMLPolyDataReader)
     assert example.unique_reader_type is pv.XMLPolyDataReader
@@ -380,7 +381,7 @@ def test_file_loader_file_props():
     example = downloads._example_head
     example.download()
     assert all(os.path.isfile(file) for file in example.path)
-    assert example.total_size == '122.3 KiB'
+    assert example.total_size == '125.2 KB'
     assert example.unique_extension == ('.mhd', '.raw')
     assert pv.get_ext(example.path[0]) == '.mhd'
     assert pv.get_ext(example.path[1]) == '.raw'
@@ -400,7 +401,7 @@ def test_file_loader_file_props():
     assert len(example.path) == 2
     assert os.path.isfile(example.path[0])
     assert os.path.isfile(example.path[1])
-    assert example.total_size == '129.7 KiB'
+    assert example.total_size == '132.8 KB'
     assert example.unique_extension == '.slc'
     assert len(example.reader) == 2
     assert isinstance(example.reader[0], pv.SLCReader)
@@ -416,7 +417,7 @@ def test_file_loader_file_props():
     example = downloads._example_cubemap_park
     example.download()
     assert os.path.isdir(example.path)
-    assert example.total_size == '591.9 KiB'
+    assert example.total_size == '606.1 KB'
     assert example.unique_extension == '.jpg'
     assert example.reader is None
     assert example.unique_reader_type is None
@@ -430,7 +431,7 @@ def test_file_loader_file_props():
     example = downloads._example_dicom_stack
     example.download()
     assert os.path.isdir(example.path)
-    assert example.total_size == '1.5 MiB'
+    assert example.total_size == '1.6 MB'
     assert example.unique_extension == '.dcm'
     assert isinstance(example.reader, pv.DICOMReader)
     assert example.unique_reader_type is pv.DICOMReader
@@ -439,3 +440,20 @@ def test_file_loader_file_props():
     example.load()
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
+
+
+def test_format_file_size():
+    assert _format_file_size(999) == '999 B'
+    assert _format_file_size(1000) == '1.0 KB'
+
+    assert _format_file_size(999949) == '999.9 KB'
+    assert _format_file_size(999950) == '1.0 MB'
+    assert _format_file_size(1000000) == '1.0 MB'
+
+    assert _format_file_size(999949000) == '999.9 MB'
+    assert _format_file_size(999950000) == '1.0 GB'
+    assert _format_file_size(1000000000) == '1.0 GB'
+
+    assert _format_file_size(999949000000) == '999.9 GB'
+    assert _format_file_size(999950000000) == '1000.0 GB'
+    assert _format_file_size(1000000000000) == '1000.0 GB'

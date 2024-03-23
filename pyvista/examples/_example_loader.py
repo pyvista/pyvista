@@ -103,9 +103,9 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the base file reader(s) used to read the files."""
 
     @property
-    @abstractmethod
     def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
-        """Return the loaded dataset object."""
+        """Return dataset object(s)."""
+        return None
 
     @property
     def unique_dataset_type(
@@ -143,7 +143,7 @@ class _Loadable(Protocol[_FilePropStrType_co]):
     @property
     @abstractmethod
     def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
-        """Return the loaded dataset object."""
+        """Return the loaded dataset object(s)."""
 
     @abstractmethod
     def load(self) -> DatasetType:
@@ -532,12 +532,13 @@ def _get_file_or_folder_size(filepath) -> int:
     return sum(os.path.getsize(file) for file in all_filepaths)
 
 
-def _format_file_size(size):
-    for unit in ("B", "KiB", "MiB"):
-        if abs(size) < 1024.0:
-            return f"{size:3.1f} {unit}"
-        size /= 1024.0
-    return f"{size:.1f} GiB"
+def _format_file_size(size: int) -> str:
+    size_flt = float(size)
+    for unit in ('B', 'KB', 'MB'):
+        if round(size_flt * 10) / 10 < 1000.0:
+            return f"{int(size_flt)} {unit}" if unit == 'B' else f"{size_flt:3.1f} {unit}"
+        size_flt /= 1000.0
+    return f"{size_flt:.1f} GB"
 
 
 def _get_file_or_folder_ext(filepath):
