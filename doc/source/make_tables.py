@@ -5,8 +5,6 @@ import io
 import os
 import re
 import textwrap
-from types import FunctionType, ModuleType
-from typing import Dict, Iterable, Type, TypeVar
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -17,7 +15,7 @@ CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
 DOWNLOADS_TABLE_DIR = "api/examples"
-PREVIEW_EXAMPLES_IMAGES_DIR = "images/preview-examples"
+EXAMPLES_THUMBNAIL_IMAGES_DIR = "images/examples-thumbnails"
 
 
 def _aligned_dedent(txt):
@@ -354,30 +352,30 @@ class DownloadsMetadataTable(DocTable):
     row_template = _aligned_dedent(
         """
         |.. list-table:: :func:`~{}`
-        |   :widths: 50 50
+        |   :widths: 60 40
         |   :header-rows: 1
         |
         |   * - Info
-        |     - Preview
+        |     - Thumbnail
         |
         |   * - {}
         |
-        |       - Size on Disk: {}
-        |       - Num Files: {}
+        |       - Size on Disk: ``{}``
+        |       - Num Files: ``{}``
         |       - Extension: {}
         |       - Reader: {}
         |       - Representation: {}
         |
-        |     - {}
+        |     - .. image:: /{}
         """
     )
 
     @classmethod
     def fetch_data(cls):
-        os.makedirs(PREVIEW_EXAMPLES_IMAGES_DIR, exist_ok=True)
+
         # Collect all `_example_<name>` file loaders
         module_members = dict(inspect.getmembers(pv.examples.downloads))
-        example_file_loaders = {
+        file_loaders_dict = {
             name: item
             for name, item in module_members.items()
             if name.startswith('_example_')
@@ -389,12 +387,7 @@ class DownloadsMetadataTable(DocTable):
                 ),
             )
         }
-        # new = dict(example_file_loaders)
-        # for i, key in enumerate(example_file_loaders):
-        #     if i < 100:
-        #         new.pop(key)
-        # example_file_loaders = new
-        return sorted(example_file_loaders.items())
+        return sorted(file_loaders_dict.items())
 
     @classmethod
     def get_header(cls, data):
@@ -410,10 +403,10 @@ class DownloadsMetadataTable(DocTable):
         func_fullname = _get_fullname(download_func)
         doc_line = download_func.__doc__.splitlines()[0]
 
-        na = 'Not available'
         try:
             loader.download()
         except VTKVersionError:
+            na = 'Not available'
             file_size, num_files, file_ext, reader_type, repr_rst, img_rst = na, na, na, na, na, na
             return cls.row_template.format(
                 func_fullname,
@@ -429,9 +422,12 @@ class DownloadsMetadataTable(DocTable):
         # Get file info
         file_size = loader.total_size
         num_files = loader.num_files
-        file_ext = '\'' + str(loader.extension) + '\''
-        file_ext = file_ext if isinstance(file_ext, str) else '\' \''.join('\'' + file_ext)
-        reader_type = (
+        # Format extension as single str with rst backticks
+        file_ext = loader.extension
+        file_ext_str = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
+        file_ext_rst = '``\'' + file_ext_str.replace(' ', '\'``, ``\'') + '\'``'
+        # Format reader type as rst linked to class
+        reader_type_rst = (
             repr(loader.reader_type)
             .replace('<class \'', ':class:`~')
             .replace('\'>', '`')
@@ -441,112 +437,84 @@ class DownloadsMetadataTable(DocTable):
 
         # Get instance info
         dataset = loader.load()
-        # Format repr
+        # Format repr as literal block
         repr_rst = '::\n\n' + repr(dataset)
         repr_rst = repr_rst.replace('\n', '\n|           ')
         repr_rst = _aligned_dedent(repr_rst)
-        # Replace any types with linkable references to the class doc(s)
-        class_list = [
-            'PolyData',
-            'ImageData',
-            'MultiBlock',
-            'Texture',
-            'UnstructuredGrid',
-            'RectilinearGrid',
-            'StructuredGrid',
-        ]
-        for _class in class_list:
-            repr_rst = re.sub(
-                pattern=_class + r'.*?\n',
-                repl=r':class:`~pyvista.' + _class + '`\n',
-                string=repr_rst,
-            )
+        # Replace any hex code memory addresses with ellipses
+        repr_rst = re.sub(
+            pattern=r'0x[0-9a-f]*',
+            repl='...',
+            string=repr_rst,
+        )
 
-        # Create a preview image of the dataset
-        img_path = f"{PREVIEW_EXAMPLES_IMAGES_DIR}/{download_name}.png"
-        try:
-            cls.generate_img(dataset, img_path)
-            img_rst = '..image:: ' + img_path
-        except NotImplementedError:
-            # Cannot generate image for this example (e.g. loading arbitrary numpy array)
-            img_rst = na
-        except (RuntimeError, AttributeError, ValueError, TypeError, FileNotFoundError):
-            raise RuntimeError(
-                f"Unable to generate a preview image for example \'{download_name}\'"
-            )
+        # Search for the file name from all images in the thumbnail directory.
+        # Match:
+        #     any word character(s), then function name, then any non-word character(s),
+        #     then a 3 or 4 character file extension, e.g.:
+        #       'pyvista-examples...download_name...ext'
+        #     or simply:
+        #       'download_name.ext'
+        all_filenames = '\n' + '\n'.join(os.listdir(EXAMPLES_THUMBNAIL_IMAGES_DIR)) + '\n'
+        match = re.search(
+            pattern=r'\n([\w|\-]*' + download_name + r'(\-\w*\.|\.)[a-z]{3})\n',
+            string=all_filenames,
+            flags=re.MULTILINE,
+        )
+
+        if match:
+            groups = match.groups()
+            assert (
+                sum(download_name in grp for grp in groups) <= 1
+            ), f"More than one thumbnail image was found for {download_name}, got:\n{groups}"
+            img_fname = groups[0]
+            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
+            assert os.path.isfile(img_path)
+        else:
+            print(f"WARNING: Missing thumbnail image file for \'{download_name}\'")
+            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
+
+        cls.process_img(img_path)
 
         return cls.row_template.format(
             func_fullname,
             doc_line,
             file_size,
             num_files,
-            file_ext,
-            reader_type,
+            file_ext_rst,
+            reader_type_rst,
             repr_rst,
-            img_rst,
+            img_path,
         )
 
     @staticmethod
-    def generate_img(dataset, img_path):
-        """Generate and save an image of the given download object."""
-        p = pv.Plotter(off_screen=True, window_size=[300, 300])
-        p.background_color = 'w'
-
-        # Clear any point or cell data except for image data
-        try:
-            if isinstance(dataset, Iterable):
-                [data.clear_data() for data in dataset if not isinstance(dataset, pv.ImageData)]
-            else:
-                dataset.clear_data() if not isinstance(dataset, pv.ImageData) else None
-        except AttributeError:
-            pass
-
-        if isinstance(dataset, pv.Texture):
-            dims = dataset.dimensions
-            p.add_mesh(pv.Plane(i_size=dims[0], j_size=dims[1]), texture=dataset)
-            p.view_xy()
-        elif isinstance(dataset, pv.ImageData):
-            if any(dim == 1 for dim in dataset.dimensions):
-                p.add_mesh(dataset)
-                p.view_xy()
-            else:
-                try:
-                    p.add_volume(dataset)
-                except Exception:
-                    p.add_mesh(dataset)
-        elif isinstance(dataset, (tuple, pv.MultiBlock)):
-            p.add_composite(dataset)
-        else:
-            p.add_mesh(dataset)
-        img_array = p.show(screenshot=True)
-
-        # # exit early if the image already exists and is the same
-        # if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
-        #     return
-        # save it
-        del p
-        del dataset
+    def process_img(img_path):
+        """Process the thumbnail image to ensure it's the right size."""
         from PIL import Image
 
-        Image.fromarray(img_array).save(img_path)
-        return
+        IMG_WIDTH, IMG_HEIGHT = 300, 300
 
+        if os.path.basename(img_path) == 'not_available.png':
+            not_available_mesh = pv.Text3D('Not Available')
+            p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+            p.background_color = 'white'
+            p.add_mesh(not_available_mesh, color='black')
+            p.view_xy()
+            p.camera.up = (1, 1, 0)
+            img_array = p.show(screenshot=True)
 
-_TypeType = TypeVar('_TypeType', bound=Type)
+            # exit early if the image is the same
+            if os.path.isfile(img_path) and pv.compare_images(img_path, img_path) < 1:
+                return
 
-
-def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
-    """Get all members of a specified type which are defined locally inside a module."""
-
-    def is_local(obj):
-        return type(obj) is typ and obj.__module__ == module.__name__
-
-    return dict(inspect.getmembers(module, predicate=is_local))
-
-
-def _get_module_functions(module: ModuleType):
-    """Get all functions defined locally inside a module."""
-    return _get_module_members(module, typ=FunctionType)
+            img = Image.fromarray(img_array)
+            img.save(img_path)
+        else:
+            # Resize existing image if necessary
+            img = Image.open(img_path)
+            if img.width > IMG_WIDTH or img.height > IMG_HEIGHT:
+                img.thumbnail(size=(IMG_WIDTH, IMG_HEIGHT))
+                img.save(img_path)
 
 
 def _get_fullname(typ) -> str:
