@@ -353,7 +353,7 @@ class DownloadsMetadataTable(DocTable):
     header = ""
     row_template = _aligned_dedent(
         """
-        |.. grid:: 1 2
+        |.. grid:: 1 2 2 2
         |
         |   .. grid-item:: {}
         |
@@ -366,7 +366,7 @@ class DownloadsMetadataTable(DocTable):
         |.. dropdown:: Metadata
         |   :open:
         |
-        |   .. grid:: 1 2
+        |   .. grid:: 1 2 2 2
         |
         |      .. grid-item::
         |
@@ -375,7 +375,6 @@ class DownloadsMetadataTable(DocTable):
         |      .. grid-item::
         |
         |{}
-        |
         """
     )
 
