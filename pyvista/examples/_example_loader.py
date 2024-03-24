@@ -72,8 +72,12 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
     @property
     def num_files(self) -> int:
-        """Return the number of files."""
-        return 1 if isinstance(self.path, str) else len(self.path)
+        """Return the number of files from path or paths.
+
+        If a path is a folder, the number of files contained in the folder is returned.
+        """
+        path = [path] if isinstance(path := self.path, str) else path
+        return sum([1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in path])
 
     @property
     def unique_extension(self) -> Union[str, Tuple[str, ...]]:
@@ -541,14 +545,14 @@ def _format_file_size(size: int) -> str:
     return f"{size_flt:.1f} GB"
 
 
-def _get_file_or_folder_ext(filepath):
+def _get_file_or_folder_ext(path: str):
     """Wrap the `get_ext` function to handle special cases for directories."""
-    if os.path.isfile(filepath):
-        return get_ext(filepath)
-    assert os.path.isdir(filepath), 'Expected a file or folder path.'
-    all_filepaths = _get_all_nested_filepaths(filepath)
-    ext = [get_ext(file) for file in all_filepaths]
-    assert len(ext) != 0, f'No files with extensions were found in"\n\t{filepath}'
+    if os.path.isfile(path):
+        return get_ext(path)
+    assert os.path.isdir(path), 'Expected a file or folder path.'
+    all_paths = _get_all_nested_filepaths(path)
+    ext = [get_ext(file) for file in all_paths]
+    assert len(ext) != 0, f'No files with extensions were found in"\n\t{path}'
     return ext
 
 

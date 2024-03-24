@@ -372,15 +372,22 @@ def test_file_loader_file_props():
     example = downloads._example_cow
     example.download()
     assert os.path.isfile(example.path)
+    assert example.num_files == 1
     assert example.total_size == '60.4 KB'
     assert example.unique_extension == '.vtp'
     assert isinstance(example.reader, pv.XMLPolyDataReader)
     assert example.unique_reader_type is pv.XMLPolyDataReader
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is pv.PolyData
+    assert example.unique_dataset_type is pv.PolyData
 
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
     assert all(os.path.isfile(file) for file in example.path)
+    assert example.num_files == 2
     assert example.total_size == '125.2 KB'
     assert example.unique_extension == ('.mhd', '.raw')
     assert pv.get_ext(example.path[0]) == '.mhd'
@@ -399,6 +406,7 @@ def test_file_loader_file_props():
     example = downloads._example_bolt_nut
     example.download()
     assert len(example.path) == 2
+    assert example.num_files == 2
     assert os.path.isfile(example.path[0])
     assert os.path.isfile(example.path[1])
     assert example.total_size == '132.8 KB'
@@ -417,6 +425,7 @@ def test_file_loader_file_props():
     example = downloads._example_cubemap_park
     example.download()
     assert os.path.isdir(example.path)
+    assert example.num_files == 6
     assert example.total_size == '606.1 KB'
     assert example.unique_extension == '.jpg'
     assert example.reader is None
@@ -431,6 +440,7 @@ def test_file_loader_file_props():
     example = downloads._example_dicom_stack
     example.download()
     assert os.path.isdir(example.path)
+    assert example.num_files == 3
     assert example.total_size == '1.6 MB'
     assert example.unique_extension == '.dcm'
     assert isinstance(example.reader, pv.DICOMReader)
