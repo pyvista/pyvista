@@ -1,5 +1,6 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
+import os
 from pathlib import Path
 import shutil
 from typing import Iterator, List
@@ -105,9 +106,8 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         _process_events_before_scraping(plotter)
         fname = next(image_path_iterator)
         # Make sure the extension is "png"
-        path = Path(fname)
-        fname_withoutextension = path.parent / path.stem
-        fname = Path(fname_withoutextension + ".png")
+        fname_withoutextension, _ = os.path.splitext(fname)
+        fname = fname_withoutextension + ".png"
 
         if hasattr(plotter, "_gif_filename"):
             # move gif to fname
