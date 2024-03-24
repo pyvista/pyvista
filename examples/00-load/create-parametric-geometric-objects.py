@@ -4,7 +4,7 @@
 Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creating parametric objects
+Creating parametric objects from :ref:`parametric_api`.
 """
 
 from math import pi
