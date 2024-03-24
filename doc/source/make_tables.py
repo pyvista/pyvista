@@ -363,16 +363,16 @@ class DownloadsMetadataTable(DocTable):
         |
         |      {}
         |
-        |.. dropdown:: Metadata
-        |   :open:
+        |   .. dropdown:: Metadata
+        |      :open:
         |
-        |   .. grid:: 1 2 2 2
+        |      .. grid:: 1 2 2 2
         |
-        |      .. grid-item::
+        |         .. grid-item::
         |
         |{}
         |
-        |      .. grid-item::
+        |         .. grid-item::
         |
         |{}
         """
@@ -500,10 +500,11 @@ class DownloadsMetadataTable(DocTable):
             dataset_repr,
             img_path,
         )
-        INDENT3 = '|         '
+        # Indent lines to match grid depth
+        INDENT = '|            '
         title, doc = header_item
-        info_item = _pad_lines(info_item, pad_left=INDENT3)
-        repr_item = _pad_lines(repr_item, pad_left=INDENT3)
+        info_item = _pad_lines(info_item, pad_left=INDENT)
+        repr_item = _pad_lines(repr_item, pad_left=INDENT)
 
         def _joined_aligned_dedent(lines: list[str]):
             return _aligned_dedent('\n'.join(lines))
