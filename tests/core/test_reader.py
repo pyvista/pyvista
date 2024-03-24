@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 
 import numpy as np
@@ -292,7 +293,7 @@ def test_dcmreader(tmpdir):
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    filename = os.path.join(directory, "1-1.dcm")
+    filename = Path(directory) / "1-1.dcm"
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == filename
@@ -515,7 +516,7 @@ def test_pvdreader():
 def test_pvdreader_no_time_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+    filename = Path(filename).parent / 'dualSphereNoTime.pvd'
 
     reader = pv.PVDReader(filename)
     assert reader.time_values == [0.0]
@@ -532,7 +533,7 @@ def test_pvdreader_no_time_group():
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+    filename = Path(filename).parent / 'dualSphereAnimation4NoPart.pvd'
 
     reader = pv.PVDReader(filename)
     assert reader.active_time_value == 0.0

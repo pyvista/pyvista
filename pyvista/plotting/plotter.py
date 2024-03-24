@@ -9,6 +9,7 @@ import io
 import logging
 import os
 import pathlib
+from pathlib import Path
 import platform
 import sys
 import textwrap
@@ -5791,7 +5792,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Unsupported extension {filename.suffix}\n'
                         f'Must be one of the following: {SUPPORTED_FORMATS}'
                     )
-                filename = os.path.abspath(os.path.expanduser(str(filename)))
+                filename = Path(str(filename)).expanduser().resolve()
                 Image.fromarray(image).save(filename)
             else:
                 Image.fromarray(image).save(filename, format="PNG")
@@ -5845,9 +5846,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        filename = os.path.abspath(os.path.expanduser(filename))
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        filename = Path(filename).expanduser().resolve()
         extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
@@ -6171,10 +6172,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = Path(pyvista.FIGURE_PATH) / filename
         else:
-            filename = os.path.abspath(os.path.expanduser(filename))
+            filename = Path(filename).expanduser().resolve()
 
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')

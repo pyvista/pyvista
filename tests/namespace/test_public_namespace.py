@@ -1,4 +1,5 @@
 import pathlib
+from pathlib import Path
 
 import pytest
 
@@ -8,7 +9,7 @@ import pyvista as pv
 # This prevents testing against things that are not intended
 # to be in the public namespace
 namespace_data = pathlib.Path(__file__).parent / 'namespace-top.txt'
-with open(namespace_data) as f:
+with Path(namespace_data).open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]

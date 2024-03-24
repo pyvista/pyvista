@@ -1,11 +1,11 @@
 import datetime
-import os
+from pathlib import Path
 import re
 import sys
 
 import pyvista
 
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+sys.path.append(Path(__file__).parent)
 
 # -- General configuration ------------------------------------------------
 

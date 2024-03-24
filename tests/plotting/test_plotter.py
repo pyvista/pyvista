@@ -6,6 +6,7 @@ All other tests requiring rendering should to in
 """
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -499,8 +500,8 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(screenshot=sphere_screenshot)
-    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
-    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    sphere_path = Path(pv.FIGURE_PATH) / sphere_screenshot
+    res_path = Path(pv.FIGURE_PATH) / res_file
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
 

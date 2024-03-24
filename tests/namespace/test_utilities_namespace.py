@@ -1,12 +1,13 @@
 import importlib
 import pathlib
+from pathlib import Path
 
 import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 namespace_data = pathlib.Path(__file__).parent / 'namespace-utilities.txt'
-with open(namespace_data) as f:
+with Path(namespace_data).open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
