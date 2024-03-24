@@ -5,7 +5,7 @@ import sys
 
 import pyvista
 
-sys.path.append(Path(__file__).parent)
+sys.path.append(Path(__file__).parent.parent)
 
 # -- General configuration ------------------------------------------------
 
