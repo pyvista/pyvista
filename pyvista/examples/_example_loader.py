@@ -36,6 +36,7 @@ import os
 from typing import (
     Any,
     Callable,
+    List,
     Optional,
     Protocol,
     Sequence,
@@ -96,8 +97,13 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
     @property
     @abstractmethod
+    def _total_size_bytes(self) -> int:
+        """Return the total size of all files in bytes."""
+
+    @property
+    @abstractmethod
     def total_size(self) -> str:
-        """Return the total size of all files."""
+        """Return the total size of all files formatted as a string."""
 
     @property
     @abstractmethod
@@ -173,6 +179,10 @@ class _SingleFile(_FileProps[str, int]):
     @property
     def _filesize_format(self) -> str:
         return _format_file_size(self._filesize_bytes)
+
+    @property
+    def _total_size_bytes(self) -> int:
+        return self._filesize_bytes
 
     @property
     def total_size(self) -> str:
@@ -376,32 +386,36 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
         self._dataset = None
 
     @property
-    def _file_loaders(self):
+    def _file_objects(self):
         if self._file_loaders_ is None:
             self._file_loaders_ = self._files_func()
         return self._file_loaders_
 
     @property
     def path(self) -> Tuple[str, ...]:
-        return tuple([file.path for file in self._file_loaders])
+        return tuple(_flatten_path([file.path for file in self._file_objects]))
 
     @property
     def path_loadable(self) -> Tuple[str, ...]:
         return tuple(
-            [file.path for file in self._file_loaders if isinstance(file, _SingleFileLoadable)]
+            [file.path for file in self._file_objects if isinstance(file, _SingleFileLoadable)]
         )
 
     @property
     def _filesize_bytes(self) -> Tuple[int, ...]:
-        return tuple([file._filesize_bytes for file in self._file_loaders])
+        return tuple([file._filesize_bytes for file in self._file_objects])
 
     @property
     def _filesize_format(self) -> Tuple[str, ...]:
         return tuple([_format_file_size(size) for size in self._filesize_bytes])
 
     @property
+    def _total_size_bytes(self) -> int:
+        return sum([file._total_size_bytes for file in self._file_objects])
+
+    @property
     def total_size(self) -> str:
-        return _format_file_size(sum(self._filesize_bytes))
+        return _format_file_size(self._total_size_bytes)
 
     @property
     def reader(
@@ -409,14 +423,19 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
-        return tuple([file.reader for file in self._file_loaders])
+        reader = [file.reader for file in self._file_objects]
+        # flatten in case any file objects themselves are multifiles
+        reader_out: List[pv.BaseReader] = []
+        for r in reader:
+            reader_out.extend(r) if isinstance(r, Sequence) else reader_out.append(r)
+        return tuple(reader_out)
 
     @property
     def dataset(self) -> Optional[DatasetType]:
         return self._dataset
 
     def load(self):
-        self._dataset = self._load_func(self._file_loaders)
+        self._dataset = self._load_func(self._file_objects)
         return self.dataset
 
 
@@ -424,9 +443,28 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     """Wrap multiple files for downloading and loading."""
 
     def download(self) -> Tuple[str, ...]:
-        path = [file.download() for file in self._file_loaders if isinstance(file, _Downloadable)]
-        assert all(os.path.isfile(file) for file in path)
-        return tuple(path)
+        path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
+        # flatten paths in case any loaders have multiple files
+        path_out = _flatten_path(path)
+        assert all(os.path.isfile(p) or os.path.isdir(p) for p in path_out)
+        return tuple(path_out)
+
+
+def _flatten_path(
+    path: Union[
+        str,
+        Union[List[str], Tuple[str, ...]],
+        Sequence[Union[str, Union[List[str], Tuple[str, ...]]]],
+    ]
+):
+    """Flatten path or nested sequences of paths and return a single path or a list of paths."""
+    if isinstance(path, str):
+        return path
+    else:
+        path_out = []
+        for p in path:
+            path_out.append(p) if isinstance(p, str) else path_out.extend(p)
+        return path_out
 
 
 def _download_example(

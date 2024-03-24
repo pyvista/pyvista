@@ -373,6 +373,7 @@ def test_file_loader_file_props():
     example.download()
     assert os.path.isfile(example.path)
     assert example.num_files == 1
+    assert example._total_size_bytes == 60449
     assert example.total_size == '60.4 KB'
     assert example.unique_extension == '.vtp'
     assert isinstance(example.reader, pv.XMLPolyDataReader)
@@ -388,6 +389,7 @@ def test_file_loader_file_props():
     example.download()
     assert all(os.path.isfile(file) for file in example.path)
     assert example.num_files == 2
+    assert example._total_size_bytes == 125223
     assert example.total_size == '125.2 KB'
     assert example.unique_extension == ('.mhd', '.raw')
     assert pv.get_ext(example.path[0]) == '.mhd'
@@ -402,13 +404,15 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
 
-    # test multiple files, both of which are loaded as a multiblock
+    # test multiple files, both have same ext and reader,
+    # both of which are loaded as a multiblock
     example = downloads._example_bolt_nut
     example.download()
     assert len(example.path) == 2
     assert example.num_files == 2
     assert os.path.isfile(example.path[0])
     assert os.path.isfile(example.path[1])
+    assert example._total_size_bytes == 132818
     assert example.total_size == '132.8 KB'
     assert example.unique_extension == '.slc'
     assert len(example.reader) == 2
@@ -426,6 +430,7 @@ def test_file_loader_file_props():
     example.download()
     assert os.path.isdir(example.path)
     assert example.num_files == 6
+    assert example._total_size_bytes == 606113
     assert example.total_size == '606.1 KB'
     assert example.unique_extension == '.jpg'
     assert example.reader is None
@@ -441,6 +446,7 @@ def test_file_loader_file_props():
     example.download()
     assert os.path.isdir(example.path)
     assert example.num_files == 3
+    assert example._total_size_bytes == 1583688
     assert example.total_size == '1.6 MB'
     assert example.unique_extension == '.dcm'
     assert isinstance(example.reader, pv.DICOMReader)
@@ -450,6 +456,37 @@ def test_file_loader_file_props():
     example.load()
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
+
+    # test complex multiple file case with separate ext and reader, which are loaded as a tuple
+    # piece together new dataset from existing ones
+    def files_func():
+        loadable1 = downloads._example_cow
+        loadable2 = downloads._example_head
+        loadable3 = downloads._example_dicom_stack
+        return loadable1, loadable2, loadable3
+
+    example = _MultiFileDownloadableLoadable(files_func)
+    example.download()
+    assert len(example.path) == 4
+    assert example.num_files == 6
+    assert os.path.isfile(example.path[0])
+    assert os.path.isfile(example.path[1])
+    assert os.path.isfile(example.path[2])
+    assert os.path.isdir(example.path[3])
+    assert example._total_size_bytes == 1769360
+    assert example.total_size == '1.8 MB'
+    assert example.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
+    assert len(example.reader) == 4
+    assert isinstance(example.reader[0], pv.XMLPolyDataReader)
+    assert isinstance(example.reader[1], pv.MetaImageReader)
+    assert example.reader[2] is None
+    assert isinstance(example.reader[3], pv.DICOMReader)
+    assert example.unique_reader_type == (pv.XMLPolyDataReader, pv.MetaImageReader, pv.DICOMReader)
+    assert example.dataset is None
+    assert example.unique_dataset_type is None
+    example.load()
+    assert type(example.dataset) is tuple
+    assert set(example.unique_dataset_type) == {pv.PolyData, pv.ImageData}
 
 
 def test_format_file_size():
