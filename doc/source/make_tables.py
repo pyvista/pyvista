@@ -355,13 +355,13 @@ class DownloadsMetadataTable(DocTable):
         """
         |.. grid:: 1 2
         |
-        |   .. grid-item::
+        |   .. grid-item:: {}
         |
-        |{}
+        |      {}
         |
         |   .. grid-item-card::
         |
-        |{}
+        |      {}
         |
         |.. dropdown:: Metadata
         |   :open:
@@ -501,10 +501,8 @@ class DownloadsMetadataTable(DocTable):
             dataset_repr,
             img_path,
         )
-        INDENT2 = '|      '
         INDENT3 = '|         '
-        header_item = _pad_lines(header_item, pad_left=INDENT2)
-        img_item = _pad_lines(img_item, pad_left=INDENT2)
+        title, doc = header_item
         info_item = _pad_lines(info_item, pad_left=INDENT3)
         repr_item = _pad_lines(repr_item, pad_left=INDENT3)
 
@@ -512,8 +510,9 @@ class DownloadsMetadataTable(DocTable):
             return _aligned_dedent('\n'.join(lines))
 
         return cls.row_template.format(
-            _joined_aligned_dedent(header_item),
-            _joined_aligned_dedent(img_item),
+            title,
+            doc,
+            img_item[0],
             _joined_aligned_dedent(info_item),
             _joined_aligned_dedent(repr_item),
         )
