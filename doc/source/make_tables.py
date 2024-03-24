@@ -683,7 +683,7 @@ def _create_metadata_table(
         f'- Extension: {file_ext}',
         f'- Reader: {reader_type}',
         f'- Dataset Type: {dataset_type}',
-        f'- Representation: {' '}',  # show repr in next row
+        f'- Representation: {""}',  # show repr in next row
     ]
 
     # Format img cell
