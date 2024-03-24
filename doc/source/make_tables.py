@@ -359,7 +359,7 @@ class DownloadsMetadataTable(DocTable):
         |
         |      {}
         |
-        |   .. grid-item-card::
+        |   .. grid-item::
         |
         |      {}
         |
