@@ -11,7 +11,7 @@ import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _example_loader, downloads
 
-# Paths to directories in which resulting rst files and images are stored.
+# Paths to directories in xxxwhich resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
@@ -355,7 +355,6 @@ class DownloadsMetadataTable(DocTable):
         """
         |.. table::
         |   :widths: 50 50
-        |   :header-rows: 1
         |   :class: tight-table
         |
         |{}
@@ -670,6 +669,8 @@ def _create_metadata_table(
             len(line) == total_table_width for line in table_lines
         ), "The length of all table lines must be equal."
 
+        # Add padding to left of entire table for indenting
+        table_lines = _pad_lines(table_lines, pad_left='   ')
         return table_lines
 
     # Format header cell
