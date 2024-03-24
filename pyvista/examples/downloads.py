@@ -804,7 +804,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
     return _download_example(_example_bolt_nut, load=load)
 
 
-def _bolt_nut_files_func():
+def _bolt_nut_files_func():  # pragma: no cover
     # Multiple mesh files are loaded for this example
     bolt = _SingleFileDownloadableLoadable('bolt.slc')
     nut = _SingleFileDownloadableLoadable('nut.slc')
@@ -1904,7 +1904,7 @@ def download_frog(load=True):  # pragma: no cover
     return _download_example(_example_frog, load=load)
 
 
-def _frog_files_func():
+def _frog_files_func():  # pragma: no cover
     # Multiple files needed for read, but only one gets loaded
     frog_zraw = _SingleFileDownloadable('froggy/frog.zraw')
     frog_mhd = _SingleFileDownloadableLoadable('froggy/frog.mhd')
@@ -4210,7 +4210,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     return _download_example(_example_cylinder_crossflow, load=load)
 
 
-def _cylinder_crossflow_files_func():
+def _cylinder_crossflow_files_func():  # pragma: no cover
     case = _SingleFileDownloadableLoadable('EnSight/CylinderCrossflow/cylinder_Re35.case')
     geo = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.geo')
     scl1 = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
@@ -4771,7 +4771,7 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     return _download_example(_example_electronics_cooling, load=load)
 
 
-def _electronics_cooling_files_func():
+def _electronics_cooling_files_func():  # pragma: no cover
     _structure = _SingleFileDownloadableLoadable(
         'fvm/cooling_electronics/datasets.zip', target_file='structure.vtp'
     )
