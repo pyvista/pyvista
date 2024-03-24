@@ -25,7 +25,7 @@ def _aligned_dedent(txt):
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
-    return textwrap.dedent(txt).replace('\n|', '\n')
+    return textwrap.dedent(txt).replace('|', '')
 
 
 class DocTable:
@@ -353,11 +353,29 @@ class DownloadsMetadataTable(DocTable):
     header = ""
     row_template = _aligned_dedent(
         """
-        |.. table::
-        |   :widths: 50 50
-        |   :class: tight-table
+        |.. grid:: 1 2
+        |
+        |   .. grid-item::
         |
         |{}
+        |
+        |   .. grid-item-card::
+        |
+        |{}
+        |
+        |.. dropdown:: Metadata
+        |   :open:
+        |
+        |   .. grid:: 1 2
+        |
+        |      .. grid-item::
+        |
+        |{}
+        |
+        |      .. grid-item::
+        |
+        |{}
+        |
         """
     )
 
@@ -472,7 +490,7 @@ class DownloadsMetadataTable(DocTable):
 
         cls.process_img(img_path)
 
-        grid_table = _create_metadata_table(
+        header_item, info_item, img_item, repr_item = _create_grid_items(
             func_fullname,
             doc_line,
             file_size_rst,
@@ -483,8 +501,22 @@ class DownloadsMetadataTable(DocTable):
             dataset_repr,
             img_path,
         )
-        table_str = '\n'.join(grid_table)
-        return cls.row_template.format(table_str)
+        INDENT2 = '|      '
+        INDENT3 = '|         '
+        header_item = _pad_lines(header_item, pad_left=INDENT2)
+        img_item = _pad_lines(img_item, pad_left=INDENT2)
+        info_item = _pad_lines(info_item, pad_left=INDENT3)
+        repr_item = _pad_lines(repr_item, pad_left=INDENT3)
+
+        def _joined_aligned_dedent(lines: list[str]):
+            return _aligned_dedent('\n'.join(lines))
+
+        return cls.row_template.format(
+            _joined_aligned_dedent(header_item),
+            _joined_aligned_dedent(img_item),
+            _joined_aligned_dedent(info_item),
+            _joined_aligned_dedent(repr_item),
+        )
 
     @staticmethod
     def process_img(img_path):
@@ -520,7 +552,7 @@ def _get_fullname(typ) -> str:
     return f"{typ.__module__}.{typ.__qualname__}"
 
 
-def _create_metadata_table(
+def _create_grid_items(
     func_fullname: str,
     doc_line: str,
     file_size: str,
@@ -544,152 +576,100 @@ def _create_metadata_table(
     +------+--------+
     """
 
-    def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
-        min_width = min_width if min_width else _max_width(lines)
-        return [line.ljust(min_width) for line in lines]
-
-    def _max_width(lines: List[str]) -> int:
-        return max(map(len, lines))
-
-    def _repeat(string: str, num_repeat: int) -> str:
-        return ''.join([string] * num_repeat)
-
-    def _horz_concat_lines(lines1: List[str], lines2: List[str]) -> List[str]:
-        assert len(lines1) == len(lines2)
-        return [l1 + l2 for l1, l2 in zip(lines1, lines2)]
-
-    def _pad_lines(
-        lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
-    ):
-        """Add padding to the left or right of each line with a specified string.
-
-        By default, padding is only applied to left-justify the text such that the lines
-        all have the same width.
-
-        Optionally, the lines may be padded to the left or right using a specified string.
-
-        Parameters
-        ----------
-        lines : list[str]
-            Lines to be padded. If a tuple of lists is given, all lists are padded together
-            as if they were one, but returned as separate lists.
-
-        pad_left : str, default: ''
-            String to pad the left of each line with.
-
-        pad_right : str, default: ''
-            String to pad the right of each line with.
-
-        ljust : bool, default: True
-            If ``True``, left-justify the lines such that they have equal width
-            before applying any padding.
-
-        return_shape : bool, default: False
-            If ``True``, also return the width and height of the padded lines.
-
-        """
-        # Justify
-        lines = _ljust_lines(lines) if ljust else lines
-        # Pad
-        lines = [pad_left + line + pad_right for line in lines]
-        if return_shape:
-            return lines, _max_width(lines), len(lines)
-        return lines
-
-    def _make_table(
-        header_cell: List[str], info_cell: List[str], img_cell: List[str], repr_cell: List[str]
-    ):
-        header_cell, header_width, header_height = _pad_lines(
-            header_cell, pad_left=' ', pad_right=' ', return_shape=True
-        )
-        info_cell, info_width, _ = _pad_lines(
-            info_cell, pad_left=' ', pad_right=' ', return_shape=True
-        )
-        img_cell, img_width, _ = _pad_lines(
-            img_cell, pad_left=' ', pad_right=' ', return_shape=True
-        )
-        repr_cell, repr_width, _ = _pad_lines(
-            repr_cell, pad_left=' ', pad_right=' ', return_shape=True
-        )
-
-        # Make sure table is wide enough to fit everything
-        # Compute table width, excluding the two side borders
-        table_width = max((header_width, info_width + img_width + 1, repr_width))
-        col1_width = info_width
-        col2_width = table_width - col1_width - 1
-
-        # Define table components
-        CORNER = '+'
-        HORZ_BAR = '-'
-        VERT_BAR = '|'
-        HORZ_BAR_HEADER = '='
-
-        ROW_SEP = [
-            CORNER + _repeat(HORZ_BAR, col1_width) + CORNER + _repeat(HORZ_BAR, col2_width) + CORNER
-        ]
-        ROW_SEP_HEADER = [
-            CORNER
-            + _repeat(HORZ_BAR_HEADER, col1_width)
-            + CORNER
-            + _repeat(HORZ_BAR_HEADER, col2_width)
-            + CORNER
-        ]
-
-        # Build table
-        #  Add horizontal separations and top/bottom table borders
-        #  Justify rows so they all span the full table width
-        #  Pad rows with vertical separators
-        table_lines = []
-
-        # Header
-        table_lines.extend(ROW_SEP)
-        header_lines = _pad_lines(
-            _ljust_lines(header_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-        )
-        table_lines.extend(header_lines)
-        table_lines.extend(ROW_SEP_HEADER)
-
-        # Row 1
-        row1_cat = _horz_concat_lines(_pad_lines(info_cell, pad_right=VERT_BAR), img_cell)
-        row1_lines = _pad_lines(
-            _ljust_lines(row1_cat, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-        )
-        table_lines.extend(row1_lines)
-        table_lines.extend(ROW_SEP)
-
-        # Row 2
-        row2_lines = _pad_lines(
-            _ljust_lines(repr_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-        )
-        table_lines.extend(row2_lines)
-        table_lines.extend(ROW_SEP)
-
-        total_table_width = table_width + 2  # include left and right borders
-        assert all(
-            len(line) == total_table_width for line in table_lines
-        ), "The length of all table lines must be equal."
-
-        # Add padding to left of entire table for indenting
-        table_lines = _pad_lines(table_lines, pad_left='   ')
-        return table_lines
+    # def _make_table(
+    #     header_cell: List[str], info_cell: List[str], img_cell: List[str], repr_cell: List[str]
+    # ):
+    #     header_cell, header_width, header_height = _pad_lines(
+    #         header_cell, pad_left=' ', pad_right=' ', return_shape=True
+    #     )
+    #     info_cell, info_width, _ = _pad_lines(
+    #         info_cell, pad_left=' ', pad_right=' ', return_shape=True
+    #     )
+    #     img_cell, img_width, _ = _pad_lines(
+    #         img_cell, pad_left=' ', pad_right=' ', return_shape=True
+    #     )
+    #     repr_cell, repr_width, _ = _pad_lines(
+    #         repr_cell, pad_left=' ', pad_right=' ', return_shape=True
+    #     )
+    #
+    #     # Make sure table is wide enough to fit everything
+    #     # Compute table width, excluding the two side borders
+    #     table_width = max((header_width, info_width + img_width + 1, repr_width))
+    #     col1_width = info_width
+    #     col2_width = table_width - col1_width - 1
+    #
+    #     # Define table components
+    #     CORNER = '+'
+    #     HORZ_BAR = '-'
+    #     VERT_BAR = '|'
+    #     HORZ_BAR_HEADER = '='
+    #
+    #     ROW_SEP = [
+    #         CORNER + _repeat(HORZ_BAR, col1_width) + CORNER + _repeat(HORZ_BAR, col2_width) + CORNER
+    #     ]
+    #     ROW_SEP_HEADER = [
+    #         CORNER
+    #         + _repeat(HORZ_BAR_HEADER, col1_width)
+    #         + CORNER
+    #         + _repeat(HORZ_BAR_HEADER, col2_width)
+    #         + CORNER
+    #     ]
+    #
+    #     # Build table
+    #     #  Add horizontal separations and top/bottom table borders
+    #     #  Justify rows so they all span the full table width
+    #     #  Pad rows with vertical separators
+    #     table_lines = []
+    #
+    #     # Header
+    #     table_lines.extend(ROW_SEP)
+    #     header_lines = _pad_lines(
+    #         _ljust_lines(header_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+    #     )
+    #     table_lines.extend(header_lines)
+    #     table_lines.extend(ROW_SEP_HEADER)
+    #
+    #     # Row 1
+    #     row1_cat = _horz_concat_lines(_pad_lines(info_cell, pad_right=VERT_BAR), img_cell)
+    #     row1_lines = _pad_lines(
+    #         _ljust_lines(row1_cat, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+    #     )
+    #     table_lines.extend(row1_lines)
+    #     table_lines.extend(ROW_SEP)
+    #
+    #     # Row 2
+    #     row2_lines = _pad_lines(
+    #         _ljust_lines(repr_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+    #     )
+    #     table_lines.extend(row2_lines)
+    #     table_lines.extend(ROW_SEP)
+    #
+    #     total_table_width = table_width + 2  # include left and right borders
+    #     assert all(
+    #         len(line) == total_table_width for line in table_lines
+    #     ), "The length of all table lines must be equal."
+    #
+    #     # Add padding to left of entire table for indenting
+    #     table_lines = _pad_lines(table_lines, pad_left='   ')
+    #     return table_lines
 
     # Format header cell
-    header_cell = [f':func:`~{func_fullname}`']
+    header_cell = [
+        f':func:`~{func_fullname}`',
+        f'{doc_line}',
+    ]
 
     # Format info cell
     info_cell = [
-        f'{doc_line}',
         f'- Size on Disk: {file_size}',
         f'- Num Files: {num_files}',
         f'- Extension: {file_ext}',
         f'- Reader: {reader_type}',
         f'- Dataset Type: {dataset_type}',
-        f'- Representation: {""}',  # show repr in next row
     ]
 
     # Format img cell
-    img_cell = [''] * len(info_cell)
-    img_cell[0] = f'.. image:: /{img_path}'
+    img_cell = [f'.. image:: /{img_path}']
 
     # Format data repr cell as a rst literal block
     repr_cell = ['::', '']
@@ -697,7 +677,68 @@ def _create_metadata_table(
     repr_content = _pad_lines(dataset_repr, pad_left='   ')
     repr_cell.extend(repr_content)
 
-    return _make_table(header_cell, info_cell, img_cell, repr_cell)
+    return header_cell, info_cell, img_cell, repr_cell
+
+
+def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
+    """Left-justify a list of lines."""
+    min_width = min_width if min_width else _max_width(lines)
+    return [line.ljust(min_width) for line in lines]
+
+
+def _max_width(lines: List[str]) -> int:
+    """Compute the max line-width from a list of lines."""
+    return max(map(len, lines))
+
+
+def _repeat(string: str, num_repeat: int) -> str:
+    """Repeat `string` `num_repeat` times."""
+    return ''.join([string] * num_repeat)
+
+
+def _horz_concat_lines(lines1: List[str], lines2: List[str]) -> List[str]:
+    """Concatenate two lists of lines horizontally."""
+    assert len(lines1) == len(lines2)
+    return [l1 + l2 for l1, l2 in zip(lines1, lines2)]
+
+
+def _pad_lines(
+    lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
+):
+    """Add padding to the left or right of each line with a specified string.
+
+    By default, padding is only applied to left-justify the text such that the lines
+    all have the same width.
+
+    Optionally, the lines may be padded to the left or right using a specified string.
+
+    Parameters
+    ----------
+    lines : list[str]
+        Lines to be padded. If a tuple of lists is given, all lists are padded together
+        as if they were one, but returned as separate lists.
+
+    pad_left : str, default: ''
+        String to pad the left of each line with.
+
+    pad_right : str, default: ''
+        String to pad the right of each line with.
+
+    ljust : bool, default: True
+        If ``True``, left-justify the lines such that they have equal width
+        before applying any padding.
+
+    return_shape : bool, default: False
+        If ``True``, also return the width and height of the padded lines.
+
+    """
+    # Justify
+    lines = _ljust_lines(lines) if ljust else lines
+    # Pad
+    lines = [pad_left + line + pad_right for line in lines]
+    if return_shape:
+        return lines, _max_width(lines), len(lines)
+    return lines
 
 
 def make_all_tables():
