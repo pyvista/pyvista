@@ -5,6 +5,7 @@ import io
 import os
 import re
 import textwrap
+from typing import List
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -24,7 +25,7 @@ def _aligned_dedent(txt):
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
-    return textwrap.dedent(txt).replace('|', '')
+    return textwrap.dedent(txt).replace('\n|', '\n')
 
 
 class DocTable:
@@ -348,33 +349,21 @@ class DownloadsMetadataTable(DocTable):
 
     path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata_table.rst"
 
-    # No hmain eader; each example is its own table
+    # No main header; each example is its own table
     header = ""
     row_template = _aligned_dedent(
         """
-        |.. list-table:: :func:`~{}`
-        |   :widths: 60 40
+        |.. table::
+        |   :widths: 50 50
         |   :header-rows: 1
+        |   :class: tight-table
         |
-        |   * - Info
-        |     - Thumbnail
-        |
-        |   * - {}
-        |
-        |       - Size on Disk: {}
-        |       - Num Files: {}
-        |       - Extension: {}
-        |       - Reader: {}
-        |       - Dataset Type: {}
-        |       - Representation: {}
-        |
-        |     - .. image:: /{}
+        |{}
         """
     )
 
     @classmethod
     def fetch_data(cls):
-
         # Collect all `_example_<name>` file loaders
         module_members = dict(inspect.getmembers(pv.examples.downloads))
         file_loaders_dict = {
@@ -398,17 +387,19 @@ class DownloadsMetadataTable(DocTable):
     @classmethod
     def get_row(cls, i, row_data):
         loader_name, loader = row_data
-        download_name = loader_name.replace('_example_', 'download_')
 
         # Get the corresponding 'download' function for the example
+        download_name = loader_name.replace('_example_', 'download_')
         download_func = getattr(downloads, download_name)
         func_fullname = _get_fullname(download_func)
         doc_line = download_func.__doc__.splitlines()[0]
 
+        # Download the example and process
         try:
             loader.download()
         except VTKVersionError:
-            na = 'Not available'
+            # Set default values
+            na = '``Not available``'
             img_path = NOT_AVAILABLE_IMG_PATH
             (
                 file_size_rst,
@@ -416,8 +407,8 @@ class DownloadsMetadataTable(DocTable):
                 file_ext_rst,
                 reader_type_rst,
                 dataset_type_rst,
-                repr_rst,
-            ) = (na, na, na, na, na, na)
+                dataset_repr,
+            ) = (na, na, na, na, na, [na])
         else:
             # Get file info
             file_size_rst = '``' + loader.total_size + '``'
@@ -446,21 +437,18 @@ class DownloadsMetadataTable(DocTable):
                 .replace('(', '')
                 .replace(')', '')
             )
-            # Format repr as literal block
-            repr_rst = '::\n\n' + repr(dataset)
-            repr_rst = repr_rst.replace('\n', '\n|           ')
-            repr_rst = _aligned_dedent(repr_rst)
             # Replace any hex code memory addresses with ellipses
-            repr_rst = re.sub(
+            dataset_repr = repr(dataset)
+            dataset_repr = re.sub(
                 pattern=r'0x[0-9a-f]*',
                 repl='...',
-                string=repr_rst,
-            )
+                string=dataset_repr,
+            ).splitlines()
 
             # Search for the file name from all images in the thumbnail directory.
             # Match:
             #     any word character(s), then function name, then any non-word character(s),
-            #     then a 3 or 4 character file extension, e.g.:
+            #     then a 3character file extension, e.g.:
             #       'pyvista-examples...download_name...ext'
             #     or simply:
             #       'download_name.ext'
@@ -485,7 +473,7 @@ class DownloadsMetadataTable(DocTable):
 
         cls.process_img(img_path)
 
-        return cls.row_template.format(
+        grid_table = _create_metadata_table(
             func_fullname,
             doc_line,
             file_size_rst,
@@ -493,9 +481,11 @@ class DownloadsMetadataTable(DocTable):
             file_ext_rst,
             reader_type_rst,
             dataset_type_rst,
-            repr_rst,
+            dataset_repr,
             img_path,
         )
+        table_str = '\n'.join(grid_table)
+        return cls.row_template.format(table_str)
 
     @staticmethod
     def process_img(img_path):
@@ -529,6 +519,184 @@ class DownloadsMetadataTable(DocTable):
 
 def _get_fullname(typ) -> str:
     return f"{typ.__module__}.{typ.__qualname__}"
+
+
+def _create_metadata_table(
+    func_fullname: str,
+    doc_line: str,
+    file_size: str,
+    num_files: str,
+    file_ext: str,
+    reader_type: str,
+    dataset_type: str,
+    dataset_repr: List[str],
+    img_path: str,
+):
+    """
+    Create a grid table with three rows and two columns.
+
+    The table is formatted for the following template:
+    +------+--------+
+    | Function Name |
+    +======+========+
+    | Info | Image  |
+    +------+--------+
+    | Repr          |
+    +------+--------+
+    """
+
+    def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
+        min_width = min_width if min_width else _max_width(lines)
+        return [line.ljust(min_width) for line in lines]
+
+    def _max_width(lines: List[str]) -> int:
+        return max(map(len, lines))
+
+    def _repeat(string: str, num_repeat: int) -> str:
+        return ''.join([string] * num_repeat)
+
+    def _horz_concat_lines(lines1: List[str], lines2: List[str]) -> List[str]:
+        assert len(lines1) == len(lines2)
+        return [l1 + l2 for l1, l2 in zip(lines1, lines2)]
+
+    def _pad_lines(
+        lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
+    ):
+        """Add padding to the left or right of each line with a specified string.
+
+        By default, padding is only applied to left-justify the text such that the lines
+        all have the same width.
+
+        Optionally, the lines may be padded to the left or right using a specified string.
+
+        Parameters
+        ----------
+        lines : list[str]
+            Lines to be padded. If a tuple of lists is given, all lists are padded together
+            as if they were one, but returned as separate lists.
+
+        pad_left : str, default: ''
+            String to pad the left of each line with.
+
+        pad_right : str, default: ''
+            String to pad the right of each line with.
+
+        ljust : bool, default: True
+            If ``True``, left-justify the lines such that they have equal width
+            before applying any padding.
+
+        return_shape : bool, default: False
+            If ``True``, also return the width and height of the padded lines.
+
+        """
+        # Justify
+        lines = _ljust_lines(lines) if ljust else lines
+        # Pad
+        lines = [pad_left + line + pad_right for line in lines]
+        if return_shape:
+            return lines, _max_width(lines), len(lines)
+        return lines
+
+    def _make_table(
+        header_cell: List[str], info_cell: List[str], img_cell: List[str], repr_cell: List[str]
+    ):
+        header_cell, header_width, header_height = _pad_lines(
+            header_cell, pad_left=' ', pad_right=' ', return_shape=True
+        )
+        info_cell, info_width, _ = _pad_lines(
+            info_cell, pad_left=' ', pad_right=' ', return_shape=True
+        )
+        img_cell, img_width, _ = _pad_lines(
+            img_cell, pad_left=' ', pad_right=' ', return_shape=True
+        )
+        repr_cell, repr_width, _ = _pad_lines(
+            repr_cell, pad_left=' ', pad_right=' ', return_shape=True
+        )
+
+        # Make sure table is wide enough to fit everything
+        # Compute table width, excluding the two side borders
+        table_width = max((header_width, info_width + img_width + 1, repr_width))
+        col1_width = info_width
+        col2_width = table_width - col1_width - 1
+
+        # Define table components
+        CORNER = '+'
+        HORZ_BAR = '-'
+        VERT_BAR = '|'
+        HORZ_BAR_HEADER = '='
+
+        ROW_SEP = [
+            CORNER + _repeat(HORZ_BAR, col1_width) + CORNER + _repeat(HORZ_BAR, col2_width) + CORNER
+        ]
+        ROW_SEP_HEADER = [
+            CORNER
+            + _repeat(HORZ_BAR_HEADER, col1_width)
+            + CORNER
+            + _repeat(HORZ_BAR_HEADER, col2_width)
+            + CORNER
+        ]
+
+        # Build table
+        #  Add horizontal separations and top/bottom table borders
+        #  Justify rows so they all span the full table width
+        #  Pad rows with vertical separators
+        table_lines = []
+
+        # Header
+        table_lines.extend(ROW_SEP)
+        header_lines = _pad_lines(
+            _ljust_lines(header_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+        )
+        table_lines.extend(header_lines)
+        table_lines.extend(ROW_SEP_HEADER)
+
+        # Row 1
+        row1_cat = _horz_concat_lines(_pad_lines(info_cell, pad_right=VERT_BAR), img_cell)
+        row1_lines = _pad_lines(
+            _ljust_lines(row1_cat, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+        )
+        table_lines.extend(row1_lines)
+        table_lines.extend(ROW_SEP)
+
+        # Row 2
+        row2_lines = _pad_lines(
+            _ljust_lines(repr_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
+        )
+        table_lines.extend(row2_lines)
+        table_lines.extend(ROW_SEP)
+
+        total_table_width = table_width + 2  # include left and right borders
+        assert all(
+            len(line) == total_table_width for line in table_lines
+        ), "The length of all table lines must be equal."
+
+        return table_lines
+
+    # Format header cell
+    header_cell = [f':func:`~{func_fullname}`']
+
+    # Format info cell
+    info_cell = [
+        f'{doc_line}',
+        f'- Size on Disk: {file_size}',
+        f'- Num Files: {num_files}',
+        f'- Extension: {file_ext}',
+        f'- Reader: {reader_type}',
+        f'- Dataset Type: {dataset_type}',
+        f'- Representation: {' '}',  # show repr in next row
+    ]
+
+    # Format img cell
+    img_cell = [''] * len(info_cell)
+    img_cell[0] = f'.. image:: /{img_path}'
+
+    # Format data repr cell as a rst literal block
+    repr_cell = ['::', '']
+    # Indent paragraph
+    repr_content = _pad_lines(dataset_repr, pad_left='   ')
+    repr_cell.extend(repr_content)
+
+    return _make_table(header_cell, info_cell, img_cell, repr_cell)
 
 
 def make_all_tables():
