@@ -195,6 +195,11 @@ articles = dict(
         link="https://github.com/cardinalgeo/drilldown",
         image="drilldown.jpg",
     ),
+    stpyvista=Example(
+        title="stpyvista",
+        link="https://github.com/edsaac/stpyvista",
+        image="stpyvista_intro_crop.gif",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
