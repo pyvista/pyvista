@@ -501,6 +501,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         document.attributes['_plot_counter'] = counter
         path = Path(source_file_name)
         base = str(path.parent / path.stem)
+        ext = path.suffix
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
         caption = options.get('caption', '')
