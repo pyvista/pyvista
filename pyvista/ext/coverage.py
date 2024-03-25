@@ -71,7 +71,8 @@ class CoverageBuilder(Builder):
     def init(self) -> None:
         self.c_sourcefiles: List[str] = []
         for pattern in self.config.coverage_c_path:
-            self.c_sourcefiles.extend(Path(self.srcdir).glob(pattern))
+            pattern = path.join(self.srcdir, pattern)
+            self.c_sourcefiles.extend(glob.glob(pattern))
 
         self.c_regexes: List[Tuple[str, Pattern]] = []
         for name, exp in self.config.coverage_c_regexes.items():
