@@ -506,7 +506,7 @@ def read_meshio(filename, file_format=None):
         raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
-    filename = Path(Path(str(filename).expanduser())).resolve()
+    filename = Path(str(filename)).expanduser().resolve()
     # Read mesh file
     mesh = meshio.read(filename, file_format)
     return from_meshio(mesh)
