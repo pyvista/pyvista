@@ -368,21 +368,19 @@ class DownloadsMetadataTable(DocTable):
         |
         |            .. grid-item::
         |
-        |{}
-        |
-        |            .. grid-item::
-        |
         |               .. grid:: 1
         |
         |                  .. grid-item-card::
         |
         |                     {}
         |
+        |            .. grid-item::
+        |
+        |{}
+        |
         |      .. grid-item::
         |
-        |         .. grid:: 1
-        |
-        |            .. grid-item-card:: :octicon:`info` Representation
+        |         Representation:
         |
         |{}
         |
@@ -427,6 +425,7 @@ class DownloadsMetadataTable(DocTable):
         except VTKVersionError:
             # Set default values
             na = '``Not available``'
+            na_ = na.replace('`', '')
             img_path = NOT_AVAILABLE_IMG_PATH
             (
                 file_size_rst,
@@ -435,7 +434,7 @@ class DownloadsMetadataTable(DocTable):
                 reader_type_rst,
                 dataset_type_rst,
                 dataset_repr,
-            ) = (na, na, na, na, na, [na])
+            ) = (na, na, na, na, na, [na_])
         else:
             # Get file info
             file_size_rst = '``' + loader.total_size + '``'
@@ -513,8 +512,8 @@ class DownloadsMetadataTable(DocTable):
         )
         # Indent lines to match grid depth
         title, doc = header_item
-        info_item = _pad_lines(info_item, pad_left='|                     ')
-        repr_item = _pad_lines(repr_item, pad_left='|               ')
+        info_item = _pad_lines(info_item, pad_left='|               ')
+        repr_item = _pad_lines(repr_item, pad_left='|         ')
 
         def _joined_aligned_dedent(lines: list[str]):
             return _aligned_dedent('\n'.join(lines))
@@ -523,8 +522,8 @@ class DownloadsMetadataTable(DocTable):
             download_name,
             title,
             doc,
-            _joined_aligned_dedent(info_item),
             img_item[0],
+            _joined_aligned_dedent(info_item),
             _joined_aligned_dedent(repr_item),
         )
 
