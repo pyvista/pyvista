@@ -2,7 +2,6 @@ import datetime
 import faulthandler
 import locale
 import os
-from pathlib import Path
 import sys
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -10,7 +9,7 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 faulthandler.enable()
 
-sys.path.insert(0, str(Path().resolve()))
+sys.path.insert(0, os.path.abspath("."))  # noqa: PTH100
 import make_external_gallery
 import make_tables
 
@@ -36,9 +35,11 @@ pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = str(Path("./images/").resolve() / "auto-generated/")
-if not Path(pyvista.FIGURE_PATH).exists():
-    Path(pyvista.FIGURE_PATH).mkdir()
+pyvista.FIGURE_PATH = os.path.join(  # noqa: PTH118
+    os.path.abspath("./images/"), "auto-generated/"  # noqa: PTH100
+)
+if not os.path.exists(pyvista.FIGURE_PATH):  # noqa: PTH110
+    os.makedirs(pyvista.FIGURE_PATH)  # noqa: PTH103
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
@@ -63,7 +64,7 @@ warnings.filterwarnings(
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
-sys.path.append(str(Path("./_ext").resolve()))
+sys.path.append(os.path.abspath("./_ext"))  # noqa: PTH100
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
