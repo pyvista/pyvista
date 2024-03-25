@@ -499,9 +499,8 @@ def run(arguments, content, options, state_machine, state, lineno):
         code = textwrap.dedent("\n".join(map(str, content)))
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        path = Path(source_file_name)
-        base = str(path.parent / path.stem)
-        ext = path.suffix
+        path = Path(Path(source_file_name).name)
+        base = path.parent / path.stem
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
         caption = options.get('caption', '')
