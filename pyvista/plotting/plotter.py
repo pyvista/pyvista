@@ -6079,7 +6079,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         Plot an orbit around the earth.  Save the gif as a temporary file.
 
-        >>> import os
+        >>> from pathlib import Path
         >>> from tempfile import mkdtemp
         >>> import pyvista as pv
         >>> from pyvista import examples
