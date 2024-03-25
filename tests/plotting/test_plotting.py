@@ -297,7 +297,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     )
     assert isinstance(cpos, pv.CameraPosition)
     assert isinstance(img, np.ndarray)
-    assert Path(filename).isfile()
+    assert Path(filename).is_file()
 
     verify_image_cache.skip = True
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
@@ -1259,7 +1259,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
-    assert Path(filename).isfile()
+    assert Path(filename).is_file()
     assert pathlib.Path(filename).stat().st_size
 
 
@@ -2658,7 +2658,7 @@ def test_write_gif(sphere, tmpdir):
     pl.close()
 
     # assert file exists and is not empty
-    assert Path(path).isfile()
+    assert Path(path).is_file()
     assert Path(path).stat().st_size
 
 
@@ -2727,7 +2727,7 @@ def test_screenshot_notebook(tmpdir):
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
 
-    assert Path(filename).isfile()
+    assert Path(filename).is_file()
 
 
 def test_culling_frontface(sphere):
