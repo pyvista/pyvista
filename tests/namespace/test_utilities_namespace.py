@@ -1,11 +1,11 @@
 import importlib
-import pathlib
+from pathlib import Path
 
 import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = pathlib.Path(__file__).parent / 'namespace-utilities.txt'
+namespace_data = Path(__file__).parent / 'namespace-utilities.txt'
 with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
