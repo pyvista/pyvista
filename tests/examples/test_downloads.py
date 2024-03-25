@@ -367,7 +367,7 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
         assert np.array_equal(dataset.points, expected.points)
 
 
-def test_file_loader_file_props():
+def test_file_loader_file_props_from_one_file():
     # test single file
     example = downloads._example_cow
     example.download()
@@ -384,6 +384,8 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.PolyData
     assert example.unique_dataset_type is pv.PolyData
 
+
+def test_file_loader_file_props_from_two_files_one_loaded():
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
@@ -404,6 +406,8 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
 
+
+def test_file_loader_file_props_from_two_files_both_loaded():
     # test multiple files, both have same ext and reader,
     # both of which are loaded as a multiblock
     example = downloads._example_bolt_nut
@@ -425,6 +429,8 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.MultiBlock
     assert example.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
 
+
+def test_file_loader_file_props_from_directory_cubemap():
     # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
@@ -441,6 +447,8 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.Texture
     assert example.unique_dataset_type is pv.Texture
 
+
+def test_file_loader_file_props_from_directory_dicom():
     # test directory (dicom stack)
     example = downloads._example_dicom_stack
     example.download()
@@ -457,6 +465,8 @@ def test_file_loader_file_props():
     assert type(example.dataset) is pv.ImageData
     assert example.unique_dataset_type is pv.ImageData
 
+
+def test_file_loader_file_props_from_nested_files_and_directory():
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
     def files_func():
