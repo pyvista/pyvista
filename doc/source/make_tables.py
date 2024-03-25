@@ -5,13 +5,14 @@ import io
 import os
 import re
 import textwrap
-from typing import List
+from types import FunctionType
+from typing import Any, Callable, Dict, List, Type
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _example_loader, downloads
 
-# Paths to directories in xxxwhich resulting rst files and images are stored.
+# Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
@@ -345,11 +346,30 @@ class ColorTable(DocTable):
 
 
 class DownloadsMetadataTable(DocTable):
-    """Class to generate info about pyvista downloadable examples."""
+    """Class to generate info about pyvista downloadable examples.
+
+    For each 'row' of this table:
+
+    Create a card with a 1-column grid with two grid items (rows).
+    The first row is a nested grid with two items displayed as a single
+    column for small screen sizes, or two columns for larger screens.
+
+    The card has a structure similar to:
+    +---------------+
+    | Function Name |
+    | Docstring     |
+    +======+========+
+    | Info | Image  |
+    +------+--------+
+    | Repr          |
+    +---------------+
+
+    See https://sphinx-design.readthedocs.io/en/latest/index.html for
+    details on the directives used and their formatting."""
 
     path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata_table.rst"
 
-    # No main header; each example is its own table
+    # No main header; each example is its own separate card
     header = ""
     row_template = _aligned_dedent(
         """
@@ -372,25 +392,35 @@ class DownloadsMetadataTable(DocTable):
         |
         |                  .. grid-item-card::
         |
-        |                     {}
+        |                     .. image:: /{}
         |
         |            .. grid-item::
         |
-        |{}
+        |               - Size on Disk: {}
+        |               - Num Files: {}
+        |               - Extension: {}
+        |               - Reader: {}
+        |               - Dataset Type: {}
         |
         |      .. grid-item::
         |
         |         Representation:
         |
-        |{}
+        |         .. code-block::
+        |
+        |            {}
         |
         """
     )
+    # Set the indentation level for the representation item
+    # Level should be one more than the representation's '.. code-block::' directive in the
+    # row template above
+    REPR_INDENT_LEVEL = 4
 
     @classmethod
     def fetch_data(cls):
         # Collect all `_example_<name>` file loaders
-        module_members = dict(inspect.getmembers(pv.examples.downloads))
+        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
         file_loaders_dict = {
             name: item
             for name, item in module_members.items()
@@ -413,122 +443,146 @@ class DownloadsMetadataTable(DocTable):
     def get_row(cls, i, row_data):
         loader_name, loader = row_data
 
-        # Get the corresponding 'download' function for the example
-        download_name = loader_name.replace('_example_', 'download_')
-        download_func = getattr(downloads, download_name)
-        func_fullname = _get_fullname(download_func)
-        doc_line = download_func.__doc__.splitlines()[0]
+        # Get the corresponding 'download' function of the loader
+        func_name = loader_name.replace('_example_', 'download_')
+        func = getattr(downloads, func_name)
 
-        # Download the example and process
+        # Use the function's name for rst references
+        ref = func_name
+
+        # Get the card's header info
+        title = f':func:`~{_get_fullname(func)}`'
+        doc = _get_doc(func)
+
+        # Get file and instance metadata
         try:
             loader.download()
         except VTKVersionError:
             # Set default values
-            na = '``Not available``'
-            na_ = na.replace('`', '')
+            NOT_AVAILABLE = '``Not available``'
+            file_size = NOT_AVAILABLE
+            num_files = NOT_AVAILABLE
+            file_ext = NOT_AVAILABLE
+            reader_type = NOT_AVAILABLE
+            dataset_type = NOT_AVAILABLE
+            dataset_repr = [NOT_AVAILABLE.replace('`', '')]
             img_path = NOT_AVAILABLE_IMG_PATH
-            (
-                file_size_rst,
-                num_files_rst,
-                file_ext_rst,
-                reader_type_rst,
-                dataset_type_rst,
-                dataset_repr,
-            ) = (na, na, na, na, na, [na_])
         else:
-            # Get file info
-            file_size_rst = '``' + loader.total_size + '``'
-            num_files_rst = '``' + str(loader.num_files) + '``'
-            # Format extension as single str with rst backticks
-            file_ext = loader.unique_extension
-            file_ext_str = (
-                file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-            )
-            file_ext_rst = '``\'' + file_ext_str.replace(' ', '\'``, ``\'') + '\'``'
-            # Format reader type as rst linked to class
-            reader_type_rst = (
-                repr(loader.unique_reader_type)
-                .replace('<class \'', ':class:`~')
-                .replace('\'>', '`')
-                .replace('(', '')
-                .replace(')', '')
-            )
+            # Get data from loader
+            loader.load()
+            file_size = cls._format_file_size(loader)
+            num_files = cls._format_num_files(loader)
+            file_ext = cls._format_file_ext(loader)
+            reader_type = cls._format_reader_type(loader)
+            dataset_type = cls._format_dataset_type(loader)
+            dataset_repr = cls._format_dataset_repr(loader, cls.REPR_INDENT_LEVEL)
+            img_path = cls._search_image_path(func_name)
 
-            # Get instance info
-            dataset = loader.load()
-            dataset_type_rst = (
-                repr(loader.unique_dataset_type)
-                .replace('<class \'', ':class:`~')
-                .replace('\'>', '`')
-                .replace('(', '')
-                .replace(')', '')
-            )
-            # Replace any hex code memory addresses with ellipses
-            dataset_repr = repr(dataset)
-            dataset_repr = re.sub(
-                pattern=r'0x[0-9a-f]*',
-                repl='...',
-                string=dataset_repr,
-            ).splitlines()
-
-            # Search for the file name from all images in the thumbnail directory.
-            # Match:
-            #     any word character(s), then function name, then any non-word character(s),
-            #     then a 3character file extension, e.g.:
-            #       'pyvista-examples...download_name...ext'
-            #     or simply:
-            #       'download_name.ext'
-            all_filenames = '\n' + '\n'.join(os.listdir(EXAMPLES_THUMBNAIL_IMAGES_DIR)) + '\n'
-            match = re.search(
-                pattern=r'\n([\w|\-]*' + download_name + r'(\-\w*\.|\.)[a-z]{3})\n',
-                string=all_filenames,
-                flags=re.MULTILINE,
-            )
-
-            if match:
-                groups = match.groups()
-                assert (
-                    sum(download_name in grp for grp in groups) <= 1
-                ), f"More than one thumbnail image was found for {download_name}, got:\n{groups}"
-                img_fname = groups[0]
-                img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
-                assert os.path.isfile(img_path)
-            else:
-                print(f"WARNING: Missing thumbnail image file for \'{download_name}\'")
-                img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
-
-        cls.process_img(img_path)
-
-        header_item, info_item, img_item, repr_item = _create_grid_items(
-            func_fullname,
-            doc_line,
-            file_size_rst,
-            num_files_rst,
-            file_ext_rst,
-            reader_type_rst,
-            dataset_type_rst,
-            dataset_repr,
-            img_path,
-        )
-        # Indent lines to match grid depth
-        title, doc = header_item
-        info_item = _pad_lines(info_item, pad_left='|               ')
-        repr_item = _pad_lines(repr_item, pad_left='|         ')
-
-        def _joined_aligned_dedent(lines: list[str]):
-            return _aligned_dedent('\n'.join(lines))
+        cls._process_img(img_path)
 
         return cls.row_template.format(
-            download_name,
+            ref,
             title,
             doc,
-            img_item[0],
-            _joined_aligned_dedent(info_item),
-            _joined_aligned_dedent(repr_item),
+            img_path,
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            dataset_repr,
         )
 
     @staticmethod
-    def process_img(img_path):
+    def _format_file_size(loader: _example_loader._FileProps):
+        return '``' + loader.total_size + '``'
+
+    @staticmethod
+    def _format_num_files(loader: _example_loader._FileProps):
+        return '``' + str(loader.num_files) + '``'
+
+    @staticmethod
+    def _format_file_ext(loader: _example_loader._FileProps):
+        # Format extension as single str with rst backticks
+        # Multiple extensions are comma-separated
+        file_ext = loader.unique_extension
+        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
+        file_ext = '``\'' + file_ext.replace(' ', '\'``, ``\'') + '\'``'
+        return file_ext
+
+    @staticmethod
+    def _format_reader_type(loader: _example_loader._FileProps):
+        """Format reader type(s) with doc references to reader class(es)."""
+        reader_type = (
+            repr(loader.unique_reader_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        )
+        return reader_type
+
+    @staticmethod
+    def _format_dataset_type(loader: _example_loader._FileProps):
+        """Format dataset type(s) with doc references to dataset class(es)."""
+        dataset_type = (
+            repr(loader.unique_dataset_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        )
+        return dataset_type
+
+    @staticmethod
+    def _format_dataset_repr(loader: _example_loader._FileProps, indent_level: int) -> str:
+        """Format the dataset's representation as a single multi-line string.
+
+        The returned string is indented up to the specified indent level.
+        """
+        # Replace any hex code memory addresses with ellipses
+        dataset_repr = repr(loader.dataset)
+        dataset_repr = re.sub(
+            pattern=r'0x[0-9a-f]*',
+            repl='...',
+            string=dataset_repr,
+        )
+        return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def _search_image_path(dataset_download_func_name: str):
+        """Search the thumbnail directory and return its path.
+
+        If no thumbnail is found, the path to a "not available" image is returned.
+        """
+        # Search directory and match:
+        #     any word character(s), then function name, then any non-word character(s),
+        #     then a 3character file extension, e.g.:
+        #       'pyvista-examples...download_name...ext'
+        #     or simply:
+        #       'download_name.ext'
+        all_filenames = '\n' + '\n'.join(os.listdir(EXAMPLES_THUMBNAIL_IMAGES_DIR)) + '\n'
+        match = re.search(
+            pattern=r'\n([\w|\-]*' + dataset_download_func_name + r'(\-\w*\.|\.)[a-z]{3})\n',
+            string=all_filenames,
+            flags=re.MULTILINE,
+        )
+
+        if match:
+            groups = match.groups()
+            assert (
+                sum(dataset_download_func_name in grp for grp in groups) <= 1
+            ), f"More than one thumbnail image was found for {dataset_download_func_name}, got:\n{groups}"
+            img_fname = groups[0]
+            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
+            assert os.path.isfile(img_path)
+        else:
+            print(f"WARNING: Missing thumbnail image file for \'{dataset_download_func_name}\'")
+            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
+        return img_path
+
+    @staticmethod
+    def _process_img(img_path):
         """Process the thumbnail image to ensure it's the right size."""
         from PIL import Image
 
@@ -557,136 +611,14 @@ class DownloadsMetadataTable(DocTable):
                 img.save(img_path)
 
 
-def _get_fullname(typ) -> str:
+def _get_doc(func: Callable[[], Any]) -> str:
+    """Return the first line of the callable's docstring."""
+    return func.__doc__.splitlines()[0]
+
+
+def _get_fullname(typ: Type) -> str:
+    """Return the fully qualified name of the given type object."""
     return f"{typ.__module__}.{typ.__qualname__}"
-
-
-def _create_grid_items(
-    func_fullname: str,
-    doc_line: str,
-    file_size: str,
-    num_files: str,
-    file_ext: str,
-    reader_type: str,
-    dataset_type: str,
-    dataset_repr: List[str],
-    img_path: str,
-):
-    """
-    Create a grid table with three rows and two columns.
-
-    The table is formatted for the following template:
-    +------+--------+
-    | Function Name |
-    +======+========+
-    | Info | Image  |
-    +------+--------+
-    | Repr          |
-    +------+--------+
-    """
-
-    # def _make_table(
-    #     header_cell: List[str], info_cell: List[str], img_cell: List[str], repr_cell: List[str]
-    # ):
-    #     header_cell, header_width, header_height = _pad_lines(
-    #         header_cell, pad_left=' ', pad_right=' ', return_shape=True
-    #     )
-    #     info_cell, info_width, _ = _pad_lines(
-    #         info_cell, pad_left=' ', pad_right=' ', return_shape=True
-    #     )
-    #     img_cell, img_width, _ = _pad_lines(
-    #         img_cell, pad_left=' ', pad_right=' ', return_shape=True
-    #     )
-    #     repr_cell, repr_width, _ = _pad_lines(
-    #         repr_cell, pad_left=' ', pad_right=' ', return_shape=True
-    #     )
-    #
-    #     # Make sure table is wide enough to fit everything
-    #     # Compute table width, excluding the two side borders
-    #     table_width = max((header_width, info_width + img_width + 1, repr_width))
-    #     col1_width = info_width
-    #     col2_width = table_width - col1_width - 1
-    #
-    #     # Define table components
-    #     CORNER = '+'
-    #     HORZ_BAR = '-'
-    #     VERT_BAR = '|'
-    #     HORZ_BAR_HEADER = '='
-    #
-    #     ROW_SEP = [
-    #         CORNER + _repeat(HORZ_BAR, col1_width) + CORNER + _repeat(HORZ_BAR, col2_width) + CORNER
-    #     ]
-    #     ROW_SEP_HEADER = [
-    #         CORNER
-    #         + _repeat(HORZ_BAR_HEADER, col1_width)
-    #         + CORNER
-    #         + _repeat(HORZ_BAR_HEADER, col2_width)
-    #         + CORNER
-    #     ]
-    #
-    #     # Build table
-    #     #  Add horizontal separations and top/bottom table borders
-    #     #  Justify rows so they all span the full table width
-    #     #  Pad rows with vertical separators
-    #     table_lines = []
-    #
-    #     # Header
-    #     table_lines.extend(ROW_SEP)
-    #     header_lines = _pad_lines(
-    #         _ljust_lines(header_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-    #     )
-    #     table_lines.extend(header_lines)
-    #     table_lines.extend(ROW_SEP_HEADER)
-    #
-    #     # Row 1
-    #     row1_cat = _horz_concat_lines(_pad_lines(info_cell, pad_right=VERT_BAR), img_cell)
-    #     row1_lines = _pad_lines(
-    #         _ljust_lines(row1_cat, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-    #     )
-    #     table_lines.extend(row1_lines)
-    #     table_lines.extend(ROW_SEP)
-    #
-    #     # Row 2
-    #     row2_lines = _pad_lines(
-    #         _ljust_lines(repr_cell, min_width=table_width), pad_left=VERT_BAR, pad_right=VERT_BAR
-    #     )
-    #     table_lines.extend(row2_lines)
-    #     table_lines.extend(ROW_SEP)
-    #
-    #     total_table_width = table_width + 2  # include left and right borders
-    #     assert all(
-    #         len(line) == total_table_width for line in table_lines
-    #     ), "The length of all table lines must be equal."
-    #
-    #     # Add padding to left of entire table for indenting
-    #     table_lines = _pad_lines(table_lines, pad_left='   ')
-    #     return table_lines
-
-    # Format header cell
-    header_cell = [
-        f':func:`~{func_fullname}`',
-        f'{doc_line}',
-    ]
-
-    # Format info cell
-    info_cell = [
-        f'- Size on Disk: {file_size}',
-        f'- Num Files: {num_files}',
-        f'- Extension: {file_ext}',
-        f'- Reader: {reader_type}',
-        f'- Dataset Type: {dataset_type}',
-    ]
-
-    # Format img cell
-    img_cell = [f'.. image:: /{img_path}']
-
-    # Format data repr cell as a rst literal block
-    repr_cell = ['::', '']
-    # Indent paragraph
-    repr_content = _pad_lines(dataset_repr, pad_left='   ')
-    repr_cell.extend(repr_content)
-
-    return header_cell, info_cell, img_cell, repr_cell
 
 
 def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
@@ -748,6 +680,39 @@ def _pad_lines(
     if return_shape:
         return lines, _max_width(lines), len(lines)
     return lines
+
+
+def _indent_multi_line_string(
+    string: str, indent_size=3, indent_level: int = 1, omit_first_line=True
+) -> str:
+    """Indent each line of a multi-line string by a specified indentation level.
+
+    Optionally specify the indent size (e.g. 3 spaces for rst).
+    Optionally omit indentation from the first line if it is already indented.
+
+    This function is used to support de-denting formatted multi-line strings.
+    E.g. for the following rst text with item {} indented by 3 levels:
+
+        |      .. some_directive::
+        |
+        |         {}
+
+    a multi-line string input such as 'line1\nline2\nline3' will be formatted as:
+
+        |      .. some_directive::
+        |
+        |         line1\n         line2\n         line3
+        |
+
+    which will result in the correct indentation applied to all lines of the string.
+
+    """
+    lines = string.splitlines()
+    indentation = _repeat(' ', num_repeat=indent_size * indent_level)
+    first_line = lines.pop(0) if omit_first_line else ''
+    lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
+    lines.insert(0, first_line)
+    return '\n'.join(lines)
 
 
 def make_all_tables():
