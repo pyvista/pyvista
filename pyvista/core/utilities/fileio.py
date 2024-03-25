@@ -172,7 +172,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
                 name = None
             multi.append(read(each, file_format=file_format), name)
         return multi
-    filename = Path(Path(str(filename).expanduser())).resolve()
+    filename = Path(str(filename)).expanduser().resolve()
     if not Path(filename).is_file() and not Path(filename).is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
 
