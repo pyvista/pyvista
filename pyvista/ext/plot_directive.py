@@ -526,7 +526,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
-    source_rel_dir = str(Path(source_rel_name).lstrip(os.path.sep).parent)
+    source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
     build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
