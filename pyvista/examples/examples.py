@@ -16,7 +16,7 @@ import numpy as np
 import pyvista
 
 # get location of this folder and the example files
-dir_path = str(Path(Path(os.path.realpath(__file__)).parent))
+dir_path = str(Path(os.path.realpath(__file__)).parent)
 antfile = str(Path(dir_path) / 'ant.ply')
 planefile = str(Path(dir_path) / 'airplane.ply')
 hexbeamfile = str(Path(dir_path) / 'hexbeam.vtk')

@@ -36,7 +36,7 @@ pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = str(Path(str(Path("./images/").resolve())) / "auto-generated/")
+pyvista.FIGURE_PATH = str(Path("./images/").resolve() / "auto-generated/")
 if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 

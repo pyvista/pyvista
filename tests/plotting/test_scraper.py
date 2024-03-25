@@ -50,7 +50,7 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         target_file=target_file,
     )
 
-    Path(Path(img_fnames[0]).parent).mkdir(parents=True)
+    Path(img_fnames[0]).parent.mkdir(parents=True)
     for img_fname in img_fnames:
         assert not Path(img_fname).is_file()
 
@@ -106,7 +106,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
         target_file=target_file,
     )
 
-    Path(Path(img_fnames[0]).parent).mkdir(parents=True)
+    Path(img_fnames[0]).parent.mkdir(parents=True)
     for img_fname in img_fnames:
         assert not Path(img_fname).is_file()
 
@@ -136,7 +136,7 @@ def test_scraper_raise(tmpdir):
         example_globals=dict(a=1),
         target_file=target_file,
     )
-    Path(str(Path(img_fname).parent)).mkdir(parents=True)
+    Path(img_fname).parent.mkdir(parents=True)
     assert not Path(img_fname).is_file()
     Path(out_dir).mkdir(parents=True)
 

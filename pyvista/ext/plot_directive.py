@@ -436,7 +436,7 @@ def render_figures(
                         continue
                     else:
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with Path(image_file.filename, "wb").open() as f:
+                        with Path(image_file.filename).open("wb") as f:
                             f.write(plotter.last_vtksz)
                 images.append(image_file)
 
@@ -499,7 +499,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         code = textwrap.dedent("\n".join(map(str, content)))
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        path = Path(Path(source_file_name).name)
+        path = Path(source_file_name)
         base = str(path.parent / path.stem)
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
@@ -537,7 +537,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     Path(build_dir).mkdir(exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = str(Path(Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
     Path(dest_dir).mkdir(exist_ok=True)
 
     # how to link to files from the RST file

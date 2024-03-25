@@ -1931,7 +1931,7 @@ class _PVDReader(BaseVTKReader):
     def SetFileName(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = str(Path(Path(filename).parent))
+        self._directory = str(Path(filename).parent)
 
     def UpdateInformation(self):
         """Parse PVD file."""
