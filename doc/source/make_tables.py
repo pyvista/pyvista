@@ -585,7 +585,7 @@ class DownloadsMetadataTable(DocTable):
         """Process the thumbnail image to ensure it's the right size."""
         from PIL import Image
 
-        IMG_WIDTH, IMG_HEIGHT = 300, 300
+        IMG_WIDTH, IMG_HEIGHT = 400, 300
 
         if os.path.basename(img_path) == 'not_available.png':
             not_available_mesh = pv.Text3D('Not Available')
@@ -593,7 +593,8 @@ class DownloadsMetadataTable(DocTable):
             p.background_color = 'white'
             p.add_mesh(not_available_mesh, color='black')
             p.view_xy()
-            p.camera.up = (1, 1, 0)
+            p.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+            p.enable_parallel_projection()
             img_array = p.show(screenshot=True)
 
             # exit early if the image is the same
