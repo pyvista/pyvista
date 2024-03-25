@@ -361,18 +361,24 @@ class DownloadsMetadataTable(DocTable):
         |
         |   .. grid-item::
         |
-        |      {}
+        |      .. grid:: 1
         |
-        |   .. dropdown:: Metadata
-        |      :open:
+        |         .. grid-item-card::
         |
-        |      .. grid:: 1 2 2 2
+        |            {}
         |
-        |         .. grid-item::
+        |   .. grid-item::
+        |
+        |      .. dropdown:: Metadata
+        |         :open:
+        |
+        |         .. grid:: 1 2 2 2
+        |
+        |            .. grid-item::
         |
         |{}
         |
-        |         .. grid-item::
+        |            .. grid-item::
         |
         |{}
         |
@@ -502,7 +508,7 @@ class DownloadsMetadataTable(DocTable):
             img_path,
         )
         # Indent lines to match grid depth
-        INDENT = '|            '
+        INDENT = '|               '
         title, doc = header_item
         info_item = _pad_lines(info_item, pad_left=INDENT)
         repr_item = _pad_lines(repr_item, pad_left=INDENT)
