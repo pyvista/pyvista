@@ -10,7 +10,7 @@ rendered on this page.
 
 Notes
 -----
-See the downloads metadata page for detailed information about the examples,
+Browse the examples metadata gallery for detailed information about the examples,
 including the size of the downloads, file format(s), and dataset info.
 
 .. toctree::
