@@ -17,9 +17,12 @@ from pyvista.examples._example_loader import (
     _Downloadable,
     _format_file_size,
     _load_and_merge,
+    _load_as_cubemap,
     _load_as_multiblock,
     _Loadable,
     _MultiFileDownloadableLoadable,
+    _MultiFileLoadable,
+    _SingleFile,
     _SingleFileDownloadable,
     _SingleFileDownloadableLoadable,
     _SingleFileLoadable,
@@ -367,10 +370,50 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
         assert np.array_equal(dataset.points, expected.points)
 
 
-def test_file_loader_file_props_from_one_file():
+@pytest.fixture()
+def loadable_vtp() -> _SingleFileLoadable:
+    return _SingleFileLoadable(downloads.download_file('cow.vtp'))
+
+
+@pytest.fixture()
+def loadable_mhd() -> _MultiFileLoadable:
+    def _head_files_func():
+        # Multiple files needed for read, but only one gets loaded
+        head_raw = _SingleFile('HeadMRVolume.raw')
+        head_mhd = _SingleFileLoadable('HeadMRVolume.mhd')
+        return head_mhd, head_raw
+
+    return _MultiFileLoadable(_head_files_func)
+
+
+@pytest.fixture()
+def loadable_slc() -> _MultiFileLoadable:
+    def _bolt_nut_files_func():
+        bolt = _SingleFileLoadable(downloads.download_file('bolt.slc'))
+        nut = _SingleFileLoadable(downloads.download_file('nut.slc'))
+        return bolt, nut
+
+    return _MultiFileLoadable(_bolt_nut_files_func, load_func=_load_as_multiblock)
+
+
+@pytest.fixture()
+def loadable_cubemap() -> _SingleFileLoadable:
+    return _SingleFileLoadable(
+        downloads._download_archive_file_or_folder('cubemap_park/cubemap_park.zip', target_file=''),
+        read_func=_load_as_cubemap,
+    )
+
+
+@pytest.fixture()
+def loadable_dicom() -> _SingleFileLoadable:
+    return _SingleFileLoadable(
+        downloads._download_archive_file_or_folder('DICOM_Stack/data.zip', target_file='data')
+    )
+
+
+def test_file_loader_file_props_from_one_file(loadable_vtp):
     # test single file
-    example = downloads._example_cow
-    example.download()
+    example = loadable_vtp
     assert os.path.isfile(example.path)
     assert example.num_files == 1
     assert example._total_size_bytes == 60449
@@ -385,7 +428,7 @@ def test_file_loader_file_props_from_one_file():
     assert example.unique_dataset_type is pv.PolyData
 
 
-def test_file_loader_file_props_from_two_files_one_loaded():
+def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
@@ -407,11 +450,10 @@ def test_file_loader_file_props_from_two_files_one_loaded():
     assert example.unique_dataset_type is pv.ImageData
 
 
-def test_file_loader_file_props_from_two_files_both_loaded():
+def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
     # test multiple files, both have same ext and reader,
     # both of which are loaded as a multiblock
-    example = downloads._example_bolt_nut
-    example.download()
+    example = loadable_slc
     assert len(example.path) == 2
     assert example.num_files == 2
     assert os.path.isfile(example.path[0])
@@ -430,10 +472,9 @@ def test_file_loader_file_props_from_two_files_both_loaded():
     assert example.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
 
 
-def test_file_loader_file_props_from_directory_cubemap():
+def test_file_loader_file_props_from_directory_cubemap(loadable_cubemap):
     # test directory (cubemap)
-    example = downloads._example_cubemap_park
-    example.download()
+    example = loadable_cubemap
     assert os.path.isdir(example.path)
     assert example.num_files == 6
     assert example._total_size_bytes == 606113
@@ -448,10 +489,9 @@ def test_file_loader_file_props_from_directory_cubemap():
     assert example.unique_dataset_type is pv.Texture
 
 
-def test_file_loader_file_props_from_directory_dicom():
+def test_file_loader_file_props_from_directory_dicom(loadable_dicom):
     # test directory (dicom stack)
-    example = downloads._example_dicom_stack
-    example.download()
+    example = loadable_dicom
     assert os.path.isdir(example.path)
     assert example.num_files == 3
     assert example._total_size_bytes == 1583688
@@ -466,17 +506,15 @@ def test_file_loader_file_props_from_directory_dicom():
     assert example.unique_dataset_type is pv.ImageData
 
 
-def test_file_loader_file_props_from_nested_files_and_directory():
+def test_file_loader_file_props_from_nested_files_and_directory(
+    loadable_vtp, loadable_mhd, loadable_dicom
+):
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
     def files_func():
-        loadable1 = downloads._example_cow
-        loadable2 = downloads._example_head
-        loadable3 = downloads._example_dicom_stack
-        return loadable1, loadable2, loadable3
+        return loadable_vtp, loadable_mhd, loadable_dicom
 
-    example = _MultiFileDownloadableLoadable(files_func)
-    example.download()
+    example = _MultiFileLoadable(files_func)
     assert len(example.path) == 4
     assert example.num_files == 6
     assert os.path.isfile(example.path[0])
