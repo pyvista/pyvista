@@ -552,7 +552,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = Path(Path(str(filename).expanduser())).resolve()
+    filename = Path(Path(str(filename)).expanduser()).resolve()
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
