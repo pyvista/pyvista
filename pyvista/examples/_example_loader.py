@@ -438,7 +438,10 @@ def _load_as_multiblock(
     """
     block = pyvista.MultiBlock()
     names = (
-        [str(Path(file.filename).parent / Path(file.filename).stem) for file in files]
+        [
+            os.path.splitext(os.path.basename(file.filename))[0]  # noqa: PTH122,PTH119
+            for file in files
+        ]
         if names is None
         else names
     )
