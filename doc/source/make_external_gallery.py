@@ -203,7 +203,7 @@ articles = dict(
     visualpic=Example(
         title="VisualPIC",
         link="https://github.com/AngelFP/VisualPIC",
-        image="visualpic.gif",
+        image="visualpic.png",
     ),
     # entry=Example(title="",
     #     link="",
