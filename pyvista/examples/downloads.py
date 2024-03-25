@@ -4353,6 +4353,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> from pathlib import Path
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
     >>> from pyvista import examples
