@@ -52,12 +52,12 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
 
     Path(Path(img_fnames[0]).parent).mkdir(parents=True)
     for img_fname in img_fnames:
-        assert not Path(img_fname).isfile()
+        assert not Path(img_fname).is_file()
 
     Path(out_dir).mkdir(parents=True)
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
-        assert Path(img_fname).isfile()
+        assert Path(img_fname).is_file()
 
     # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
     assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
@@ -137,7 +137,7 @@ def test_scraper_raise(tmpdir):
         target_file=target_file,
     )
     Path.mkdir(img_fname)
-    assert not Path(img_fname).isfile()
+    assert not Path(img_fname).is_file()
     Path.mkdir(out_dir)
 
     with pytest.raises(RuntimeError, match="pyvista.BUILDING_GALLERY"):
