@@ -107,7 +107,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         # Make sure the extension is "png"
         path = Path(fname)
         fname_withoutextension = str(path.parent / path.stem)
-        fname = fname_withoutextension.name + ".png"
+        fname = fname_withoutextension + ".png"
 
         if hasattr(plotter, "_gif_filename"):
             # move gif to fname
