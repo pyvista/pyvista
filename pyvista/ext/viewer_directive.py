@@ -51,7 +51,7 @@ class OfflineViewerDirective(Directive):
         # copy viewer HTML to _static
         static_path = pathlib.Path(output_dir) / '_static'
         static_path.mkdir(exist_ok=True)
-        if not pathlib.Path(static_path, Path(HTML_VIEWER_PATH)).exists().name:
+        if not (Path(static_path) / Path(HTML_VIEWER_PATH).name)).exists():
             shutil.copy(HTML_VIEWER_PATH, static_path)
 
         # calculate the scene asset path relative to the build directory and
