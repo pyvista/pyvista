@@ -11,6 +11,7 @@ Modified slightly for ``pyvista``.
 
 """
 
+import glob
 from importlib import import_module
 import inspect
 from os import path
