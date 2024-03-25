@@ -1931,7 +1931,7 @@ class _PVDReader(BaseVTKReader):
     def SetFileName(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = Path(Path(filename).parent)
+        self._directory = str(Path(Path(filename).parent))
 
     def UpdateInformation(self):
         """Parse PVD file."""
@@ -1966,7 +1966,7 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(Path(self._directory) / dataset.path) for dataset in self._active_datasets
+            get_reader(str(Path(self._directory) / dataset.path)) for dataset in self._active_datasets
         ]
 
 

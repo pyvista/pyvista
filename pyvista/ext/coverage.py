@@ -131,7 +131,7 @@ class CoverageBuilder(Builder):
                 self.c_undoc[filename] = undoc
 
     def write_c_coverage(self) -> None:
-        output_file = Path(self.outdir) / 'c.txt'
+        output_file = str(Path(self.outdir) / 'c.txt')
         with Path(output_file).open('w') as op:
             if self.config.coverage_write_headline:
                 write_header(op, 'Undocumented C API elements', '=')
@@ -268,7 +268,7 @@ class CoverageBuilder(Builder):
             self.py_undoc[mod_name] = {'funcs': funcs, 'classes': classes}
 
     def write_py_coverage(self) -> None:
-        output_file = Path(self.outdir) / 'python.txt'
+        output_file = str(Path(self.outdir) / 'python.txt')
         failed = []
         with Path(output_file).open('w') as op:
             if self.config.coverage_write_headline:
@@ -357,7 +357,7 @@ class CoverageBuilder(Builder):
 
     def finish(self) -> None:
         # dump the coverage data to a pickle file too
-        picklepath = Path(self.outdir) / 'undoc.pickle'
+        picklepath = str(Path(self.outdir) / 'undoc.pickle')
         with Path(picklepath).open('wb') as dumpfile:
             pickle.dump((self.py_undoc, self.c_undoc), dumpfile)
 

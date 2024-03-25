@@ -127,7 +127,7 @@ def test_import_gltf(verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
 
-    filename = Path(THIS_PATH) / '..' / 'example_files' / 'Box.glb'
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.glb')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -158,7 +158,7 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 
 
 def test_import_vrml():
-    filename = Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl'
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -2759,7 +2759,7 @@ def test_add_text_latex():
 
 def test_add_text_font_file():
     plotter = pv.Plotter()
-    font_file = Path(__file__).parent / "fonts/Mplus2-Regular.ttf"
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     plotter.add_text("左上", position='upper_left', font_size=25, color='blue', font_file=font_file)
     plotter.add_text(
         "中央", position=(0.5, 0.5), viewport=True, orientation=-90, font_file=font_file

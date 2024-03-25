@@ -237,7 +237,7 @@ def _download_archive_file_or_folder(filename, target_file=None):
     except (FileNotFoundError, RuntimeError):
         pass
     # Return folder, or re-raise error by calling function again
-    folder = Path(USER_DATA_PATH) / filename + '.unzip', target_file
+    folder = str(Path(USER_DATA_PATH) / (filename + '.unzip') / target_file)
     return folder if Path(folder).is_dir() else _download_archive(filename, target_file=target_file)
 
 
@@ -4363,7 +4363,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     Write the gif to a temporary directory. Normally you would write to a local
     path.
 
-    >>> gif_filename = Path(mkdtemp()) / 'single_sphere.gif'
+    >>> gif_filename = str(Path(mkdtemp()) / 'single_sphere.gif')
 
     Generate the animation.
 
@@ -4415,7 +4415,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     Write the gif to a temporary directory. Normally you would write to a local
     path.
 
-    >>> gif_filename = Path(mkdtemp()) / 'dual_sphere.gif'
+    >>> gif_filename = str(Path(mkdtemp()) / 'dual_sphere.gif')
 
     Generate the animation.
 

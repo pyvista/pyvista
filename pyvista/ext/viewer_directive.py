@@ -42,7 +42,7 @@ class OfflineViewerDirective(Directive):
         build_dir = pathlib.Path(self.state.document.settings.env.app.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
-        source_file = Path(self.state.document.current_source).parent / self.arguments[0]
+        source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
         source_file = source_file.absolute().resolve()
         if not Path(source_file).is_file():
             logger.warn(f'Source file {source_file} does not exist.')

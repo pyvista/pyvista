@@ -5026,7 +5026,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ) from None
 
         if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = Path(pyvista.FIGURE_PATH) / filename
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5100,8 +5100,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = Path(pyvista.FIGURE_PATH) / filename
-        self._gif_filename = Path(filename).resolve()
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        self._gif_filename = str(Path(filename).resolve())
 
         kwargs['mode'] = 'I'
         kwargs['loop'] = loop
@@ -5784,7 +5784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(filename, (str, pathlib.Path)):
                 filename = pathlib.Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                    filename = pathlib.Path(Path(pyvista.FIGURE_PATH) / filename)
+                    filename = Path(pyvista.FIGURE_PATH) / filename
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
@@ -5847,8 +5847,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
         if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = Path(pyvista.FIGURE_PATH) / filename
-        filename = Path(filename).expanduser().resolve()
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        filename = str(Path(filename).expanduser().resolve())
         extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
@@ -6085,7 +6085,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
-        >>> filename = Path(mkdtemp()) / 'orbit.gif'
+        >>> filename = str(Path(mkdtemp()) / 'orbit.gif')
         >>> plotter = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
         ...     mesh, texture=texture, smooth_shading=True
@@ -6173,9 +6173,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
         if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = Path(pyvista.FIGURE_PATH) / filename
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
         else:
-            filename = Path(filename).expanduser().resolve()
+            filename = str(Path(filename).expanduser().resolve())
 
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')

@@ -36,13 +36,13 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     plotters[1].add_mesh(pv.Cone())
 
     src_dir = str(tmpdir)
-    out_dir = Path(str(tmpdir)) / '_build' / 'html'
+    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
     img_fnames = [
-        Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png' for n in range(n_win)
+        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = Path(src_dir) / 'auto_examples' / 'sg.py'
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
@@ -86,9 +86,9 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
         raise ValueError(f'Invalid scraper type: {scraper}')
 
     src_dir = str(tmpdir)
-    out_dir = Path(str(tmpdir)) / '_build' / 'html'
+    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
     img_fnames = [
-        Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png' for n in range(n_win)
+        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
     # create and save GIF to tmpdir
@@ -98,7 +98,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     plotter_gif.close()
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = Path(src_dir) / 'auto_examples' / 'sg.py'
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = ("empty_block", "", 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
@@ -126,10 +126,10 @@ def test_scraper_raise(tmpdir):
     plotter = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
-    out_dir = Path(src_dir) / '_build' / 'html'
-    img_fname = Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png'
+    out_dir = str(Path(src_dir) / '_build' / 'html')
+    img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = Path(src_dir) / 'auto_examples' / 'sg.py'
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
         image_path_iterator=(img for img in [img_fname]),

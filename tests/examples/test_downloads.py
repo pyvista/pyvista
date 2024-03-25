@@ -122,7 +122,7 @@ def test_delete_downloads(tmpdir):
     try:
         examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
         assert Path(examples.downloads.USER_DATA_PATH).is_dir()
-        tmp_file = Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt'
+        tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
         with Path(tmp_file).open('w') as fid:
             fid.write('test')
         examples.delete_downloads()
@@ -149,11 +149,11 @@ def test_delete_downloads_does_not_exist(tmpdir):
 def test_file_from_files(tmpdir):
     path = str(tmpdir)
     fnames = [
-        Path(path) / 'tmp2.txt',
-        Path(path) / 'tmp1.txt',
-        Path(path) / 'tmp0.txt',
-        Path(path) / 'tmp' / 'tmp2.txt',
-        Path(path) / '/__MACOSX/',
+        str(Path(path) / 'tmp2.txt'),
+        str(Path(path) / 'tmp1.txt'),
+        str(Path(path) / 'tmp0.txt'),
+        str(Path(path) / 'tmp' / 'tmp2.txt'),
+        str(Path(path) / '/__MACOSX/'),
     ]
 
     with pytest.raises(FileNotFoundError):
@@ -211,7 +211,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of examples available for download."""
 
     # setup
-    repository_path = Path(tmp_path) / 'repo'
+    repository_path = str(Path(tmp_path) / 'repo')
     Path(repository_path).mkdir()
 
     downloadable_basenames = [
@@ -228,13 +228,13 @@ def examples_local_repository_tmp_dir(tmp_path):
 
     # copy datasets from the pyvista repo to the local repository
     [
-        shutil.copyfile(Path(pyvista.examples.dir_path) / base, Path(repository_path) / base)
+        shutil.copyfile(str(Path(pyvista.examples.dir_path) / base), str(Path(repository_path) / base))
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(Path(tmp_path) / 'archive', 'zip', repository_path)
-    shutil.move(Path(tmp_path) / 'archive.zip', Path(repository_path) / 'archive.zip')
+    shutil.make_archive(str(Path(tmp_path) / 'archive'), 'zip', repository_path)
+    shutil.move(str(Path(tmp_path) / 'archive.zip'), str(Path(repository_path) / 'archive.zip'))
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -244,7 +244,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     downloads._FILE_CACHE = True
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_filenames = [Path(downloads.FETCHER.path) / base for base in downloadable_basenames]
+    cached_filenames = [str(Path(downloads.FETCHER.path) / base) for base in downloadable_basenames]
     [Path(file).unlink() for file in cached_filenames if Path(file).is_file()]
 
     yield repository_path

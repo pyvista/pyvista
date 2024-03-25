@@ -61,7 +61,7 @@ def cubemap(path='', prefix='', ext='.jpg'):
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    image_paths = [Path(path) / f'{prefix}{suffix}{ext}' for suffix in sets]
+    image_paths = [str(Path(path) / f'{prefix}{suffix}{ext}') for suffix in sets]
     return _cubemap_from_paths(image_paths)
 
 

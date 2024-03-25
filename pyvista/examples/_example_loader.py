@@ -238,7 +238,7 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
                     fullpath = file_from_files(target_file, self.filename)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    fullpath = Path(USER_DATA_PATH) / (filename + '.unzip') / target_file
+                    fullpath = str(Path(USER_DATA_PATH) / (filename + '.unzip') / target_file)
                     fullpath = fullpath if Path(fullpath).is_dir() else None
             # set the filename as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
@@ -517,7 +517,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
-        [Path(path) / name for name in files if condition(name)]
+        [str(Path(path) / name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
     ][0]
 

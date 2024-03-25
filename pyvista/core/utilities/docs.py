@@ -75,7 +75,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
         return None
 
     fn = op.relpath(fn, start=Path(pyvista.__file__).parent)
-    fn = '/'.join(Path(op.normpath(fn)).parts)  # in case on Windows
+    fn = str(Path('/') / Path(op.normpath(fn)).parts)  # in case on Windows
 
     try:
         source, lineno = inspect.getsourcelines(obj)

@@ -360,7 +360,7 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 
 
 def test_init_bad_filename():
-    filename = Path(test_path) / 'test_grid.py'
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.UnstructuredGrid(filename)
 
@@ -681,7 +681,7 @@ def test_load_structured_bad_filename():
     with pytest.raises(FileNotFoundError):
         pv.StructuredGrid('not a file')
 
-    filename = Path(test_path) / 'test_grid.py'
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.StructuredGrid(filename)
 

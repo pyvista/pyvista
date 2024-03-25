@@ -126,7 +126,7 @@ def test_property_orientation(prop):
 
 
 def test_property_set_font_file(prop):
-    font_file = Path(__file__).parent / "fonts/Mplus2-Regular.ttf"
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     prop.set_font_file(font_file)
     with pytest.raises(FileNotFoundError):
         prop.set_font_file("foo.ttf")

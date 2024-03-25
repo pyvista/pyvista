@@ -178,7 +178,7 @@ def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pv.PolyData('file.bad')
 
-    filename = Path(test_path) / 'test_polydata.py'
+    filename = str(Path(test_path) / 'test_polydata.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.PolyData(filename)
 

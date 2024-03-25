@@ -328,7 +328,7 @@ class ImageFile:
     @property
     def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
-        return Path(self.dirname) / self.basename
+        return str(Path(self.dirname) / self.basename)
 
     @property
     def stem(self):  # numpydoc ignore=RT01
@@ -468,9 +468,9 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     if len(arguments):
         if not config.plot_basedir:
-            source_file_name = Path(setup.app.builder.srcdir) / directives.uri(arguments[0])
+            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
-            source_file_name = (
+            source_file_name = str(
                 Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0])
             )
 
@@ -529,7 +529,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     source_rel_dir = Path(source_rel_name).lstrip(os.path.sep).parent
 
     # build_dir: where to place output files (temporarily)
-    build_dir = Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir
+    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -537,11 +537,11 @@ def run(arguments, content, options, state_machine, state, lineno):
     Path(build_dir).mkdir(exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = Path(Path(setup.app.builder.outdir) / source_rel_dir).resolve()
+    dest_dir = str(Path(Path(setup.app.builder.outdir) / source_rel_dir).resolve())
     Path(dest_dir).mkdir(exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = Path(relpath(setup.confdir) / rst_dir, source_rel_dir).replace(os.path.sep, '/')
+    dest_dir_link = str(Path(relpath(setup.confdir, rst_dir)) / source_rel_dir).replace(os.path.sep, '/'))
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
@@ -627,7 +627,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     for _, images in results:
         for image in images:
-            destimg = Path(dest_dir) / image.basename
+            destimg = str(Path(dest_dir) / image.basename)
             if image.filename != destimg:
                 shutil.copyfile(image.filename, destimg)
 
