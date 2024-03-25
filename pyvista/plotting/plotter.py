@@ -552,7 +552,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename += '.html'
 
         # Move to final destination
-        with Path(filename, 'w', encoding='utf-8').open() as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
@@ -599,7 +599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return content
 
-        with Path(filename, 'wb').open() as f:
+        with Path(filename).open('wb') as f:
             f.write(content)
 
         return filename
