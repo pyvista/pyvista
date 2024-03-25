@@ -260,7 +260,7 @@ def read_texture(filename, progress_bar=False):
     --------
     Read in an example jpg map file as a texture.
 
-    >>> import os
+    >>> from pathlib import Path
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> Path(examples.mapfile).name
