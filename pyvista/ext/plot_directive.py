@@ -464,7 +464,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = None if not keep_context else options['context']
 
     rst_file = document.attributes['source']
-    rst_dir = Path(rst_file).parent
+    rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
         if not config.plot_basedir:
@@ -500,13 +500,13 @@ def run(arguments, content, options, state_machine, state, lineno):
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
         path = Path(Path(source_file_name).name)
-        base = path.parent / path.stem
+        base = str(path.parent / path.stem)
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
         caption = options.get('caption', '')
 
     path = Path(output_base)
-    base = path.parent / path.stem
+    base = str(path.parent / path.stem)
     source_ext = path.suffix
     if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
@@ -526,7 +526,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
-    source_rel_dir = Path(source_rel_name).lstrip(os.path.sep).parent
+    source_rel_dir = str(Path(source_rel_name).lstrip(os.path.sep).parent)
 
     # build_dir: where to place output files (temporarily)
     build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)

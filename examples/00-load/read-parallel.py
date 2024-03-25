@@ -22,7 +22,7 @@ from pyvista import examples
 # Let's inspect where this downloaded our dataset by setting ``load=False`` and
 # looking at the directory containing the file we downloaded.
 filename = examples.download_blood_vessels(load=False)
-path = Path(filename).parent
+path = str(Path(filename).parent)
 os.listdir(path)
 
 

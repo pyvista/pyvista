@@ -186,7 +186,7 @@ def test_file_copier(tmpdir):
 def test_local_file_cache(tmpdir):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
     basename = Path(examples.planefile).name
-    dirname = Path(examples.planefile).parent
+    dirname = str(Path(examples.planefile).parent)
     downloads.FETCHER.registry[basename] = None
 
     try:

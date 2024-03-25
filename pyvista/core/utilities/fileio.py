@@ -62,7 +62,7 @@ def get_ext(filename):
 
     """
     path = Path(filename)
-    base = path.parent / path.stem
+    base = str(path.parent / path.stem)
     ext = path.suffix
     ext = ext.lower()
     if ext == ".gz":

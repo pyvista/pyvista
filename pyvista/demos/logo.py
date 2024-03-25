@@ -23,7 +23,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 
-THIS_PATH = Path(os.path.realpath(__file__)).parent
+THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
 LOGO_TITLE = 'PyVista'
 

@@ -6,7 +6,7 @@ import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = pathlib.Path(__file__).parent / 'namespace-utilities.txt'
+namespace_data = str(pathlib.Path(__file__).parent / 'namespace-utilities.txt')
 with Path(namespace_data).open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
