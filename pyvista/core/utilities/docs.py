@@ -1,8 +1,8 @@
 """Supporting functions for documentation build."""
 
 import inspect
+import os
 import os.path as op
-from pathlib import Path
 import sys
 from typing import Dict, Optional
 
@@ -74,8 +74,8 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
             return None
         return None
 
-    fn = op.relpath(fn, start=Path(pyvista.__file__).parent)
-    fn = str(Path('/') / Path(op.normpath(fn)).parts)  # in case on Windows
+    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
+    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)

@@ -228,7 +228,9 @@ def examples_local_repository_tmp_dir(tmp_path):
 
     # copy datasets from the pyvista repo to the local repository
     [
-        shutil.copyfile(str(Path(pyvista.examples.dir_path) / base), str(Path(repository_path) / base))
+        shutil.copyfile(
+            str(Path(pyvista.examples.dir_path) / base), str(Path(repository_path) / base)
+        )
         for base in downloadable_basenames
     ]
 
