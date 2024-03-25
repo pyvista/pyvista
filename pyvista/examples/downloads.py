@@ -4353,7 +4353,6 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import os
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -4405,7 +4404,6 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import os
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
     >>> from pyvista import examples
