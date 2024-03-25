@@ -2,6 +2,7 @@
 
 import os
 import pathlib
+from pathlib import Path
 import shutil
 import sys
 
@@ -41,18 +42,16 @@ class OfflineViewerDirective(Directive):
         build_dir = pathlib.Path(self.state.document.settings.env.app.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
-        source_file = os.path.join(
-            os.path.dirname(self.state.document.current_source), self.arguments[0]
-        )
-        source_file = pathlib.Path(source_file).absolute().resolve()
-        if not os.path.isfile(source_file):
+        source_file = Path(self.state.document.current_source).parent / self.arguments[0]
+        source_file = source_file.absolute().resolve()
+        if not Path(source_file).is_file():
             logger.warn(f'Source file {source_file} does not exist.')
             return []
 
         # copy viewer HTML to _static
         static_path = pathlib.Path(output_dir) / '_static'
         static_path.mkdir(exist_ok=True)
-        if not pathlib.Path(static_path, os.path.basename(HTML_VIEWER_PATH)).exists():
+        if not pathlib.Path(static_path, Path(HTML_VIEWER_PATH)).exists().name:
             shutil.copy(HTML_VIEWER_PATH, static_path)
 
         # calculate the scene asset path relative to the build directory and
@@ -88,7 +87,7 @@ class OfflineViewerDirective(Directive):
         # generated HTML file.
         relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
         rel_viewer_path = (
-            pathlib.Path() / relpath_to_source_root / '_static' / os.path.basename(HTML_VIEWER_PATH)
+            pathlib.Path() / relpath_to_source_root / '_static' / Path(HTML_VIEWER_PATH).name
         ).as_posix()
         rel_asset_path = pathlib.Path(os.path.relpath(dest_file, static_path)).as_posix()
         html = f"""

@@ -1,7 +1,7 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
-import os
 import pathlib
+from pathlib import Path
 import warnings
 
 import numpy as np
@@ -61,10 +61,13 @@ def get_ext(filename):
         extension is returned as well.
 
     """
-    base, ext = os.path.splitext(filename)
+    path = Path(filename)
+    base = path.parent / path.stem
+    ext = path.suffix
     ext = ext.lower()
     if ext == ".gz":
-        ext_pre = os.path.splitext(base)[1].lower()
+        path = Path(base)
+        ext_pre = path.suffix.lower()
         ext = f"{ext_pre}{ext}"
     return ext
 
@@ -164,13 +167,13 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         multi = pyvista.MultiBlock()
         for each in filename:
             if isinstance(each, (str, pathlib.Path)):
-                name = os.path.basename(str(each))
+                name = Path(str(each).name)
             else:
                 name = None
             multi.append(read(each, file_format=file_format), name)
         return multi
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    if not os.path.isfile(filename) and not os.path.isdir(filename):
+    filename = Path(Path(str(filename).expanduser())).resolve()
+    if not Path(filename).is_file() and not Path(filename).is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present
@@ -260,14 +263,14 @@ def read_texture(filename, progress_bar=False):
     >>> import os
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> os.path.basename(examples.mapfile)
+    >>> Path(examples.mapfile).name
     '2k_earth_daymap.jpg'
     >>> texture = pv.read_texture(examples.mapfile)
     >>> type(texture)
     <class 'pyvista.plotting.texture.Texture'>
 
     """
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = Path(Path(filename).expanduser()).resolve()
     try:
         # initialize the reader using the extension to find it
 
@@ -503,7 +506,7 @@ def read_meshio(filename, file_format=None):
         raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    filename = Path(Path(str(filename).expanduser())).resolve()
     # Read mesh file
     mesh = meshio.read(filename, file_format)
     return from_meshio(mesh)
@@ -549,7 +552,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    filename = Path(Path(str(filename).expanduser())).resolve()
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
@@ -620,7 +623,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 
 def _process_filename(filename):
-    return os.path.abspath(os.path.expanduser(str(filename)))
+    return Path(str(filename)).expanduser().resolve()
 
 
 def _try_imageio_imread(filename):

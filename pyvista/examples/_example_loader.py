@@ -33,6 +33,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import functools
 import os
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -115,7 +116,7 @@ class _SingleFile(_FileProps[str, int]):
         from pyvista.examples.downloads import USER_DATA_PATH
 
         self._filename = (
-            filename if os.path.isabs(filename) else os.path.join(USER_DATA_PATH, filename)
+            filename if Path(filename).is_absolute() else Path(USER_DATA_PATH) / filename
         )
 
     @property
@@ -231,21 +232,21 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             # Try to resolve the full path to the target file (without downloading) if
             # the archive already exists in the cache
             fullpath = None
-            if os.path.isfile(self.filename):
+            if Path(self.filename).is_file():
                 try:
                     # Get file path
                     fullpath = file_from_files(target_file, self.filename)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    fullpath = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
-                    fullpath = fullpath if os.path.isdir(fullpath) else None
+                    fullpath = Path(USER_DATA_PATH) / (filename + '.unzip') / target_file
+                    fullpath = fullpath if Path(fullpath).is_dir() else None
             # set the filename as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
             self._filename = target_file if fullpath is None else fullpath
 
     def download(self) -> str:
         filename = self._download_func(self._download_source)
-        assert os.path.isfile(filename)
+        assert Path(filename).is_file()
         self._filename = filename
         return filename
 
@@ -274,7 +275,7 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
 
     def download(self) -> str:
         filename = self._download_func(self._download_source)
-        assert os.path.isfile(filename) or os.path.isdir(filename)
+        assert Path(filename).is_file() or Path(filename).is_dir()
         # Reset the filename since the full path for archive files
         # isn't known until after downloading
         self._filename = filename
@@ -377,7 +378,7 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
         filename = [
             file.download() for file in self._file_loaders if isinstance(file, _Downloadable)
         ]
-        assert all(os.path.isfile(file) for file in filename)
+        assert all(Path(file).is_file() for file in filename)
         return tuple(filename)
 
 
@@ -437,7 +438,7 @@ def _load_as_multiblock(
     """
     block = pyvista.MultiBlock()
     names = (
-        [os.path.splitext(os.path.basename(file.filename))[0] for file in files]
+        [str(Path(file.filename).parent / Path(file.filename).stem) for file in files]
         if names is None
         else names
     )
@@ -466,7 +467,7 @@ def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> p
 
     return (
         pyvista.cubemap(filename)
-        if isinstance(files, str) and os.path.isdir(files)
+        if isinstance(files, str) and Path(files).is_dir()
         else pyvista.cubemap_from_filenames(filename)
     )
 
@@ -483,11 +484,11 @@ def _load_and_merge(files: Sequence[_SingleFile]):
 
 
 def _get_file_or_folder_size(filepath) -> int:
-    if os.path.isfile(filepath):
-        return os.path.getsize(filepath)
-    assert os.path.isdir(filepath), 'Expected a file or folder path.'
+    if Path(filepath).is_file():
+        return Path(filepath).stat().st_size
+    assert Path(filepath).is_dir(), 'Expected a file or folder path.'
     all_filepaths = _get_all_nested_filepaths(filepath)
-    return sum(os.path.getsize(file) for file in all_filepaths)
+    return sum(Path(file).stat().st_size for file in all_filepaths)
 
 
 def _format_file_size(size):
@@ -500,9 +501,9 @@ def _format_file_size(size):
 
 def _get_file_or_folder_ext(filepath):
     """Wrap the `get_ext` function to handle special cases for directories."""
-    if os.path.isfile(filepath):
+    if Path(filepath).is_file():
         return get_ext(filepath)
-    assert os.path.isdir(filepath), 'Expected a file or folder path.'
+    assert Path(filepath).is_dir(), 'Expected a file or folder path.'
     all_filepaths = _get_all_nested_filepaths(filepath)
     ext = [get_ext(file) for file in all_filepaths]
     assert len(ext) != 0, f'No files with extensions were found in"\n\t{filepath}'
@@ -516,7 +517,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
-        [os.path.join(path, name) for name in files if condition(name)]
+        [Path(path) / name for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
     ][0]
 
@@ -540,7 +541,7 @@ def _get_extension_from_filename(filename: Union[str, Sequence[str]]):
     elif (
         len(ext_output) == len(fname_sequence)
         and isinstance(filename, str)
-        and not os.path.isdir(filename)
+        and not Path(filename).is_dir()
     ):
         # If num extensions matches num files, make
         # sure the extension order matches the fname order

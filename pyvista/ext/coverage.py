@@ -11,10 +11,10 @@ Modified slightly for ``pyvista``.
 
 """
 
-import glob
 from importlib import import_module
 import inspect
 from os import path
+from pathlib import Path
 import pickle
 import re
 from typing import IO, Any, Dict, List, Pattern, Set, Tuple
@@ -71,8 +71,7 @@ class CoverageBuilder(Builder):
     def init(self) -> None:
         self.c_sourcefiles: List[str] = []
         for pattern in self.config.coverage_c_path:
-            pattern = path.join(self.srcdir, pattern)
-            self.c_sourcefiles.extend(glob.glob(pattern))
+            self.c_sourcefiles.extend(Path(self.srcdir).glob(pattern))
 
         self.c_regexes: List[Tuple[str, Pattern]] = []
         for name, exp in self.config.coverage_c_regexes.items():
@@ -115,7 +114,7 @@ class CoverageBuilder(Builder):
         c_objects = self.env.domaindata['c']['objects']
         for filename in self.c_sourcefiles:
             undoc: Set[Tuple[str, str]] = set()
-            with open(filename) as f:
+            with Path(filename).open() as f:
                 for line in f:
                     for key, regex in self.c_regexes:
                         match = regex.match(line)
@@ -132,8 +131,8 @@ class CoverageBuilder(Builder):
                 self.c_undoc[filename] = undoc
 
     def write_c_coverage(self) -> None:
-        output_file = path.join(self.outdir, 'c.txt')
-        with open(output_file, 'w') as op:
+        output_file = Path(self.outdir) / 'c.txt'
+        with Path(output_file).open('w') as op:
             if self.config.coverage_write_headline:
                 write_header(op, 'Undocumented C API elements', '=')
             op.write('\n')
@@ -269,9 +268,9 @@ class CoverageBuilder(Builder):
             self.py_undoc[mod_name] = {'funcs': funcs, 'classes': classes}
 
     def write_py_coverage(self) -> None:
-        output_file = path.join(self.outdir, 'python.txt')
+        output_file = Path(self.outdir) / 'python.txt'
         failed = []
-        with open(output_file, 'w') as op:
+        with Path(output_file).open('w') as op:
             if self.config.coverage_write_headline:
                 write_header(op, 'Undocumented Python objects', '=')
             keys = sorted(self.py_undoc.keys())
@@ -358,8 +357,8 @@ class CoverageBuilder(Builder):
 
     def finish(self) -> None:
         # dump the coverage data to a pickle file too
-        picklepath = path.join(self.outdir, 'undoc.pickle')
-        with open(picklepath, 'wb') as dumpfile:
+        picklepath = Path(self.outdir) / 'undoc.pickle'
+        with Path(picklepath).open('wb') as dumpfile:
             pickle.dump((self.py_undoc, self.c_undoc), dumpfile)
 
 

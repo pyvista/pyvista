@@ -447,8 +447,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        filename = Path(str(filename)).expanduser().resolve()
+        if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -492,8 +492,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkVRMLImporter
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        filename = Path(str(filename)).expanduser().resolve()
+        if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -552,7 +552,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename += '.html'
 
         # Move to final destination
-        with open(filename, 'w', encoding='utf-8') as f:
+        with Path(filename, 'w', encoding='utf-8').open() as f:
             f.write(buffer.read())
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
@@ -599,7 +599,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return content
 
-        with open(filename, 'wb') as f:
+        with Path(filename, 'wb').open() as f:
             f.write(content)
 
         return filename
@@ -5025,8 +5025,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5099,9 +5099,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        self._gif_filename = os.path.abspath(filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        self._gif_filename = Path(filename).resolve()
 
         kwargs['mode'] = 'I'
         kwargs['loop'] = loop
@@ -5784,7 +5784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(filename, (str, pathlib.Path)):
                 filename = pathlib.Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+                    filename = pathlib.Path(Path(pyvista.FIGURE_PATH) / filename)
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
@@ -6085,7 +6085,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
-        >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
+        >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
         ...     mesh, texture=texture, smooth_shading=True

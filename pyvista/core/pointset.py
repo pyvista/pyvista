@@ -3,8 +3,8 @@
 import collections.abc
 from functools import wraps
 import numbers
-import os
 import pathlib
+from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
 import warnings
@@ -1419,7 +1419,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        filename = Path(str(filename)).resolve().expanduser()
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly

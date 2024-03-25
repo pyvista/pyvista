@@ -211,8 +211,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of examples available for download."""
 
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    repository_path = Path(tmp_path) / 'repo'
+    Path(repository_path).mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -228,15 +228,13 @@ def examples_local_repository_tmp_dir(tmp_path):
 
     # copy datasets from the pyvista repo to the local repository
     [
-        shutil.copyfile(
-            os.path.join(pyvista.examples.dir_path, base), os.path.join(repository_path, base)
-        )
+        shutil.copyfile(Path(pyvista.examples.dir_path) / base, Path(repository_path) / base)
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
+    shutil.make_archive(Path(tmp_path) / 'archive', 'zip', repository_path)
+    shutil.move(Path(tmp_path) / 'archive.zip', Path(repository_path) / 'archive.zip')
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -246,10 +244,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     downloads._FILE_CACHE = True
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_filenames = [
-        os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames
-    ]
-    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+    cached_filenames = [Path(downloads.FETCHER.path) / base for base in downloadable_basenames]
+    [Path(file).unlink() for file in cached_filenames if Path(file).is_file()]
 
     yield repository_path
 
@@ -259,7 +255,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+    [Path(file).unlink() for file in cached_filenames if Path(file).is_file()]
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
@@ -277,20 +273,20 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test initial filename
     filename = file_loader.filename
-    assert os.path.basename(filename) == basename
-    assert not os.path.isfile(filename)
+    assert Path(filename).name == basename
+    assert not Path(filename).is_file()
 
     if expected_path_is_absolute:
-        assert os.path.isabs(filename)
+        assert Path(filename).is_absolute()
     else:
-        assert not os.path.isabs(filename)
+        assert not Path(filename).is_absolute()
 
     # test download
     if isinstance(file_loader, (_SingleFileDownloadable, _SingleFileDownloadableLoadable)):
         assert isinstance(file_loader, _Downloadable)
         filename_download = file_loader.download()
-        assert os.path.isfile(filename_download)
-        assert os.path.isabs(filename_download)
+        assert Path(filename_download).is_file()
+        assert Path(filename_download).is_absolute()
         assert file_loader.filename == filename_download
     else:
         with pytest.raises(AttributeError):
@@ -307,7 +303,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         with pytest.raises(AttributeError):
             file_loader.load()
 
-    assert os.path.isfile(file_loader.filename)
+    assert Path(file_loader.filename).is_file()
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
@@ -333,19 +329,19 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     filename = multi_file_loader.filename
     assert multi_file_loader._file_loaders_ is not None
     assert isinstance(filename, tuple)
-    assert [os.path.isabs(file) for file in filename]
+    assert [Path(file).is_absolute() for file in filename]
     assert len(filename) == 3
 
     filename_loadable = multi_file_loader.filename_loadable
     assert isinstance(filename_loadable, tuple)
-    assert [os.path.isabs(file) for file in filename_loadable]
+    assert [Path(file).is_absolute() for file in filename_loadable]
     assert len(filename_loadable) == 2
     assert basename_not_loaded not in filename_loadable
 
     # test download
     filename_download = multi_file_loader.download()
     assert filename_download == filename
-    assert [os.path.isfile(file) for file in filename_download]
+    assert [Path(file).is_file() for file in filename_download]
 
     # test load
     dataset = multi_file_loader.load()
@@ -370,7 +366,7 @@ def test_file_loader_file_props():
     # test single file
     example = downloads._example_cow
     example.download()
-    assert os.path.isfile(example.filename)
+    assert Path(example.filename).is_file()
     assert example.total_size == '59.0 KiB'
     assert example.extension == '.vtp'
     assert type(example.reader) is pv.XMLPolyDataReader
@@ -378,7 +374,7 @@ def test_file_loader_file_props():
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
-    assert all(os.path.isfile(file) for file in example.filename)
+    assert all(Path(file).is_file() for file in example.filename)
     assert example.total_size == '122.3 KiB'
     assert example.extension == ('.mhd', '.raw')
     assert pv.get_ext(example.filename[0]) == '.mhd'
@@ -388,7 +384,7 @@ def test_file_loader_file_props():
     # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
-    assert os.path.isdir(example.filename)
+    assert Path(example.filename).is_dir()
     assert example.total_size == '591.9 KiB'
     assert example.extension == '.jpg'
     assert example.reader is None
@@ -396,7 +392,7 @@ def test_file_loader_file_props():
     # test directory (dicom stack)
     example = downloads._example_dicom_stack
     example.download()
-    assert os.path.isdir(example.filename)
+    assert Path(example.filename).is_dir()
     assert example.total_size == '1.5 MiB'
     assert example.extension == '.dcm'
     assert type(example.reader) is pv.DICOMReader
