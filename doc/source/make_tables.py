@@ -355,14 +355,16 @@ class DownloadsMetadataTable(DocTable):
     column for small screen sizes, or two columns for larger screens.
 
     The card has a structure similar to:
-    +---------------+
-    | Function Name |
-    | Docstring     |
-    +======+========+
-    | Info | Image  |
-    +------+--------+
-    | Repr          |
-    +---------------+
+
+        Dataset Name
+        +---------------+
+        | Function Name |
+        | Docstring     |
+        +======+========+
+        | Info | Image  |
+        +------+--------+
+        | Repr          |
+        +---------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
     details on the directives used and their formatting."""
@@ -373,7 +375,9 @@ class DownloadsMetadataTable(DocTable):
     header = ""
     row_template = _aligned_dedent(
         """
-        |.. _metadata_{}:
+        |.. index:: {}
+        |
+        |{}
         |
         |.. card:: {}
         |
@@ -442,16 +446,23 @@ class DownloadsMetadataTable(DocTable):
     def get_row(cls, i, row_data):
         loader_name, loader = row_data
 
+        # Extract data set name from loader name
+        dataset_name = loader_name.replace('_example_', '')
+
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_metadata'
+        dataset_heading = (
+            ' '.join([word.capitalize() for word in dataset_name.split('_')]) + ' Dataset'
+        )
+        dataset_heading += '\n' + _repeat_string('-', len(dataset_heading))
+
         # Get the corresponding 'download' function of the loader
-        func_name = loader_name.replace('_example_', 'download_')
+        func_name = 'download_' + dataset_name
         func = getattr(downloads, func_name)
 
-        # Use the function's name for rst references
-        ref = func_name
-
         # Get the card's header info
-        title = f':func:`~{_get_fullname(func)}`'
-        doc = _get_doc(func)
+        func_ref = f':func:`~{_get_fullname(func)}`'
+        func_doc = _get_doc(func)
 
         # Get file and instance metadata
         try:
@@ -480,9 +491,10 @@ class DownloadsMetadataTable(DocTable):
         cls._process_img(img_path)
 
         return cls.row_template.format(
-            ref,
-            title,
-            doc,
+            index_name,
+            dataset_heading,
+            func_ref,
+            func_doc,
             img_path,
             file_size,
             num_files,
@@ -632,7 +644,7 @@ def _max_width(lines: List[str]) -> int:
     return max(map(len, lines))
 
 
-def _repeat(string: str, num_repeat: int) -> str:
+def _repeat_string(string: str, num_repeat: int) -> str:
     """Repeat `string` `num_repeat` times."""
     return ''.join([string] * num_repeat)
 
@@ -708,7 +720,7 @@ def _indent_multi_line_string(
 
     """
     lines = string.splitlines()
-    indentation = _repeat(' ', num_repeat=indent_size * indent_level)
+    indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
     first_line = lines.pop(0) if omit_first_line else ''
     lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
     lines.insert(0, first_line)

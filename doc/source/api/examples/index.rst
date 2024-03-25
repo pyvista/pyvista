@@ -53,7 +53,7 @@ Browse the metadata gallery to view file and instance info for example datasets.
 
 .. toctree::
 
-    examples/metadata
+    /api/examples/metadata
 
 
 Usage Considerations

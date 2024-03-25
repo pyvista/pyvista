@@ -15,7 +15,7 @@ including the size of the downloads, file format(s), and dataset info.
 
 .. toctree::
 
-    ../metadata
+    /api/examples/metadata
 
 Examples
 --------
