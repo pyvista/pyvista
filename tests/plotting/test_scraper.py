@@ -126,7 +126,7 @@ def test_scraper_raise(tmpdir):
     plotter = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
-    out_dir = str(Path(src_dir) / '_build' / 'html')
+    out_dir = str(Path(tmpdir) / '_build' / 'html')
     img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
     target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
@@ -136,9 +136,9 @@ def test_scraper_raise(tmpdir):
         example_globals=dict(a=1),
         target_file=target_file,
     )
-    Path.mkdir(img_fname)
+    Path(str(Path(img_fname).parent)).mkdir(parents=True)
     assert not Path(img_fname).is_file()
-    Path.mkdir(out_dir)
+    Path(out_dir).mkdir(parents=True)
 
     with pytest.raises(RuntimeError, match="pyvista.BUILDING_GALLERY"):
         scraper(block, block_vars, gallery_conf)
