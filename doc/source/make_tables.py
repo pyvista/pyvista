@@ -404,9 +404,8 @@ class DownloadsMetadataTable(DocTable):
         |
         |      .. grid-item::
         |
-        |         Representation:
-        |
         |         .. code-block::
+        |            :caption: Dataset Representation
         |
         |            {}
         |
