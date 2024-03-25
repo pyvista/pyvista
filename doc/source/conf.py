@@ -10,7 +10,7 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 faulthandler.enable()
 
-sys.path.insert(0, Path().resolve())
+sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
 
@@ -36,7 +36,7 @@ pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = str(Path(Path("./images/").resolve()) / "auto-generated/")
+pyvista.FIGURE_PATH = str(Path(str(Path("./images/").resolve())) / "auto-generated/")
 if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 
@@ -63,7 +63,7 @@ warnings.filterwarnings(
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
-sys.path.append(Path("./_ext").resolve())
+sys.path.append(str(Path("./_ext").resolve()))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

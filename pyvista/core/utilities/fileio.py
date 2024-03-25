@@ -167,7 +167,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         multi = pyvista.MultiBlock()
         for each in filename:
             if isinstance(each, (str, pathlib.Path)):
-                name = Path(str(each).name)
+                name = Path(str(each)).name
             else:
                 name = None
             multi.append(read(each, file_format=file_format), name)
@@ -270,7 +270,7 @@ def read_texture(filename, progress_bar=False):
     <class 'pyvista.plotting.texture.Texture'>
 
     """
-    filename = Path(Path(filename).expanduser()).resolve()
+    filename = str(Path(filename).expanduser().resolve())
     try:
         # initialize the reader using the extension to find it
 
@@ -506,7 +506,7 @@ def read_meshio(filename, file_format=None):
         raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
-    filename = Path(str(filename)).expanduser().resolve()
+    filename = str(Path(str(filename)).expanduser().resolve())
     # Read mesh file
     mesh = meshio.read(filename, file_format)
     return from_meshio(mesh)
@@ -552,7 +552,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = Path(Path(str(filename)).expanduser()).resolve()
+    filename = str(Path(str(filename)).expanduser().resolve())
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
@@ -623,7 +623,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 
 def _process_filename(filename):
-    return Path(str(filename)).expanduser().resolve()
+    return str(Path(str(filename)).expanduser().resolve())
 
 
 def _try_imageio_imread(filename):

@@ -92,7 +92,7 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     ]
 
     # create and save GIF to tmpdir
-    gif_path = Path(tmpdir + 'sg_img_0.gif').resolve()
+    gif_path = str(Path(tmpdir + 'sg_img_0.gif').resolve())
     plotter_gif.open_gif(gif_path)
     plotter_gif.write_frame()
     plotter_gif.close()

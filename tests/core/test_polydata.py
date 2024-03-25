@@ -36,7 +36,7 @@ def cube_dense():
     return pv.Cube()
 
 
-test_path = Path(__file__).resolve().parent
+test_path = str(Path(__file__).resolve().parent)
 
 
 def is_binary(filename):

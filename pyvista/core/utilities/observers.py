@@ -28,7 +28,7 @@ def set_error_output_file(filename):
         VTK output window.
 
     """
-    filename = Path(filename).expanduser().resolve()
+    filename = str(Path(filename).expanduser().resolve())
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()

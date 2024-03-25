@@ -447,7 +447,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        filename = Path(str(filename)).expanduser().resolve()
+        filename = str(Path(str(filename)).expanduser().resolve())
         if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
@@ -492,7 +492,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkVRMLImporter
 
-        filename = Path(str(filename)).expanduser().resolve()
+        filename = str(Path(str(filename)).expanduser().resolve())
         if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
@@ -5792,7 +5792,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Unsupported extension {filename.suffix}\n'
                         f'Must be one of the following: {SUPPORTED_FORMATS}'
                     )
-                filename = Path(str(filename)).expanduser().resolve()
+                filename = str(Path(str(filename)).expanduser().resolve())
                 Image.fromarray(image).save(filename)
             else:
                 Image.fromarray(image).save(filename, format="PNG")

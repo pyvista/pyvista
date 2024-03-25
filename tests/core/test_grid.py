@@ -15,7 +15,7 @@ from pyvista.core.errors import (
     PyVistaDeprecationWarning,
 )
 
-test_path = Path(__file__).resolve().parent
+test_path = str(Path(__file__).resolve().parent)
 
 # must be manually set until pytest adds parametrize with fixture feature
 HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
