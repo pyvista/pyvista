@@ -200,6 +200,11 @@ articles = dict(
         link="https://github.com/edsaac/stpyvista",
         image="stpyvista_intro_crop.gif",
     ),
+    visualpic=Example(
+        title="VisualPIC",
+        link="https://github.com/AngelFP/VisualPIC",
+        image="visualpic.gif",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
