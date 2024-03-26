@@ -13,7 +13,7 @@ import pyvista as pv
 from pyvista import examples
 import pyvista.examples
 from pyvista.examples import downloads
-from pyvista.examples._example_loader import (
+from pyvista.examples._dataset_loader import (
     _Downloadable,
     _format_file_size,
     _load_and_merge,
@@ -36,7 +36,7 @@ class ExampleTestCaseData:
     load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
 
 
-def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
+def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
     """Generate a list of test cases with all download functions and file loaders"""
 
     test_cases_dict: Dict = {}
@@ -47,8 +47,8 @@ def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
         # This way, we can defer checking for any mismatch between the download functions
         # and file loaders to test time.
         nonlocal test_cases_dict
-        if func_name.startswith('_example_'):
-            case_name = func_name.split('_example_')[1]
+        if func_name.startswith('_dataset_'):
+            case_name = func_name.split('_dataset_')[1]
             key = 'load_func'
         elif func_name.startswith('download_'):
             case_name = func_name.split('download_')[1]
@@ -61,19 +61,19 @@ def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
     module_members = dict(inspect.getmembers(pv.examples.downloads))
 
     # Collect all `download_<name>` functions
-    download_example_functions = {
+    download_dataset_functions = {
         name: item
         for name, item in module_members.items()
         if name.startswith('download_') and isinstance(item, FunctionType)
     }
-    del download_example_functions['download_file']
-    [add_to_dict(name, func) for name, func in download_example_functions.items()]
+    del download_dataset_functions['download_file']
+    [add_to_dict(name, func) for name, func in download_dataset_functions.items()]
 
-    # Collect all `_example_<name>` file loaders
+    # Collect all `_dataset_<name>` file loaders
     example_file_loaders = {
         name: item
         for name, item in module_members.items()
-        if name.startswith('_example_')
+        if name.startswith('_dataset_')
         and isinstance(item, (_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable))
     }
     [add_to_dict(name, func) for name, func in example_file_loaders.items()]
@@ -93,7 +93,7 @@ def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable example
-        test_cases = _generate_example_loader_test_cases()
+        test_cases = _generate_dataset_loader_test_cases()
         ids = [case.name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
@@ -109,13 +109,13 @@ def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
         return (
             f"A download function:\n\t\'{test_case.download_func[0]}\'\n\t{test_case.download_func[1]}\n"
             f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_example_{test_case.name}\'\nGot: {test_case.load_func}"
+            f"Expected to find a loader named:\n\t\'_dataset_{test_case.name}\'\nGot: {test_case.load_func}"
         )
     else:
         return None
 
 
-def test_example_loader_name_matches_download_name(test_case: ExampleTestCaseData):
+def test_dataset_loader_name_matches_download_name(test_case: ExampleTestCaseData):
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
 
@@ -430,7 +430,7 @@ def test_file_loader_file_props_from_one_file(loadable_vtp):
 
 def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
     # test multiple files, but only one is loaded
-    example = downloads._example_head
+    example = downloads._dataset_head
     example.download()
     assert all(os.path.isfile(file) for file in example.path)
     assert example.num_files == 2

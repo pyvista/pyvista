@@ -1,6 +1,6 @@
 Dataset Gallery
 ===============
-Browse PyVista datasets and their file and instance metadata.
+Browse PyVista datasets and their metadata.
 
 Downloaded Datasets
 -------------------

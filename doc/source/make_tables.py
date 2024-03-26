@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List, Type
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples import _example_loader, downloads
+from pyvista.examples import _dataset_loader, downloads
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -426,17 +426,17 @@ class DownloadsMetadataTable(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        # Collect all `_example_<name>` file loaders
+        # Collect all `_dataset_<name>` file loaders
         module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
         file_loaders_dict = {
             name: item
             for name, item in module_members.items()
-            if name.startswith('_example_')
+            if name.startswith('_dataset_')
             and isinstance(
                 item,
                 (
-                    _example_loader._SingleFileDownloadable,
-                    _example_loader._MultiFileDownloadableLoadable,
+                    _dataset_loader._SingleFileDownloadable,
+                    _dataset_loader._MultiFileDownloadableLoadable,
                 ),
             )
         }
@@ -498,7 +498,7 @@ class DownloadsMetadataTable(DocTable):
     @staticmethod
     def _format_dataset_name(loader_name: str):
         # Extract data set name from loader name
-        dataset_name = loader_name.replace('_example_', '')
+        dataset_name = loader_name.replace('_dataset_', '')
 
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
@@ -515,15 +515,15 @@ class DownloadsMetadataTable(DocTable):
         return index_name, dataset_heading, func_ref, func_doc, func_name
 
     @staticmethod
-    def _format_file_size(loader: _example_loader._FileProps):
+    def _format_file_size(loader: _dataset_loader._FileProps):
         return '``' + loader.total_size + '``'
 
     @staticmethod
-    def _format_num_files(loader: _example_loader._FileProps):
+    def _format_num_files(loader: _dataset_loader._FileProps):
         return '``' + str(loader.num_files) + '``'
 
     @staticmethod
-    def _format_file_ext(loader: _example_loader._FileProps):
+    def _format_file_ext(loader: _dataset_loader._FileProps):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         file_ext = loader.unique_extension
@@ -532,7 +532,7 @@ class DownloadsMetadataTable(DocTable):
         return file_ext
 
     @staticmethod
-    def _format_reader_type(loader: _example_loader._FileProps):
+    def _format_reader_type(loader: _dataset_loader._FileProps):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = (
             repr(loader.unique_reader_type)
@@ -544,7 +544,7 @@ class DownloadsMetadataTable(DocTable):
         return reader_type
 
     @staticmethod
-    def _format_dataset_type(loader: _example_loader._FileProps):
+    def _format_dataset_type(loader: _dataset_loader._FileProps):
         """Format dataset type(s) with doc references to dataset class(es)."""
         dataset_type = (
             repr(loader.unique_dataset_type)
@@ -556,7 +556,7 @@ class DownloadsMetadataTable(DocTable):
         return dataset_type
 
     @staticmethod
-    def _format_dataset_repr(loader: _example_loader._FileProps, indent_level: int) -> str:
+    def _format_dataset_repr(loader: _dataset_loader._FileProps, indent_level: int) -> str:
         """Format the dataset's representation as a single multi-line string.
 
         The returned string is indented up to the specified indent level.

@@ -1,17 +1,17 @@
-"""Abstraction layer for downloading, reading, and loading example files.
+"""Abstraction layer for downloading, reading, and loading dataset files.
 
 The classes and methods in this module define an API for working with either
 a single file or multiple files which may be downloaded and/or loaded as an
 example dataset.
 
-Many example datasets have a straightforward input to output mapping:
+Many datasets have a straightforward input to output mapping:
     file -> read -> dataset
 
 However, some file formats require multiple input files for reading (e.g.
 separate data and header files):
     (file1, file1) -> read -> dataset
 
-Or, an example may combine two separate datasets:
+Or, a dataset may be combination of two separate datasets:
     file1 -> read -> dataset1 ┬─> combined_dataset
     file2 -> read -> dataset2 ┘
 
@@ -467,12 +467,12 @@ def _flatten_path(
         return path_out
 
 
-def _download_example(
+def _download_dataset(
     example: Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable],
     load: bool = True,
     metafiles: bool = False,
 ):
-    """Download and load an example file or files.
+    """Download and load an dataset file or files.
 
     Parameters
     ----------
