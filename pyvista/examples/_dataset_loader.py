@@ -313,7 +313,7 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
     def download_url(self) -> str:
         from pyvista.examples.downloads import SOURCE
 
-        return str(Path(SOURCE) / self._download_source)
+        return SOURCE + self._download_source
 
     def download(self) -> str:
         path = self._download_func(self._download_source)
@@ -534,7 +534,7 @@ def _load_as_multiblock(
     to partially specify the names parameter before passing it as loading function.
     """
     block = pv.MultiBlock()
-    names = [Path(file.path).name[0] for file in files] if names is None else names
+    names = [Path(file.path).stem for file in files] if names is None else names
     assert len(names) == len(files)
     [
         block.append(file.load(), name)  # type: ignore[arg-type]

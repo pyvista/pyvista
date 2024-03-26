@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import shutil
 
 import numpy as np
@@ -27,8 +27,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of datasets available for download."""
 
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    repository_path = Path(tmp_path) / 'repo'
+    Path.mkdir(Path(repository_path))
 
     downloadable_basenames = [
         'airplane.ply',
@@ -45,13 +45,13 @@ def examples_local_repository_tmp_dir(tmp_path):
     # copy datasets from the pyvista repo to the local repository
 
     [
-        shutil.copyfile(os.path.join(examples.dir_path, base), os.path.join(repository_path, base))
+        shutil.copyfile(Path(examples.dir_path) / base, Path(repository_path) / base)
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
+    shutil.make_archive(str(Path(tmp_path) / 'archive'), 'zip', repository_path)
+    shutil.move(str(Path(tmp_path) / 'archive.zip'), Path(repository_path) / 'archive.zip')
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -61,8 +61,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     downloads._FILE_CACHE = True
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames]
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    cached_paths = [str(Path(downloads.FETCHER.path) / base) for base in downloadable_basenames]
+    [Path.unlink(file) for file in cached_paths if Path(file).is_file()]
 
     yield repository_path
 
@@ -72,7 +72,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_paths if os.path.isfile(file)]
+    [Path.unlink(file) for file in cached_paths if Path(file).is_file()]
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
@@ -90,20 +90,20 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test initial path
     path = file_loader.path
-    assert os.path.basename(path) == basename
-    assert not os.path.isfile(path)
+    assert Path(path).name == basename
+    assert not Path(path).is_file()
 
     if expected_path_is_absolute:
-        assert os.path.isabs(path)
+        assert Path(path).is_absolute()
     else:
-        assert not os.path.isabs(path)
+        assert not Path(path).is_absolute()
 
     # test download
     if isinstance(file_loader, (_SingleFileDownloadable, _SingleFileDownloadableLoadable)):
         assert isinstance(file_loader, _Downloadable)
         path_download = file_loader.download()
-        assert os.path.isfile(path_download)
-        assert os.path.isabs(path_download)
+        assert Path(path_download).is_file()
+        assert Path(path_download).is_absolute()
         assert file_loader.path == path_download
         assert 'https://github.com/pyvista/vtk-data/raw/master/Data/' in file_loader.download_url
     else:
@@ -122,7 +122,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         with pytest.raises(AttributeError):
             file_loader.load()
 
-    assert os.path.isfile(file_loader.path)
+    assert Path(file_loader.path).is_file()
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
@@ -148,19 +148,19 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     path = multi_file_loader.path
     assert multi_file_loader._file_loaders_ is not None
     assert isinstance(path, tuple)
-    assert [os.path.isabs(file) for file in path]
+    assert [Path(file).is_absolute() for file in path]
     assert len(path) == 3
 
     path_loadable = multi_file_loader.path_loadable
     assert isinstance(path_loadable, tuple)
-    assert [os.path.isabs(file) for file in path_loadable]
+    assert [Path(file).is_absolute() for file in path_loadable]
     assert len(path_loadable) == 2
     assert basename_not_loaded not in path_loadable
 
     # test download
     path_download = multi_file_loader.download()
     assert path_download == path
-    assert [os.path.isfile(file) for file in path_download]
+    assert [Path(file).is_file() for file in path_download]
     assert [
         'https://github.com/pyvista/vtk-data/raw/master/Data/' in url
         for url in multi_file_loader.download_url
@@ -230,7 +230,7 @@ def loadable_dicom() -> _SingleFileLoadable:
 def test_file_loader_file_props_from_one_file(loadable_vtp):
     # test single file
     example = loadable_vtp
-    assert os.path.isfile(example.path)
+    assert Path(example.path).is_file()
     assert example.num_files == 1
     assert example._total_size_bytes == 60449
     assert example.total_size == '60.4 KB'
@@ -248,7 +248,7 @@ def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
     # test multiple files, but only one is loaded
     example = downloads._dataset_head
     example.download()
-    assert all(os.path.isfile(file) for file in example.path)
+    assert all(Path(file).is_file() for file in example.path)
     assert example.num_files == 2
     assert example._total_size_bytes == 125223
     assert example.total_size == '125.2 KB'
@@ -272,8 +272,8 @@ def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
     example = downloads._dataset_bolt_nut
     assert len(example.path) == 2
     assert example.num_files == 2
-    assert os.path.isfile(example.path[0])
-    assert os.path.isfile(example.path[1])
+    assert Path(example.path[0]).is_file()
+    assert Path(example.path[1]).is_file()
     assert example._total_size_bytes == 132818
     assert example.total_size == '132.8 KB'
     assert example.unique_extension == '.slc'
@@ -291,7 +291,7 @@ def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
 def test_file_loader_file_props_from_directory_cubemap(loadable_cubemap):
     # test directory (cubemap)
     example = loadable_cubemap
-    assert os.path.isdir(example.path)
+    assert Path(example.path).is_dir()
     assert example.num_files == 6
     assert example._total_size_bytes == 606113
     assert example.total_size == '606.1 KB'
@@ -308,7 +308,7 @@ def test_file_loader_file_props_from_directory_cubemap(loadable_cubemap):
 def test_file_loader_file_props_from_directory_dicom(loadable_dicom):
     # test directory (dicom stack)
     example = loadable_dicom
-    assert os.path.isdir(example.path)
+    assert Path(example.path).is_dir()
     assert example.num_files == 3
     assert example._total_size_bytes == 1583688
     assert example.total_size == '1.6 MB'
@@ -333,10 +333,10 @@ def test_file_loader_file_props_from_nested_files_and_directory(
     example = _MultiFileLoadable(files_func)
     assert len(example.path) == 4
     assert example.num_files == 6
-    assert os.path.isfile(example.path[0])
-    assert os.path.isfile(example.path[1])
-    assert os.path.isfile(example.path[2])
-    assert os.path.isdir(example.path[3])
+    assert Path(example.path[0]).is_file()
+    assert Path(example.path[1]).is_file()
+    assert Path(example.path[2]).is_file()
+    assert Path(example.path[3]).is_dir()
     assert example._total_size_bytes == 1769360
     assert example.total_size == '1.8 MB'
     assert example.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
