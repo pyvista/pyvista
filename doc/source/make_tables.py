@@ -503,7 +503,7 @@ class DownloadsMetadataTable(DocTable):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
         dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
-        dataset_heading += '\n' + _repeat_string('-', len(dataset_heading))
+        dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
 
         # Get the corresponding 'download' function of the loader
         func_name = 'download_' + dataset_name
