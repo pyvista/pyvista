@@ -721,16 +721,16 @@ Test all the images with:
 
 The test will:
 
-   1. Collect all images from ``./doc/_build/html/_images``,
-   1. Resize the images to a maximum of 400x400 pixels,
-   1. Save a copy of the resized images to a flat directory in ``./_doc_debug_images``, and
+   1. Collect all images from ``./doc/_build/html/_images``.
+   1. Resize the images to a maximum of 400x400 pixels.
+   1. Save a copy of the resized images to a flat directory in ``./_doc_debug_images``.
    1. Use `:func:pyvista.compare_images` to compare the build images in ``./_doc_debug_images``
       to the cached images in ``./tests/doc/doc_image_cache``.
 
 To resolve any failed tests, either:
 
    1. Update the cache by copying the image(s) from ``./_doc_debug_images``
-      to ``./tests/doc/doc_image_cache``, or
+      to ``./tests/doc/doc_image_cache``.
    1. Update the docstring example code to ensure its output matches the expected
       output from the cache.
 
