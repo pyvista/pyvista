@@ -1,9 +1,9 @@
-Dataset Metadata Gallery
-========================
-View the metadata for the example datasets.
+Dataset Gallery
+===============
+Browse PyVista datasets and their file and instance metadata.
 
-Downloads Metadata
-------------------
-Metadata for all examples in :mod:`pyvista.examples.downloads`.
+Downloaded Datasets
+-------------------
+Browse all datasets in :mod:`pyvista.examples.downloads`.
 
 .. include:: /api/examples/downloads_metadata_table.rst

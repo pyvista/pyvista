@@ -10,10 +10,11 @@ rendered on this page.
 
 Notes
 -----
-Browse the examples metadata gallery for detailed information about the examples,
-including the size of the downloads, file format(s), and dataset info.
+Browse the dataset gallery for detailed information about the downloads,
+including file and dataset metadata.
 
 .. toctree::
+   :maxdepth: 1
 
     /api/examples/metadata
 

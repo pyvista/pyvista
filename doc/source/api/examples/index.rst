@@ -34,8 +34,8 @@ demonstrate features.
    >>> plotter = demos.orientation_plotter()
    >>> plotter.show()
 
-Examples API Reference
-----------------------
+API Reference
+-------------
 
 .. currentmodule:: pyvista
 
@@ -47,14 +47,14 @@ Examples API Reference
    examples.planets
    demos.demos
 
-Examples Metadata Gallery
--------------------------
-Browse the metadata gallery to view file and instance info for example datasets.
+Dataset Gallery
+---------------
+Browse the gallery to view file and instance metadata for example datasets.
 
 .. toctree::
+   :maxdepth: 1
 
     /api/examples/metadata
-
 
 Usage Considerations
 --------------------
