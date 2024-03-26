@@ -105,6 +105,9 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
       - id: mixed-line-ending
+      - id: file-contents-sorter
+        verbose: true
+        files: ^(\.dockerignore)$
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema

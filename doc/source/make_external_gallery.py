@@ -1,7 +1,7 @@
 """A helper script to generate the external examples gallery."""
 
 from io import StringIO
-import os
+from pathlib import Path
 
 
 def format_icon(title, link, image):
@@ -195,6 +195,16 @@ articles = dict(
         link="https://github.com/cardinalgeo/drilldown",
         image="drilldown.jpg",
     ),
+    stpyvista=Example(
+        title="stpyvista",
+        link="https://github.com/edsaac/stpyvista",
+        image="stpyvista_intro_crop.gif",
+    ),
+    visualpic=Example(
+        title="VisualPIC",
+        link="https://github.com/AngelFP/VisualPIC",
+        image="visualpic.png",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
@@ -254,13 +264,13 @@ glad to add it.
 
     # check if it's necessary to overwrite the table
     existing = ""
-    if os.path.exists(path):
-        with open(path) as existing_fid:
+    if Path(path).exists():
+        with Path(path).open() as existing_fid:
             existing = existing_fid.read()
 
     # write if different or does not exist
     if new_text != existing:
-        with open(path, "w", encoding="utf-8") as fid:
+        with Path(path).open("w", encoding="utf-8") as fid:
             fid.write(new_text)
 
     return

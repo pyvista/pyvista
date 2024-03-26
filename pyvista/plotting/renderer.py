@@ -3438,11 +3438,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.renderers[0].viewport
         (0.0, 0.0, 0.5, 1.0)
 
+        Change viewport to half size.
+
+        >>> pl.renderers[0].viewport = (0.125, 0.25, 0.375, 0.75)
+        >>> pl.show()
+
         """
         return self.GetViewport()
+
+    @viewport.setter
+    def viewport(self, viewport):  # numpydoc ignore=GL08
+        self.SetViewport(viewport)
 
     @property
     def width(self):  # numpydoc ignore=RT01

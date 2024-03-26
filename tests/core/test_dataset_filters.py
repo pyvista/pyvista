@@ -1,5 +1,5 @@
 import itertools
-import os
+from pathlib import Path
 import platform
 from unittest.mock import Mock, patch
 
@@ -1797,7 +1797,7 @@ def test_plot_over_line(tmpdir):
         fname=filename,
         progress_bar=True,
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
@@ -1910,7 +1910,7 @@ def test_plot_over_circular_arc(tmpdir):
     mesh.plot_over_circular_arc(
         a, b, center, resolution=1000, show=False, fname=filename, progress_bar=True
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1953,7 +1953,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
     mesh.plot_over_circular_arc_normal(
         center, polar=polar, angle=angle, show=False, fname=filename, progress_bar=True
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
