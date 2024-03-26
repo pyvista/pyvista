@@ -9,6 +9,7 @@ from functools import wraps
 import importlib
 import os
 import pathlib
+from pathlib import Path
 from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 
@@ -190,7 +191,7 @@ def get_reader(filename, force_ext=None):
     try:
         Reader = CLASS_READERS[ext]
     except KeyError:
-        if os.path.isdir(filename):
+        if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
                 pathlib.Path(f).suffix == '.dcm' for f in files
             ):
@@ -308,7 +309,7 @@ class BaseReader:
         """
         self._progress_bar = True
         if msg is None:
-            msg = f"Reading {os.path.basename(self.path)}"
+            msg = f"Reading {Path(self.path).name}"
         self._progress_msg = msg
 
     def hide_progress(self):
@@ -359,9 +360,9 @@ class BaseReader:
 
     @path.setter
     def path(self, path: str):  # numpydoc ignore=GL08
-        if os.path.isdir(path):
+        if Path(path).is_dir():
             self._set_directory(path)
-        elif os.path.isfile(path):
+        elif Path(path).is_file():
             self._set_filename(path)
         else:
             raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
@@ -1930,7 +1931,7 @@ class _PVDReader(BaseVTKReader):
     def SetFileName(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = os.path.join(os.path.dirname(filename))
+        self._directory = str(Path(filename).parent)
 
     def UpdateInformation(self):
         """Parse PVD file."""
@@ -1965,7 +1966,7 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(os.path.join(self._directory, dataset.path))
+            get_reader(str(Path(self._directory) / dataset.path))
             for dataset in self._active_datasets
         ]
 

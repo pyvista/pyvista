@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from PIL import Image, ImageSequence
 import numpy as np
@@ -81,7 +81,7 @@ def test_skybox(tmpdir):
     filenames = []
     for suffix in sets:
         image = Image.new('RGB', (10, 10))
-        filename = os.path.join(path, suffix + '.jpg')
+        filename = str(Path(path) / suffix) + '.jpg'
         image.save(filename)
         filenames.append(filename)
 
