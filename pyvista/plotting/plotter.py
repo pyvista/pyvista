@@ -640,7 +640,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point_cloud = np.random.default_rng().random((100, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> point_cloud = rng.random((100, 3))
         >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pv.Sphere(radius=0.02)
@@ -3319,8 +3320,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Plot spheres using `points_gaussian` style and scale them by radius.
 
         >>> N_SPHERES = 1_000_000
-        >>> pos = np.random.random((N_SPHERES, 3))
-        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> rng = np.random.default_rng(seed=0)
+        >>> pos = rng.random((N_SPHERES, 3))
+        >>> rad = rng.random(N_SPHERES) * 0.01
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
         >>> pdata.plot(
@@ -5684,7 +5686,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> points = np.random.default_rng().random((10, 3))
+        >>>
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5693,7 +5697,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = np.random.default_rng().random((10, 3))
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5735,8 +5739,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> cent = np.random.default_rng().random((10, 3))
-        >>> direction = np.random.default_rng().random((10, 3))
+
+        >>> rng = np.random.default_rng(seed=0)
+        >>> cent = rng.random((10, 3))
+        >>> direction = rng.random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
