@@ -419,7 +419,7 @@ def test_file_loader_file_props_from_one_file(loadable_vtp):
     assert example._total_size_bytes == 60449
     assert example.total_size == '60.4 KB'
     assert example.unique_extension == '.vtp'
-    assert isinstance(example.reader, pv.XMLPolyDataReader)
+    assert isinstance(example._reader, pv.XMLPolyDataReader)
     assert example.unique_reader_type is pv.XMLPolyDataReader
     assert example.dataset is None
     assert example.unique_dataset_type is None
@@ -439,9 +439,9 @@ def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
     assert example.unique_extension == ('.mhd', '.raw')
     assert pv.get_ext(example.path[0]) == '.mhd'
     assert pv.get_ext(example.path[1]) == '.raw'
-    assert len(example.reader) == 2
-    assert isinstance(example.reader[0], pv.MetaImageReader)
-    assert example.reader[1] is None
+    assert len(example._reader) == 2
+    assert isinstance(example._reader[0], pv.MetaImageReader)
+    assert example._reader[1] is None
     assert example.unique_reader_type is pv.MetaImageReader
     assert example.dataset is None
     assert example.unique_dataset_type is None
@@ -461,9 +461,9 @@ def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
     assert example._total_size_bytes == 132818
     assert example.total_size == '132.8 KB'
     assert example.unique_extension == '.slc'
-    assert len(example.reader) == 2
-    assert isinstance(example.reader[0], pv.SLCReader)
-    assert isinstance(example.reader[1], pv.SLCReader)
+    assert len(example._reader) == 2
+    assert isinstance(example._reader[0], pv.SLCReader)
+    assert isinstance(example._reader[1], pv.SLCReader)
     assert example.unique_reader_type is pv.SLCReader
     assert example.dataset is None
     assert example.unique_dataset_type is None
@@ -480,7 +480,7 @@ def test_file_loader_file_props_from_directory_cubemap(loadable_cubemap):
     assert example._total_size_bytes == 606113
     assert example.total_size == '606.1 KB'
     assert example.unique_extension == '.jpg'
-    assert example.reader is None
+    assert example._reader is None
     assert example.unique_reader_type is None
     assert example.dataset is None
     assert example.unique_dataset_type is None
@@ -497,7 +497,7 @@ def test_file_loader_file_props_from_directory_dicom(loadable_dicom):
     assert example._total_size_bytes == 1583688
     assert example.total_size == '1.6 MB'
     assert example.unique_extension == '.dcm'
-    assert isinstance(example.reader, pv.DICOMReader)
+    assert isinstance(example._reader, pv.DICOMReader)
     assert example.unique_reader_type is pv.DICOMReader
     assert example.dataset is None
     assert example.unique_dataset_type is None
@@ -524,11 +524,11 @@ def test_file_loader_file_props_from_nested_files_and_directory(
     assert example._total_size_bytes == 1769360
     assert example.total_size == '1.8 MB'
     assert example.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
-    assert len(example.reader) == 4
-    assert isinstance(example.reader[0], pv.XMLPolyDataReader)
-    assert isinstance(example.reader[1], pv.MetaImageReader)
-    assert example.reader[2] is None
-    assert isinstance(example.reader[3], pv.DICOMReader)
+    assert len(example._reader) == 4
+    assert isinstance(example._reader[0], pv.XMLPolyDataReader)
+    assert isinstance(example._reader[1], pv.MetaImageReader)
+    assert example._reader[2] is None
+    assert isinstance(example._reader[3], pv.DICOMReader)
     assert example.unique_reader_type == (pv.XMLPolyDataReader, pv.MetaImageReader, pv.DICOMReader)
     assert example.dataset is None
     assert example.unique_dataset_type is None

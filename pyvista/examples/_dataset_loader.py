@@ -107,7 +107,7 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
     @property
     @abstractmethod
-    def reader(
+    def _reader(
         self,
     ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         """Return the base file reader(s) used to read the files."""
@@ -129,7 +129,7 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         self,
     ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
         """Return unique reader type(s) from all file readers."""
-        return _get_unique_reader_type(self.reader)
+        return _get_unique_reader_type(self._reader)
 
 
 @runtime_checkable
@@ -189,7 +189,7 @@ class _SingleFile(_FileProps[str, int]):
         return self._filesize_format
 
     @property
-    def reader(self) -> Optional[pv.BaseReader]:
+    def _reader(self) -> Optional[pv.BaseReader]:
         return None
 
 
@@ -238,7 +238,7 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
         return self._dataset
 
     @property
-    def reader(self) -> Optional[pv.BaseReader]:
+    def _reader(self) -> Optional[pv.BaseReader]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
@@ -418,12 +418,12 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
         return _format_file_size(self._total_size_bytes)
 
     @property
-    def reader(
+    def _reader(
         self,
     ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
-        reader = [file.reader for file in self._file_objects]
+        reader = [file._reader for file in self._file_objects]
         # flatten in case any file objects themselves are multifiles
         reader_out: List[pv.BaseReader] = []
         for r in reader:
