@@ -61,8 +61,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     downloads._FILE_CACHE = True
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_paths = [str(Path(downloads.FETCHER.path) / base) for base in downloadable_basenames]
-    [Path(file).unlink() for file in cached_paths if Path(file).is_file()]
+    cached_paths = [Path(downloads.FETCHER.path) / base for base in downloadable_basenames]
+    [path.unlink() for path in cached_paths if path.is_file()]
 
     yield repository_path
 
@@ -72,7 +72,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [Path(file).unlink() for file in cached_paths if Path(file).is_file()]
+    [path.unlink() for path in cached_paths if path.is_file()]
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
