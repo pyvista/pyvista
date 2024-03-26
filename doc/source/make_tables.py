@@ -381,6 +381,8 @@ class DownloadsMetadataTable(DocTable):
         """
         |.. index:: {}
         |
+        |.. _{}:
+        |
         |{}
         |
         |.. card:: {}
@@ -450,9 +452,9 @@ class DownloadsMetadataTable(DocTable):
     def get_row(cls, i, row_data):
         loader_name, loader = row_data
 
-        # Get dataset name info
-        index_name, dataset_heading, func_ref, func_doc, func_name = cls._format_dataset_name(
-            loader_name
+        # Get dataset name-related info
+        index_name, ref_name, dataset_heading, func_ref, func_doc, func_name = (
+            cls._format_dataset_name(loader_name)
         )
 
         # Get file and instance metadata
@@ -483,6 +485,7 @@ class DownloadsMetadataTable(DocTable):
 
         return cls.row_template.format(
             index_name,
+            ref_name,
             dataset_heading,
             func_ref,
             func_doc,
@@ -502,6 +505,7 @@ class DownloadsMetadataTable(DocTable):
 
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
+        ref_name = index_name
         dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
         dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
 
@@ -512,7 +516,7 @@ class DownloadsMetadataTable(DocTable):
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
-        return index_name, dataset_heading, func_ref, func_doc, func_name
+        return index_name, ref_name, dataset_heading, func_ref, func_doc, func_name
 
     @staticmethod
     def _format_file_size(loader: _dataset_loader._FileProps):
