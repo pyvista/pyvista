@@ -419,12 +419,18 @@ class DownloadsMetadataTable(DocTable):
         |
         |            {}
         |
+        |   .. dropdown:: :octicon:`desktop-download` Download Links
+        |
+        |      {}
+        |
         """
     )
     # Set the indentation level for the representation item
     # Level should be one more than the representation's '.. code-block::' directive in the
     # row template above
     REPR_INDENT_LEVEL = 4
+
+    LINKS_INDENT_LEVEL = 2
 
     @classmethod
     def fetch_data(cls):
@@ -463,12 +469,14 @@ class DownloadsMetadataTable(DocTable):
         except VTKVersionError:
             # Set default values
             NOT_AVAILABLE = '``Not available``'
+            NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
             file_size = NOT_AVAILABLE
             num_files = NOT_AVAILABLE
             file_ext = NOT_AVAILABLE
             reader_type = NOT_AVAILABLE
             dataset_type = NOT_AVAILABLE
-            dataset_repr = [NOT_AVAILABLE.replace('`', '')]
+            dataset_repr = [NOT_AVAILABLE_NO_BACKTICKS]
+            download_links = NOT_AVAILABLE_NO_BACKTICKS
             img_path = NOT_AVAILABLE_IMG_PATH
         else:
             # Get data from loader
@@ -479,6 +487,7 @@ class DownloadsMetadataTable(DocTable):
             reader_type = cls._format_reader_type(loader)
             dataset_type = cls._format_dataset_type(loader)
             dataset_repr = cls._format_dataset_repr(loader, cls.REPR_INDENT_LEVEL)
+            download_links = cls._format_download_links(loader, cls.LINKS_INDENT_LEVEL)
             img_path = cls._search_image_path(func_name)
 
         cls._process_img(img_path)
@@ -496,6 +505,7 @@ class DownloadsMetadataTable(DocTable):
             reader_type,
             dataset_type,
             dataset_repr,
+            download_links,
         )
 
     @staticmethod
@@ -573,6 +583,16 @@ class DownloadsMetadataTable(DocTable):
             string=dataset_repr,
         )
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def _format_download_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
+        def _rst_link(url):
+            return f'`{url}<{url}>`_'
+
+        links = [url] if isinstance(url := loader.download_url, str) else url
+        links = [_rst_link(url) for url in links]
+        links = '\n'.join(links)
+        return _indent_multi_line_string(links, indent_size=3, indent_level=indent_level)
 
     @staticmethod
     def _search_image_path(dataset_download_func_name: str):

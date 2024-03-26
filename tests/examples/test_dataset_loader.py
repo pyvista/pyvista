@@ -24,7 +24,7 @@ from pyvista.examples._dataset_loader import (
 
 @pytest.fixture()
 def examples_local_repository_tmp_dir(tmp_path):
-    """Create a local repository with a bunch of examples available for download."""
+    """Create a local repository with a bunch of datasets available for download."""
 
     # setup
     repository_path = os.path.join(tmp_path, 'repo')
@@ -105,6 +105,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         assert os.path.isfile(path_download)
         assert os.path.isabs(path_download)
         assert file_loader.path == path_download
+        assert 'https://github.com/pyvista/vtk-data/raw/master/Data/' in file_loader.download_url
     else:
         with pytest.raises(AttributeError):
             file_loader.download()
@@ -160,6 +161,10 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     path_download = multi_file_loader.download()
     assert path_download == path
     assert [os.path.isfile(file) for file in path_download]
+    assert [
+        'https://github.com/pyvista/vtk-data/raw/master/Data/' in url
+        for url in multi_file_loader.download_url
+    ]
 
     # test load
     dataset = multi_file_loader.load()
@@ -264,7 +269,7 @@ def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
 def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
     # test multiple files, both have same ext and reader,
     # both of which are loaded as a multiblock
-    example = loadable_slc
+    example = downloads._dataset_bolt_nut
     assert len(example.path) == 2
     assert example.num_files == 2
     assert os.path.isfile(example.path[0])
