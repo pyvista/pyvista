@@ -1,3 +1,4 @@
+from pathlib import Path
 import tempfile
 
 from trame.app import get_server
@@ -37,7 +38,7 @@ def handle(file_exchange, **kwargs):
             print(file.info)
             bytes = file.content
             with tempfile.NamedTemporaryFile(suffix=file.name) as path:
-                with open(path.name, 'wb') as f:
+                with Path(path.name).open('wb') as f:
                     f.write(bytes)
                 ds = pv.read(path.name)
             pl.add_mesh(ds, name=file.name)

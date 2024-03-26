@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import inspect
 import os
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
 
@@ -112,13 +112,13 @@ def test_delete_downloads(tmpdir):
     old_path = examples.downloads.USER_DATA_PATH
     try:
         examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
-        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
-        tmp_file = os.path.join(examples.downloads.USER_DATA_PATH, 'tmp.txt')
-        with open(tmp_file, 'w') as fid:
+        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+        tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
+        with Path(tmp_file).open('w') as fid:
             fid.write('test')
         examples.delete_downloads()
-        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
-        assert not os.path.isfile(tmp_file)
+        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+        assert not Path(tmp_file).is_file()
     finally:
         examples.downloads.USER_DATA_PATH = old_path
 
@@ -131,7 +131,7 @@ def test_delete_downloads_does_not_exist(tmpdir):
     try:
         # delete_downloads for a missing directory should not fail.
         examples.downloads.USER_DATA_PATH = new_path
-        assert not os.path.isdir(examples.downloads.USER_DATA_PATH)
+        assert not Path(examples.downloads.USER_DATA_PATH).is_dir()
         examples.delete_downloads()
     finally:
         examples.downloads.USER_DATA_PATH = old_path
@@ -140,11 +140,11 @@ def test_delete_downloads_does_not_exist(tmpdir):
 def test_file_from_files(tmpdir):
     path = str(tmpdir)
     fnames = [
-        os.path.join(path, 'tmp2.txt'),
-        os.path.join(path, 'tmp1.txt'),
-        os.path.join(path, 'tmp0.txt'),
-        os.path.join(path, 'tmp', 'tmp2.txt'),
-        os.path.join(path, '/__MACOSX/'),
+        str(Path(path) / 'tmp2.txt'),
+        str(Path(path) / 'tmp1.txt'),
+        str(Path(path) / 'tmp0.txt'),
+        str(Path(path) / 'tmp' / 'tmp2.txt'),
+        str(Path(path) / '/__MACOSX/'),
     ]
 
     with pytest.raises(FileNotFoundError):
@@ -164,11 +164,11 @@ def test_file_copier(tmpdir):
     input_file = str(tmpdir.join('tmp0.txt'))
     output_file = str(tmpdir.join('tmp1.txt'))
 
-    with open(input_file, 'w') as fid:
+    with Path(input_file).open('w') as fid:
         fid.write('hello world')
 
     examples.downloads._file_copier(input_file, output_file, None)
-    assert os.path.isfile(output_file)
+    assert Path(output_file).is_file()
 
     with pytest.raises(FileNotFoundError):
         examples.downloads._file_copier('not a file', output_file, None)
@@ -176,20 +176,21 @@ def test_file_copier(tmpdir):
 
 def test_local_file_cache(tmpdir):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
-    basename = os.path.basename(examples.planefile)
-    dirname = os.path.dirname(examples.planefile)
+    basename = Path(examples.planefile).name
+    dirname = str(Path(examples.planefile).parent)
     downloads.FETCHER.registry[basename] = None
 
     try:
         downloads.FETCHER.base_url = dirname + '/'
         downloads.FETCHER.registry[basename] = None
         downloads._FILE_CACHE = True
-        path = downloads._download_and_read(basename, load=False)
-        assert os.path.isfile(path)
+
+        filename = downloads._download_and_read(basename, load=False)
+        assert Path(filename).is_file()
 
         dataset = downloads._download_and_read(basename, load=True)
         assert isinstance(dataset, pv.DataSet)
-        os.remove(path)
+        Path(filename).unlink()
 
     finally:
         downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"

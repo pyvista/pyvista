@@ -3,6 +3,7 @@
 import inspect
 import io
 import os
+from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
@@ -18,7 +19,7 @@ CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
 DOWNLOADS_TABLE_DIR = "api/examples"
 EXAMPLES_THUMBNAIL_IMAGES_DIR = "images/examples-thumbnails"
-NOT_AVAILABLE_IMG_PATH = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
+NOT_AVAILABLE_IMG_PATH = Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / 'not_available.png'
 
 
 def _aligned_dedent(txt):
@@ -61,15 +62,15 @@ class DocTable:
             new_txt = fnew.read()
 
         # determine if existing file needs to be rewritten
-        if os.path.exists(cls.path):
-            with open(cls.path) as fold:
+        if Path(cls.path).exists():
+            with Path(cls.path).open() as fold:
                 orig_txt = fold.read()
             if orig_txt == new_txt:
                 new_txt = ''
 
         # write if there is any text to write. This avoids resetting the documentation cache
         if new_txt:
-            with open(cls.path, 'w', encoding="utf-8") as fout:
+            with Path(cls.path).open('w', encoding="utf-8") as fout:
                 fout.write(new_txt)
 
         pv.close_all()
@@ -148,7 +149,7 @@ class LineStyleTable(DocTable):
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -214,7 +215,7 @@ class MarkerStyleTable(DocTable):
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -288,7 +289,7 @@ class ColorSchemeTable(DocTable):
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return n_colors
 
         # save it
@@ -619,11 +620,11 @@ class DownloadsMetadataTable(DocTable):
                 sum(dataset_download_func_name in grp for grp in groups) <= 1
             ), f"More than one thumbnail image was found for {dataset_download_func_name}, got:\n{groups}"
             img_fname = groups[0]
-            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, img_fname)
-            assert os.path.isfile(img_path)
+            img_path = Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / img_fname
+            assert Path(img_path).is_file()
         else:
             print(f"WARNING: Missing thumbnail image file for \'{dataset_download_func_name}\'")
-            img_path = os.path.join(EXAMPLES_THUMBNAIL_IMAGES_DIR, 'not_available.png')
+            img_path = Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / 'not_available.png'
         return img_path
 
     @staticmethod
@@ -633,7 +634,7 @@ class DownloadsMetadataTable(DocTable):
 
         IMG_WIDTH, IMG_HEIGHT = 400, 300
 
-        if os.path.basename(img_path) == 'not_available.png':
+        if Path(img_path) / 'not_available.png':
             not_available_mesh = pv.Text3D('Not Available')
             p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
             p.background_color = 'white'
@@ -644,7 +645,7 @@ class DownloadsMetadataTable(DocTable):
             img_array = p.show(screenshot=True)
 
             # exit early if the image is the same
-            if os.path.isfile(img_path) and pv.compare_images(img_path, img_path) < 1:
+            if Path(img_path).is_file() and pv.compare_images(img_path, img_path) < 1:
                 return
 
             img = Image.fromarray(img_array)
@@ -756,7 +757,7 @@ def _indent_multi_line_string(
 
 
 def make_all_tables():
-    os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    Path(CHARTS_IMAGE_DIR).mkdir(exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
