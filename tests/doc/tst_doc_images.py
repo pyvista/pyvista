@@ -3,6 +3,7 @@
 from collections import namedtuple
 import glob
 import os
+from pathlib import Path
 from typing import Dict
 import warnings
 
@@ -10,12 +11,13 @@ from PIL import Image
 import pytest
 
 import pyvista as pv
+from pathlib import Path
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-BUILD_DIR = os.path.join(ROOT_DIR, 'doc', '_build')
-BUILD_IMAGE_DIR = os.path.join(BUILD_DIR, 'html', '_images')
-DEBUG_IMAGE_DIR = os.path.join(ROOT_DIR, '_doc_debug_images')
-BUILD_IMAGE_CACHE = os.path.join(os.path.dirname(__file__), 'doc_image_cache')
+ROOT_DIR = str(Path(__file__).parent.parent.parent)
+BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
+BUILD_IMAGE_DIR = str(Path(BUILD_DIR) / 'html' / '_images')
+DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
+BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
 
 
 _TestCaseTuple = namedtuple('_TestCaseTuple', ['filename', 'docs_image_path', 'cached_image_path'])
@@ -23,8 +25,8 @@ _TestCaseTuple = namedtuple('_TestCaseTuple', ['filename', 'docs_image_path', 'c
 
 def _get_file_paths(dir_: str, ext: str):
     """Get all paths of files with a specific extension inside a directory tree."""
-    pattern = os.path.join(dir_, '**', '*.' + ext)
-    file_paths = glob.glob(pattern, recursive=True)
+    pattern = str(Path(dir_) / '**' / ('*.' + ext))
+    file_paths = glob.glob(pattern, recursive=True) # noqa: PTH207
     return file_paths
 
 
@@ -36,12 +38,12 @@ def _preprocess_build_images(build_images_dir: str, output_dir: str):
     """Read png images from the build dir, resize them, and save to flat output dir."""
     input_paths = _get_file_paths(build_images_dir, ext='png')
     output_paths = []
-    os.makedirs(output_dir, exist_ok=True)
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
     for input_path in input_paths:
         # input image from the docs may come from a nested directory,
         # so we flatten the file's relative path
         output_file_name = _flatten_path(os.path.relpath(input_path, build_images_dir))
-        output_path = os.path.join(output_dir, output_file_name)
+        output_path = str(Path(output_dir) / output_file_name)
         output_paths.append(output_path)
 
         # Ensure image size is max 400x400 and save to output
@@ -68,7 +70,7 @@ def _generate_test_cases():
         # This way, we can defer checking for any mismatch between the cached and docs
         # images to test time.
         nonlocal test_cases_dict
-        filename = os.path.basename(filepath)
+        filename = Path(filepath).name
         try:
             test_cases_dict[filename]
         except KeyError:
