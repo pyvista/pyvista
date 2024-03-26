@@ -1,6 +1,7 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 import os
 import shutil
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -16,7 +17,6 @@ from pyvista.examples._dataset_loader import (
     _Loadable,
     _MultiFileDownloadableLoadable,
     _MultiFileLoadable,
-    _SingleFile,
     _SingleFileDownloadable,
     _SingleFileDownloadableLoadable,
     _SingleFileLoadable,
@@ -188,147 +188,141 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
 
 
 @pytest.fixture()
-def loadable_vtp() -> _SingleFileLoadable:
-    return _SingleFileLoadable(downloads.download_file('cow.vtp'))
+def dataset_loader_one_file():
+    loader = _SingleFileDownloadableLoadable('cow.vtp')
+    loader.download()
+    loader.load()
+    return loader
+
+
+def test_dataset_loader_one_file(dataset_loader_one_file):
+    loader = dataset_loader_one_file
+    assert isinstance(loader.path, str)
+    assert loader.num_files == 1
+    assert loader._total_size_bytes == 60449
+    assert loader.total_size == '60.4 KB'
+    assert loader.unique_extension == '.vtp'
+    assert isinstance(loader._reader, pv.XMLPolyDataReader)
+    assert loader.unique_reader_type is pv.XMLPolyDataReader
+    assert type(loader.dataset) is pv.PolyData
+    assert loader.unique_dataset_type is pv.PolyData
 
 
 @pytest.fixture()
-def loadable_mhd() -> _MultiFileLoadable:
-    def _head_files_func():
-        # Multiple files needed for read, but only one gets loaded
-        head_raw = _SingleFile('HeadMRVolume.raw')
-        head_mhd = _SingleFileLoadable('HeadMRVolume.mhd')
-        return head_mhd, head_raw
+def dataset_loader_two_files_one_loadable(examples_local_repository_tmp_dir):
+    def _files_func():
+        loadable = _SingleFileDownloadableLoadable('HeadMRVolume.mhd')
+        not_loadable = _SingleFileDownloadable('HeadMRVolume.raw')
+        return loadable, not_loadable
 
-    return _MultiFileLoadable(_head_files_func)
+    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader.download()
+    loader.load()
+    return loader
+
+
+def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_loadable):
+    loader = dataset_loader_two_files_one_loadable
+    assert len(loader.path) == 2
+    assert loader.num_files == 2
+    assert loader._total_size_bytes == 125223
+    assert loader.total_size == '125.2 KB'
+    assert loader.unique_extension == ('.mhd', '.raw')
+    assert pv.get_ext(loader.path[0]) == '.mhd'
+    assert pv.get_ext(loader.path[1]) == '.raw'
+    assert len(loader._reader) == 2
+    assert isinstance(loader._reader[0], pv.MetaImageReader)
+    assert loader._reader[1] is None
+    assert loader.unique_reader_type is pv.MetaImageReader
+    assert isinstance(loader.dataset, pv.ImageData)
+    assert loader.unique_dataset_type is pv.ImageData
 
 
 @pytest.fixture()
-def loadable_slc() -> _MultiFileLoadable:
-    def _bolt_nut_files_func():
-        bolt = _SingleFileLoadable(downloads.download_file('bolt.slc'))
-        nut = _SingleFileLoadable(downloads.download_file('nut.slc'))
-        return bolt, nut
+def dataset_loader_two_files_both_loadable():
+    def _files_func():
+        loadable1 = _SingleFileDownloadableLoadable('bolt.slc')
+        loadable2 = _SingleFileDownloadableLoadable('nut.slc')
+        return loadable1, loadable2
 
-    return _MultiFileLoadable(_bolt_nut_files_func, load_func=_load_as_multiblock)
+    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader.download()
+    loader.load()
+    return loader
+
+
+def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_loadable):
+    loader = dataset_loader_two_files_both_loadable
+    assert len(loader.path) == 2
+    assert loader.num_files == 2
+    assert loader._total_size_bytes == 132818
+    assert loader.total_size == '132.8 KB'
+    assert loader.unique_extension == '.slc'
+    assert pv.get_ext(loader.path[0]) == '.slc'
+    assert pv.get_ext(loader.path[1]) == '.slc'
+    assert len(loader._reader) == 2
+    assert isinstance(loader._reader[0], pv.SLCReader)
+    assert isinstance(loader._reader[1], pv.SLCReader)
+    assert loader.unique_reader_type is pv.SLCReader
+    assert isinstance(loader.dataset, Tuple)
+    dataset1, dataset2 = loader.dataset
+    assert isinstance(dataset1, pv.ImageData)
+    assert isinstance(dataset2, pv.ImageData)
+    assert loader.unique_dataset_type is pv.ImageData
 
 
 @pytest.fixture()
-def loadable_cubemap() -> _SingleFileLoadable:
-    return _SingleFileLoadable(
+def dataset_loader_cubemap():
+    loader = _SingleFileDownloadableLoadable(
         downloads._download_archive_file_or_folder('cubemap_park/cubemap_park.zip', target_file=''),
         read_func=_load_as_cubemap,
     )
+    loader.download()
+    loader.load()
+    return loader
+
+
+def test_dataset_loader_cubemap(dataset_loader_cubemap):
+    loader = dataset_loader_cubemap
+    assert os.path.isdir(loader.path)
+    assert loader.num_files == 6
+    assert loader._total_size_bytes == 606113
+    assert loader.total_size == '606.1 KB'
+    assert loader.unique_extension == '.jpg'
+    assert type(loader.dataset) is pv.Texture
+    assert loader.unique_dataset_type is pv.Texture
 
 
 @pytest.fixture()
-def loadable_dicom() -> _SingleFileLoadable:
-    return _SingleFileLoadable(
+def dataset_loader_dicom():
+    loader = _SingleFileDownloadableLoadable(
         downloads._download_archive_file_or_folder('DICOM_Stack/data.zip', target_file='data')
     )
+    loader.download()
+    loader.load()
+    return loader
 
 
-def test_file_loader_file_props_from_one_file(loadable_vtp):
-    # test single file
-    example = loadable_vtp
-    assert os.path.isfile(example.path)
-    assert example.num_files == 1
-    assert example._total_size_bytes == 60449
-    assert example.total_size == '60.4 KB'
-    assert example.unique_extension == '.vtp'
-    assert isinstance(example._reader, pv.XMLPolyDataReader)
-    assert example.unique_reader_type is pv.XMLPolyDataReader
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.PolyData
-    assert example.unique_dataset_type is pv.PolyData
+def test_dataset_loader_dicom(dataset_loader_dicom):
+    loader = dataset_loader_dicom
+    assert os.path.isdir(loader.path)
+    assert loader.num_files == 3
+    assert loader._total_size_bytes == 1583688
+    assert loader.total_size == '1.6 MB'
+    assert loader.unique_extension == '.dcm'
+    assert isinstance(loader._reader, pv.DICOMReader)
+    assert loader.unique_reader_type is pv.DICOMReader
+    assert isinstance(loader.dataset, pv.ImageData)
+    assert loader.unique_dataset_type is pv.ImageData
 
 
-def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
-    # test multiple files, but only one is loaded
-    example = loadable_mhd
-    assert all(os.path.isfile(file) for file in example.path)
-    assert example.num_files == 2
-    assert example._total_size_bytes == 125223
-    assert example.total_size == '125.2 KB'
-    assert example.unique_extension == ('.mhd', '.raw')
-    assert pv.get_ext(example.path[0]) == '.mhd'
-    assert pv.get_ext(example.path[1]) == '.raw'
-    assert len(example._reader) == 2
-    assert isinstance(example._reader[0], pv.MetaImageReader)
-    assert example._reader[1] is None
-    assert example.unique_reader_type is pv.MetaImageReader
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.ImageData
-    assert example.unique_dataset_type is pv.ImageData
-
-
-def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
-    # test multiple files, both have same ext and reader,
-    # both of which are loaded as a multiblock
-    example = loadable_slc
-    assert len(example.path) == 2
-    assert example.num_files == 2
-    assert os.path.isfile(example.path[0])
-    assert os.path.isfile(example.path[1])
-    assert example._total_size_bytes == 132818
-    assert example.total_size == '132.8 KB'
-    assert example.unique_extension == '.slc'
-    assert len(example._reader) == 2
-    assert isinstance(example._reader[0], pv.SLCReader)
-    assert isinstance(example._reader[1], pv.SLCReader)
-    assert example.unique_reader_type is pv.SLCReader
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.MultiBlock
-    assert example.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
-
-
-def test_file_loader_file_props_from_directory_cubemap(loadable_cubemap):
-    # test directory (cubemap)
-    example = loadable_cubemap
-    assert os.path.isdir(example.path)
-    assert example.num_files == 6
-    assert example._total_size_bytes == 606113
-    assert example.total_size == '606.1 KB'
-    assert example.unique_extension == '.jpg'
-    assert example._reader is None
-    assert example.unique_reader_type is None
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.Texture
-    assert example.unique_dataset_type is pv.Texture
-
-
-def test_file_loader_file_props_from_directory_dicom(loadable_dicom):
-    # test directory (dicom stack)
-    example = loadable_dicom
-    assert os.path.isdir(example.path)
-    assert example.num_files == 3
-    assert example._total_size_bytes == 1583688
-    assert example.total_size == '1.6 MB'
-    assert example.unique_extension == '.dcm'
-    assert isinstance(example._reader, pv.DICOMReader)
-    assert example.unique_reader_type is pv.DICOMReader
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is pv.ImageData
-    assert example.unique_dataset_type is pv.ImageData
-
-
-def test_file_loader_file_props_from_nested_files_and_directory(
-    loadable_vtp, loadable_mhd, loadable_dicom
+def test_dataset_loader_from_nested_files_and_directory(
+    dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 ):
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
     def files_func():
-        return loadable_vtp, loadable_mhd, loadable_dicom
+        return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 
     example = _MultiFileLoadable(files_func)
     assert len(example.path) == 4

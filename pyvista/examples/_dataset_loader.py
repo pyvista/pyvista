@@ -254,11 +254,15 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
             return None
 
     def load(self):
-        self._dataset = (
-            self._read_func(self.path)
-            if self._load_func is None
-            else self._load_func(self._read_func(self.path))
-        )
+        try:
+            self._dataset = (
+                self._read_func(self.path)
+                if self._load_func is None
+                else self._load_func(self._read_func(self.path))
+            )
+        except Exception:
+            raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
+
         return self.dataset
 
 
@@ -266,9 +270,9 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
     If downloading a file from an archive, set the filepath of the zip as
-    ``path`` and set ``target_file`` as the file to extract. Set ``target_file=''``
-    (empty string) to download the entire archive and return the directory
-    path to the entire extracted archive.
+    ``path`` and set ``target_file`` as the file to extract. If the path is
+    a zip file and no target file is specified, the entire archive is downloaded
+    and and extracted and the root directory of the path is returned.
 
     """
 
@@ -288,6 +292,8 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
 
         self._download_source = path
         self._download_func = download_file
+
+        target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
         if target_file is not None:
             # download from archive
             self._download_func = functools.partial(
