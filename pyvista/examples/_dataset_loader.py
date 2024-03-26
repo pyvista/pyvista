@@ -138,6 +138,11 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
     @property
     @abstractmethod
+    def source(self) -> _FilePropStrType_co:
+        """Return the source of the download."""
+
+    @property
+    @abstractmethod
     def path(self) -> _FilePropStrType_co:
         """Return the file path of downloaded file."""
 
@@ -303,9 +308,15 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             # the fullpath could not be resolved (i.e. not yet downloaded)
             self._path = target_file if fullpath is None else fullpath
 
+    @property
+    def source(self) -> str:
+        return self._download_source
+
     def download(self) -> str:
         path = self._download_func(self._download_source)
         assert os.path.isfile(path)
+        # Reset the path since the full path for archive files
+        # isn't known until after downloading
         self._path = path
         return path
 
@@ -329,14 +340,6 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
     ):
         _SingleFileLoadable.__init__(self, path, read_func=read_func, load_func=load_func)
         _SingleFileDownloadable.__init__(self, path, target_file=target_file)
-
-    def download(self) -> str:
-        path = self._download_func(self._download_source)
-        assert os.path.isfile(path) or os.path.isdir(path)
-        # Reset the path since the full path for archive files
-        # isn't known until after downloading
-        self._path = path
-        return path
 
 
 class _MultiFile(_FileProps[Tuple[str, ...], Tuple[int, ...]]):
@@ -442,6 +445,10 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
 class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str, ...]]):
     """Wrap multiple files for downloading and loading."""
 
+    @property
+    def source(self) -> Tuple[str, ...]:
+        return tuple([file._download_source for file in self._file_objects])
+
     def download(self) -> Tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
@@ -468,16 +475,16 @@ def _flatten_path(
 
 
 def _download_dataset(
-    example: Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable],
+    dataset: Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable],
     load: bool = True,
     metafiles: bool = False,
 ):
-    """Download and load an dataset file or files.
+    """Download and load a dataset file or files.
 
     Parameters
     ----------
-    example
-        SingleFile or MultiFile object(s) to download or load.
+    dataset
+        SingleFile or MultiFile object(s) of the dataset(s) to download or load.
 
     load
         Read and load the file after downloading. When ``False``,
@@ -501,15 +508,15 @@ def _download_dataset(
 
     """
     # Download all files for the dataset, include any metafiles
-    path = example.download()
+    path = dataset.download()
 
     # Exclude non-loadable metafiles from result (if any)
-    if not metafiles and isinstance(example, _MultiFileDownloadableLoadable):
-        path = example.path_loadable
+    if not metafiles and isinstance(dataset, _MultiFileDownloadableLoadable):
+        path = dataset.path_loadable
         # Return scalar if only one loadable file
         path = path[0] if len(path) == 1 else path
 
-    return example.load() if load else path
+    return dataset.load() if load else path
 
 
 def _load_as_multiblock(
