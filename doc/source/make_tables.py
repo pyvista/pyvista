@@ -19,7 +19,7 @@ CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
 DOWNLOADS_TABLE_DIR = "api/examples"
 EXAMPLES_THUMBNAIL_IMAGES_DIR = "images/examples-thumbnails"
-NOT_AVAILABLE_IMG_PATH = Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / 'not_available.png'
+NOT_AVAILABLE_IMG_PATH = str(Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / 'not_available.png')
 
 
 def _aligned_dedent(txt):
@@ -625,7 +625,7 @@ class DownloadsMetadataTable(DocTable):
         else:
             print(f"WARNING: Missing thumbnail image file for \'{dataset_download_func_name}\'")
             img_path = Path(EXAMPLES_THUMBNAIL_IMAGES_DIR) / 'not_available.png'
-        return img_path
+        return str(img_path)
 
     @staticmethod
     def _process_img(img_path):
@@ -634,7 +634,7 @@ class DownloadsMetadataTable(DocTable):
 
         IMG_WIDTH, IMG_HEIGHT = 400, 300
 
-        if Path(img_path) / 'not_available.png':
+        if Path(img_path).name == 'not_available.png':
             not_available_mesh = pv.Text3D('Not Available')
             p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
             p.background_color = 'white'
@@ -645,7 +645,7 @@ class DownloadsMetadataTable(DocTable):
             img_array = p.show(screenshot=True)
 
             # exit early if the image is the same
-            if Path(img_path).is_file() and pv.compare_images(img_path, img_path) < 1:
+            if Path(img_path).is_file() and pv.compare_images(img_path, img_array) < 1:
                 return
 
             img = Image.fromarray(img_array)

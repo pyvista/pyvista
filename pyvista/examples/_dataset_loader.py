@@ -172,7 +172,7 @@ class _SingleFile(_FileProps[str, int]):
     def __init__(self, path):
         from pyvista.examples.downloads import USER_DATA_PATH
 
-        self._path = path if Path(path).is_absolute() else Path(USER_DATA_PATH) / path
+        self._path = path if Path(path).is_absolute() else str(Path(USER_DATA_PATH) / path)
 
     @property
     def path(self) -> str:
