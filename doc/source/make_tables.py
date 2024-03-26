@@ -346,7 +346,7 @@ class ColorTable(DocTable):
 
 
 class DownloadsMetadataTable(DocTable):
-    """Class to generate info about pyvista downloadable examples.
+    """Class to generate metadata about pyvista downloadable datasets.
 
     For each 'row' of this table:
 
@@ -357,21 +357,24 @@ class DownloadsMetadataTable(DocTable):
     The card has a structure similar to:
 
         Dataset Name
-        +---------------+
-        | Function Name |
-        | Docstring     |
-        +======+========+
-        | Info | Image  |
-        +------+--------+
-        | Repr          |
-        +---------------+
+        +------------------+
+        | Function Name    |
+        | Docstring        |
+        +==================+
+        | +------+-------+ |
+        | | Info | Image | |
+        | +------+-------+ |
+        +------------------+
+        | Repr             |
+        +------------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
-    details on the directives used and their formatting."""
+    details on the directives used and their formatting.
+    """
 
     path = f"{DOWNLOADS_TABLE_DIR}/downloads_metadata_table.rst"
 
-    # No main header; each example is its own separate card
+    # No main header; each row/dataset is a separate card
     header = ""
     row_template = _aligned_dedent(
         """
@@ -409,7 +412,7 @@ class DownloadsMetadataTable(DocTable):
         |      .. grid-item::
         |
         |         .. code-block::
-        |            :caption: Dataset Representation
+        |            :caption: Representation
         |
         |            {}
         |
@@ -446,23 +449,10 @@ class DownloadsMetadataTable(DocTable):
     def get_row(cls, i, row_data):
         loader_name, loader = row_data
 
-        # Extract data set name from loader name
-        dataset_name = loader_name.replace('_example_', '')
-
-        # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_metadata'
-        dataset_heading = (
-            ' '.join([word.capitalize() for word in dataset_name.split('_')]) + ' Dataset'
+        # Get dataset name info
+        index_name, dataset_heading, func_ref, func_doc, func_name = cls._format_dataset_name(
+            loader_name
         )
-        dataset_heading += '\n' + _repeat_string('-', len(dataset_heading))
-
-        # Get the corresponding 'download' function of the loader
-        func_name = 'download_' + dataset_name
-        func = getattr(downloads, func_name)
-
-        # Get the card's header info
-        func_ref = f':func:`~{_get_fullname(func)}`'
-        func_doc = _get_doc(func)
 
         # Get file and instance metadata
         try:
@@ -503,6 +493,27 @@ class DownloadsMetadataTable(DocTable):
             dataset_type,
             dataset_repr,
         )
+
+    @staticmethod
+    def _format_dataset_name(loader_name: str):
+        # Extract data set name from loader name
+        dataset_name = loader_name.replace('_example_', '')
+
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_metadata'
+        dataset_heading = (
+            ' '.join([word.capitalize() for word in dataset_name.split('_')]) + ' Dataset'
+        )
+        dataset_heading += '\n' + _repeat_string('-', len(dataset_heading))
+
+        # Get the corresponding 'download' function of the loader
+        func_name = 'download_' + dataset_name
+        func = getattr(downloads, func_name)
+
+        # Get the card's header info
+        func_ref = f':func:`~{_get_fullname(func)}`'
+        func_doc = _get_doc(func)
+        return (index_name, dataset_heading, func_ref, func_doc, func_name)
 
     @staticmethod
     def _format_file_size(loader: _example_loader._FileProps):
@@ -647,12 +658,6 @@ def _max_width(lines: List[str]) -> int:
 def _repeat_string(string: str, num_repeat: int) -> str:
     """Repeat `string` `num_repeat` times."""
     return ''.join([string] * num_repeat)
-
-
-def _horz_concat_lines(lines1: List[str], lines2: List[str]) -> List[str]:
-    """Concatenate two lists of lines horizontally."""
-    assert len(lines1) == len(lines2)
-    return [l1 + l2 for l1, l2 in zip(lines1, lines2)]
 
 
 def _pad_lines(
