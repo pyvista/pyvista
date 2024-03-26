@@ -16,7 +16,7 @@ including file and dataset metadata.
 .. toctree::
    :maxdepth: 1
 
-    /api/examples/metadata
+   /api/examples/metadata
 
 Examples
 --------

@@ -54,7 +54,7 @@ Browse the gallery to view file and instance metadata for example datasets.
 .. toctree::
    :maxdepth: 1
 
-    /api/examples/metadata
+   /api/examples/metadata
 
 Usage Considerations
 --------------------
