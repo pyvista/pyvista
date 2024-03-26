@@ -303,7 +303,7 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
                     fullpath = file_from_files(target_file, self.path)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    fullpath = Path(USER_DATA_PATH) / (path + '.unzip') / target_file
+                    fullpath = str(Path(USER_DATA_PATH) / (path + '.unzip') / target_file)
                     fullpath = fullpath if Path(fullpath).is_dir() else None
             # set the file path as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
@@ -458,7 +458,7 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
         path_out = _flatten_path(path)
-        assert all(Path(p).is_file() or Path().is_dir() for p in path_out)
+        assert all(Path(p).is_file() or Path(p).is_dir() for p in path_out)
         return tuple(path_out)
 
 
@@ -609,7 +609,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
-        [Path(path) / name for name in files if condition(name)]
+        [str(Path(path) / name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
     ][0]
 

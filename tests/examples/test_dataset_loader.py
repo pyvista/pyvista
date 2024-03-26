@@ -27,8 +27,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of datasets available for download."""
 
     # setup
-    repository_path = Path(tmp_path) / 'repo'
-    Path.mkdir(Path(repository_path))
+    repository_path = str(Path(tmp_path) / 'repo')
+    Path(repository_path).mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -45,13 +45,13 @@ def examples_local_repository_tmp_dir(tmp_path):
     # copy datasets from the pyvista repo to the local repository
 
     [
-        shutil.copyfile(Path(examples.dir_path) / base, Path(repository_path) / base)
+        shutil.copyfile(str(Path(examples.dir_path) / base), str(Path(repository_path) / base))
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
     shutil.make_archive(str(Path(tmp_path) / 'archive'), 'zip', repository_path)
-    shutil.move(str(Path(tmp_path) / 'archive.zip'), Path(repository_path) / 'archive.zip')
+    shutil.move(str(Path(tmp_path) / 'archive.zip'), str(Path(repository_path) / 'archive.zip'))
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -62,7 +62,7 @@ def examples_local_repository_tmp_dir(tmp_path):
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
     cached_paths = [str(Path(downloads.FETCHER.path) / base) for base in downloadable_basenames]
-    [Path.unlink(file) for file in cached_paths if Path(file).is_file()]
+    [Path(file).unlink() for file in cached_paths if Path(file).is_file()]
 
     yield repository_path
 
@@ -72,7 +72,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [Path.unlink(file) for file in cached_paths if Path(file).is_file()]
+    [Path(file).unlink() for file in cached_paths if Path(file).is_file()]
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
@@ -148,12 +148,12 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     path = multi_file_loader.path
     assert multi_file_loader._file_loaders_ is not None
     assert isinstance(path, tuple)
-    assert [Path(file).is_absolute() for file in path]
+    assert all(Path(file).is_absolute() for file in path)
     assert len(path) == 3
 
     path_loadable = multi_file_loader.path_loadable
     assert isinstance(path_loadable, tuple)
-    assert [Path(file).is_absolute() for file in path_loadable]
+    assert all(Path(file).is_absolute() for file in path_loadable)
     assert len(path_loadable) == 2
     assert basename_not_loaded not in path_loadable
 
