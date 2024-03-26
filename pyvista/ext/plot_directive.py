@@ -328,7 +328,7 @@ class ImageFile:
     @property
     def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
-        return os.path.join(self.dirname, self.basename)  # noqa: PTH118
+        return str(Path(self.dirname) / self.basename)
 
     @property
     def stem(self):  # numpydoc ignore=RT01
@@ -436,7 +436,7 @@ def render_figures(
                         continue
                     else:
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with open(image_file.filename, "wb") as f:  # noqa: PTH123
+                        with Path(image_file.filename).open("wb") as f:
                             f.write(plotter.last_vtksz)
                 images.append(image_file)
 
@@ -464,16 +464,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = None if not keep_context else options['context']
 
     rst_file = document.attributes['source']
-    rst_dir = os.path.dirname(rst_file)  # noqa: PTH120
+    rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
         if not config.plot_basedir:
-            source_file_name = os.path.join(  # noqa: PTH118
-                setup.app.builder.srcdir, directives.uri(arguments[0])
-            )
+            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
-            source_file_name = os.path.join(  # noqa: PTH118
-                setup.confdir, config.plot_basedir, directives.uri(arguments[0])
+            source_file_name = str(
+                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0])
             )
 
         # If there is content, it will be passed as a caption.
@@ -495,7 +493,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             function_name = None
 
         code = Path(source_file_name).read_text(encoding='utf-8')
-        output_base = os.path.basename(source_file_name)  # noqa: PTH119
+        output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
         code = textwrap.dedent("\n".join(map(str, content)))
@@ -525,23 +523,19 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
-    source_rel_dir = os.path.dirname(source_rel_name).lstrip(os.path.sep)  # noqa: PTH120
+    source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = os.path.join(  # noqa: PTH118
-        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir  # noqa: PTH120
-    )
+    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
     build_dir = os.path.normpath(build_dir)
-    os.makedirs(build_dir, exist_ok=True)  # noqa: PTH103
+    Path(build_dir).mkdir(parents=True, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = os.path.abspath(  # noqa: PTH100
-        os.path.join(setup.app.builder.outdir, source_rel_dir)  # noqa: PTH118
-    )
-    os.makedirs(dest_dir, exist_ok=True)  # noqa: PTH103
+    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
     dest_dir_link = os.path.join(  # noqa: PTH118
@@ -632,7 +626,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     for _, images in results:
         for image in images:
-            destimg = os.path.join(dest_dir, image.basename)  # noqa: PTH118
+            destimg = str(Path(dest_dir) / image.basename)
             if image.filename != destimg:
                 shutil.copyfile(image.filename, destimg)
 
