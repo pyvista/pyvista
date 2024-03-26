@@ -43,7 +43,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @scale.setter
     def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01

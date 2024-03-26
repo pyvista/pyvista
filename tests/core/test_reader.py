@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 
 import numpy as np
@@ -22,9 +23,12 @@ pytestmark = pytest.mark.skipif(
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
-def test_get_reader_fail():
+def test_get_reader_fail(tmp_path):
     with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
+    match = "`pyvista.get_reader` does not support reading from directory:\n\t"
+    with pytest.raises(ValueError, match=match):
+        pv.get_reader(str(tmp_path))
 
 
 def test_reader_invalid_file():
@@ -279,7 +283,7 @@ def test_ensightreader_time_sets():
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
-    reader = pv.DICOMReader(directory)  # ``get_reader`` doesn't support directories
+    reader = pv.get_reader(directory)
     assert directory in str(reader)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == directory
@@ -289,7 +293,7 @@ def test_dcmreader(tmpdir):
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    filename = os.path.join(directory, "1-1.dcm")
+    filename = str(Path(directory) / "1-1.dcm")
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == filename
@@ -512,7 +516,7 @@ def test_pvdreader():
 def test_pvdreader_no_time_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+    filename = str(Path(filename).parent / 'dualSphereNoTime.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.time_values == [0.0]
@@ -529,7 +533,7 @@ def test_pvdreader_no_time_group():
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+    filename = str(Path(filename).parent / 'dualSphereAnimation4NoPart.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.active_time_value == 0.0

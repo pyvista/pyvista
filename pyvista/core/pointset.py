@@ -3,8 +3,8 @@
 import collections.abc
 from functools import wraps
 import numbers
-import os
 import pathlib
+from pathlib import Path
 from textwrap import dedent
 from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
 import warnings
@@ -687,7 +687,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __init__(
         self,
-        var_inp: Union[_vtk.vtkPolyData, str, MatrixLike[float], None] = None,
+        var_inp: Union[_vtk.vtkPolyData, str, pathlib.Path, MatrixLike[float], None] = None,
         faces: Optional[CellArrayLike] = None,
         n_faces: Optional[int] = None,
         lines: Optional[CellArrayLike] = None,
@@ -1417,12 +1417,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        filename = str(Path(str(filename)).expanduser().resolve())
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            self.compute_normals(inplace=True)
+            try:
+                self.compute_normals(inplace=True)
+            except TypeError:
+                pass
 
         # validate texture
         if ftype == '.ply' and texture is not None:

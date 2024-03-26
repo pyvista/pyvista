@@ -463,7 +463,7 @@ changes any given branch is introducing before looking at the code.
    addition
 -  ``junk/``: for any experimental changes that can be deleted if gone
    stale
--  ``maint/``: for general maintenance of the repository or CI routines
+-  ``maint/`` and ``ci/``: for general maintenance of the repository or CI routines
 -  ``doc/``: for any changes only pertaining to documentation
 -  ``no-ci/``: for low impact activity that should NOT trigger the CI
    routines
@@ -830,7 +830,7 @@ Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have make a Pull Request. You can comment
-`github-actions preview` on a pull request to preview documentation.
+`@pyvista-bot preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
 new contributors kindly request them to comment command.
@@ -971,6 +971,18 @@ should not wait until a minor release. The steps for a patch release
    from conda and follow the directions in step 10 in the minor release
    section.
 
+Dependency version policy
+-------------------------
+
+Python and VTK dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support all supported `Python versions`_ and `VTK versions`_ that
+support those Python versions. As much as we would prefer to follow
+`SPEC 0`_, we follow VTK versions as an interface library of VTK.
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _Python versions: https://endoflife.date/python
+.. _VTK versions: https://pypi.org/project/vtk/
+.. _SPEC 0: https://scientific-python.org/specs/spec-0000/

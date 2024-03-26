@@ -1223,6 +1223,7 @@ def Cube(
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
+
         .. versionadded:: 0.44.0
 
     Returns
@@ -1907,9 +1908,16 @@ def Rectangle(points=None):
     vec_02 = point_2 - point_0
     vec_12 = point_2 - point_1
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02)
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12)
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12)
+    mag_01 = np.linalg.norm(vec_01)
+    mag_02 = np.linalg.norm(vec_02)
+    mag_12 = np.linalg.norm(vec_12)
+
+    if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
+        raise ValueError("Unable to build a rectangle with less than three different points")
+
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val
@@ -1918,8 +1926,6 @@ def Rectangle(points=None):
     ]
     if len(null_scalar_products) == 0:
         raise ValueError("The three points should defined orthogonal vectors")
-    if len(null_scalar_products) > 1:
-        raise ValueError("Unable to build a rectangle with less than three different points")
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):

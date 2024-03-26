@@ -1,5 +1,5 @@
-import os
 import pathlib
+from pathlib import Path
 import weakref
 
 import numpy as np
@@ -15,7 +15,7 @@ from pyvista.core.errors import (
     PyVistaDeprecationWarning,
 )
 
-test_path = os.path.dirname(os.path.abspath(__file__))
+test_path = str(Path(__file__).resolve().parent)
 
 # must be manually set until pytest adds parametrize with fixture feature
 HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
@@ -360,7 +360,7 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 
 
 def test_init_bad_filename():
-    filename = os.path.join(test_path, 'test_grid.py')
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.UnstructuredGrid(filename)
 
@@ -681,7 +681,7 @@ def test_load_structured_bad_filename():
     with pytest.raises(FileNotFoundError):
         pv.StructuredGrid('not a file')
 
-    filename = os.path.join(test_path, 'test_grid.py')
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.StructuredGrid(filename)
 
@@ -1273,7 +1273,7 @@ def test_ExplicitStructuredGrid_save():
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
-    os.remove('grid.vtu')
+    Path('grid.vtu').unlink()
 
 
 def test_ExplicitStructuredGrid_hide_cells():
