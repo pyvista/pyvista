@@ -1,6 +1,7 @@
 """This is a helper module to generate tables that can be included in the documentation."""
+
 import io
-import os
+from pathlib import Path
 import textwrap
 
 import pyvista as pv
@@ -51,15 +52,15 @@ class DocTable:
             new_txt = fnew.read()
 
         # determine if existing file needs to be rewritten
-        if os.path.exists(cls.path):
-            with open(cls.path) as fold:
+        if Path(cls.path).exists():
+            with Path(cls.path).open() as fold:
                 orig_txt = fold.read()
             if orig_txt == new_txt:
                 new_txt = ''
 
         # write if there is any text to write. This avoids resetting the documentation cache
         if new_txt:
-            with open(cls.path, 'w', encoding="utf-8") as fout:
+            with Path(cls.path).open('w', encoding="utf-8") as fout:
                 fout.write(new_txt)
 
         pv.close_all()
@@ -138,7 +139,7 @@ class LineStyleTable(DocTable):
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -204,7 +205,7 @@ class MarkerStyleTable(DocTable):
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -278,7 +279,7 @@ class ColorSchemeTable(DocTable):
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
-        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
+        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
             return n_colors
 
         # save it
@@ -336,7 +337,7 @@ class ColorTable(DocTable):
 
 
 def make_all_tables():
-    os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    Path(CHARTS_IMAGE_DIR).mkdir(exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()

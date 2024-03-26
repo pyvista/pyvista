@@ -1,4 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
+
 import collections.abc
 import warnings
 
@@ -410,7 +411,7 @@ class PolyDataFilters(DataSetFilters):
         merged = _get_output(append_filter)
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore
+            self.deep_copy(merged)
             return self
 
         return merged
@@ -532,7 +533,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
-                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                    merged.points, faces=merged.GetCells(), deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
                 # case. Store values to restore after updating.
@@ -1586,6 +1587,14 @@ class PolyDataFilters(DataSetFilters):
         present, the edges are split and new points generated to
         prevent blurry edges (due to Phong shading).
 
+        An array named ``"Normals"`` is stored with the mesh.
+
+        .. warning::
+
+           - Normals can only be computed for polygons and triangle strips. Point clouds are not supported.
+           - Triangle strips are broken up into triangle polygons. You may want to restrip the triangles.
+           - Previous arrays named ``"Normals"`` will be overwritten.
+
         Parameters
         ----------
         cell_normals : bool, default: True
@@ -1635,25 +1644,22 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        TypeError
+            If the mesh contains only ``LINE`` or ``VERTEX`` cell types. Normals cannot be computed for these cells.
+
         Returns
         -------
         pyvista.PolyData
             Updated mesh with cell and point normals.
 
-        Notes
-        -----
-        Previous arrays named ``"Normals"`` will be overwritten.
-
-        Normals are computed only for polygons and triangle
-        strips. Normals are not computed for lines or vertices.
-
-        Triangle strips are broken up into triangle polygons. You may
-        want to restrip the triangles.
-
-        It may be easier to run
-        :func:`pyvista.PolyData.point_normals` or
-        :func:`pyvista.PolyData.cell_normals` if you would just
-        like the array of point or cell normals.
+        See Also
+        --------
+        point_normals
+            Returns the array of point normals.
+        cell_normals
+            Returns the array of cell normals.
 
         Examples
         --------
@@ -1699,6 +1705,19 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(normal, progress_bar, 'Computing Normals')
 
         mesh = _get_output(normal)
+        try:
+            mesh['Normals']
+        except KeyError:
+            if (self.n_verts + self.n_lines) == self.n_cells:
+                raise TypeError(
+                    "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
+                    "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells)."
+                )
+            else:  # pragma: no cover
+                raise RuntimeError(
+                    'Normals could not be computed for unknown reasons.\n'
+                    'Please report the issue at https://github.com/pyvista/pyvista/issues.'
+                )
         if point_normals:
             mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:

@@ -1,4 +1,5 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
+
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
@@ -8,9 +9,9 @@ import time
 import warnings
 import weakref
 
+from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .opts import PickerType
@@ -1112,6 +1113,7 @@ class RenderWindowInteractor:
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
         self.interactor.SetKeyCode(key)
+        self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
 
     def _control_key_press(self):

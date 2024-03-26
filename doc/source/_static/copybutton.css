@@ -1,21 +1,21 @@
 /* Copy buttons */
 a.copybtn {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 1em;
-    height: 1em;
-    padding: .3em;
-	opacity: .3;
-	transition: opacity 0.5s;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 1em;
+  height: 1em;
+  padding: 0.3em;
+  opacity: 0.3;
+  transition: opacity 0.5s;
 }
 
-div.highlight  {
-    position: relative;
+div.highlight {
+  position: relative;
 }
 
 .highlight:hover .copybtn {
-	opacity: 1;
+  opacity: 1;
 }
 
 /**
@@ -26,32 +26,36 @@ div.highlight  {
  *
  * <p class="o-tooltip--left" data-tooltip="Hey">Short</p>
  */
- .o-tooltip--left {
+.o-tooltip--left {
   position: relative;
- }
+}
 
- .o-tooltip--left:after {
-    opacity: 0;
-    visibility: hidden;
-    position: absolute;
-    content: attr(data-tooltip);
-    padding: 2px;
-    top: 0;
-    left: 0;
-    background: grey;
-    font-size: 1rem;
-    color: white;
-    white-space: nowrap;
-    z-index: 2;
-    border-radius: 2px;
-    transform: translateX(-102%) translateY(0);
-    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+.o-tooltip--left:after {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  content: attr(data-tooltip);
+  padding: 2px;
+  top: 0;
+  left: 0;
+  background: grey;
+  font-size: 1rem;
+  color: white;
+  white-space: nowrap;
+  z-index: 2;
+  border-radius: 2px;
+  transform: translateX(-102%) translateY(0);
+  transition:
+    opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
 }
 
 .o-tooltip--left:hover:after {
-    display: block;
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-100%) translateY(0);
-    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-100%) translateY(0);
+  transition:
+    opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1),
+    transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
 }

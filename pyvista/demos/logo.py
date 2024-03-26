@@ -13,7 +13,9 @@ plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos
           off_screen=True)
 
 """
+
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -21,7 +23,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 
-THIS_PATH = os.path.dirname(os.path.realpath(__file__))
+THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
 LOGO_TITLE = 'PyVista'
 

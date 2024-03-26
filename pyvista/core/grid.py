@@ -1,12 +1,14 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+
 from functools import wraps
 import pathlib
-from typing import Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -179,10 +181,14 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
-        return self.SetDimensions(len(self.x), len(self.y), len(self.z))
+        self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
     def _from_arrays(
-        self, x: np.ndarray, y: np.ndarray, z: np.ndarray, check_duplicates: bool = False
+        self,
+        x: NumpyArray[float],
+        y: NumpyArray[float],
+        z: NumpyArray[float],
+        check_duplicates: bool = False,
     ):
         """Create VTK rectilinear grid directly from numpy arrays.
 
@@ -230,7 +236,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> list:  # numpydoc ignore=RT01
+    def meshgrid(self) -> List[NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -245,8 +251,8 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         """
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
-    @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
+    @property  # type: ignore[explicit-override, override]
+    def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return a copy of the points as an ``(n, 3)`` numpy array.
 
         Returns
@@ -296,7 +302,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         )
 
     @property
-    def x(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def x(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the coordinates along the X-direction.
 
         Returns
@@ -327,13 +333,13 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords: Sequence):  # numpydoc ignore=GL08
+    def x(self, coords: Sequence[float]):  # numpydoc ignore=GL08
         self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def y(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def y(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Y-direction.
 
         Returns
@@ -364,13 +370,13 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords: Sequence):  # numpydoc ignore=GL08
+    def y(self, coords: Sequence[float]):  # numpydoc ignore=GL08
         self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def z(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def z(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the coordinates along the Z-direction.
 
         Returns
@@ -401,12 +407,12 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords: Sequence):  # numpydoc ignore=GL08
+    def z(self, coords: Sequence[float]):  # numpydoc ignore=GL08
         self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
-    @Grid.dimensions.setter  # type: ignore
+    @Grid.dimensions.setter  # type: ignore[attr-defined]
     def dimensions(self, _dims):  # numpydoc ignore=GL08
         """Set Dimensions.
 
@@ -631,8 +637,8 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         self.SetOrigin(xo, yo, zo)
         self.spacing = (spacing[0], spacing[1], spacing[2])
 
-    @property  # type: ignore
-    def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01
+    @property  # type: ignore[explicit-override, override]
+    def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Build a copy of the implicitly defined points as a numpy array.
 
         Returns
@@ -667,7 +673,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         # get the points and convert to spacings
         dx, dy, dz = self.spacing
         # Now make the cell arrays
-        ox, oy, oz = np.array(self.origin) + np.array(self.extent[::2])  # type: ignore
+        ox, oy, oz = np.array(self.origin) + self.extent[::2] * np.array([dx, dy, dz])
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
@@ -689,7 +695,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         )
 
     @property
-    def x(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def x(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return all the X points.
 
         Examples
@@ -703,7 +709,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.points[:, 0]
 
     @property
-    def y(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def y(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return all the Y points.
 
         Examples
@@ -717,7 +723,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.points[:, 1]
 
     @property
-    def z(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def z(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return all the Z points.
 
         Examples
@@ -852,7 +858,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return grid
 
     @property
-    def extent(self) -> tuple:  # numpydoc ignore=RT01
+    def extent(self) -> Tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.

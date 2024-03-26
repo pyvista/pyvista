@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import platform
 
 import numpy as np
@@ -22,9 +23,12 @@ pytestmark = pytest.mark.skipif(
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
-def test_get_reader_fail():
-    with pytest.raises(ValueError):
+def test_get_reader_fail(tmp_path):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.get_reader("not_a_supported_file.no_data")
+    match = "`pyvista.get_reader` does not support reading from directory:\n\t"
+    with pytest.raises(ValueError, match=match):
+        pv.get_reader(str(tmp_path))
 
 
 def test_reader_invalid_file():
@@ -252,10 +256,34 @@ def test_ensightreader_timepoints():
         reader.set_active_time_value(1000.0)
 
 
+def test_ensightreader_time_sets():
+    filename = examples.download_lshape(load=False)
+
+    reader = pv.get_reader(filename)
+    assert reader.active_time_set == 0
+
+    reader.set_active_time_set(1)
+    assert reader.number_time_points == 11
+
+    mesh = reader.read()["all"]
+    assert reader.number_time_points == 11
+    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+
+    reader.set_active_time_value(reader.time_values[-1])
+    mesh = reader.read()["all"]
+    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+
+    reader.set_active_time_set(0)
+    assert reader.number_time_points == 1
+
+    with pytest.raises(IndexError, match="Time set index"):
+        reader.set_active_time_set(2)
+
+
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
-    reader = pv.DICOMReader(directory)  # ``get_reader`` doesn't support directories
+    reader = pv.get_reader(directory)
     assert directory in str(reader)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == directory
@@ -265,7 +293,7 @@ def test_dcmreader(tmpdir):
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    filename = os.path.join(directory, "1-1.dcm")
+    filename = str(Path(directory) / "1-1.dcm")
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == filename
@@ -488,7 +516,7 @@ def test_pvdreader():
 def test_pvdreader_no_time_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+    filename = str(Path(filename).parent / 'dualSphereNoTime.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.time_values == [0.0]
@@ -505,7 +533,7 @@ def test_pvdreader_no_time_group():
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+    filename = str(Path(filename).parent / 'dualSphereAnimation4NoPart.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.active_time_value == 0.0
@@ -609,6 +637,9 @@ def test_openfoamreader_read_data_time_point():
     assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+)
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
     reader.decompose_polyhedra = False
