@@ -37,15 +37,7 @@ Which will be rendered as:
 
 .. note::
 
-   You need to install the following packages to build the interactive scene.
-
-   * `jupyter_sphinx>=0.5.3`
-   * `jupyterlab>=4.0.10`
-   * `osmnx>=1.8.1`
-   * `sphinx-design>=0.5.0`
-   * `trame>=3.5.0`
-   * `trame-vtk>=2.6.3`
-   * `trame-vuetify>=2.3.1`
+   You need to install `the packages to build the interactive scene <https://github.com/pyvista/pyvista-docs-dynamic/blob/main/requirements.txt>`_.
 
 .. note::
 
