@@ -588,4 +588,3 @@ def setup(app):
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
     app.add_css_file("summary.css")
-    app.add_css_file("tight_table.css")
