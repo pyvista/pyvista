@@ -204,9 +204,12 @@ def loadable_mhd() -> _MultiFileLoadable:
 
 @pytest.fixture()
 def loadable_slc() -> _MultiFileLoadable:
+    file1 = downloads.download_file('bolt.slc')
+    file2 = downloads.download_file('nut.slc')
+
     def _bolt_nut_files_func():
-        bolt = _SingleFileLoadable(downloads.download_file('bolt.slc'))
-        nut = _SingleFileLoadable(downloads.download_file('nut.slc'))
+        bolt = _SingleFileLoadable(file1)
+        nut = _SingleFileLoadable(file2)
         return bolt, nut
 
     return _MultiFileLoadable(_bolt_nut_files_func, load_func=_load_as_multiblock)

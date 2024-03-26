@@ -169,14 +169,16 @@ class _Loadable(Protocol[_FilePropStrType_co]):
 class _SingleFile(_FileProps[str, int]):
     """Wrap a single file."""
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         from pyvista.examples.downloads import USER_DATA_PATH
 
-        self._path = path if Path(path).is_absolute() else str(Path(USER_DATA_PATH) / path)
+        self._path = path if Path(path).is_absolute() else str(Path(USER_DATA_PATH, path))
 
     @property
     def path(self) -> str:
-        return self._path
+        path = self._path
+        assert isinstance(path, str)
+        return path
 
     @property
     def _filesize_bytes(self) -> int:
@@ -399,7 +401,9 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
 
     @property
     def path(self) -> Tuple[str, ...]:
-        return tuple(_flatten_path([file.path for file in self._file_objects]))
+        path = _flatten_path([file.path for file in self._file_objects])
+        assert all(isinstance(p, str) for p in path)
+        return tuple(path)
 
     @property
     def path_loadable(self) -> Tuple[str, ...]:
@@ -602,11 +606,12 @@ def _get_file_or_folder_ext(path: str):
     return ext
 
 
-def _get_all_nested_filepaths(filepath, exclude_readme=True):
+def _get_all_nested_filepaths(filepath: str, exclude_readme=True):
     """Walk through directory and get all file paths.
 
     Optionally exclude any readme files (if any).
     """
+    assert Path(filepath).is_dir()
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
         [str(Path(path) / name) for name in files if condition(name)]
