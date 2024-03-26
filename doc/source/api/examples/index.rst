@@ -49,12 +49,12 @@ API Reference
 
 Dataset Gallery
 ---------------
-Browse the gallery to view file and instance metadata for example datasets.
+Browse the dataset gallery to view file and instance metadata for all datasets.
 
 .. toctree::
    :maxdepth: 1
 
-   /api/examples/metadata
+   /api/examples/dataset_gallery
 
 Usage Considerations
 --------------------
