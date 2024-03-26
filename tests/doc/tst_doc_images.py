@@ -11,7 +11,6 @@ from PIL import Image
 import pytest
 
 import pyvista as pv
-from pathlib import Path
 
 ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
@@ -26,7 +25,7 @@ _TestCaseTuple = namedtuple('_TestCaseTuple', ['filename', 'docs_image_path', 'c
 def _get_file_paths(dir_: str, ext: str):
     """Get all paths of files with a specific extension inside a directory tree."""
     pattern = str(Path(dir_) / '**' / ('*.' + ext))
-    file_paths = glob.glob(pattern, recursive=True) # noqa: PTH207
+    file_paths = glob.glob(pattern, recursive=True)  # noqa: PTH207
     return file_paths
 
 
