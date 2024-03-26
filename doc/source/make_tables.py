@@ -354,19 +354,20 @@ class DownloadsMetadataTable(DocTable):
     The first row is a nested grid with two items displayed as a single
     column for small screen sizes, or two columns for larger screens.
 
-    The card has a structure similar to:
+    Each row has a structure similar to:
 
         Dataset Name
-        +------------------+
-        | Function Name    |
-        | Docstring        |
-        +==================+
-        | +------+-------+ |
-        | | Info | Image | |
-        | +------+-------+ |
-        +------------------+
-        | Repr             |
-        +------------------+
+        +-Card---------------------+
+        | Function Name            |
+        | Docstring                |
+        |  +-Grid---------------+  |
+        |  |  +-Grid-+-------+  |  |
+        |  |  | Info | Image |  |  |
+        |  |  +------+-------+  |  |
+        |  +--------------------+  |
+        |  | Repr               |  |
+        |  +--------------------+  |
+        +--------------------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
     details on the directives used and their formatting.
@@ -500,10 +501,8 @@ class DownloadsMetadataTable(DocTable):
         dataset_name = loader_name.replace('_example_', '')
 
         # Format dataset name for indexing and section heading
-        index_name = dataset_name + '_metadata'
-        dataset_heading = (
-            ' '.join([word.capitalize() for word in dataset_name.split('_')]) + ' Dataset'
-        )
+        index_name = dataset_name + '_dataset'
+        dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
         dataset_heading += '\n' + _repeat_string('-', len(dataset_heading))
 
         # Get the corresponding 'download' function of the loader
@@ -513,7 +512,7 @@ class DownloadsMetadataTable(DocTable):
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
-        return (index_name, dataset_heading, func_ref, func_doc, func_name)
+        return index_name, dataset_heading, func_ref, func_doc, func_name
 
     @staticmethod
     def _format_file_size(loader: _example_loader._FileProps):
