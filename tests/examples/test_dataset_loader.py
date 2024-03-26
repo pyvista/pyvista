@@ -247,8 +247,7 @@ def test_file_loader_file_props_from_one_file(loadable_vtp):
 
 def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
     # test multiple files, but only one is loaded
-    example = downloads._dataset_head
-    example.download()
+    example = loadable_mhd
     assert all(os.path.isfile(file) for file in example.path)
     assert example.num_files == 2
     assert example._total_size_bytes == 125223
@@ -270,7 +269,7 @@ def test_file_loader_file_props_from_two_files_one_loaded(loadable_mhd):
 def test_file_loader_file_props_from_two_files_both_loaded(loadable_slc):
     # test multiple files, both have same ext and reader,
     # both of which are loaded as a multiblock
-    example = downloads._dataset_bolt_nut
+    example = loadable_slc
     assert len(example.path) == 2
     assert example.num_files == 2
     assert os.path.isfile(example.path[0])

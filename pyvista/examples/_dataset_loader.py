@@ -611,6 +611,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
 
     Optionally exclude any readme files (if any).
     """
+    assert os.path.isfile(filepath) or os.path.isdir(filepath)
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return [
         [os.path.join(path, name) for name in files if condition(name)]
