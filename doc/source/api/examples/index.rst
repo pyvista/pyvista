@@ -34,6 +34,9 @@ demonstrate features.
    >>> plotter = demos.orientation_plotter()
    >>> plotter.show()
 
+API Reference
+-------------
+
 .. currentmodule:: pyvista
 
 .. autosummary::
@@ -44,6 +47,17 @@ demonstrate features.
    examples.planets
    demos.demos
 
+Dataset Gallery
+---------------
+Browse the dataset gallery to view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 1
+
+   /api/examples/dataset_gallery
+
+Usage Considerations
+--------------------
 .. warning::
    As you browse this repository and think about how you might use our 3D
    models and range datasets, please remember that several of these artifacts

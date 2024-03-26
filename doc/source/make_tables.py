@@ -1,15 +1,25 @@
 """This is a helper module to generate tables that can be included in the documentation."""
 
+# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+import inspect
 import io
+import os
 from pathlib import Path
+import re
 import textwrap
+from types import FunctionType
+from typing import Any, Callable, Dict, List, Type
 
 import pyvista as pv
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import _dataset_loader, downloads
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
+DATASET_GALLERY_TABLE_DIR = "api/examples/dataset-gallery"
+DATASET_GALLERY_IMAGE_DIR = "images/dataset-gallery"
 
 
 def _aligned_dedent(txt):
@@ -60,7 +70,7 @@ class DocTable:
 
         # write if there is any text to write. This avoids resetting the documentation cache
         if new_txt:
-            with Path(cls.path).open('w', encoding="utf-8") as fout:
+            with open(cls.path, 'w', encoding="utf-8") as fout:
                 fout.write(new_txt)
 
         pv.close_all()
@@ -139,7 +149,7 @@ class LineStyleTable(DocTable):
         img = img[18:25, 22:85, :]
 
         # exit early if the image already exists and is the same
-        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -205,7 +215,7 @@ class MarkerStyleTable(DocTable):
         img = img[40:53, 47:60, :]
 
         # exit early if the image already exists and is the same
-        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
             return
 
         # save it
@@ -279,7 +289,7 @@ class ColorSchemeTable(DocTable):
         img = img[34:78, 22:225, :]
 
         # exit early if the image already exists and is the same
-        if Path(img_path).is_file() and pv.compare_images(img, img_path) < 1:
+        if os.path.isfile(img_path) and pv.compare_images(img, img_path) < 1:
             return n_colors
 
         # save it
@@ -336,9 +346,422 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
+class DownloadsMetadataTable(DocTable):
+    """Class to generate metadata about pyvista downloadable datasets.
+
+    For each 'row' of this table:
+
+    Create a card with a 1-column grid with two grid items (rows).
+    The first row is a nested grid with two items displayed as a single
+    column for small screen sizes, or two columns for larger screens.
+
+    Each row has a structure similar to:
+
+        Dataset Name
+        +-Card---------------------+
+        | Function Name            |
+        | Docstring                |
+        |  +-Grid---------------+  |
+        |  |  +-Grid-+-------+  |  |
+        |  |  | Info | Image |  |  |
+        |  |  +------+-------+  |  |
+        |  +--------------------+  |
+        |  | Repr               |  |
+        |  +--------------------+  |
+        +--------------------------+
+
+    See https://sphinx-design.readthedocs.io/en/latest/index.html for
+    details on the directives used and their formatting.
+    """
+
+    NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
+    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rst"
+
+    # No main header; each row/dataset is a separate card
+    header = ""
+    row_template = _aligned_dedent(
+        """
+        |.. index:: {}
+        |
+        |.. _{}:
+        |
+        |{}
+        |
+        |.. card:: {}
+        |
+        |   {}
+        |
+        |   .. grid:: 1
+        |
+        |      .. grid-item::
+        |
+        |         .. grid:: 1 2 2 2
+        |            :reverse:
+        |
+        |            .. grid-item::
+        |
+        |               .. grid:: 1
+        |
+        |                  .. grid-item-card::
+        |
+        |                     .. image:: /{}
+        |
+        |            .. grid-item::
+        |
+        |               - Size on Disk: {}
+        |               - Num Files: {}
+        |               - Extension: {}
+        |               - Reader: {}
+        |               - Dataset Type: {}
+        |
+        |      .. grid-item::
+        |
+        |         .. code-block::
+        |            :caption: Representation
+        |
+        |            {}
+        |
+        |   .. dropdown:: :octicon:`desktop-download` Download Links
+        |
+        |      {}
+        |
+        """
+    )
+    # Set the indentation level for the representation item
+    # Level should be one more than the representation's '.. code-block::' directive in the
+    # row template above
+    REPR_INDENT_LEVEL = 4
+
+    LINKS_INDENT_LEVEL = 2
+
+    @classmethod
+    def fetch_data(cls):
+        # Collect all `_dataset_<name>` file loaders
+        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
+        file_loaders_dict = {
+            name: item
+            for name, item in module_members.items()
+            if name.startswith('_dataset_')
+            and isinstance(
+                item,
+                (
+                    _dataset_loader._SingleFileDownloadable,
+                    _dataset_loader._MultiFileDownloadableLoadable,
+                ),
+            )
+        }
+        return sorted(file_loaders_dict.items())
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        loader_name, loader = row_data
+
+        # Get dataset name-related info
+        index_name, ref_name, dataset_heading, func_ref, func_doc, func_name = (
+            cls._format_dataset_name(loader_name)
+        )
+
+        # Get file and instance metadata
+        try:
+            loader.download()
+        except VTKVersionError:
+            # Set default values
+            NOT_AVAILABLE = '``Not available``'
+            NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
+            file_size = NOT_AVAILABLE
+            num_files = NOT_AVAILABLE
+            file_ext = NOT_AVAILABLE
+            reader_type = NOT_AVAILABLE
+            dataset_type = NOT_AVAILABLE
+            dataset_repr = [NOT_AVAILABLE_NO_BACKTICKS]
+            download_links = NOT_AVAILABLE_NO_BACKTICKS
+            img_path = cls.NOT_AVAILABLE_IMG_PATH
+        else:
+            # Get data from loader
+            loader.load()
+            file_size = cls._format_file_size(loader)
+            num_files = cls._format_num_files(loader)
+            file_ext = cls._format_file_ext(loader)
+            reader_type = cls._format_reader_type(loader)
+            dataset_type = cls._format_dataset_type(loader)
+            dataset_repr = cls._format_dataset_repr(loader, cls.REPR_INDENT_LEVEL)
+            download_links = cls._format_download_links(loader, cls.LINKS_INDENT_LEVEL)
+            img_path = cls._search_image_path(func_name)
+
+        cls._process_img(img_path)
+
+        return cls.row_template.format(
+            index_name,
+            ref_name,
+            dataset_heading,
+            func_ref,
+            func_doc,
+            img_path,
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            dataset_repr,
+            download_links,
+        )
+
+    @staticmethod
+    def _format_dataset_name(loader_name: str):
+        # Extract data set name from loader name
+        dataset_name = loader_name.replace('_dataset_', '')
+
+        # Format dataset name for indexing and section heading
+        index_name = dataset_name + '_dataset'
+        ref_name = index_name
+        dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
+        dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
+
+        # Get the corresponding 'download' function of the loader
+        func_name = 'download_' + dataset_name
+        func = getattr(downloads, func_name)
+
+        # Get the card's header info
+        func_ref = f':func:`~{_get_fullname(func)}`'
+        func_doc = _get_doc(func)
+        return index_name, ref_name, dataset_heading, func_ref, func_doc, func_name
+
+    @staticmethod
+    def _format_file_size(loader: _dataset_loader._FileProps):
+        return '``' + loader.total_size + '``'
+
+    @staticmethod
+    def _format_num_files(loader: _dataset_loader._FileProps):
+        return '``' + str(loader.num_files) + '``'
+
+    @staticmethod
+    def _format_file_ext(loader: _dataset_loader._FileProps):
+        # Format extension as single str with rst backticks
+        # Multiple extensions are comma-separated
+        file_ext = loader.unique_extension
+        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
+        file_ext = '``\'' + file_ext.replace(' ', '\'``, ``\'') + '\'``'
+        return file_ext
+
+    @staticmethod
+    def _format_reader_type(loader: _dataset_loader._FileProps):
+        """Format reader type(s) with doc references to reader class(es)."""
+        reader_type = (
+            repr(loader.unique_reader_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        )
+        return reader_type
+
+    @staticmethod
+    def _format_dataset_type(loader: _dataset_loader._FileProps):
+        """Format dataset type(s) with doc references to dataset class(es)."""
+        dataset_type = (
+            repr(loader.unique_dataset_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        )
+        return dataset_type
+
+    @staticmethod
+    def _format_dataset_repr(loader: _dataset_loader._FileProps, indent_level: int) -> str:
+        """Format the dataset's representation as a single multi-line string.
+
+        The returned string is indented up to the specified indent level.
+        """
+        # Replace any hex code memory addresses with ellipses
+        dataset_repr = repr(loader.dataset)
+        dataset_repr = re.sub(
+            pattern=r'0x[0-9a-f]*',
+            repl='...',
+            string=dataset_repr,
+        )
+        return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def _format_download_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
+        def _rst_link(url):
+            return f'`{url}<{url}>`_'
+
+        links = [url] if isinstance(url := loader.download_url, str) else url
+        links = [_rst_link(url) for url in links]
+        links = '\n'.join(links)
+        return _indent_multi_line_string(links, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def _search_image_path(dataset_download_func_name: str):
+        """Search the thumbnail directory and return its path.
+
+        If no thumbnail is found, the path to a "not available" image is returned.
+        """
+        # Search directory and match:
+        #     any word character(s), then function name, then any non-word character(s),
+        #     then a 3character file extension, e.g.:
+        #       'pyvista-examples...download_name...ext'
+        #     or simply:
+        #       'download_name.ext'
+        all_filenames = '\n' + '\n'.join(os.listdir(DATASET_GALLERY_IMAGE_DIR)) + '\n'
+        match = re.search(
+            pattern=r'\n([\w|\-]*' + dataset_download_func_name + r'(\-\w*\.|\.)[a-z]{3})\n',
+            string=all_filenames,
+            flags=re.MULTILINE,
+        )
+
+        if match:
+            groups = match.groups()
+            assert (
+                sum(dataset_download_func_name in grp for grp in groups) <= 1
+            ), f"More than one thumbnail image was found for {dataset_download_func_name}, got:\n{groups}"
+            img_fname = groups[0]
+            img_path = os.path.join(DATASET_GALLERY_IMAGE_DIR, img_fname)
+            assert os.path.isfile(img_path)
+        else:
+            print(f"WARNING: Missing thumbnail image file for \'{dataset_download_func_name}\'")
+            img_path = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
+        return img_path
+
+    @staticmethod
+    def _process_img(img_path):
+        """Process the thumbnail image to ensure it's the right size."""
+        from PIL import Image
+
+        IMG_WIDTH, IMG_HEIGHT = 400, 300
+
+        if os.path.basename(img_path) == 'not_available.png':
+            not_available_mesh = pv.Text3D('Not Available')
+            p = pv.Plotter(off_screen=True, window_size=(IMG_WIDTH, IMG_HEIGHT))
+            p.background_color = 'white'
+            p.add_mesh(not_available_mesh, color='black')
+            p.view_xy()
+            p.camera.up = (1, IMG_WIDTH / IMG_HEIGHT, 0)
+            p.enable_parallel_projection()
+            img_array = p.show(screenshot=True)
+
+            # exit early if the image is the same
+            if os.path.isfile(img_path) and pv.compare_images(img_path, img_path) < 1:
+                return
+
+            img = Image.fromarray(img_array)
+            img.save(img_path)
+        else:
+            # Resize existing image if necessary
+            img = Image.open(img_path)
+            if img.width > IMG_WIDTH or img.height > IMG_HEIGHT:
+                img.thumbnail(size=(IMG_WIDTH, IMG_HEIGHT))
+                img.save(img_path)
+
+
+def _get_doc(func: Callable[[], Any]) -> str:
+    """Return the first line of the callable's docstring."""
+    return func.__doc__.splitlines()[0]
+
+
+def _get_fullname(typ: Type) -> str:
+    """Return the fully qualified name of the given type object."""
+    return f"{typ.__module__}.{typ.__qualname__}"
+
+
+def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
+    """Left-justify a list of lines."""
+    min_width = min_width if min_width else _max_width(lines)
+    return [line.ljust(min_width) for line in lines]
+
+
+def _max_width(lines: List[str]) -> int:
+    """Compute the max line-width from a list of lines."""
+    return max(map(len, lines))
+
+
+def _repeat_string(string: str, num_repeat: int) -> str:
+    """Repeat `string` `num_repeat` times."""
+    return ''.join([string] * num_repeat)
+
+
+def _pad_lines(
+    lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
+):
+    """Add padding to the left or right of each line with a specified string.
+
+    By default, padding is only applied to left-justify the text such that the lines
+    all have the same width.
+
+    Optionally, the lines may be padded to the left or right using a specified string.
+
+    Parameters
+    ----------
+    lines : list[str]
+        Lines to be padded. If a tuple of lists is given, all lists are padded together
+        as if they were one, but returned as separate lists.
+
+    pad_left : str, default: ''
+        String to pad the left of each line with.
+
+    pad_right : str, default: ''
+        String to pad the right of each line with.
+
+    ljust : bool, default: True
+        If ``True``, left-justify the lines such that they have equal width
+        before applying any padding.
+
+    return_shape : bool, default: False
+        If ``True``, also return the width and height of the padded lines.
+
+    """
+    # Justify
+    lines = _ljust_lines(lines) if ljust else lines
+    # Pad
+    lines = [pad_left + line + pad_right for line in lines]
+    if return_shape:
+        return lines, _max_width(lines), len(lines)
+    return lines
+
+
+def _indent_multi_line_string(
+    string: str, indent_size=3, indent_level: int = 1, omit_first_line=True
+) -> str:
+    """Indent each line of a multi-line string by a specified indentation level.
+
+    Optionally specify the indent size (e.g. 3 spaces for rst).
+    Optionally omit indentation from the first line if it is already indented.
+
+    This function is used to support de-denting formatted multi-line strings.
+    E.g. for the following rst text with item {} indented by 3 levels:
+
+        |      .. some_directive::
+        |
+        |         {}
+
+    a multi-line string input such as 'line1\nline2\nline3' will be formatted as:
+
+        |      .. some_directive::
+        |
+        |         line1\n         line2\n         line3
+        |
+
+    which will result in the correct indentation applied to all lines of the string.
+
+    """
+    lines = string.splitlines()
+    indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
+    first_line = lines.pop(0) if omit_first_line else ''
+    lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
+    lines.insert(0, first_line)
+    return '\n'.join(lines)
+
+
 def make_all_tables():
-    Path(CHARTS_IMAGE_DIR).mkdir(exist_ok=True)
+    os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
+    DownloadsMetadataTable.generate()
