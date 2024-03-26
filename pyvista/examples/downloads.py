@@ -19,7 +19,7 @@ Examples
 import functools
 import logging
 import os
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
 import shutil
 from typing import Union
 import warnings
@@ -54,9 +54,9 @@ CACHE_VERSION = 3
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
 
-    if not os.path.basename(_path) == 'Data':
+    if not Path(_path).name == 'Data':
         # append 'Data' if user does not provide it
-        _path = os.path.join(_path, 'Data')
+        _path = str(Path(_path) / 'Data')
 
     # pooch assumes this is a URL so we have to take care of this
     if not _path.endswith('/'):
@@ -70,7 +70,7 @@ else:
 
 # allow user to override the local path
 if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
-    if not os.path.isdir(os.environ['PYVISTA_USERDATA_PATH']):
+    if not Path(os.environ['PYVISTA_USERDATA_PATH']).is_dir():
         warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
     else:
         USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
@@ -79,9 +79,9 @@ else:
     USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 
     # provide helpful message if pooch path is inaccessible
-    if not os.path.isdir(USER_DATA_PATH):  # pragma: no cover
+    if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
         try:
-            os.makedirs(USER_DATA_PATH, exist_ok=True)
+            Path(USER_DATA_PATH, exist_ok=True).mkdir()
             if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
@@ -145,7 +145,7 @@ def file_from_files(target_path, fnames):
 
 def _file_copier(input_file, output_file, *args, **kwargs):
     """Copy a file from a local directory to the output path."""
-    if not os.path.isfile(input_file):
+    if not Path(input_file).is_file():
         raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
     shutil.copy(input_file, output_file)
 
@@ -237,8 +237,8 @@ def _download_archive_file_or_folder(filename, target_file=None):
     except (FileNotFoundError, RuntimeError):
         pass
     # Return folder, or re-raise error by calling function again
-    folder = os.path.join(USER_DATA_PATH, filename + '.unzip', target_file)
-    return folder if os.path.isdir(folder) else _download_archive(filename, target_file=target_file)
+    folder = str(Path(USER_DATA_PATH) / (filename + '.unzip') / target_file)
+    return folder if Path(folder).is_dir() else _download_archive(filename, target_file=target_file)
 
 
 def delete_downloads():
@@ -252,9 +252,9 @@ def delete_downloads():
     >>> examples.delete_downloads()  # doctest:+SKIP
 
     """
-    if os.path.isdir(USER_DATA_PATH):
+    if Path(USER_DATA_PATH).is_dir():
         shutil.rmtree(USER_DATA_PATH)
-    os.makedirs(USER_DATA_PATH)
+    Path(USER_DATA_PATH).mkdir()
 
 
 def _download_and_read(filename, texture=False, file_format=None, load=True):
@@ -4353,7 +4353,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import os
+    >>> from pathlib import Path
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -4363,7 +4363,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     Write the gif to a temporary directory. Normally you would write to a local
     path.
 
-    >>> gif_filename = os.path.join(mkdtemp(), 'single_sphere.gif')
+    >>> gif_filename = str(Path(mkdtemp()) / 'single_sphere.gif')
 
     Generate the animation.
 
@@ -4405,7 +4405,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> import os
+    >>> from pathlib import Path
     >>> from tempfile import mkdtemp
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -4415,7 +4415,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     Write the gif to a temporary directory. Normally you would write to a local
     path.
 
-    >>> gif_filename = os.path.join(mkdtemp(), 'dual_sphere.gif')
+    >>> gif_filename = str(Path(mkdtemp()) / 'dual_sphere.gif')
 
     Generate the animation.
 
@@ -4454,7 +4454,7 @@ def download_osmnx_graph():  # pragma: no cover
         ...     address, dist=500, network_type='drive'
         ... )  # doctest:+SKIP
         >>> pickle.dump(
-        ...     graph, open('osmnx_graph.p', 'wb')
+        ...     graph, Path('osmnx_graph.p').open('wb')
         ... )  # doctest:+SKIP
 
     Returns
@@ -4481,7 +4481,7 @@ def download_osmnx_graph():  # pragma: no cover
 def _osmnx_graph_read_func(filename):  # pragma: no cover
     import pickle
 
-    return pickle.load(open(filename, 'rb'))
+    return pickle.load(Path(filename).open('rb'))
 
 
 _example_osmnx_graph = _SingleFileDownloadableLoadable(

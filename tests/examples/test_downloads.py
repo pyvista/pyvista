@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import inspect
 import os
-from pathlib import PureWindowsPath
+from pathlib import Path, PureWindowsPath
 import shutil
 from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
@@ -121,13 +121,13 @@ def test_delete_downloads(tmpdir):
     old_path = examples.downloads.USER_DATA_PATH
     try:
         examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
-        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
-        tmp_file = os.path.join(examples.downloads.USER_DATA_PATH, 'tmp.txt')
-        with open(tmp_file, 'w') as fid:
+        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+        tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
+        with Path(tmp_file).open('w') as fid:
             fid.write('test')
         examples.delete_downloads()
-        assert os.path.isdir(examples.downloads.USER_DATA_PATH)
-        assert not os.path.isfile(tmp_file)
+        assert Path(examples.downloads.USER_DATA_PATH).is_dir()
+        assert not Path(tmp_file).is_file()
     finally:
         examples.downloads.USER_DATA_PATH = old_path
 
@@ -140,7 +140,7 @@ def test_delete_downloads_does_not_exist(tmpdir):
     try:
         # delete_downloads for a missing directory should not fail.
         examples.downloads.USER_DATA_PATH = new_path
-        assert not os.path.isdir(examples.downloads.USER_DATA_PATH)
+        assert not Path(examples.downloads.USER_DATA_PATH).is_dir()
         examples.delete_downloads()
     finally:
         examples.downloads.USER_DATA_PATH = old_path
@@ -149,11 +149,11 @@ def test_delete_downloads_does_not_exist(tmpdir):
 def test_file_from_files(tmpdir):
     path = str(tmpdir)
     fnames = [
-        os.path.join(path, 'tmp2.txt'),
-        os.path.join(path, 'tmp1.txt'),
-        os.path.join(path, 'tmp0.txt'),
-        os.path.join(path, 'tmp', 'tmp2.txt'),
-        os.path.join(path, '/__MACOSX/'),
+        str(Path(path) / 'tmp2.txt'),
+        str(Path(path) / 'tmp1.txt'),
+        str(Path(path) / 'tmp0.txt'),
+        str(Path(path) / 'tmp' / 'tmp2.txt'),
+        str(Path(path) / '/__MACOSX/'),
     ]
 
     with pytest.raises(FileNotFoundError):
@@ -173,11 +173,11 @@ def test_file_copier(tmpdir):
     input_file = str(tmpdir.join('tmp0.txt'))
     output_file = str(tmpdir.join('tmp1.txt'))
 
-    with open(input_file, 'w') as fid:
+    with Path(input_file).open('w') as fid:
         fid.write('hello world')
 
     examples.downloads._file_copier(input_file, output_file, None)
-    assert os.path.isfile(output_file)
+    assert Path(output_file).is_file()
 
     with pytest.raises(FileNotFoundError):
         examples.downloads._file_copier('not a file', output_file, None)
@@ -185,8 +185,8 @@ def test_file_copier(tmpdir):
 
 def test_local_file_cache(tmpdir):
     """Ensure that pyvista.examples.downloads can work with a local cache."""
-    basename = os.path.basename(examples.planefile)
-    dirname = os.path.dirname(examples.planefile)
+    basename = Path(examples.planefile).name
+    dirname = str(Path(examples.planefile).parent)
     downloads.FETCHER.registry[basename] = None
 
     try:
@@ -194,11 +194,11 @@ def test_local_file_cache(tmpdir):
         downloads.FETCHER.registry[basename] = None
         downloads._FILE_CACHE = True
         filename = downloads._download_and_read(basename, load=False)
-        assert os.path.isfile(filename)
+        assert Path(filename).is_file()
 
         dataset = downloads._download_and_read(basename, load=True)
         assert isinstance(dataset, pv.DataSet)
-        os.remove(filename)
+        Path(filename).unlink()
 
     finally:
         downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
@@ -211,8 +211,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of examples available for download."""
 
     # setup
-    repository_path = os.path.join(tmp_path, 'repo')
-    os.mkdir(repository_path)
+    repository_path = str(Path(tmp_path) / 'repo')
+    Path(repository_path).mkdir()
 
     downloadable_basenames = [
         'airplane.ply',
@@ -229,14 +229,14 @@ def examples_local_repository_tmp_dir(tmp_path):
     # copy datasets from the pyvista repo to the local repository
     [
         shutil.copyfile(
-            os.path.join(pyvista.examples.dir_path, base), os.path.join(repository_path, base)
+            str(Path(pyvista.examples.dir_path) / base), str(Path(repository_path) / base)
         )
         for base in downloadable_basenames
     ]
 
     # create a zipped copy of the datasets and include the zip with repository
-    shutil.make_archive(os.path.join(tmp_path, 'archive'), 'zip', repository_path)
-    shutil.move(os.path.join(tmp_path, 'archive.zip'), os.path.join(repository_path, 'archive.zip'))
+    shutil.make_archive(str(Path(tmp_path) / 'archive'), 'zip', repository_path)
+    shutil.move(str(Path(tmp_path) / 'archive.zip'), str(Path(repository_path) / 'archive.zip'))
     downloadable_basenames.append('archive.zip')
 
     # initialize downloads fetcher
@@ -246,10 +246,8 @@ def examples_local_repository_tmp_dir(tmp_path):
     downloads._FILE_CACHE = True
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared
-    cached_filenames = [
-        os.path.join(downloads.FETCHER.path, base) for base in downloadable_basenames
-    ]
-    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+    cached_filenames = [str(Path(downloads.FETCHER.path) / base) for base in downloadable_basenames]
+    [Path(file).unlink() for file in cached_filenames if Path(file).is_file()]
 
     yield repository_path
 
@@ -259,7 +257,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
     # make sure any "downloaded" files (moved from repo -> cache) are cleared afterward
-    [os.remove(file) for file in cached_filenames if os.path.isfile(file)]
+    [Path(file).unlink() for file in cached_filenames if Path(file).is_file()]
 
 
 @pytest.mark.parametrize('use_archive', [True, False])
@@ -277,20 +275,20 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test initial filename
     filename = file_loader.filename
-    assert os.path.basename(filename) == basename
-    assert not os.path.isfile(filename)
+    assert Path(filename).name == basename
+    assert not Path(filename).is_file()
 
     if expected_path_is_absolute:
-        assert os.path.isabs(filename)
+        assert Path(filename).is_absolute()
     else:
-        assert not os.path.isabs(filename)
+        assert not Path(filename).is_absolute()
 
     # test download
     if isinstance(file_loader, (_SingleFileDownloadable, _SingleFileDownloadableLoadable)):
         assert isinstance(file_loader, _Downloadable)
         filename_download = file_loader.download()
-        assert os.path.isfile(filename_download)
-        assert os.path.isabs(filename_download)
+        assert Path(filename_download).is_file()
+        assert Path(filename_download).is_absolute()
         assert file_loader.filename == filename_download
     else:
         with pytest.raises(AttributeError):
@@ -307,7 +305,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         with pytest.raises(AttributeError):
             file_loader.load()
 
-    assert os.path.isfile(file_loader.filename)
+    assert Path(file_loader.filename).is_file()
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
@@ -333,19 +331,19 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     filename = multi_file_loader.filename
     assert multi_file_loader._file_loaders_ is not None
     assert isinstance(filename, tuple)
-    assert [os.path.isabs(file) for file in filename]
+    assert [Path(file).is_absolute() for file in filename]
     assert len(filename) == 3
 
     filename_loadable = multi_file_loader.filename_loadable
     assert isinstance(filename_loadable, tuple)
-    assert [os.path.isabs(file) for file in filename_loadable]
+    assert [Path(file).is_absolute() for file in filename_loadable]
     assert len(filename_loadable) == 2
     assert basename_not_loaded not in filename_loadable
 
     # test download
     filename_download = multi_file_loader.download()
     assert filename_download == filename
-    assert [os.path.isfile(file) for file in filename_download]
+    assert [Path(file).is_file() for file in filename_download]
 
     # test load
     dataset = multi_file_loader.load()
@@ -370,7 +368,7 @@ def test_file_loader_file_props():
     # test single file
     example = downloads._example_cow
     example.download()
-    assert os.path.isfile(example.filename)
+    assert Path(example.filename).is_file()
     assert example.total_size == '59.0 KiB'
     assert example.extension == '.vtp'
     assert type(example.reader) is pv.XMLPolyDataReader
@@ -378,7 +376,7 @@ def test_file_loader_file_props():
     # test multiple files, but only one is loaded
     example = downloads._example_head
     example.download()
-    assert all(os.path.isfile(file) for file in example.filename)
+    assert all(Path(file).is_file() for file in example.filename)
     assert example.total_size == '122.3 KiB'
     assert example.extension == ('.mhd', '.raw')
     assert pv.get_ext(example.filename[0]) == '.mhd'
@@ -388,7 +386,7 @@ def test_file_loader_file_props():
     # test directory (cubemap)
     example = downloads._example_cubemap_park
     example.download()
-    assert os.path.isdir(example.filename)
+    assert Path(example.filename).is_dir()
     assert example.total_size == '591.9 KiB'
     assert example.extension == '.jpg'
     assert example.reader is None
@@ -396,7 +394,7 @@ def test_file_loader_file_props():
     # test directory (dicom stack)
     example = downloads._example_dicom_stack
     example.download()
-    assert os.path.isdir(example.filename)
+    assert Path(example.filename).is_dir()
     assert example.total_size == '1.5 MiB'
     assert example.extension == '.dcm'
     assert type(example.reader) is pv.DICOMReader
