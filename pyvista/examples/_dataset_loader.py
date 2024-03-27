@@ -139,7 +139,7 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
     @property
     @abstractmethod
-    def download_url(self) -> _FilePropStrType_co:
+    def source_url(self) -> _FilePropStrType_co:
         """Return the source of the download."""
 
     @property
@@ -316,10 +316,12 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             self._path = target_file if fullpath is None else fullpath
 
     @property
-    def download_url(self) -> str:
+    def source_url(self) -> str:
         from pyvista.examples.downloads import SOURCE
 
-        return os.path.join(SOURCE, self._download_source)
+        url_raw = os.path.join(SOURCE, self._download_source)
+        url_blob = url_raw.replace('/raw/', '/blob/')
+        return url_blob
 
     def download(self) -> str:
         path = self._download_func(self._download_source)
@@ -455,9 +457,9 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     """Wrap multiple files for downloading and loading."""
 
     @property
-    def download_url(self) -> Tuple[str, ...]:
+    def source_url(self) -> Tuple[str, ...]:
         return tuple(
-            [file.download_url for file in self._file_objects if isinstance(file, _Downloadable)]
+            [file.source_url for file in self._file_objects if isinstance(file, _Downloadable)]
         )
 
     def download(self) -> Tuple[str, ...]:
