@@ -31,6 +31,10 @@ from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 
+class ContourFilter(_vtk.vtkContourFilter):
+    """Contour filter."""
+
+
 @abstract_class
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
