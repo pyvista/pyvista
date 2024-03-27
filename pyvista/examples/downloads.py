@@ -10,13 +10,8 @@ rendered on this page.
 
 Notes
 -----
-Browse the dataset gallery for detailed information about the downloads,
+Browse the `Dataset Gallery` for detailed information about the downloads,
 including file and dataset metadata.
-
-.. toctree::
-   :maxdepth: 1
-
-   /api/examples/dataset_gallery
 
 Examples
 --------
