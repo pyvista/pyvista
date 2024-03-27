@@ -286,7 +286,7 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
     If downloading a file from an archive, set the filepath of the zip as
     ``path`` and set ``target_file`` as the file to extract. If the path is
     a zip file and no target file is specified, the entire archive is downloaded
-    and and extracted and the root directory of the path is returned.
+    and extracted and the root directory of the path is returned.
 
     """
 
