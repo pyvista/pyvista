@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from pyvista.core.errors import PyVistaEfficiencyWarning
+
 
 def _cast_to_list(arr):
     """Cast an array to a nested list.
@@ -106,6 +108,36 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
             out = np.array(arr, dtype=dtype, copy=copy)
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
+    except Exception as e:
+        # If array-like is `polars` data, try to make a copy then re-cast to numpy array
+        polars_error = False
+        try:
+            import polars
+
+            if isinstance(e, polars.PolarsError):
+                polars_error = True
+                try:
+                    out = arr.to_list()
+                    import warnings
+
+                    warnings.warn(
+                        'Polars data could not be directly cast to a numpy array and was copied '
+                        'instead. This may be due to non-contiguous data. To avoid making an '
+                        'explicit copy, consider setting the dtype or schema of the polars data '
+                        'to make your data contiguous before using it with PyVista.',
+                        PyVistaEfficiencyWarning,
+                    )
+                except (AttributeError, polars.PolarsError):
+                    raise RuntimeError(f"Data type {type(arr)} could not be cast as a numpy array.")
+                # Try again
+                out = _cast_to_numpy(out, dtype=dtype, as_any=True, copy=False)
+                # NOTE: by default the output array from polars is read-only
+        except ModuleNotFoundError:
+            pass
+        if not polars_error:
+            # Exception was not raised by polars, so re-raise
+            raise
+
     if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':

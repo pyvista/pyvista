@@ -951,6 +951,53 @@ def test_cast_to_numpy_must_be_real():
         _ = _cast_to_numpy("abc", must_be_real=True)
 
 
+def test_cast_to_numpy_with_polars():
+    import polars as pl
+
+    # Test with series
+    initial_array = [1, 2, 3]
+    array_in = pl.Series('points', initial_array)
+
+    # Test array values are not copies
+    array_out = _cast_to_numpy(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0] = 99
+    assert array_in[0] == 99
+
+    # Test with dataframe, created naively
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+    array_in = data['points']
+
+    # Test that a copy is made
+    array_out = _cast_to_numpy(array_in)
+    array_out[0, 0] = 99
+    assert array_in[0][0] != 99
+
+    # Test with dataframe, created by specifying schema
+    data = pl.DataFrame(dict(points=initial_array), schema=dict(points=pl.Array(pl.Float64, 3)))
+    array_in = data['points']
+
+    # Test array values are not copies
+    array_out = _cast_to_numpy(array_in)
+    assert not array_out.flags.writeable
+    array_out.flags["WRITEABLE"] = True
+    array_out[0, 0] = 99
+    assert array_in[0][0] == 99
+
+
+def test_cast_to_numpy_with_polars_raises():
+    import polars as pl
+
+    initial_array = [[1, 2, 3], [4, 5, 6]]
+    data = pl.DataFrame(dict(points=initial_array))
+
+    msg = "Data type <class 'polars.dataframe.frame.DataFrame'> could not be cast as a numpy array."
+    with pytest.raises(RuntimeError, match=msg):
+        _cast_to_numpy(data)
+
+
 def test_cast_to_tuple():
     array_in = np.zeros(shape=(2, 2, 3))
     array_tuple = _cast_to_tuple(array_in)
