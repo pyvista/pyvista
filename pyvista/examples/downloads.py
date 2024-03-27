@@ -3740,7 +3740,7 @@ def download_delaunay_example(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`delaunay_dataset_dataset`
+        :ref:`delaunay_dataset`
 
     Parameters
     ----------

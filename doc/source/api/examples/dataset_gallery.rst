@@ -6,4 +6,4 @@ Downloaded Datasets
 -------------------
 Browse all datasets in :mod:`pyvista.examples.downloads`.
 
-.. include:: /api/examples/dataset-gallery/downloads_table.rst
+.. include:: /api/examples/dataset-gallery/downloads_gallery_table.rst
