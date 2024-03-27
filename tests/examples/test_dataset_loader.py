@@ -388,6 +388,15 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert set(example.unique_dataset_type) == {pv.PolyData, pv.ImageData}
 
 
+def test_reader_returns_none(dataset_loader_one_file):
+    dataset = downloads._dataset_cloud_dark_matter
+    match = '`pyvista.get_reader` does not support a file with the .npy extension'
+    with pytest.raises(ValueError, match=match):
+        pv.get_reader(dataset.path)
+    assert dataset.unique_extension == '.npy'
+    assert dataset._reader is None
+
+
 def test_format_file_size():
     assert _format_file_size(999) == '999 B'
     assert _format_file_size(1000) == '1.0 KB'
