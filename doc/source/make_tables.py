@@ -357,6 +357,8 @@ class DownloadsMetadataTable(DocTable):
 
     Each row has a structure similar to:
 
+        HTML Index
+        Sphinx Ref
         Dataset Name
         +-Card---------------------+
         | Function Name            |
