@@ -57,13 +57,13 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
     [add_to_dict(name, func) for name, func in download_dataset_functions.items()]
 
     # Collect all `_dataset_<name>` file loaders
-    example_file_loaders = {
+    dataset_file_loaders = {
         name: item
         for name, item in module_members.items()
         if name.startswith('_dataset_')
         and isinstance(item, (_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable))
     }
-    [add_to_dict(name, func) for name, func in example_file_loaders.items()]
+    [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
 
     # Flatten dict
     test_cases_list: List[ExampleTestCaseData] = []
@@ -79,7 +79,7 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
-        # Generate a separate test case for each downloadable example
+        # Generate a separate test case for each downloadable dataset
         test_cases = _generate_dataset_loader_test_cases()
         ids = [case.name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
@@ -105,6 +105,33 @@ def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
 def test_dataset_loader_name_matches_download_name(test_case: ExampleTestCaseData):
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
+
+
+def test_dataset_loader_source_url(test_case: ExampleTestCaseData):
+    sources = test_case.load_func[1].source_url
+    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
+    for url in sources:
+        try:
+            if not _is_valid_url(url):
+                pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.name}:\n{url}")
+        except pv.VTKVersionError as e:
+            reason = e.args[0]
+            pytest.skip(reason)
+
+
+import requests
+
+
+def _is_valid_url(url):
+    try:
+        requests.get(url)
+        return True
+    except (
+        requests.exceptions.HTTPError,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Sc,
+    ):
+        return False
 
 
 def test_delete_downloads(tmpdir):

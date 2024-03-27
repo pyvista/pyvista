@@ -421,7 +421,7 @@ class DownloadsMetadataTable(DocTable):
         |
         |            {}
         |
-        |   .. dropdown:: :octicon:`desktop-download` Download Links
+        |   .. dropdown:: :octicon:`globe` Data Source Links
         |
         |      {}
         |
@@ -477,8 +477,8 @@ class DownloadsMetadataTable(DocTable):
             file_ext = NOT_AVAILABLE
             reader_type = NOT_AVAILABLE
             dataset_type = NOT_AVAILABLE
-            dataset_repr = [NOT_AVAILABLE_NO_BACKTICKS]
-            download_links = NOT_AVAILABLE_NO_BACKTICKS
+            dataset_repr = NOT_AVAILABLE_NO_BACKTICKS
+            datasource_links = NOT_AVAILABLE_NO_BACKTICKS
             img_path = cls.NOT_AVAILABLE_IMG_PATH
         else:
             # Get data from loader
@@ -489,7 +489,7 @@ class DownloadsMetadataTable(DocTable):
             reader_type = cls._format_reader_type(loader)
             dataset_type = cls._format_dataset_type(loader)
             dataset_repr = cls._format_dataset_repr(loader, cls.REPR_INDENT_LEVEL)
-            download_links = cls._format_download_links(loader, cls.LINKS_INDENT_LEVEL)
+            datasource_links = cls._format_datasource_links(loader, cls.LINKS_INDENT_LEVEL)
             img_path = cls._search_image_path(func_name)
 
         cls._process_img(img_path)
@@ -507,7 +507,7 @@ class DownloadsMetadataTable(DocTable):
             reader_type,
             dataset_type,
             dataset_repr,
-            download_links,
+            datasource_links,
         )
 
     @staticmethod
@@ -587,11 +587,11 @@ class DownloadsMetadataTable(DocTable):
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
-    def _format_download_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
+    def _format_datasource_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
         def _rst_link(url):
-            return f'`{url}<{url}>`_'
+            return f'`{url} <{url}>`_'
 
-        links = [url] if isinstance(url := loader.download_url, str) else url
+        links = [url] if isinstance(url := loader.source_url, str) else url
         links = [_rst_link(url) for url in links]
         links = '\n'.join(links)
         return _indent_multi_line_string(links, indent_size=3, indent_level=indent_level)
