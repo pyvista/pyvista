@@ -375,7 +375,9 @@ class DownloadsMetadataTable(DocTable):
     """
 
     NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
-    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_gallery_table.rst"
+    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
+    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
+    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_gallery_table.rest"
 
     # No main header; each row/dataset is a separate card
     header = ""
@@ -517,7 +519,7 @@ class DownloadsMetadataTable(DocTable):
 
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
-        ref_name = 'ref_' + index_name
+        ref_name = index_name
         dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
         dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
 
