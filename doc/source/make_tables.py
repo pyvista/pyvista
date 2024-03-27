@@ -368,6 +368,7 @@ class DownloadsMetadataTable(DocTable):
         |  +--------------------+  |
         |  | Repr               |  |
         |  +--------------------+  |
+        | Source Links             |
         +--------------------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
