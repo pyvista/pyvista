@@ -378,6 +378,7 @@ class DownloadsMetadataTable(DocTable):
     """
 
     NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
+
     # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
     # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
     path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_gallery_table.rest"
@@ -426,7 +427,7 @@ class DownloadsMetadataTable(DocTable):
         |
         |            {}
         |
-        |   .. dropdown:: :octicon:`globe` Data Source Links
+        |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
         |      {}
         |
@@ -593,13 +594,14 @@ class DownloadsMetadataTable(DocTable):
 
     @staticmethod
     def _format_datasource_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
-        def _rst_link(url):
-            return f'`{url} <{url}>`_'
+        def _rst_link(name, url):
+            return f'`{name} <{url}>`_'
 
-        links = [url] if isinstance(url := loader.source_url_blob, str) else url
-        links = [_rst_link(url) for url in links]
-        links = '\n'.join(links)
-        return _indent_multi_line_string(links, indent_size=3, indent_level=indent_level)
+        names = [name] if isinstance(name := loader.source_name, str) else name
+        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
+        urls = [_rst_link(name, url) for name, url in zip(names, urls)]
+        urls = '\n'.join(urls)
+        return _indent_multi_line_string(urls, indent_size=3, indent_level=indent_level)
 
     @staticmethod
     def _search_image_path(dataset_download_func_name: str):

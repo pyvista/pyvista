@@ -16,7 +16,6 @@ from pyvista.examples._dataset_loader import (
     _load_as_multiblock,
     _Loadable,
     _MultiFileDownloadableLoadable,
-    _MultiFileLoadable,
     _SingleFileDownloadable,
     _SingleFileDownloadableLoadable,
     _SingleFileLoadable,
@@ -215,6 +214,7 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.unique_reader_type is pv.XMLPolyDataReader
     assert type(loader.dataset) is pv.PolyData
     assert loader.unique_dataset_type is pv.PolyData
+    assert loader.source_name == 'cow.vtp'
     assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
     assert loader.source_url_blob == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
 
@@ -247,6 +247,7 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert loader.unique_reader_type is pv.MetaImageReader
     assert isinstance(loader.dataset, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
+    assert loader.source_name == ('HeadMRVolume.mhd', 'HeadMRVolume.raw')
     assert loader.source_url_raw == (
         'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.mhd',
         'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.raw',
@@ -288,6 +289,7 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert isinstance(dataset1, pv.ImageData)
     assert isinstance(dataset2, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
+    assert loader.source_name == ('bolt.slc', 'nut.slc')
     assert loader.source_url_raw == (
         'https://github.com/pyvista/vtk-data/raw/master/Data/bolt.slc',
         'https://github.com/pyvista/vtk-data/raw/master/Data/nut.slc',
@@ -318,6 +320,7 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     assert loader.unique_extension == '.jpg'
     assert type(loader.dataset) is pv.Texture
     assert loader.unique_dataset_type is pv.Texture
+    assert loader.source_name == 'cubemap_park/cubemap_park.zip'
     assert (
         loader.source_url_raw
         == 'https://github.com/pyvista/vtk-data/raw/master/Data/cubemap_park/cubemap_park.zip'
@@ -347,6 +350,7 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
     assert loader.unique_reader_type is pv.DICOMReader
     assert isinstance(loader.dataset, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
+    assert loader.source_name == 'DICOM_Stack/data.zip'
     assert (
         loader.source_url_raw
         == 'https://github.com/pyvista/vtk-data/raw/master/Data/DICOM_Stack/data.zip'
@@ -365,27 +369,46 @@ def test_dataset_loader_from_nested_files_and_directory(
     def files_func():
         return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 
-    example = _MultiFileLoadable(files_func)
-    assert len(example.path) == 4
-    assert example.num_files == 6
-    assert os.path.isfile(example.path[0])
-    assert os.path.isfile(example.path[1])
-    assert os.path.isfile(example.path[2])
-    assert os.path.isdir(example.path[3])
-    assert example._total_size_bytes == 1769360
-    assert example.total_size == '1.8 MB'
-    assert example.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
-    assert len(example._reader) == 4
-    assert isinstance(example._reader[0], pv.XMLPolyDataReader)
-    assert isinstance(example._reader[1], pv.MetaImageReader)
-    assert example._reader[2] is None
-    assert isinstance(example._reader[3], pv.DICOMReader)
-    assert example.unique_reader_type == (pv.XMLPolyDataReader, pv.MetaImageReader, pv.DICOMReader)
-    assert example.dataset is None
-    assert example.unique_dataset_type is None
-    example.load()
-    assert type(example.dataset) is tuple
-    assert set(example.unique_dataset_type) == {pv.PolyData, pv.ImageData}
+    loader = _MultiFileDownloadableLoadable(files_func)
+    loader.download()
+    assert len(loader.path) == 4
+    assert loader.num_files == 6
+    assert os.path.isfile(loader.path[0])
+    assert os.path.isfile(loader.path[1])
+    assert os.path.isfile(loader.path[2])
+    assert os.path.isdir(loader.path[3])
+    assert loader._total_size_bytes == 1769360
+    assert loader.total_size == '1.8 MB'
+    assert loader.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
+    assert len(loader._reader) == 4
+    assert isinstance(loader._reader[0], pv.XMLPolyDataReader)
+    assert isinstance(loader._reader[1], pv.MetaImageReader)
+    assert loader._reader[2] is None
+    assert isinstance(loader._reader[3], pv.DICOMReader)
+    assert loader.unique_reader_type == (pv.XMLPolyDataReader, pv.MetaImageReader, pv.DICOMReader)
+    assert loader.dataset is None
+    assert loader.unique_dataset_type is None
+    loader.load()
+    assert type(loader.dataset) is tuple
+    assert set(loader.unique_dataset_type) == {pv.PolyData, pv.ImageData}
+    assert loader.source_name == (
+        'cow.vtp',
+        'HeadMRVolume.mhd',
+        'HeadMRVolume.raw',
+        'DICOM_Stack/data.zip',
+    )
+    assert loader.source_url_raw == (
+        'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp',
+        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/vtk-data/raw/master/Data/DICOM_Stack/data.zip',
+    )
+    assert loader.source_url_blob == (
+        'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp',
+        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
+        'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip',
+    )
 
 
 def test_reader_returns_none(dataset_loader_one_file):

@@ -135,21 +135,32 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
-    """Class which implements a 'download' method."""
+    """Class which downloads a file  a 'download' method."""
 
     @property
     @abstractmethod
+    def source_name(self) -> _FilePropStrType_co:
+        """Return the name of the download file relative to the source repository."""
+
+    @property
     def source_url_raw(self) -> _FilePropStrType_co:
         """Return the raw source of the download.
 
-        This is the URL used to download the data directly.
+        This is the full URL used to download the data directly.
         """
+        from pyvista.examples.downloads import SOURCE
+
+        # Make single urls iterable and replace 'raw' with 'blob'
+        name_iter = [name] if isinstance(name := self.source_name, str) else name
+        url_raw = [os.path.join(SOURCE, name) for name in name_iter]
+        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property
     def source_url_blob(self) -> _FilePropStrType_co:
         """Return the blob source of the download.
 
-        This URL is useful for linking to the source webpage.
+        This URL is useful for linking to the source webpage for
+        a human to open on a browser.
         """
         # Make single urls iterable and replace 'raw' with 'blob'
         url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
@@ -330,10 +341,8 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             self._path = target_file if fullpath is None else fullpath
 
     @property
-    def source_url_raw(self) -> str:
-        from pyvista.examples.downloads import SOURCE
-
-        return os.path.join(SOURCE, self._download_source)
+    def source_name(self) -> str:
+        return self._download_source
 
     def download(self) -> str:
         path = self._download_func(self._download_source)
@@ -419,7 +428,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
 
     @property
     def path(self) -> Tuple[str, ...]:
-        return tuple(_flatten_path([file.path for file in self._file_objects]))
+        return tuple(_flatten_nested_path_sequence([file.path for file in self._file_objects]))
 
     @property
     def path_loadable(self) -> Tuple[str, ...]:
@@ -469,20 +478,19 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     """Wrap multiple files for downloading and loading."""
 
     @property
-    def source_url_raw(self) -> Tuple[str, ...]:
-        return tuple(
-            [file.source_url_raw for file in self._file_objects if isinstance(file, _Downloadable)]
-        )
+    def source_name(self) -> Tuple[str, ...]:
+        name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
+        return tuple(_flatten_nested_path_sequence(name))
 
     def download(self) -> Tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
-        path_out = _flatten_path(path)
+        path_out = _flatten_nested_path_sequence(path)
         assert all(os.path.isfile(p) or os.path.isdir(p) for p in path_out)
         return tuple(path_out)
 
 
-def _flatten_path(
+def _flatten_nested_path_sequence(
     path: Union[
         str,
         Union[List[str], Tuple[str, ...]],
