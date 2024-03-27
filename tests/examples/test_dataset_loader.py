@@ -413,6 +413,7 @@ def test_dataset_loader_from_nested_files_and_directory(
 
 def test_reader_returns_none(dataset_loader_one_file):
     dataset = downloads._dataset_cloud_dark_matter
+    dataset.download()
     match = '`pyvista.get_reader` does not support a file with the .npy extension'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(dataset.path)
