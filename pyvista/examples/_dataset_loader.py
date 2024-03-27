@@ -139,8 +139,22 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
     @property
     @abstractmethod
-    def source_url(self) -> _FilePropStrType_co:
-        """Return the source of the download."""
+    def source_url_raw(self) -> _FilePropStrType_co:
+        """Return the raw source of the download.
+
+        This is the URL used to download the data directly.
+        """
+
+    @property
+    def source_url_blob(self) -> _FilePropStrType_co:
+        """Return the blob source of the download.
+
+        This URL is useful for linking to the source webpage.
+        """
+        # Make single urls iterable and replace 'raw' with 'blob'
+        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
+        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
+        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
 
     @property
     @abstractmethod
@@ -316,12 +330,10 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
             self._path = target_file if fullpath is None else fullpath
 
     @property
-    def source_url(self) -> str:
+    def source_url_raw(self) -> str:
         from pyvista.examples.downloads import SOURCE
 
-        url_raw = os.path.join(SOURCE, self._download_source)
-        url_blob = url_raw.replace('/raw/', '/blob/')
-        return url_blob
+        return os.path.join(SOURCE, self._download_source)
 
     def download(self) -> str:
         path = self._download_func(self._download_source)
@@ -457,9 +469,9 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     """Wrap multiple files for downloading and loading."""
 
     @property
-    def source_url(self) -> Tuple[str, ...]:
+    def source_url_raw(self) -> Tuple[str, ...]:
         return tuple(
-            [file.source_url for file in self._file_objects if isinstance(file, _Downloadable)]
+            [file.source_url_raw for file in self._file_objects if isinstance(file, _Downloadable)]
         )
 
     def download(self) -> Tuple[str, ...]:

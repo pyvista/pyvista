@@ -6,6 +6,7 @@ from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pytest
+import requests
 
 import pyvista as pv
 from pyvista import examples
@@ -107,31 +108,27 @@ def test_dataset_loader_name_matches_download_name(test_case: ExampleTestCaseDat
         pytest.fail(msg)
 
 
-def test_dataset_loader_source_url(test_case: ExampleTestCaseData):
-    sources = test_case.load_func[1].source_url
-    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
-    for url in sources:
-        try:
-            if not _is_valid_url(url):
-                pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.name}:\n{url}")
-        except pv.VTKVersionError as e:
-            reason = e.args[0]
-            pytest.skip(reason)
-
-
-import requests
-
-
 def _is_valid_url(url):
     try:
         requests.get(url)
         return True
-    except (
-        requests.exceptions.HTTPError,
-        requests.exceptions.ConnectionError,
-        requests.exceptions.Sc,
-    ):
+    except requests.RequestException:
         return False
+
+
+def test_dataset_loader_source_url_blob(test_case: ExampleTestCaseData):
+    try:
+        # Skip test if not loadable
+        sources = test_case.load_func[1].source_url_blob
+    except pv.VTKVersionError as e:
+        reason = e.args[0]
+        pytest.skip(reason)
+
+    # Test valid url
+    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
+    for url in sources:
+        if not _is_valid_url(url):
+            pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.name}:\n{url}")
 
 
 def test_delete_downloads(tmpdir):

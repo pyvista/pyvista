@@ -591,7 +591,7 @@ class DownloadsMetadataTable(DocTable):
         def _rst_link(url):
             return f'`{url} <{url}>`_'
 
-        links = [url] if isinstance(url := loader.source_url, str) else url
+        links = [url] if isinstance(url := loader.source_url_blob, str) else url
         links = [_rst_link(url) for url in links]
         links = '\n'.join(links)
         return _indent_multi_line_string(links, indent_size=3, indent_level=indent_level)

@@ -68,7 +68,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     yield repository_path
 
     # teardown
-    downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/blob/master/Data/"
+    downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
     downloads._FILE_CACHE = False
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
@@ -107,7 +107,10 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         assert os.path.isfile(path_download)
         assert os.path.isabs(path_download)
         assert file_loader.path == path_download
-        assert 'https://github.com/pyvista/vtk-data/blob/master/Data/' in file_loader.source_url
+        assert 'https://github.com/pyvista/vtk-data/raw/master/Data/' in file_loader.source_url_raw
+        assert (
+            'https://github.com/pyvista/vtk-data/blob/master/Data/' in file_loader.source_url_blob
+        )
     else:
         with pytest.raises(AttributeError):
             file_loader.download()
@@ -164,8 +167,12 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     assert path_download == path
     assert [os.path.isfile(file) for file in path_download]
     assert [
+        'https://github.com/pyvista/vtk-data/raw/master/Data/' in url
+        for url in multi_file_loader.source_url_raw
+    ]
+    assert [
         'https://github.com/pyvista/vtk-data/blob/master/Data/' in url
-        for url in multi_file_loader.source_url
+        for url in multi_file_loader.source_url_blob
     ]
 
     # test load
@@ -208,7 +215,8 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.unique_reader_type is pv.XMLPolyDataReader
     assert type(loader.dataset) is pv.PolyData
     assert loader.unique_dataset_type is pv.PolyData
-    assert loader.source_url == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
+    assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
+    assert loader.source_url_blob == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
 
 
 @pytest.fixture()
@@ -239,7 +247,11 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert loader.unique_reader_type is pv.MetaImageReader
     assert isinstance(loader.dataset, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
-    assert loader.source_url == (
+    assert loader.source_url_raw == (
+        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.mhd',
+        'https://github.com/pyvista/vtk-data/raw/master/Data/HeadMRVolume.raw',
+    )
+    assert loader.source_url_blob == (
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
     )
@@ -276,7 +288,11 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert isinstance(dataset1, pv.ImageData)
     assert isinstance(dataset2, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
-    assert loader.source_url == (
+    assert loader.source_url_raw == (
+        'https://github.com/pyvista/vtk-data/raw/master/Data/bolt.slc',
+        'https://github.com/pyvista/vtk-data/raw/master/Data/nut.slc',
+    )
+    assert loader.source_url_blob == (
         'https://github.com/pyvista/vtk-data/blob/master/Data/bolt.slc',
         'https://github.com/pyvista/vtk-data/blob/master/Data/nut.slc',
     )
@@ -303,7 +319,11 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     assert type(loader.dataset) is pv.Texture
     assert loader.unique_dataset_type is pv.Texture
     assert (
-        loader.source_url
+        loader.source_url_raw
+        == 'https://github.com/pyvista/vtk-data/raw/master/Data/cubemap_park/cubemap_park.zip'
+    )
+    assert (
+        loader.source_url_blob
         == 'https://github.com/pyvista/vtk-data/blob/master/Data/cubemap_park/cubemap_park.zip'
     )
 
@@ -328,7 +348,11 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
     assert isinstance(loader.dataset, pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
     assert (
-        loader.source_url
+        loader.source_url_raw
+        == 'https://github.com/pyvista/vtk-data/raw/master/Data/DICOM_Stack/data.zip'
+    )
+    assert (
+        loader.source_url_blob
         == 'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip'
     )
 
