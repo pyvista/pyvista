@@ -404,16 +404,15 @@ class DownloadsMetadataTable(DocTable):
         |   .. grid:: 1
         |
         |      .. grid-item::
-        |         :margin: auto 0 auto auto
         |
         |         .. grid:: 1 2 2 2
         |            :reverse:
-        |            :margin: auto 0 0 0
-        |            :padding: auto 0 0 0
+        |            :margin: 0
         |
         |            .. grid-item::
         |
         |               .. grid:: 1
+        |                  :margin: 0
         |
         |                  .. grid-item-card::
         |
@@ -428,7 +427,6 @@ class DownloadsMetadataTable(DocTable):
         |               - Dataset Type: {}
         |
         |      .. grid-item::
-        |         :margin: 0 auto auto auto
         |
         |         .. code-block::
         |            :caption: Representation
