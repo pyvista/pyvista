@@ -2,8 +2,10 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
-Downloaded Datasets
--------------------
-Browse all datasets in :mod:`pyvista.examples.downloads`.
+.. _gallery_downloadable_datasets:
+
+Downloadable Datasets
+---------------------
+Browse all datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.
 
 .. include:: /api/examples/dataset-gallery/downloads_gallery_table.rest

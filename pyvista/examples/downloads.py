@@ -8,10 +8,8 @@ using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
 rendered on this page.
 
-Notes
------
-Browse the `Dataset Gallery` for detailed information about the downloads,
-including file and dataset metadata.
+See the :ref:`Dataset Gallery <gallery_downloadable_datasets>` for detailed
+information about the datasets, including file and dataset metadata.
 
 Examples
 --------
