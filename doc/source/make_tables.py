@@ -517,7 +517,7 @@ class DownloadsMetadataTable(DocTable):
 
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
-        ref_name = 'ref' + index_name
+        ref_name = 'ref_' + index_name
         dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
         dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
 
