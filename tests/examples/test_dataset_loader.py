@@ -209,7 +209,7 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
 
 
 @pytest.fixture()
-def dataset_loader_two_files_one_loadable(examples_local_repository_tmp_dir):
+def dataset_loader_two_files_one_loadable():
     def _files_func():
         loadable = _SingleFileDownloadableLoadable('HeadMRVolume.mhd')
         not_loadable = _SingleFileDownloadable('HeadMRVolume.raw')
@@ -274,7 +274,7 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
 @pytest.fixture()
 def dataset_loader_cubemap():
     loader = _SingleFileDownloadableLoadable(
-        downloads._download_archive_file_or_folder('cubemap_park/cubemap_park.zip', target_file=''),
+        'cubemap_park/cubemap_park.zip',
         read_func=_load_as_cubemap,
     )
     loader.download()
