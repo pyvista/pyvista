@@ -522,3 +522,9 @@ def test_edge_opacity(sphere):
     pl = pv.Plotter(sphere)
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
+
+def test_plotter_theme_axes_box(sphere):
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.theme.axes.box = True
+    pl.show()
