@@ -505,8 +505,6 @@ class DatasetCards:
         |   ^^^
         |   {}
         |
-        |   ----------
-        |
         |   .. grid:: 1
         |
         |      .. grid-item::
