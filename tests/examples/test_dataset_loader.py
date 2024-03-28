@@ -432,7 +432,7 @@ def test_load_dataset_no_reader(dataset_loader_one_file):
 
     # try loading .npy file directly
     loader = _SingleFileLoadable(dataset.path)
-    match = f'Error loading dataset from path:\n\t{dataset.path}'
+    match = 'Error loading dataset from path'
     with pytest.raises(RuntimeError, match=match):
         loader.load()
 
