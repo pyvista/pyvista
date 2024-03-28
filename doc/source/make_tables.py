@@ -1,6 +1,7 @@
 """This is a helper module to generate tables that can be included in the documentation."""
 
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+from abc import abstractmethod
 import inspect
 import io
 import os
@@ -346,49 +347,51 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-class DatasetGalleryDownloadsTable(DocTable):
-    """Class to generate metadata about pyvista downloadable datasets."""
+class DatasetGalleryTable(DocTable):
+
+    @classmethod
+    @abstractmethod
+    def fetch_data(cls):
+        """Return a list of dataset names to include in the gallery ."""
+
+    @classmethod
+    def get_header(cls, data):
+        """Return an empty string.
+
+        Gallery tables aren't really tables, they're rows of cards,
+        so a header doesn't apply.
+        """
+        return ""
+
+    @classmethod
+    def get_row(cls, i, dataset_name):
+        """Return the rst card for a given dataset name."""
+        return DatasetCards.CARDS[dataset_name]
+
+
+class DatasetGalleryDownloadsTable(DatasetGalleryTable):
+    """Class to generate a table of all downloadable dataset cards."""
 
     # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
     # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
     path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rest"
 
-    # No main header; each row/dataset is a separate card
-    header = ""
-
     @classmethod
     def fetch_data(cls):
-        # Collect all `_dataset_<name>` file loaders
-        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
-
-        for name, item in sorted(module_members.items()):
-            # Extract data set name from loader name
-
-            if name.startswith('_dataset_') and isinstance(
-                item,
-                (
-                    _dataset_loader._SingleFileDownloadable,
-                    _dataset_loader._MultiFileDownloadableLoadable,
-                ),
-            ):
-
-                dataset_name = name.replace('_dataset_', '')
-                dataset_loader = item
-                DatasetCards.make_card(dataset_name, dataset_loader)
-
+        """Return all dataset cards."""
         return DatasetCards.CARDS
 
     @classmethod
-    def get_header(cls, data):
-        return cls.header
-
-    @classmethod
     def get_row(cls, i, row_data):
+        """Return the card along with its references.
+
+        References should only be included once (e.g. by this class).
+        """
         return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
 
 
 class DatasetGalleryMedicalTable(DocTable):
-    """Generate table of medical dataset."""
+    """Class to generate a table of medical dataset cards."""
 
     path = f"{DATASET_GALLERY_TABLE_DIR}/medical_table.rest"
     header = ""
@@ -625,14 +628,33 @@ class DatasetCards:
     CARDS = {}
 
     @classmethod
-    def make_card(
+    def make_cards(cls):
+        """Download and load all datasets and make a card for each dataset."""
+        # Collect all `_dataset_<name>` file loaders
+        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
+
+        for name, item in sorted(module_members.items()):
+            # Extract data set name from loader name
+
+            if name.startswith('_dataset_') and isinstance(
+                item,
+                (
+                    _dataset_loader._SingleFileDownloadable,
+                    _dataset_loader._MultiFileDownloadableLoadable,
+                ),
+            ):
+                dataset_name = name.replace('_dataset_', '')
+                dataset_loader = item
+                DatasetCards._make_card(dataset_name, dataset_loader)
+
+    @classmethod
+    def _make_card(
         cls,
         dataset_name: str,
         loader: Union[
             _dataset_loader._MultiFileDownloadableLoadable,
             _dataset_loader._SingleFileDownloadableLoadable,
         ],
-        return_ref=False,
     ):
 
         # Get dataset name-related info
@@ -687,8 +709,6 @@ class DatasetCards:
         )
         cls.REFS[dataset_name] = ref
         cls.CARDS[dataset_name] = card
-
-        return card, ref if return_ref else card
 
     @staticmethod
     def _format_dataset_name(dataset_name: str):
@@ -845,5 +865,7 @@ def make_all_tables():
     ColorTable.generate()
 
     # Make dataset gallery files
+    os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
+    DatasetCards.make_cards()
     DatasetGalleryDownloadsTable.generate()
     DatasetGalleryMedicalTable.generate()
