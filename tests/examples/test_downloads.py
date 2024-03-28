@@ -19,7 +19,7 @@ from pyvista.examples._dataset_loader import (
 
 @dataclass
 class ExampleTestCaseData:
-    name: str
+    dataset_name: str
     download_func: Tuple[str, FunctionType]
     load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
 
@@ -71,7 +71,9 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
     for name, content in sorted(test_cases_dict.items()):
         download_func = content.setdefault('download_func', None)
         load_func = content.setdefault('load_func', None)
-        test_case = ExampleTestCaseData(name=name, download_func=download_func, load_func=load_func)
+        test_case = ExampleTestCaseData(
+            dataset_name=name, download_func=download_func, load_func=load_func
+        )
         test_cases_list.append(test_case)
 
     return test_cases_list
@@ -82,7 +84,7 @@ def pytest_generate_tests(metafunc):
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable dataset
         test_cases = _generate_dataset_loader_test_cases()
-        ids = [case.name for case in test_cases]
+        ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
@@ -91,13 +93,13 @@ def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
         return (
             f"A file loader:\n\t\'{test_case.load_func[0]}\'\n\t{test_case.load_func[1]}\n"
             f"was found but is missing a corresponding download function.\n\n"
-            f"Expected to find a function named:\n\t\'download_{test_case.name}\'\nGot: {test_case.download_func}"
+            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.download_func}"
         )
     elif test_case.load_func is None:
         return (
             f"A download function:\n\t\'{test_case.download_func[0]}\'\n\t{test_case.download_func[1]}\n"
             f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_dataset_{test_case.name}\'\nGot: {test_case.load_func}"
+            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.load_func}"
         )
     else:
         return None
@@ -128,7 +130,7 @@ def test_dataset_loader_source_url_blob(test_case: ExampleTestCaseData):
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
         if not _is_valid_url(url):
-            pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.name}:\n{url}")
+            pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.dataset_name}:\n{url}")
 
 
 def test_delete_downloads(tmpdir):
