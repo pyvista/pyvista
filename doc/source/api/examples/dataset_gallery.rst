@@ -15,8 +15,6 @@ Browse All Datasets
 
           Datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.
 
-          .. currentmodule:: pyvista.examples.downloads
-
           .. include:: /api/examples/dataset-gallery/downloads_table.rest
 
 
@@ -27,19 +25,22 @@ Browse All Datasets
 
       Datasets which are loaded as :class:`~pyvista.ImageData`
 
-      .. include:: /api/examples/dataset-gallery/imagedata_table.rest
+      ..
+         .. include:: /api/examples/dataset-gallery/imagedata_table.rest
 
    .. tab-item:: 2D Images
 
       Images with two-dimensional data.
 
-      .. include:: /api/examples/dataset-gallery/imagedata_2d_table.rest
+      ..
+         .. include:: /api/examples/dataset-gallery/imagedata_2d_table.rest
 
    .. tab-item:: 3D Images
 
       Three-dimensional volumetric images.
 
-      .. include:: /api/examples/dataset-gallery/imagedata_3d_table.rest
+      ..
+         .. include:: /api/examples/dataset-gallery/imagedata_3d_table.rest
 
 
 
@@ -100,4 +101,5 @@ Browse All Datasets
 
       Medical datasets.
 
-      .. include:: /api/examples/dataset-gallery/medical_table.rest
+      ..
+         .. include:: /api/examples/dataset-gallery/medical_table.rest

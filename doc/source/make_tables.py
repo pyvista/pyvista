@@ -788,6 +788,8 @@ class DatasetCards:
 
 
 class GalleryTable(DocTable):
+    # Subclasses should give the table name
+    # The name should end with '_table'
     name = None
     # Whether to include references or not
     # Dataset references should only be included once by a single table,
@@ -800,6 +802,7 @@ class GalleryTable(DocTable):
         # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
         # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
         assert isinstance(cls.name, str), 'Table name must be defined.'
+        assert cls.name.endswith('_table'), 'Table name must end with "_table".'
         return f"{DATASET_GALLERY_TABLE_DIR}/{cls.name}.rest"
 
     @classmethod
@@ -853,7 +856,7 @@ class ImageDataGalleryTable(GalleryTable):
 
 
 class ImageData2DGalleryTable(GalleryTable):
-    """Class to generate a table of all ImageData cards."""
+    """Class to generate a table of 2D ImageData cards."""
 
     name = 'imagedata_2d_table'
 
@@ -863,7 +866,7 @@ class ImageData2DGalleryTable(GalleryTable):
 
 
 class ImageData3DGalleryTable(GalleryTable):
-    """Class to generate a table of all ImageData cards."""
+    """Class to generate a table of 3D ImageData cards."""
 
     name = 'imagedata_3d_table'
 
@@ -937,10 +940,10 @@ def make_all_tables():
     DatasetCards.make_cards()
     DownloadsGalleryTable.generate()
 
-    # ImageData tables
-    ImageDataGalleryTable.generate()
-    ImageData2DGalleryTable.generate()
-    ImageData3DGalleryTable.generate()
-
-    # Categorical tables
-    MedicalGalleryTable.generate()
+    # # ImageData tables
+    # ImageDataGalleryTable.generate()
+    # ImageData2DGalleryTable.generate()
+    # ImageData3DGalleryTable.generate()
+    #
+    # # Categorical tables
+    # MedicalGalleryTable.generate()
