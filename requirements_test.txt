@@ -11,7 +11,7 @@ ipywidgets<9.0.0
 meshio<5.4.0
 nest_asyncio<1.6.1
 numpydoc==1.6.0
-param<2.1.0
+param<2.2.0
 pydata-sphinx-theme<0.16.0
 pytest<8.1.0
 pytest-cov<4.2.0
