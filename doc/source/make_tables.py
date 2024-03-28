@@ -495,7 +495,6 @@ class DatasetCards:
         |
         |.. _{}:
         |
-        |{}
         """
     )
     card_template = _aligned_dedent(
@@ -503,10 +502,10 @@ class DatasetCards:
         |.. card:: {}
         |
         |   {}
+        |   ^^^
+        |   {}
         |
-        |   .. raw:: html
-        |
-        |      <hr />
+        |   ----------
         |
         |   .. grid:: 1
         |
@@ -590,8 +589,8 @@ class DatasetCards:
     ):
 
         # Get dataset name-related info
-        index_name, ref_name, dataset_heading, func_ref, func_doc, func_name = (
-            cls._format_dataset_name(dataset_name)
+        index_name, ref_name, header, func_ref, func_doc, func_name = cls._format_dataset_name(
+            dataset_name
         )
         # Get file and instance metadata
         try:
@@ -622,13 +621,10 @@ class DatasetCards:
 
         cls._process_img(img_path)
 
-        ref = cls.ref_template.format(
-            index_name,
-            ref_name,
-            dataset_heading,
-        )
+        ref = cls.ref_template.format(index_name, ref_name)
         card = cls.card_template.format(
             func_ref,
+            header,
             func_doc,
             img_path,
             file_size,
@@ -650,8 +646,7 @@ class DatasetCards:
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
         ref_name = index_name
-        dataset_heading = ' '.join([word.capitalize() for word in index_name.split('_')])
-        dataset_heading += '\n' + _repeat_string('*', len(dataset_heading))
+        header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the corresponding 'download' function of the loader
         func_name = 'download_' + dataset_name
@@ -660,7 +655,7 @@ class DatasetCards:
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
-        return index_name, ref_name, dataset_heading, func_ref, func_doc, func_name
+        return index_name, ref_name, header, func_ref, func_doc, func_name
 
     @staticmethod
     def _format_file_size(loader: _dataset_loader._FileProps):
