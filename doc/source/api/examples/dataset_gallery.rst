@@ -10,4 +10,4 @@ Browse all datasets available for download from the :mod:`downloads <pyvista.exa
 
 .. currentmodule:: pyvista.examples.downloads
 
-.. include:: /api/examples/dataset-gallery/downloads_gallery_table.rest
+.. include:: /api/examples/dataset-gallery/downloads_table.rest

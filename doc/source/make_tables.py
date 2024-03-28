@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Type
+from typing import Any, Callable, Dict, List, Type, Union
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -346,19 +346,159 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-class DownloadsMetadataTable(DocTable):
-    """Class to generate metadata about pyvista downloadable datasets.
+class DatasetGalleryDownloadsTable(DocTable):
+    """Class to generate metadata about pyvista downloadable datasets."""
 
-    For each 'row' of this table:
+    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
+    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
+    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rest"
+
+    # No main header; each row/dataset is a separate card
+    header = ""
+
+    @classmethod
+    def fetch_data(cls):
+        # Collect all `_dataset_<name>` file loaders
+        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
+
+        for name, item in sorted(module_members.items()):
+            # Extract data set name from loader name
+
+            if name.startswith('_dataset_') and isinstance(
+                item,
+                (
+                    _dataset_loader._SingleFileDownloadable,
+                    _dataset_loader._MultiFileDownloadableLoadable,
+                ),
+            ):
+
+                dataset_name = name.replace('_dataset_', '')
+                dataset_loader = item
+                DatasetCards.make_card(dataset_name, dataset_loader)
+
+        return DatasetCards.CARDS
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
+
+
+def _get_doc(func: Callable[[], Any]) -> str:
+    """Return the first line of the callable's docstring."""
+    return func.__doc__.splitlines()[0]
+
+
+def _get_fullname(typ: Type) -> str:
+    """Return the fully qualified name of the given type object."""
+    return f"{typ.__module__}.{typ.__qualname__}"
+
+
+def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
+    """Left-justify a list of lines."""
+    min_width = min_width if min_width else _max_width(lines)
+    return [line.ljust(min_width) for line in lines]
+
+
+def _max_width(lines: List[str]) -> int:
+    """Compute the max line-width from a list of lines."""
+    return max(map(len, lines))
+
+
+def _repeat_string(string: str, num_repeat: int) -> str:
+    """Repeat `string` `num_repeat` times."""
+    return ''.join([string] * num_repeat)
+
+
+def _pad_lines(
+    lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
+):
+    """Add padding to the left or right of each line with a specified string.
+
+    By default, padding is only applied to left-justify the text such that the lines
+    all have the same width.
+
+    Optionally, the lines may be padded to the left or right using a specified string.
+
+    Parameters
+    ----------
+    lines : list[str]
+        Lines to be padded. If a tuple of lists is given, all lists are padded together
+        as if they were one, but returned as separate lists.
+
+    pad_left : str, default: ''
+        String to pad the left of each line with.
+
+    pad_right : str, default: ''
+        String to pad the right of each line with.
+
+    ljust : bool, default: True
+        If ``True``, left-justify the lines such that they have equal width
+        before applying any padding.
+
+    return_shape : bool, default: False
+        If ``True``, also return the width and height of the padded lines.
+
+    """
+    # Justify
+    lines = _ljust_lines(lines) if ljust else lines
+    # Pad
+    lines = [pad_left + line + pad_right for line in lines]
+    if return_shape:
+        return lines, _max_width(lines), len(lines)
+    return lines
+
+
+def _indent_multi_line_string(
+    string: str, indent_size=3, indent_level: int = 1, omit_first_line=True
+) -> str:
+    """Indent each line of a multi-line string by a specified indentation level.
+
+    Optionally specify the indent size (e.g. 3 spaces for rst).
+    Optionally omit indentation from the first line if it is already indented.
+
+    This function is used to support de-denting formatted multi-line strings.
+    E.g. for the following rst text with item {} indented by 3 levels:
+
+        |      .. some_directive::
+        |
+        |         {}
+
+    a multi-line string input such as 'line1\nline2\nline3' will be formatted as:
+
+        |      .. some_directive::
+        |
+        |         line1\n         line2\n         line3
+        |
+
+    which will result in the correct indentation applied to all lines of the string.
+
+    """
+    lines = string.splitlines()
+    indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
+    first_line = lines.pop(0) if omit_first_line else ''
+    lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
+    lines.insert(0, first_line)
+    return '\n'.join(lines)
+
+
+class DatasetCards:
+    """Create a rst-formatted card for a dataset.
 
     Create a card with a 1-column grid with two grid items (rows).
     The first row is a nested grid with two items displayed as a single
     column for small screen sizes, or two columns for larger screens.
 
-    Each row has a structure similar to:
+    If the card's references are returned:
 
         HTML Index
         Sphinx Ref
+
+    Each card has the following structure:
+
         Dataset Name
         +-Card---------------------+
         | Function Name            |
@@ -377,22 +517,17 @@ class DownloadsMetadataTable(DocTable):
     details on the directives used and their formatting.
     """
 
-    NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
-
-    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
-    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
-    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_gallery_table.rest"
-
-    # No main header; each row/dataset is a separate card
-    header = ""
-    row_template = _aligned_dedent(
+    ref_template = _aligned_dedent(
         """
         |.. index:: {}
         |
         |.. _{}:
         |
         |{}
-        |
+        """
+    )
+    card_template = _aligned_dedent(
+        """
         |.. card:: {}
         |
         |   {}
@@ -439,44 +574,33 @@ class DownloadsMetadataTable(DocTable):
         |
         """
     )
-    # Set the indentation level for the representation item
-    # Level should be one more than the representation's '.. code-block::' directive in the
-    # row template above
-    REPR_INDENT_LEVEL = 4
+    # Indentation level for the representation item
+    # Level should be one more than the representation's '.. code-block::' directive
+    _REPR_INDENT_LEVEL = 4
 
-    LINKS_INDENT_LEVEL = 2
+    # Indentation level for the data source links
+    _LINKS_INDENT_LEVEL = 2
 
-    @classmethod
-    def fetch_data(cls):
-        # Collect all `_dataset_<name>` file loaders
-        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
-        file_loaders_dict = {
-            name: item
-            for name, item in module_members.items()
-            if name.startswith('_dataset_')
-            and isinstance(
-                item,
-                (
-                    _dataset_loader._SingleFileDownloadable,
-                    _dataset_loader._MultiFileDownloadableLoadable,
-                ),
-            )
-        }
-        return sorted(file_loaders_dict.items())
+    _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
+
+    REFS = {}
+    CARDS = {}
 
     @classmethod
-    def get_header(cls, data):
-        return cls.header
-
-    @classmethod
-    def get_row(cls, i, row_data):
-        loader_name, loader = row_data
+    def make_card(
+        cls,
+        dataset_name: str,
+        loader: Union[
+            _dataset_loader._MultiFileDownloadableLoadable,
+            _dataset_loader._SingleFileDownloadableLoadable,
+        ],
+        return_ref=False,
+    ):
 
         # Get dataset name-related info
         index_name, ref_name, dataset_heading, func_ref, func_doc, func_name = (
-            cls._format_dataset_name(loader_name)
+            cls._format_dataset_name(dataset_name)
         )
-
         # Get file and instance metadata
         try:
             loader.download()
@@ -491,7 +615,7 @@ class DownloadsMetadataTable(DocTable):
             dataset_type = NOT_AVAILABLE
             dataset_repr = NOT_AVAILABLE_NO_BACKTICKS
             datasource_links = NOT_AVAILABLE_NO_BACKTICKS
-            img_path = cls.NOT_AVAILABLE_IMG_PATH
+            img_path = cls._NOT_AVAILABLE_IMG_PATH
         else:
             # Get data from loader
             loader.load()
@@ -500,16 +624,18 @@ class DownloadsMetadataTable(DocTable):
             file_ext = cls._format_file_ext(loader)
             reader_type = cls._format_reader_type(loader)
             dataset_type = cls._format_dataset_type(loader)
-            dataset_repr = cls._format_dataset_repr(loader, cls.REPR_INDENT_LEVEL)
-            datasource_links = cls._format_datasource_links(loader, cls.LINKS_INDENT_LEVEL)
+            dataset_repr = cls._format_dataset_repr(loader, cls._REPR_INDENT_LEVEL)
+            datasource_links = cls._format_datasource_links(loader, cls._LINKS_INDENT_LEVEL)
             img_path = cls._search_image_path(func_name)
 
         cls._process_img(img_path)
 
-        return cls.row_template.format(
+        ref = cls.ref_template.format(
             index_name,
             ref_name,
             dataset_heading,
+        )
+        card = cls.card_template.format(
             func_ref,
             func_doc,
             img_path,
@@ -521,12 +647,13 @@ class DownloadsMetadataTable(DocTable):
             dataset_repr,
             datasource_links,
         )
+        cls.REFS[dataset_name] = ref
+        cls.CARDS[dataset_name] = card
+
+        return card, ref if return_ref else card
 
     @staticmethod
-    def _format_dataset_name(loader_name: str):
-        # Extract data set name from loader name
-        dataset_name = loader_name.replace('_dataset_', '')
-
+    def _format_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
         ref_name = index_name
@@ -672,104 +799,6 @@ class DownloadsMetadataTable(DocTable):
                 img.save(img_path)
 
 
-def _get_doc(func: Callable[[], Any]) -> str:
-    """Return the first line of the callable's docstring."""
-    return func.__doc__.splitlines()[0]
-
-
-def _get_fullname(typ: Type) -> str:
-    """Return the fully qualified name of the given type object."""
-    return f"{typ.__module__}.{typ.__qualname__}"
-
-
-def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
-    """Left-justify a list of lines."""
-    min_width = min_width if min_width else _max_width(lines)
-    return [line.ljust(min_width) for line in lines]
-
-
-def _max_width(lines: List[str]) -> int:
-    """Compute the max line-width from a list of lines."""
-    return max(map(len, lines))
-
-
-def _repeat_string(string: str, num_repeat: int) -> str:
-    """Repeat `string` `num_repeat` times."""
-    return ''.join([string] * num_repeat)
-
-
-def _pad_lines(
-    lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
-):
-    """Add padding to the left or right of each line with a specified string.
-
-    By default, padding is only applied to left-justify the text such that the lines
-    all have the same width.
-
-    Optionally, the lines may be padded to the left or right using a specified string.
-
-    Parameters
-    ----------
-    lines : list[str]
-        Lines to be padded. If a tuple of lists is given, all lists are padded together
-        as if they were one, but returned as separate lists.
-
-    pad_left : str, default: ''
-        String to pad the left of each line with.
-
-    pad_right : str, default: ''
-        String to pad the right of each line with.
-
-    ljust : bool, default: True
-        If ``True``, left-justify the lines such that they have equal width
-        before applying any padding.
-
-    return_shape : bool, default: False
-        If ``True``, also return the width and height of the padded lines.
-
-    """
-    # Justify
-    lines = _ljust_lines(lines) if ljust else lines
-    # Pad
-    lines = [pad_left + line + pad_right for line in lines]
-    if return_shape:
-        return lines, _max_width(lines), len(lines)
-    return lines
-
-
-def _indent_multi_line_string(
-    string: str, indent_size=3, indent_level: int = 1, omit_first_line=True
-) -> str:
-    """Indent each line of a multi-line string by a specified indentation level.
-
-    Optionally specify the indent size (e.g. 3 spaces for rst).
-    Optionally omit indentation from the first line if it is already indented.
-
-    This function is used to support de-denting formatted multi-line strings.
-    E.g. for the following rst text with item {} indented by 3 levels:
-
-        |      .. some_directive::
-        |
-        |         {}
-
-    a multi-line string input such as 'line1\nline2\nline3' will be formatted as:
-
-        |      .. some_directive::
-        |
-        |         line1\n         line2\n         line3
-        |
-
-    which will result in the correct indentation applied to all lines of the string.
-
-    """
-    lines = string.splitlines()
-    indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
-    first_line = lines.pop(0) if omit_first_line else ''
-    lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
-    lines.insert(0, first_line)
-    return '\n'.join(lines)
-
-
 def make_all_tables():
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
@@ -777,4 +806,4 @@ def make_all_tables():
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
-    DownloadsMetadataTable.generate()
+    DatasetGalleryDownloadsTable.generate()
