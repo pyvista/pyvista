@@ -190,6 +190,14 @@ class _Loadable(Protocol[_FilePropStrType_co]):
     def load(self) -> DatasetType:
         """Load the dataset."""
 
+    def unload(self) -> None:
+        """Clear the loaded dataset object from memory."""
+        if isinstance(dataset := self.dataset, Sequence):
+            for data in dataset:
+                del data
+        else:
+            del dataset
+
 
 class _SingleFile(_FileProps[str, int]):
     """Wrap a single file."""

@@ -3,6 +3,7 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 from __future__ import annotations
 
+from abc import abstractmethod
 import inspect
 import io
 import os
@@ -10,7 +11,9 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Sequence, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Literal, Type, Union, final
+
+import numpy as np
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -49,8 +52,12 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
-        assert cls.path is not None, "Subclasses should specify a path."
+        assert cls.path is not None, f"Subclass {cls} should specify a path."
+        if isinstance(cls.path, property):
+            cls.path = cls.path.fget(cls)
+
         data = cls.fetch_data()
+        assert data is not None, f"No data was fetched by {cls}."
 
         with io.StringIO() as fnew:
             fnew.write(cls.get_header(data))
@@ -446,6 +453,10 @@ def _indent_multi_line_string(
     return '\n'.join(lines)
 
 
+def _as_iterable(item) -> Iterable[Any]:
+    return [item] if not isinstance(item, (Iterable, str)) else item
+
+
 class DatasetCards:
     """Create a rst-formatted card for a dataset.
 
@@ -546,6 +557,7 @@ class DatasetCards:
 
     REFS = {}
     CARDS = {}
+    LOADERS = {}
 
     @classmethod
     def make_cards(cls):
@@ -629,6 +641,9 @@ class DatasetCards:
         )
         cls.REFS[dataset_name] = ref
         cls.CARDS[dataset_name] = card
+        cls.LOADERS[dataset_name] = loader
+
+        loader.unload()
 
     @staticmethod
     def _format_dataset_name(dataset_name: str):
@@ -777,16 +792,29 @@ class DatasetCards:
                 img.save(img_path)
 
 
-class DatasetGalleryTable(DocTable):
-    # Sequence of datasets (by name) to include in the table
-    DATASETS: Sequence[str] = None
+class GalleryTable(DocTable):
+    name = None
+    # Whether to include references or not
+    # Dataset references should only be included once by a single table,
+    # e.g. table with all downloadable datasets
+    _include_ref = False
+
+    @property
+    @final
+    def path(cls):
+        # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
+        # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
+        assert isinstance(cls.name, str), 'Table name must be defined.'
+        return f"{DATASET_GALLERY_TABLE_DIR}/{cls.name}.rest"
 
     @classmethod
+    @abstractmethod
     def fetch_data(cls):
         """Return a list of dataset names to include in the gallery ."""
-        return cls.DATASETS
+        ...
 
     @classmethod
+    @final
     def get_header(cls, data):
         """Return an empty string.
 
@@ -796,63 +824,128 @@ class DatasetGalleryTable(DocTable):
         return ""
 
     @classmethod
-    def get_row(cls, i, dataset_name):
-        """Return the rst card for a given dataset name."""
+    @final
+    def get_row(cls, _, dataset_name):
+        """Return the card for a given dataset.
+
+        References may optionally be included but
+        should only be included in a single table.
+        """
+        if cls._include_ref:
+            return DatasetCards.REFS[dataset_name] + DatasetCards.CARDS[dataset_name]
         return DatasetCards.CARDS[dataset_name]
 
 
-class DatasetGalleryDownloadsTable(DatasetGalleryTable):
+class DownloadsGalleryTable(GalleryTable):
     """Class to generate a table of all downloadable dataset cards."""
 
-    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
-    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
-    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rest"
-
-    DATASETS = DatasetCards.CARDS
+    name = 'downloads_table'
+    _include_ref = True
 
     @classmethod
-    def get_row(cls, i, row_data):
-        """Return the card along with its references.
-
-        References should only be included once (e.g. by this class).
-        """
-        return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
+    def fetch_data(cls):
+        return DatasetCards.CARDS
 
 
-class DatasetGalleryMedicalTable(DocTable):
+class ImageDataGalleryTable(GalleryTable):
+    """Class to generate a table of all ImageData cards."""
+
+    name = 'imagedata_table'
+
+    @classmethod
+    def fetch_data(cls):
+        return _fetch_imagedata('all')
+
+
+class ImageData2DGalleryTable(GalleryTable):
+    """Class to generate a table of all ImageData cards."""
+
+    name = 'imagedata_2d_table'
+
+    @classmethod
+    def fetch_data(cls):
+        return _fetch_imagedata('2d')
+
+
+class ImageData3DGalleryTable(GalleryTable):
+    """Class to generate a table of all ImageData cards."""
+
+    name = 'imagedata_3d_table'
+
+    @classmethod
+    def fetch_data(cls):
+        return _fetch_imagedata('3d')
+
+
+class MedicalGalleryTable(GalleryTable):
     """Class to generate a table of medical dataset cards."""
 
-    path = f"{DATASET_GALLERY_TABLE_DIR}/medical_table.rest"
+    name = 'medical_table'
 
-    DATASETS = sorted(
-        (
-            'brain',
-            'brain_atlas_with_sides',
-            'chest',
-            'carotid',
-            'dicom_stack',
-            'embryo',
-            'foot_bones',
-            'frog',
-            'frog_tissue',
-            'head',
-            'head_2',
-            'knee',
-            'knee_full',
-            'prostate',
+    @classmethod
+    def fetch_data(cls):
+        return sorted(
+            (
+                'brain',
+                'brain_atlas_with_sides',
+                'chest',
+                'carotid',
+                'dicom_stack',
+                'embryo',
+                'foot_bones',
+                'frog',
+                'frog_tissue',
+                'head',
+                'head_2',
+                'knee',
+                'knee_full',
+                'prostate',
+            )
         )
-    )
+
+
+def _fetch_imagedata(kind: Literal['all', '2d', '3d']):
+    dataset_names = []
+
+    def _is_2d(data):
+        return np.any(np.array(data.dimensions) == 1)
+
+    for name, loader in DatasetCards.LOADERS.items():
+        # We want to avoid re-loading the data if possible,
+        # so check if dataset has ImageData first
+        if pv.ImageData in _as_iterable(loader.unique_dataset_type):
+            if kind == 'all':
+                dataset_names.append(name)
+            else:
+                # Load and add dataset to list
+                dataset = _as_iterable(loader.load())
+                for data in dataset:
+                    if isinstance(data, pv.ImageData):
+                        if kind == '2d' and _is_2d(data):
+                            dataset_names.append(name)
+                        elif kind == '3d' and not _is_2d(data):
+                            dataset_names.append(name)
+                loader.unload()
+    return dataset_names
 
 
 def make_all_tables():
+    # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
 
-    # Make dataset gallery files
+    # Make dataset gallery tables
     os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
     DatasetCards.make_cards()
-    DatasetGalleryDownloadsTable.generate()
-    DatasetGalleryMedicalTable.generate()
+    DownloadsGalleryTable.generate()
+
+    # ImageData tables
+    ImageDataGalleryTable.generate()
+    ImageData2DGalleryTable.generate()
+    ImageData3DGalleryTable.generate()
+
+    # Categorical tables
+    MedicalGalleryTable.generate()
