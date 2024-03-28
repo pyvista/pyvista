@@ -22,7 +22,7 @@ sphinx-gallery<0.16.0
 sphinx_design<0.6.0
 sympy<1.13.0
 tqdm<4.67.0
-trame>=2.5.2,<3.5.4
+trame>=2.5.2,<3.5.5
 trame-vtk>=2.5.8,<2.8.6
 trame-vuetify>=2.3.1,<2.4.4
 trimesh<4.3.0
