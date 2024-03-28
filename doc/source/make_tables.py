@@ -1,7 +1,8 @@
 """This is a helper module to generate tables that can be included in the documentation."""
 
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
-from abc import abstractmethod
+from __future__ import annotations
+
 import inspect
 import io
 import os
@@ -9,7 +10,7 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, List, Type, Union
+from typing import Any, Callable, Dict, List, Sequence, Type, Union
 
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
@@ -345,87 +346,6 @@ class ColorTable(DocTable):
         names = [row_data["name"]] + row_data["synonyms"]
         name = " or ".join(name_template.format(n) for n in names)
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
-
-
-class DatasetGalleryTable(DocTable):
-
-    @classmethod
-    @abstractmethod
-    def fetch_data(cls):
-        """Return a list of dataset names to include in the gallery ."""
-
-    @classmethod
-    def get_header(cls, data):
-        """Return an empty string.
-
-        Gallery tables aren't really tables, they're rows of cards,
-        so a header doesn't apply.
-        """
-        return ""
-
-    @classmethod
-    def get_row(cls, i, dataset_name):
-        """Return the rst card for a given dataset name."""
-        return DatasetCards.CARDS[dataset_name]
-
-
-class DatasetGalleryDownloadsTable(DatasetGalleryTable):
-    """Class to generate a table of all downloadable dataset cards."""
-
-    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
-    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
-    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rest"
-
-    @classmethod
-    def fetch_data(cls):
-        """Return all dataset cards."""
-        return DatasetCards.CARDS
-
-    @classmethod
-    def get_row(cls, i, row_data):
-        """Return the card along with its references.
-
-        References should only be included once (e.g. by this class).
-        """
-        return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
-
-
-class DatasetGalleryMedicalTable(DocTable):
-    """Class to generate a table of medical dataset cards."""
-
-    path = f"{DATASET_GALLERY_TABLE_DIR}/medical_table.rest"
-    header = ""
-
-    DATASETS = sorted(
-        (
-            'brain',
-            'brain_atlas_with_sides',
-            'chest',
-            'carotid',
-            'dicom_stack',
-            'embryo',
-            'foot_bones',
-            'frog',
-            'frog_tissue',
-            'head',
-            'head_2',
-            'knee',
-            'knee_full',
-            'prostate',
-        )
-    )
-
-    @classmethod
-    def fetch_data(cls):
-        return cls.DATASETS
-
-    @classmethod
-    def get_header(cls, data):
-        return cls.header
-
-    @classmethod
-    def get_row(cls, i, row_data):
-        return DatasetCards.CARDS[row_data]
 
 
 def _get_doc(func: Callable[[], Any]) -> str:
@@ -855,6 +775,73 @@ class DatasetCards:
             if img.width > IMG_WIDTH or img.height > IMG_HEIGHT:
                 img.thumbnail(size=(IMG_WIDTH, IMG_HEIGHT))
                 img.save(img_path)
+
+
+class DatasetGalleryTable(DocTable):
+    # Sequence of datasets (by name) to include in the table
+    DATASETS: Sequence[str] = None
+
+    @classmethod
+    def fetch_data(cls):
+        """Return a list of dataset names to include in the gallery ."""
+        return cls.DATASETS
+
+    @classmethod
+    def get_header(cls, data):
+        """Return an empty string.
+
+        Gallery tables aren't really tables, they're rows of cards,
+        so a header doesn't apply.
+        """
+        return ""
+
+    @classmethod
+    def get_row(cls, i, dataset_name):
+        """Return the rst card for a given dataset name."""
+        return DatasetCards.CARDS[dataset_name]
+
+
+class DatasetGalleryDownloadsTable(DatasetGalleryTable):
+    """Class to generate a table of all downloadable dataset cards."""
+
+    # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
+    # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
+    path = f"{DATASET_GALLERY_TABLE_DIR}/downloads_table.rest"
+
+    DATASETS = DatasetCards.CARDS
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        """Return the card along with its references.
+
+        References should only be included once (e.g. by this class).
+        """
+        return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
+
+
+class DatasetGalleryMedicalTable(DocTable):
+    """Class to generate a table of medical dataset cards."""
+
+    path = f"{DATASET_GALLERY_TABLE_DIR}/medical_table.rest"
+
+    DATASETS = sorted(
+        (
+            'brain',
+            'brain_atlas_with_sides',
+            'chest',
+            'carotid',
+            'dicom_stack',
+            'embryo',
+            'foot_bones',
+            'frog',
+            'frog_tissue',
+            'head',
+            'head_2',
+            'knee',
+            'knee_full',
+            'prostate',
+        )
+    )
 
 
 def make_all_tables():
