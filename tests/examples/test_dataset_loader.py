@@ -369,7 +369,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     def files_func():
         return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 
-    loader = _MultiFileDownloadableLoadable(files_func)
+    loader = _MultiFileDownloadableLoadable(files_func, load_func=_load_as_multiblock)
     loader.download()
     assert len(loader.path) == 4
     assert loader.num_files == 6
@@ -377,6 +377,8 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert os.path.isfile(loader.path[1])
     assert os.path.isfile(loader.path[2])
     assert os.path.isdir(loader.path[3])
+    assert loader._filesize_bytes == (60449, 231, 124992, 1583688)
+    assert loader._filesize_format == ('60.4 KB', '231 B', '125.0 KB', '1.6 MB')
     assert loader._total_size_bytes == 1769360
     assert loader.total_size == '1.8 MB'
     assert loader.unique_extension == ('.dcm', '.mhd', '.raw', '.vtp')
@@ -385,12 +387,17 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert isinstance(loader._reader[1], pv.MetaImageReader)
     assert loader._reader[2] is None
     assert isinstance(loader._reader[3], pv.DICOMReader)
-    assert loader.unique_reader_type == (pv.XMLPolyDataReader, pv.MetaImageReader, pv.DICOMReader)
+    assert set(loader.unique_reader_type) == {
+        pv.XMLPolyDataReader,
+        pv.DICOMReader,
+        pv.MetaImageReader,
+    }
     assert loader.dataset is None
     assert loader.unique_dataset_type is None
     loader.load()
-    assert type(loader.dataset) is tuple
-    assert set(loader.unique_dataset_type) == {pv.PolyData, pv.ImageData}
+    assert type(loader.dataset) is pv.MultiBlock
+    assert set(loader.unique_dataset_type) == {pv.MultiBlock, pv.ImageData, pv.PolyData}
+    assert loader.dataset.keys() == ['dataset0', 'dataset1', 'dataset2']
     assert loader.source_name == (
         'cow.vtp',
         'HeadMRVolume.mhd',
@@ -411,14 +418,23 @@ def test_dataset_loader_from_nested_files_and_directory(
     )
 
 
-def test_reader_returns_none(dataset_loader_one_file):
+def test_load_dataset_no_reader(dataset_loader_one_file):
+    # Test using dataset with .npy file
     dataset = downloads._dataset_cloud_dark_matter
+
     dataset.download()
     match = '`pyvista.get_reader` does not support a file with the .npy extension'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(dataset.path)
     assert dataset.unique_extension == '.npy'
     assert dataset._reader is None
+    assert dataset.unique_reader_type is None
+
+    # try loading .npy file directly
+    loader = _SingleFileLoadable(dataset.path)
+    match = f'Error loading dataset from path:\n\t{dataset.path}'
+    with pytest.raises(RuntimeError, match=match):
+        loader.load()
 
 
 def test_format_file_size():

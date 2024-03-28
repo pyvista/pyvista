@@ -428,17 +428,20 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
 
     @property
     def path(self) -> Tuple[str, ...]:
-        return tuple(_flatten_nested_path_sequence([file.path for file in self._file_objects]))
+        return tuple(_flatten_nested_sequence([file.path for file in self._file_objects]))
 
     @property
     def path_loadable(self) -> Tuple[str, ...]:
+
         return tuple(
             [file.path for file in self._file_objects if isinstance(file, _SingleFileLoadable)]
         )
 
     @property
     def _filesize_bytes(self) -> Tuple[int, ...]:
-        return tuple([file._filesize_bytes for file in self._file_objects])
+        return tuple(
+            _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects])
+        )
 
     @property
     def _filesize_format(self) -> Tuple[str, ...]:
@@ -458,7 +461,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
-        reader = [file._reader for file in self._file_objects]
+        reader = _flatten_nested_sequence([file._reader for file in self._file_objects])
         # flatten in case any file objects themselves are multifiles
         reader_out: List[pv.BaseReader] = []
         for r in reader:
@@ -480,31 +483,28 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
     @property
     def source_name(self) -> Tuple[str, ...]:
         name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
-        return tuple(_flatten_nested_path_sequence(name))
+        return tuple(_flatten_nested_sequence(name))
 
     def download(self) -> Tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
-        path_out = _flatten_nested_path_sequence(path)
+        path_out = _flatten_nested_sequence(path)
         assert all(os.path.isfile(p) or os.path.isdir(p) for p in path_out)
         return tuple(path_out)
 
 
-def _flatten_nested_path_sequence(
-    path: Union[
-        str,
-        Union[List[str], Tuple[str, ...]],
-        Sequence[Union[str, Union[List[str], Tuple[str, ...]]]],
-    ]
-):
-    """Flatten path or nested sequences of paths and return a single path or a list of paths."""
-    if isinstance(path, str):
-        return path
-    else:
-        path_out = []
-        for p in path:
-            path_out.append(p) if isinstance(p, str) else path_out.extend(p)
-        return path_out
+_ScalarType = TypeVar('_ScalarType', int, str, pv.BaseReader)
+
+
+def _flatten_nested_sequence(path: Sequence[Union[_ScalarType, Sequence[_ScalarType]]]):
+    """Flatten nested sequences of and return a single path or a list of paths."""
+    flat: List[_ScalarType] = []
+    for p in path:
+        if isinstance(p, Sequence) and not isinstance(p, str):
+            flat.extend(p)
+        else:
+            flat.append(p)
+    return flat
 
 
 def _download_dataset(
@@ -553,7 +553,8 @@ def _download_dataset(
 
 
 def _load_as_multiblock(
-    files: Sequence[_SingleFile], names: Optional[Sequence[str]] = None
+    files: Sequence[Union[_SingleFileLoadable, _MultiFileLoadable]],
+    names: Optional[Sequence[str]] = None,
 ) -> pv.MultiBlock:
     """Load multiple files as a MultiBlock.
 
@@ -562,14 +563,17 @@ def _load_as_multiblock(
     to partially specify the names parameter before passing it as loading function.
     """
     block = pv.MultiBlock()
-    names = (
-        [os.path.splitext(os.path.basename(file.path))[0] for file in files]
-        if names is None
-        else names
-    )
+    try:
+        names = (
+            [os.path.splitext(os.path.basename(file.path))[0] for file in files]  # type: ignore[misc, type-var]
+            if names is None
+            else names
+        )
+    except TypeError:
+        names = [f'dataset{num}' for num in range(len(files))]
     assert len(names) == len(files)
     [
-        block.append(file.load(), name)  # type: ignore[arg-type]
+        block.append(file.load(), name)
         for file, name in zip(files, names)
         if isinstance(file, _Loadable)
     ]
@@ -658,17 +662,8 @@ def _get_unique_extension(path: Union[str, Sequence[str]]):
         ext_set.add(ext) if isinstance(ext, str) else ext_set.update(ext)
 
     # Format output
-    ext_output = list(ext_set)
-    if len(ext_output) == 1:
-        return ext_output[0]
-    elif (
-        len(ext_output) == len(fname_sequence) and isinstance(path, str) and not os.path.isdir(path)
-    ):
-        # If num extensions matches num files, make
-        # sure the extension order matches the fname order
-        return tuple([get_ext(name) for name in path])
-    else:
-        return tuple(sorted(ext_output))
+    ext_output = tuple(ext_set)
+    return ext_output[0] if len(ext_output) == 1 else tuple(sorted(ext_output))
 
 
 def _get_unique_reader_type(
@@ -684,19 +679,12 @@ def _get_unique_reader_type(
         else [type(r) for r in reader if r is not None]
     )
 
-    # Add all reader types to the set and exclude any 'None' types
+    # Add all reader types to the set
     reader_set.update(reader_type)
-    reader_output = tuple(reader_set)
 
     # Format output
-    if len(reader_output) == 1:
-        return reader_output[0]
-    elif len(reader_type) == len(reader_output):
-        # If num readers matches num files, make
-        # sure the reader order matches the file order
-        return tuple(reader_type)
-    else:
-        return tuple(reader_output)
+    reader_output = tuple(reader_set)
+    return reader_output[0] if len(reader_output) == 1 else tuple(reader_output)
 
 
 def _get_unique_dataset_type(
@@ -708,7 +696,7 @@ def _get_unique_dataset_type(
     dataset_set: Set[DatasetTypeType] = set()
     if isinstance(dataset, Sequence):
         # Include all sub-dataset types from tuple[datataset, ...] or MultiBlock[dataset, ...]
-        [dataset_set.add(type(d)) for d in dataset if d is not None]  # type: ignore[func-returns-value]
+        [dataset_set.add(type(d)) for d in _flatten_nested_sequence(dataset)]  # type: ignore[func-returns-value]
     else:
         dataset_set.add(type(dataset))
 
