@@ -44,7 +44,7 @@ if not Path(pyvista.FIGURE_PATH).exists():
 pyvista.BUILDING_GALLERY = False
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'false'
 
-remove_from_toctrees = ["api/plotting/*", "api/utilities/*"]
+remove_from_toctrees = ["api/*"]
 
 # SG warnings
 import warnings
@@ -385,6 +385,7 @@ sphinx_gallery_conf = {
     "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
+    "plot_gallery": 'False',
 }
 
 import re
