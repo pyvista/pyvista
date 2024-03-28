@@ -52,7 +52,7 @@ Dataset Gallery
 Browse the dataset gallery to view file and instance metadata for all datasets.
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    /api/examples/dataset_gallery
 
