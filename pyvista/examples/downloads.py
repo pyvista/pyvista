@@ -8,8 +8,8 @@ using the ``download_file`` function. If you add a file to the example data
 repository, you should add a ``download-<dataset>`` method here which will
 rendered on this page.
 
-See the :ref:`Dataset Gallery <gallery_downloadable_datasets>` for detailed
-information about the datasets, including file and dataset metadata.
+See the :ref:`_dataset_gallery` for detailed information about the datasets,
+including file and dataset metadata.
 
 Examples
 --------
@@ -731,14 +731,7 @@ def download_head(load=True):  # pragma: no cover
     --------
     head_dataset
     head_2_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -789,14 +782,7 @@ def download_head_2(load=True):  # pragma: no cover
     --------
     head_2_dataset
     head_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -1024,14 +1010,7 @@ def download_knee(load=True):  # pragma: no cover
     --------
     knee_dataset
     knee_full_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -1070,14 +1049,7 @@ def download_knee_full(load=True):  # pragma: no cover
     --------
     knee_full_dataset
     knee_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2076,14 +2048,7 @@ def download_frog(load=True):  # pragma: no cover
     --------
     frog_dataset
     frog_tissue_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2135,14 +2100,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
     --------
     frog_tissue_dataset
     frog_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2231,15 +2189,7 @@ def download_chest(load=True):  # pragma: no cover
     See Also
     --------
     chest_dataset
-    carotid_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2275,6 +2225,7 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
     --------
     brain_atlas_with_sides_dataset
     brain_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2306,6 +2257,7 @@ def download_prostate(load=True):  # pragma: no cover
     See Also
     --------
     prostate_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -2566,6 +2518,7 @@ def download_brain(load=True):  # pragma: no cover
     --------
     brain_dataset
     brain_atlas_with_sides_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -3041,15 +2994,7 @@ def download_carotid(load=True):  # pragma: no cover
     See Also
     --------
     carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -3802,15 +3747,7 @@ def download_embryo(load=True):  # pragma: no cover
     See Also
     --------
     embryo_dataset
-    carotid_dataset
-    chest_dataset
-    dicom_stack_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------
@@ -5659,15 +5596,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
     See Also
     --------
     dicom_stack_dataset
-    carotid_dataset
-    chest_dataset
-    embryo_dataset
-    frog_dataset
-    frog_tissue_dataset
-    head_dataset
-    head_2_dataset
-    knee_dataset
-    knee_full_dataset
+    medical_dataset_gallery
 
     Parameters
     ----------

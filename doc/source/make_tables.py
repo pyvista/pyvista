@@ -387,6 +387,44 @@ class DatasetGalleryDownloadsTable(DocTable):
         return DatasetCards.REFS[row_data] + DatasetCards.CARDS[row_data]
 
 
+class DatasetGalleryMedicalTable(DocTable):
+    """Generate table of medical dataset."""
+
+    path = f"{DATASET_GALLERY_TABLE_DIR}/medical_table.rest"
+    header = ""
+
+    DATASETS = sorted(
+        (
+            'brain',
+            'brain_atlas_with_sides',
+            'chest',
+            'carotid',
+            'dicom_stack',
+            'embryo',
+            'foot_bones',
+            'frog',
+            'frog_tissue',
+            'head',
+            'head_2',
+            'knee',
+            'knee_full',
+            'prostate',
+        )
+    )
+
+    @classmethod
+    def fetch_data(cls):
+        return cls.DATASETS
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header
+
+    @classmethod
+    def get_row(cls, i, row_data):
+        return DatasetCards.CARDS[row_data]
+
+
 def _get_doc(func: Callable[[], Any]) -> str:
     """Return the first line of the callable's docstring."""
     return func.__doc__.splitlines()[0]
@@ -801,9 +839,11 @@ class DatasetCards:
 
 def make_all_tables():
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
-    os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
+
+    # Make dataset gallery files
     DatasetGalleryDownloadsTable.generate()
+    DatasetGalleryMedicalTable.generate()
