@@ -5,7 +5,7 @@ export PYVISTA_OFF_SCREEN := True
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-DEFAULTS	  = -w sphinx_warnings.txt -W --keep-going
+DEFAULTS	  = -w sphinx_warnings.txt
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = pyvista
 SOURCEDIR     = source
