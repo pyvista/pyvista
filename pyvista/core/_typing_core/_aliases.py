@@ -49,3 +49,6 @@ Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
 
 CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
+
+# Undocumented alias - should be expanded in docs
+_ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]

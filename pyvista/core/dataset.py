@@ -1392,7 +1392,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
+        check_valid_vector(cast(VectorLike[float], point), 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         return self.transform(
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
@@ -1453,7 +1453,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         check_valid_vector(normal, 'normal')
-        check_valid_vector(point, 'point')
+        check_valid_vector(cast(VectorLike[float], point), 'point')
         t = transformations.reflection(normal, point=point)
         return self.transform(
             t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
@@ -1746,7 +1746,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[int]:  # numpydoc ignore=RT01
+    def center(self) -> List[float]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
