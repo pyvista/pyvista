@@ -1,6 +1,5 @@
 import tempfile
 
-from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
 from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
@@ -24,9 +23,9 @@ with tempfile.TemporaryDirectory() as tmpdir:
     r = vtkXMLPartitionedDataSetReader()
     r.SetFileName(file_name)
     r.Update()
-    output_data = r.GetOutputDataObject(0)
+    output_data = pv.wrap(r.GetOutputDataObject(0))
 
-assert isinstance(output_data, vtkPartitionedDataSet)
+assert isinstance(output_data, pv.PartitionedDataSet)
 assert output_data.GetNumberOfPartitions() == 2
 
 for i in range(output_data.GetNumberOfPartitions()):

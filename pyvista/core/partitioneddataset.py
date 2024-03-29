@@ -1,7 +1,27 @@
 """Contains the PartitionedDataSet class."""
 
 from . import _vtk_core as _vtk
+from .dataset import DataObject
 
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet):
-    """DataSet which composite dataset to encapsulates a dataset consisting of partitions."""
+class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
+    """Wrapper for the ``vtkPartitionedDataSet`` class.
+
+    DataSet which composite dataset to encapsulates a dataset consisting of partitions.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the PartitionedDataSet."""
+        super().__init__(*args, **kwargs)
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkPartitionedDataSet):
+                deep = kwargs.get('deep', True)
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    self.shallow_copy(args[0])
