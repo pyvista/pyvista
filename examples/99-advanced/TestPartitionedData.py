@@ -45,7 +45,26 @@ class SimpleFilter(PreserveTypeAlgorithmBase):
         outInfo.GetInformationObject(0).Set(dm.vtkDataObject.DATA_OBJECT(), opt)
         return 1
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo):
+        """Perform algorithm execution.
+
+        Parameters
+        ----------
+        _request : vtk.vtkInformation
+            The request object.
+
+        inInfo : vtk.vtkInformationVector
+            Information about the input data.
+
+        outInfo : vtk.vtkInformationVector
+            Information about the output data.
+
+        Returns
+        -------
+        int
+            1 on success.
+
+        """
         inp = dm.vtkDataObject.GetData(inInfo[0])
         print("SimpleFilter iter %d: Input: %s" % (self.Counter, inp.GetClassName()))
         opt = dm.vtkDataObject.GetData(outInfo)
