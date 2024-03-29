@@ -11,13 +11,15 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, Iterable, List, Literal, Type, Union, final
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Type, Union, final
 
 import numpy as np
 
+import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _dataset_loader, downloads
+from pyvista.examples._dataset_loader import _MultiFileDownloadableLoadable, _SingleFileDownloadable
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -457,8 +459,8 @@ def _as_iterable(item) -> Iterable[Any]:
     return [item] if not isinstance(item, (Iterable, str)) else item
 
 
-class DatasetCards:
-    """Create a rst-formatted card for a dataset.
+class DatasetCard:
+    """Class for creating a rst-formatted card for a dataset.
 
     Create a card with a 1-column grid with two grid items (rows).
     The first row is a nested grid with two items displayed as a single
@@ -552,42 +554,28 @@ class DatasetCards:
 
     _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
 
-    REFS = {}
-    CARDS = {}
-    LOADERS = {}
-
-    @classmethod
-    def make_cards(cls):
-        """Download and load all datasets and make a card for each dataset."""
-        # Collect all `_dataset_<name>` file loaders
-        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
-
-        for name, item in sorted(module_members.items()):
-            # Extract data set name from loader name
-
-            if name.startswith('_dataset_') and isinstance(
-                item,
-                (
-                    _dataset_loader._SingleFileDownloadable,
-                    _dataset_loader._MultiFileDownloadableLoadable,
-                ),
-            ):
-                dataset_name = name.replace('_dataset_', '')
-                dataset_loader = item
-                DatasetCards._make_card(dataset_name, dataset_loader)
-
-    @classmethod
-    def _make_card(
-        cls,
+    def __init__(
+        self,
         dataset_name: str,
         loader: Union[
             _dataset_loader._MultiFileDownloadableLoadable,
             _dataset_loader._SingleFileDownloadableLoadable,
         ],
     ):
+        self.dataset_name = dataset_name
+        self.loader = loader
+        self._tags: List[str] = []
+        self.card = None
+        self.ref = None
 
+    def add_tag(self, tag: str):
+        self._tags.append(tag)
+
+    def generate(self):
+        dataset_name = self.dataset_name
+        loader = self.loader
         # Get dataset name-related info
-        index_name, ref_name, header, func_ref, func_doc, func_name = cls._format_dataset_name(
+        index_name, ref_name, header, func_ref, func_doc, func_name = self._format_dataset_name(
             dataset_name
         )
         # Get file and instance metadata
@@ -604,23 +592,23 @@ class DatasetCards:
             dataset_type = NOT_AVAILABLE
             dataset_repr = NOT_AVAILABLE_NO_BACKTICKS
             datasource_links = NOT_AVAILABLE_NO_BACKTICKS
-            img_path = cls._NOT_AVAILABLE_IMG_PATH
+            img_path = self._NOT_AVAILABLE_IMG_PATH
         else:
             # Get data from loader
             loader.load()
-            file_size = cls._format_file_size(loader)
-            num_files = cls._format_num_files(loader)
-            file_ext = cls._format_file_ext(loader)
-            reader_type = cls._format_reader_type(loader)
-            dataset_type = cls._format_dataset_type(loader)
-            dataset_repr = cls._format_dataset_repr(loader, cls._REPR_INDENT_LEVEL)
-            datasource_links = cls._format_datasource_links(loader, cls._LINKS_INDENT_LEVEL)
-            img_path = cls._search_image_path(func_name)
+            file_size = self._format_file_size(loader)
+            num_files = self._format_num_files(loader)
+            file_ext = self._format_file_ext(loader)
+            reader_type = self._format_reader_type(loader)
+            dataset_type = self._format_dataset_type(loader)
+            dataset_repr = self._format_dataset_repr(loader, self._REPR_INDENT_LEVEL)
+            datasource_links = self._format_datasource_links(loader, self._LINKS_INDENT_LEVEL)
+            img_path = self._search_image_path(func_name)
 
-        cls._process_img(img_path)
+        self._process_img(img_path)
 
-        ref = cls.ref_template.format(index_name, ref_name)
-        card = cls.card_template.format(
+        ref = self.ref_template.format(index_name, ref_name)
+        card = self.card_template.format(
             func_ref,
             header,
             func_doc,
@@ -633,11 +621,7 @@ class DatasetCards:
             dataset_repr,
             datasource_links,
         )
-        cls.REFS[dataset_name] = ref
-        cls.CARDS[dataset_name] = card
-        cls.LOADERS[dataset_name] = loader
-
-        loader.unload()
+        return ref, card
 
     @staticmethod
     def _format_dataset_name(dataset_name: str):
@@ -785,6 +769,49 @@ class DatasetCards:
                 img.save(img_path)
 
 
+class DatasetCardFetcher:
+    CARDS_OBJ_DICT: Dict[str, DatasetCard] = {}
+    CARDS_RST_REF_DICT: Dict[str, str] = {}
+    CARDS_RST_DICT: Dict[str, str] = {}
+
+    @classmethod
+    def init_cards(cls):
+        """Download and load all datasets and initialize a card objects for each dataset."""
+        # Collect all `_dataset_<name>` file loaders
+        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(pv.examples.downloads))
+
+        for name, item in sorted(module_members.items()):
+            # Extract data set name from loader name
+
+            if name.startswith('_dataset_') and isinstance(
+                item,
+                (
+                    _SingleFileDownloadable,
+                    _MultiFileDownloadableLoadable,
+                ),
+            ):
+                # Make card
+                dataset_name = name.replace('_dataset_', '')
+                dataset_loader = item
+                cls.CARDS_OBJ_DICT[dataset_name] = DatasetCard(dataset_name, dataset_loader)
+
+                # Load data
+                try:
+                    dataset_loader.download()
+                    dataset_loader.load()
+                except pyvista.VTKVersionError:
+                    # deal with this later
+                    pass
+
+    @classmethod
+    def generate_cards(cls):
+        """Generate formatted rst output for all cards."""
+        for name in cls.CARDS_OBJ_DICT:
+            ref, card = cls.CARDS_OBJ_DICT[name].generate()
+            cls.CARDS_RST_REF_DICT[name] = ref
+            cls.CARDS_RST_DICT[name] = card
+
+
 class GalleryTable(DocTable):
     # Subclasses should give the table name
     # The name should end with '_table'
@@ -793,6 +820,8 @@ class GalleryTable(DocTable):
     # Dataset references should only be included once by a single table,
     # e.g. table with all downloadable datasets
     _include_ref = False
+
+    dataset_names: Optional[Iterable[str]] = None
 
     @property
     @final
@@ -804,10 +833,23 @@ class GalleryTable(DocTable):
         return f"{DATASET_GALLERY_TABLE_DIR}/{cls.name}.rest"
 
     @classmethod
-    @abstractmethod
     def fetch_data(cls):
-        """Return a list of dataset names to include in the gallery ."""
-        ...
+
+        return cls.dataset_names
+
+    @classmethod
+    @abstractmethod
+    def fetch_dataset_names(cls) -> Iterable[str]:
+        """Return all dataset names to include in the gallery ."""
+
+    @classmethod
+    def init_dataset_names(cls):
+        names = cls.fetch_dataset_names()
+        assert names is not None, (
+            f'Dataset names cannot be None, {cls.fetch_dataset_names} must return '
+            f'a string iterable.'
+        )
+        cls.dataset_names = names
 
     @classmethod
     @final
@@ -827,9 +869,11 @@ class GalleryTable(DocTable):
         References may optionally be included but
         should only be included in a single table.
         """
+        card = DatasetCardFetcher.CARDS_RST_DICT[dataset_name]
         if cls._include_ref:
-            return DatasetCards.REFS[dataset_name] + DatasetCards.CARDS[dataset_name]
-        return DatasetCards.CARDS[dataset_name]
+            ref = DatasetCardFetcher.CARDS_RST_REF_DICT[dataset_name]
+            return ref + card
+        return card
 
 
 class DownloadsGalleryTable(GalleryTable):
@@ -839,8 +883,8 @@ class DownloadsGalleryTable(GalleryTable):
     _include_ref = True
 
     @classmethod
-    def fetch_data(cls):
-        return DatasetCards.CARDS
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.CARDS_OBJ_DICT.keys()
 
 
 class ImageDataGalleryTable(GalleryTable):
@@ -849,7 +893,7 @@ class ImageDataGalleryTable(GalleryTable):
     name = 'imagedata_table'
 
     @classmethod
-    def fetch_data(cls):
+    def fetch_dataset_names(cls):
         return _fetch_imagedata('all')
 
 
@@ -859,7 +903,7 @@ class ImageData2DGalleryTable(GalleryTable):
     name = 'imagedata_2d_table'
 
     @classmethod
-    def fetch_data(cls):
+    def fetch_dataset_names(cls):
         return _fetch_imagedata('2d')
 
 
@@ -869,7 +913,7 @@ class ImageData3DGalleryTable(GalleryTable):
     name = 'imagedata_3d_table'
 
     @classmethod
-    def fetch_data(cls):
+    def fetch_dataset_names(cls):
         return _fetch_imagedata('3d')
 
 
@@ -879,7 +923,7 @@ class MedicalGalleryTable(GalleryTable):
     name = 'medical_table'
 
     @classmethod
-    def fetch_data(cls):
+    def fetch_dataset_names(cls):
         return sorted(
             (
                 'brain',
@@ -906,9 +950,8 @@ def _fetch_imagedata(kind: Literal['all', '2d', '3d']):
     def _is_2d(data):
         return np.any(np.array(data.dimensions) == 1)
 
-    for name, loader in DatasetCards.LOADERS.items():
-        # We want to avoid re-loading the data if possible,
-        # so check if dataset has ImageData first
+    for name, card in DatasetCardFetcher.CARDS_OBJ_DICT.items():
+        loader = card.loader
         if pv.ImageData in _as_iterable(loader.unique_dataset_type):
             if kind == 'all':
                 dataset_names.append(name)
@@ -935,13 +978,18 @@ def make_all_tables():
 
     # Make dataset gallery tables
     os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
-    DatasetCards.make_cards()
-    DownloadsGalleryTable.generate()
+    DatasetCardFetcher.init_cards()
 
-    # # ImageData tables
-    # ImageDataGalleryTable.generate()
-    # ImageData2DGalleryTable.generate()
-    # ImageData3DGalleryTable.generate()
-    #
-    # # Categorical tables
-    # MedicalGalleryTable.generate()
+    DownloadsGalleryTable.init_dataset_names()
+    ImageDataGalleryTable.init_dataset_names()
+    ImageData2DGalleryTable.init_dataset_names()
+    ImageData3DGalleryTable.init_dataset_names()
+    MedicalGalleryTable.init_dataset_names()
+
+    DatasetCardFetcher.generate_cards()
+
+    DownloadsGalleryTable.generate()
+    ImageDataGalleryTable.generate()
+    ImageData2DGalleryTable.generate()
+    ImageData3DGalleryTable.generate()
+    MedicalGalleryTable.generate()
