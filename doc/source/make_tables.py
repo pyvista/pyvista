@@ -1151,19 +1151,6 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
         return sorted(surface_polydata_names)
 
 
-# class CompositeMiscGalleryCarousel(GalleryCarousel):
-#     """Class to generate a carousel of composite and misc dataset cards."""
-#
-#     name = 'compositemisc_carousel'
-#     doc = ':class:`~pyvista.MultiBlock` datasets and any datasets with non-standard representations.'
-#
-#     @classmethod
-#     def fetch_dataset_names(cls):
-#         multiblock_names = DatasetCardFetcher.fetch_by_datatype(pv.MultiBlock)
-#         misc_names = DatasetCardFetcher.fetch_and_filter(_misc_dataset_filter)
-#         return sorted(multiblock_names + misc_names)
-
-
 class MiscGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of misc dataset cards."""
 
