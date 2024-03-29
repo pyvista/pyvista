@@ -17,7 +17,7 @@ from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
-
+from pyvista.plotting.themes import DocumentTheme
 
 @pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
 def test_plotter_image_before_show():
@@ -524,6 +524,6 @@ def test_edge_opacity(sphere):
     assert actor.prop.edge_opacity == edge_opacity
 
 def test_plotter_theme_axes_box(sphere):
-    my_theme = themes.DocumentTheme()
+    my_theme = DocumentTheme()
     my_theme.axes.box = True
     cpos = pv.Sphere().plot(theme=my_theme)
