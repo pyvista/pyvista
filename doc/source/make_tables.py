@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+import functools
 import inspect
 import io
 import os
@@ -845,7 +846,7 @@ class DatasetCardFetcher:
     @classmethod
     def fetch_and_filter(cls, filter_func: Callable[[], bool]) -> List[str]:
         """Return dataset names whose dataset objects return 'True' for a given function."""
-        # Store output names in a dict to preserve order
+        # Store output names in a dict to preserve order and make entries unique
         dataset_names_out = {}
         for dataset_name, card in cls.CARDS_OBJ_DICT.items():
             dataset_iterable = card.loader.dataset_iterable
@@ -1006,9 +1007,9 @@ class ImageDataTextureGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        imagedata = DatasetCardFetcher.fetch_by_datatype(pv.ImageData)
-        texture = DatasetCardFetcher.fetch_by_datatype(pv.Texture)
-        return sorted(imagedata + texture)
+        imagedata_names = DatasetCardFetcher.fetch_by_datatype(pv.ImageData)
+        texture_names = DatasetCardFetcher.fetch_by_datatype(pv.Texture)
+        return sorted(imagedata_names + texture_names)
 
 
 class ImageData3DGalleryCarousel(GalleryCarousel):
@@ -1066,10 +1067,10 @@ class GridGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        rectilinear = DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
-        structured = DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
-        unstructured = DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
-        return sorted(rectilinear + structured + unstructured)
+        rectilinear_names = DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
+        structured_names = DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
+        unstructured_names = DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
+        return sorted(rectilinear_names + structured_names + unstructured_names)
 
 
 class RectilinearGridGalleryCarousel(GalleryCarousel):
@@ -1109,13 +1110,13 @@ class PointSetPolyDataGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of PointSet and PolyData cards."""
 
     name = 'pointset_polydata_carousel'
-    doc = ':class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` datasets.'
+    doc = ':class:`~pyvista.PointSet` and :class:`~pyvista.PolyData` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
-        pointset = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
-        polydata = DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
-        return sorted(pointset + polydata)
+        pointset_names = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        polydata_names = DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
+        return sorted(pointset_names + polydata_names)
 
 
 class PointCloudGalleryCarousel(GalleryCarousel):
@@ -1126,23 +1127,119 @@ class PointCloudGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        pointset = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
-        vertex_polydata_filter = lambda poly: poly.n_verts == poly.n_cells
-        vertex_polydata = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
-        return sorted(pointset + vertex_polydata)
+        pointset_names = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        vertex_polydata_filter = (
+            lambda poly: isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
+        )
+        vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
+        return sorted(pointset_names + vertex_polydata_names)
 
 
 class SurfaceMeshGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of triangle surface mesh cloud cards."""
+    """Class to generate a carousel of surface mesh cards."""
 
     name = 'surfacemesh_carousel'
     doc = ':class:`~pyvista.PolyData` surface meshes.'
 
     @classmethod
     def fetch_dataset_names(cls):
-        surface_polydata_filter = lambda poly: (poly.n_cells - poly.n_verts - poly.n_lines) > 0
-        surface_polydata = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
-        return sorted(surface_polydata)
+        surface_polydata_filter = (
+            lambda poly: isinstance(poly, pv.PolyData)
+            and (poly.n_cells - poly.n_verts - poly.n_lines) > 0
+        )
+        surface_polydata_names = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
+        return sorted(surface_polydata_names)
+
+
+# class CompositeMiscGalleryCarousel(GalleryCarousel):
+#     """Class to generate a carousel of composite and misc dataset cards."""
+#
+#     name = 'compositemisc_carousel'
+#     doc = ':class:`~pyvista.MultiBlock` datasets and any datasets with non-standard representations.'
+#
+#     @classmethod
+#     def fetch_dataset_names(cls):
+#         multiblock_names = DatasetCardFetcher.fetch_by_datatype(pv.MultiBlock)
+#         misc_names = DatasetCardFetcher.fetch_and_filter(_misc_dataset_filter)
+#         return sorted(multiblock_names + misc_names)
+
+
+class MiscGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of misc dataset cards."""
+
+    name = 'misc_carousel'
+    doc = 'Datasets which have a non-standard representation.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        misc_dataset_filter = lambda obj: not isinstance(
+            obj, (pv.MultiBlock, pv.Texture, pv.DataSet)
+        )
+        return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
+
+
+class MultiBlockGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of MultiBlock dataset cards."""
+
+    name = 'multiblock_carousel'
+    doc = ':class:`~pyvista.MultiBlock` datasets.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_by_datatype(pv.MultiBlock)
+
+
+def _multiblock_filter(multiblock, kind: Literal['hetero', 'homo']):
+    is_multiblock = lambda obj: isinstance(obj, pv.MultiBlock)
+    is_not_singular = lambda sized: len(sized) > 1
+
+    is_homogeneous = lambda multi: all(type(blk) == type(multi[0]) for blk in multi)  # noqa: E721
+    if kind == 'hetero':
+        return (
+            is_multiblock(multiblock)
+            and is_not_singular(multiblock)
+            and not is_homogeneous(multiblock)
+        )
+    else:
+        return (
+            is_multiblock(multiblock) and is_not_singular(multiblock) and is_homogeneous(multiblock)
+        )
+
+
+class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of heterogeneous MultiBlock dataset cards."""
+
+    name = 'multiblock_hetero_carousel'
+    doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of different mesh types.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        multiblock_hetero_filter = functools.partial(_multiblock_filter, kind='hetero')
+        return DatasetCardFetcher.fetch_and_filter(multiblock_hetero_filter)
+
+
+class MultiBlockHomoGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of homogeneous MultiBlock dataset cards."""
+
+    name = 'multiblock_homo_carousel'
+    doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of the same mesh type.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        multiblock_homo_filter = functools.partial(_multiblock_filter, kind='homo')
+        return DatasetCardFetcher.fetch_and_filter(multiblock_homo_filter)
+
+
+class MultiBlockSingleGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of MultiBlock dataset cards which contain a single block."""
+
+    name = 'multiblock_single_carousel'
+    doc = ':class:`~pyvista.MultiBlock` datasets with one block.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        multiblock_single_filter = lambda obj: isinstance(obj, pv.MultiBlock) and obj.n_blocks == 1
+        return DatasetCardFetcher.fetch_and_filter(multiblock_single_filter)
 
 
 class MedicalGalleryCarousel(GalleryCarousel):
@@ -1212,6 +1309,11 @@ def make_all_tables():
             RectilinearGridGalleryCarousel,
             StructuredGridGalleryCarousel,
             UnstructuredGridGalleryCarousel,
+            MultiBlockGalleryCarousel,
+            MultiBlockHeteroGalleryCarousel,
+            MultiBlockHomoGalleryCarousel,
+            MultiBlockSingleGalleryCarousel,
+            MiscGalleryCarousel,
             MedicalGalleryCarousel,
         ]
     )
