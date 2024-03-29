@@ -1,12 +1,12 @@
 import tempfile
 
-from vtkmodules import vtkCommonDataModel as dm
+from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
 from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
 import pyvista as pv
 
-p = dm.vtkPartitionedDataSet()
+p = vtkPartitionedDataSet()
 
 partition1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
 partition2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
