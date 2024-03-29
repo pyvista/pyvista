@@ -1,6 +1,6 @@
+"""
 .. _create_partitioned_data_set:
 
-"""
 Creating a PartitionedDataSet
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
