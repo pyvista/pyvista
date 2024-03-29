@@ -26,12 +26,12 @@ with tempfile.TemporaryDirectory() as tmpdir:
     r.Update()
     o = r.GetOutputDataObject(0)
 
+    number_of_partitions = o.GetNumberOfPartitions()
     assert o.IsA("vtkPartitionedDataSet")
-    np = o.GetNumberOfPartitions()
-    assert np == 2
+    assert number_of_partitions == 2
 
-    for i in range(np):
-        d = o.GetPartition(i)
-        d2 = p.GetPartition(i)
-        assert d.IsA("vtkImageData")
-        assert d.GetNumberOfCells() == d2.GetNumberOfCells()
+    for i in range(number_of_partitions):
+        partition = o.GetPartition(i)
+        partition_ = p.GetPartition(i)
+        assert partition.IsA("vtkImageData")
+        assert partition.GetNumberOfCells() == partition_.GetNumberOfCells()
