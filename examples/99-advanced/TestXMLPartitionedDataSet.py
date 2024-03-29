@@ -1,23 +1,22 @@
 import tempfile
 
-from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic
+from vtkmodules import vtkCommonDataModel as dm
 from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
+import pyvista as pv
+
 p = dm.vtkPartitionedDataSet()
 
-s = ic.vtkRTAnalyticSource()
-s.SetWholeExtent(0, 10, 0, 10, 0, 5)
-s.Update()
+wavelet1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
 
 p1 = dm.vtkImageData()
-p1.ShallowCopy(s.GetOutput())
+p1.ShallowCopy(wavelet1)
 
-s.SetWholeExtent(0, 10, 0, 10, 5, 10)
-s.Update()
+wavelet2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
 
 p2 = dm.vtkImageData()
-p2.ShallowCopy(s.GetOutput())
+p2.ShallowCopy(wavelet2)
 
 p.SetPartition(0, p1)
 p.SetPartition(1, p2)
