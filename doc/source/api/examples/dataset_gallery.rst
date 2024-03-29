@@ -12,9 +12,7 @@ Browse PyVista datasets and their metadata.
 
             Datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.
 
-            .. card-carousel:: 2
-
-                .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
+            .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
 
 
 
