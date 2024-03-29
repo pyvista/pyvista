@@ -6,7 +6,7 @@ from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
 import pyvista as pv
 
-input_data = vtkPartitionedDataSet()
+input_data = pv.PartitionedDataSet()
 
 partition1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
 partition2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))

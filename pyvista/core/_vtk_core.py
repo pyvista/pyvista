@@ -179,6 +179,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
+    vtkPartitionedDataSet,
     vtkPerlinNoise,
     vtkPiecewiseFunction,
     vtkPlane,
