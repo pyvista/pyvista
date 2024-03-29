@@ -12,11 +12,13 @@ Browse PyVista datasets and their metadata.
 
             Datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.
 
-            .. include:: /api/examples/dataset-gallery/downloads_table.rest
+            .. card-carousel:: 2
+
+                .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
 
 
 
-.. dropdown:: Browse **ImageData** Datasets
+.. dropdown:: Browse ImageData Datasets
 
     .. tab-set::
 
@@ -24,19 +26,19 @@ Browse PyVista datasets and their metadata.
 
             Datasets which are loaded as :class:`~pyvista.ImageData`
 
-            .. include:: /api/examples/dataset-gallery/imagedata_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_carousel.rest
 
         .. tab-item:: 2D Images
 
             Images with two-dimensional data.
 
-            .. include:: /api/examples/dataset-gallery/imagedata_2d_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_2d_carousel.rest
 
         .. tab-item:: 3D Images
 
             Three-dimensional volumetric images.
 
-            .. include:: /api/examples/dataset-gallery/imagedata_3d_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_3d_carousel.rest
 
 
 .. dropdown:: Browse **RectilinearGrid** Datasets
@@ -48,7 +50,7 @@ Browse PyVista datasets and their metadata.
             Datasets which are loaded as :class:`~pyvista.RectilinearGrid`.
 
             ..
-                .. include:: /api/examples/dataset-gallery/rectilineargrid_table.rest
+                .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
 
 
 
@@ -61,7 +63,7 @@ Browse PyVista datasets and their metadata.
             Datasets which are loaded as :class:`~pyvista.StructuredGrid`
 
             ..
-                .. include:: /api/examples/dataset-gallery/structuredgrid_table.rest
+                .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
 
 
 
@@ -74,7 +76,7 @@ Browse PyVista datasets and their metadata.
             Datasets which are loaded as :class:`~pyvista.UnstructuredGrid`
 
             ..
-                .. include:: /api/examples/dataset-gallery/unstructuredgrid_table.rest
+                .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
 
 
 
@@ -87,14 +89,14 @@ Browse PyVista datasets and their metadata.
             Datasets which are loaded as :class:`~pyvista.Texture`
 
             ..
-                .. include:: /api/examples/dataset-gallery/texture_table.rest
+                .. include:: /api/examples/dataset-gallery/texture_carousel.rest
 
         .. tab-item:: Cubemaps
 
             Textures with six images: one for each side of the cube.
 
             ..
-                .. include:: /api/examples/dataset-gallery/cubemap_table.rest
+                .. include:: /api/examples/dataset-gallery/cubemap_carousel.rest
 
 
 
@@ -106,4 +108,4 @@ Browse PyVista datasets and their metadata.
 
             Medical datasets.
 
-            .. include:: /api/examples/dataset-gallery/medical_table.rest
+            .. include:: /api/examples/dataset-gallery/medical_carousel.rest

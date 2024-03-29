@@ -25,7 +25,7 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableLoadable, _Si
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
 COLORS_TABLE_DIR = "api/utilities"
-DATASET_GALLERY_TABLE_DIR = "api/examples/dataset-gallery"
+DATASET_GALLERY_DIR = "api/examples/dataset-gallery"
 DATASET_GALLERY_IMAGE_DIR = "images/dataset-gallery"
 
 
@@ -384,7 +384,12 @@ def _repeat_string(string: str, num_repeat: int) -> str:
 
 
 def _pad_lines(
-    lines: List[str], *, pad_left: str = '', pad_right: str = '', ljust=True, return_shape=False
+    lines: Union[str, List[str]],
+    *,
+    pad_left: str = '',
+    pad_right: str = '',
+    ljust=False,
+    return_shape=False,
 ):
     """Add padding to the left or right of each line with a specified string.
 
@@ -395,9 +400,8 @@ def _pad_lines(
 
     Parameters
     ----------
-    lines : list[str]
-        Lines to be padded. If a tuple of lists is given, all lists are padded together
-        as if they were one, but returned as separate lists.
+    lines : str | list[str]
+        Lines to be padded. If a string, it is first split with splitlines.
 
     pad_left : str, default: ''
         String to pad the left of each line with.
@@ -413,13 +417,18 @@ def _pad_lines(
         If ``True``, also return the width and height of the padded lines.
 
     """
+    if is_str := isinstance(lines, str):
+        lines = lines.splitlines()
     # Justify
     lines = _ljust_lines(lines) if ljust else lines
     # Pad
     lines = [pad_left + line + pad_right for line in lines]
+
     if return_shape:
-        return lines, _max_width(lines), len(lines)
-    return lines
+        width, height = _max_width(lines), len(lines)
+        lines = '\n'.join(lines) if is_str else lines
+        return lines, width, height
+    return '\n'.join(lines) if is_str else lines
 
 
 def _indent_multi_line_string(
@@ -503,7 +512,7 @@ class DatasetCard:
         """
         |.. card:: {}
         |
-        |   {}
+        |   **{}**
         |   ^^^
         |   {}
         |
@@ -542,6 +551,7 @@ class DatasetCard:
         |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
         |      {}
+        |
         |
         """
     )
@@ -595,7 +605,6 @@ class DatasetCard:
             img_path = self._NOT_AVAILABLE_IMG_PATH
         else:
             # Get data from loader
-            loader.load()
             file_size = self._format_file_size(loader)
             num_files = self._format_num_files(loader)
             file_ext = self._format_file_ext(loader)
@@ -621,7 +630,12 @@ class DatasetCard:
             dataset_repr,
             datasource_links,
         )
-        return ref, card
+        # Create separate version of the card with index
+        # and ref directives inserted below card title
+        ref_lines = _pad_lines(ref.splitlines(), pad_left='   ')
+        card_lines = card.splitlines()
+        card_with_ref = '\n'.join((*card_lines[0:2], *ref_lines, *card_lines[3:]))
+        return card, card_with_ref
 
     @staticmethod
     def _format_dataset_name(dataset_name: str):
@@ -807,19 +821,16 @@ class DatasetCardFetcher:
     def generate_cards(cls):
         """Generate formatted rst output for all cards."""
         for name in cls.CARDS_OBJ_DICT:
-            ref, card = cls.CARDS_OBJ_DICT[name].generate()
-            cls.CARDS_RST_REF_DICT[name] = ref
-            cls.CARDS_RST_DICT[name] = card
+            card, card_with_ref = cls.CARDS_OBJ_DICT[name].generate()
+            # indent one level from the carousel header directive
+            cls.CARDS_RST_REF_DICT[name] = _pad_lines(card_with_ref, pad_left='   ')
+            cls.CARDS_RST_DICT[name] = _pad_lines(card, pad_left='   ')
 
 
-class GalleryTable(DocTable):
-    # Subclasses should give the table name
-    # The name should end with '_table'
+class GalleryCarousel(DocTable):
+    # Subclasses should give the carousel a name
+    # The name should end with '_carousel'
     name = None
-    # Whether to include references or not
-    # Dataset references should only be included once by a single table,
-    # e.g. table with all downloadable datasets
-    _include_ref = False
 
     dataset_names: Optional[Iterable[str]] = None
 
@@ -829,8 +840,8 @@ class GalleryTable(DocTable):
         # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
         # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
         assert isinstance(cls.name, str), 'Table name must be defined.'
-        assert cls.name.endswith('_table'), 'Table name must end with "_table".'
-        return f"{DATASET_GALLERY_TABLE_DIR}/{cls.name}.rest"
+        assert cls.name.endswith('_carousel'), 'Table name must end with "_carousel".'
+        return f"{DATASET_GALLERY_DIR}/{cls.name}.rest"
 
     @classmethod
     def fetch_data(cls):
@@ -840,9 +851,10 @@ class GalleryTable(DocTable):
     @classmethod
     @abstractmethod
     def fetch_dataset_names(cls) -> Iterable[str]:
-        """Return all dataset names to include in the gallery ."""
+        """Return all dataset names to include in the gallery."""
 
     @classmethod
+    @final
     def init_dataset_names(cls):
         names = cls.fetch_dataset_names()
         assert names is not None, (
@@ -854,73 +866,68 @@ class GalleryTable(DocTable):
     @classmethod
     @final
     def get_header(cls, data):
-        """Return an empty string.
-
-        Gallery tables aren't really tables, they're rows of cards,
-        so a header doesn't apply.
-        """
-        return ""
+        """Return carousel directive as the header."""
+        return '.. card-carousel:: 2\n'
 
     @classmethod
-    @final
     def get_row(cls, _, dataset_name):
         """Return the card for a given dataset.
 
-        References may optionally be included but
-        should only be included in a single table.
+        A standard card is returned by default. Subclasses
+        should override this method to customize the card.
         """
-        card = DatasetCardFetcher.CARDS_RST_DICT[dataset_name]
-        if cls._include_ref:
-            ref = DatasetCardFetcher.CARDS_RST_REF_DICT[dataset_name]
-            return ref + card
-        return card
+        return DatasetCardFetcher.CARDS_RST_DICT[dataset_name]
 
 
-class DownloadsGalleryTable(GalleryTable):
+class DownloadsGalleryCarousel(GalleryCarousel):
     """Class to generate a table of all downloadable dataset cards."""
 
-    name = 'downloads_table'
+    name = 'downloads_carousel'
     _include_ref = True
 
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.CARDS_OBJ_DICT.keys()
 
+    @classmethod
+    def get_row(cls, _, dataset_name):
+        return DatasetCardFetcher.CARDS_RST_REF_DICT[dataset_name]
 
-class ImageDataGalleryTable(GalleryTable):
+
+class ImageDataGalleryCarousel(GalleryCarousel):
     """Class to generate a table of all ImageData cards."""
 
-    name = 'imagedata_table'
+    name = 'imagedata_carousel'
 
     @classmethod
     def fetch_dataset_names(cls):
         return _fetch_imagedata('all')
 
 
-class ImageData2DGalleryTable(GalleryTable):
+class ImageData2DGalleryCarousel(GalleryCarousel):
     """Class to generate a table of 2D ImageData cards."""
 
-    name = 'imagedata_2d_table'
+    name = 'imagedata_2d_carousel'
 
     @classmethod
     def fetch_dataset_names(cls):
         return _fetch_imagedata('2d')
 
 
-class ImageData3DGalleryTable(GalleryTable):
+class ImageData3DGalleryCarousel(GalleryCarousel):
     """Class to generate a table of 3D ImageData cards."""
 
-    name = 'imagedata_3d_table'
+    name = 'imagedata_3d_carousel'
 
     @classmethod
     def fetch_dataset_names(cls):
         return _fetch_imagedata('3d')
 
 
-class MedicalGalleryTable(GalleryTable):
+class MedicalGalleryCarousel(GalleryCarousel):
     """Class to generate a table of medical dataset cards."""
 
-    name = 'medical_table'
+    name = 'medical_carousel'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -976,20 +983,20 @@ def make_all_tables():
     ColorSchemeTable.generate()
     ColorTable.generate()
 
-    # Make dataset gallery tables
-    os.makedirs(DATASET_GALLERY_TABLE_DIR, exist_ok=True)
+    # Make dataset gallery carousels
+    os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     DatasetCardFetcher.init_cards()
 
-    DownloadsGalleryTable.init_dataset_names()
-    ImageDataGalleryTable.init_dataset_names()
-    ImageData2DGalleryTable.init_dataset_names()
-    ImageData3DGalleryTable.init_dataset_names()
-    MedicalGalleryTable.init_dataset_names()
+    DownloadsGalleryCarousel.init_dataset_names()
+    ImageDataGalleryCarousel.init_dataset_names()
+    ImageData2DGalleryCarousel.init_dataset_names()
+    ImageData3DGalleryCarousel.init_dataset_names()
+    MedicalGalleryCarousel.init_dataset_names()
 
     DatasetCardFetcher.generate_cards()
 
-    DownloadsGalleryTable.generate()
-    ImageDataGalleryTable.generate()
-    ImageData2DGalleryTable.generate()
-    ImageData3DGalleryTable.generate()
-    MedicalGalleryTable.generate()
+    DownloadsGalleryCarousel.generate()
+    ImageDataGalleryCarousel.generate()
+    ImageData2DGalleryCarousel.generate()
+    ImageData3DGalleryCarousel.generate()
+    MedicalGalleryCarousel.generate()
