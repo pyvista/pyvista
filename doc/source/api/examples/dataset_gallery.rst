@@ -4,10 +4,7 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
-Browse All Datasets
--------------------
-
-.. dropdown:: Browse Datasets
+.. dropdown:: Browse Datasets By Module
 
     .. tab-set::
 
@@ -19,7 +16,7 @@ Browse All Datasets
 
 
 
-.. dropdown:: Browse *ImageData* Datasets
+.. dropdown:: Browse **ImageData** Datasets
 
     .. tab-set::
 
@@ -27,25 +24,22 @@ Browse All Datasets
 
             Datasets which are loaded as :class:`~pyvista.ImageData`
 
-            ..
-                .. include:: /api/examples/dataset-gallery/imagedata_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_table.rest
 
         .. tab-item:: 2D Images
 
             Images with two-dimensional data.
 
-            ..
-                .. include:: /api/examples/dataset-gallery/imagedata_2d_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_2d_table.rest
 
         .. tab-item:: 3D Images
 
             Three-dimensional volumetric images.
 
-            ..
-                .. include:: /api/examples/dataset-gallery/imagedata_3d_table.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_3d_table.rest
 
 
-.. dropdown:: Browse *RectilinearGrid* Datasets
+.. dropdown:: Browse **RectilinearGrid** Datasets
 
     .. tab-set::
 
@@ -58,7 +52,7 @@ Browse All Datasets
 
 
 
-.. dropdown:: Browse *StructuredGrid* Datasets
+.. dropdown:: Browse **StructuredGrid** Datasets
 
     .. tab-set::
 
@@ -71,7 +65,7 @@ Browse All Datasets
 
 
 
-.. dropdown:: Browse *UnstructuredGrid* Datasets
+.. dropdown:: Browse **UnstructuredGrid** Datasets
 
     .. tab-set::
 
@@ -84,7 +78,7 @@ Browse All Datasets
 
 
 
-.. dropdown:: Browse *Texture* Datasets
+.. dropdown:: Browse **Texture** Datasets
 
     .. tab-set::
 
@@ -112,5 +106,4 @@ Browse All Datasets
 
             Medical datasets.
 
-            ..
-                .. include:: /api/examples/dataset-gallery/medical_table.rest
+            .. include:: /api/examples/dataset-gallery/medical_table.rest
