@@ -2,11 +2,12 @@ from vtkmodules import vtkCommonCore as cc, vtkCommonDataModel as dm, vtkCommonE
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 import pyvista as pv
+from pyvista.plotting.utilities.algorithms import PreserveTypeAlgorithmBase
 
 
-class SimpleFilter(VTKPythonAlgorithmBase):
+class SimpleFilter(PreserveTypeAlgorithmBase):
     def __init__(self):
-        VTKPythonAlgorithmBase.__init__(self)
+        PreserveTypeAlgorithmBase.__init__(self)
         self.InputType = "vtkDataSet"
         self.OutputType = "vtkDataObject"
         self.Counter = 0
@@ -41,9 +42,9 @@ class SimpleFilter(VTKPythonAlgorithmBase):
         return 1
 
 
-class PartitionAwareFilter(VTKPythonAlgorithmBase):
+class PartitionAwareFilter(PreserveTypeAlgorithmBase):
     def __init__(self):
-        VTKPythonAlgorithmBase.__init__(self)
+        PreserveTypeAlgorithmBase.__init__(self)
         self.InputType = "vtkDataSet"
         self.OutputType = "vtkDataObject"
         self.Counter = 0
