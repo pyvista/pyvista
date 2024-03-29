@@ -4,106 +4,112 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
-.. dropdown:: Browse Datasets By Module
+Browse All Datasets
+-------------------
+
+.. dropdown:: All Datasets
 
     .. tab-set::
 
         .. tab-item:: Downloads
 
-            Datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.
-
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
 
 
+Browse Datasets by Type
+-----------------------
 
-.. dropdown:: Browse ImageData Datasets
+.. dropdown:: Volumes, Images, and Textures
 
     .. tab-set::
 
         .. tab-item:: All
 
-            Datasets which are loaded as :class:`~pyvista.ImageData`
+            .. include:: /api/examples/dataset-gallery/imagedata_texture_carousel.rest
 
-            .. include:: /api/examples/dataset-gallery/imagedata_carousel.rest
-
-        .. tab-item:: 2D Images
-
-            Images with two-dimensional data.
-
-            .. include:: /api/examples/dataset-gallery/imagedata_2d_carousel.rest
-
-        .. tab-item:: 3D Images
-
-            Three-dimensional volumetric images.
+        .. tab-item:: Volumes
 
             .. include:: /api/examples/dataset-gallery/imagedata_3d_carousel.rest
 
+        .. tab-item:: 2D Images
 
-.. dropdown:: Browse **RectilinearGrid** Datasets
+            .. include:: /api/examples/dataset-gallery/imagedata_2d_carousel.rest
 
-    .. tab-set::
+        .. tab-item:: Textures
 
-        .. tab-item:: All
-
-            Datasets which are loaded as :class:`~pyvista.RectilinearGrid`.
-
-            ..
-                .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
-
-
-
-.. dropdown:: Browse **StructuredGrid** Datasets
-
-    .. tab-set::
-
-        .. tab-item:: All
-
-            Datasets which are loaded as :class:`~pyvista.StructuredGrid`
-
-            ..
-                .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
-
-
-
-.. dropdown:: Browse **UnstructuredGrid** Datasets
-
-    .. tab-set::
-
-        .. tab-item:: All
-
-            Datasets which are loaded as :class:`~pyvista.UnstructuredGrid`
-
-            ..
-                .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
-
-
-
-.. dropdown:: Browse **Texture** Datasets
-
-    .. tab-set::
-
-        .. tab-item:: All
-
-            Datasets which are loaded as :class:`~pyvista.Texture`
-
-            ..
-                .. include:: /api/examples/dataset-gallery/texture_carousel.rest
+            .. include:: /api/examples/dataset-gallery/texture_carousel.rest
 
         .. tab-item:: Cubemaps
 
-            Textures with six images: one for each side of the cube.
+            .. include:: /api/examples/dataset-gallery/cubemap_carousel.rest
+
+
+.. dropdown:: Point Clouds and Surface Meshes
+
+    .. tab-set::
+
+        .. tab-item:: All
+
+            Datasets which are loaded as :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData`
 
             ..
-                .. include:: /api/examples/dataset-gallery/cubemap_carousel.rest
+                .. include:: /api/examples/dataset-gallery/pointset_polydata_carousel.rest
+
+        .. tab-item:: PointSet
+
+            Datasets which are loaded as :class:`~pyvista.PointSet`.
+
+            ..
+                .. include:: /api/examples/dataset-gallery/pointset_carousel.rest
+
+        .. tab-item:: All
+
+            Datasets which are loaded as :class:`~pyvista.PolyData`.
+
+            ..
+                .. include:: /api/examples/dataset-gallery/polydata_carousel.rest
 
 
+.. dropdown:: Gridded Datasets
 
-.. dropdown:: Browse Datasets By Category
+    .. tab-set::
+
+        .. tab-item:: All
+
+            .. include:: /api/examples/dataset-gallery/grid_carousel.rest
+
+        .. tab-item:: RectilinearGrid
+
+            .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
+
+        .. tab-item:: StructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
+
+        .. tab-item:: UnstructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
+
+
+.. dropdown:: Composite Datasets
+
+    .. tab-set::
+
+        .. tab-item:: All
+
+            Datasets which are loaded as :class:`~pyvista.MultiBlock`
+
+            ..
+                .. include:: /api/examples/dataset-gallery/multiblock_carousel.rest
+
+
+Browse Datasets By Category
+---------------------------
+
+.. dropdown:: Filter By Domain
 
     .. tab-set::
 
         .. tab-item:: Medical
-
-            Medical datasets.
 
             .. include:: /api/examples/dataset-gallery/medical_carousel.rest
