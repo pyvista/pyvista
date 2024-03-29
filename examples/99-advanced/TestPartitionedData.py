@@ -1,5 +1,4 @@
 from vtkmodules import vtkCommonCore as cc, vtkCommonDataModel as dm, vtkCommonExecutionModel as em
-from vtkmodules.test import Testing
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 import pyvista as pv
@@ -158,90 +157,83 @@ class CompositeAwareFilter(VTKPythonAlgorithmBase):
         return 1
 
 
-class TestPartitionedData(Testing.vtkTest):
-
-    def test(self):
-
-        p = dm.vtkPartitionedDataSet()
-
-        wavelet1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
-
-        p1 = pv.ImageData()
-        p1.ShallowCopy(wavelet1)
-
-        wavelet2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
-
-        p2 = pv.ImageData()
-        p2.ShallowCopy(wavelet2)
-
-        p.SetPartition(0, p1)
-        p.SetPartition(1, p2)
-
-        p2 = dm.vtkPartitionedDataSet()
-        p2.ShallowCopy(p)
-
-        c = dm.vtkPartitionedDataSetCollection()
-        c.SetPartitionedDataSet(0, p)
-        c.SetPartitionedDataSet(1, p2)
-
-        # SimpleFilter:
-        sf = SimpleFilter()
-        sf.SetInputDataObject(c)
-        sf.Update()
-        assert sf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
-        for i in (0, 1):
-            pdsc = sf.GetOutputDataObject(0)
-            assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
-            pds = pdsc.GetPartitionedDataSet(i)
-            assert pds.GetClassName() == "vtkPartitionedDataSet"
-            assert pds.GetNumberOfPartitions() == 2
-            for j in (0, 1):
-                part = pds.GetPartition(j)
-                countArray = part.GetFieldData().GetArray("counter")
-                info = countArray.GetInformation()
-                assert countArray.GetValue(0) == i * 2 + j
-                assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkImageData"
-
-        # PartitionAwareFilter
-        pf = PartitionAwareFilter()
-        pf.SetInputDataObject(c)
-        pf.Update()
-        assert pf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
-        for i in (0, 1):
-            pdsc = pf.GetOutputDataObject(0)
-            assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
-            pds = pdsc.GetPartitionedDataSet(i)
-            assert pds.GetClassName() == "vtkPartitionedDataSet"
-            assert pds.GetNumberOfPartitions() == 0
-            countArray = pds.GetFieldData().GetArray("counter")
-            info = countArray.GetInformation()
-            assert countArray.GetValue(0) == i
-            assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSet"
-
-        # PartitionCollectionAwareFilter
-        pcf = PartitionCollectionAwareFilter()
-        pcf.SetInputDataObject(c)
-        pcf.Update()
-        assert pcf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 0
-        pdsc = pcf.GetOutputDataObject(0)
-        assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
-        countArray = pdsc.GetFieldData().GetArray("counter")
-        info = countArray.GetInformation()
-        assert countArray.GetValue(0) == 0
-        assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSetCollection"
-
-        # CompositeAwareFilter
-        cf = CompositeAwareFilter()
-        cf.SetInputDataObject(c)
-        cf.Update()
-        assert pcf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 0
-        pdsc = pcf.GetOutputDataObject(0)
-        assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
-        countArray = pdsc.GetFieldData().GetArray("counter")
-        info = countArray.GetInformation()
-        assert countArray.GetValue(0) == 0
-        assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSetCollection"
-
-
 if __name__ == "__main__":
-    Testing.main([(TestPartitionedData, 'test')])
+    p = dm.vtkPartitionedDataSet()
+
+    wavelet1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
+
+    p1 = pv.ImageData()
+    p1.ShallowCopy(wavelet1)
+
+    wavelet2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
+
+    p2 = pv.ImageData()
+    p2.ShallowCopy(wavelet2)
+
+    p.SetPartition(0, p1)
+    p.SetPartition(1, p2)
+
+    p2 = dm.vtkPartitionedDataSet()
+    p2.ShallowCopy(p)
+
+    c = dm.vtkPartitionedDataSetCollection()
+    c.SetPartitionedDataSet(0, p)
+    c.SetPartitionedDataSet(1, p2)
+
+    # SimpleFilter:
+    sf = SimpleFilter()
+    sf.SetInputDataObject(c)
+    sf.Update()
+    assert sf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
+    for i in (0, 1):
+        pdsc = sf.GetOutputDataObject(0)
+        assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
+        pds = pdsc.GetPartitionedDataSet(i)
+        assert pds.GetClassName() == "vtkPartitionedDataSet"
+        assert pds.GetNumberOfPartitions() == 2
+        for j in (0, 1):
+            part = pds.GetPartition(j)
+            countArray = part.GetFieldData().GetArray("counter")
+            info = countArray.GetInformation()
+            assert countArray.GetValue(0) == i * 2 + j
+            assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkImageData"
+
+    # PartitionAwareFilter
+    pf = PartitionAwareFilter()
+    pf.SetInputDataObject(c)
+    pf.Update()
+    assert pf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
+    for i in (0, 1):
+        pdsc = pf.GetOutputDataObject(0)
+        assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
+        pds = pdsc.GetPartitionedDataSet(i)
+        assert pds.GetClassName() == "vtkPartitionedDataSet"
+        assert pds.GetNumberOfPartitions() == 0
+        countArray = pds.GetFieldData().GetArray("counter")
+        info = countArray.GetInformation()
+        assert countArray.GetValue(0) == i
+        assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSet"
+
+    # PartitionCollectionAwareFilter
+    pcf = PartitionCollectionAwareFilter()
+    pcf.SetInputDataObject(c)
+    pcf.Update()
+    assert pcf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 0
+    pdsc = pcf.GetOutputDataObject(0)
+    assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
+    countArray = pdsc.GetFieldData().GetArray("counter")
+    info = countArray.GetInformation()
+    assert countArray.GetValue(0) == 0
+    assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSetCollection"
+
+    # CompositeAwareFilter
+    cf = CompositeAwareFilter()
+    cf.SetInputDataObject(c)
+    cf.Update()
+    assert pcf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 0
+    pdsc = pcf.GetOutputDataObject(0)
+    assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
+    countArray = pdsc.GetFieldData().GetArray("counter")
+    info = countArray.GetInformation()
+    assert countArray.GetValue(0) == 0
+    assert info.Get(dm.vtkDataObject.DATA_TYPE_NAME()) == "vtkPartitionedDataSetCollection"
