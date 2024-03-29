@@ -1,5 +1,4 @@
 from vtkmodules import vtkCommonCore as cc, vtkCommonDataModel as dm, vtkCommonExecutionModel as em
-from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 
 import pyvista as pv
 from pyvista.plotting.utilities.algorithms import PreserveTypeAlgorithmBase
@@ -80,9 +79,9 @@ class PartitionAwareFilter(PreserveTypeAlgorithmBase):
         return 1
 
 
-class PartitionCollectionAwareFilter(VTKPythonAlgorithmBase):
+class PartitionCollectionAwareFilter(PreserveTypeAlgorithmBase):
     def __init__(self):
-        VTKPythonAlgorithmBase.__init__(self)
+        PreserveTypeAlgorithmBase.__init__(self)
         self.InputType = "vtkDataSet"
         self.OutputType = "vtkDataObject"
         self.Counter = 0
@@ -120,9 +119,9 @@ class PartitionCollectionAwareFilter(VTKPythonAlgorithmBase):
         return 1
 
 
-class CompositeAwareFilter(VTKPythonAlgorithmBase):
+class CompositeAwareFilter(PreserveTypeAlgorithmBase):
     def __init__(self):
-        VTKPythonAlgorithmBase.__init__(self)
+        PreserveTypeAlgorithmBase.__init__(self)
         self.InputType = "vtkDataSet"
         self.OutputType = "vtkDataObject"
         self.Counter = 0
