@@ -10,12 +10,12 @@ p = dm.vtkPartitionedDataSet()
 
 wavelet1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
 
-p1 = dm.vtkImageData()
+p1 = pv.ImageData()
 p1.ShallowCopy(wavelet1)
 
 wavelet2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
 
-p2 = dm.vtkImageData()
+p2 = pv.ImageData()
 p2.ShallowCopy(wavelet2)
 
 p.SetPartition(0, p1)
