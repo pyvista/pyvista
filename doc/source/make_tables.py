@@ -969,8 +969,10 @@ def _fetch_imagedata(kind: Literal['all', '2d', '3d']):
                     if isinstance(data, pv.ImageData):
                         if kind == '2d' and _is_2d(data):
                             dataset_names.append(name)
+                            break
                         elif kind == '3d' and not _is_2d(data):
                             dataset_names.append(name)
+                            break
                 loader.unload()
     return dataset_names
 
