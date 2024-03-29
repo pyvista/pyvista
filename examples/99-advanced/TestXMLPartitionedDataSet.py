@@ -24,14 +24,15 @@ with tempfile.TemporaryDirectory() as tmpdir:
     r = vtkXMLPartitionedDataSetReader()
     r.SetFileName(fname)
     r.Update()
-    o = r.GetOutputDataObject(0)
 
-    number_of_partitions = o.GetNumberOfPartitions()
-    assert o.IsA("vtkPartitionedDataSet")
-    assert number_of_partitions == 2
+o = r.GetOutputDataObject(0)
 
-    for i in range(number_of_partitions):
-        partition = o.GetPartition(i)
-        partition_ = p.GetPartition(i)
-        assert partition.IsA("vtkImageData")
-        assert partition.GetNumberOfCells() == partition_.GetNumberOfCells()
+number_of_partitions = o.GetNumberOfPartitions()
+assert o.IsA("vtkPartitionedDataSet")
+assert number_of_partitions == 2
+
+for i in range(number_of_partitions):
+    partition = o.GetPartition(i)
+    partition_ = p.GetPartition(i)
+    assert partition.IsA("vtkImageData")
+    assert partition.GetNumberOfCells() == partition_.GetNumberOfCells()
