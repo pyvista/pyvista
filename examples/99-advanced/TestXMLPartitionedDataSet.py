@@ -24,8 +24,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
     r = vtkXMLPartitionedDataSetReader()
     r.SetFileName(file_name)
     r.Update()
-
-dataset_ = r.GetOutputDataObject(0)
+    dataset_ = r.GetOutputDataObject(0)
 
 number_of_partitions = dataset_.GetNumberOfPartitions()
 assert dataset_.IsA("vtkPartitionedDataSet")
