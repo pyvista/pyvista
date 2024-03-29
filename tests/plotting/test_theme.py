@@ -641,3 +641,8 @@ def test_trame_config():
     trame_config.jupyter_extension_enabled = False
     assert not trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
+
+
+def test_box_axes(default_theme):
+    default_theme.axes.box = True
+    _ = pv.Sphere().plot(theme=default_theme)
