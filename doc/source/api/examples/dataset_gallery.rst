@@ -15,6 +15,16 @@ Browse All Datasets
 
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
 
+            ..
+                TODO: add builtin datasets
+                .. tab-item:: Built-in
+                .. include:: /api/examples/dataset-gallery/builtin_carousel.rest
+
+            ..
+                TODO: add planets
+                .. tab-item:: Planets
+                .. include:: /api/examples/dataset-gallery/planets_carousel.rest
+
 
 Browse Datasets by Type
 -----------------------
@@ -50,27 +60,18 @@ Browse Datasets by Type
 
         .. tab-item:: All
 
-            Datasets which are loaded as :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData`
+            .. include:: /api/examples/dataset-gallery/pointset_polydata_carousel.rest
 
-            ..
-                .. include:: /api/examples/dataset-gallery/pointset_polydata_carousel.rest
+        .. tab-item:: Point Clouds
 
-        .. tab-item:: PointSet
+            .. include:: /api/examples/dataset-gallery/pointclouds_carousel.rest
 
-            Datasets which are loaded as :class:`~pyvista.PointSet`.
+        .. tab-item:: Surface Meshes
 
-            ..
-                .. include:: /api/examples/dataset-gallery/pointset_carousel.rest
-
-        .. tab-item:: All
-
-            Datasets which are loaded as :class:`~pyvista.PolyData`.
-
-            ..
-                .. include:: /api/examples/dataset-gallery/polydata_carousel.rest
+            .. include:: /api/examples/dataset-gallery/surfacemesh_carousel.rest
 
 
-.. dropdown:: Gridded Datasets
+.. dropdown:: Grids
 
     .. tab-set::
 
@@ -97,7 +98,7 @@ Browse Datasets by Type
 
         .. tab-item:: All
 
-            Datasets which are loaded as :class:`~pyvista.MultiBlock`
+            Datasets which are loaded as :class:`~pyvista.MultiBlock`.
 
             ..
                 .. include:: /api/examples/dataset-gallery/multiblock_carousel.rest

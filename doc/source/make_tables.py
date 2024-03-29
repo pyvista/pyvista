@@ -19,7 +19,12 @@ import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _dataset_loader, downloads
-from pyvista.examples._dataset_loader import _MultiFileDownloadableLoadable, _SingleFileDownloadable
+from pyvista.examples._dataset_loader import (
+    _MultiFileDownloadableLoadable,
+    _SingleFileDownloadableLoadable,
+)
+
+DatasetLoaderObj = Union[_MultiFileDownloadableLoadable, _SingleFileDownloadableLoadable]
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -567,10 +572,7 @@ class DatasetCard:
     def __init__(
         self,
         dataset_name: str,
-        loader: Union[
-            _dataset_loader._MultiFileDownloadableLoadable,
-            _dataset_loader._SingleFileDownloadableLoadable,
-        ],
+        loader: DatasetLoaderObj,
     ):
         self.dataset_name = dataset_name
         self.loader = loader
@@ -800,7 +802,7 @@ class DatasetCardFetcher:
             if name.startswith('_dataset_') and isinstance(
                 item,
                 (
-                    _SingleFileDownloadable,
+                    _SingleFileDownloadableLoadable,
                     _MultiFileDownloadableLoadable,
                 ),
             ):
@@ -826,14 +828,37 @@ class DatasetCardFetcher:
             cls.CARDS_RST_REF_DICT[name] = _pad_lines(card_with_ref, pad_left='   ')
             cls.CARDS_RST_DICT[name] = _pad_lines(card, pad_left='   ')
 
+    # @classmethod
+    # def get_dataset_objects(cls, dataset_name:str)-> Tuple[Any, ...]:
+    #     """Return the loaded dataset objects as an iterable."""
+    #     return cls.CARDS_OBJ_DICT[dataset_name].card.loader.dataset_objects
+
     @classmethod
-    def fetch_by_datatype(cls, datatype):
+    def fetch_by_datatype(cls, datatype) -> List[str]:
         dataset_names = []
         for name, card in DatasetCardFetcher.CARDS_OBJ_DICT.items():
             loader = card.loader
             if datatype in _as_iterable(loader.unique_dataset_type):
                 dataset_names.append(name)
         return dataset_names
+
+    @classmethod
+    def fetch_and_filter(cls, filter_func: Callable[[], bool]) -> List[str]:
+        """Return dataset names whose dataset objects return 'True' for a given function."""
+        # Store output names in a dict to preserve order
+        dataset_names_out = {}
+        for dataset_name, card in cls.CARDS_OBJ_DICT.items():
+            dataset_iterable = card.loader.dataset_iterable
+            for obj in dataset_iterable:
+                try:
+                    keep = filter_func(obj)
+                except AttributeError:
+                    keep = False
+                if keep:
+                    dataset_names_out[dataset_name] = None
+        dataset_names_out = list(dataset_names_out.keys())
+        assert len(dataset_names_out) > 0, f"No datasets were matched by the filter {filter_func}."
+        return dataset_names_out
 
     @classmethod
     def fetch_imagedata(cls, kind: Literal['all', '2d', '3d']):
@@ -875,11 +900,14 @@ class DatasetCardFetcher:
 
 
 class GalleryCarousel(DocTable):
+    # Include
     header_template = _aligned_dedent(
         """
-        |.. card-carousel:: 1
+        |.. _{}:
         |
-        |   {}
+        |{}
+        |
+        |.. card-carousel:: 1
         |
         """
     )
@@ -925,8 +953,10 @@ class GalleryCarousel(DocTable):
     @final
     def get_header(cls, data):
         """Return carousel directive as the header."""
-        assert cls.doc is not None, "Subclasses should define a doc string."
-        return cls.header_template.format(cls.doc)
+        # Use the name as a label which can be referenced
+        assert cls.name is not None, "Carousel must have a name."
+        assert cls.doc is not None, "Carousel must have a doc string."
+        return cls.header_template.format(cls.name, cls.doc)
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
@@ -942,26 +972,37 @@ class GalleryCarousel(DocTable):
 
 
 class DownloadsGalleryCarousel(GalleryCarousel):
-    """Class to generate a table of all downloadable dataset cards."""
+    """Class to generate a carousel with cards from the downloads module."""
 
     name = 'downloads_carousel'
-    doc = 'Datasets available for download from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
 
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.CARDS_OBJ_DICT.keys()
 
-    @classmethod
-    def get_row(cls, _, dataset_name):
-        # Override method since we want to include refs
-        return DatasetCardFetcher.CARDS_RST_REF_DICT[dataset_name]
+
+class BuiltinGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel with cards for built-in datasets."""
+
+    # TODO: add builtin datasets
+    name = 'builtin_carousel'
+    doc = 'Built-in datasets from the :mod:`examples <pyvista.examples.examples>` module.'
+
+
+class PlanetsGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel with cards from the planets module."""
+
+    # TODO: add planets datasets
+    name = 'planets_carousel'
+    doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
 
 
 class ImageDataTextureGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of all ImageData and Texture cards."""
 
     name = 'imagedata_texture_carousel'
-    doc = 'Datasets which are loaded as :class:`~pyvista.ImageData` or :class:`~pyvista.Texture`.'
+    doc = ':class:`~pyvista.ImageData` or :class:`~pyvista.Texture` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -974,7 +1015,7 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of 3D ImageData cards."""
 
     name = 'imagedata_3d_carousel'
-    doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData`.'
+    doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -985,7 +1026,7 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of 2D ImageData cards."""
 
     name = 'imagedata_2d_carousel'
-    doc = 'Two-dimensional :class:`~pyvista.ImageData`.'
+    doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -996,7 +1037,7 @@ class TextureGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of all Texture cards."""
 
     name = 'texture_carousel'
-    doc = 'Datasets which are loaded as :class:`~pyvista.Texture`'
+    doc = ':class:`~pyvista.Texture` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1004,10 +1045,10 @@ class TextureGalleryCarousel(GalleryCarousel):
 
 
 class CubemapGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of all Texture cards."""
+    """Class to generate a carousel of cubemap cards."""
 
     name = 'cubemap_carousel'
-    doc = 'Textures with six images: one for each side of the cube.'
+    doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1019,8 +1060,8 @@ class GridGalleryCarousel(GalleryCarousel):
 
     name = 'grid_carousel'
     doc = (
-        'Datasets loaded as :class:`~pyvista.RectilinearGrid`, :class:`~pyvista.StructuredGrid`, '
-        'or :class:`~pyvista.UnstructuredGrid`'
+        ':class:`~pyvista.RectilinearGrid`, :class:`~pyvista.StructuredGrid`, '
+        'and :class:`~pyvista.UnstructuredGrid` datasets.'
     )
 
     @classmethod
@@ -1035,7 +1076,7 @@ class RectilinearGridGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of RectilinearGrid cards."""
 
     name = 'rectilineargrid_carousel'
-    doc = 'Datasets which are loaded as :class:`~pyvista.RectilinearGrid`.'
+    doc = ':class:`~pyvista.RectilinearGrid` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1046,7 +1087,7 @@ class StructuredGridGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of StructuredGrid cards."""
 
     name = 'structuredgrid_carousel'
-    doc = 'Datasets which are loaded as :class:`~pyvista.StructuredGrid`.'
+    doc = ':class:`~pyvista.StructuredGrid` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1057,11 +1098,51 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
     """Class to generate a carousel of UnstructuredGrid cards."""
 
     name = 'unstructuredgrid_carousel'
-    doc = 'Datasets which are loaded as :class:`~pyvista.UnstructuredGrid`.'
+    doc = ':class:`~pyvista.UnstructuredGrid` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
+
+
+class PointSetPolyDataGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of PointSet and PolyData cards."""
+
+    name = 'pointset_polydata_carousel'
+    doc = ':class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` datasets.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        pointset = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        polydata = DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
+        return sorted(pointset + polydata)
+
+
+class PointCloudGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of point cloud cards."""
+
+    name = 'pointcloud_carousel'
+    doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        pointset = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        vertex_polydata_filter = lambda poly: poly.n_verts == poly.n_cells
+        vertex_polydata = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
+        return sorted(pointset + vertex_polydata)
+
+
+class SurfaceMeshGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of triangle surface mesh cloud cards."""
+
+    name = 'surfacemesh_carousel'
+    doc = ':class:`~pyvista.PolyData` surface meshes.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        surface_polydata_filter = lambda poly: (poly.n_cells - poly.n_verts - poly.n_lines) > 0
+        surface_polydata = DatasetCardFetcher.fetch_and_filter(surface_polydata_filter)
+        return sorted(surface_polydata)
 
 
 class MedicalGalleryCarousel(GalleryCarousel):
@@ -1114,6 +1195,10 @@ def make_all_tables():
     TextureGalleryCarousel.init_dataset_names()
     CubemapGalleryCarousel.init_dataset_names()
 
+    PointSetPolyDataGalleryCarousel.init_dataset_names()
+    PointCloudGalleryCarousel.init_dataset_names()
+    SurfaceMeshGalleryCarousel.init_dataset_names()
+
     GridGalleryCarousel.init_dataset_names()
     RectilinearGridGalleryCarousel.init_dataset_names()
     StructuredGridGalleryCarousel.init_dataset_names()
@@ -1131,6 +1216,10 @@ def make_all_tables():
     ImageData2DGalleryCarousel.generate()
     TextureGalleryCarousel.generate()
     CubemapGalleryCarousel.generate()
+
+    PointSetPolyDataGalleryCarousel.generate()
+    PointCloudGalleryCarousel.generate()
+    SurfaceMeshGalleryCarousel.generate()
 
     GridGalleryCarousel.generate()
     RectilinearGridGalleryCarousel.generate()

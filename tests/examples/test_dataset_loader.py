@@ -212,7 +212,8 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.unique_extension == '.vtp'
     assert isinstance(loader._reader, pv.XMLPolyDataReader)
     assert loader.unique_reader_type is pv.XMLPolyDataReader
-    assert type(loader.dataset) is pv.PolyData
+    assert isinstance(loader.dataset, pv.PolyData)
+    assert isinstance(loader.dataset_iterable[0], pv.PolyData)
     assert loader.unique_dataset_type is pv.PolyData
     assert loader.source_name == 'cow.vtp'
     assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
@@ -246,6 +247,7 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert loader._reader[1] is None
     assert loader.unique_reader_type is pv.MetaImageReader
     assert isinstance(loader.dataset, pv.ImageData)
+    assert isinstance(loader.dataset_iterable[0], pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
     assert loader.source_name == ('HeadMRVolume.mhd', 'HeadMRVolume.raw')
     assert loader.source_url_raw == (
@@ -288,6 +290,8 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     dataset1, dataset2 = loader.dataset
     assert isinstance(dataset1, pv.ImageData)
     assert isinstance(dataset2, pv.ImageData)
+    assert isinstance(loader.dataset_iterable[0], pv.ImageData)
+    assert isinstance(loader.dataset_iterable[1], pv.ImageData)
     assert loader.unique_dataset_type is pv.ImageData
     assert loader.source_name == ('bolt.slc', 'nut.slc')
     assert loader.source_url_raw == (
@@ -318,7 +322,8 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     assert loader._total_size_bytes == 606113
     assert loader.total_size == '606.1 KB'
     assert loader.unique_extension == '.jpg'
-    assert type(loader.dataset) is pv.Texture
+    assert isinstance(loader.dataset, pv.Texture)
+    assert isinstance(loader.dataset_iterable[0], pv.Texture)
     assert loader.unique_dataset_type is pv.Texture
     assert loader.source_name == 'cubemap_park/cubemap_park.zip'
     assert (
@@ -396,6 +401,10 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert loader.unique_dataset_type is None
     loader.load()
     assert type(loader.dataset) is pv.MultiBlock
+    assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
+    assert isinstance(loader.dataset_iterable[1], pv.PolyData)
+    assert isinstance(loader.dataset_iterable[2], pv.ImageData)
+    assert isinstance(loader.dataset_iterable[3], pv.ImageData)
     assert set(loader.unique_dataset_type) == {pv.MultiBlock, pv.ImageData, pv.PolyData}
     assert loader.dataset.keys() == ['dataset0', 'dataset1', 'dataset2']
     assert loader.source_name == (

@@ -37,6 +37,7 @@ import os
 from typing import (
     Any,
     Callable,
+    Iterable,
     List,
     Optional,
     Protocol,
@@ -115,8 +116,26 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
 
     @property
     def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
-        """Return dataset object(s)."""
+        """Return the dataset."""
         return None
+
+    @property
+    def dataset_iterable(self) -> Tuple[Any, ...]:
+        """Return a tuple of all dataset object(s), including any nested objects.
+
+        E.g. for a single object dataset:
+            ImageData -> (ImageData, )
+
+        The blocks of composite objects are also included:
+
+        E.g. for a composite dataset:
+            MultiBlock -> (MultiBlock, Block0, Block1, ...)
+        """
+        dataset = self.dataset
+        dataset_list = [dataset] if not isinstance(dataset, (Iterable, str)) else list(dataset)
+        if isinstance(dataset, pv.MultiBlock):
+            dataset_list.insert(0, dataset)
+        return tuple(dataset_list)
 
     @property
     def unique_dataset_type(
@@ -504,14 +523,14 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
 _ScalarType = TypeVar('_ScalarType', int, str, pv.BaseReader)
 
 
-def _flatten_nested_sequence(path: Sequence[Union[_ScalarType, Sequence[_ScalarType]]]):
-    """Flatten nested sequences of and return a single path or a list of paths."""
+def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_ScalarType]]]):
+    """Flatten nested sequences of objects."""
     flat: List[_ScalarType] = []
-    for p in path:
-        if isinstance(p, Sequence) and not isinstance(p, str):
-            flat.extend(p)
+    for item in nested:
+        if isinstance(item, Sequence) and not isinstance(item, str):
+            flat.extend(item)
         else:
-            flat.append(p)
+            flat.append(item)
     return flat
 
 
