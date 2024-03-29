@@ -1,7 +1,6 @@
-from pathlib import Path
+import tempfile
 
 from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic
-from vtkmodules.util.misc import vtkGetTempDir
 from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
@@ -23,25 +22,24 @@ p2.ShallowCopy(s.GetOutput())
 p.SetPartition(0, p1)
 p.SetPartition(1, p2)
 
-tmpdir = vtkGetTempDir()
-fname = tmpdir + "/testxmlpartds.vtpd"
-w = vtkXMLPartitionedDataSetWriter()
-w.SetInputData(p)
-w.SetFileName(fname)
-w.Write()
+with tempfile.TemporaryDirectory() as tmpdir:
+    fname = tmpdir + "/testxmlpartds.vtpd"
+    w = vtkXMLPartitionedDataSetWriter()
+    w.SetInputData(p)
+    w.SetFileName(fname)
+    w.Write()
 
-r = vtkXMLPartitionedDataSetReader()
-r.SetFileName(fname)
-r.Update()
-o = r.GetOutputDataObject(0)
+    r = vtkXMLPartitionedDataSetReader()
+    r.SetFileName(fname)
+    r.Update()
+    o = r.GetOutputDataObject(0)
 
-assert o.IsA("vtkPartitionedDataSet")
-np = o.GetNumberOfPartitions()
-assert np == 2
+    assert o.IsA("vtkPartitionedDataSet")
+    np = o.GetNumberOfPartitions()
+    assert np == 2
 
-for i in range(np):
-    d = o.GetPartition(i)
-    d2 = p.GetPartition(i)
-    assert d.IsA("vtkImageData")
-    assert d.GetNumberOfCells() == d2.GetNumberOfCells()
-Path(fname).unlink()
+    for i in range(np):
+        d = o.GetPartition(i)
+        d2 = p.GetPartition(i)
+        assert d.IsA("vtkImageData")
+        assert d.GetNumberOfCells() == d2.GetNumberOfCells()
