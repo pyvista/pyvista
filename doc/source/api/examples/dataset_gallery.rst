@@ -125,10 +125,10 @@ Browse Datasets by Type
 Browse Datasets by Category
 ---------------------------
 
-.. dropdown:: Filter By Domain
+.. dropdown:: Medical Datasets
 
     .. tab-set::
 
-        .. tab-item:: Medical
+        .. tab-item:: All
 
             .. include:: /api/examples/dataset-gallery/medical_carousel.rest
