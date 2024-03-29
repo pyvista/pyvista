@@ -820,7 +820,7 @@ class DatasetCardFetcher:
                     pass
 
     @classmethod
-    def generate_cards(cls):
+    def generate(cls):
         """Generate formatted rst output for all cards."""
         for name in cls.CARDS_OBJ_DICT:
             card, card_with_ref = cls.CARDS_OBJ_DICT[name].generate()
@@ -1173,6 +1173,20 @@ class MedicalGalleryCarousel(GalleryCarousel):
         )
 
 
+def make_all_carousels(carousels: List[GalleryCarousel]):
+    # Load datasets and create card objects
+    DatasetCardFetcher.init_cards()
+
+    # Create lists of dataset names for each carousel
+    [carousel.init_dataset_names() for carousel in carousels]
+
+    # Generate rst for all card objects
+    DatasetCardFetcher.generate()
+
+    # Generate rst for all carousels
+    [carousel.generate() for carousel in carousels]
+
+
 def make_all_tables():
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
@@ -1182,48 +1196,22 @@ def make_all_tables():
     ColorTable.generate()
 
     # Make dataset gallery carousels
-    # Init Fetcher
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    DatasetCardFetcher.init_cards()
-
-    # Init Datasets
-    DownloadsGalleryCarousel.init_dataset_names()
-
-    ImageDataTextureGalleryCarousel.init_dataset_names()
-    ImageData3DGalleryCarousel.init_dataset_names()
-    ImageData2DGalleryCarousel.init_dataset_names()
-    TextureGalleryCarousel.init_dataset_names()
-    CubemapGalleryCarousel.init_dataset_names()
-
-    PointSetPolyDataGalleryCarousel.init_dataset_names()
-    PointCloudGalleryCarousel.init_dataset_names()
-    SurfaceMeshGalleryCarousel.init_dataset_names()
-
-    GridGalleryCarousel.init_dataset_names()
-    RectilinearGridGalleryCarousel.init_dataset_names()
-    StructuredGridGalleryCarousel.init_dataset_names()
-    UnstructuredGridGalleryCarousel.init_dataset_names()
-    MedicalGalleryCarousel.init_dataset_names()
-
-    # Generate Cards
-    DatasetCardFetcher.generate_cards()
-
-    # Generate Carousels
-    DownloadsGalleryCarousel.generate()
-
-    ImageDataTextureGalleryCarousel.generate()
-    ImageData3DGalleryCarousel.generate()
-    ImageData2DGalleryCarousel.generate()
-    TextureGalleryCarousel.generate()
-    CubemapGalleryCarousel.generate()
-
-    PointSetPolyDataGalleryCarousel.generate()
-    PointCloudGalleryCarousel.generate()
-    SurfaceMeshGalleryCarousel.generate()
-
-    GridGalleryCarousel.generate()
-    RectilinearGridGalleryCarousel.generate()
-    StructuredGridGalleryCarousel.generate()
-    UnstructuredGridGalleryCarousel.generate()
-
-    MedicalGalleryCarousel.generate()
+    make_all_carousels(
+        [
+            DownloadsGalleryCarousel,
+            ImageDataTextureGalleryCarousel,
+            ImageData3DGalleryCarousel,
+            ImageData2DGalleryCarousel,
+            TextureGalleryCarousel,
+            CubemapGalleryCarousel,
+            PointSetPolyDataGalleryCarousel,
+            PointCloudGalleryCarousel,
+            SurfaceMeshGalleryCarousel,
+            GridGalleryCarousel,
+            RectilinearGridGalleryCarousel,
+            StructuredGridGalleryCarousel,
+            UnstructuredGridGalleryCarousel,
+            MedicalGalleryCarousel,
+        ]
+    )
