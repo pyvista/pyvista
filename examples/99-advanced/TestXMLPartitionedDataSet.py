@@ -26,11 +26,10 @@ with tempfile.TemporaryDirectory() as tmpdir:
     r.Update()
     output_data = r.GetOutputDataObject(0)
 
-number_of_partitions = output_data.GetNumberOfPartitions()
 assert isinstance(output_data, vtkPartitionedDataSet)
-assert number_of_partitions == 2
+assert output_data.GetNumberOfPartitions() == 2
 
-for i in range(number_of_partitions):
+for i in range(output_data.GetNumberOfPartitions()):
     assert isinstance(pv.wrap(output_data.GetPartition(i)), pv.ImageData)
     assert (
         output_data.GetPartition(i).GetNumberOfCells()
