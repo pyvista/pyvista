@@ -103,7 +103,7 @@ Browse Datasets by Type
                 .. include:: /api/examples/dataset-gallery/multiblock_carousel.rest
 
 
-Browse Datasets By Category
+Browse Datasets by Category
 ---------------------------
 
 .. dropdown:: Filter By Domain
