@@ -1,3 +1,11 @@
+.. _create_partitioned_data_set:
+
+Creating a PartitionedDataSet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create a PartitionedDataSet.
+
+"""
 import tempfile
 
 from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
