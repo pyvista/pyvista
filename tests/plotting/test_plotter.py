@@ -526,4 +526,4 @@ def test_edge_opacity(sphere):
 def test_plotter_theme_axes_box(sphere):
     my_theme = DocumentTheme()
     my_theme.axes.box = True
-    cpos = pv.Sphere().plot(theme=my_theme)
+    _ = pv.Sphere().plot(theme=my_theme)
