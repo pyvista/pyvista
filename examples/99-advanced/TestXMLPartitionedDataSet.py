@@ -8,18 +8,11 @@ import pyvista as pv
 
 p = dm.vtkPartitionedDataSet()
 
-wavelet1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
+partition1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
+partition2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
 
-p1 = pv.ImageData()
-p1.ShallowCopy(wavelet1)
-
-wavelet2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
-
-p2 = pv.ImageData()
-p2.ShallowCopy(wavelet2)
-
-p.SetPartition(0, p1)
-p.SetPartition(1, p2)
+p.SetPartition(0, partition1)
+p.SetPartition(1, partition2)
 
 with tempfile.TemporaryDirectory() as tmpdir:
     fname = tmpdir + "/testxmlpartds.vtpd"
