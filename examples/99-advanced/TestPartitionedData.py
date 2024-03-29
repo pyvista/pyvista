@@ -17,6 +17,24 @@ class SimpleFilter(PreserveTypeAlgorithmBase):
         return 1
 
     def RequestDataObject(self, request, inInfo, outInfo):
+        """Preserve data type.
+
+        Parameters
+        ----------
+        _request : vtk.vtkInformation
+            The request object for the filter.
+
+        inInfo : vtk.vtkInformationVector
+            The input information vector for the filter.
+
+        outInfo : vtk.vtkInformationVector
+            The output information vector for the filter.
+
+        Returns
+        -------
+        int
+            Returns 1 if successful.
+        """
         inp = dm.vtkDataObject.GetData(inInfo[0])
         opt = dm.vtkDataObject.GetData(outInfo)
 
@@ -185,13 +203,13 @@ if __name__ == "__main__":
     sf.SetInputDataObject(c)
     sf.Update()
     assert sf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
-    for i in (0, 1):
+    for i in range(2):
         pdsc = sf.GetOutputDataObject(0)
         assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
         pds = pdsc.GetPartitionedDataSet(i)
         assert pds.GetClassName() == "vtkPartitionedDataSet"
         assert pds.GetNumberOfPartitions() == 2
-        for j in (0, 1):
+        for j in range(2):
             part = pds.GetPartition(j)
             countArray = part.GetFieldData().GetArray("counter")
             info = countArray.GetInformation()
@@ -203,7 +221,7 @@ if __name__ == "__main__":
     pf.SetInputDataObject(c)
     pf.Update()
     assert pf.GetOutputDataObject(0).GetNumberOfPartitionedDataSets() == 2
-    for i in (0, 1):
+    for i in range(2):
         pdsc = pf.GetOutputDataObject(0)
         assert pdsc.GetClassName() == "vtkPartitionedDataSetCollection"
         pds = pdsc.GetPartitionedDataSet(i)
