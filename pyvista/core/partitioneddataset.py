@@ -28,3 +28,14 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
+
+    @property
+    def n_partitions(self) -> int:
+        """Return the number of partitions.
+
+        Returns
+        -------
+        int
+            The number of partitions.
+        """
+        return self.GetNumberOfPartitions()

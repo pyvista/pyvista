@@ -1006,8 +1006,8 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     new_mesh = pv.read(tmpfile.strpath)
 
     assert isinstance(new_mesh, pv.PartitionedDataSet)
-    assert new_mesh.GetNumberOfPartitions() == 2
+    assert new_mesh.n_partitions == 2
 
-    for i in range(new_mesh.GetNumberOfPartitions()):
+    for i in range(new_mesh.n_partitions):
         assert isinstance(pv.wrap(new_mesh.GetPartition(i)), pv.ImageData)
         assert pv.wrap(new_mesh.GetPartition(i)).n_cells == pv.wrap(mesh.GetPartition(i)).n_cells
