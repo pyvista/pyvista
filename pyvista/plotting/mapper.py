@@ -748,7 +748,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     @property
     def resolve(self) -> str:
-        "Set or return the global flag to avoid z-buffer resolution.
+        """Set or return the global flag to avoid z-buffer resolution.
 
         A global flag that controls whether the coincident topology
         (e.g., a line on top of a polygon) is shifted to avoid
