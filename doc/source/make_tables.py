@@ -908,6 +908,8 @@ class GalleryCarousel(DocTable):
         |
         |{}
         |
+        |**Num Datasets**: ``{}``
+        |
         |.. card-carousel:: 1
         |
         """
@@ -953,15 +955,17 @@ class GalleryCarousel(DocTable):
     @classmethod
     @final
     def get_header(cls, data):
-        """Return carousel directive as the header."""
+        """Generate the rst for the carousel's header."""
         # Use the name as a label which can be referenced
         assert cls.name is not None, "Carousel must have a name."
         assert cls.doc is not None, "Carousel must have a doc string."
-        return cls.header_template.format(cls.name, cls.doc)
+        num_datasets = len(data)
+        assert num_datasets > 0, "No datasets were found for the carousel."
+        return cls.header_template.format(cls.name, cls.doc, num_datasets)
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
-        """Return the card for a given dataset.
+        """Generate the rst card for a given dataset.
 
         A standard card is returned by default. Subclasses
         should override this method to customize the card.
