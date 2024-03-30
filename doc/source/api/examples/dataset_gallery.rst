@@ -98,19 +98,19 @@ Browse Datasets by Type
 
         .. tab-item:: All
 
-            include:: /api/examples/dataset-gallery/multiblock_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_carousel.rest
 
         .. tab-item:: Homogeneous
 
-            include:: /api/examples/dataset-gallery/multiblock_homo_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_homo_carousel.rest
 
         .. tab-item:: Heterogeneous
 
-            include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rest
 
         .. tab-item:: Single
 
-            include:: /api/examples/dataset-gallery/multiblock_single_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_single_carousel.rest
 
 
 .. dropdown:: Miscellaneous Datasets
@@ -119,7 +119,7 @@ Browse Datasets by Type
 
         .. tab-item:: All
 
-            include:: /api/examples/dataset-gallery/misc_carousel.rest
+            .. include:: /api/examples/dataset-gallery/misc_carousel.rest
 
 
 Browse Datasets by Category
