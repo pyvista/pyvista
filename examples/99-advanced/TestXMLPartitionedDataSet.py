@@ -1,6 +1,5 @@
 import tempfile
 
-from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
 
 import pyvista as pv
@@ -15,10 +14,7 @@ input_data.SetPartition(1, partition2)
 
 with tempfile.TemporaryDirectory() as tmpdir:
     file_name = tmpdir + "/testxmlpartds.vtpd"
-    w = vtkXMLPartitionedDataSetWriter()
-    w.SetInputData(input_data)
-    w.SetFileName(file_name)
-    w.Write()
+    input_data.save(file_name)
 
     r = vtkXMLPartitionedDataSetReader()
     r.SetFileName(file_name)

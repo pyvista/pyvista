@@ -15,6 +15,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
 
     """
 
+    _WRITERS = {".vtpd": _vtk.vtkXMLPartitionedDataSetWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
         super().__init__(*args, **kwargs)

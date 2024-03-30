@@ -14,6 +14,7 @@ from collections import namedtuple
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
+from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
