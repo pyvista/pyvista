@@ -55,6 +55,24 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         return self.n_partitions
 
     @overload
+    def __getitem__(self, index: int) -> Optional[DataSet]:  # noqa: D105
+        ...
+
+    @overload
+    def __getitem__(self, index: slice) -> 'PartitionedDataSet':  # noqa: D105
+        ...
+
+    def __getitem__(self, index):
+        """Get a block by its index."""
+        if isinstance(index, slice):
+            partitions = PartitionedDataSet()
+            for i in range(self.n_partitions)[index]:
+                partitions.append(self[i])
+            return partitions
+        else:
+            return wrap(self.GetPartition(index))
+
+    @overload
     def __setitem__(self, index: int, data: Optional[DataSet]):  # noqa: D105
         ...
 
