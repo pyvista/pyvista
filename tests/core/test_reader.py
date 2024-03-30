@@ -989,3 +989,25 @@ def test_xdmf_reader():
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
+
+
+def test_xmlpartitioneddatasetreader(tmpdir):
+    tmpfile = tmpdir.join("temp.vtpd")
+
+    mesh = pv.PartitionedDataSet()
+
+    partition1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
+    partition2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
+
+    mesh.SetPartition(0, partition1)
+    mesh.SetPartition(1, partition2)
+
+    mesh.save(tmpfile.strpath)
+    new_mesh = pv.read(tmpfile.strpath)
+
+    assert isinstance(new_mesh, pv.PartitionedDataSet)
+    assert new_mesh.GetNumberOfPartitions() == 2
+
+    for i in range(new_mesh.GetNumberOfPartitions()):
+        assert isinstance(pv.wrap(new_mesh.GetPartition(i)), pv.ImageData)
+        assert pv.wrap(new_mesh.GetPartition(i)).n_cells == pv.wrap(mesh.GetPartition(i)).n_cells
