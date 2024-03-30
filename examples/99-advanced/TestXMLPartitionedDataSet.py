@@ -31,6 +31,5 @@ assert output_data.GetNumberOfPartitions() == 2
 for i in range(output_data.GetNumberOfPartitions()):
     assert isinstance(pv.wrap(output_data.GetPartition(i)), pv.ImageData)
     assert (
-        output_data.GetPartition(i).GetNumberOfCells()
-        == input_data.GetPartition(i).GetNumberOfCells()
+        pv.wrap(output_data.GetPartition(i)).n_cells == pv.wrap(input_data.GetPartition(i)).n_cells
     )
