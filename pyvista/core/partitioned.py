@@ -27,9 +27,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     >>> partitions.save("my_partitions.vtpd")
     >>> new_partitions = pv.read("my_partitions.vtpd")
 
-    >>> assert isinstance(new_partitions, pv.PartitionedDataSet)
+    >>> isinstance(new_partitions, pv.PartitionedDataSet)
     True
-    >>> assert len(new_partitions) == len(partitions)
+    >>> len(new_partitions) == len(partitions)
     True
 
     """
