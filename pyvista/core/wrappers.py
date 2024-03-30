@@ -26,7 +26,7 @@ A user-defined Foo class is defined that extends the functionality of
 from .composite import MultiBlock
 from .grid import ImageData, RectilinearGrid
 from .objects import Table
-from .partitioneddataset import PartitionedDataSet
+from .partitioned import PartitionedDataSet
 from .pointset import ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
 
 _wrappers = {
