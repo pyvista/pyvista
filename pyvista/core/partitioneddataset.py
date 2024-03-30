@@ -44,6 +44,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
             if not is_pyvista_dataset(block):
                 self.SetPartition(i, wrap(block))
 
+    def __len__(self) -> int:
+        """Return the number of partitions."""
+        return self.n_partitions
+
     @property
     def n_partitions(self) -> int:
         """Return the number of partitions.
