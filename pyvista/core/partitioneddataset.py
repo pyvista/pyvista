@@ -1,11 +1,13 @@
 """Contains the PartitionedDataSet class."""
 
+import collections.abc
+
 from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .utilities.helpers import is_pyvista_dataset, wrap
 
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
+class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc.MutableSequence):  # type: ignore[type-arg]
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
