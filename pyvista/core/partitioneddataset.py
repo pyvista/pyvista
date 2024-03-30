@@ -2,6 +2,7 @@
 
 from . import _vtk_core as _vtk
 from .dataset import DataObject
+from .utilities.helpers import is_pyvista_dataset, wrap
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
@@ -28,6 +29,20 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
+
+        # Upon creation make sure all nested structures are wrapped
+        self.wrap_nested()
+
+    def wrap_nested(self):
+        """Ensure that all nested data structures are wrapped as PyVista datasets.
+
+        This is performed in place.
+
+        """
+        for i in range(self.n_partitions):
+            block = self.GetPartition(i)
+            if not is_pyvista_dataset(block):
+                self.SetPartition(i, wrap(block))
 
     @property
     def n_partitions(self) -> int:
