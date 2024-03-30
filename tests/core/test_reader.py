@@ -1008,6 +1008,6 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     assert isinstance(new_partitions, pv.PartitionedDataSet)
     assert len(new_partitions) == len(partitions)
 
-    for i in range(len(new_partitions)):
-        assert isinstance(pv.wrap(new_partitions[i]), pv.ImageData)
-        assert pv.wrap(new_partitions[i]).n_cells == pv.wrap(partitions[i]).n_cells
+    for i, new_partition in enumerate(new_partitions):
+        assert isinstance(new_partition, pv.ImageData)
+        assert new_partitions[i].n_cells == partitions[i].n_cells

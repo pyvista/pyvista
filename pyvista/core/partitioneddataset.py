@@ -50,10 +50,6 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             if not is_pyvista_dataset(block):
                 self.SetPartition(i, wrap(block))
 
-    def __len__(self) -> int:
-        """Return the number of partitions."""
-        return self.n_partitions
-
     @overload
     def __getitem__(self, index: int) -> Optional[DataSet]:  # noqa: D105
         ...
@@ -87,6 +83,23 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     ):
         """Set a block with a VTK data object."""
         self.SetPartition(index, data)
+
+    def __iter__(self) -> 'PartitionedDataSet':
+        """Return the iterator across all partitions."""
+        self._iter_n = 0
+        return self
+
+    def __next__(self) -> Optional[DataSet]:
+        """Get the next partition from the iterator."""
+        if self._iter_n < self.n_partitions:
+            result = self[self._iter_n]
+            self._iter_n += 1
+            return result
+        raise StopIteration
+
+    def __len__(self) -> int:
+        """Return the number of partitions."""
+        return self.n_partitions
 
     @property
     def n_partitions(self) -> int:
