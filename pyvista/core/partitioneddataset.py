@@ -1,9 +1,10 @@
 """Contains the PartitionedDataSet class."""
 
 import collections.abc
+from typing import Iterable, Optional, Union, overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataset import DataObject, DataSet
 from .utilities.helpers import is_pyvista_dataset, wrap
 
 
@@ -31,6 +32,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
+            elif isinstance(args[0], (list, tuple)):
+                for partition in args[0]:
+                    self.append(partition)
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
@@ -50,6 +54,22 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Return the number of partitions."""
         return self.n_partitions
 
+    @overload
+    def __setitem__(self, index: int, data: Optional[DataSet]):  # noqa: D105
+        ...
+
+    @overload
+    def __setitem__(self, index: slice, data: Iterable[Optional[DataSet]]):  # noqa: D105
+        ...
+
+    def __setitem__(
+        self,
+        index: Union[int, slice],
+        data,
+    ):
+        """Set a block with a VTK data object."""
+        self.SetPartition(index, data)
+
     @property
     def n_partitions(self) -> int:
         """Return the number of partitions.
@@ -60,3 +80,20 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             The number of partitions.
         """
         return self.GetNumberOfPartitions()
+
+    @n_partitions.setter
+    def n_partitions(self, n):  # numpydoc ignore=GL08
+        self.SetNumberOfPartitions(n)
+        self.Modified()
+
+    def append(self, dataset):
+        """Add a data set to the next partition index.
+
+        Parameters
+        ----------
+        dataset : pyvista.DataSet
+            Dataset to append to this partitioned dataset.
+        """
+        index = self.n_partitions
+        self.n_partitions += 1
+        self[index] = dataset

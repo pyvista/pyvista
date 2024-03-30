@@ -991,16 +991,16 @@ def test_try_imageio_imread():
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.",
+)
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join("temp.vtpd")
 
-    mesh = pv.PartitionedDataSet()
-
-    partition1 = pv.Wavelet(extent=(0, 10, 0, 10, 0, 5))
-    partition2 = pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))
-
-    mesh.SetPartition(0, partition1)
-    mesh.SetPartition(1, partition2)
+    mesh = pv.PartitionedDataSet(
+        [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))]
+    )
 
     mesh.save(tmpfile.strpath)
     new_mesh = pv.read(tmpfile.strpath)
