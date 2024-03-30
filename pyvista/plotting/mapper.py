@@ -748,16 +748,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     @property
     def resolve(self) -> str:
-        """Set or return global flag to avoid z-buffer resolution.
+        "Set or return the global flag to avoid z-buffer resolution.
 
-        A global flag that controls whether coincident topology
+        A global flag that controls whether the coincident topology
         (e.g., a line on top of a polygon) is shifted to avoid
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.
         `polygon_offset` uses graphics systems calls to shift polygons,
-        lines and points from each other.
-        `shift_zbuffer` is a legacy method that used to remap the z-buffer
+        lines, and points from each other.
+        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
         You should only use the polygon_offset method (or none) at this point.
