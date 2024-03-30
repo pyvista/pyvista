@@ -10,8 +10,6 @@ Create a PartitionedDataSet.
 
 import tempfile
 
-from vtkmodules.vtkIOXML import vtkXMLPartitionedDataSetReader
-
 import pyvista as pv
 
 input_data = pv.PartitionedDataSet()
@@ -25,11 +23,7 @@ input_data.SetPartition(1, partition2)
 with tempfile.TemporaryDirectory() as tmpdir:
     file_name = tmpdir + "/testxmlpartds.vtpd"
     input_data.save(file_name)
-
-    r = vtkXMLPartitionedDataSetReader()
-    r.SetFileName(file_name)
-    r.Update()
-    output_data = pv.wrap(r.GetOutputDataObject(0))
+    output_data = pv.read(file_name)
 
 assert isinstance(output_data, pv.PartitionedDataSet)
 assert output_data.GetNumberOfPartitions() == 2
