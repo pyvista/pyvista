@@ -15,7 +15,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject):
 
     """
 
-    if _vtk.vtk_version_info > (9, 0):
+    if _vtk.vtk_version_info >= (9, 1):
         _WRITERS = {".vtpd": _vtk.vtkXMLPartitionedDataSetWriter}
 
     def __init__(self, *args, **kwargs):
