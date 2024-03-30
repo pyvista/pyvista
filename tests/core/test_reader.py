@@ -998,16 +998,19 @@ def test_try_imageio_imread():
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join("temp.vtpd")
 
-    mesh = pv.PartitionedDataSet(
+    partitions = pv.PartitionedDataSet(
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))]
     )
 
-    mesh.save(tmpfile.strpath)
-    new_mesh = pv.read(tmpfile.strpath)
+    partitions.save(tmpfile.strpath)
+    new_partitions = pv.read(tmpfile.strpath)
 
-    assert isinstance(new_mesh, pv.PartitionedDataSet)
-    assert len(new_mesh) == len(mesh)
+    assert isinstance(new_partitions, pv.PartitionedDataSet)
+    assert len(new_partitions) == len(partitions)
 
-    for i in range(len(new_mesh)):
-        assert isinstance(pv.wrap(new_mesh.GetPartition(i)), pv.ImageData)
-        assert pv.wrap(new_mesh.GetPartition(i)).n_cells == pv.wrap(mesh.GetPartition(i)).n_cells
+    for i in range(len(new_partitions)):
+        assert isinstance(pv.wrap(new_partitions.GetPartition(i)), pv.ImageData)
+        assert (
+            pv.wrap(new_partitions.GetPartition(i)).n_cells
+            == pv.wrap(partitions.GetPartition(i)).n_cells
+        )
