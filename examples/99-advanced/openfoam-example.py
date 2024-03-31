@@ -96,9 +96,7 @@ def slice_z_center(mesh):
 
 
 slice_internal_mesh = slice_z_center(internal_mesh)
-slice_boundaries = pyvista.MultiBlock(
-    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()}
-)
+slice_boundaries = pyvista.MultiBlock({key: slice_z_center(boundaries[key]) for key in boundaries})
 
 ###############################################################################
 # Streamlines are generated using the point data "U".

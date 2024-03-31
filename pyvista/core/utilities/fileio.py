@@ -566,7 +566,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     # Check that meshio supports all cell types in input mesh
     pixel_voxel = {8, 11}  # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
-        if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
+        if cell_type not in vtk_to_meshio_type and cell_type not in pixel_voxel:
             raise TypeError(f"meshio does not support VTK type {cell_type}.")
 
     # Get cells

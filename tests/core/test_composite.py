@@ -67,8 +67,8 @@ def test_multi_block_keys(rectilinear, airplane):
     data = {'grid': rectilinear, 'poly': airplane}
     multi = MultiBlock(data)
     assert len(multi.keys()) == 2
-    assert 'grid' in multi.keys()
-    assert 'poly' in multi.keys()
+    assert 'grid' in multi
+    assert 'poly' in multi
 
 
 def test_multi_block_init_list(rectilinear, airplane):
@@ -143,7 +143,7 @@ def test_multi_block_set_get_ers():
     pop = multi.pop(0)
     assert isinstance(pop, RectilinearGrid)
     assert multi.n_blocks == 3
-    assert all(k is None for k in multi.keys())
+    assert all(k is None for k in multi)
 
     multi["new key"] = pv.Sphere()
     assert multi.n_blocks == 4
@@ -190,12 +190,12 @@ def test_del_slice(sphere):
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
-    assert all(f"{i}" in multi.keys() for i in range(1, 10, 2))
+    assert all(f"{i}" in multi for i in range(1, 10, 2))
 
     multi = MultiBlock({f"{i}": sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
-    assert all(f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9])
+    assert all(f"{i}" in multi for i in [0, 1, 2, 6, 7, 8, 9])
 
 
 def test_slicing_multiple_in_setitem(sphere):
