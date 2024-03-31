@@ -29,11 +29,7 @@ import pyvista as pv
 def analytical_integral_rppd(p, q, r, a, b, c):
     """Returns the analytical value of the RPPD integral, i.e. the integral
     of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c)."""
-    if p < 0:
-        return 0.0
-    elif q < 0:
-        return 0.0
-    elif r < 0.0:
+    if p < 0 or q < 0 or r < 0.0:
         return 0.0
     else:
         return (

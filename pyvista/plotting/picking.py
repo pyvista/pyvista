@@ -1146,9 +1146,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.Update()
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
-            if picked.n_blocks == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif picked.n_blocks == 1:
                 self_()._picked_cell = picked[0]
@@ -1289,9 +1287,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
                 selection.UnRegister(selection)
 
-            if len(picked) == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if len(picked) == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif len(picked) == 1:
                 self_()._picked_cell = picked[0]
