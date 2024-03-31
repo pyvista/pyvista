@@ -1083,7 +1083,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             See :func:`pyvista.create_axes_orientation_box` for details.
 
             .. deprecated:: 0.43.0
-                The is deprecated. Use `add_box_axes` method instead.",
+                The is deprecated. Use `add_box_axes` method instead.
 
         box_args : dict, optional
             Parameters for the orientation box widget when
