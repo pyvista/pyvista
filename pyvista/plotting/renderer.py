@@ -2475,10 +2475,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
-            names = []
-            for k in keys:
-                if k.startswith(f'{name}-'):
-                    names.append(k)
+            names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
