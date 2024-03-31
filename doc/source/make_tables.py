@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from dataclasses import dataclass
+from enum import StrEnum, auto
 import functools
 import inspect
 import io
@@ -554,6 +556,8 @@ class DatasetCard:
         |
         |            {}
         |
+        |   Badges: {}
+        |
         |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
         |      {}
@@ -577,12 +581,12 @@ class DatasetCard:
     ):
         self.dataset_name = dataset_name
         self.loader = loader
-        self._tags: List[str] = []
+        self._badges: List[Optional[_BaseDatasetBadge]] = []
         self.card = None
         self.ref = None
 
-    def add_tag(self, tag: str):
-        self._tags.append(tag)
+    def add_badge(self, badge: _BaseDatasetBadge):
+        self._badges.append(badge)
 
     def generate(self):
         dataset_name = self.dataset_name
@@ -595,6 +599,7 @@ class DatasetCard:
         try:
             loader.download()
         except VTKVersionError:
+            # Exception is caused by 'download_can'
             # Set default values
             NOT_AVAILABLE = '``Not available``'
             NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
@@ -615,9 +620,13 @@ class DatasetCard:
             dataset_type = self._format_dataset_type(loader)
             dataset_repr = self._format_dataset_repr(loader, self._REPR_INDENT_LEVEL)
             datasource_links = self._format_datasource_links(loader, self._LINKS_INDENT_LEVEL)
+
             img_path = self._search_image_path(func_name)
 
         self._process_img(img_path)
+
+        # Format badges
+        badges = self._format_badges(self._badges)
 
         ref = self.ref_template.format(index_name, ref_name)
         card = self.card_template.format(
@@ -631,6 +640,7 @@ class DatasetCard:
             reader_type,
             dataset_type,
             dataset_repr,
+            badges,
             datasource_links,
         )
         # Create separate version of the card with index
@@ -713,6 +723,16 @@ class DatasetCard:
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
+    def _format_badges(badges: List[_BaseDatasetBadge]):
+        """Sort badges by type and join all badge rst into a single string."""
+        module_badges = [b for b in badges if isinstance(b, ModuleBadge)]
+        datatype_badges = [b for b in badges if isinstance(b, DataTypeBadge)]
+        category_badges = [b for b in badges if isinstance(b, CategoryBadge)]
+        all_badges = module_badges + datatype_badges + category_badges
+        rst = ', '.join([badge.generate() for badge in all_badges])
+        return rst
+
+    @staticmethod
     def _format_datasource_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
@@ -787,9 +807,12 @@ class DatasetCard:
 
 
 class DatasetCardFetcher:
-    CARDS_OBJ_DICT: Dict[str, DatasetCard] = {}
-    CARDS_RST_REF_DICT: Dict[str, str] = {}
-    CARDS_RST_DICT: Dict[str, str] = {}
+    # Dict of all card objects
+    DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
+
+    # Dict of generated rst cards
+    DATASET_CARDS_RST_REF: Dict[str, str] = {}
+    DATASET_CARDS_RST: Dict[str, str] = {}
 
     @classmethod
     def init_cards(cls):
@@ -810,7 +833,7 @@ class DatasetCardFetcher:
                 # Make card
                 dataset_name = name.replace('_dataset_', '')
                 dataset_loader = item
-                cls.CARDS_OBJ_DICT[dataset_name] = DatasetCard(dataset_name, dataset_loader)
+                cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
                 # Load data
                 try:
@@ -823,21 +846,21 @@ class DatasetCardFetcher:
     @classmethod
     def generate(cls):
         """Generate formatted rst output for all cards."""
-        for name in cls.CARDS_OBJ_DICT:
-            card, card_with_ref = cls.CARDS_OBJ_DICT[name].generate()
+        for name in cls.DATASET_CARDS_OBJ:
+            card, card_with_ref = cls.DATASET_CARDS_OBJ[name].generate()
             # indent one level from the carousel header directive
-            cls.CARDS_RST_REF_DICT[name] = _pad_lines(card_with_ref, pad_left='   ')
-            cls.CARDS_RST_DICT[name] = _pad_lines(card, pad_left='   ')
+            cls.DATASET_CARDS_RST_REF[name] = _pad_lines(card_with_ref, pad_left='   ')
+            cls.DATASET_CARDS_RST[name] = _pad_lines(card, pad_left='   ')
 
-    # @classmethod
-    # def get_dataset_objects(cls, dataset_name:str)-> Tuple[Any, ...]:
-    #     """Return the loaded dataset objects as an iterable."""
-    #     return cls.CARDS_OBJ_DICT[dataset_name].card.loader.dataset_objects
+    @classmethod
+    def add_badge_to_cards(cls, dataset_names: List[str], badge: _BaseDatasetBadge):
+        for dataset_name in dataset_names:
+            cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
 
     @classmethod
     def fetch_by_datatype(cls, datatype) -> List[str]:
         dataset_names = []
-        for name, card in DatasetCardFetcher.CARDS_OBJ_DICT.items():
+        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             loader = card.loader
             if datatype in _as_iterable(loader.unique_dataset_type):
                 dataset_names.append(name)
@@ -848,7 +871,7 @@ class DatasetCardFetcher:
         """Return dataset names whose dataset objects return 'True' for a given function."""
         # Store output names in a dict to preserve order and make entries unique
         dataset_names_out = {}
-        for dataset_name, card in cls.CARDS_OBJ_DICT.items():
+        for dataset_name, card in cls.DATASET_CARDS_OBJ.items():
             dataset_iterable = card.loader.dataset_iterable
             for obj in dataset_iterable:
                 try:
@@ -868,7 +891,7 @@ class DatasetCardFetcher:
         def _is_2d(data):
             return np.any(np.array(data.dimensions) == 1)
 
-        for name, card in cls.CARDS_OBJ_DICT.items():
+        for name, card in cls.DATASET_CARDS_OBJ.items():
             loader = card.loader
             if pv.ImageData in _as_iterable(loader.unique_dataset_type):
                 if kind == 'all':
@@ -889,7 +912,7 @@ class DatasetCardFetcher:
     @classmethod
     def fetch_cubemap(cls):
         dataset_names = []
-        for name, card in cls.CARDS_OBJ_DICT.items():
+        for name, card in cls.DATASET_CARDS_OBJ.items():
             loader = card.loader
             if pv.Texture in _as_iterable(loader.unique_dataset_type):
                 dataset = _as_iterable(loader.dataset)
@@ -900,8 +923,75 @@ class DatasetCardFetcher:
         return dataset_names
 
 
+@dataclass(unsafe_hash=True)
+class _BaseDatasetBadge:
+    class SemanticColorEnum(StrEnum):
+
+        primary = auto()
+        secondary = auto()
+        success = auto()
+
+    name: str
+    ref: str
+
+    def __post_init__(self):
+        self.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None
+
+    def generate(self):
+        # Generate rst
+        color = self.semantic_color.name
+        name = self.name
+        ref = self.ref
+        return f':bdg-{color}:`{name} <{ref}>`'
+
+
+@dataclass
+class ModuleBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based on its source module,
+
+    e.g. 'Downloads' for datasets from `pyvista.examples.downloads`.
+    """
+
+    name: str
+    ref: str
+
+    def __post_init__(self):
+        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.primary
+
+
+@dataclass
+class DataTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based on its type.
+
+    The term `type` here may refer to a proper python type, e.g.
+    'UnstructuredGrid',but can also be used more loosely to refer
+    to a general type of data,  e.g. 'Point Cloud', or specialized
+    version of a type, e.g. 'Cubemap' (a type of Texture) or
+    'Volume' (a type of ImageData).
+    """
+
+    name: str
+    ref: str
+
+    def __post_init__(self):
+        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
+
+
+@dataclass
+class CategoryBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based on its application or use.
+
+    e.g. 'Medical' for medical datasets.
+    """
+
+    name: str
+    ref: str
+
+    def __post_init__(self):
+        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
+
+
 class GalleryCarousel(DocTable):
-    # Include
     header_template = _aligned_dedent(
         """
         |.. _{}:
@@ -917,12 +1007,17 @@ class GalleryCarousel(DocTable):
 
     # Subclasses should give the carousel a name
     # The name should end with '_carousel'
-    name = None
-    # Subclasses should give the carousel a short description
-    # describing the carousel's contents.
-    doc = None
+    name: str = None
 
-    dataset_names: Optional[Iterable[str]] = None
+    # Subclasses should give the carousel a short description
+    # describing the carousel's contents
+    doc: str = None
+
+    # Subclasses may optionally define a badge for the carousel
+    # All datasets in the carousel will be given this badge.
+    badge: _BaseDatasetBadge = None
+
+    dataset_names: Optional[List[str]] = None
 
     @property
     @final
@@ -939,7 +1034,7 @@ class GalleryCarousel(DocTable):
 
     @classmethod
     @abstractmethod
-    def fetch_dataset_names(cls) -> Iterable[str]:
+    def fetch_dataset_names(cls) -> List[str]:
         """Return all dataset names to include in the gallery."""
 
     @classmethod
@@ -973,7 +1068,7 @@ class GalleryCarousel(DocTable):
         assert isinstance(
             dataset_name, str
         ), f"Dataset name {dataset_name} for {cls} must be a string."
-        return DatasetCardFetcher.CARDS_RST_DICT[dataset_name]
+        return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
 
 
 class DownloadsGalleryCarousel(GalleryCarousel):
@@ -981,10 +1076,11 @@ class DownloadsGalleryCarousel(GalleryCarousel):
 
     name = 'downloads_carousel'
     doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    badge = ModuleBadge('Downloads', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.CARDS_OBJ_DICT.keys()
+        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
 
 
 class BuiltinGalleryCarousel(GalleryCarousel):
@@ -992,7 +1088,8 @@ class BuiltinGalleryCarousel(GalleryCarousel):
 
     # TODO: add builtin datasets
     name = 'builtin_carousel'
-    doc = 'Built-in datasets from the :mod:`examples <pyvista.examples.examples>` module.'
+    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
+    badge = ModuleBadge('Built-in', ref=name)
 
 
 class PlanetsGalleryCarousel(GalleryCarousel):
@@ -1001,6 +1098,7 @@ class PlanetsGalleryCarousel(GalleryCarousel):
     # TODO: add planets datasets
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
+    badge = ModuleBadge('Planets', ref=name)
 
 
 class ImageDataTextureGalleryCarousel(GalleryCarousel):
@@ -1021,6 +1119,7 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_3d_carousel'
     doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
+    badge = DataTypeBadge('ImageData 3D', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1032,6 +1131,7 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_2d_carousel'
     doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
+    badge = DataTypeBadge('ImageData 2D', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1043,6 +1143,7 @@ class TextureGalleryCarousel(GalleryCarousel):
 
     name = 'texture_carousel'
     doc = ':class:`~pyvista.Texture` datasets.'
+    badge = DataTypeBadge('Texture', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1054,6 +1155,7 @@ class CubemapGalleryCarousel(GalleryCarousel):
 
     name = 'cubemap_carousel'
     doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
+    badge = DataTypeBadge('Cubemap', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1082,6 +1184,7 @@ class RectilinearGridGalleryCarousel(GalleryCarousel):
 
     name = 'rectilineargrid_carousel'
     doc = ':class:`~pyvista.RectilinearGrid` datasets.'
+    badge = DataTypeBadge('RectilinearGrid', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1093,6 +1196,7 @@ class StructuredGridGalleryCarousel(GalleryCarousel):
 
     name = 'structuredgrid_carousel'
     doc = ':class:`~pyvista.StructuredGrid` datasets.'
+    badge = DataTypeBadge('StructuredGrid', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1104,6 +1208,7 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
 
     name = 'unstructuredgrid_carousel'
     doc = ':class:`~pyvista.UnstructuredGrid` datasets.'
+    badge = DataTypeBadge('UnstructuredGrid', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1128,6 +1233,7 @@ class PointCloudGalleryCarousel(GalleryCarousel):
 
     name = 'pointcloud_carousel'
     doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
+    badge = DataTypeBadge('Point Cloud', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1144,6 +1250,7 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
 
     name = 'surfacemesh_carousel'
     doc = ':class:`~pyvista.PolyData` surface meshes.'
+    badge = DataTypeBadge('Surface Mesh', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1160,6 +1267,7 @@ class MiscGalleryCarousel(GalleryCarousel):
 
     name = 'misc_carousel'
     doc = 'Datasets which have a non-standard representation.'
+    badge = DataTypeBadge('Misc', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1174,6 +1282,7 @@ class MultiBlockGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets.'
+    badge = DataTypeBadge('MultiBlock', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1238,6 +1347,7 @@ class MedicalGalleryCarousel(GalleryCarousel):
 
     name = 'medical_carousel'
     doc = 'Medical datasets.'
+    badge = CategoryBadge('Medical', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1267,6 +1377,12 @@ def make_all_carousels(carousels: List[GalleryCarousel]):
 
     # Create lists of dataset names for each carousel
     [carousel.init_dataset_names() for carousel in carousels]
+
+    # Add carousel badges to cards
+    [
+        DatasetCardFetcher.add_badge_to_cards(carousel.dataset_names, carousel.badge)
+        for carousel in carousels
+    ]
 
     # Generate rst for all card objects
     DatasetCardFetcher.generate()
