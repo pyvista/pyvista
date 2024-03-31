@@ -140,10 +140,10 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
-    if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict]):
+    if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
-    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict]):
+    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
         raise ValueError(
             "You requested a cell type with variable length, which can't be used in this method"
         )

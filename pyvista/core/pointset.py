@@ -2927,7 +2927,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """
         if inplace:
             name = _vtk.vtkDataSetAttributes.GhostArrayName()
-            if name in self.cell_data:
+            if name in self.cell_data.keys():
                 array = self.cell_data[name]
                 ind = np.argwhere(array == _vtk.vtkDataSetAttributes.HIDDENCELL)
                 array[ind] = 0

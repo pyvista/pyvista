@@ -471,13 +471,13 @@ def test_length_should_be_0_on_clear(insert_arange_narray):
 
 def test_keys_should_be_strings(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    for name in dsa:
+    for name in dsa.keys():
         assert isinstance(name, str)
 
 
 def test_key_should_exist(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
-    assert 'sample_array' in dsa
+    assert 'sample_array' in dsa.keys()
 
 
 def test_values_should_be_pyvista_ndarrays(insert_arange_narray):

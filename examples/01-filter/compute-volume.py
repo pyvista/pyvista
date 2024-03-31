@@ -141,7 +141,7 @@ channels = data.threshold([0.9, 1.1])
 
 bodies = channels.split_bodies()
 # Now remove all bodies with a small volume
-for key in bodies:
+for key in bodies.keys():
     b = bodies[key]
     vol = b.volume
     if vol < 1000.0:

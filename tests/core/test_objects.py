@@ -61,7 +61,7 @@ def test_table_init(tmpdir):
     assert table.n_columns == len(array_dict)
 
     assert len(table.row_arrays) == len(array_dict)
-    for name in table:
+    for name in table.keys():
         assert np.allclose(dataset[name], table[name])
 
     # Create from vtkTable object
@@ -131,7 +131,7 @@ def test_table_row_arrays():
     assert table.n_columns == len(array_dict)
 
     assert len(table.row_arrays) == len(array_dict)
-    for name in table:
+    for name in table.keys():
         assert np.allclose(dataset[name], table[name])
 
     for i, array in enumerate(table.values()):

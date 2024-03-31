@@ -3075,7 +3075,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
-        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES}
+        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
         # Overwrite custom X and Y axis using a wrapper object, as using the
         # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).

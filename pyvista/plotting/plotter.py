@@ -4250,7 +4250,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'smart': SmartVolumeMapper,
             'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
-        if not isinstance(mapper, str) or mapper not in mappers_lookup:
+        if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
             raise TypeError(
                 f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
             )

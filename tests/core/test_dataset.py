@@ -1472,7 +1472,7 @@ def test_cast_to_pointset_implicit(uniform):
     assert np.allclose(uniform.active_scalars, pointset.active_scalars)
 
     ctp = uniform.cell_data_to_point_data()
-    for name in ctp.point_data:
+    for name in ctp.point_data.keys():
         assert np.allclose(ctp[name], pointset[name])
 
     for i, name in enumerate(uniform.point_data.keys()):
@@ -1491,7 +1491,7 @@ def test_cast_to_poly_points_implicit(uniform):
     assert np.allclose(uniform.active_scalars, points.active_scalars)
 
     ctp = uniform.cell_data_to_point_data()
-    for name in ctp.point_data:
+    for name in ctp.point_data.keys():
         assert np.allclose(ctp[name], points[name])
 
     for i, name in enumerate(uniform.point_data.keys()):

@@ -418,7 +418,7 @@ class RenderWindowInteractor:
         key = self.interactor.GetKeySym()
         log.debug(f'Key {key} pressed')
         self._last_key = key
-        if key in self._key_press_event_callbacks:
+        if key in self._key_press_event_callbacks.keys():
             # Note that defaultdict's will never throw a key error
             callbacks = self._key_press_event_callbacks[key]
             for func in callbacks:

@@ -1125,8 +1125,8 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
         closest_point=(0, 0, 0),
     )
     conn = dataset.connectivity(**common_args, label_regions=True)
-    assert 'RegionId' in conn.point_data
-    assert 'RegionId' in conn.cell_data
+    assert 'RegionId' in conn.point_data.keys()
+    assert 'RegionId' in conn.cell_data.keys()
 
     expected_cell_scalars_size = conn.n_cells
     actual_cell_scalars_size = conn.cell_data['RegionId'].size
@@ -1139,8 +1139,8 @@ def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
     # test again but without labels
     active_scalars_info = dataset.active_scalars_info
     conn = dataset.connectivity(**common_args, label_regions=False)
-    assert 'RegionId' not in conn.point_data
-    assert 'RegionId' not in conn.cell_data
+    assert 'RegionId' not in conn.point_data.keys()
+    assert 'RegionId' not in conn.cell_data.keys()
 
     assert conn.n_cells == expected_cell_scalars_size
     assert conn.n_points == expected_point_scalars_size
