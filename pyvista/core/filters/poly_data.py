@@ -2194,8 +2194,7 @@ class PolyDataFilters(DataSetFilters):
                 ncells = 1
             else:
                 ncells = cell_ids.GetNumberOfIds()
-            for i in range(ncells):
-                intersection_cells.append(cell_ids.GetId(i))
+            intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
         intersection_cells = np.array(intersection_cells)
 
         if plot:
