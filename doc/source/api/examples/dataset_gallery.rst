@@ -14,17 +14,17 @@ Datasets in this section are organized by the module they are imported from.
 
         .. tab-item:: All
 
-            .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
+            .. include:: /api/examples/dataset-gallery/downloads_carousel.rst
 
             ..
                 TODO: add builtin datasets
                 .. tab-item:: Built-in
-                .. include:: /api/examples/dataset-gallery/builtin_carousel.rest
+                .. include:: /api/examples/dataset-gallery/builtin_carousel.rst
 
             ..
                 TODO: add planets
                 .. tab-item:: Planets
-                .. include:: /api/examples/dataset-gallery/planets_carousel.rest
+                .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
 
 Browse Datasets by Type
@@ -41,24 +41,24 @@ Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for detai
 
         .. tab-item:: PointSet
 
-            .. include:: /api/examples/dataset-gallery/pointset_carousel.rest
+            .. include:: /api/examples/dataset-gallery/pointset_carousel.rst
 
         .. tab-item:: PolyData
 
-            .. include:: /api/examples/dataset-gallery/polydata_carousel.rest
+            .. include:: /api/examples/dataset-gallery/polydata_carousel.rst
 
         .. tab-item:: UnstructuredGrid
 
-            .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
+            .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rst
 
         .. tab-item:: StructuredGrid
 
-            .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
+            .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rst
 
         ..
             TODO: Add this dataset and carousel
             .. tab-item:: ExplicitStructuredGrid
-            .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rest
+            .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rst
 
 Browse point sets with a specific kind of representation.
 
@@ -68,11 +68,11 @@ Browse point sets with a specific kind of representation.
 
         .. tab-item:: Point Clouds
 
-            .. include:: /api/examples/dataset-gallery/pointcloud_carousel.rest
+            .. include:: /api/examples/dataset-gallery/pointcloud_carousel.rst
 
         .. tab-item:: Surface Meshes
 
-            .. include:: /api/examples/dataset-gallery/surfacemesh_carousel.rest
+            .. include:: /api/examples/dataset-gallery/surfacemesh_carousel.rst
 
 
 Gridded Data
@@ -86,11 +86,11 @@ See :doc:`/api/core/grids` for details.
 
         .. tab-item:: RectilinearGrid
 
-            .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
+            .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rst
 
         .. tab-item:: ImageData
 
-            .. include:: /api/examples/dataset-gallery/imagedata_carousel.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_carousel.rst
 
 Browse gridded data with a specific kind of representation.
 
@@ -100,19 +100,19 @@ Browse gridded data with a specific kind of representation.
 
         .. tab-item:: 3D Volumes
 
-            .. include:: /api/examples/dataset-gallery/imagedata_3d_carousel.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_3d_carousel.rst
 
         .. tab-item:: 2D Images
 
-            .. include:: /api/examples/dataset-gallery/imagedata_2d_carousel.rest
+            .. include:: /api/examples/dataset-gallery/imagedata_2d_carousel.rst
 
         .. tab-item:: Textures
 
-            .. include:: /api/examples/dataset-gallery/texture_carousel.rest
+            .. include:: /api/examples/dataset-gallery/texture_carousel.rst
 
         .. tab-item:: Cubemaps
 
-            .. include:: /api/examples/dataset-gallery/cubemap_carousel.rest
+            .. include:: /api/examples/dataset-gallery/cubemap_carousel.rst
 
 
 Composite Datasets
@@ -126,19 +126,19 @@ Composite classes which hold many data sets. See :doc:`/api/core/composite` for 
 
         .. tab-item:: All
 
-            .. include:: /api/examples/dataset-gallery/multiblock_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_carousel.rst
 
         .. tab-item:: Homogeneous
 
-            .. include:: /api/examples/dataset-gallery/multiblock_homo_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_homo_carousel.rst
 
         .. tab-item:: Heterogeneous
 
-            .. include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rst
 
         .. tab-item:: Single Block
 
-            .. include:: /api/examples/dataset-gallery/multiblock_single_carousel.rest
+            .. include:: /api/examples/dataset-gallery/multiblock_single_carousel.rst
 
 
 Miscellaneous Datasets
@@ -150,7 +150,7 @@ Miscellaneous Datasets
 
         .. tab-item:: All
 
-            .. include:: /api/examples/dataset-gallery/misc_carousel.rest
+            .. include:: /api/examples/dataset-gallery/misc_carousel.rst
 
 
 Browse Datasets by Category
@@ -162,4 +162,4 @@ Browse Datasets by Category
 
         .. tab-item:: All
 
-            .. include:: /api/examples/dataset-gallery/medical_carousel.rest
+            .. include:: /api/examples/dataset-gallery/medical_carousel.rst
