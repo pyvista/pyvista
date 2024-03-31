@@ -965,7 +965,10 @@ class _BaseDatasetBadge:
         # Generate rst
         color = self.semantic_color.name
         name = self.name
-        ref = self.ref
+        # the badge's bdg-ref uses :any: under the hood to find references
+        # so we use _gallery to point to the explicit reference instead
+        # of the carousel's rst file
+        ref = self.ref.replace('_carousel', '_gallery')
         line = '-line' if hasattr(self, 'filled') and not self.filled else ''
         return f':bdg-ref-{color}{line}:`{name} <{ref}>`'
 
@@ -1097,7 +1100,12 @@ class GalleryCarousel(DocTable):
         assert cls.doc is not None, f"Carousel {cls} must have a doc string."
         num_datasets = len(data)
         assert num_datasets > 0, f"No datasets were found for carousel {cls}."
-        return cls.header_template.format(cls.name, cls.doc, num_datasets)
+        # the carousel doc will auto-generate its own :doc:carousel.rst ref
+        # in addition to the explicit ref that is added here in the header.
+        # To ensure the doc ref andexplicit ref have unique names, we use _gallery
+        # for the ref name. This way, using :any: to resolve references will work.
+        ref_name = cls.name.replace('_carousel', '_gallery')
+        return cls.header_template.format(ref_name, cls.doc, num_datasets)
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
