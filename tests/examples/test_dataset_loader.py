@@ -218,6 +218,7 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.source_name == 'cow.vtp'
     assert loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/cow.vtp'
     assert loader.source_url_blob == 'https://github.com/pyvista/vtk-data/blob/master/Data/cow.vtp'
+    assert loader.unique_cell_types == (pv.CellType.TRIANGLE, pv.CellType.POLYGON, pv.CellType.QUAD)
 
 
 @pytest.fixture()
@@ -258,6 +259,7 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
     )
+    assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
 
 @pytest.fixture()
@@ -302,6 +304,7 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
         'https://github.com/pyvista/vtk-data/blob/master/Data/bolt.slc',
         'https://github.com/pyvista/vtk-data/blob/master/Data/nut.slc',
     )
+    assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
 
 @pytest.fixture()
@@ -335,6 +338,8 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
         == 'https://github.com/pyvista/vtk-data/blob/master/Data/cubemap_park/cubemap_park.zip'
     )
 
+    assert loader.unique_cell_types == (pv.CellType.PIXEL,)
+
 
 @pytest.fixture()
 def dataset_loader_dicom():
@@ -364,6 +369,7 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
         loader.source_url_blob
         == 'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip'
     )
+    assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
 
 def test_dataset_loader_from_nested_files_and_directory(
@@ -424,6 +430,12 @@ def test_dataset_loader_from_nested_files_and_directory(
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.mhd',
         'https://github.com/pyvista/vtk-data/blob/master/Data/HeadMRVolume.raw',
         'https://github.com/pyvista/vtk-data/blob/master/Data/DICOM_Stack/data.zip',
+    )
+    assert loader.unique_cell_types == (
+        pv.CellType.TRIANGLE,
+        pv.CellType.POLYGON,
+        pv.CellType.QUAD,
+        pv.CellType.VOXEL,
     )
 
 

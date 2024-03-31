@@ -553,7 +553,7 @@ class DatasetCard:
         |
         |            {}
         |
-        |   **Badges**:
+        |   **Gallery tags**: {}
         |
         |   {}
         |
@@ -625,7 +625,11 @@ class DatasetCard:
         self._process_img(img_path)
 
         # Format badges
-        badges = self._format_badges(self._badges)
+        carousel_badges = self._format_carousel_badges(self._badges)
+        celltype_badges = self._format_celltype_badges(self._badges)
+        if celltype_badges != '':
+            # Only show this section if the dataset has cells
+            celltype_badges = f'**Cell Types**: {celltype_badges}'
 
         ref = self.ref_template.format(ref_name)
         card = self.card_template.format(
@@ -639,7 +643,8 @@ class DatasetCard:
             reader_type,
             dataset_type,
             dataset_repr,
-            badges,
+            carousel_badges,
+            celltype_badges,
             datasource_links,
         )
         # Create separate version of the card with index
@@ -722,7 +727,7 @@ class DatasetCard:
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
-    def _format_badges(badges: List[_BaseDatasetBadge]):
+    def _format_carousel_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
         for badge in badges:
@@ -734,10 +739,22 @@ class DatasetCard:
                 special_badges.append(badge)
             elif isinstance(badge, CategoryBadge):
                 category_badges.append(badge)
+            elif isinstance(badge, CellTypeBadge):
+                pass  # process these separately
             elif isinstance(badge, _BaseDatasetBadge):
                 raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
         all_badges = module_badges + datatype_badges + special_badges + category_badges
         rst = ' '.join([badge.generate() for badge in all_badges])
+        return rst
+
+    @staticmethod
+    def _format_celltype_badges(badges: List[_BaseDatasetBadge]):
+        """Sort badges by type and join all badge rst into a single string."""
+        celltype_badges = []
+        for badge in badges:
+            if isinstance(badge, CellTypeBadge):
+                celltype_badges.append(badge)
+        rst = ' '.join([badge.generate() for badge in celltype_badges])
         return rst
 
     @staticmethod
@@ -862,8 +879,16 @@ class DatasetCardFetcher:
 
     @classmethod
     def add_badge_to_cards(cls, dataset_names: List[str], badge: _BaseDatasetBadge):
+        """Add a single badge to all specified datasets."""
         for dataset_name in dataset_names:
             cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
+
+    @classmethod
+    def add_cell_badges_to_all_cards(cls):
+        """Add cell type badge(s) to every dataset."""
+        for card in cls.DATASET_CARDS_OBJ.values():
+            for cell_type in card.loader.unique_cell_types:
+                card.add_badge(CellTypeBadge(cell_type.name))
 
     @classmethod
     def fetch_by_datatype(cls, datatype) -> List[str]:
@@ -940,6 +965,7 @@ class _BaseDatasetBadge:
         primary = auto()
         secondary = auto()
         success = auto()
+        dark = auto()
 
     # Name of the badge
     name: str
@@ -965,12 +991,18 @@ class _BaseDatasetBadge:
         # Generate rst
         color = self.semantic_color.name
         name = self.name
-        # the badge's bdg-ref uses :any: under the hood to find references
-        # so we use _gallery to point to the explicit reference instead
-        # of the carousel's rst file
-        ref = self.ref.replace('_carousel', '_gallery')
         line = '-line' if hasattr(self, 'filled') and not self.filled else ''
-        return f':bdg-ref-{color}{line}:`{name} <{ref}>`'
+        if self.ref:
+            # the badge's bdg-ref uses :any: under the hood to find references
+            # so we use _gallery to point to the explicit reference instead
+            # of the carousel's rst file
+            ref_name = self.ref.replace('_carousel', '_gallery')
+            ref_link_rst = f' <{ref_name}>'
+            bdg_ref_rst = 'ref-'
+        else:
+            bdg_ref_rst = ''
+            ref_link_rst = ''
+        return f':bdg-{bdg_ref_rst}{color}{line}:`{name}{ref_link_rst}`'
 
 
 @dataclass
@@ -1035,6 +1067,22 @@ class CategoryBadge(_BaseDatasetBadge):
     @classmethod
     def __post_init__(cls):
         cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
+
+
+@dataclass
+class CellTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset based with a specific cell type.
+
+    e.g. 'Medical' for medical datasets.
+    """
+
+    name: str
+    ref: str = None
+
+    @classmethod
+    def __post_init__(cls):
+        cls.filled = False
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
 
 
 class GalleryCarousel(DocTable):
@@ -1439,6 +1487,8 @@ def make_all_carousels(carousels: List[GalleryCarousel]):
         DatasetCardFetcher.add_badge_to_cards(carousel.dataset_names, carousel.badge)
         for carousel in carousels
     ]
+    # Add celltype badges to cards
+    DatasetCardFetcher.add_cell_badges_to_all_cards()
 
     # Generate rst for all card objects
     DatasetCardFetcher.generate()

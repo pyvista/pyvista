@@ -151,6 +151,25 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return unique reader type(s) from all file readers."""
         return _get_unique_reader_type(self._reader)
 
+    @property
+    def unique_cell_types(
+        self,
+    ) -> Tuple[pv.CellType, ...]:
+        """Return unique reader type(s) from all file readers."""
+        cell_types = set()
+        for data in self.dataset_iterable:
+            # Get the underlying dataset for the texture
+            if isinstance(data, pv.Texture):
+                data = pv.wrap(data.GetInput())
+            try:
+                for cell_type in pv.CellType:
+                    extracted = data.extract_cells_by_type(cell_type)
+                    if extracted.n_cells > 0:
+                        cell_types.add(cell_type)
+            except AttributeError:
+                continue
+        return tuple(sorted(cell_types))
+
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
