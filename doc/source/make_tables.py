@@ -1098,10 +1098,10 @@ class GalleryCarousel(DocTable):
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
         # Use the name as a label which can be referenced
-        assert cls.name is not None, "Carousel must have a name."
-        assert cls.doc is not None, "Carousel must have a doc string."
+        assert cls.name is not None, f"Carousel {cls} must have a name."
+        assert cls.doc is not None, f"Carousel {cls} must have a doc string."
         num_datasets = len(data)
-        assert num_datasets > 0, "No datasets were found for the carousel."
+        assert num_datasets > 0, f"No datasets were found for carousel {cls}."
         return cls.header_template.format(cls.name, cls.doc, num_datasets)
 
     @classmethod
@@ -1147,106 +1147,26 @@ class PlanetsGalleryCarousel(GalleryCarousel):
     badge = ModuleBadge('Planets', ref=name)
 
 
-class ImageDataTextureGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of all ImageData and Texture cards."""
+class PointSetGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of PointSet cards."""
 
-    name = 'imagedata_texture_carousel'
-    doc = ':class:`~pyvista.ImageData` or :class:`~pyvista.Texture` datasets.'
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        imagedata_names = DatasetCardFetcher.fetch_by_datatype(pv.ImageData)
-        texture_names = DatasetCardFetcher.fetch_by_datatype(pv.Texture)
-        return sorted(imagedata_names + texture_names)
-
-
-class ImageData3DGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of 3D ImageData cards."""
-
-    name = 'imagedata_3d_carousel'
-    doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('ImageData 3D', ref=name)
+    name = 'pointset_carousel'
+    doc = ':class:`~pyvista.PointSet` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_imagedata('3d')
+        return DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
 
 
-class ImageData2DGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of 2D ImageData cards."""
+class PolyDataGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of PolyData cards."""
 
-    name = 'imagedata_2d_carousel'
-    doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('ImageData 2D', ref=name)
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_imagedata('2d')
-
-
-class TextureGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of all Texture cards."""
-
-    name = 'texture_carousel'
-    doc = ':class:`~pyvista.Texture` datasets.'
-    badge = DataTypeBadge('Texture', ref=name)
+    name = 'polydata_carousel'
+    doc = ':class:`~pyvista.PolyData` datasets.'
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.Texture)
-
-
-class CubemapGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of cubemap cards."""
-
-    name = 'cubemap_carousel'
-    doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
-    badge = SpecialDataTypeBadge('Cubemap', ref=name)
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_cubemap()
-
-
-class GridGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of Grid cards."""
-
-    name = 'grid_carousel'
-    doc = (
-        ':class:`~pyvista.RectilinearGrid`, :class:`~pyvista.StructuredGrid`, '
-        'and :class:`~pyvista.UnstructuredGrid` datasets.'
-    )
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        rectilinear_names = DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
-        structured_names = DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
-        unstructured_names = DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
-        return sorted(rectilinear_names + structured_names + unstructured_names)
-
-
-class RectilinearGridGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of RectilinearGrid cards."""
-
-    name = 'rectilineargrid_carousel'
-    doc = ':class:`~pyvista.RectilinearGrid` datasets.'
-    badge = DataTypeBadge('RectilinearGrid', ref=name)
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
-
-
-class StructuredGridGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of StructuredGrid cards."""
-
-    name = 'structuredgrid_carousel'
-    doc = ':class:`~pyvista.StructuredGrid` datasets.'
-    badge = DataTypeBadge('StructuredGrid', ref=name)
-
-    @classmethod
-    def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
+        return DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
 
 
 class UnstructuredGridGalleryCarousel(GalleryCarousel):
@@ -1261,17 +1181,28 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
 
 
-class PointSetPolyDataGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of PointSet and PolyData cards."""
+class StructuredGridGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of StructuredGrid cards."""
 
-    name = 'pointset_polydata_carousel'
-    doc = ':class:`~pyvista.PointSet` and :class:`~pyvista.PolyData` datasets.'
+    name = 'structuredgrid_carousel'
+    doc = ':class:`~pyvista.StructuredGrid` datasets.'
+    badge = DataTypeBadge('StructuredGrid', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
-        pointset_names = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
-        polydata_names = DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
-        return sorted(pointset_names + polydata_names)
+        return DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
+
+
+class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of ExplicitStructuredGrid cards."""
+
+    name = 'explicitstructuredgrid_carousel'
+    doc = ':class:`~pyvista.ExplicitStructuredGrid` datasets.'
+    badge = DataTypeBadge('ExplicitStructuredGrid', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_by_datatype(pv.ExplicitStructuredGrid)
 
 
 class PointCloudGalleryCarousel(GalleryCarousel):
@@ -1308,19 +1239,75 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
         return sorted(surface_polydata_names)
 
 
-class MiscGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of misc dataset cards."""
+class RectilinearGridGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of RectilinearGrid cards."""
 
-    name = 'misc_carousel'
-    doc = 'Datasets which have a non-standard representation.'
-    badge = DataTypeBadge('Misc', ref=name)
+    name = 'rectilineargrid_carousel'
+    doc = ':class:`~pyvista.RectilinearGrid` datasets.'
+    badge = DataTypeBadge('RectilinearGrid', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
-        misc_dataset_filter = lambda obj: not isinstance(
-            obj, (pv.MultiBlock, pv.Texture, pv.DataSet)
-        )
-        return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
+        return DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
+
+
+class ImageDataGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of ImageData cards."""
+
+    name = 'imagedata_carousel'
+    doc = ':class:`~pyvista.ImageData` datasets.'
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_by_datatype(pv.ImageData)
+
+
+class ImageData3DGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of 3D ImageData cards."""
+
+    name = 'imagedata_3d_carousel'
+    doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
+    badge = SpecialDataTypeBadge('3D Volume', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_imagedata('3d')
+
+
+class ImageData2DGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of 2D ImageData cards."""
+
+    name = 'imagedata_2d_carousel'
+    doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
+    badge = SpecialDataTypeBadge('2D Image', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_imagedata('2d')
+
+
+class TextureGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of all Texture cards."""
+
+    name = 'texture_carousel'
+    doc = ':class:`~pyvista.Texture` datasets.'
+    badge = DataTypeBadge('Texture', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_by_datatype(pv.Texture)
+
+
+class CubemapGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of cubemap cards."""
+
+    name = 'cubemap_carousel'
+    doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
+    badge = SpecialDataTypeBadge('Cubemap', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_cubemap()
 
 
 class MultiBlockGalleryCarousel(GalleryCarousel):
@@ -1357,6 +1344,7 @@ class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_hetero_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of different mesh types.'
+    badge = SpecialDataTypeBadge('Heterogeneous', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1369,6 +1357,7 @@ class MultiBlockHomoGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_homo_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of the same mesh type.'
+    badge = SpecialDataTypeBadge('Homogeneous', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1381,11 +1370,27 @@ class MultiBlockSingleGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_single_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets with one block.'
+    badge = SpecialDataTypeBadge('Single Block', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
         multiblock_single_filter = lambda obj: isinstance(obj, pv.MultiBlock) and obj.n_blocks == 1
         return DatasetCardFetcher.fetch_and_filter(multiblock_single_filter)
+
+
+class MiscGalleryCarousel(GalleryCarousel):
+    """Class to generate a carousel of misc dataset cards."""
+
+    name = 'misc_carousel'
+    doc = 'Datasets which have a non-standard representation.'
+    badge = DataTypeBadge('Misc', ref=name)
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        misc_dataset_filter = lambda obj: not isinstance(
+            obj, (pv.MultiBlock, pv.Texture, pv.DataSet)
+        )
+        return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 
 
 class MedicalGalleryCarousel(GalleryCarousel):
@@ -1450,21 +1455,24 @@ def make_all_tables():
     make_all_carousels(
         [
             DownloadsGalleryCarousel,
-            ImageDataTextureGalleryCarousel,
+            PointSetGalleryCarousel,
+            PolyDataGalleryCarousel,
+            UnstructuredGridGalleryCarousel,
+            StructuredGridGalleryCarousel,
+            # TODO: There is no dataset of this type yet.
+            #  Add new dataset and uncomment this line
+            # ExplicitStructuredGridGalleryCarousel,
+            PointCloudGalleryCarousel,
+            SurfaceMeshGalleryCarousel,
+            RectilinearGridGalleryCarousel,
+            ImageDataGalleryCarousel,
             ImageData3DGalleryCarousel,
             ImageData2DGalleryCarousel,
             TextureGalleryCarousel,
             CubemapGalleryCarousel,
-            PointSetPolyDataGalleryCarousel,
-            PointCloudGalleryCarousel,
-            SurfaceMeshGalleryCarousel,
-            GridGalleryCarousel,
-            RectilinearGridGalleryCarousel,
-            StructuredGridGalleryCarousel,
-            UnstructuredGridGalleryCarousel,
             MultiBlockGalleryCarousel,
-            MultiBlockHeteroGalleryCarousel,
             MultiBlockHomoGalleryCarousel,
+            MultiBlockHeteroGalleryCarousel,
             MultiBlockSingleGalleryCarousel,
             MiscGalleryCarousel,
             MedicalGalleryCarousel,

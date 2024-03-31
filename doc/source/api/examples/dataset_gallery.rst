@@ -4,14 +4,15 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
-Browse All Datasets
--------------------
+Browse Datasets by Module
+-------------------------
+Datasets in this section are organized by the module they are imported from.
 
-.. dropdown:: All Datasets
+.. dropdown:: Downloads
 
     .. tab-set::
 
-        .. tab-item:: Downloads
+        .. tab-item:: All
 
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rest
 
@@ -28,16 +29,76 @@ Browse All Datasets
 
 Browse Datasets by Type
 -----------------------
+Datasets in this section are organized by their instance type.
+
+Point Sets
+**********
+Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for details.
+
+.. dropdown:: Point Sets
+
+    .. tab-set::
+
+        .. tab-item:: PointSet
+
+            .. include:: /api/examples/dataset-gallery/pointset_carousel.rest
+
+        .. tab-item:: PolyData
+
+            .. include:: /api/examples/dataset-gallery/polydata_carousel.rest
+
+        .. tab-item:: UnstructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
+
+        .. tab-item:: StructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
+
+        ..
+            TODO: Add this dataset and carousel
+            .. tab-item:: ExplicitStructuredGrid
+            .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rest
+
+Browse point sets with a specific kind of representation.
+
+.. dropdown:: Point Clouds and Surface Meshes
+
+    .. tab-set::
+
+        .. tab-item:: Point Clouds
+
+            .. include:: /api/examples/dataset-gallery/pointcloud_carousel.rest
+
+        .. tab-item:: Surface Meshes
+
+            .. include:: /api/examples/dataset-gallery/surfacemesh_carousel.rest
+
+
+Gridded Data
+************
+Datasets with topologically regular point spacing and implicit geometry.
+See :doc:`/api/core/grids` for details.
+
+.. dropdown:: Gridded Data
+
+    .. tab-set::
+
+        .. tab-item:: RectilinearGrid
+
+            .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
+
+        .. tab-item:: ImageData
+
+            .. include:: /api/examples/dataset-gallery/imagedata_carousel.rest
+
+Browse gridded data with a specific kind of representation.
 
 .. dropdown:: Volumes, Images, and Textures
 
     .. tab-set::
 
-        .. tab-item:: All
-
-            .. include:: /api/examples/dataset-gallery/imagedata_texture_carousel.rest
-
-        .. tab-item:: Volumes
+        .. tab-item:: 3D Volumes
 
             .. include:: /api/examples/dataset-gallery/imagedata_3d_carousel.rest
 
@@ -54,43 +115,10 @@ Browse Datasets by Type
             .. include:: /api/examples/dataset-gallery/cubemap_carousel.rest
 
 
-.. dropdown:: Point Clouds and Surface Meshes
+Composite Datasets
+******************
 
-    .. tab-set::
-
-        .. tab-item:: All
-
-            .. include:: /api/examples/dataset-gallery/pointset_polydata_carousel.rest
-
-        .. tab-item:: Point Clouds
-
-            .. include:: /api/examples/dataset-gallery/pointcloud_carousel.rest
-
-        .. tab-item:: Surface Meshes
-
-            .. include:: /api/examples/dataset-gallery/surfacemesh_carousel.rest
-
-
-.. dropdown:: Grids
-
-    .. tab-set::
-
-        .. tab-item:: All
-
-            .. include:: /api/examples/dataset-gallery/grid_carousel.rest
-
-        .. tab-item:: RectilinearGrid
-
-            .. include:: /api/examples/dataset-gallery/rectilineargrid_carousel.rest
-
-        .. tab-item:: StructuredGrid
-
-            .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rest
-
-        .. tab-item:: UnstructuredGrid
-
-            .. include:: /api/examples/dataset-gallery/unstructuredgrid_carousel.rest
-
+Composite classes which hold many data sets. See :doc:`/api/core/composite` for details.
 
 .. dropdown:: Composite Datasets
 
@@ -108,10 +136,13 @@ Browse Datasets by Type
 
             .. include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rest
 
-        .. tab-item:: Single
+        .. tab-item:: Single Block
 
             .. include:: /api/examples/dataset-gallery/multiblock_single_carousel.rest
 
+
+Miscellaneous Datasets
+**********************
 
 .. dropdown:: Miscellaneous Datasets
 
