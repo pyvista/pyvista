@@ -727,10 +727,19 @@ class DatasetCard:
     @staticmethod
     def _format_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
-        module_badges = [b for b in badges if isinstance(b, ModuleBadge)]
-        datatype_badges = [b for b in badges if isinstance(b, DataTypeBadge)]
-        category_badges = [b for b in badges if isinstance(b, CategoryBadge)]
-        all_badges = module_badges + datatype_badges + category_badges
+        module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
+        for badge in badges:
+            if isinstance(badge, ModuleBadge):
+                module_badges.append(badge)
+            elif isinstance(badge, DataTypeBadge):
+                datatype_badges.append(badge)
+            elif isinstance(badge, SpecialDataTypeBadge):
+                special_badges.append(badge)
+            elif isinstance(badge, CategoryBadge):
+                category_badges.append(badge)
+            elif isinstance(badge, _BaseDatasetBadge):
+                raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
+        all_badges = module_badges + datatype_badges + special_badges + category_badges
         rst = ' '.join([badge.generate() for badge in all_badges])
         return rst
 
@@ -944,6 +953,15 @@ class _BaseDatasetBadge:
 
     @classmethod
     def __post_init__(cls):
+        """Use post-init to set private variables.
+
+        Sub classes should configure these options as required.
+        """
+        # Configure whether the badge should appear filled or not.
+        # If False, a badge outline is shown.
+        cls.filled: bool = True
+
+        # Set the badge's color
         cls.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None
 
     def generate(self):
@@ -951,7 +969,8 @@ class _BaseDatasetBadge:
         color = self.semantic_color.name
         name = self.name
         ref = self.ref
-        return f':bdg-link-{color}:`{name} <{ref}>`'
+        line = '-line' if hasattr(self, 'filled') and not self.filled else ''
+        return f':bdg-link-{color}{line}:`{name} <{ref}>`'
 
 
 @dataclass
@@ -971,13 +990,10 @@ class ModuleBadge(_BaseDatasetBadge):
 
 @dataclass
 class DataTypeBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based on its type.
+    """Badge given to a dataset based strictly on its type.
 
-    The term `type` here may refer to a proper python type, e.g.
-    'UnstructuredGrid',but can also be used more loosely to refer
-    to a general type of data,  e.g. 'Point Cloud', or specialized
-    version of a type, e.g. 'Cubemap' (a type of Texture) or
-    'Volume' (a type of ImageData).
+    The badge name should correspond to the type of the dataset.
+    e.g. 'UnstructuredGrid'.
     """
 
     name: str
@@ -985,6 +1001,24 @@ class DataTypeBadge(_BaseDatasetBadge):
 
     @classmethod
     def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
+
+
+@dataclass
+class SpecialDataTypeBadge(_BaseDatasetBadge):
+    """Badge given to a dataset with special properties.
+
+    Use this badge for specializations of data types (e.g. 2D ImageData
+    as a special kind of ImageData, or Cubemap as a special kind of Texture),
+    or for special classifications of datasets (e.g. point clouds).
+    """
+
+    name: str
+    ref: str
+
+    @classmethod
+    def __post_init__(cls):
+        cls.filled = False
         cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
 
 
@@ -1131,7 +1165,7 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_3d_carousel'
     doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
-    badge = DataTypeBadge('ImageData 3D', ref=name)
+    badge = SpecialDataTypeBadge('ImageData 3D', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1143,7 +1177,7 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_2d_carousel'
     doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
-    badge = DataTypeBadge('ImageData 2D', ref=name)
+    badge = SpecialDataTypeBadge('ImageData 2D', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1167,7 +1201,7 @@ class CubemapGalleryCarousel(GalleryCarousel):
 
     name = 'cubemap_carousel'
     doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
-    badge = DataTypeBadge('Cubemap', ref=name)
+    badge = SpecialDataTypeBadge('Cubemap', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1245,7 +1279,7 @@ class PointCloudGalleryCarousel(GalleryCarousel):
 
     name = 'pointcloud_carousel'
     doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
-    badge = DataTypeBadge('Point Cloud', ref=name)
+    badge = SpecialDataTypeBadge('Point Cloud', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1262,7 +1296,7 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
 
     name = 'surfacemesh_carousel'
     doc = ':class:`~pyvista.PolyData` surface meshes.'
-    badge = DataTypeBadge('Surface Mesh', ref=name)
+    badge = SpecialDataTypeBadge('Surface Mesh', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
