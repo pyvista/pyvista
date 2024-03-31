@@ -97,11 +97,9 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     things up.
     """
     # building coordinates
-    triplets = []
-    for p in range(N + 1):
-        for q in range(N - p + 1):
-            for r in range(N - p - q + 1):
-                triplets.append((p, q, r))
+    triplets = [
+        (p, q, r) for p in range(N + 1) for q in range(N - p + 1) for r in range(N - p - q + 1)
+    ]
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
