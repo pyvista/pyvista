@@ -967,7 +967,7 @@ class _BaseDatasetBadge:
         name = self.name
         ref = self.ref
         line = '-line' if hasattr(self, 'filled') and not self.filled else ''
-        return f':bdg-link-{color}{line}:`{name} <{ref}>`'
+        return f':bdg-ref-{color}{line}:`{name} <{ref}>`'
 
 
 @dataclass
