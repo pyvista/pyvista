@@ -77,7 +77,8 @@ allow optional names to be provided for the dictionary like usage.
    partitions[0:2]  # The Sphere and Cube objects in a new ``PartitionedDataSet``
 
 PartitionedDataSet API Reference
-------------------------
+--------------------------------
+
 The :class:`pyvista.PartitionedDataSet` class holds attributes that
 are *common* to all spatially referenced datasets in PyVista. This
 base class is analogous to VTK's `vtk.vtkPartitionedDataSetDataSet`_ class.
