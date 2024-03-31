@@ -401,10 +401,10 @@ def _pad_lines(
 ):
     """Add padding to the left or right of each line with a specified string.
 
-    By default, padding is only applied to left-justify the text such that the lines
+    Optionally, padding may be applied to left-justify the text such that the lines
     all have the same width.
 
-    Optionally, the lines may be padded to the left or right using a specified string.
+    Optionally, the lines may be padded on the left or right using a specified string.
 
     Parameters
     ----------
@@ -417,7 +417,7 @@ def _pad_lines(
     pad_right : str, default: ''
         String to pad the right of each line with.
 
-    ljust : bool, default: True
+    ljust : bool, default: False
         If ``True``, left-justify the lines such that they have equal width
         before applying any padding.
 
