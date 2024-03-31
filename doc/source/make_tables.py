@@ -1158,6 +1158,7 @@ class PolyDataGalleryCarousel(GalleryCarousel):
 
     name = 'polydata_carousel'
     doc = ':class:`~pyvista.PolyData` datasets.'
+    badge = DataTypeBadge('PolyData', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1251,6 +1252,7 @@ class ImageDataGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_carousel'
     doc = ':class:`~pyvista.ImageData` datasets.'
+    badge = DataTypeBadge('ImageData', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
