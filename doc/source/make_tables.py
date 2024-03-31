@@ -556,7 +556,9 @@ class DatasetCard:
         |
         |            {}
         |
-        |   Badges: {}
+        |   **Badges**:
+        |
+        |   {}
         |
         |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
@@ -729,7 +731,7 @@ class DatasetCard:
         datatype_badges = [b for b in badges if isinstance(b, DataTypeBadge)]
         category_badges = [b for b in badges if isinstance(b, CategoryBadge)]
         all_badges = module_badges + datatype_badges + category_badges
-        rst = ', '.join([badge.generate() for badge in all_badges])
+        rst = ' '.join([badge.generate() for badge in all_badges])
         return rst
 
     @staticmethod
@@ -923,26 +925,33 @@ class DatasetCardFetcher:
         return dataset_names
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class _BaseDatasetBadge:
     class SemanticColorEnum(StrEnum):
+        """Enum of badge colors.
+        See: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html"""
 
         primary = auto()
         secondary = auto()
         success = auto()
 
+    # Name of the badge
     name: str
+
+    # Name of internal label the badge will reference
+    # This should be the name of the carousel.
     ref: str
 
-    def __post_init__(self):
-        self.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None
 
     def generate(self):
         # Generate rst
         color = self.semantic_color.name
         name = self.name
         ref = self.ref
-        return f':bdg-{color}:`{name} <{ref}>`'
+        return f':bdg-link-{color}:`{name} <{ref}>`'
 
 
 @dataclass
@@ -955,8 +964,9 @@ class ModuleBadge(_BaseDatasetBadge):
     name: str
     ref: str
 
-    def __post_init__(self):
-        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.primary
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.primary
 
 
 @dataclass
@@ -973,8 +983,9 @@ class DataTypeBadge(_BaseDatasetBadge):
     name: str
     ref: str
 
-    def __post_init__(self):
-        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.secondary
 
 
 @dataclass
@@ -987,8 +998,9 @@ class CategoryBadge(_BaseDatasetBadge):
     name: str
     ref: str
 
-    def __post_init__(self):
-        self.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
+    @classmethod
+    def __post_init__(cls):
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.success
 
 
 class GalleryCarousel(DocTable):
