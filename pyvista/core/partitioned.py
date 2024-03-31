@@ -67,11 +67,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 
     @overload
     def __getitem__(self, index: int) -> Optional[DataSet]:  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __getitem__(self, index: slice) -> 'PartitionedDataSet':  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index."""
@@ -85,11 +85,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 
     @overload
     def __setitem__(self, index: int, data: Optional[DataSet]):  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __setitem__(self, index: slice, data: Iterable[Optional[DataSet]]):  # noqa: D105
-        ...
+        ...  # pragma: no cover
 
     def __setitem__(
         self,
