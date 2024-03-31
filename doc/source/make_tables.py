@@ -485,7 +485,6 @@ class DatasetCard:
 
     If the card's references are returned:
 
-        HTML Index
         Sphinx Ref
 
     Each card has the following structure:
@@ -510,8 +509,6 @@ class DatasetCard:
 
     ref_template = _aligned_dedent(
         """
-        |.. index:: {}
-        |
         |.. _{}:
         |
         """
@@ -630,7 +627,7 @@ class DatasetCard:
         # Format badges
         badges = self._format_badges(self._badges)
 
-        ref = self.ref_template.format(index_name, ref_name)
+        ref = self.ref_template.format(ref_name)
         card = self.card_template.format(
             func_ref,
             header,
@@ -1068,11 +1065,9 @@ class GalleryCarousel(DocTable):
     @property
     @final
     def path(cls):
-        # NOTE: Use '.rest' instead of '.rst' to prevent sphinx from creating duplicate
-        # references. This is because '.rst' is defined as a 'source_suffix' in conf.py
         assert isinstance(cls.name, str), 'Table name must be defined.'
         assert cls.name.endswith('_carousel'), 'Table name must end with "_carousel".'
-        return f"{DATASET_GALLERY_DIR}/{cls.name}.rest"
+        return f"{DATASET_GALLERY_DIR}/{cls.name}.rst"
 
     @classmethod
     def fetch_data(cls):
