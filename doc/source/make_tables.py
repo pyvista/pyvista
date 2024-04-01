@@ -522,7 +522,7 @@ class DatasetCard:
         |
         |.. raw:: html
         |
-        |   </p>
+        |   </p></div>
         """
     )
     card_template = _aligned_dedent(
@@ -551,6 +551,7 @@ class DatasetCard:
         |                     .. image:: /{}
         |
         |            .. grid-item::
+        |               :margin: 0
         |
         |               {}
         |               {}
