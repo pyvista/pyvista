@@ -404,7 +404,7 @@ def test_dataset_loader_from_nested_files_and_directory(
         pv.MetaImageReader,
     }
     assert loader.dataset is None
-    assert loader.unique_dataset_type is None
+    assert loader.unique_dataset_type is type(None)
     loader.load()
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
@@ -436,6 +436,44 @@ def test_dataset_loader_from_nested_files_and_directory(
         pv.CellType.POLYGON,
         pv.CellType.QUAD,
         pv.CellType.VOXEL,
+    )
+
+
+@pytest.fixture()
+def dataset_loader_nested_multiblock():
+    loader = _SingleFileDownloadableLoadable('mesh_fs8.exo')
+    loader.download()
+    loader.load()
+    return loader
+
+
+def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock):
+    loader = dataset_loader_nested_multiblock
+    assert loader.num_files == 1
+    assert os.path.isfile(loader.path)
+    assert loader._filesize_bytes == 69732
+    assert loader._filesize_format == '69.7 KB'
+    assert loader._total_size_bytes == 69732
+    assert loader.total_size == '69.7 KB'
+    assert loader.unique_extension == '.exo'
+    assert loader._reader is None
+    assert loader.unique_reader_type is None
+    assert type(loader.dataset) is pv.MultiBlock
+    assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
+    assert len(loader.dataset_iterable) == 12
+    assert loader.unique_dataset_type == (pv.MultiBlock, pv.UnstructuredGrid)
+    assert loader.source_name == 'mesh_fs8.exo'
+    assert (
+        loader.source_url_raw == 'https://github.com/pyvista/vtk-data/raw/master/Data/mesh_fs8.exo'
+    )
+    assert (
+        loader.source_url_blob
+        == 'https://github.com/pyvista/vtk-data/blob/master/Data/mesh_fs8.exo'
+    )
+    assert loader.unique_cell_types == (
+        pv.CellType.TRIANGLE,
+        pv.CellType.QUAD,
+        pv.CellType.WEDGE,
     )
 
 

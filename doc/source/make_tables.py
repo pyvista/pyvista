@@ -6,7 +6,6 @@ from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum, auto
-import functools
 import inspect
 import io
 import os
@@ -750,10 +749,7 @@ class DatasetCard:
     @staticmethod
     def _format_celltype_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
-        celltype_badges = []
-        for badge in badges:
-            if isinstance(badge, CellTypeBadge):
-                celltype_badges.append(badge)
+        celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
         rst = ' '.join([badge.generate() for badge in celltype_badges])
         return rst
 
@@ -891,67 +887,71 @@ class DatasetCardFetcher:
                 card.add_badge(CellTypeBadge(cell_type.name))
 
     @classmethod
-    def fetch_by_datatype(cls, datatype) -> List[str]:
-        dataset_names = []
+    def fetch_dataset_names_by_datatype(cls, datatype) -> List[str]:
+        for name, dataset_iterable in cls.fetch_all_dataset_objects():
+            if datatype in [type(data) for data in dataset_iterable]:
+                yield name
+
+    @classmethod
+    def fetch_all_dataset_objects(cls) -> Dict[str, Iterable[Any]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
-            loader = card.loader
-            if datatype in _as_iterable(loader.unique_dataset_type):
-                dataset_names.append(name)
-        return dataset_names
+            yield name, card.loader.dataset_iterable
 
     @classmethod
     def fetch_and_filter(cls, filter_func: Callable[[], bool]) -> List[str]:
-        """Return dataset names whose dataset objects return 'True' for a given function."""
-        # Store output names in a dict to preserve order and make entries unique
-        dataset_names_out = {}
-        for dataset_name, card in cls.DATASET_CARDS_OBJ.items():
-            dataset_iterable = card.loader.dataset_iterable
+        """Return dataset names where any dataset object returns 'True' for a given function."""
+        dataset_names_out = {}  # Use dict as an ordered set
+        for name, dataset_iterable in cls.fetch_all_dataset_objects():
             for obj in dataset_iterable:
                 try:
                     keep = filter_func(obj)
                 except AttributeError:
                     keep = False
                 if keep:
-                    dataset_names_out[dataset_name] = None
+                    dataset_names_out[name] = None
         dataset_names_out = list(dataset_names_out.keys())
         assert len(dataset_names_out) > 0, f"No datasets were matched by the filter {filter_func}."
         return dataset_names_out
 
+    # @classmethod
+    # def fetch_imagedata(cls, kind: Literal['all', '2d', '3d']):
+    #     dataset_names = []
+    #
+    #     def _is_2d(data):
+    #         return np.any(np.array(data.dimensions) == 1)
+    #
+    #     for name, card in cls.DATASET_CARDS_OBJ.items():
+    #         loader = card.loader
+    #         if pv.ImageData in _as_iterable(loader.unique_dataset_type):
+    #             if kind == 'all':
+    #                 dataset_names.append(name)
+    #             else:
+    #                 # Load and add dataset to list
+    #                 dataset = _as_iterable(loader.dataset)
+    #                 for data in dataset:
+    #                     if isinstance(data, pv.ImageData):
+    #                         if kind == '2d' and _is_2d(data):
+    #                             dataset_names.append(name)
+    #                             break
+    #                         elif kind == '3d' and not _is_2d(data):
+    #                             dataset_names.append(name)
+    #                             break
+    #     return dataset_names
+
     @classmethod
-    def fetch_imagedata(cls, kind: Literal['all', '2d', '3d']):
+    def fetch_multiblock(cls, kind: Literal['hetero', 'homo', 'single']):
         dataset_names = []
-
-        def _is_2d(data):
-            return np.any(np.array(data.dimensions) == 1)
-
-        for name, card in cls.DATASET_CARDS_OBJ.items():
-            loader = card.loader
-            if pv.ImageData in _as_iterable(loader.unique_dataset_type):
-                if kind == 'all':
+        for name, dataset_objects in cls.fetch_all_dataset_objects():
+            types_list = [type(obj) for obj in dataset_objects]
+            if pv.MultiBlock in types_list:
+                types_list.remove(pv.MultiBlock)
+                num_datasets = len(types_list)
+                if num_datasets == 1 and kind == 'single':
                     dataset_names.append(name)
-                else:
-                    # Load and add dataset to list
-                    dataset = _as_iterable(loader.dataset)
-                    for data in dataset:
-                        if isinstance(data, pv.ImageData):
-                            if kind == '2d' and _is_2d(data):
-                                dataset_names.append(name)
-                                break
-                            elif kind == '3d' and not _is_2d(data):
-                                dataset_names.append(name)
-                                break
-        return dataset_names
-
-    @classmethod
-    def fetch_cubemap(cls):
-        dataset_names = []
-        for name, card in cls.DATASET_CARDS_OBJ.items():
-            loader = card.loader
-            if pv.Texture in _as_iterable(loader.unique_dataset_type):
-                dataset = _as_iterable(loader.dataset)
-                assert dataset is not None
-                for data in dataset:
-                    if data.cube_map:
+                elif num_datasets >= 2:
+                    if len(set(types_list)) == 1 and kind == 'homo':
+                        dataset_names.append(name)
+                    elif len(set(types_list)) > 1 and kind == 'hetero':
                         dataset_names.append(name)
         return dataset_names
 
@@ -1122,7 +1122,7 @@ class GalleryCarousel(DocTable):
 
     @classmethod
     def fetch_data(cls):
-        return cls.dataset_names
+        return list(cls.dataset_names)
 
     @classmethod
     @abstractmethod
@@ -1132,7 +1132,7 @@ class GalleryCarousel(DocTable):
     @classmethod
     @final
     def init_dataset_names(cls):
-        names = cls.fetch_dataset_names()
+        names = list(cls.fetch_dataset_names())
         assert names is not None, (
             f'Dataset names cannot be None, {cls.fetch_dataset_names} must return '
             f'a string iterable.'
@@ -1206,7 +1206,7 @@ class PointSetGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
 
 
 class PolyDataGalleryCarousel(GalleryCarousel):
@@ -1218,7 +1218,7 @@ class PolyDataGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.PolyData)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PolyData)
 
 
 class UnstructuredGridGalleryCarousel(GalleryCarousel):
@@ -1230,7 +1230,7 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.UnstructuredGrid)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.UnstructuredGrid)
 
 
 class StructuredGridGalleryCarousel(GalleryCarousel):
@@ -1242,7 +1242,7 @@ class StructuredGridGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.StructuredGrid)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.StructuredGrid)
 
 
 class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
@@ -1254,7 +1254,7 @@ class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.ExplicitStructuredGrid)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ExplicitStructuredGrid)
 
 
 class PointCloudGalleryCarousel(GalleryCarousel):
@@ -1266,12 +1266,12 @@ class PointCloudGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        pointset_names = DatasetCardFetcher.fetch_by_datatype(pv.PointSet)
+        pointset_names = DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
         vertex_polydata_filter = (
             lambda poly: isinstance(poly, pv.PolyData) and poly.n_verts == poly.n_cells
         )
         vertex_polydata_names = DatasetCardFetcher.fetch_and_filter(vertex_polydata_filter)
-        return sorted(pointset_names + vertex_polydata_names)
+        return sorted(list(pointset_names) + list(vertex_polydata_names))
 
 
 class SurfaceMeshGalleryCarousel(GalleryCarousel):
@@ -1300,7 +1300,7 @@ class RectilinearGridGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.RectilinearGrid)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.RectilinearGrid)
 
 
 class ImageDataGalleryCarousel(GalleryCarousel):
@@ -1312,7 +1312,7 @@ class ImageDataGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.ImageData)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ImageData)
 
 
 class ImageData3DGalleryCarousel(GalleryCarousel):
@@ -1324,7 +1324,10 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_imagedata('3d')
+        image_3d_filter = lambda img: isinstance(img, pv.ImageData) and not np.any(
+            np.array(img.dimensions) == 1
+        )
+        return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
 
 class ImageData2DGalleryCarousel(GalleryCarousel):
@@ -1336,7 +1339,10 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_imagedata('2d')
+        image_2d_filter = lambda img: isinstance(img, pv.ImageData) and np.any(
+            np.array(img.dimensions) == 1
+        )
+        return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
 
 class TextureGalleryCarousel(GalleryCarousel):
@@ -1348,7 +1354,7 @@ class TextureGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.Texture)
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.Texture)
 
 
 class CubemapGalleryCarousel(GalleryCarousel):
@@ -1360,7 +1366,8 @@ class CubemapGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_cubemap()
+        cube_map_filter = lambda cubemap: isinstance(cubemap, pv.Texture) and cubemap.cube_map
+        return DatasetCardFetcher.fetch_and_filter(cube_map_filter)
 
 
 class MultiBlockGalleryCarousel(GalleryCarousel):
@@ -1372,24 +1379,7 @@ class MultiBlockGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_by_datatype(pv.MultiBlock)
-
-
-def _multiblock_filter(multiblock, kind: Literal['hetero', 'homo']):
-    is_multiblock = lambda obj: isinstance(obj, pv.MultiBlock)
-    is_not_singular = lambda sized: len(sized) > 1
-
-    is_homogeneous = lambda multi: all(type(blk) == type(multi[0]) for blk in multi)  # noqa: E721
-    if kind == 'hetero':
-        return (
-            is_multiblock(multiblock)
-            and is_not_singular(multiblock)
-            and not is_homogeneous(multiblock)
-        )
-    else:
-        return (
-            is_multiblock(multiblock) and is_not_singular(multiblock) and is_homogeneous(multiblock)
-        )
+        return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.MultiBlock)
 
 
 class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
@@ -1401,8 +1391,7 @@ class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        multiblock_hetero_filter = functools.partial(_multiblock_filter, kind='hetero')
-        return DatasetCardFetcher.fetch_and_filter(multiblock_hetero_filter)
+        return DatasetCardFetcher.fetch_multiblock('hetero')
 
 
 class MultiBlockHomoGalleryCarousel(GalleryCarousel):
@@ -1414,21 +1403,19 @@ class MultiBlockHomoGalleryCarousel(GalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        multiblock_homo_filter = functools.partial(_multiblock_filter, kind='homo')
-        return DatasetCardFetcher.fetch_and_filter(multiblock_homo_filter)
+        return DatasetCardFetcher.fetch_multiblock('homo')
 
 
 class MultiBlockSingleGalleryCarousel(GalleryCarousel):
-    """Class to generate a carousel of MultiBlock dataset cards which contain a single block."""
+    """Class to generate a carousel of MultiBlock dataset cards which contain a single mesh."""
 
     name = 'multiblock_single_carousel'
-    doc = ':class:`~pyvista.MultiBlock` datasets with one block.'
+    doc = ':class:`~pyvista.MultiBlock` datasets which contain a single mesh.'
     badge = SpecialDataTypeBadge('Single Block', ref=name)
 
     @classmethod
     def fetch_dataset_names(cls):
-        multiblock_single_filter = lambda obj: isinstance(obj, pv.MultiBlock) and obj.n_blocks == 1
-        return DatasetCardFetcher.fetch_and_filter(multiblock_single_filter)
+        return DatasetCardFetcher.fetch_multiblock('single')
 
 
 class MiscGalleryCarousel(GalleryCarousel):

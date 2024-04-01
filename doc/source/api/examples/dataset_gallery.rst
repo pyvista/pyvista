@@ -124,7 +124,7 @@ Composite classes which hold many data sets. See :doc:`/api/core/composite` for 
 
     .. tab-set::
 
-        .. tab-item:: All
+        .. tab-item:: MultiBlock
 
             .. include:: /api/examples/dataset-gallery/multiblock_carousel.rst
 
@@ -136,7 +136,7 @@ Composite classes which hold many data sets. See :doc:`/api/core/composite` for 
 
             .. include:: /api/examples/dataset-gallery/multiblock_hetero_carousel.rst
 
-        .. tab-item:: Single Block
+        .. tab-item:: Single Mesh
 
             .. include:: /api/examples/dataset-gallery/multiblock_single_carousel.rst
 

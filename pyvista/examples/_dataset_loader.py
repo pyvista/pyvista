@@ -37,7 +37,7 @@ import os
 from typing import (
     Any,
     Callable,
-    Iterable,
+    Dict,
     List,
     Optional,
     Protocol,
@@ -123,26 +123,40 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
     def dataset_iterable(self) -> Tuple[Any, ...]:
         """Return a tuple of all dataset object(s), including any nested objects.
 
-        E.g. for a single object dataset:
-            ImageData -> (ImageData, )
-
-        The blocks of composite objects are also included:
+        If the dataset is a MultiBlock, the block itself is also returned as the first
+        item. Any nested MultiBlocks are not included, only their datasets.
 
         E.g. for a composite dataset:
             MultiBlock -> (MultiBlock, Block0, Block1, ...)
         """
         dataset = self.dataset
-        dataset_list = [dataset] if not isinstance(dataset, (Iterable, str)) else list(dataset)
+
+        def _flat(obj):
+            if isinstance(obj, Sequence):
+                output_list = []
+                for item in obj:
+                    (
+                        output_list.extend(item)
+                        if isinstance(item, Sequence)
+                        else output_list.append(item)
+                    )
+                    if any(isinstance(item, Sequence) for item in output_list):
+                        return _flat(output_list)
+                return output_list
+            else:
+                return [obj]
+
+        flat = _flat(dataset)
         if isinstance(dataset, pv.MultiBlock):
-            dataset_list.insert(0, dataset)
-        return tuple(dataset_list)
+            flat.insert(0, dataset)
+        return tuple(flat)
 
     @property
     def unique_dataset_type(
         self,
     ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
         """Return unique dataset type(s) from all datasets."""
-        return _get_unique_dataset_type(self.dataset)
+        return _get_unique_dataset_type(self.dataset_iterable)
 
     @property
     def unique_reader_type(
@@ -155,8 +169,8 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
     def unique_cell_types(
         self,
     ) -> Tuple[pv.CellType, ...]:
-        """Return unique reader type(s) from all file readers."""
-        cell_types = set()
+        """Return unique cell types from all datasets."""
+        cell_types: Dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
@@ -165,10 +179,10 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
                 for cell_type in pv.CellType:
                     extracted = data.extract_cells_by_type(cell_type)
                     if extracted.n_cells > 0:
-                        cell_types.add(cell_type)
+                        cell_types[cell_type] = None
             except AttributeError:
                 continue
-        return tuple(sorted(cell_types))
+        return tuple(sorted(cell_types.keys()))
 
 
 @runtime_checkable
@@ -734,26 +748,11 @@ def _get_unique_reader_type(
 
 
 def _get_unique_dataset_type(
-    dataset: Optional[Union[DatasetType, Tuple[DatasetType, ...]]],
-) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+    dataset_iterable: Tuple[DatasetType, ...],
+) -> Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]:
     """Return a dataset type or tuple of unique dataset types."""
-    if dataset is None or (isinstance(dataset, Sequence) and all(d is None for d in dataset)):
-        return None
-    dataset_set: Set[DatasetTypeType] = set()
-    if isinstance(dataset, Sequence):
-        # Include all sub-dataset types from tuple[datataset, ...] or MultiBlock[dataset, ...]
-        [dataset_set.add(type(d)) for d in _flatten_nested_sequence(dataset)]  # type: ignore[func-returns-value]
-    else:
-        dataset_set.add(type(dataset))
-
-    # Add MultiBlock type itself to output and make sure it's the first entry
-    if isinstance(dataset, pv.MultiBlock):
-        dataset_set.add(pv.MultiBlock)
-        dataset_set.discard(pv.MultiBlock)
-        dataset_list = list(dataset_set)
-        dataset_list.insert(0, pv.MultiBlock)
-        dataset_output = tuple(dataset_list)
-    else:
-        dataset_output = tuple(dataset_set)
-
-    return dataset_output[0] if len(dataset_output) == 1 else dataset_output
+    dataset_types: Dict[DatasetTypeType, None] = {}  # use dict as an ordered set
+    for dataset in dataset_iterable:
+        dataset_types[type(dataset)] = None
+    output = tuple(dataset_types.keys())
+    return output[0] if len(output) == 1 else output
