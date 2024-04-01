@@ -76,11 +76,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     def __getitem__(self, index):
         """Get a block by its index."""
         if isinstance(index, slice):
-            partitions = PartitionedDataSet()
-            for i in range(self.n_partitions)[index]:
-                partitions.append(self[i])
-            return partitions
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
+            if index < 0:
+                index = self.n_partitions + index
             return wrap(self.GetPartition(index))
 
     @overload
