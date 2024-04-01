@@ -35,12 +35,6 @@ Add some data to the collection.
    partitions.append(pv.Sphere())
    partitions.append(pv.Cube(center=(0, 0, -1)))
 
-Plotting the ``PartitionedDataSet`` plots all the meshes contained by it.
-
-.. jupyter-execute::
-
-   partitions.plot(smooth_shading=True)
-
 ``PartitionedDataSet`` is List-like, so individual partitions can be accessed via
 indices.
 
