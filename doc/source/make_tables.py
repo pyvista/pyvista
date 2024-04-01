@@ -482,24 +482,17 @@ class DatasetCard:
     The first row is a nested grid with two items displayed as a single
     column for small screen sizes, or two columns for larger screens.
 
-    If the card's references are returned:
-
-        Sphinx Ref
-
     Each card has the following structure:
 
-        Dataset Name
         +-Card---------------------+
+        | Image                    |
         | Function Name            |
         | Docstring                |
-        |  +-Grid---------------+  |
-        |  |  +-Grid-+-------+  |  |
-        |  |  | Info | Image |  |  |
-        |  |  +------+-------+  |  |
-        |  +--------------------+  |
-        |  | Repr               |  |
-        |  +--------------------+  |
-        | Source Links             |
+        | Tags                     |
+        |                          |
+        | Dataset Info             |
+        |                          |
+        | Downloads Info           |
         +--------------------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
@@ -514,73 +507,31 @@ class DatasetCard:
     )
     hanging_indent_field_template = _aligned_dedent(
         """
-        |.. raw:: html
-        |
-        |   <div style=“text-indent: -20px; padding-left: 20px;”><p>
-        |
-        |**{}**: {}
-        |
-        |.. raw:: html
-        |
-        |   </p></div>
+        | **{}**
+        |   {}
         """
     )
     card_template = _aligned_dedent(
         """
         |.. card:: {}
+        |   :img-top: /{}
         |
         |   **{}**
         |   ^^^
         |   {}
-        |
-        |   .. grid:: 1
-        |
-        |      .. grid-item::
-        |
-        |         .. grid:: 1 2 2 2
-        |            :reverse:
-        |            :margin: 0
-        |
-        |            .. grid-item::
-        |
-        |               .. grid:: 1
-        |                  :margin: 0
-        |
-        |                  .. grid-item-card::
-        |
-        |                     .. image:: /{}
-        |
-        |            .. grid-item::
-        |               :margin: 0
-        |
-        |               {}
-        |               {}
-        |               {}
-        |               {}
-        |               {}
-        |               {}
-        |
-        |      .. grid-item::
-        |
-        |         .. code-block::
-        |            :caption: Representation
-        |
-        |            {}
-        |
-        |   **Gallery tags**: {}
+        |   {}
+        |   {}
+        |   {}
         |
         |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
         |      {}
         |
-        |
         """
     )
-    # Indentation level for the representation item
-    # Level should be one more than the representation's '.. code-block::' directive
-    _REPR_INDENT_LEVEL = 4
 
     # Indentation level for the data source links
+    _FIELD_DATA_INDENT_LEVEL = 1
     _LINKS_INDENT_LEVEL = 2
 
     _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
@@ -619,7 +570,6 @@ class DatasetCard:
             file_ext = NOT_AVAILABLE
             reader_type = NOT_AVAILABLE
             dataset_type = NOT_AVAILABLE
-            dataset_repr = NOT_AVAILABLE_NO_BACKTICKS
             datasource_links = NOT_AVAILABLE_NO_BACKTICKS
             img_path = self._NOT_AVAILABLE_IMG_PATH
         else:
@@ -629,7 +579,6 @@ class DatasetCard:
             file_ext = self._format_file_ext(loader)
             reader_type = self._format_reader_type(loader)
             dataset_type = self._format_dataset_type(loader)
-            dataset_repr = self._format_dataset_repr(loader, self._REPR_INDENT_LEVEL)
             datasource_links = self._format_datasource_links(loader, self._LINKS_INDENT_LEVEL)
 
             img_path = self._search_image_path(func_name)
@@ -641,24 +590,69 @@ class DatasetCard:
         celltype_badges = self._format_celltype_badges(self._badges)
 
         def hanging_field(field_name, content):
-            hanging_html = self.hanging_indent_field_template.format(field_name, content)
-            indented = _indent_multi_line_string(hanging_html, indent_level=5)
-            return indented
+            if content in [None, '']:
+                return None
+            # Get template without trailing newline characters
+            template = self.hanging_indent_field_template[1:-1]
+            dedented = template.format(field_name, content)
+            return dedented
+
+        def _try_getattr(dataset, attr: str):
+            try:
+                return getattr(dataset, attr)
+            except AttributeError:
+                return None
+
+        def _format_num(num: Optional[float], fmt: Literal['exp', 'spaced']):
+            if num is None:
+                return None
+            if fmt == 'exp':
+                return f"{num:.3e}"
+            elif fmt == 'spaced':
+                return f"{num:,}".replace(',', ' ')
+
+        dataset_fields = [
+            hanging_field('Data Type', dataset_type),
+            hanging_field('Cell Type', celltype_badges),
+            hanging_field(
+                'N Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
+            ),
+            hanging_field(
+                'N Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
+            ),
+            hanging_field('Length', _format_num(_try_getattr(loader.dataset, 'length'), fmt='exp')),
+            hanging_field('Dimensions', _try_getattr(loader.dataset, 'dimensions')),
+            hanging_field('Spacing', _try_getattr(loader.dataset, 'spacing')),
+            hanging_field('N Arrays', _try_getattr(loader.dataset, 'n_arrays')),
+        ]
+        f"{10000:,}".replace(',', ' ')
+
+        def _generate_line_block(lines: List[Union[str, None]], indent: int = 0):
+            # Add bars to format as rst line-blocks
+            lines = '\n'.join([field for field in lines if field])
+            lines = _pad_lines(lines, pad_left='|')
+            return _indent_multi_line_string(lines, indent_level=indent, omit_first_line=False)
+
+        dataset_fields = _generate_line_block(dataset_fields, indent=self._FIELD_DATA_INDENT_LEVEL)
+        downloads_fields = [
+            hanging_field('File Size', file_size),
+            hanging_field('Num Files', num_files),
+            hanging_field('File Ext', file_ext),
+            hanging_field('Reader', reader_type),
+        ]
+        downloads_fields = _generate_line_block(
+            downloads_fields, indent=self._FIELD_DATA_INDENT_LEVEL
+        )
 
         ref = self.ref_template.format(ref_name)
         card = self.card_template.format(
             func_ref,
+            img_path,
             header,
             func_doc,
-            img_path,
-            hanging_field('Data Type', dataset_type),
-            hanging_field('Cell Type', celltype_badges),
-            hanging_field('File Size', file_size),
-            hanging_field('Num Files', num_files),
-            hanging_field('Extension', file_ext),
-            hanging_field('Reader', reader_type),
-            dataset_repr,
             carousel_badges,
+            dataset_fields,
+            downloads_fields,
             datasource_links,
         )
         # Create separate version of the card with index
@@ -929,31 +923,6 @@ class DatasetCardFetcher:
         dataset_names_out = list(dataset_names_out.keys())
         assert len(dataset_names_out) > 0, f"No datasets were matched by the filter {filter_func}."
         return dataset_names_out
-
-    # @classmethod
-    # def fetch_imagedata(cls, kind: Literal['all', '2d', '3d']):
-    #     dataset_names = []
-    #
-    #     def _is_2d(data):
-    #         return np.any(np.array(data.dimensions) == 1)
-    #
-    #     for name, card in cls.DATASET_CARDS_OBJ.items():
-    #         loader = card.loader
-    #         if pv.ImageData in _as_iterable(loader.unique_dataset_type):
-    #             if kind == 'all':
-    #                 dataset_names.append(name)
-    #             else:
-    #                 # Load and add dataset to list
-    #                 dataset = _as_iterable(loader.dataset)
-    #                 for data in dataset:
-    #                     if isinstance(data, pv.ImageData):
-    #                         if kind == '2d' and _is_2d(data):
-    #                             dataset_names.append(name)
-    #                             break
-    #                         elif kind == '3d' and not _is_2d(data):
-    #                             dataset_names.append(name)
-    #                             break
-    #     return dataset_names
 
     @classmethod
     def fetch_multiblock(cls, kind: Literal['hetero', 'homo', 'single']):
