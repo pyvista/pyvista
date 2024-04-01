@@ -50,8 +50,6 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             elif isinstance(args[0], (list, tuple)):
                 for partition in args[0]:
                     self.append(partition)
-
-        # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
     def wrap_nested(self):
