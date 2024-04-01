@@ -2005,11 +2005,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         0
 
         """
-        pickable = []
-        for renderer in self.renderers:
-            for actor in renderer.actors.values():
-                if actor.GetPickable():
-                    pickable.append(actor)
+        pickable = [
+            actor
+            for renderer in self.renderers
+            for actor in renderer.actors.values()
+            if actor.GetPickable()
+        ]
         return pickable
 
     @pickable_actors.setter
@@ -6379,10 +6380,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> plotter.show()
         """
-        places = []
-        for index in range(len(self.renderers)):
-            if name in self.renderers[index]._actors:
-                places.append(tuple(self.renderers.index_to_loc(index)))
+        places = [
+            tuple(self.renderers.index_to_loc(index))
+            for index in range(len(self.renderers))
+            if name in self.renderers[index]._actors
+        ]
         return places
 
 
@@ -7041,10 +7043,9 @@ class Plotter(BasePlotter):
         List[Union[pyvista.DataSet, PyVista.MultiBlock]]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
-        meshes = []
-        for actor in self.actors.values():
-            if hasattr(actor, 'mapper'):
-                meshes.append(actor.mapper.dataset)
+        meshes = [
+            actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')
+        ]
 
         return meshes
 
