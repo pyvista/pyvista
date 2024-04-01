@@ -60,7 +60,7 @@ allow optional names to be provided for the dictionary like usage.
 
 .. jupyter-execute::
 
-   partitions.append(pv.Cone(), name="cone")
+   partitions.append(pv.Cone())
    cone = partitions.pop(-1)  # Pops Cone
    partitions.reverse()
 
