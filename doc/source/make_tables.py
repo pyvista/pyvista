@@ -81,7 +81,7 @@ class DocTable:
 
         # determine if existing file needs to be rewritten
         if Path(cls.path).exists():
-            with Path(cls.path).open() as fold:
+            with Path(cls.path).open(encoding="utf-8") as fold:
                 orig_txt = fold.read()
             if orig_txt == new_txt:
                 new_txt = ''
@@ -512,6 +512,19 @@ class DatasetCard:
         |
         """
     )
+    hanging_indent_field_template = _aligned_dedent(
+        """
+        |.. raw:: html
+        |
+        |   <div style=“text-indent: -20px; padding-left: 20px;”><p>
+        |
+        |**{}**: {}
+        |
+        |.. raw:: html
+        |
+        |   </p>
+        """
+    )
     card_template = _aligned_dedent(
         """
         |.. card:: {}
@@ -539,11 +552,12 @@ class DatasetCard:
         |
         |            .. grid-item::
         |
-        |               - Size on Disk: {}
-        |               - Num Files: {}
-        |               - Extension: {}
-        |               - Reader: {}
-        |               - Dataset Type: {}
+        |               {}
+        |               {}
+        |               {}
+        |               {}
+        |               {}
+        |               {}
         |
         |      .. grid-item::
         |
@@ -553,8 +567,6 @@ class DatasetCard:
         |            {}
         |
         |   **Gallery tags**: {}
-        |
-        |   {}
         |
         |   .. dropdown:: :octicon:`globe`  Data Source Links
         |
@@ -626,9 +638,11 @@ class DatasetCard:
         # Format badges
         carousel_badges = self._format_carousel_badges(self._badges)
         celltype_badges = self._format_celltype_badges(self._badges)
-        if celltype_badges != '':
-            # Only show this section if the dataset has cells
-            celltype_badges = f'**Cell Types**: {celltype_badges}'
+
+        def hanging_field(field_name, content):
+            hanging_html = self.hanging_indent_field_template.format(field_name, content)
+            indented = _indent_multi_line_string(hanging_html, indent_level=5)
+            return indented
 
         ref = self.ref_template.format(ref_name)
         card = self.card_template.format(
@@ -636,14 +650,14 @@ class DatasetCard:
             header,
             func_doc,
             img_path,
-            file_size,
-            num_files,
-            file_ext,
-            reader_type,
-            dataset_type,
+            hanging_field('Data Type', dataset_type),
+            hanging_field('Cell Type', celltype_badges),
+            hanging_field('File Size', file_size),
+            hanging_field('Num Files', num_files),
+            hanging_field('Extension', file_ext),
+            hanging_field('Reader', reader_type),
             dataset_repr,
             carousel_badges,
-            celltype_badges,
             datasource_links,
         )
         # Create separate version of the card with index
@@ -751,6 +765,8 @@ class DatasetCard:
         """Sort badges by type and join all badge rst into a single string."""
         celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
         rst = ' '.join([badge.generate() for badge in celltype_badges])
+        if rst == '':
+            rst = '``None``'
         return rst
 
     @staticmethod
