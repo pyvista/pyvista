@@ -61,9 +61,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 
         """
         for i in range(self.n_partitions):
-            block = self.GetPartition(i)
-            if not is_pyvista_dataset(block):
-                self.SetPartition(i, wrap(block))
+            partition = self.GetPartition(i)
+            if not is_pyvista_dataset(partition):
+                self.SetPartition(i, wrap(partition))
 
     @overload
     def __getitem__(self, index: int) -> Optional[DataSet]:  # noqa: D105
@@ -74,7 +74,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         ...  # pragma: no cover
 
     def __getitem__(self, index):
-        """Get a block by its index."""
+        """Get a partition by its index."""
         if isinstance(index, slice):
             return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
@@ -95,7 +95,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         index: Union[int, slice],
         data,
     ):
-        """Set a block with a VTK data object."""
+        """Set a partition with a VTK data object."""
         self.SetPartition(index, data)
 
     def __iter__(self) -> 'PartitionedDataSet':
