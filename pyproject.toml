@@ -348,6 +348,7 @@ extend-select = [
     "RUF005",
     "RUF010",
     "RUF100",
+    "SIM114",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]
