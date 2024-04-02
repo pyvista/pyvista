@@ -664,7 +664,7 @@ def test_elevation():
     # Test default params
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
@@ -672,21 +672,21 @@ def test_elevation():
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
     elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' != elev.active_scalars_name
+    assert elev.active_scalars_name != 'Elevation'
     # Set use a range by scalar name
     elev = dataset.elevation(scalar_range='Spatial Point Data', progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0], progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
     with pytest.raises(TypeError):
