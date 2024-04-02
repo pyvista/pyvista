@@ -186,7 +186,7 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
         arr = arr.flatten()
         axis = -1
     else:
-        if not axis == -1:
+        if axis != -1:
             # Validate axis
             check_number(axis, name="Axis")
             check_integer(axis, name="Axis")
