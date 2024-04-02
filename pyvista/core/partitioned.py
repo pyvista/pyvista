@@ -96,6 +96,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Set a partition with a VTK data object."""
         self.SetPartition(index, data)
 
+    def __delitem__(self, index: Union[int, str, slice]) -> None:
+        """Remove a partition at the specified index."""
+
     def __iter__(self) -> 'PartitionedDataSet':
         """Return the iterator across all partitions."""
         self._iter_n = 0
