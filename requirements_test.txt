@@ -10,7 +10,7 @@ ipython<9.0.0
 ipywidgets<9.0.0
 meshio<5.4.0
 nest_asyncio<1.6.1
-numpydoc==1.6.0
+numpydoc==1.7.0
 pydata-sphinx-theme<0.16.0
 pytest<8.2.0
 pytest-cov<5.1.0
