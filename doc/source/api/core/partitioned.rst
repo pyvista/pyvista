@@ -55,14 +55,16 @@ or through the ``n_partitions`` attribute
    partitions.n_partitions
 
 More specifically, ``PartitionedDataSet`` is a :class:`collections.abc.MutableSequence`
-and supports operations such as append, pop, insert, etc. Some of these operations
-allow optional names to be provided for the dictionary like usage.
+and supports operations such as append, insert, etc.
 
 .. jupyter-execute::
 
    partitions.append(pv.Cone())
-   cone = partitions.pop(-1)  # Pops Cone
    partitions.reverse()
+
+.. warning::
+
+   pop is not supported in ``PartitionedDataSet`` class.
 
 ``PartitionedDataSet`` also supports slicing for getting or setting partitions.
 

@@ -5,6 +5,7 @@ from typing import Iterable, Optional, Union, overload
 
 from . import _vtk_core as _vtk
 from .dataset import DataObject, DataSet
+from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset, wrap
 
 
@@ -96,8 +97,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Set a partition with a VTK data object."""
         self.SetPartition(index, data)
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
-        """Remove a partition at the specified index."""
+    def __delitem__(self, index: Union[int, slice]) -> None:
+        """Remove a partition at the specified index are not supported."""
+        raise PartitionedDataSetsNotSupported
 
     def __iter__(self) -> 'PartitionedDataSet':
         """Return the iterator across all partitions."""
@@ -111,6 +113,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             self._iter_n += 1
             return result
         raise StopIteration
+
+    def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01
+        """Pop off a partition at the specified index are not supported."""
+        raise PartitionedDataSetsNotSupported
 
     def __len__(self) -> int:
         """Return the number of partitions."""
