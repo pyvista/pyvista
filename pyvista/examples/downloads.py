@@ -54,7 +54,7 @@ CACHE_VERSION = 3
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
 
-    if not Path(_path).name == 'Data':
+    if Path(_path).name != 'Data':
         # append 'Data' if user does not provide it
         _path = str(Path(_path) / 'Data')
 

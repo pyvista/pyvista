@@ -105,11 +105,11 @@ def test_invalid_color_str_single_char():
 
 def test_color_str():
     clr = colors.Color("k")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("black")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("white")
-    assert (1.0, 1.0, 1.0) == clr
+    assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
 
