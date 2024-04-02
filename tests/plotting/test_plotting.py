@@ -940,7 +940,7 @@ def test_isometric_view_interactive(sphere):
     plotter_iso.camera_position = 'xy'
     cpos_old = plotter_iso.camera_position
     plotter_iso.isometric_view_interactive()
-    assert not plotter_iso.camera_position == cpos_old
+    assert plotter_iso.camera_position != cpos_old
 
 
 def test_add_point_labels():
