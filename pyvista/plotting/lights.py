@@ -178,9 +178,8 @@ class Light(vtkLight):
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
-            raise TypeError(
-                f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
-            )
+            msg = f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+            raise TypeError(msg)
         # LightType is an int subclass
 
         self.light_type = light_type
@@ -802,9 +801,8 @@ class Light(vtkLight):
             try:
                 trans = vtkmatrix_from_array(matrix)
             except ValueError:
-                raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.'
-                ) from None
+                msg = 'Transformation matrix must be a 4-by-4 matrix or array-like.'
+                raise ValueError(msg) from None
         self.SetTransformMatrix(trans)
 
     @property
@@ -864,9 +862,8 @@ class Light(vtkLight):
     def light_type(self, ltype):  # numpydoc ignore=GL08
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
-            raise TypeError(
-                f'Light type must be an integer subclass instance, got {ltype} instead.'
-            )
+            msg = f'Light type must be an integer subclass instance, got {ltype} instead.'
+            raise TypeError(msg)
         self.SetLightType(ltype)
 
     @property
@@ -1138,9 +1135,8 @@ class Light(vtkLight):
 
         """
         if not isinstance(vtk_light, vtkLight):
-            raise TypeError(
-                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
-            )
+            msg = f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+            raise TypeError(msg)
 
         light = cls()
         light.light_type = vtk_light.GetLightType()  # resets transformation matrix

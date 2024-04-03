@@ -364,7 +364,8 @@ class DataSetFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise ValueError("The bounds mesh must have only 6 faces.")
+                msg = "The bounds mesh must have only 6 faces."
+                raise ValueError(msg)
             bounds = []
             poly.compute_normals(inplace=True)
             for cid in range(6):
@@ -373,9 +374,11 @@ class DataSetFilters:
                 bounds.append(normal)
                 bounds.append(cell.center)
         if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
-            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+            msg = 'Bounds must be a sequence of floats with length 3, 6 or 12.'
+            raise TypeError(msg)
         if len(bounds) not in [3, 6, 12]:
-            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+            msg = 'Bounds must be a sequence of floats with length 3, 6 or 12.'
+            raise ValueError(msg)
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds
             bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
@@ -959,9 +962,8 @@ class DataSetFilters:
             try:
                 ax_index = label_to_index[axis.lower()]
             except KeyError:
-                raise ValueError(
-                    f'Axis ({axis!r}) not understood. Choose one of {labels}.'
-                ) from None
+                msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
+                raise ValueError(msg) from None
             ax_label = axis
         # get the locations along that axis
         if bounds is None:
@@ -1058,10 +1060,12 @@ class DataSetFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise ValueError('Input line must have only one cell.')
+            msg = 'Input line must have only one cell.'
+            raise ValueError(msg)
         polyline = line.GetCell(0)
         if not isinstance(polyline, _vtk.vtkPolyLine):
-            raise TypeError(f'Input line must have a PolyLine cell, not ({type(polyline)})')
+            msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
+            raise TypeError(msg)
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -1231,7 +1235,8 @@ class DataSetFilters:
             _, scalars = self.active_scalars_info
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
-            raise ValueError('No arrays present to threshold.')
+            msg = 'No arrays present to threshold.'
+            raise ValueError(msg)
 
         field = get_array_association(self, scalars, preference=preference)
 
@@ -1254,20 +1259,19 @@ class DataSetFilters:
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
             if not isinstance(component, (int, np.integer)):
-                raise TypeError("component must be int")
+                msg = "component must be int"
+                raise TypeError(msg)
             if component > (dim - 1) or component < 0:
-                raise ValueError(
-                    f"scalars has {dim} components: supplied component {component} not in range"
-                )
+                msg = f"scalars has {dim} components: supplied component {component} not in range"
+                raise ValueError(msg)
             alg.SetSelectedComponent(component)
         elif component_mode == "all":
             alg.SetComponentModeToUseAll()
         elif component_mode == "any":
             alg.SetComponentModeToUseAny()
         else:
-            raise ValueError(
-                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
-            )
+            msg = f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            raise ValueError(msg)
 
         # Run the threshold
         _update_alg(alg, progress_bar, 'Thresholding')
@@ -1376,9 +1380,11 @@ class DataSetFilters:
             if percent >= 1:
                 percent = float(percent) / 100.0
                 if percent > 1:
-                    raise ValueError(f'Percentage ({percent}) is out of range (0, 1).')
+                    msg = f'Percentage ({percent}) is out of range (0, 1).'
+                    raise ValueError(msg)
             if percent < 1e-10:
-                raise ValueError(f'Percentage ({percent}) is too close to zero or negative.')
+                msg = f'Percentage ({percent}) is too close to zero or negative.'
+                raise ValueError(msg)
             return percent
 
         def _get_val(percent, dmin, dmax):
@@ -1391,7 +1397,8 @@ class DataSetFilters:
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
         elif isinstance(percent, collections.abc.Iterable):
-            raise TypeError('Percent must either be a single scalar or a sequence.')
+            msg = 'Percent must either be a single scalar or a sequence.'
+            raise TypeError(msg)
         else:
             # Compute one value to threshold
             value = _get_val(percent, dmin, dmax)
@@ -1577,10 +1584,11 @@ class DataSetFilters:
             try:
                 alg.SetUseAllPoints(use_all_points)
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError(
+                msg = (
                     'This version of VTK does not support `use_all_points=True`. '
                     'VTK v9.1 or newer is required.'
                 )
+                raise VTKVersionError(msg)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
@@ -1684,9 +1692,11 @@ class DataSetFilters:
             scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)
         elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
-                raise ValueError('scalar_range must have a length of two defining the min and max')
+                msg = 'scalar_range must have a length of two defining the min and max'
+                raise ValueError(msg)
         else:
-            raise TypeError(f'scalar_range argument ({scalar_range}) not understood.')
+            msg = f'scalar_range argument ({scalar_range}) not understood.'
+            raise TypeError(msg)
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
@@ -1825,16 +1835,20 @@ class DataSetFilters:
         elif method == 'flying_edges':
             alg = _vtk.vtkFlyingEdges3D()
         else:
-            raise ValueError(f"Method '{method}' is not supported")
+            msg = f"Method '{method}' is not supported"
+            raise ValueError(msg)
 
         if rng is not None:
             if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
-                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
+                msg = f'Array-like rng expected, got {type(rng).__name__}.'
+                raise TypeError(msg)
             rng_shape = np.shape(rng)
             if rng_shape != (2,):
-                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
+                msg = f'rng must be a two-length array-like, not {rng}.'
+                raise ValueError(msg)
             if rng[0] > rng[1]:
-                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
+                msg = f'rng must be a sorted min-max pair, not {rng}.'
+                raise ValueError(msg)
 
         if isinstance(scalars, str):
             scalars_name = scalars
@@ -1842,14 +1856,16 @@ class DataSetFilters:
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is not None:
-            raise TypeError(
+            msg = (
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
                 'a numpy.ndarray, a string, or None.'
             )
+            raise TypeError(msg)
 
         # Make sure the input has scalars to contour on
         if self.n_arrays < 1:
-            raise ValueError('Input dataset for the contour filter must have scalar.')
+            msg = 'Input dataset for the contour filter must have scalar.'
+            raise ValueError(msg)
 
         alg.SetInputDataObject(self)
         alg.SetComputeNormals(compute_normals)
@@ -1863,7 +1879,8 @@ class DataSetFilters:
             field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError('Contour filter only works on point data.')
+            msg = 'Contour filter only works on point data.'
+            raise TypeError(msg)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -1882,7 +1899,8 @@ class DataSetFilters:
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
         else:
-            raise TypeError('isosurfaces not understood.')
+            msg = 'isosurfaces not understood.'
+            raise TypeError(msg)
         _update_alg(alg, progress_bar, 'Computing Contour')
         output = _get_output(alg)
 
@@ -2265,16 +2283,19 @@ class DataSetFilters:
                 # use default "categorical" indices
                 indices = np.arange(len(geom))
             if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
-                raise TypeError(
+                msg = (
                     'If "geom" is a sequence then "indices" must '
                     'also be a sequence of the same length.'
                 )
+                raise TypeError(msg)
             if len(indices) != len(geom) and len(geom) != 1:
-                raise ValueError('The sequence "indices" must be the same length ' 'as "geom".')
+                msg = 'The sequence "indices" must be the same length ' 'as "geom".'
+                raise ValueError(msg)
         else:
             geom = [geom]
         if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
-            raise TypeError('Only PolyData objects can be used as glyphs.')
+            msg = 'Only PolyData objects can be used as glyphs.'
+            raise TypeError(msg)
 
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
@@ -2337,7 +2358,8 @@ class DataSetFilters:
 
         if scale and orient:
             if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
-                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+                msg = "Both ``scale`` and ``orient`` must use point data or cell data."
+                raise ValueError(msg)
 
         source_data = dataset
         set_actives_on_source_data = False
@@ -2588,7 +2610,8 @@ class DataSetFilters:
             is_all_integers = np.issubdtype(ids.dtype, np.integer)
             is_all_positive = not np.any(ids < 0)
             if not (is_all_positive and is_all_integers):
-                raise ValueError('IDs must be positive integer values.')
+                msg = 'IDs must be positive integer values.'
+                raise ValueError(msg)
             return np.unique(ids)
 
         def _extract_points(_input, points):
@@ -2611,9 +2634,8 @@ class DataSetFilters:
                     _output = _input
                 else:
                     if pyvista.vtk_version_info < (9, 1, 0):
-                        raise VTKVersionError(
-                            '`connectivity` with PolyData requires vtk>=9.1.0'
-                        )  # pragma: no cover
+                        msg = '`connectivity` with PolyData requires vtk>=9.1.0'
+                        raise VTKVersionError(msg)  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(_input)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
@@ -2639,13 +2661,14 @@ class DataSetFilters:
             elif isinstance(scalar_range, collections.abc.Sequence):
                 num_elements = len(scalar_range)
             else:
-                raise TypeError('Scalar range must be a numpy array or a sequence.')
+                msg = 'Scalar range must be a numpy array or a sequence.'
+                raise TypeError(msg)
             if num_elements != 2:
-                raise ValueError('Scalar range must have two elements defining the min and max.')
+                msg = 'Scalar range must have two elements defining the min and max.'
+                raise ValueError(msg)
             if scalar_range[0] > scalar_range[1]:
-                raise ValueError(
-                    f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}"
-                )
+                msg = f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}"
+                raise ValueError(msg)
 
             # Input will be modified, so copy first
             input_mesh = self.copy()  # type: ignore[attr-defined]
@@ -2698,9 +2721,8 @@ class DataSetFilters:
         elif extraction_mode == 'specified':
             if region_ids is None:
                 if variable_input is None:
-                    raise ValueError(
-                        "`region_ids` must be specified when `extraction_mode='specified'`."
-                    )
+                    msg = "`region_ids` must be specified when `extraction_mode='specified'`."
+                    raise ValueError(msg)
                 else:
                     region_ids = variable_input
             # this mode returns scalar data with shape that may not match
@@ -2713,9 +2735,8 @@ class DataSetFilters:
         elif extraction_mode == 'cell_seed':
             if cell_ids is None:
                 if variable_input is None:
-                    raise ValueError(
-                        "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
-                    )
+                    msg = "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
+                    raise ValueError(msg)
                 else:
                     cell_ids = variable_input
             alg.SetExtractionModeToCellSeededRegions()
@@ -2726,9 +2747,8 @@ class DataSetFilters:
         elif extraction_mode == 'point_seed':
             if point_ids is None:
                 if variable_input is None:
-                    raise ValueError(
-                        "`point_ids` must be specified when `extraction_mode='point_seed'`."
-                    )
+                    msg = "`point_ids` must be specified when `extraction_mode='point_seed'`."
+                    raise ValueError(msg)
                 else:
                     point_ids = variable_input
             alg.SetExtractionModeToPointSeededRegions()
@@ -2739,18 +2759,16 @@ class DataSetFilters:
         elif extraction_mode == 'closest':
             if closest_point is None:
                 if variable_input is None:
-                    raise ValueError(
-                        "`closest_point` must be specified when `extraction_mode='closest'`."
-                    )
+                    msg = "`closest_point` must be specified when `extraction_mode='closest'`."
+                    raise ValueError(msg)
                 else:
                     closest_point = variable_input
             alg.SetExtractionModeToClosestPointRegion()
             alg.SetClosestPoint(*closest_point)
 
         else:
-            raise ValueError(
-                f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
-            )
+            msg = f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
+            raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
         output = _get_output(alg)
@@ -2970,7 +2988,8 @@ class DataSetFilters:
 
         field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:
-            raise TypeError('Dataset can only by warped by a point data array.')
+            msg = 'Dataset can only by warped by a point data array.'
+            raise TypeError(msg)
         # Run the algorithm
         alg = _vtk.vtkWarpScalar()
         alg.SetInputDataObject(self)
@@ -2985,7 +3004,8 @@ class DataSetFilters:
         output = _get_output(alg)
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
-                raise TypeError("This filter cannot be applied inplace for this mesh type.")
+                msg = "This filter cannot be applied inplace for this mesh type."
+                raise TypeError(msg)
             self.copy_from(output, deep=False)
             return self
         return output
@@ -3046,14 +3066,16 @@ class DataSetFilters:
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
         if arr is None:
-            raise ValueError('No vectors present to warp by vector.')
+            msg = 'No vectors present to warp by vector.'
+            raise ValueError(msg)
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
-            raise ValueError(
+            msg = (
                 'Dataset can only by warped by a 3D vector point data array. '
                 'The values you provided do not satisfy this requirement'
             )
+            raise ValueError(msg)
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
@@ -3409,13 +3431,15 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            raise TypeError("`surface` must be `pyvista.PolyData`")
+            msg = "`surface` must be `pyvista.PolyData`"
+            raise TypeError(msg)
         if check_surface and surface.n_open_edges > 0:
-            raise RuntimeError(
+            msg = (
                 "Surface is not closed. Please read the warning in the "
                 "documentation for this function and either pass "
                 "`check_surface=False` or repair the surface."
             )
+            raise RuntimeError(msg)
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
         alg.SetSurfaceData(surface)
@@ -3635,7 +3659,8 @@ class DataSetFilters:
 
         """
         if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
+            msg = '`target` must be a PyVista mesh type.'
+            raise TypeError(msg)
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
@@ -3661,16 +3686,16 @@ class DataSetFilters:
                 try:
                     locator = locator_map[locator]
                 except KeyError as err:
-                    raise ValueError(
-                        f"locator must be a string from {locator_map.keys()}, got {locator}"
-                    ) from err
+                    msg = f"locator must be a string from {locator_map.keys()}, got {locator}"
+                    raise ValueError(msg) from err
             alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
+                msg = "`snap_to_closest_point=True` requires vtk 9.3.0 or newer"
+                raise VTKVersionError(msg)
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3781,7 +3806,8 @@ class DataSetFilters:
 
         """
         if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
+            msg = '`target` must be a PyVista mesh type.'
+            raise TypeError(msg)
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
@@ -3813,7 +3839,8 @@ class DataSetFilters:
         elif strategy == 'closest_point':
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
-            raise ValueError(f'strategy `{strategy}` not supported.')
+            msg = f'strategy `{strategy}` not supported.'
+            raise ValueError(msg)
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
         _update_alg(interpolator, progress_bar, 'Interpolating')
@@ -3911,7 +3938,8 @@ class DataSetFilters:
             n_points = 1
 
         if (pointa is not None and pointb is None) or (pointa is None and pointb is not None):
-            raise ValueError("Both pointa and pointb must be provided")
+            msg = "Both pointa and pointb must be provided"
+            raise ValueError(msg)
         elif pointa is not None and pointb is not None:
             source = _vtk.vtkLineSource()
             source.SetPoint1(pointa)
@@ -4047,16 +4075,20 @@ class DataSetFilters:
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
-            raise ValueError(
+            msg = (
                 "Integration direction must be one of:\n 'backward', "
                 f"'forward', or 'both' - not '{integration_direction}'."
             )
+            raise ValueError(msg)
         if integrator_type not in [2, 4, 45]:
-            raise ValueError('Integrator type must be one of `2`, `4`, or `45`.')
+            msg = 'Integrator type must be one of `2`, `4`, or `45`.'
+            raise ValueError(msg)
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
-            raise ValueError("Interpolator type must be either 'cell' or 'point'")
+            msg = "Interpolator type must be either 'cell' or 'point'"
+            raise ValueError(msg)
         if step_unit not in ['l', 'cl']:
-            raise ValueError("Step unit must be either 'l' or 'cl'")
+            msg = "Step unit must be either 'l' or 'cl'"
+            raise ValueError(msg)
         step_unit = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
@@ -4071,7 +4103,8 @@ class DataSetFilters:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
         if not isinstance(source, pyvista.DataSet):
-            raise TypeError("source must be a pyvista.DataSet")
+            msg = "source must be a pyvista.DataSet"
+            raise TypeError(msg)
 
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
@@ -4238,11 +4271,14 @@ class DataSetFilters:
         See :ref:`2d_streamlines_example` for more examples using this filter.
         """
         if integrator_type not in [2, 4]:
-            raise ValueError('Integrator type must be one of `2` or `4`.')
+            msg = 'Integrator type must be one of `2` or `4`.'
+            raise ValueError(msg)
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
-            raise ValueError("Interpolator type must be either 'cell' or 'point'")
+            msg = "Interpolator type must be either 'cell' or 'point'"
+            raise ValueError(msg)
         if step_unit not in ['l', 'cl']:
-            raise ValueError("Step unit must be either 'l' or 'cl'")
+            msg = "Step unit must be either 'l' or 'cl'"
+            raise ValueError(msg)
         step_unit = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
@@ -5367,7 +5403,8 @@ class DataSetFilters:
                 self.deep_copy(merged)
                 return self
             else:
-                raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
+                msg = f"Mesh type {type(self)} cannot be overridden by output."
+                raise TypeError(msg)
         return merged
 
     def __add__(self, dataset):
@@ -5385,11 +5422,12 @@ class DataSetFilters:
         try:
             merged = DataSetFilters.merge(self, dataset, inplace=True)
         except TypeError:
-            raise TypeError(
+            msg = (
                 'In-place merge only possible if the target mesh '
                 'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
                 'instead, which returns a new UnstructuredGrid.'
-            ) from None
+            )
+            raise TypeError(msg) from None
         return merged
 
     def compute_cell_quality(
@@ -5514,9 +5552,8 @@ class DataSetFilters:
             measure_setters[quality_measure]()
         except (KeyError, IndexError):
             options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
-            raise KeyError(
-                f'Cell quality type ({quality_measure}) not available. Options are: {options}'
-            )
+            msg = f'Cell quality type ({quality_measure}) not available. Options are: {options}'
+            raise KeyError(msg)
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
@@ -5567,9 +5604,8 @@ class DataSetFilters:
 
         """
         if pyvista.vtk_version_info < (9, 3, 0):
-            raise VTKVersionError(
-                '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            )  # pragma: no cover
+            msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
+            raise VTKVersionError(msg)  # pragma: no cover
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
@@ -5663,11 +5699,11 @@ class DataSetFilters:
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         if not isinstance(scalars, str):
-            raise TypeError('scalars array must be given as a string name')
+            msg = 'scalars array must be given as a string name'
+            raise TypeError(msg)
         if not any((gradient, divergence, vorticity, qcriterion)):
-            raise ValueError(
-                'must set at least one of gradient, divergence, vorticity, or qcriterion'
-            )
+            msg = 'must set at least one of gradient, divergence, vorticity, or qcriterion'
+            raise ValueError(msg)
 
             # bool(non-empty string/True) == True, bool(None/False) == False
         alg.SetComputeGradient(bool(gradient))
@@ -5734,7 +5770,8 @@ class DataSetFilters:
 
         """
         if not (0.0 <= shrink_factor <= 1.0):
-            raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
+            msg = '`shrink_factor` should be between 0.0 and 1.0'
+            raise ValueError(msg)
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
@@ -5800,7 +5837,8 @@ class DataSetFilters:
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            raise TypeError('Tessellate filter is not supported for PolyData objects.')
+            msg = 'Tessellate filter is not supported for PolyData objects.'
+            raise TypeError(msg)
         alg = _vtk.vtkTessellatorFilter()
         alg.SetInputData(self)
         alg.SetMergePoints(merge_points)
@@ -5886,7 +5924,8 @@ class DataSetFilters:
 
         """
         if inplace and isinstance(self, pyvista.Grid):
-            raise TypeError(f'Cannot transform a {self.__class__} inplace')
+            msg = f'Cannot transform a {self.__class__} inplace'
+            raise TypeError(msg)
 
         if isinstance(trans, _vtk.vtkMatrix4x4):
             m = trans
@@ -5897,20 +5936,23 @@ class DataSetFilters:
             m = trans.GetMatrix()
         elif isinstance(trans, np.ndarray):
             if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
+                msg = 'Transformation array must be 4x4'
+                raise ValueError(msg)
             m = vtkmatrix_from_array(trans)
             t = _vtk.vtkTransform()
             t.SetMatrix(m)
         else:
-            raise TypeError(
+            msg = (
                 'Input transform must be either:\n'
                 '\tvtk.vtkMatrix4x4\n'
                 '\tvtk.vtkTransform\n'
                 '\t4x4 np.ndarray\n'
             )
+            raise TypeError(msg)
 
         if m.GetElement(3, 3) == 0:
-            raise ValueError("Transform element (3,3), the inverse scale term, is zero")
+            msg = "Transform element (3,3), the inverse scale term, is zero"
+            raise ValueError(msg)
 
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
@@ -6086,7 +6128,8 @@ class DataSetFilters:
 
         """
         if not hasattr(_vtk, 'vtkIntegrateAttributes'):  # pragma: no cover
-            raise VTKVersionError('`integrate_data` requires VTK 9.1.0 or newer.')
+            msg = '`integrate_data` requires VTK 9.1.0 or newer.'
+            raise VTKVersionError(msg)
 
         alg = _vtk.vtkIntegrateAttributes()
         alg.SetInputData(self)
@@ -6152,12 +6195,14 @@ class DataSetFilters:
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
         # work correctly, returning the wrong number of partitions.
         if pyvista.vtk_version_info < (9, 1, 0):
-            raise VTKVersionError('`partition` requires vtk>=9.1.0')  # pragma: no cover
+            msg = '`partition` requires vtk>=9.1.0'
+            raise VTKVersionError(msg)  # pragma: no cover
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
-            raise VTKVersionError(
+            msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pyvista.vtk_version_info}'
-            )  # pragma: no cover
+            )
+            raise VTKVersionError(msg)  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
@@ -6317,9 +6362,10 @@ class DataSetFilters:
             for cell_type in cell_types:
                 alg.AddCellType(cell_type)
         else:
-            raise TypeError(
+            msg = (
                 f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
             )
+            raise TypeError(msg)
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
@@ -6522,7 +6568,8 @@ class DataSetFilters:
         elif isinstance(output_scalars, str):
             output_scalars = output_scalars
         else:
-            raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
+            msg = f"Output scalars must be a string, got {type(output_scalars)} instead."
+            raise TypeError(msg)
 
         # Do packing
         if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
@@ -6595,16 +6642,15 @@ def _set_threshold_limit(alg, value, method, invert):
     # Check value
     if isinstance(value, (np.ndarray, collections.abc.Sequence)):
         if len(value) != 2:
-            raise ValueError(
-                f'Value range must be length one for a float value or two for min/max; not ({value}).'
-            )
+            msg = f'Value range must be length one for a float value or two for min/max; not ({value}).'
+            raise ValueError(msg)
         # Check range
         if value[0] > value[1]:
-            raise ValueError(
-                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
-            )
+            msg = 'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+            raise ValueError(msg)
     elif isinstance(value, collections.abc.Iterable):
-        raise TypeError('Value must either be a single scalar or a sequence.')
+        msg = 'Value must either be a single scalar or a sequence.'
+        raise TypeError(msg)
     alg.SetInvert(invert)
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
@@ -6621,7 +6667,8 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.SetUpperThreshold(value)
                 alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
             else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+                msg = 'Invalid method choice. Either `lower` or `upper`'
+                raise ValueError(msg)
     else:  # pragma: no cover
         # ThresholdByLower, ThresholdByUpper, ThresholdBetween
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
@@ -6633,4 +6680,5 @@ def _set_threshold_limit(alg, value, method, invert):
             elif method.lower() == 'upper':
                 alg.ThresholdByUpper(value)
             else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+                msg = 'Invalid method choice. Either `lower` or `upper`'
+                raise ValueError(msg)

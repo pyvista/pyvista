@@ -129,7 +129,8 @@ def wrap(
             mesh.active_scalars_name = 'values'
             return mesh
         else:
-            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
+            msg = 'NumPy array could not be wrapped pyvista.'
+            raise NotImplementedError(msg)
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
@@ -141,7 +142,8 @@ def wrap(
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
+            msg = f'VTK data type ({key}) is not currently supported by pyvista.'
+            raise TypeError(msg)
         return
 
     # wrap meshio
@@ -161,7 +163,8 @@ def wrap(
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
-    raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
+    msg = f'Unable to wrap ({type(dataset)}) into a pyvista type.'
+    raise NotImplementedError(msg)
 
 
 def is_pyvista_dataset(obj):
@@ -251,7 +254,8 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 
     if axis not in axis_to_vec:
-        raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
+        msg = 'Invalid axis. Must be either "x", "y", or "z"'
+        raise ValueError(msg)
 
     rot_mat = transformations.axis_angle_rotation(axis_to_vec[axis], angle, deg=deg)
     return transformations.apply_transformation_to_points(rot_mat, points, inplace=inplace)
@@ -282,12 +286,14 @@ def is_inside_bounds(point, bounds):
         point, collections.deque
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise ValueError('Bounds mismatch point dimensionality')
+            msg = 'Bounds mismatch point dimensionality'
+            raise ValueError(msg)
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, collections.deque):
-        raise TypeError(f'Unknown input data type ({type(point)}).')
+        msg = f'Unknown input data type ({type(point)}).'
+        raise TypeError(msg)
     if len(point) < 1:
         return True
     p = point.popleft()

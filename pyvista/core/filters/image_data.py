@@ -76,11 +76,13 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -304,11 +306,13 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                msg = 'Can only process point data, given `scalars` are cell data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -399,12 +403,12 @@ class ImageDataFilters(DataSetFilters):
         # set the threshold(s) and mode
         if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
-                raise ValueError(
-                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).'
-                )
+                msg = f'Threshold must be length one for a float value or two for min/max; not ({threshold}).'
+                raise ValueError(msg)
             alg.ThresholdBetween(threshold[0], threshold[1])
         elif isinstance(threshold, collections.abc.Iterable):
-            raise TypeError('Threshold must either be a single scalar or a sequence.')
+            msg = 'Threshold must either be a single scalar or a sequence.'
+            raise TypeError(msg)
         else:
             alg.ThresholdByUpper(threshold)
         # set the replacement values / modes
@@ -486,11 +490,13 @@ class ImageDataFilters(DataSetFilters):
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                raise MissingDataError('FFT filter requires point scalars.') from None
+                msg = 'FFT filter requires point scalars.'
+                raise MissingDataError(msg) from None
 
             # possible only cell scalars were made active
             if self.point_data.active_scalars_name is None:
-                raise MissingDataError('FFT filter requires point scalars.')
+                msg = 'FFT filter requires point scalars.'
+                raise MissingDataError(msg)
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
@@ -749,19 +755,22 @@ class ImageDataFilters(DataSetFilters):
             if len(possible_scalars) == 1:
                 self.set_active_scalars(possible_scalars[0], preference='point')
             elif len(possible_scalars) > 1:
-                raise AmbiguousDataError(
+                msg = (
                     'There are multiple point scalars available. Set one to be '
                     'active with `point_data.active_scalars_name = `'
                 )
+                raise AmbiguousDataError(msg)
             else:
-                raise MissingDataError('FFT filters require point scalars.')
+                msg = 'FFT filters require point scalars.'
+                raise MissingDataError(msg)
 
         if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
-            raise ValueError(
+            msg = (
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
                 '`numpy.complex128`.'
             )
+            raise ValueError(msg)
 
     def _flip_uniform(self, axis) -> 'pyvista.ImageData':
         """Flip the uniform grid along a specified axis and return a uniform grid.
@@ -862,20 +871,21 @@ class ImageDataFilters(DataSetFilters):
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+            msg = 'Surface nets 3D require VTK 9.3.0 or newer.'
+            raise VTKVersionError(msg)
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                msg = 'If `scalars` not given, active scalars must be point array.'
+                raise ValueError(msg)
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
-                )
+                msg = f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                raise ValueError(msg)
         alg.SetInputArrayToProcess(
             0, 0, 0, field.value, scalars
         )  # args: (idx, port, connection, field, name)
@@ -887,17 +897,18 @@ class ImageDataFilters(DataSetFilters):
         elif output_mesh_type == 'triangles':
             alg.SetOutputMeshTypeToTriangles()
         else:
-            raise ValueError(
-                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
-            )
+            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+            raise ValueError(msg)
         if output_style == 'default':
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
         elif output_style == 'selected':
-            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+            msg = f'Output style "{output_style}" is not implemented'
+            raise NotImplementedError(msg)
         else:
-            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
+            msg = f'Invalid output style "{output_style}", use "default" or "boundary"'
+            raise ValueError(msg)
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)

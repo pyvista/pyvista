@@ -96,16 +96,19 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
 
     axis = np.asarray(axis, dtype='float64')
     if axis.shape != (3,):
-        raise ValueError('Axis must be a 3-length array-like.')
+        msg = 'Axis must be a 3-length array-like.'
+        raise ValueError(msg)
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Rotation center must be a 3-length array-like.')
+            msg = 'Rotation center must be a 3-length array-like.'
+            raise ValueError(msg)
 
     # check and normalize
     axis_norm = np.linalg.norm(axis)
     if np.isclose(axis_norm, 0):
-        raise ValueError('Cannot rotate around zero vector axis.')
+        msg = 'Cannot rotate around zero vector axis.'
+        raise ValueError(msg)
     if not np.isclose(axis_norm, 1):
         axis = axis / axis_norm
 
@@ -214,16 +217,19 @@ def reflection(normal, point=None):
     """
     normal = np.asarray(normal, dtype='float64')
     if normal.shape != (3,):
-        raise ValueError('Normal must be a 3-length array-like.')
+        msg = 'Normal must be a 3-length array-like.'
+        raise ValueError(msg)
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Plane reference point must be a 3-length array-like.')
+            msg = 'Plane reference point must be a 3-length array-like.'
+            raise ValueError(msg)
 
     # check and normalize
     normal_norm = np.linalg.norm(normal)
     if np.isclose(normal_norm, 0):
-        raise ValueError('Plane normal cannot be zero.')
+        msg = 'Plane normal cannot be zero.'
+        raise ValueError(msg)
     if not np.isclose(normal_norm, 1):
         normal = normal / normal_norm
 
@@ -280,10 +286,12 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+        msg = '`transformation` must be of shape (3, 3) or (4, 4).'
+        raise ValueError(msg)
 
     if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+        msg = '`points` must be of shape (N, 3).'
+        raise ValueError(msg)
 
     if transformation_shape[0] == 4:
         # Divide by scale factor when homogeneous

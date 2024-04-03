@@ -197,13 +197,11 @@ def get_reader(filename, force_ext=None):
             ):
                 Reader = DICOMReader
             else:
-                raise ValueError(
-                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}"
-                )
+                msg = f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}"
+                raise ValueError(msg)
         else:
-            raise ValueError(
-                f"`pyvista.get_reader` does not support a file with the {ext} extension"
-            )
+            msg = f"`pyvista.get_reader` does not support a file with the {ext} extension"
+            raise ValueError(msg)
 
     return Reader(filename)
 
@@ -365,7 +363,8 @@ class BaseReader:
         elif Path(path).is_file():
             self._set_filename(path)
         else:
-            raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
+            msg = f"Path '{path}' is invalid or does not exist."
+            raise FileNotFoundError(msg)
 
     def _set_directory(self, directory):
         """Set directory and update reader."""
@@ -396,7 +395,8 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("File reader failed to read and/or produced no output.")
+            msg = "File reader failed to read and/or produced no output."
+            raise RuntimeError(msg)
         data._post_file_load_processing()
 
         # check for any pyvista metadata
@@ -859,9 +859,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
-            raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
-            )
+            msg = f"Not a valid time {time_value} from available time values: {self.time_values}"
+            raise ValueError(msg)
         self.reader.SetTimeValue(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
@@ -895,7 +894,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
+            msg = f"Time set index {time_set} not in {range(number_time_sets)}"
+            raise IndexError(msg)
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -925,16 +925,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         try:
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
-            raise AttributeError(
-                "Inspecting active time value only supported for vtk versions >9.1.0"
-            ) from err
+            msg = "Inspecting active time value only supported for vtk versions >9.1.0"
+            raise AttributeError(msg) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
-            raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
-            )
+            msg = f"Not a valid time {time_value} from available time values: {self.time_values}"
+            raise ValueError(msg)
         self.reader.UpdateTimeStep(time_value)
 
     def set_active_time_point(self, time_point):  # noqa: D102
@@ -1228,7 +1226,8 @@ class POpenFOAMReader(OpenFOAMReader):
         elif value == 'decomposed':
             self.reader.SetCaseType(0)
         else:
-            raise ValueError(f"Unknown case type '{value}'.")
+            msg = f"Unknown case type '{value}'."
+            raise ValueError(msg)
 
         self._update_information()
 
@@ -1936,7 +1935,8 @@ class _PVDReader(BaseVTKReader):
     def UpdateInformation(self):
         """Parse PVD file."""
         if self._filename is None:
-            raise ValueError("Filename must be set")
+            msg = "Filename must be set"
+            raise ValueError(msg)
         tree = ElementTree.parse(self._filename)
         root = tree.getroot()
         dataset_elements = root[0].findall("DataSet")
@@ -2354,11 +2354,12 @@ class HDFReader(BaseReader):
                 return super().read()
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
-                raise RuntimeError(
+                msg = (
                     f'{self.path} is missing the Type attribute. '
                     'The VTKHDF format has changed as of 9.2.0, '
                     f'see {HDF_HELP} for more details.'
                 )
+                raise RuntimeError(msg)
             else:
                 raise err
 
@@ -2483,9 +2484,8 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
-            raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
-            )
+            msg = f"Not a valid time {time_value} from available time values: {self.time_values}"
+            raise ValueError(msg)
         self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
 

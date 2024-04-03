@@ -182,7 +182,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         elif value == 'map':
             self.SetColorModeToMapScalars()
         else:
-            raise ValueError('Color mode must be either "default", "direct" or "map"')
+            msg = 'Color mode must be either "default", "direct" or "map"'
+            raise ValueError(msg)
 
     @property
     def interpolate_before_map(self) -> bool:  # numpydoc ignore=RT01
@@ -312,10 +313,11 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         elif scalar_mode == 'field':
             self.SetScalarModeToUseFieldData()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
                 '"default", "point", "cell", "point_field", "cell_field" or "field".'
             )
+            raise ValueError(msg)
 
     @property
     def scalar_visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -648,7 +650,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells
             ):
                 if not isinstance(component, (int, type(None))):
-                    raise TypeError('component must be either None or an integer')
+                    msg = 'component must be either None or an integer'
+                    raise TypeError(msg)
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
                     scalars_name = f'{scalars_name}-normed'
@@ -656,10 +659,11 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                     scalars = np.array(scalars[:, component]).copy()
                     scalars_name = f'{scalars_name}-{component}'
                 else:
-                    raise ValueError(
+                    msg = (
                         'Component must be nonnegative and less than the '
                         f'dimensionality of the scalars array: {scalars.shape[1]}'
                     )
+                    raise ValueError(msg)
             else:
                 scalars = scalars.ravel()
 
@@ -805,7 +809,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif resolve == 'shift_zbuffer':
             self.SetResolveCoincidentTopologyToShiftZBuffer()
         else:
-            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
+            msg = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+            raise ValueError(msg)
 
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
@@ -833,11 +838,12 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif opacity.size == self.dataset.n_cells:
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
         else:  # pragma: no cover
-            raise ValueError(
+            msg = (
                 f"Opacity array size ({opacity.size}) does not equal "
                 f"the number of points ({self.dataset.n_points}) or the "
                 f"number of cells ({self.dataset.n_cells})."
             )
+            raise ValueError(msg)
 
         if self._theme is not None:
             default_color = self._theme.color
@@ -957,13 +963,15 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
     @scale_array.setter
     def scale_array(self, name: str):  # numpydoc ignore=GL08
         if not self.dataset:  # pragma: no cover
-            raise RuntimeError('Missing dataset.')
+            msg = 'Missing dataset.'
+            raise RuntimeError(msg)
         if name not in self.dataset.point_data:
             available_arrays = ", ".join(self.dataset.point_data.keys())
-            raise KeyError(
+            msg = (
                 f'Point array "{name}" does not exist. '
                 f'Available point arrays are: {available_arrays}'
             )
+            raise KeyError(msg)
 
         self.scale_factor = 1.0
         self.SetScaleArray(name)
@@ -1097,9 +1105,8 @@ class _BaseVolumeMapper(_BaseMapper):
         elif value == 4:
             return 'additive'
 
-        raise NotImplementedError(
-            f'Unsupported blend mode return value {value}'
-        )  # pragma: no cover
+        msg = f'Unsupported blend mode return value {value}'
+        raise NotImplementedError(msg)  # pragma: no cover
 
     @blend_mode.setter
     def blend_mode(self, value: Union[str, int]):  # numpydoc ignore=GL08
@@ -1118,13 +1125,15 @@ class _BaseVolumeMapper(_BaseMapper):
             elif value in ['minimum', 'min', 'minimum_intensity']:
                 self.SetBlendModeToMinimumIntensity()
             else:
-                raise ValueError(
+                msg = (
                     f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
                     '"composite", "minimum" or "maximum".'
                 )
+                raise ValueError(msg)
         else:
-            raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
+            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'
+            raise TypeError(msg)
 
     def __del__(self):
         self._lut = None

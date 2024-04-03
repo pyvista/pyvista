@@ -137,16 +137,19 @@ def file_from_files(target_path, fnames):
 
     if len(found_fnames) > 1:
         files_str = '\n'.join(found_fnames)
-        raise RuntimeError(f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}')
+        msg = f'Ambiguous "{target_path}". Multiple matches found:\n{files_str}'
+        raise RuntimeError(msg)
 
     files_str = '\n'.join(fnames)
-    raise FileNotFoundError(f'Missing "{target_path}" from archive. Archive contains:\n{files_str}')
+    msg = f'Missing "{target_path}" from archive. Archive contains:\n{files_str}'
+    raise FileNotFoundError(msg)
 
 
 def _file_copier(input_file, output_file, *args, **kwargs):
     """Copy a file from a local directory to the output path."""
     if not Path(input_file).is_file():
-        raise FileNotFoundError(f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'")
+        msg = f"'{input_file}' not found within PYVISTA_VTK_DATA '{SOURCE}'"
+        raise FileNotFoundError(msg)
     shutil.copy(input_file, output_file)
 
 
@@ -282,7 +285,8 @@ def _download_and_read(filename, texture=False, file_format=None, load=True):
 
     """
     if get_ext(filename) == '.zip':  # pragma: no cover
-        raise ValueError('Cannot download and read an archive file')
+        msg = 'Cannot download and read an archive file'
+        raise ValueError(msg)
 
     saved_file = download_file(filename)
     if not load:
@@ -4473,7 +4477,8 @@ def download_osmnx_graph():  # pragma: no cover
     try:
         import osmnx  # noqa: F401
     except ImportError:
-        raise ImportError('Install `osmnx` to use this example')
+        msg = 'Install `osmnx` to use this example'
+        raise ImportError(msg)
     # TODO: add `load` parameter
     return _download_example(_example_osmnx_graph)
 
@@ -4824,10 +4829,11 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
 def _example_can_files_func():  # pragma: no cover
     if pyvista.vtk_version_info > (9, 1):
-        raise VTKVersionError(
+        msg = (
             'This example file is deprecated for VTK v9.2.0 and newer. '
             'Use `download_can_crushed_hdf` instead.'
         )
+        raise VTKVersionError(msg)
     can_0 = _SingleFileDownloadableLoadable('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableLoadable('hdf/can_1.hdf')
     can_2 = _SingleFileDownloadableLoadable('hdf/can_2.hdf')

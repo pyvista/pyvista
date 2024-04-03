@@ -48,11 +48,13 @@ def parse_field_choice(field):
         elif field in ['row', 'r']:
             field = FieldAssociation.ROW
         else:
-            raise ValueError(f'Data field ({field}) not supported.')
+            msg = f'Data field ({field}) not supported.'
+            raise ValueError(msg)
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise TypeError(f'Data field ({field}) not supported.')
+        msg = f'Data field ({field}) not supported.'
+        raise TypeError(msg)
     return field
 
 
@@ -82,19 +84,23 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        raise TypeError("Given points must be convertible to a numerical array.")
+        msg = "Given points must be convertible to a numerical array."
+        raise TypeError(msg)
 
     if points.ndim > 2:
-        raise ValueError("Array of points must be 1D or 2D")
+        msg = "Array of points must be 1D or 2D"
+        raise ValueError(msg)
 
     if points.ndim == 2:
         if points.shape[1] != 3:
-            raise ValueError("Array of points must have three values per point (shape (n, 3))")
+            msg = "Array of points must have three values per point (shape (n, 3))"
+            raise ValueError(msg)
         singular = False
 
     else:
         if points.size != 3:
-            raise ValueError("Given point must have three values")
+            msg = "Given point must have three values"
+            raise ValueError(msg)
         singular = True
         points = np.reshape(points, [1, 3])
 
@@ -135,7 +141,8 @@ def copy_vtk_array(array, deep=True):
 
     """
     if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
-        raise TypeError(f"Invalid type {type(array)}.")
+        msg = f"Invalid type {type(array)}."
+        raise TypeError(msg)
 
     new_array = type(array)()
     if deep:
@@ -177,7 +184,8 @@ def raise_has_duplicates(arr):
         If the array contains duplicate values.
     """
     if has_duplicates(arr):
-        raise ValueError("Array contains duplicate values.")
+        msg = "Array contains duplicate values."
+        raise ValueError(msg)
 
 
 def convert_array(arr, name=None, deep=False, array_type=None):
@@ -225,7 +233,8 @@ def convert_array(arr, name=None, deep=False, array_type=None):
         return vtk_data
     # Otherwise input must be a vtkDataArray
     if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
-        raise TypeError(f'Invalid input array type ({type(arr)}).')
+        msg = f'Invalid input array type ({type(arr)}).'
+        raise TypeError(msg)
     # Handle booleans
     if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
@@ -265,16 +274,19 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.nda
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            msg = f'Data array ({name}) not present in this dataset.'
+            raise KeyError(msg)
         return arr
 
     if not isinstance(preference, str):
-        raise TypeError('`preference` must be a string')
+        msg = '`preference` must be a string'
+        raise TypeError(msg)
     if preference not in ['cell', 'point', 'field']:
-        raise ValueError(
+        msg = (
             f'`preference` must be either "cell", "point", "field" for a '
             f'{type(mesh)}, not "{preference}".'
         )
+        raise ValueError(msg)
 
     parr = point_array(mesh, name)
     carr = cell_array(mesh, name)
@@ -295,7 +307,8 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.nda
     elif farr is not None:
         return farr
     elif err:
-        raise KeyError(f'Data array ({name}) not present in this dataset.')
+        msg = f'Data array ({name}) not present in this dataset.'
+        raise KeyError(msg)
     return None
 
 
@@ -329,7 +342,8 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            msg = f'Data array ({name}) not present in this dataset.'
+            raise KeyError(msg)
         return FieldAssociation.ROW
 
     # with multiple arrays, return the array preference if possible
@@ -340,13 +354,15 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
     preference = parse_field_choice(preference)
     if preference not in preferences:
-        raise ValueError(f'Data field ({preference}) not supported.')
+        msg = f'Data field ({preference}) not supported.'
+        raise ValueError(msg)
 
     matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            msg = f'Data array ({name}) not present in this dataset.'
+            raise KeyError(msg)
         return FieldAssociation.NONE
     # use preference if it applies
     if preference in matches:
@@ -372,14 +388,16 @@ def raise_not_matching(scalars, dataset):
         Raises a ValueError if the size of scalars does not the dataset.
     """
     if isinstance(dataset, _vtk.vtkTable):
-        raise ValueError(
+        msg = (
             f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
         )
-    raise ValueError(
+        raise ValueError(msg)
+    msg = (
         f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
         f'or the number of cells ({dataset.n_cells}).'
     )
+    raise ValueError(msg)
 
 
 def _assoc_array(obj, name, association='point'):
@@ -577,9 +595,8 @@ def convert_string_array(arr, name=None):
         if (
             np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
         ):  # avoids segfault
-            raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.'
-            )
+            msg = 'String array contains non-ASCII characters that are not supported by VTK.'
+            raise ValueError(msg)
         vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
             # distinguish scalar inputs from array inputs by
@@ -630,10 +647,11 @@ def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
-        raise TypeError(
+        msg = (
             'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
             f' got {type(matrix).__name__} instead.'
         )
+        raise TypeError(msg)
     array = np.zeros(shape)
     for i, j in product(range(shape[0]), range(shape[1])):
         array[i, j] = matrix.GetElement(i, j)
@@ -662,7 +680,8 @@ def vtkmatrix_from_array(array):
     elif array.shape == (4, 4):
         matrix = _vtk.vtkMatrix4x4()
     else:
-        raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
+        msg = f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).'
+        raise ValueError(msg)
     m, n = array.shape
     for i, j in product(range(m), range(n)):
         matrix.SetElement(i, j, array[i, j])
@@ -715,14 +734,16 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
             preference = 'cell'
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
-        raise MissingDataError("No vector-like data available.")
+        msg = "No vector-like data available."
+        raise MissingDataError(msg)
     elif n_possible_vectors > 1:
-        raise AmbiguousDataError(
+        msg = (
             "Multiple vector-like data available\n"
             f"cell data: {possible_vectors_cell}.\n"
             f"point data: {possible_vectors_point}.\n"
             "Set one as active using DataSet.set_active_vectors(name, preference=type)"
         )
+        raise AmbiguousDataError(msg)
 
 
 def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
@@ -767,14 +788,16 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             preference = 'cell'
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
-        raise MissingDataError("No data available.")
+        msg = "No data available."
+        raise MissingDataError(msg)
     elif n_possible_scalars > 1:
-        raise AmbiguousDataError(
+        msg = (
             "Multiple data available\n"
             f"cell data: {possible_scalars_cell}.\n"
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)"
         )
+        raise AmbiguousDataError(msg)
 
 
 def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
@@ -805,9 +828,10 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
         elif transform_like.shape == (4, 4):
             transform_array = transform_like
         else:
-            raise ValueError('Transformation array must be 3x3 or 4x4.')
+            msg = 'Transformation array must be 3x3 or 4x4.'
+            raise ValueError(msg)
     else:
-        raise TypeError(
+        msg = (
             'Input transform must be one of:\n'
             '\tvtk.vtkMatrix4x4\n'
             '\tvtk.vtkMatrix3x3\n'
@@ -815,4 +839,5 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
             '\t4x4 np.ndarray\n'
             '\t3x3 np.ndarray\n'
         )
+        raise TypeError(msg)
     return transform_array

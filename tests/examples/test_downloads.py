@@ -50,7 +50,8 @@ def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
             case_name = func_name.split('download_')[1]
             key = 'download_func'
         else:
-            raise RuntimeError(f'Invalid case specified: {(func_name, func)}')
+            msg = f'Invalid case specified: {(func_name, func)}'
+            raise RuntimeError(msg)
         test_cases_dict.setdefault(case_name, {})
         test_cases_dict[case_name][key] = (func_name, func)
 

@@ -49,9 +49,8 @@ class Camera(_vtk.vtkCamera):
 
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
-                raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
-                )
+                msg = 'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                raise TypeError(msg)
             self._renderer = proxy(renderer)
         else:
             self._renderer = None
@@ -274,9 +273,8 @@ class Camera(_vtk.vtkCamera):
 
         """
         if self._renderer is None:
-            raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.'
-            )
+            msg = 'Camera is must be associated with a renderer to reset its clipping range.'
+            raise AttributeError(msg)
         self._renderer.reset_camera_clipping_range()
 
     @property
@@ -451,8 +449,9 @@ class Camera(_vtk.vtkCamera):
 
         """
         if isinstance(value, str):
-            if not value == 'tight':
-                raise ValueError('If a string, ``zoom`` can only be "tight"')
+            if value != 'tight':
+                msg = 'If a string, ``zoom`` can only be "tight"'
+                raise ValueError(msg)
             self.tight()
             return
 
@@ -561,7 +560,8 @@ class Camera(_vtk.vtkCamera):
     @clipping_range.setter
     def clipping_range(self, points):  # numpydoc ignore=GL08
         if points[0] > points[1]:
-            raise ValueError('Near point must be lower than the far point.')
+            msg = 'Near point must be lower than the far point.'
+            raise ValueError(msg)
         self.SetClippingRange(points[0], points[1])
 
     @property

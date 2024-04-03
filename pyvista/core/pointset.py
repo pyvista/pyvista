@@ -130,9 +130,8 @@ class _PointSet(DataSet):
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
-                )
+                msg = f'Boolean array size must match the number of cells ({self.n_cells})'
+                raise ValueError(msg)
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
@@ -283,7 +282,8 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
         """
         if pyvista.vtk_version_info < (9, 1, 0):
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
+            msg = "pyvista.PointSet requires VTK >= 9.1.0"
+            raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
 
     def __init__(self, var_inp=None, deep=False, force_float=True):
@@ -382,17 +382,18 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     def contour(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
-        raise PointSetNotSupported(
-            'Contour and other dimension reducing filters are not supported on PointSets'
-        )
+        msg = 'Contour and other dimension reducing filters are not supported on PointSets'
+        raise PointSetNotSupported(msg)
 
     def cell_data_to_point_data(self, *args, **kwargs):
         """Raise PointSets do not have cells."""
-        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+        msg = 'PointSets contain no cells or cell data.'
+        raise PointSetNotSupported(msg)
 
     def point_data_to_cell_data(self, *args, **kwargs):
         """Raise PointSets do not have cells."""
-        raise PointSetNotSupported('PointSets contain no cells or cell data.')
+        msg = 'PointSets contain no cells or cell data.'
+        raise PointSetNotSupported(msg)
 
     def triangulate(self, *args, **kwargs):
         """Raise cell operations are not supported."""
@@ -716,9 +717,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if isinstance(var_inp, (str, pathlib.Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
-                    raise ValueError(
-                        'No other arguments should be set when first parameter is a string'
-                    )
+                    msg = 'No other arguments should be set when first parameter is a string'
+                    raise ValueError(msg)
             self._from_file(var_inp, force_ext=force_ext)  # is filename
 
             return
@@ -727,9 +727,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if isinstance(var_inp, _vtk.vtkPolyData):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
-                    raise ValueError(
-                        'No other arguments should be set when first parameter is a PolyData'
-                    )
+                    msg = 'No other arguments should be set when first parameter is a PolyData'
+                    raise ValueError(msg)
             if deep:
                 self.deep_copy(var_inp)
             else:
@@ -769,7 +768,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                     v = CellArray(v)
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
-                    raise CellSizeError(f"`{k}` cell array size is invalid.") from err
+                    msg = f"`{k}` cell array size is invalid."
+                    raise CellSizeError(msg) from err
 
             setattr(self, k, v)
 
@@ -1433,18 +1433,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if ftype == '.ply' and texture is not None:
             if isinstance(texture, str):
                 if self[texture].dtype != np.uint8:
-                    raise ValueError(
-                        f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
-                    )
+                    msg = f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
+                    raise ValueError(msg)
             elif isinstance(texture, np.ndarray):
                 if texture.dtype != np.uint8:
-                    raise ValueError(f'Invalid datatype {texture.dtype} of texture array')
+                    msg = f'Invalid datatype {texture.dtype} of texture array'
+                    raise ValueError(msg)
             else:
-                raise TypeError(
+                msg = (
                     f'Invalid type {type(texture)} for texture.  '
                     'Should be either a string representing a point or '
                     'cell array, or a numpy array.'
                 )
+                raise TypeError(msg)
 
         super().save(filename, binary, texture=texture)
 
@@ -1754,7 +1755,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
             else:
                 itype = type(args[0])
-                raise TypeError(f'Cannot work with input type {itype}')
+                msg = f'Cannot work with input type {itype}'
+                raise TypeError(msg)
 
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
@@ -1770,12 +1772,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
-                raise TypeError('All input types must be sequences.')
+                msg = 'All input types must be sequences.'
+                raise TypeError(msg)
         else:
-            raise TypeError(
+            msg = (
                 'Invalid parameters.  Initialization with arrays requires the '
                 'following arrays:\n`cells`, `cell_type`, `points`'
             )
+            raise TypeError(msg)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -1787,7 +1791,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     def _from_cells_dict(self, cells_dict, points, deep=True):
         if points.ndim != 2 or points.shape[-1] != 3:
-            raise ValueError("Points array must be a [M, 3] array")
+            msg = "Points array must be a [M, 3] array"
+            raise ValueError(msg)
 
         nr_points = points.shape[0]
         cell_types, cells = create_mixed_cells(cells_dict, nr_points)
@@ -1896,16 +1901,18 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         from arrays.
         """
         if self.n_cells != self.celltypes.size:
-            raise ValueError(
+            msg = (
                 f'Number of cell types ({self.celltypes.size}) '
                 f'must match the number of cells {self.n_cells})'
             )
+            raise ValueError(msg)
 
         if self.n_cells != self.offset.size - 1:  # pragma: no cover
-            raise ValueError(
+            msg = (
                 f'Size of the offset ({self.offset.size}) '
                 f'must be one greater than the number of cells ({self.n_cells})'
             )
+            raise ValueError(msg)
 
     @property
     def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
@@ -2245,7 +2252,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         s2 = self.cell_data.keys()
         if not s1.issubset(s2):
-            raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required")
+            msg = "'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required"
+            raise TypeError(msg)
         alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
         alg.SetInputData(self)
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
@@ -2342,7 +2350,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         super().__init__()
 
         if args:
-            raise ValueError("Too many args to create StructuredGrid.")
+            msg = "Too many args to create StructuredGrid."
+            raise ValueError(msg)
 
         if isinstance(uinput, _vtk.vtkStructuredGrid):
             if deep:
@@ -2363,7 +2372,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             # do nothing, initialize as empty structured grid
             pass
         else:
-            raise TypeError(
+            msg = (
                 "Invalid parameters. Expecting one of the following:\n"
                 " - No arguments\n"
                 " - Filename as the only argument\n"
@@ -2371,6 +2380,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 " - Single `numpy.ndarray` as the only argument"
                 " - Three `numpy.ndarray` as the first three arguments"
             )
+            raise TypeError(msg)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -2402,7 +2412,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         """
         if not (x.shape == y.shape == z.shape):
-            raise ValueError('Input point array shapes must match exactly')
+            msg = 'Input point array shapes must match exactly'
+            raise ValueError(msg)
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
@@ -2504,10 +2515,12 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         voi = []
         rate = []
         if len(key) != 3:
-            raise RuntimeError('Slices must have exactly 3 dimensions.')
+            msg = 'Slices must have exactly 3 dimensions.'
+            raise RuntimeError(msg)
         for i, k in enumerate(key):
             if isinstance(k, collections.abc.Iterable):
-                raise RuntimeError('Fancy indexing is not supported.')
+                msg = 'Fancy indexing is not supported.'
+                raise RuntimeError(msg)
             if isinstance(k, numbers.Integral):
                 start = stop = k
                 step = 1
@@ -2558,9 +2571,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             return self.copy().hide_cells(ind, inplace=True)
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
-                )
+                msg = f'Boolean array size must match the number of cells ({self.n_cells})'
+                raise ValueError(msg)
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
 
@@ -2601,9 +2613,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_points:
-                raise ValueError(
-                    f'Boolean array size must match the number of points ({self.n_points})'
-                )
+                msg = f'Boolean array size must match the number of points ({self.n_points})'
+                raise ValueError(msg)
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
 
@@ -2680,7 +2691,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         super().__init__()
         n = len(args)
         if n > 2:
-            raise ValueError("Too many args to create ExplicitStructuredGrid.")
+            msg = "Too many args to create ExplicitStructuredGrid."
+            raise ValueError(msg)
         if n == 1:
             arg0 = args[0]
             if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
@@ -2729,7 +2741,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
         if len(dims) != 3:
-            raise ValueError("Expected dimensions to be length 3.")
+            msg = "Expected dimensions to be length 3."
+            raise ValueError(msg)
 
         shape0 = np.asanyarray(dims) - 1
         shape1 = 2 * shape0
@@ -2848,7 +2861,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
         if texture is not None:
-            raise ValueError('Cannot save texture of a pointset.')
+            msg = 'Cannot save texture of a pointset.'
+            raise ValueError(msg)
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
@@ -3220,9 +3234,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         }
 
         if rel not in rel_map:
-            raise ValueError(
-                f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}'
-            )
+            msg = f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}'
+            raise ValueError(msg)
         rel_func = rel_map[rel]
 
         indices = set()

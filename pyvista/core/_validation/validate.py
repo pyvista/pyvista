@@ -272,7 +272,8 @@ def validate_array(
         try:
             check_subdtype(arr_out, np.number, name=name)
         except TypeError as e:
-            raise TypeError(f"{name} must be numeric.") from e
+            msg = f"{name} must be numeric."
+            raise TypeError(msg) from e
 
     if must_have_dtype is not None:
         check_subdtype(arr_out, must_have_dtype, name=name)
@@ -410,7 +411,8 @@ def validate_axes(
             item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
         )
     elif must_have_orientation is None and len(axes) == 2:
-        raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
+        msg = f"{name} orientation must be specified when only two vectors are given."
+        raise ValueError(msg)
 
     # Validate axes array
     if len(axes) == 1:
@@ -431,9 +433,11 @@ def validate_axes(
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
         np.dot(axes_array[0], axes_array[2]), 1
     ):
-        raise ValueError(f"{name} cannot be parallel.")
+        msg = f"{name} cannot be parallel."
+        raise ValueError(msg)
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
-        raise ValueError(f"{name} cannot be zeros.")
+        msg = f"{name} cannot be zeros."
+        raise ValueError(msg)
 
     # Check orthogonality and orientation using cross products
     # Normalize axes first since norm values are needed for cross product calc
@@ -445,14 +449,17 @@ def validate_axes(
         (np.allclose(cross_0_1, axes_norm[2]) or np.allclose(cross_0_1, -axes_norm[2]))
         and (np.allclose(cross_1_2, axes_norm[0]) or np.allclose(cross_1_2, -axes_norm[0]))
     ):
-        raise ValueError(f"{name} are not orthogonal.")
+        msg = f"{name} are not orthogonal."
+        raise ValueError(msg)
 
     if must_have_orientation:
         dot = np.dot(cross_0_1, axes_norm[2])
         if must_have_orientation == 'right' and dot < 0:
-            raise ValueError(f"{name} do not have a right-handed orientation.")
+            msg = f"{name} do not have a right-handed orientation."
+            raise ValueError(msg)
         if must_have_orientation == 'left' and dot > 0:
-            raise ValueError(f"{name} do not have a left-handed orientation.")
+            msg = f"{name} do not have a left-handed orientation."
+            raise ValueError(msg)
 
     if normalize:
         return axes_norm
@@ -504,7 +511,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
             else:
                 arr = valid_arr
         except ValueError:
-            raise TypeError(
+            msg = (
                 'Input transform must be one of:\n'
                 '\tvtkMatrix4x4\n'
                 '\tvtkMatrix3x3\n'
@@ -512,6 +519,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
                 '\t4x4 np.ndarray\n'
                 '\t3x3 np.ndarray\n'
             )
+            raise TypeError(msg)
 
     return arr
 
@@ -550,9 +558,8 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
-            raise TypeError(
-                'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
-            )
+            msg = 'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
+            raise TypeError(msg)
     return arr
 
 

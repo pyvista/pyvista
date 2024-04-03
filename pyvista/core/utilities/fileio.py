@@ -30,9 +30,8 @@ def set_pickle_format(format: str):
     supported = {'xml', 'legacy'}
     format = format.lower()
     if format not in supported:
-        raise ValueError(
-            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
-        )
+        msg = f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+        raise ValueError(msg)
     pyvista.PICKLE_FORMAT = format
 
 
@@ -161,7 +160,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
     """
     if file_format is not None and force_ext is not None:
-        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+        msg = 'Only one of `file_format` and `force_ext` may be specified.'
+        raise ValueError(msg)
 
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
@@ -174,7 +174,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         return multi
     filename = str(Path(str(filename)).expanduser().resolve())
     if not Path(filename).is_file() and not Path(filename).is_dir():
-        raise FileNotFoundError(f'File ({filename}) not found')
+        msg = f'File ({filename}) not found'
+        raise FileNotFoundError(msg)
 
     # Read file using meshio.read if file_format is present
     if file_format:
@@ -189,13 +190,15 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise OSError("This file was not able to be automatically read by pvista.")
+            msg = "This file was not able to be automatically read by pvista."
+            raise OSError(msg)
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise OSError("This file was not able to be automatically read by pyvista.")
+            msg = "This file was not able to be automatically read by pyvista."
+            raise OSError(msg)
     else:
         observer = Observer()
         observer.observe(reader.reader)
@@ -276,7 +279,8 @@ def read_texture(filename, progress_bar=False):
 
         image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
-            raise ValueError("Problem reading the image with VTK.")
+            msg = "Problem reading the image with VTK."
+            raise ValueError(msg)
         return pyvista.Texture(image)
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
@@ -367,7 +371,8 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
+            msg = f'Could not parse sideset ID/name: {sideset}'
+            raise ValueError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -503,7 +508,8 @@ def read_meshio(filename, file_format=None):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
+        msg = "To use this feature install meshio with:\n\npip install meshio"
+        raise ImportError(msg)
 
     # Make sure relative paths will work
     filename = str(Path(str(filename)).expanduser().resolve())
@@ -544,7 +550,8 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
+        msg = "To use this feature install meshio with:\n\npip install meshio"
+        raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
@@ -567,7 +574,8 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     pixel_voxel = {8, 11}  # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
         if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
-            raise TypeError(f"meshio does not support VTK type {cell_type}.")
+            msg = f"meshio does not support VTK type {cell_type}."
+            raise TypeError(msg)
 
     # Get cells
     cells = []
@@ -649,10 +657,11 @@ def _try_imageio_imread(filename):
     try:
         from imageio import imread
     except ModuleNotFoundError:  # pragma: no cover
-        raise ModuleNotFoundError(
+        msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
             '   pip install imageio'
-        ) from None
+        )
+        raise ModuleNotFoundError(msg) from None
 
     return imread(filename)

@@ -24,7 +24,8 @@ ID_TYPE = _get_vtk_id_type()
 if vtk_version_info.major < 9:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
+    msg = 'VTK version must be 9.0.0 or greater.'
+    raise VTKVersionError(msg)
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -101,6 +102,7 @@ def __getattr__(name):
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError:
-        raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
+        msg = f"module 'pyvista' has no attribute '{name}'"
+        raise AttributeError(msg) from None
 
     return feature

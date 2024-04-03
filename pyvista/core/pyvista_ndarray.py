@@ -57,10 +57,11 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
         else:
-            raise TypeError(
+            msg = (
                 f'pyvista_ndarray got an invalid type {type(array)}. '
                 'Expected an Iterable or vtk.vtkAbstractArray'
             )
+            raise TypeError(msg)
 
         obj.association = association
         obj.dataset = _vtk.vtkWeakReference()

@@ -64,7 +64,8 @@ def map_loc_to_pos(loc, size, border=0.05):
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
-        raise ValueError(f'`size` must be a list of length 2. Passed value is {size}')
+        msg = f'`size` must be a list of length 2. Passed value is {size}'
+        raise ValueError(msg)
 
     if 'right' in loc:
         x = 1 - size[1] - border
@@ -117,7 +118,7 @@ def make_legend_face(face):
     elif isinstance(face, pyvista.PolyData):
         legendface = face
     else:
-        raise ValueError(
+        msg = (
             f'Invalid face "{face}".  Must be one of the following:\n'
             '\t"triangle"\n'
             '\t"circle"\n'
@@ -125,6 +126,7 @@ def make_legend_face(face):
             '\tNone'
             '\tpyvista.PolyData'
         )
+        raise ValueError(msg)
     return legendface
 
 
@@ -378,11 +380,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
-                raise InvalidCameraError(
+                msg = (
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
                     f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
                 )
+                raise InvalidCameraError(msg)
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
@@ -556,7 +559,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if not isinstance(aa_type, str):
-            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+            msg = f'`aa_type` must be a string, not {type(aa_type)}'
+            raise TypeError(msg)
         aa_type = aa_type.lower()
 
         if aa_type == 'fxaa':
@@ -575,7 +579,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._render_passes.enable_ssaa_pass()
 
         else:
-            raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
+            msg = f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"'
+            raise ValueError(msg)
 
     def disable_anti_aliasing(self):
         """Disable all anti-aliasing."""
@@ -679,9 +684,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
-            )
+            msg = "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
+            raise VTKVersionError(msg)
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
@@ -870,7 +874,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 except AttributeError:  # pragma: no cover
                     pass
             else:
-                raise ValueError(f'Culling option ({culling}) not understood.')
+                msg = f'Culling option ({culling}) not understood.'
+                raise ValueError(msg)
 
         self.Modified()
 
@@ -1646,7 +1651,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if grid:
             grid = 'back' if grid is True else grid
             if not isinstance(grid, str):
-                raise TypeError(f'`grid` must be a str, not {type(grid)}')
+                msg = f'`grid` must be a str, not {type(grid)}'
+                raise TypeError(msg)
             grid = grid.lower()
             if grid in ('front', 'frontface'):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
@@ -1655,7 +1661,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif grid in ('back', True):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
             else:
-                raise ValueError(f'`grid` must be either "front", "back, or, "all", not {grid}')
+                msg = f'`grid` must be either "front", "back, or, "all", not {grid}'
+                raise ValueError(msg)
             # Only show user desired grid lines
             cube_axes_actor.SetDrawXGridlines(show_xaxis)
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
@@ -1678,12 +1685,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError(
+                msg = (
                     f'Value of location ("{location}") should be either "all", "origin",'
                     ' "outer", "default", "closest", "front", "furthest", or "back".'
                 )
+                raise ValueError(msg)
         elif location is not None:
-            raise TypeError('location must be a string')
+            msg = 'location must be a string'
+            raise TypeError(msg)
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -1700,7 +1709,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
-            raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
+            msg = f'padding ({padding}) not understood. Must be float between 0 and 1'
+            raise ValueError(msg)
         cube_axes_actor.bounds = bounds
 
         # set axes ranges if input
@@ -1708,16 +1718,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
-                raise TypeError('Input axes_ranges must be a numeric sequence.')
+                msg = 'Input axes_ranges must be a numeric sequence.'
+                raise TypeError(msg)
 
             if not np.issubdtype(axes_ranges.dtype, np.number):
-                raise TypeError('All of the elements of axes_ranges must be numbers.')
+                msg = 'All of the elements of axes_ranges must be numbers.'
+                raise TypeError(msg)
 
             # set the axes ranges
             if axes_ranges.shape != (6,):
-                raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
-                )
+                msg = '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                raise ValueError(msg)
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
             cube_axes_actor.y_axis_range = axes_ranges[2], axes_ranges[3]
@@ -2069,7 +2080,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError(f'Face ({face}) not implemented')
+            msg = f'Face ({face}) not implemented'
+            raise NotImplementedError(msg)
         self._floor = pyvista.Plane(
             center=center,
             direction=normal,
@@ -2178,7 +2190,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             light = pyvista.Light.from_vtk(light)
 
         if not isinstance(light, pyvista.Light):
-            raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
+            msg = f'Expected Light instance, got {type(light).__name__} instead.'
+            raise TypeError(msg)
         self._lights.append(light)
         self.AddLight(light)
         self.Modified()
@@ -3222,9 +3235,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if not (right is side is corner is None) and vtk_version_info < (9, 3):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
-            )
+            msg = "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+            raise VTKVersionError(msg)
         if not (
             (top is right is side is corner is None)
             or (top is not None and right is side is corner is None)
@@ -3232,7 +3244,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             or (side is not None and top is right is corner is None)
             or (corner is not None and top is right is side is None)
         ):  # pragma: no cover
-            raise ValueError("You can only set one argument in top, right, side, corner.")
+            msg = "You can only set one argument in top, right, side, corner."
+            raise ValueError(msg)
         if top is not None:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
@@ -3594,12 +3607,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise ValueError(
+                msg = (
                     'No labels input.\n\n'
                     'Add labels to individual items when adding them to'
                     'the plotting object with the "label=" parameter.  '
                     'or enter them as the "labels" parameter.'
                 )
+                raise ValueError(msg)
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
@@ -3642,9 +3656,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         color = None
 
                 else:
-                    raise ValueError(
-                        f"The object passed to the legend ({type(args)}) is not valid."
-                    )
+                    msg = f"The object passed to the legend ({type(args)}) is not valid."
+                    raise ValueError(msg)
 
                 legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
@@ -3652,7 +3665,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
                 allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
-                raise ValueError(f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}')
+                msg = f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}'
+                raise ValueError(msg)
             x, y, size = map_loc_to_pos(loc, size, border=0.05)
             self._legend.SetPosition(x, y)
             self._legend.SetPosition2(size[0], size[1])

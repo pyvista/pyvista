@@ -46,7 +46,8 @@ def vtk_points(points, deep=True, force_float=False):
 
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
-        raise TypeError('Points must be a numeric type')
+        msg = 'Points must be a numeric type'
+        raise TypeError(msg)
 
     if force_float:
         if not np.issubdtype(points.dtype, np.floating):
@@ -62,14 +63,16 @@ def vtk_points(points, deep=True, force_float=False):
     if points.ndim == 1:
         points = points.reshape(-1, 3)
     elif points.ndim > 2:
-        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
+        msg = f'Dimension of ``points`` should be 1 or 2, not {points.ndim}'
+        raise ValueError(msg)
 
     # verify shape
     if points.shape[1] != 3:
-        raise ValueError(
+        msg = (
             'Points array must contain three values per point. '
             f'Shape is {points.shape} and should be (X, 3)'
         )
+        raise ValueError(msg)
 
     # use the underlying vtk data if present to avoid memory leaks
     if not deep and isinstance(points, pyvista.pyvista_ndarray):
@@ -125,7 +128,8 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2 != 0:
-        raise ValueError("An even number of points must be given to define each segment.")
+        msg = "An even number of points must be given to define each segment."
+        raise ValueError(msg)
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -359,9 +363,11 @@ def make_tri_mesh(points, faces):
 
     """
     if points.shape[1] != 3:
-        raise ValueError("Points array should have shape (N, 3).")
+        msg = "Points array should have shape (N, 3)."
+        raise ValueError(msg)
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError("Face array should have shape (M, 3).")
+        msg = "Face array should have shape (M, 3)."
+        raise ValueError(msg)
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
@@ -419,12 +425,14 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise ValueError('orig array must be 3D')
+        msg = 'orig array must be 3D'
+        raise ValueError(msg)
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise ValueError('vec array must be 3D')
+        msg = 'vec array must be 3D'
+        raise ValueError(msg)
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()

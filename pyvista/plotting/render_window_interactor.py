@@ -135,10 +135,12 @@ class RenderWindowInteractor:
 
         """
         if not callable(callback):
-            raise TypeError('callback must be callable.')
+            msg = 'callback must be callable.'
+            raise TypeError(msg)
         for param in signature(callback).parameters.values():
             if param.default is param.empty:
-                raise TypeError('`callback` must not have any arguments without default values.')
+                msg = '`callback` must not have any arguments without default values.'
+                raise TypeError(msg)
         self._key_press_event_callbacks[key].append(callback)
 
     def add_timer_event(self, max_steps, duration, callback):
@@ -304,7 +306,8 @@ class RenderWindowInteractor:
             self._key_press_event_callbacks.pop(key)
         except KeyError:
             if raise_on_missing:
-                raise ValueError(f'No events found for key {key!r}.') from None
+                msg = f'No events found for key {key!r}.'
+                raise ValueError(msg) from None
 
     def track_mouse_position(self, callback):
         """Keep track of the mouse position.
@@ -333,7 +336,8 @@ class RenderWindowInteractor:
         elif side in ["left", "l"]:
             return "LeftButtonPressEvent"
         else:
-            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`.")
+            msg = f"Side ({side}) not supported. Try `left` or `right`."
+            raise TypeError(msg)
 
     def _click_event(self, _obj, event):
         t = time.time()
@@ -386,9 +390,8 @@ class RenderWindowInteractor:
         if callable(callback):
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
-            raise ValueError(
-                "Invalid callback provided, it should be either ``None`` or a callable."
-            )
+            msg = "Invalid callback provided, it should be either ``None`` or a callable."
+            raise ValueError(msg)
 
         if add_observer:
             self.add_observer(event, self._click_event)
@@ -661,7 +664,8 @@ class RenderWindowInteractor:
             control_right,
         ]:
             if p not in start_action_map:
-                raise ValueError(f"Action '{p}' not in the allowed {list(start_action_map.keys())}")
+                msg = f"Action '{p}' not in the allowed {list(start_action_map.keys())}"
+                raise ValueError(msg)
 
         button_press_map = {
             "left": self._style_class.OnLeftButtonDown,
@@ -1111,7 +1115,8 @@ class RenderWindowInteractor:
     def _simulate_keypress(self, key):  # pragma:
         """Simulate a keypress."""
         if len(key) > 1:
-            raise ValueError('Only accepts a single key')
+            msg = 'Only accepts a single key'
+            raise ValueError(msg)
         self.interactor.SetKeyCode(key)
         self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
@@ -1265,7 +1270,8 @@ class RenderWindowInteractor:
             renderer = self._plotter.renderers[index]
             if renderer is poked_renderer:
                 return self._plotter.renderers.index_to_loc(index)
-        raise RuntimeError('Poked renderer not found in Plotter.')
+        msg = 'Poked renderer not found in Plotter.'
+        raise RuntimeError(msg)
 
     @contextmanager
     def poked_subplot(self):
@@ -1356,9 +1362,8 @@ class RenderWindowInteractor:
     def process_events(self):
         """Process events."""
         if not self.initialized:
-            raise RuntimeError(
-                'Render window interactor must be initialized before processing events.'
-            )
+            msg = 'Render window interactor must be initialized before processing events.'
+            raise RuntimeError(msg)
         self.interactor.ProcessEvents()
 
     @property
@@ -1428,7 +1433,8 @@ class RenderWindowInteractor:
             try:
                 picker = pickers[picker]()
             except KeyError:
-                raise KeyError(f'Picker class `{picker}` is unknown.')
+                msg = f'Picker class `{picker}` is unknown.'
+                raise KeyError(msg)
             # Set default tolerance for internal configurations
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)

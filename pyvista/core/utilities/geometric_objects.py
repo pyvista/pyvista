@@ -390,7 +390,8 @@ def Arrow(
     if isinstance(scale, (float, int)):
         surf.points *= scale
     elif scale is not None:
-        raise TypeError("Scale must be either float, int or 'auto'.")
+        msg = "Scale must be either float, int or 'auto'."
+        raise TypeError(msg)
 
     translate(surf, start, direction)
     return surf
@@ -793,21 +794,27 @@ def SolidSphereGeneric(
     nphi = len(phi)
 
     if nr < 2:
-        raise ValueError("radius resolution must be 2 or more")
+        msg = "radius resolution must be 2 or more"
+        raise ValueError(msg)
     if ntheta < 2:
-        raise ValueError("theta resolution must be 2 or more")
+        msg = "theta resolution must be 2 or more"
+        raise ValueError(msg)
     if nphi < 2:
-        raise ValueError("phi resolution must be 2 or more")
+        msg = "phi resolution must be 2 or more"
+        raise ValueError(msg)
 
     def _is_sorted(a):
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
-        raise ValueError("radius is not monotonically increasing")
+        msg = "radius is not monotonically increasing"
+        raise ValueError(msg)
     if not _is_sorted(theta):
-        raise ValueError("theta is not monotonically increasing")
+        msg = "theta is not monotonically increasing"
+        raise ValueError(msg)
     if not _is_sorted(phi):
-        raise ValueError("phi is not monotonically increasing")
+        msg = "phi is not monotonically increasing"
+        raise ValueError(msg)
 
     def _greater_than_equal_or_close(value1, value2, atol):
         return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
@@ -816,18 +823,22 @@ def SolidSphereGeneric(
         return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
     if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
-        raise ValueError("minimum radius cannot be negative")
+        msg = "minimum radius cannot be negative"
+        raise ValueError(msg)
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
         max_angle = "2 * np.pi" if radians else "360 degrees"
-        raise ValueError(f"max theta and min theta must be within {max_angle}")
+        msg = f"max theta and min theta must be within {max_angle}"
+        raise ValueError(msg)
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
-        raise ValueError("minimum phi cannot be negative")
+        msg = "minimum phi cannot be negative"
+        raise ValueError(msg)
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
         max_angle = "np.pi" if radians else "180 degrees"
-        raise ValueError(f"maximum phi cannot be > {max_angle}")
+        msg = f"maximum phi cannot be > {max_angle}"
+        raise ValueError(msg)
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
@@ -1670,7 +1681,8 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
         np.linalg.norm(np.array(pointa) - np.array(center)),
         np.linalg.norm(np.array(pointb) - np.array(center)),
     ):
-        raise ValueError("pointa and pointb are not equidistant from center")
+        msg = "pointa and pointb are not equidistant from center"
+        raise ValueError(msg)
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
@@ -1810,7 +1822,8 @@ def Pyramid(points=None):
         ]
 
     if len(points) != 5:
-        raise TypeError('Points must be given as length 5 np.ndarray or list.')
+        msg = 'Points must be given as length 5 np.ndarray or list.'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1859,7 +1872,8 @@ def Triangle(points=None):
         points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
@@ -1896,7 +1910,8 @@ def Rectangle(points=None):
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) != 3:
-        raise TypeError('Points must be given as length 3 np.ndarray or list')
+        msg = 'Points must be given as length 3 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -1913,7 +1928,8 @@ def Rectangle(points=None):
     mag_12 = np.linalg.norm(vec_12)
 
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
-        raise ValueError("Unable to build a rectangle with less than three different points")
+        msg = "Unable to build a rectangle with less than three different points"
+        raise ValueError(msg)
 
     scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
     scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
@@ -1925,7 +1941,8 @@ def Rectangle(points=None):
         if np.isclose(val, 0)
     ]
     if len(null_scalar_products) == 0:
-        raise ValueError("The three points should defined orthogonal vectors")
+        msg = "The three points should defined orthogonal vectors"
+        raise ValueError(msg)
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
@@ -1968,7 +1985,8 @@ def Quadrilateral(points=None):
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
-        raise TypeError('Points must be given as length 4 np.ndarray or list')
+        msg = 'Points must be given as length 4 np.ndarray or list'
+        raise TypeError(msg)
 
     points, _ = _coerce_pointslike_arg(points)
 

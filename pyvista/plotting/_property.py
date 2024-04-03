@@ -305,12 +305,13 @@ class Property(_vtk.vtkProperty):
         elif new_style == 'surface':
             self.SetRepresentationToSurface()
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
                 '\t"points"\n'
             )
+            raise ValueError(msg)
 
     @property
     def color(self) -> Color:  # numpydoc ignore=RT01
@@ -1052,9 +1053,8 @@ class Property(_vtk.vtkProperty):
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
-            raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
-            )
+            msg = f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
+            raise ValueError(msg)
 
     @property
     def ambient_color(self) -> Color:  # numpydoc ignore=RT01
@@ -1179,7 +1179,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         return self.GetAnisotropy()
 
     @anisotropy.setter
@@ -1187,7 +1188,8 @@ class Property(_vtk.vtkProperty):
         if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            msg = 'Anisotropy requires VTK v9.1.0 or newer.'
+            raise VTKVersionError(msg)
         _check_range(value, (0, 1), 'anisotropy')
         self.SetAnisotropy(value)
 

@@ -216,7 +216,8 @@ class RenderPasses:
             return
 
         if self._ssao_pass is not None:
-            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+            msg = 'Depth of field pass is incompatible with the SSAO pass.'
+            raise RuntimeError(msg)
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
@@ -251,7 +252,8 @@ class RenderPasses:
 
         """
         if self._dof_pass is not None:
-            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
+            msg = 'SSAO pass is incompatible with the depth of field pass.'
+            raise RuntimeError(msg)
 
         if self._ssao_pass is not None:
             return
@@ -295,7 +297,8 @@ class RenderPasses:
     def _update_passes(self):
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
+            msg = 'The renderer has been closed.'
+            raise RuntimeError(msg)
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

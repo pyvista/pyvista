@@ -98,7 +98,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
-                raise TypeError(f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}')
+                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'
+                raise TypeError(msg)
             # cell type must be set first before deep or shallow copy
             if cell_type is None:
                 self.SetCellType(vtk_cell.GetCellType())
@@ -204,7 +205,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
             else:
                 return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
-            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
+            msg = f"3D cells cannot be cast to PolyData: got cell type {self.type}"
+            raise ValueError(msg)
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
@@ -386,7 +388,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         """
         if index + 1 > self.n_edges:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_edges} edges.')
+            msg = f'Invalid index {index} for a cell with {self.n_edges} edges.'
+            raise IndexError(msg)
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
@@ -461,7 +464,8 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         # must deep copy here as sequental calls overwrite the underlying pointer
         if index + 1 > self.n_faces:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_faces} faces.')
+            msg = f'Invalid index {index} for a cell with {self.n_faces} faces.'
+            raise IndexError(msg)
 
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer

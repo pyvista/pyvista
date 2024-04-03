@@ -79,10 +79,11 @@ class DataObject:
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(
+            msg = (
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.'
             )
+            raise ValueError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -127,20 +128,22 @@ class DataObject:
 
         """
         if self._WRITERS is None:
-            raise NotImplementedError(
+            msg = (
                 f'{self.__class__.__name__} writers are not specified,'
                 ' this should be a dict of (file extension: vtkWriter type)'
             )
+            raise NotImplementedError(msg)
 
         file_path = Path(filename)
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
-            raise ValueError(
+            msg = (
                 'Invalid file extension for this data type.'
                 f' Must be one of: {self._WRITERS.keys()}'
             )
+            raise ValueError(msg)
 
         # store complex and bitarray types as field data
         self._store_metadata()
@@ -197,13 +200,13 @@ class DataObject:
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
-        raise NotImplementedError(
-            f'{type(self)} mesh type does not have a `get_data_range` method.'
-        )
+        msg = f'{type(self)} mesh type does not have a `get_data_range` method.'
+        raise NotImplementedError(msg)
 
     def _get_attrs(self):  # pragma: no cover
         """Return the representation methods (internal helper)."""
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
     def head(self, display=True, html=None):
         """Return the header stats of this dataset.
@@ -273,7 +276,8 @@ class DataObject:
         This includes header details and information about all arrays.
 
         """
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
     def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
@@ -409,7 +413,8 @@ class DataObject:
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.set_array(array, name, deep_copy=deep)
 
@@ -460,7 +465,8 @@ class DataObject:
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.clear()
         return None
@@ -572,7 +578,8 @@ class DataObject:
                     writer = writer_type()
                     break
             else:
-                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot pickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -622,7 +629,8 @@ class DataObject:
                     reader = reader_type()
                     break
             else:
-                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot unpickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
             reader.ReadFromInputStringOn()
             reader.SetInputString(vtk_serialized)

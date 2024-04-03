@@ -113,25 +113,22 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
         tension = np.array([0.0, 0.0, 0.0])
     check_valid_vector(tension, "tension")
     if not np.all(np.abs(tension) <= 1.0):
-        raise ValueError(
-            "The absolute value of all values of the tension array elements must be <= 1.0 "
-        )
+        msg = "The absolute value of all values of the tension array elements must be <= 1.0 "
+        raise ValueError(msg)
 
     if bias is None:
         bias = np.array([0.0, 0.0, 0.0])
     check_valid_vector(bias, "bias")
     if not np.all(np.abs(bias) <= 1.0):
-        raise ValueError(
-            "The absolute value of all values of the bias array elements must be <= 1.0 "
-        )
+        msg = "The absolute value of all values of the bias array elements must be <= 1.0 "
+        raise ValueError(msg)
 
     if continuity is None:
         continuity = np.array([0.0, 0.0, 0.0])
     check_valid_vector(continuity, "continuity")
     if not np.all(np.abs(continuity) <= 1.0):
-        raise ValueError(
-            "The absolute value of all values continuity array elements must be <= 1.0 "
-        )
+        msg = "The absolute value of all values continuity array elements must be <= 1.0 "
+        raise ValueError(msg)
 
     spline_function = _vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))

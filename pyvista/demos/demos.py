@@ -458,10 +458,11 @@ def plot_datasets(dataset_type=None):
     ]
     if dataset_type is not None:
         if dataset_type not in allowable_types:
-            raise ValueError(
+            msg = (
                 f'Invalid dataset_type {dataset_type}.  Must be one '
                 f'of the following: {allowable_types}'
             )
+            raise ValueError(msg)
 
     ###########################################################################
     # uniform grid

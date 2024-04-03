@@ -3066,7 +3066,8 @@ def test_integrate_data_datasets(datasets):
         elif "Volume" in integrated.array_names:
             assert integrated["Volume"] > 0
         else:
-            raise ValueError("Unexpected integration")
+            msg = "Unexpected integration"
+            raise ValueError(msg)
 
 
 def test_integrate_data():

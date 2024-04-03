@@ -570,10 +570,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise ValueError(
+            msg = (
                 f'Opacity transfer function ({mapping}) unknown. '
                 f'Valid options: {list(transfer_func.keys())}'
-            ) from None
+            )
+            raise ValueError(msg) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -588,7 +589,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
-                    raise ValueError('No interpolation.')
+                    msg = 'No interpolation.'
+                    raise ValueError(msg)
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
 
@@ -603,11 +605,11 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
-            )
+            msg = f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+            raise RuntimeError(msg)
         return mapping
-    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
+    msg = f'Transfer function type ({type(mapping)}) not understood'
+    raise TypeError(msg)
 
 
 def parse_font_family(font_family: str) -> int:
@@ -635,7 +637,8 @@ def parse_font_family(font_family: str) -> int:
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
     if font_family not in fonts:
-        raise ValueError(f'Font must one of the following:\n{", ".join(fonts)}')
+        msg = f'Font must one of the following:\n{", ".join(fonts)}'
+        raise ValueError(msg)
     return FONTS[font_family].value
 
 
@@ -677,7 +680,8 @@ def check_matplotlib_vtk_compatibility():
         if mpl_vers >= (3, 6):
             return True
         return False  # pragma: no cover
-    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
+    msg = 'Uncheckable versions.'
+    raise RuntimeError(msg)  # pragma: no cover
 
 
 def check_math_text_support():

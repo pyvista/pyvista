@@ -68,18 +68,21 @@ class DocTable:
     @classmethod
     def fetch_data(cls):
         """Get a list of row_data used to generate the table."""
-        raise NotImplementedError("Subclasses should specify a fetch_data method.")
+        msg = "Subclasses should specify a fetch_data method."
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_header(cls, data):
         """Get the table's header rst."""
-        raise NotImplementedError("Subclasses should specify a table header.")
+        msg = "Subclasses should specify a table header."
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_row(cls, i, row_data):
         """Get the rst for the given row. Can return ``None`` if no row should
         be generated for the provided ``row_data``."""
-        raise NotImplementedError("Subclasses should specify a get_row method.")
+        msg = "Subclasses should specify a get_row method."
+        raise NotImplementedError(msg)
 
 
 class LineStyleTable(DocTable):

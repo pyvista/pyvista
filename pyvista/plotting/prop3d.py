@@ -307,12 +307,12 @@ class Prop3D(_vtk.vtkProp3D):
     ):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             if value.shape != (4, 4):
-                raise ValueError('User matrix array must be 4x4.')
+                msg = 'User matrix array must be 4x4.'
+                raise ValueError(msg)
             value = vtkmatrix_from_array(value)
 
         if isinstance(value, _vtk.vtkMatrix4x4):
             self.SetUserMatrix(value)
         else:
-            raise TypeError(
-                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
-            )
+            msg = 'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
+            raise TypeError(msg)

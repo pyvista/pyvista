@@ -81,7 +81,8 @@ class BackgroundPlotter:  # numpydoc ignore=PR01
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
-        raise QtDeprecationError('BackgroundPlotter')
+        msg = 'BackgroundPlotter'
+        raise QtDeprecationError(msg)
 
 
 class QtInteractor:  # numpydoc ignore=PR01
@@ -89,7 +90,8 @@ class QtInteractor:  # numpydoc ignore=PR01
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
-        raise QtDeprecationError('QtInteractor')
+        msg = 'QtInteractor'
+        raise QtDeprecationError(msg)
 
 
 global_theme: _GlobalTheme = _GlobalTheme()

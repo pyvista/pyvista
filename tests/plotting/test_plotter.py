@@ -478,9 +478,11 @@ def test_plotter_update_coordinates(sphere):
         pl.add_mesh(sphere)
         pl.update_coordinates(sphere.points * 2.0)
         if pv._version.version_info >= (0, 46):
-            raise RuntimeError("Convert error this method")
+            msg = "Convert error this method"
+            raise RuntimeError(msg)
         if pv._version.version_info >= (0, 47):
-            raise RuntimeError("Remove this method")
+            msg = "Remove this method"
+            raise RuntimeError(msg)
 
 
 def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):

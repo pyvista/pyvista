@@ -329,9 +329,8 @@ class ConeSource(_vtk.vtkConeSource):
         self.height = height
         self.capping = capping
         if angle is not None and radius is not None:
-            raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive."
-            )
+            msg = "Both radius and angle cannot be specified. They are mutually exclusive."
+            raise ValueError(msg)
         elif angle is not None and radius is None:
             self.angle = angle
         elif angle is None and radius is not None:
@@ -803,7 +802,8 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         """
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
-            raise ValueError('>=2 points need to define multiple lines.')
+            msg = '>=2 points need to define multiple lines.'
+            raise ValueError(msg)
         self.SetPoints(pyvista.vtk_points(points))
 
     @property
@@ -925,10 +925,11 @@ class Text3DSource(vtkVectorText):
             if name in Text3DSource._new_attr_exceptions:
                 object.__setattr__(self, name, value)
             else:
-                raise AttributeError(
+                msg = (
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}'
                 )
+                raise AttributeError(msg)
 
     def __del__(self):
         """Delete filters."""
@@ -1186,9 +1187,8 @@ class CubeSource(_vtk.vtkCubeSource):
     @bounds.setter
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
+            msg = 'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            raise TypeError(msg)
         self._bounds = bounds
         self.SetBounds(bounds)
 
@@ -1325,7 +1325,8 @@ class CubeSource(_vtk.vtkCubeSource):
             Desired output point types.
         """
         if point_dtype not in ['float32', 'float64']:
-            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+            msg = "Point dtype must be either 'float32' or 'float64'"
+            raise ValueError(msg)
         precision = {
             'float32': SINGLE_PRECISION,
             'float64': DOUBLE_PRECISION,
@@ -1405,9 +1406,8 @@ class DiscSource(_vtk.vtkDiskSource):
         else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
-            )
+            msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+            raise VTKVersionError(msg)
 
     @property
     def inner(self) -> float:
@@ -1562,7 +1562,8 @@ class LineSource(_vtk.vtkLineSource):
             Location in ``[x, y, z]``.
         """
         if np.array(pointa).size != 3:
-            raise TypeError('Point A must be a length three tuple of floats.')
+            msg = 'Point A must be a length three tuple of floats.'
+            raise TypeError(msg)
         self.SetPoint1(*pointa)
 
     @property
@@ -1586,7 +1587,8 @@ class LineSource(_vtk.vtkLineSource):
             Location in ``[x, y, z]``.
         """
         if np.array(pointb).size != 3:
-            raise TypeError('Point B must be a length three tuple of floats.')
+            msg = 'Point B must be a length three tuple of floats.'
+            raise TypeError(msg)
         self.SetPoint2(*pointb)
 
     @property
@@ -1610,7 +1612,8 @@ class LineSource(_vtk.vtkLineSource):
             Number of pieces to divide line into.
         """
         if resolution <= 0:
-            raise ValueError('Resolution must be positive')
+            msg = 'Resolution must be positive'
+            raise ValueError(msg)
         self.SetResolution(resolution)
 
     @property
@@ -1736,9 +1739,8 @@ class SphereSource(_vtk.vtkSphereSource):
         else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
-            )
+            msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+            raise VTKVersionError(msg)
 
     @property
     def radius(self) -> float:
@@ -2147,12 +2149,15 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         """
         if isinstance(kind, str):
             if kind not in self._kinds:
-                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+                msg = f'Invalid Platonic solid kind "{kind}".'
+                raise ValueError(msg)
             kind = self._kinds[kind]
         elif isinstance(kind, int) and kind not in range(5):
-            raise ValueError(f'Invalid Platonic solid index "{kind}".')
+            msg = f'Invalid Platonic solid index "{kind}".'
+            raise ValueError(msg)
         elif not isinstance(kind, int):
-            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+            msg = f'Invalid Platonic solid index type "{type(kind).__name__}".'
+            raise ValueError(msg)
         self.SetSolidType(kind)
 
     @property
@@ -2454,9 +2459,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     @bounds.setter
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
+            msg = 'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+            raise TypeError(msg)
         self._bounds = bounds
         self.SetBounds(bounds)
 
