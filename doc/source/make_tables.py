@@ -465,9 +465,9 @@ def _indent_multi_line_string(
     """
     lines = string.splitlines()
     indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
-    first_line = lines.pop(0) if omit_first_line else ''
+    first_line = lines.pop(0) if omit_first_line else None
     lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
-    lines.insert(0, first_line)
+    lines.insert(0, first_line) if first_line else None
     return '\n'.join(lines)
 
 
@@ -478,22 +478,28 @@ def _as_iterable(item) -> Iterable[Any]:
 class DatasetCard:
     """Class for creating a rst-formatted card for a dataset.
 
-    Create a card with a 1-column grid with two grid items (rows).
-    The first row is a nested grid with two items displayed as a single
-    column for small screen sizes, or two columns for larger screens.
+    Create a card with header, footer, and four grid items.
+    The four grid items are displayed as:
+        - 2x2 grid for large screens
+        - 4x1 grid for small screens
 
-    Each card has the following structure:
+    Each card has roughly following structure:
 
-        +-Card---------------------+
-        | Image                    |
-        | Function Name            |
-        | Docstring                |
-        | Tags                     |
-        |                          |
-        | Dataset Info             |
-        |                          |
-        | Downloads Info           |
-        +--------------------------+
+        +-Card----------------------+
+        | Header: Dataset name      |
+        |                           |
+        | +-Grid------------------+ |
+        | | Dataset info          | |
+        | +-----------------------+ |
+        | | Image                 | |
+        | +-----------------------+ |
+        | | Dataset metadata      | |
+        | +-----------------------+ |
+        | | File metadata         | |
+        | +-----------------------+ |
+        |                           |
+        | Footer: Data source links |
+        +---------------------------+
 
     See https://sphinx-design.readthedocs.io/en/latest/index.html for
     details on the directives used and their formatting.
@@ -504,35 +510,74 @@ class DatasetCard:
         |.. _{}:
         |
         """
-    )
-    hanging_indent_field_template = _aligned_dedent(
-        """
-        | **{}**
-        |   {}
-        """
-    )
+    )[1:-1]
     card_template = _aligned_dedent(
         """
-        |.. card:: {}
-        |   :img-top: /{}
+        |.. card::
+        |   :class-header: sd-text-center sd-fs-2 sd-font-weight-bolder
         |
-        |   **{}**
+        |   {}
         |   ^^^
-        |   {}
-        |   {}
-        |   {}
+        |
+        |   .. grid:: 1 2 2 2
+        |      :margin: 0
+        |
+        |      .. grid-item::
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |
+        |         {}
+        |
+        |   +++
         |   {}
         |
-        |   .. dropdown:: :octicon:`globe`  Data Source Links
-        |
-        |      {}
         |
         """
     )
 
-    # Indentation level for the data source links
-    _FIELD_DATA_INDENT_LEVEL = 1
-    _LINKS_INDENT_LEVEL = 2
+    HEADER_FOOTER_INDENT_LEVEL = 1
+    GRID_ITEM_INDENT_LEVEL = 3
+
+    # Template for dataset func, doc, and badges
+    dataset_info_template = _aligned_dedent(
+        """
+        |{}
+        |
+        |{}
+        |
+        |{}
+        """
+    )[1:-1]
+
+    # Template for dataset image
+    # The image is encapsulated in its own card
+    image_template = _aligned_dedent(
+        """
+        |.. card::
+        |   :margin: 0
+        |
+        |   .. figure:: /{}
+        |      :figwidth: "image"
+        """
+    )[1:-1]
+
+    footer_template = _aligned_dedent(
+        """
+        |.. dropdown:: Data Source
+        |
+        |   {}
+        """
+    )[1:-1]
 
     _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_IMAGE_DIR, 'not_available.png')
 
@@ -579,7 +624,7 @@ class DatasetCard:
             file_ext = self._format_file_ext(loader)
             reader_type = self._format_reader_type(loader)
             dataset_type = self._format_dataset_type(loader)
-            datasource_links = self._format_datasource_links(loader, self._LINKS_INDENT_LEVEL)
+            datasource_links = self._format_datasource_links(loader)
 
             img_path = self._search_image_path(func_name)
 
@@ -589,13 +634,20 @@ class DatasetCard:
         carousel_badges = self._format_carousel_badges(self._badges)
         celltype_badges = self._format_celltype_badges(self._badges)
 
-        def hanging_field(field_name, content):
+        image_item = self.image_template.format(img_path)
+        image_item_indented = _indent_multi_line_string(
+            image_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
+        )
+
+        dataset_info_item = self.dataset_info_template.format(func_ref, func_doc, carousel_badges)
+        dataset_info_item_indented = _indent_multi_line_string(
+            dataset_info_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
+        )
+
+        def _generate_field(field_name, content):
             if content in [None, '']:
                 return None
-            # Get template without trailing newline characters
-            template = self.hanging_indent_field_template[1:-1]
-            dedented = template.format(field_name, content)
-            return dedented
+            return f":{field_name}: {content}"
 
         def _try_getattr(dataset, attr: str):
             try:
@@ -612,48 +664,52 @@ class DatasetCard:
                 return f"{num:,}".replace(',', ' ')
 
         dataset_fields = [
-            hanging_field('Data Type', dataset_type),
-            hanging_field('Cell Type', celltype_badges),
-            hanging_field(
-                'N Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
+            _generate_field('Data Type', dataset_type),
+            _generate_field('Cell Type', celltype_badges),
+            _generate_field(
+                'Num Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
             ),
-            hanging_field(
-                'N Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
+            _generate_field(
+                'Num Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
             ),
-            hanging_field('Length', _format_num(_try_getattr(loader.dataset, 'length'), fmt='exp')),
-            hanging_field('Dimensions', _try_getattr(loader.dataset, 'dimensions')),
-            hanging_field('Spacing', _try_getattr(loader.dataset, 'spacing')),
-            hanging_field('N Arrays', _try_getattr(loader.dataset, 'n_arrays')),
+            _generate_field(
+                'Length', _format_num(_try_getattr(loader.dataset, 'length'), fmt='exp')
+            ),
+            _generate_field('Dimensions', _try_getattr(loader.dataset, 'dimensions')),
+            _generate_field('Spacing', _try_getattr(loader.dataset, 'spacing')),
+            _generate_field('N Arrays', _try_getattr(loader.dataset, 'n_arrays')),
         ]
-        f"{10000:,}".replace(',', ' ')
 
-        def _generate_line_block(lines: List[Union[str, None]], indent: int = 0):
-            # Add bars to format as rst line-blocks
+        def _generate_field_block(lines: List[Union[str, None]], indent: int = 0):
+            # Join fields if they exist
             lines = '\n'.join([field for field in lines if field])
-            lines = _pad_lines(lines, pad_left='|')
-            return _indent_multi_line_string(lines, indent_level=indent, omit_first_line=False)
+            return _indent_multi_line_string(lines, indent_level=indent)
 
-        dataset_fields = _generate_line_block(dataset_fields, indent=self._FIELD_DATA_INDENT_LEVEL)
+        dataset_field_block = _generate_field_block(
+            dataset_fields, indent=self.GRID_ITEM_INDENT_LEVEL
+        )
         downloads_fields = [
-            hanging_field('File Size', file_size),
-            hanging_field('Num Files', num_files),
-            hanging_field('File Ext', file_ext),
-            hanging_field('Reader', reader_type),
+            _generate_field('File Size', file_size),
+            _generate_field('Num Files', num_files),
+            _generate_field('File Ext', file_ext),
+            _generate_field('Reader', reader_type),
         ]
-        downloads_fields = _generate_line_block(
-            downloads_fields, indent=self._FIELD_DATA_INDENT_LEVEL
+        downloads_field_block = _generate_field_block(
+            downloads_fields, indent=self.GRID_ITEM_INDENT_LEVEL
+        )
+        datasource_links_item = self.footer_template.format(datasource_links)
+        datasource_links_item_indented = _indent_multi_line_string(
+            datasource_links_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
         )
 
         ref = self.ref_template.format(ref_name)
         card = self.card_template.format(
-            func_ref,
-            img_path,
             header,
-            func_doc,
-            carousel_badges,
-            dataset_fields,
-            downloads_fields,
-            datasource_links,
+            dataset_info_item_indented,
+            image_item_indented,
+            dataset_field_block,
+            downloads_field_block,
+            datasource_links_item_indented,
         )
         # Create separate version of the card with index
         # and ref directives inserted below card title
@@ -765,15 +821,22 @@ class DatasetCard:
         return rst
 
     @staticmethod
-    def _format_datasource_links(loader: _dataset_loader._Downloadable, indent_level: int) -> str:
+    def _format_datasource_links(loader: _dataset_loader._Downloadable) -> str:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
 
+        # Collect url names and links as sequences
         names = [name] if isinstance(name := loader.source_name, str) else name
         urls = [url] if isinstance(url := loader.source_url_blob, str) else url
-        urls = [_rst_link(name, url) for name, url in zip(names, urls)]
-        urls = '\n'.join(urls)
-        return _indent_multi_line_string(urls, indent_size=3, indent_level=indent_level)
+
+        # Use dict to create an ordered set to make sure links are unique
+        url_dict = {}
+        for name, url in zip(names, urls):
+            url_dict[url] = name
+
+        rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
+        rst_links = '\n'.join(rst_links)
+        return rst_links
 
     @staticmethod
     def _search_image_path(dataset_download_func_name: str):
