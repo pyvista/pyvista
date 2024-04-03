@@ -57,3 +57,4 @@ PyVista has the following mesh types:
    helpers
    misc
    typing
+   partitioned
