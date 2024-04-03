@@ -31,7 +31,7 @@ PyVista has the following mesh types:
 
 - :class:`pyvista.MultiBlock` datasets are containers to hold several VTK datasets in one accessible and spatially referenced object. The :class:`pyvista.MultiBlock` class is an extension of `vtk.vtkMultiBlockDataSet`_.
 
-- :class:`pyvista.PartitionedDataSet` datasets are composite dataset to encapsulates a dataset consisting of partitions. The :class:`pyvista.PartitionedDataSet` class is an extension of `vtkPartitionedDataSet`_.
+- :class:`pyvista.PartitionedDataSet` datasets are composite dataset to encapsulates a dataset consisting of partitions. The :class:`pyvista.PartitionedDataSet` class is an extension of `vtk.vtkPartitionedDataSet`_.
 
 .. _vtk.vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
 .. _vtk.vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
