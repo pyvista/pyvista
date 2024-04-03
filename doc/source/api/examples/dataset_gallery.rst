@@ -157,6 +157,8 @@ Miscellaneous Datasets
 Browse Datasets by Category
 ---------------------------
 
+.. _medical_dataset_gallery:
+
 .. dropdown:: Medical Datasets
 
     .. tab-set::
