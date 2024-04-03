@@ -6,18 +6,18 @@ from pyvista.core.errors import PartitionedDataSetsNotSupported
 
 
 def test_reverse(sphere):
-    multi = PartitionedDataSet([sphere for i in range(3)])
-    multi.append(pv.Cube())
-    multi.reverse()
-    assert multi[0] == pv.Cube()
+    partitions = PartitionedDataSet([sphere for i in range(3)])
+    partitions.append(pv.Cube())
+    partitions.reverse()
+    assert partitions[0] == pv.Cube()
 
 
 def test_insert(sphere):
-    multi = PartitionedDataSet([sphere for i in range(3)])
+    partitions = PartitionedDataSet([sphere for i in range(3)])
     cube = pv.Cube()
-    multi.insert(0, cube)
-    assert len(multi) == 4
-    assert multi[0] is cube
+    partitions.insert(0, cube)
+    assert len(partitions) == 4
+    assert partitions[0] is cube
 
 
 def test_pop():
