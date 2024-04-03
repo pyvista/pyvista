@@ -76,7 +76,6 @@ extensions = [
     "pyvista.ext.coverage",
     "pyvista.ext.plot_directive",
     "pyvista.ext.viewer_directive",
-    "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     "sphinx.ext.extlinks",
@@ -85,8 +84,6 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
-    "sphinx_toolbox.more_autodoc.overloads",
-    "sphinx_toolbox.more_autodoc.typevars",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -170,24 +167,6 @@ coverage_additional_modules = [
 coverage_ignore_modules = [
     r'\.plot_directive$',  # Issue with class parameter documentation
 ]
-
-
-# Configuration for sphinx.ext.autodoc
-# Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {
-    "Chart": "pyvista.Chart",
-    "ColorLike": "pyvista.ColorLike",
-    "ArrayLike": "pyvista.ArrayLike",
-    "VectorLike": "pyvista.VectorLike",
-    "MatrixLike": "pyvista.MatrixLike",
-    "BoundsLike": "pyvista.BoundsLike",
-    "CellsLike": "pyvista.CellsLike",
-    "CellArrayLike": "pyvista.CellArrayLike",
-    "TransformLike": "pyvista.TransformLike",
-}
-
-# Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
-overloads_location = ["bottom"]
 
 # Display long function signatures with each param on a new line.
 # Helps make annotated signatures more readable.
