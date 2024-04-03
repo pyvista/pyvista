@@ -114,6 +114,14 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             return result
         raise StopIteration
 
+    def insert(self, index: int, dataset: DataSet) -> None:  # numpydoc ignore=PR01
+        """Insert data before index."""
+        index = range(self.n_partitions)[index]
+        self.n_partitions += 1
+        for i in reversed(range(index, self.n_partitions - 1)):
+            self[i + 1] = self[i]
+        self[index] = dataset
+
     def pop(self, index: int = -1) -> None:  # numpydoc ignore=PR01
         """Pop off a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
