@@ -6194,7 +6194,7 @@ class DataSetFilters:
         """
         # While vtkRedistributeDataSetFilter exists prior to 9.1.0, it doesn't
         # work correctly, returning the wrong number of partitions.
-        if pyvista.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
             msg = '`partition` requires vtk>=9.1.0'
             raise VTKVersionError(msg)  # pragma: no cover
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
