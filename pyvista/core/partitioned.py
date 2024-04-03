@@ -152,11 +152,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         fmt += "</td><td>"
         fmt += "\n"
         fmt += "<table>\n"
-        row = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n"
-        fmt += row.format("Index", "Name", "Type")
+        row = "<tr><th>{}</th><th>{}</th></tr>\n"
+        fmt += row.format("Index", "Type")
         for i in range(self.n_partitions):
             data = self[i]
-            fmt += row.format(i, self.get_partition_name(i), type(data).__name__)
+            fmt += row.format(i, type(data).__name__)
         fmt += "</table>\n"
         fmt += "\n"
         fmt += "</td></tr> </table>"
