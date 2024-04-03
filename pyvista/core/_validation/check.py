@@ -1123,5 +1123,5 @@ def _validate_shape_value(shape: Union[int, Tuple[int, ...], Tuple[None]]):
     else:
         check_iterable_items(shape, int, name='Shape')
     check_greater_than(shape, -1, name="Shape", strict=False)
-    msg = "This line should not be reachable." # pragma: no cover
+    msg = "This line should not be reachable."  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover

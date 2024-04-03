@@ -2664,7 +2664,7 @@ class DataSet(DataSetFilters, DataObject):
         array([  86, 1653])
 
         """
-        if pyvista.vtk_version_info < (9, 2, 0): # pragma: no cover
+        if pyvista.vtk_version_info < (9, 2, 0):  # pragma: no cover
             msg = "pyvista.PointSet requires VTK >= 9.2.0"
             raise VTKVersionError(msg)
 
