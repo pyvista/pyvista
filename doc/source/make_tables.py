@@ -505,16 +505,12 @@ class DatasetCard:
     details on the directives used and their formatting.
     """
 
-    ref_template = _aligned_dedent(
-        """
-        |.. _{}:
-        |
-        """
-    )[1:-1]
     card_template = _aligned_dedent(
         """
         |.. card::
         |   :class-header: sd-text-center sd-fs-2 sd-font-weight-bolder
+        |
+        |   {}
         |
         |   {}
         |   ^^^
@@ -599,7 +595,7 @@ class DatasetCard:
         dataset_name = self.dataset_name
         loader = self.loader
         # Get dataset name-related info
-        index_name, ref_name, header, func_ref, func_doc, func_name = self._format_dataset_name(
+        index_name, ref_label, header, func_ref, func_doc, func_name = self._format_dataset_name(
             dataset_name
         )
         # Get file and instance metadata
@@ -702,8 +698,8 @@ class DatasetCard:
             datasource_links_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
         )
 
-        ref = self.ref_template.format(ref_name)
-        card = self.card_template.format(
+        card_no_ref = self.card_template.format(
+            '',
             header,
             dataset_info_item_indented,
             image_item_indented,
@@ -711,18 +707,24 @@ class DatasetCard:
             downloads_field_block,
             datasource_links_item_indented,
         )
-        # Create separate version of the card with index
-        # and ref directives inserted below card title
-        ref_lines = _pad_lines(ref.splitlines(), pad_left='   ')
-        card_lines = card.splitlines()
-        card_with_ref = '\n'.join((*card_lines[0:2], *ref_lines, *card_lines[3:]))
-        return card, card_with_ref
+        # Create separate version of the card with ref a ref label
+        card_with_ref = self.card_template.format(
+            ref_label,
+            header,
+            dataset_info_item_indented,
+            image_item_indented,
+            dataset_field_block,
+            downloads_field_block,
+            datasource_links_item_indented,
+        )
+
+        return card_no_ref, card_with_ref
 
     @staticmethod
     def _format_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
-        ref_name = index_name
+        ref_label = f'.. _{index_name}:'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the corresponding 'download' function of the loader
@@ -732,7 +734,7 @@ class DatasetCard:
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
-        return index_name, ref_name, header, func_ref, func_doc, func_name
+        return index_name, ref_label, header, func_ref, func_doc, func_name
 
     @staticmethod
     def _format_file_size(loader: _dataset_loader._FileProps):
@@ -1221,6 +1223,11 @@ class DownloadsGalleryCarousel(GalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
+
+    @classmethod
+    def get_row(cls, _, dataset_name):
+        # Override method since we want to include a reference label for each card
+        return DatasetCardFetcher.DATASET_CARDS_RST_REF[dataset_name]
 
 
 class BuiltinGalleryCarousel(GalleryCarousel):

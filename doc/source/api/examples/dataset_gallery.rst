@@ -9,6 +9,7 @@ Browse Datasets by Module
 Datasets in this section are organized by the module they are imported from.
 
 .. dropdown:: Downloads
+   :open:
 
     .. tab-set::
 
