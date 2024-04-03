@@ -129,7 +129,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Blocks", self.n_partitions, "{}"))
+        attrs.append(("N Partitions", self.n_partitions, "{}"))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -156,7 +156,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         fmt += row.format("Index", "Name", "Type")
         for i in range(self.n_partitions):
             data = self[i]
-            fmt += row.format(i, self.get_block_name(i), type(data).__name__)
+            fmt += row.format(i, self.get_partition_name(i), type(data).__name__)
         fmt += "</table>\n"
         fmt += "\n"
         fmt += "</td></tr> </table>"
@@ -175,7 +175,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         return fmt.strip()
 
     def __str__(self) -> str:
-        """Return the str representation of the multi block."""
+        """Return the str representation of the multi partition."""
         return PartitionedDataSet.__repr__(self)
 
     def __len__(self) -> int:
