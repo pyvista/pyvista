@@ -339,3 +339,10 @@ def test_add_legend_background_opacity(sphere):
     pl.add_mesh(sphere, label='sphere')
     actor = pl.add_legend(background_opacity=background_opacity)
     assert actor.GetBackgroundOpacity() == background_opacity
+
+
+def test_viewport():
+    pl = pv.Plotter(shape=(1, 2))
+    assert pl.renderers[0].viewport == (0.0, 0.0, 0.5, 1.0)
+    pl.renderers[0].viewport = (0.125, 0.25, 0.375, 0.75)
+    assert pl.renderers[0].viewport == (0.125, 0.25, 0.375, 0.75)

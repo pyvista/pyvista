@@ -9,23 +9,24 @@ Examples
 """
 
 import os
+from pathlib import Path
 
 import numpy as np
 
 import pyvista
 
 # get location of this folder and the example files
-dir_path = os.path.dirname(os.path.realpath(__file__))
-antfile = os.path.join(dir_path, 'ant.ply')
-planefile = os.path.join(dir_path, 'airplane.ply')
-hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
-spherefile = os.path.join(dir_path, 'sphere.ply')
-uniformfile = os.path.join(dir_path, 'uniform.vtk')
-rectfile = os.path.join(dir_path, 'rectilinear.vtk')
-globefile = os.path.join(dir_path, 'globe.vtk')
-mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
-channelsfile = os.path.join(dir_path, 'channels.vti')
-logofile = os.path.join(dir_path, 'pyvista_logo.png')
+dir_path = str(Path(os.path.realpath(__file__)).parent)
+antfile = str(Path(dir_path) / 'ant.ply')
+planefile = str(Path(dir_path) / 'airplane.ply')
+hexbeamfile = str(Path(dir_path) / 'hexbeam.vtk')
+spherefile = str(Path(dir_path) / 'sphere.ply')
+uniformfile = str(Path(dir_path) / 'uniform.vtk')
+rectfile = str(Path(dir_path) / 'rectilinear.vtk')
+globefile = str(Path(dir_path) / 'globe.vtk')
+mapfile = str(Path(dir_path) / '2k_earth_daymap.jpg')
+channelsfile = str(Path(dir_path) / 'channels.vti')
+logofile = str(Path(dir_path) / 'pyvista_logo.png')
 
 
 def load_ant():
@@ -412,7 +413,7 @@ def load_nut():
     >>> mesh.plot(smooth_shading=True, split_sharp_edges=True)
 
     """
-    return pyvista.read(os.path.join(dir_path, 'nut.ply'))
+    return pyvista.read(str(Path(dir_path) / 'nut.ply'))
 
 
 def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):

@@ -1,6 +1,7 @@
 from math import pi
-import os
 import pathlib
+from pathlib import Path
+import re
 from typing import Dict, List
 import warnings
 
@@ -35,13 +36,13 @@ def cube_dense():
     return pv.Cube()
 
 
-test_path = os.path.dirname(os.path.abspath(__file__))
+test_path = str(Path(__file__).resolve().parent)
 
 
 def is_binary(filename):
     """Return ``True`` when a file is binary."""
     textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
-    with open(filename, 'rb') as f:
+    with Path(filename).open('rb') as f:
         data = f.read(1024)
     return bool(data.translate(None, textchars))
 
@@ -177,7 +178,7 @@ def test_invalid_file():
     with pytest.raises(FileNotFoundError):
         pv.PolyData('file.bad')
 
-    filename = os.path.join(test_path, 'test_polydata.py')
+    filename = str(Path(test_path) / 'test_polydata.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.PolyData(filename)
 
@@ -579,12 +580,12 @@ def test_save(sphere, extension, binary, tmpdir):
 
     if binary:
         if extension == '.vtp':
-            with open(filename) as f:
+            with Path(filename).open() as f:
                 assert 'binary' in f.read(1000)
         else:
             is_binary(filename)
     else:
-        with open(filename) as f:
+        with Path(filename).open() as f:
             fst = f.read(100).lower()
             assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
 
@@ -701,6 +702,23 @@ def test_compute_normals(sphere):
     cell_normals = sphere_normals.cell_data['Normals']
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
+
+
+def test_compute_normals_raises(sphere):
+    msg = (
+        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+        'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+    )
+
+    point_cloud = pv.PolyData(sphere.points)
+    assert point_cloud.n_verts == point_cloud.n_cells
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        point_cloud.compute_normals()
+
+    lines = pv.MultipleLines()
+    assert lines.n_lines == lines.n_cells
+    with pytest.raises(TypeError, match=re.escape(msg)):
+        lines.compute_normals()
 
 
 def test_compute_normals_inplace(sphere):

@@ -7,6 +7,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 
+cow = examples.download_cow().cast_to_unstructured_grid()
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
@@ -94,7 +95,7 @@ polyhedron = meshio.Mesh(
 )
 
 
-@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform, mesh2d, polyhedron])
+@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform, mesh2d, polyhedron, cow])
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)

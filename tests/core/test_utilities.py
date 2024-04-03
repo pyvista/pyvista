@@ -2,6 +2,7 @@
 
 import os
 import pathlib
+from pathlib import Path
 import pickle
 import shutil
 import unittest.mock as mock
@@ -139,7 +140,9 @@ def test_read_force_ext(tmpdir):
 
     dummy_extension = '.dummy'
     for fname, type in zip(fnames, types):
-        root, original_ext = os.path.splitext(fname)
+        path = Path(fname)
+        root = str(path.parent / path.stem)
+        original_ext = path.suffix
         _, name = os.path.split(root)
         new_fname = tmpdir / name + '.' + dummy_extension
         shutil.copy(fname, new_fname)
@@ -695,6 +698,13 @@ def test_convert_array():
     my_list = [1, 2, 3]
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
+
+    # test string scalar is converted to string array with length on
+    my_str = 'abc'
+    arr5 = pv.core.utilities.arrays.convert_array(my_str)
+    assert arr5.GetNumberOfValues() == 1
+    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
+    assert arr6.GetNumberOfValues() == 1
 
 
 def test_has_duplicates():

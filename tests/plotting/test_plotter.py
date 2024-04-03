@@ -6,6 +6,7 @@ All other tests requiring rendering should to in
 """
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -144,6 +145,17 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     )
 
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
+
+
+@pytest.mark.parametrize('split_sharp_edges', [True, False])
+def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
+    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
+    assert point_cloud.n_verts == point_cloud.n_cells
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        point_cloud, None, True, split_sharp_edges, False, None
+    )
+    assert scalars is None
+    assert "Normals" not in mesh.point_data
 
 
 def test_smooth_shading_shallow_copy(sphere):
@@ -488,8 +500,8 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(screenshot=sphere_screenshot)
-    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
-    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    sphere_path = str(Path(pv.FIGURE_PATH) / sphere_screenshot)
+    res_path = str(Path(pv.FIGURE_PATH) / res_file)
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
 

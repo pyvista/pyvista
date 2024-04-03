@@ -9,6 +9,7 @@ import inspect
 import io
 import os
 import pathlib
+from pathlib import Path
 import platform
 import re
 import time
@@ -126,7 +127,7 @@ def test_import_gltf(verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
 
-    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.glb')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -157,7 +158,7 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 
 
 def test_import_vrml():
-    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.wrl')
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -296,7 +297,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     )
     assert isinstance(cpos, pv.CameraPosition)
     assert isinstance(img, np.ndarray)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     verify_image_cache.skip = True
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
@@ -828,7 +829,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
 
     # remove file
     plotter.close()
-    os.remove(filename)  # verifies that the plotter has closed
+    Path(filename).unlink()  # verifies that the plotter has closed
 
 
 def test_add_legend(sphere):
@@ -939,7 +940,7 @@ def test_isometric_view_interactive(sphere):
     plotter_iso.camera_position = 'xy'
     cpos_old = plotter_iso.camera_position
     plotter_iso.isometric_view_interactive()
-    assert not plotter_iso.camera_position == cpos_old
+    assert plotter_iso.camera_position != cpos_old
 
 
 def test_add_point_labels():
@@ -1258,7 +1259,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
     assert pathlib.Path(filename).stat().st_size
 
 
@@ -2657,8 +2658,8 @@ def test_write_gif(sphere, tmpdir):
     pl.close()
 
     # assert file exists and is not empty
-    assert os.path.isfile(path)
-    assert os.path.getsize(path)
+    assert Path(path).is_file()
+    assert Path(path).stat().st_size
 
 
 def test_ruler():
@@ -2726,7 +2727,7 @@ def test_screenshot_notebook(tmpdir):
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
 
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
 
 def test_culling_frontface(sphere):
@@ -2758,7 +2759,7 @@ def test_add_text_latex():
 
 def test_add_text_font_file():
     plotter = pv.Plotter()
-    font_file = os.path.join(os.path.dirname(__file__), "fonts/Mplus2-Regular.ttf")
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     plotter.add_text("左上", position='upper_left', font_size=25, color='blue', font_file=font_file)
     plotter.add_text(
         "中央", position=(0.5, 0.5), viewport=True, orientation=-90, font_file=font_file
@@ -3052,7 +3053,7 @@ def test_export_obj(tmpdir, sphere):
     pl.export_obj(filename)
 
     # Check that the object file has been written
-    assert os.path.exists(filename)
+    assert Path(filename).exists()
 
     # Check that when we close the plotter, the adequate error is raised
     pl.close()
