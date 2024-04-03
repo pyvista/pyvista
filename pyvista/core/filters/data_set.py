@@ -5605,7 +5605,7 @@ class DataSetFilters:
         """
         if pyvista.vtk_version_info < (9, 3, 0):
             msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)  # pragma: no cover
+            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
