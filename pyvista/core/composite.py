@@ -441,7 +441,7 @@ class MultiBlock(
         # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
         # https://github.com/pyvista/pyvista/pull/5171
-        if isinstance(wrapped, pyvista_ndarray): # pragma: no cover
+        if isinstance(wrapped, pyvista_ndarray):  # pragma: no cover
             msg = 'dataset should not be or contain an array'
             raise TypeError(msg)
         dataset = wrapped
