@@ -6197,7 +6197,7 @@ class DataSetFilters:
         if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
             msg = '`partition` requires vtk>=9.1.0'
             raise VTKVersionError(msg)
-        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pyvista.vtk_version_info}'
