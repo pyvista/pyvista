@@ -1105,7 +1105,7 @@ class _BaseVolumeMapper(_BaseMapper):
         elif value == 4:
             return 'additive'
 
-        msg = f'Unsupported blend mode return value {value}'
+        msg = f'Unsupported blend mode return value {value}'  # pragma: no cover
         raise NotImplementedError(msg)  # pragma: no cover
 
     @blend_mode.setter

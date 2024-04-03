@@ -680,7 +680,7 @@ def check_matplotlib_vtk_compatibility():
         if mpl_vers >= (3, 6):
             return True
         return False  # pragma: no cover
-    msg = 'Uncheckable versions.'
+    msg = 'Uncheckable versions.'  # pragma: no cover
     raise RuntimeError(msg)  # pragma: no cover
 
 
