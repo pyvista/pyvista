@@ -508,7 +508,7 @@ class DatasetCard:
     card_template = _aligned_dedent(
         """
         |.. card::
-        |   :class-header: sd-text-center sd-fs-2 sd-font-weight-bolder
+        |   :class-header: sd-text-center sd-fs-4
         |
         |   {}
         |
@@ -516,7 +516,6 @@ class DatasetCard:
         |   ^^^
         |
         |   .. grid:: 1 2 2 2
-        |      :margin: 0
         |
         |      .. grid-item::
         |
@@ -544,11 +543,18 @@ class DatasetCard:
     HEADER_FOOTER_INDENT_LEVEL = 1
     GRID_ITEM_INDENT_LEVEL = 3
 
-    # Template for dataset func, doc, and badges
+    # Template for dataset name and badges
+    header_template = _aligned_dedent(
+        """
+        |**{}**
+        |
+        |{}
+        """
+    )[1:-1]
+
+    # Template for dataset func and doc
     dataset_info_template = _aligned_dedent(
         """
-        |{}
-        |
         |{}
         |
         |{}
@@ -563,7 +569,7 @@ class DatasetCard:
         |   :margin: 0
         |
         |   .. figure:: /{}
-        |      :figwidth: "image"
+        |      :figwidth: image
         """
     )[1:-1]
 
@@ -572,6 +578,39 @@ class DatasetCard:
         |.. dropdown:: Data Source
         |
         |   {}
+        """
+    )[1:-1]
+
+    # Format fields in a grid with two columns where the
+    # first item is always a left-justified name
+    # and second is always a right-justified value
+    field_grid_template = _aligned_dedent(
+        """
+        |.. grid:: 2
+        |
+        |   .. grid-item::
+        |      :sd-text-left:
+        |
+        |      {}
+        |
+        |   .. grid-item::
+        |      :sd-text-right:
+        |
+        |      {}
+        |
+        """
+    )[1:-1]
+
+    # If the field has more than one value, set max column width
+    # so that each value is on its own line
+    field_grid_extra_values_template = _aligned_dedent(
+        """
+        |   .. grid-item::
+        |      :columns: 12
+        |      :sd-text-right:
+        |
+        |      {}
+        |
         """
     )[1:-1]
 
@@ -595,8 +634,8 @@ class DatasetCard:
         dataset_name = self.dataset_name
         loader = self.loader
         # Get dataset name-related info
-        index_name, ref_label, header, func_ref, func_doc, func_name = self._format_dataset_name(
-            dataset_name
+        index_name, ref_label, header_name, func_ref, func_doc, func_name = (
+            self._format_dataset_name(dataset_name)
         )
         # Get file and instance metadata
         try:
@@ -630,20 +669,32 @@ class DatasetCard:
         carousel_badges = self._format_carousel_badges(self._badges)
         celltype_badges = self._format_celltype_badges(self._badges)
 
+        header_item = self.header_template.format(header_name, carousel_badges)
+        header_item_indented = _indent_multi_line_string(
+            header_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
+        )
+
         image_item = self.image_template.format(img_path)
         image_item_indented = _indent_multi_line_string(
             image_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
         )
 
-        dataset_info_item = self.dataset_info_template.format(func_ref, func_doc, carousel_badges)
+        dataset_info_item = self.dataset_info_template.format(func_ref, func_doc)
         dataset_info_item_indented = _indent_multi_line_string(
             dataset_info_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
         )
 
-        def _generate_field(field_name, content):
-            if content in [None, '']:
+        def _generate_field_grid(field_name, field_values):
+            if field_values in [None, '']:
                 return None
-            return f":{field_name}: {content}"
+            value_lines = str(field_values).splitlines()
+            first_value = value_lines.pop(0)
+            field = self.field_grid_template.format(field_name, first_value)
+            extra_values = [
+                self.field_grid_extra_values_template.format(val) for val in value_lines
+            ]
+
+            return '\n'.join([field, *extra_values])
 
         def _try_getattr(dataset, attr: str):
             try:
@@ -651,29 +702,34 @@ class DatasetCard:
             except AttributeError:
                 return None
 
-        def _format_num(num: Optional[float], fmt: Literal['exp', 'spaced']):
+        def _format_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
             if num is None:
                 return None
             if fmt == 'exp':
-                return f"{num:.3e}"
+                num_fmt = f"{num:.3e}"
             elif fmt == 'spaced':
-                return f"{num:,}".replace(',', ' ')
+                num_fmt = f"{num:,}``".replace(',', ' ')
+            else:
+                num_fmt = str(num)
+            return f"``{num_fmt}``"
 
         dataset_fields = [
-            _generate_field('Data Type', dataset_type),
-            _generate_field('Cell Type', celltype_badges),
-            _generate_field(
-                'Num Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
+            _generate_field_grid('Data Type', dataset_type),
+            _generate_field_grid('Cell Type', celltype_badges),
+            _generate_field_grid(
+                'N Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
             ),
-            _generate_field(
-                'Num Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
+            _generate_field_grid(
+                'N Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
             ),
-            _generate_field(
+            _generate_field_grid(
                 'Length', _format_num(_try_getattr(loader.dataset, 'length'), fmt='exp')
             ),
-            _generate_field('Dimensions', _try_getattr(loader.dataset, 'dimensions')),
-            _generate_field('Spacing', _try_getattr(loader.dataset, 'spacing')),
-            _generate_field('N Arrays', _try_getattr(loader.dataset, 'n_arrays')),
+            _generate_field_grid(
+                'Dimensions', _format_num(_try_getattr(loader.dataset, 'dimensions'))
+            ),
+            _generate_field_grid('Spacing', _format_num(_try_getattr(loader.dataset, 'spacing'))),
+            _generate_field_grid('N Arrays', _format_num(_try_getattr(loader.dataset, 'n_arrays'))),
         ]
 
         def _generate_field_block(lines: List[Union[str, None]], indent: int = 0):
@@ -685,14 +741,18 @@ class DatasetCard:
             dataset_fields, indent=self.GRID_ITEM_INDENT_LEVEL
         )
         downloads_fields = [
-            _generate_field('File Size', file_size),
-            _generate_field('Num Files', num_files),
-            _generate_field('File Ext', file_ext),
-            _generate_field('Reader', reader_type),
+            _generate_field_grid('File Size', file_size),
+            _generate_field_grid('Num Files', num_files),
+            _generate_field_grid('File Ext', file_ext),
+            _generate_field_grid('Reader', reader_type),
         ]
         downloads_field_block = _generate_field_block(
             downloads_fields, indent=self.GRID_ITEM_INDENT_LEVEL
         )
+
+        # indent links one level from drop down
+        datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
+        # Insert link in footer template
         datasource_links_item = self.footer_template.format(datasource_links)
         datasource_links_item_indented = _indent_multi_line_string(
             datasource_links_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
@@ -700,17 +760,17 @@ class DatasetCard:
 
         card_no_ref = self.card_template.format(
             '',
-            header,
+            header_item_indented,
             dataset_info_item_indented,
             image_item_indented,
             dataset_field_block,
             downloads_field_block,
             datasource_links_item_indented,
         )
-        # Create separate version of the card with ref a ref label
+        # Create separate version of the card with a ref label
         card_with_ref = self.card_template.format(
             ref_label,
-            header,
+            header_item_indented,
             dataset_info_item_indented,
             image_item_indented,
             dataset_field_block,
@@ -750,7 +810,7 @@ class DatasetCard:
         # Multiple extensions are comma-separated
         file_ext = loader.unique_extension
         file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-        file_ext = '``\'' + file_ext.replace(' ', '\'``, ``\'') + '\'``'
+        file_ext = '``\'' + file_ext.replace(' ', '\'``\n ``\'') + '\'``'
         return file_ext
 
     @staticmethod
@@ -762,7 +822,7 @@ class DatasetCard:
             .replace('\'>', '`')
             .replace('(', '')
             .replace(')', '')
-        )
+        ).replace(', ', '\n')
         return reader_type
 
     @staticmethod
@@ -774,7 +834,7 @@ class DatasetCard:
             .replace('\'>', '`')
             .replace('(', '')
             .replace(')', '')
-        )
+        ).replace(', ', '\n')
         return dataset_type
 
     @staticmethod
@@ -1140,7 +1200,7 @@ class GalleryCarousel(DocTable):
         |{}
         |
         |{}
-        |:Dataset Count: {}
+        |:Dataset Count: ``{}``
         |
         |.. card-carousel:: 1
         |
@@ -1253,6 +1313,7 @@ class PointSetGalleryCarousel(GalleryCarousel):
 
     name = 'pointset_carousel'
     doc = ':class:`~pyvista.PointSet` datasets.'
+    badge = DataTypeBadge('PointSet')
 
     @classmethod
     def fetch_dataset_names(cls):
