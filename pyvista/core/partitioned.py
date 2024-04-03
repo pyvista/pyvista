@@ -154,7 +154,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         fmt += "<table>\n"
         row = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n"
         fmt += row.format("Index", "Name", "Type")
-        for i in range(self.n_blocks):
+        for i in range(self.n_partitions):
             data = self[i]
             fmt += row.format(i, self.get_block_name(i), type(data).__name__)
         fmt += "</table>\n"
