@@ -1,13 +1,13 @@
 Partitioned Datasets
 ====================
 
-The :class:`pyvista.PartitionedDataSet` class is a composite dataset to encapsulates
+The :class:`pyvista.PartitionedDataSet` class is a partitioned dataset that encapsulates
 a dataset consisting of partitions. ``PartitionedDataSet`` behaves mostly like a list.
 
 List-like Features
 ------------------
 
-Create empty composite dataset
+Create an empty partitioned dataset
 
 .. jupyter-execute::
    :hide-code:
@@ -35,7 +35,7 @@ Add some data to the collection.
    partitions.append(pv.Sphere())
    partitions.append(pv.Cube(center=(0, 0, -1)))
 
-``PartitionedDataSet`` is List-like, so individual partitions can be accessed via
+``PartitionedDataSet`` is List-like so that individual partitions can be accessed via
 indices.
 
 .. jupyter-execute::
@@ -66,7 +66,7 @@ and supports operations such as append, insert, etc.
 
    pop is not supported in ``PartitionedDataSet`` class.
 
-``PartitionedDataSet`` also supports slicing for getting or setting partitions.
+``PartitionedDataSet`` also supports slicing to get or set partitions.
 
 .. jupyter-execute::
 
