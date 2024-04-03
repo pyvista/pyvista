@@ -2635,7 +2635,7 @@ class DataSetFilters:
                 else:
                     if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
                         msg = '`connectivity` with PolyData requires vtk>=9.1.0'
-                        raise VTKVersionError(msg)  # pragma: no cover
+                        raise VTKVersionError(msg)
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(_input)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
