@@ -281,7 +281,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         the class being abstract.
 
         """
-        if pyvista.vtk_version_info < (9, 1, 0):
+        if pyvista.vtk_version_info < (9, 1, 0): # pragma: no cover
             msg = "pyvista.PointSet requires VTK >= 9.1.0"
             raise VTKVersionError(msg)
         return super().__new__(cls, *args, **kwargs)
