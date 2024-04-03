@@ -40,6 +40,19 @@ def test_show_bounds_axes_ranges():
     assert labels_ranges == axes_ranges
 
 
+def test_show_grid_axes_ranges_with_all_edges():
+    plotter = pv.Plotter()
+
+    axes_ranges = [5, 10, 5, 10, 5, 10]
+    plotter.show_grid(axes_ranges=axes_ranges, all_edges=True)
+    labels_ranges = []
+    for axis in range(3):
+        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        labels_ranges.append(float(axis_labels.GetValue(0)))
+        labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
+    assert labels_ranges == axes_ranges
+
+
 def test_show_bounds_with_scaling(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
