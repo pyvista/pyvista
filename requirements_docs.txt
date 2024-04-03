@@ -6,7 +6,7 @@ imageio==2.34.0
 imageio-ffmpeg==0.4.9
 jupyter_sphinx==0.5.3
 jupyterlab==4.1.5
-lxml==5.1.0
+lxml==5.2.1
 meshio==5.3.5
 mypy==1.9.0
 mypy-extensions==1.0.0
@@ -15,7 +15,7 @@ osmnx==1.9.1
 pydata-sphinx-theme==0.15.2
 pypandoc==1.13
 pytest-sphinx==0.6.0
-scipy==1.12.0
+scipy==1.13.0
 sphinx==7.1.2
 sphinx-autobuild==2024.2.4
 sphinx-copybutton==0.5.2
@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.1
 sphinxcontrib-websupport==1.2.7
 sympy==1.12
-trame==3.5.4
+trame==3.5.5
 trame-vtk==2.8.5
 trame-vuetify==2.4.3
 trimesh==4.2.4
