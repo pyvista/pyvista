@@ -6202,7 +6202,7 @@ class DataSetFilters:
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pyvista.vtk_version_info}'
             )
-            raise VTKVersionError(msg)  # pragma: no cover
+            raise VTKVersionError(msg)
 
         alg = _vtk.vtkRedistributeDataSetFilter()
         alg.SetInputData(self)
