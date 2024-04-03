@@ -12,6 +12,14 @@ def test_reverse(sphere):
     assert multi[0] == pv.Cube()
 
 
+def test_insert(sphere):
+    multi = PartitionedDataSet([sphere for i in range(3)])
+    cube = pv.Cube()
+    multi.insert(0, cube)
+    assert len(multi) == 4
+    assert multi[0] is cube
+
+
 def test_pop():
     spheres = [pv.Sphere(phi_resolution=i + 3) for i in range(10)]
     partitions = PartitionedDataSet(spheres)
