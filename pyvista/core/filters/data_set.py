@@ -5603,7 +5603,7 @@ class DataSetFilters:
         >>> plotter.show()
 
         """
-        if pyvista.vtk_version_info < (9, 3, 0):
+        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
             msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
             raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
