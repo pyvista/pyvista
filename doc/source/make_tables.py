@@ -1022,9 +1022,8 @@ class _BaseDatasetBadge:
     # Name of the badge
     name: str
 
-    # Name of internal label the badge will reference
-    # This should be the name of the carousel.
-    ref: str
+    # Internal reference label for the badge to link to
+    ref: str = None
 
     @classmethod
     def __post_init__(cls):
@@ -1065,7 +1064,6 @@ class ModuleBadge(_BaseDatasetBadge):
     """
 
     name: str
-    ref: str
 
     @classmethod
     def __post_init__(cls):
@@ -1081,7 +1079,6 @@ class DataTypeBadge(_BaseDatasetBadge):
     """
 
     name: str
-    ref: str
 
     @classmethod
     def __post_init__(cls):
@@ -1098,7 +1095,6 @@ class SpecialDataTypeBadge(_BaseDatasetBadge):
     """
 
     name: str
-    ref: str
 
     @classmethod
     def __post_init__(cls):
@@ -1114,7 +1110,6 @@ class CategoryBadge(_BaseDatasetBadge):
     """
 
     name: str
-    ref: str
 
     @classmethod
     def __post_init__(cls):
@@ -1140,16 +1135,15 @@ class CellTypeBadge(_BaseDatasetBadge):
 class GalleryCarousel(DocTable):
     header_template = _aligned_dedent(
         """
-        |.. _{}:
-        |
         |{}
         |
-        |**Num Datasets**: ``{}``
+        |{}
+        |:Dataset Count: {}
         |
         |.. card-carousel:: 1
         |
         """
-    )
+    )[1:-1]
 
     # Subclasses should give the carousel a name
     # The name should end with '_carousel'
@@ -1198,14 +1192,11 @@ class GalleryCarousel(DocTable):
         # Use the name as a label which can be referenced
         assert cls.name is not None, f"Carousel {cls} must have a name."
         assert cls.doc is not None, f"Carousel {cls} must have a doc string."
+
+        badge_info = f":Section Badge: {cls.badge.generate()}" if cls.badge else ''
         num_datasets = len(data)
         assert num_datasets > 0, f"No datasets were found for carousel {cls}."
-        # the carousel doc will auto-generate its own :doc:carousel.rst ref
-        # in addition to the explicit ref that is added here in the header.
-        # To ensure the doc ref andexplicit ref have unique names, we use _gallery
-        # for the ref name. This way, using :any: to resolve references will work.
-        ref_name = cls.name.replace('_carousel', '_gallery')
-        return cls.header_template.format(ref_name, cls.doc, num_datasets)
+        return cls.header_template.format(cls.doc, badge_info, num_datasets)
 
     @classmethod
     def get_row(cls, _, dataset_name: str):
@@ -1225,7 +1216,7 @@ class DownloadsGalleryCarousel(GalleryCarousel):
 
     name = 'downloads_carousel'
     doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
-    badge = ModuleBadge('Downloads', ref=name)
+    badge = ModuleBadge('Downloads')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1238,7 +1229,7 @@ class BuiltinGalleryCarousel(GalleryCarousel):
     # TODO: add builtin datasets
     name = 'builtin_carousel'
     doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
-    badge = ModuleBadge('Built-in', ref=name)
+    badge = ModuleBadge('Built-in')
 
 
 class PlanetsGalleryCarousel(GalleryCarousel):
@@ -1247,7 +1238,7 @@ class PlanetsGalleryCarousel(GalleryCarousel):
     # TODO: add planets datasets
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-    badge = ModuleBadge('Planets', ref=name)
+    badge = ModuleBadge('Planets')
 
 
 class PointSetGalleryCarousel(GalleryCarousel):
@@ -1266,7 +1257,7 @@ class PolyDataGalleryCarousel(GalleryCarousel):
 
     name = 'polydata_carousel'
     doc = ':class:`~pyvista.PolyData` datasets.'
-    badge = DataTypeBadge('PolyData', ref=name)
+    badge = DataTypeBadge('PolyData')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1278,7 +1269,7 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
 
     name = 'unstructuredgrid_carousel'
     doc = ':class:`~pyvista.UnstructuredGrid` datasets.'
-    badge = DataTypeBadge('UnstructuredGrid', ref=name)
+    badge = DataTypeBadge('UnstructuredGrid')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1290,7 +1281,7 @@ class StructuredGridGalleryCarousel(GalleryCarousel):
 
     name = 'structuredgrid_carousel'
     doc = ':class:`~pyvista.StructuredGrid` datasets.'
-    badge = DataTypeBadge('StructuredGrid', ref=name)
+    badge = DataTypeBadge('StructuredGrid')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1302,7 +1293,7 @@ class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
 
     name = 'explicitstructuredgrid_carousel'
     doc = ':class:`~pyvista.ExplicitStructuredGrid` datasets.'
-    badge = DataTypeBadge('ExplicitStructuredGrid', ref=name)
+    badge = DataTypeBadge('ExplicitStructuredGrid')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1314,7 +1305,7 @@ class PointCloudGalleryCarousel(GalleryCarousel):
 
     name = 'pointcloud_carousel'
     doc = 'Datasets represented as points in space. May be :class:`~pyvista.PointSet` or :class:`~pyvista.PolyData` with :any:`VERTEX<pyvista.CellType.VERTEX>` cells.'
-    badge = SpecialDataTypeBadge('Point Cloud', ref=name)
+    badge = SpecialDataTypeBadge('Point Cloud')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1331,7 +1322,7 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
 
     name = 'surfacemesh_carousel'
     doc = ':class:`~pyvista.PolyData` surface meshes.'
-    badge = SpecialDataTypeBadge('Surface Mesh', ref=name)
+    badge = SpecialDataTypeBadge('Surface Mesh')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1348,7 +1339,7 @@ class RectilinearGridGalleryCarousel(GalleryCarousel):
 
     name = 'rectilineargrid_carousel'
     doc = ':class:`~pyvista.RectilinearGrid` datasets.'
-    badge = DataTypeBadge('RectilinearGrid', ref=name)
+    badge = DataTypeBadge('RectilinearGrid')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1360,7 +1351,7 @@ class ImageDataGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_carousel'
     doc = ':class:`~pyvista.ImageData` datasets.'
-    badge = DataTypeBadge('ImageData', ref=name)
+    badge = DataTypeBadge('ImageData')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1372,7 +1363,7 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_3d_carousel'
     doc = 'Three-dimensional volumetric :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('3D Volume', ref=name)
+    badge = SpecialDataTypeBadge('3D Volume')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1387,7 +1378,7 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
 
     name = 'imagedata_2d_carousel'
     doc = 'Two-dimensional :class:`~pyvista.ImageData` datasets.'
-    badge = SpecialDataTypeBadge('2D Image', ref=name)
+    badge = SpecialDataTypeBadge('2D Image')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1402,7 +1393,7 @@ class TextureGalleryCarousel(GalleryCarousel):
 
     name = 'texture_carousel'
     doc = ':class:`~pyvista.Texture` datasets.'
-    badge = DataTypeBadge('Texture', ref=name)
+    badge = DataTypeBadge('Texture')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1414,7 +1405,7 @@ class CubemapGalleryCarousel(GalleryCarousel):
 
     name = 'cubemap_carousel'
     doc = ':class:`~pyvista.Texture` datasets with six images: one for each side of the cube.'
-    badge = SpecialDataTypeBadge('Cubemap', ref=name)
+    badge = SpecialDataTypeBadge('Cubemap')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1427,7 +1418,7 @@ class MultiBlockGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets.'
-    badge = DataTypeBadge('MultiBlock', ref=name)
+    badge = DataTypeBadge('MultiBlock')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1439,7 +1430,7 @@ class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_hetero_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of different mesh types.'
-    badge = SpecialDataTypeBadge('Heterogeneous', ref=name)
+    badge = SpecialDataTypeBadge('Heterogeneous')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1451,7 +1442,7 @@ class MultiBlockHomoGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_homo_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets with multiple blocks of the same mesh type.'
-    badge = SpecialDataTypeBadge('Homogeneous', ref=name)
+    badge = SpecialDataTypeBadge('Homogeneous')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1463,7 +1454,7 @@ class MultiBlockSingleGalleryCarousel(GalleryCarousel):
 
     name = 'multiblock_single_carousel'
     doc = ':class:`~pyvista.MultiBlock` datasets which contain a single mesh.'
-    badge = SpecialDataTypeBadge('Single Block', ref=name)
+    badge = SpecialDataTypeBadge('Single Block')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1475,7 +1466,7 @@ class MiscGalleryCarousel(GalleryCarousel):
 
     name = 'misc_carousel'
     doc = 'Datasets which have a non-standard representation.'
-    badge = DataTypeBadge('Misc', ref=name)
+    badge = DataTypeBadge('Misc')
 
     @classmethod
     def fetch_dataset_names(cls):
@@ -1490,7 +1481,7 @@ class MedicalGalleryCarousel(GalleryCarousel):
 
     name = 'medical_carousel'
     doc = 'Medical datasets.'
-    badge = CategoryBadge('Medical', ref=name)
+    badge = CategoryBadge('Medical')
 
     @classmethod
     def fetch_dataset_names(cls):
