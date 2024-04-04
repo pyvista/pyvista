@@ -511,8 +511,6 @@ class DatasetCard:
         |
         |   {}
         |
-        |   {}
-        |
         |   ^^^
         |
         |   .. grid:: 1 2 2 2
@@ -556,6 +554,7 @@ class DatasetCard:
 
     HEADER_FOOTER_INDENT_LEVEL = 1
     GRID_ITEM_INDENT_LEVEL = 3
+    REF_ANCHOR_INDENT_LEVEL = 2
 
     # Template for dataset name and badges
     header_template = _aligned_dedent(
@@ -564,9 +563,9 @@ class DatasetCard:
         |   :margin: 0
         |
         |   .. grid-item::
-        |      :class: sd-text-center sd-fs-5
+        |      :class: sd-text-center sd-font-weight-bold sd-fs-5
         |
-        |      **{}**
+        |      {}
         |
         |   .. grid-item::
         |      :class: sd-text-center
@@ -576,14 +575,16 @@ class DatasetCard:
         """
     )[1:-1]
 
-    # Template for index
-    index_template = _aligned_dedent(
+    # Template title with a reference anchor
+    dataset_title_with_ref_template = _aligned_dedent(
         """
-        |.. index:: {}
-        |   :name: {}
+        |.. _{}:
         |
+        |{}
+        |{}
         """
     )[1:-1]
+
     # Template for dataset func and doc
     dataset_info_template = _aligned_dedent(
         """
@@ -730,13 +731,19 @@ class DatasetCard:
         carousel_badges = self._format_carousel_badges(self._badges)
         celltype_badges = self._format_celltype_badges(self._badges)
 
-        index_item = self.index_template.format(header_name, index_name)
-        index_item_indented = _indent_multi_line_string(
-            index_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
-        )
         header_item = self.header_template.format(header_name, carousel_badges)
         header_item_indented = _indent_multi_line_string(
             header_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
+        )
+        title_with_ref_item = self.dataset_title_with_ref_template.format(
+            index_name, header_name, _repeat_string('-', len(header_name))
+        )
+        title_with_ref_indented = _indent_multi_line_string(
+            title_with_ref_item, indent_level=self.REF_ANCHOR_INDENT_LEVEL
+        )
+        header_item_ref = self.header_template.format(title_with_ref_indented, carousel_badges)
+        header_item_ref_indented = _indent_multi_line_string(
+            header_item_ref, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
         )
 
         image_item = self.image_template.format(img_path)
@@ -827,7 +834,6 @@ class DatasetCard:
         )
 
         card_no_ref = self.card_template.format(
-            '',
             header_item_indented,
             dataset_info_item_indented,
             image_item_indented,
@@ -837,8 +843,7 @@ class DatasetCard:
         )
         # Create separate version of the card with a ref label
         card_with_ref = self.card_template.format(
-            index_item_indented,
-            header_item_indented,
+            header_item_ref_indented,
             dataset_info_item_indented,
             image_item_indented,
             dataset_field_block,
