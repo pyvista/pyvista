@@ -516,12 +516,12 @@ class DatasetCard:
         |   .. grid:: 1 2 2 2
         |
         |      .. grid-item::
-        |         :columns: 8 6 6 6
+        |         :columns: 12 8 8 8
         |
         |         {}
         |
         |      .. grid-item::
-        |         :columns: 4 6 6 6
+        |         :columns: 12 4 4 4
         |
         |         {}
         |
@@ -529,6 +529,7 @@ class DatasetCard:
         |
         |         .. card::
         |            :shadow: none
+        |            :class-header: sd-text-center sd-font-weight-bold
         |
         |            :octicon:`info` Dataset Info
         |            ^^^
@@ -537,6 +538,7 @@ class DatasetCard:
         |      .. grid-item::
         |
         |         .. card::
+        |            :class-header: sd-text-center sd-font-weight-bold
         |
         |            :octicon:`file` File Info
         |            ^^^
