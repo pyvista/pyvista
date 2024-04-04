@@ -489,7 +489,7 @@ class DatasetCard:
         | Header: Dataset name      |
         |                           |
         | +-Grid------------------+ |
-        | | Dataset info          | |
+        | | Dataset doc           | |
         | +-----------------------+ |
         | | Image                 | |
         | +-----------------------+ |
@@ -516,34 +516,31 @@ class DatasetCard:
         |   .. grid:: 1 2 2 2
         |
         |      .. grid-item::
+        |         :columns: 8 6 6 6
+        |
+        |         {}
+        |
+        |      .. grid-item::
+        |         :columns: 4 6 6 6
         |
         |         {}
         |
         |      .. grid-item::
         |
-        |         {}
+        |         .. card::
+        |            :shadow: none
+        |
+        |            :octicon:`info` Dataset Info
+        |            ^^^
+        |            {}
         |
         |      .. grid-item::
-        |         :class: sd-text-center sd-pb-0 sd-mb-0
         |
-        |         :octicon:`info` **Dataset Info**
+        |         .. card::
         |
-        |         .. raw:: html
-        |
-        |            <hr />
-        |
-        |         {}
-        |
-        |      .. grid-item::
-        |         :class: sd-text-center sd-pb-0 sd-mb-0
-        |
-        |         :octicon:`file` **File Info**
-        |
-        |         .. raw:: html
-        |
-        |            <hr style="height: 2px"/>
-        |
-        |         {}
+        |            :octicon:`file` File Info
+        |            ^^^
+        |            {}
         |
         |   +++
         |   {}
@@ -554,6 +551,7 @@ class DatasetCard:
 
     HEADER_FOOTER_INDENT_LEVEL = 1
     GRID_ITEM_INDENT_LEVEL = 3
+    GRID_ITEM_FIELDS_INDENT_LEVEL = 4
     REF_ANCHOR_INDENT_LEVEL = 2
 
     # Template for dataset name and badges
@@ -599,6 +597,7 @@ class DatasetCard:
     image_template = _aligned_dedent(
         """
         |.. card::
+        |   :class-body: sd-px-0 sd-py-0
         |   :margin: 1
         |
         |   .. image:: /{}
@@ -634,7 +633,7 @@ class DatasetCard:
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-align-major-justify sd-px-1
+        |   :class-container: sd-d-flex-row sd-align-major-justify sd-px-0
         |   :margin: 1
         |   :gutter: 1
         |
@@ -659,7 +658,7 @@ class DatasetCard:
     field_grid_extra_values_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-align-major-end sd-px-1
+        |   :class-container: sd-d-flex-row sd-align-major-end sd-px-1
         |   :margin: 1
         |   :gutter: 1
         |
@@ -813,7 +812,7 @@ class DatasetCard:
             return _indent_multi_line_string(lines, indent_level=indent)
 
         dataset_field_block = _generate_field_block(
-            dataset_fields, indent=self.GRID_ITEM_INDENT_LEVEL
+            dataset_fields, indent=self.GRID_ITEM_FIELDS_INDENT_LEVEL
         )
         downloads_fields = [
             _generate_field_grid('File Size', file_size),
@@ -822,7 +821,7 @@ class DatasetCard:
             _generate_field_grid('Reader', reader_type),
         ]
         downloads_field_block = _generate_field_block(
-            downloads_fields, indent=self.GRID_ITEM_INDENT_LEVEL
+            downloads_fields, indent=self.GRID_ITEM_FIELDS_INDENT_LEVEL
         )
 
         # indent links one level from drop down
