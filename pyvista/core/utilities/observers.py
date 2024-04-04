@@ -1,7 +1,8 @@
 """Core error utilities."""
+
 import collections
 import logging
-import os
+from pathlib import Path
 import re
 import signal
 import sys
@@ -27,7 +28,7 @@ def set_error_output_file(filename):
         VTK output window.
 
     """
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = str(Path(filename).expanduser().resolve())
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
@@ -51,9 +52,9 @@ class VtkErrorCatcher:
     --------
     Catch VTK errors using the context manager.
 
-    >>> import pyvista
-    >>> with pyvista.VtkErrorCatcher() as error_catcher:
-    ...     sphere = pyvista.Sphere()
+    >>> import pyvista as pv
+    >>> with pv.VtkErrorCatcher() as error_catcher:
+    ...     sphere = pv.Sphere()
     ...
     """
 
@@ -72,7 +73,7 @@ class VtkErrorCatcher:
         obs.observe(error_output)
         self._observer = obs
 
-    def __exit__(self, type, val, tb):
+    def __exit__(self, *args):
         """Stop observing VTK string output window."""
         error_win = _vtk.vtkOutputWindow()
         error_win.SetInstance(self._error_output_orig)
@@ -106,7 +107,7 @@ class Observer:
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
-        except:  # noqa: E722
+        except:
             return '', '', '', message
 
     def log_message(self, kind, alert):
@@ -116,7 +117,7 @@ class Observer:
         else:
             logging.warning(alert)
 
-    def __call__(self, obj, event, message):
+    def __call__(self, _obj, _event, message):
         """Declare standard call function for the observer.
 
         On an event occurrence, this function executes.
@@ -135,7 +136,7 @@ class Observer:
         except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
-                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                    message = f'{message[:100]!r} ... ({len(message)} characters)'
                 else:
                     message = repr(message)
                 print(
@@ -203,15 +204,12 @@ class ProgressMonitor:
     message : str, default: ""
         Message to display in the progress bar.
 
-    scaling : float, optional
-        Unused keyword argument.
-
     """
 
-    def __init__(self, algorithm, message="", scaling=None):
+    def __init__(self, algorithm, message=""):
         """Initialize observer."""
         try:
-            from tqdm import tqdm  # noqa
+            from tqdm import tqdm  # noqa: F401
         except ImportError:
             raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = _vtk.vtkCommand.ProgressEvent
@@ -229,7 +227,7 @@ class ProgressMonitor:
         self._interrupt_signal_received = (sig, frame)
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
-    def __call__(self, obj, event, *args):
+    def __call__(self, obj, *args):
         """Call progress update callback.
 
         On an event occurrence, this function executes.
@@ -256,7 +254,7 @@ class ProgressMonitor:
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, *args):
         """Exit event for ``with`` context."""
         self._progress_bar.total = 1
         self._progress_bar.refresh()

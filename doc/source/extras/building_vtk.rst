@@ -1,4 +1,4 @@
-.. _ref_building_vtk:
+.. _building_vtk:
 
 Building VTK
 ============
@@ -93,7 +93,7 @@ framebuffer. The default VTK wheels are not built with this feature,
 but you can build VTK for off-screen plotting using GPU support by
 modifying the above ``cmake`` command with:
 
-.. code::
+.. code-block:: bash
 
    #!/bin/bash
 
@@ -145,7 +145,7 @@ Building OSMesa
 OSMesa provides higher visualization performance on CPU based hosts. Use this
 instead of ``xvfb``:
 
-.. code::
+.. code-block:: bash
 
    sudo apt-get install libosmesa6-dev cmake ninja-build
 

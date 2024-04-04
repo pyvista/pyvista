@@ -1,4 +1,5 @@
 """Internal vtkAlgorithm support helpers."""
+
 import traceback
 
 import numpy as np
@@ -112,7 +113,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
 
         Parameters
         ----------
-        inInfo : _vtk.vtkInformation
+        inInfo : vtk.vtkInformation
             The information object associated with the input port.
 
         port : int
@@ -132,18 +133,18 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         return inp
 
     # THIS IS CRUCIAL to preserve data type through filter
-    def RequestDataObject(self, request, inInfo, outInfo):
+    def RequestDataObject(self, _request, inInfo, outInfo):
         """Preserve data type.
 
         Parameters
         ----------
-        request : _vtk.vtkInformation
+        _request : vtk.vtkInformation
             The request object for the filter.
 
-        inInfo : _vtk.vtkInformationVector
+        inInfo : vtk.vtkInformationVector
             The input information vector for the filter.
 
-        outInfo : _vtk.vtkInformationVector
+        outInfo : vtk.vtkInformationVector
             The output information vector for the filter.
 
         Returns
@@ -189,12 +190,12 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         self.scalars_name = name
         self.preference = preference
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo):
         """Perform algorithm execution.
 
         Parameters
         ----------
-        request : vtk.vtkInformation
+        _request : vtk.vtkInformation
             The request object.
         inInfo : vtk.vtkInformationVector
             Information about the input data.
@@ -237,17 +238,17 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkPolyData',
         )
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo):
         """
         Perform algorithm execution.
 
         Parameters
         ----------
-        request : vtkInformation
+        _request : vtk.vtkInformation
             Information associated with the request.
-        inInfo : vtkInformationVector
+        inInfo : vtk.vtkInformationVector
             Information about the input data.
-        outInfo : vtkInformationVector
+        outInfo : vtk.vtkInformationVector
             Information about the output data.
 
         Returns
@@ -294,19 +295,17 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo):
         """
         Perform algorithm execution.
 
         Parameters
         ----------
-        request : RequestType
-            The request to be processed.
-
-        inInfo : InInfoType
+        _request : vtk.vtkInformation
+            Information associated with the request.
+        inInfo : vtk.vtkInformationVector
             Information about the input data.
-
-        outInfo : OutInfoType
+        outInfo : vtk.vtkInformationVector
             Information about the output data.
 
         Returns
@@ -346,16 +345,16 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkUnstructuredGrid',
         )
 
-    def RequestData(self, request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo):
         """Perform algorithm execution based on the input data and produce the output.
 
         Parameters
         ----------
-        request : vtkInformation
+        _request : vtk.vtkInformation
             The request information associated with the algorithm.
-        inInfo : vtkInformationVector
+        inInfo : vtk.vtkInformationVector
             Information vector describing the input data.
-        outInfo : vtkInformationVector
+        outInfo : vtk.vtkInformationVector
             Information vector where the output data should be placed.
 
         Returns

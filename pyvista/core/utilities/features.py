@@ -99,6 +99,115 @@ def voxelize(mesh, density=None, check_surface=True):
     return vox
 
 
+def voxelize_volume(mesh, density=None, check_surface=True):
+    """Voxelize mesh to create a RectilinearGrid voxel volume.
+
+    Creates a voxel volume that encloses the input mesh and discretizes the cells
+    within the volume that intersect or are contained within the input mesh.
+    ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
+    density : float | array_like[float]
+        The uniform size of the voxels when single float passed.
+        Nonuniform voxel size if a list of values are passed along x,y,z directions.
+        Defaults to 1/100th of the mesh length.
+
+    check_surface : bool, default: True
+        Specify whether to check the surface for closure. If on, then the
+        algorithm first checks to see if the surface is closed and
+        manifold. If the surface is not closed and manifold, a runtime
+        error is raised.
+
+    Returns
+    -------
+    pyvista.RectilinearGrid
+        RectilinearGrid as voxelized volume with discretized cells.
+
+    See Also
+    --------
+    pyvista.voxelize
+    pyvista.DataSetFilters.select_enclosed_points
+
+    Examples
+    --------
+    Create an equal density voxel volume from input mesh.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+
+    Load file from PyVista examples.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_cow()
+
+    Create an equal density voxel volume and plot the result.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)
+    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    Slice the voxel volume to view ``InsideMesh``.
+
+    >>> slices = vox.slice_orthogonal()
+    >>> slices.plot(scalars='InsideMesh', show_edges=True)
+
+    Create a voxel volume from unequal density dimensions and plot result.
+
+    >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    Slice the unequal density voxel volume to view ``InsideMesh``.
+
+    >>> slices = vox.slice_orthogonal()
+    >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    """
+    mesh = wrap(mesh)
+    if density is None:
+        density = mesh.length / 100
+    if isinstance(density, (int, float, np.number)):
+        density_x, density_y, density_z = [density] * 3
+    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
+        density_x, density_y, density_z = density
+    else:
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+
+    # check and pre-process input mesh
+    surface = mesh.extract_geometry()  # filter preserves topology
+    if not surface.faces.size:
+        # we have a point cloud or an empty mesh
+        raise ValueError('Input mesh must have faces for voxelization.')
+    if not surface.is_all_triangles:
+        # reduce chance for artifacts, see gh-1743
+        surface.triangulate(inplace=True)
+
+    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+    x = np.arange(x_min, x_max, density_x)
+    y = np.arange(y_min, y_max, density_y)
+    z = np.arange(z_min, z_max, density_z)
+
+    # Create a RectilinearGrid
+    voi = pyvista.RectilinearGrid(x, y, z)
+
+    # get part of the mesh within the mesh's bounding surface.
+    selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
+    mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
+
+    # Get voxels that fall within input mesh boundaries
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+
+    # Create new element of grid where all cells _within_ mesh boundary are
+    # given new name 'MeshCells' and a discrete value of 1
+    voi['InsideMesh'] = np.zeros(voi.n_cells)
+    voi['InsideMesh'][cell_ids] = 1
+
+    return voi
+
+
 def create_grid(dataset, dimensions=(101, 101, 101)):
     """Create a uniform grid surrounding the given dataset.
 
@@ -222,11 +331,11 @@ def cartesian_to_spherical(x, y, z):
     r : numpy.ndarray
         Radial distance.
 
-    theta : numpy.ndarray
+    phi : numpy.ndarray
         Angle (radians) with respect to the polar axis. Also known
         as polar angle.
 
-    phi : numpy.ndarray
+    theta : numpy.ndarray
         Angle (radians) of rotation from the initial meridian plane.
         Also known as azimuthal angle.
 
@@ -236,15 +345,43 @@ def cartesian_to_spherical(x, y, z):
     >>> import pyvista as pv
     >>> grid = pv.ImageData(dimensions=(3, 3, 3))
     >>> x, y, z = grid.points.T
-    >>> r, theta, phi = pv.cartesian_to_spherical(x, y, z)
+    >>> r, phi, theta = pv.cartesian_to_spherical(x, y, z)
 
     """
     xy2 = x**2 + y**2
     r = np.sqrt(xy2 + z**2)
-    theta = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
-    phi = np.arctan2(y, x)  # the azimuth angle in radian angles
+    phi = np.arctan2(np.sqrt(xy2), z)  # the polar angle in radian angles
+    theta = np.arctan2(y, x)  # the azimuth angle in radian angles
 
-    return r, theta, phi
+    return r, phi, theta
+
+
+def spherical_to_cartesian(r, phi, theta):
+    """Convert Spherical coordinates to 3D Cartesian coordinates.
+
+    Parameters
+    ----------
+    r : numpy.ndarray
+        Radial distance.
+
+    phi : numpy.ndarray
+        Angle (radians) with respect to the polar axis. Also known
+        as polar angle.
+
+    theta : numpy.ndarray
+        Angle (radians) of rotation from the initial meridian plane.
+        Also known as azimuthal angle.
+
+    Returns
+    -------
+    numpy.ndarray, numpy.ndarray, numpy.ndarray
+        Cartesian coordinates.
+    """
+    s = np.sin(phi)
+    x = r * s * np.cos(theta)
+    y = r * s * np.sin(theta)
+    z = r * np.cos(phi)
+    return x, y, z
 
 
 def merge(
@@ -287,10 +424,10 @@ def merge(
     --------
     Merge two polydata datasets.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere(center=(0, 0, 1))
-    >>> cube = pyvista.Cube()
-    >>> mesh = pyvista.merge([cube, sphere])
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere(center=(0, 0, 1))
+    >>> cube = pv.Cube()
+    >>> mesh = pv.merge([cube, sphere])
     >>> mesh.plot()
 
     """
@@ -361,12 +498,12 @@ def perlin_noise(amplitude, freq: Sequence[float], phase: Sequence[float]):
     Create a Perlin noise function with an amplitude of 0.1, frequency
     for all axes of 1, and a phase of 0 for all axes.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
 
     Sample Perlin noise over a structured grid and plot it.
 
-    >>> grid = pyvista.sample_function(noise, [0, 5, 0, 5, 0, 5])
+    >>> grid = pv.sample_function(noise, [0, 5, 0, 5, 0, 5])
     >>> grid.plot()
 
     """
@@ -382,7 +519,7 @@ def sample_function(
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,
-    output_type: np.dtype = np.double,  # type: ignore
+    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = "scalars",
@@ -459,9 +596,9 @@ def sample_function(
     --------
     Sample Perlin noise over a structured grid in 3D.
 
-    >>> import pyvista
-    >>> noise = pyvista.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-    >>> grid = pyvista.sample_function(
+    >>> import pyvista as pv
+    >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
+    >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
     >>> grid.plot(
@@ -470,8 +607,8 @@ def sample_function(
 
     Sample Perlin noise in 2D and plot it.
 
-    >>> noise = pyvista.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
-    >>> surf = pyvista.sample_function(noise, dim=(200, 200, 1))
+    >>> noise = pv.perlin_noise(0.1, (5, 5, 5), (0, 0, 0))
+    >>> surf = pv.sample_function(noise, dim=(200, 200, 1))
     >>> surf.plot()
 
     See :ref:`perlin_noise_2d_example` for a full example using this function.

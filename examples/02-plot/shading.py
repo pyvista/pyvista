@@ -6,6 +6,7 @@ Types of Shading
 
 Comparison of default, flat shading vs. smooth shading.
 """
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista
 from pyvista import examples
@@ -58,6 +59,12 @@ pl.show()
 # physically based rendering as well.
 
 # plot both the edges and the smoothed mesh
+
+# sphinx_gallery_start_ignore
+# physically based rendering does not work in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pyvista.Plotter()
 pl.enable_anti_aliasing()
 pl.add_mesh(mesh, color='w', split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5)

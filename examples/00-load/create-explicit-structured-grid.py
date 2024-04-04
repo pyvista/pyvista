@@ -1,10 +1,11 @@
 """
-.. _ref_create_explicit_structured_grid:
+.. _create_explicit_structured_grid:
 
 Creating an Explicit Structured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create an explicit structured grid from NumPy arrays.
+Create an explicit structured grid from NumPy arrays using
+:class:`pyvista.ExplicitStructuredGrid`.
 
 """
 

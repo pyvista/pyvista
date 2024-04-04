@@ -13,6 +13,11 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# point gaussian does not work in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Compare the Plotting methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

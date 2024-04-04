@@ -1,4 +1,5 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
+
 import numpy as np
 
 import pyvista
@@ -53,7 +54,7 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
         >>> voi_1 = grid.extract_subset(
@@ -107,7 +108,7 @@ class StructuredGridFilters(DataSetFilters):
         Split a grid in half and join them.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> grid = examples.load_structured()
         >>> voi_1 = grid.extract_subset(

@@ -78,3 +78,8 @@ linkcheck:
 
 linkcheck-grep:
 	@! grep -h "^.*:.*: \[\(\(local\)\|\(broken\)\)\]" _build/linkcheck/output.txt
+
+# Spin up a local http server to view the rendered documentation.
+# This is required for interactive examples to work.
+serve-html:
+	python -m http.server 11000 --directory "$(BUILDDIR)"/html

@@ -7,6 +7,7 @@ This is necessary for future versions of PyVista that will fully
 decouple the ``core`` and ``plotting`` APIs.
 
 """
+
 import numpy as np
 
 import pyvista
@@ -34,7 +35,6 @@ def plot(
     return_cpos=False,
     jupyter_kwargs=None,
     theme=None,
-    hidden_line_removal=None,
     anti_aliasing=None,
     zoom=None,
     border=False,
@@ -130,12 +130,6 @@ def plot(
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
-
-    hidden_line_removal : bool, default: :attr:`pyvista.plotting.themes.Theme.hidden_line_removal`
-        Wireframe geometry will be drawn using hidden line removal if
-        the rendering engine supports it.  See
-        :func:`Plotter.enable_hidden_line_removal
-        <Plotter.enable_hidden_line_removal>`.
 
     anti_aliasing : str | bool, default: :attr:`pyvista.plotting.themes.Theme.anti_aliasing`
         Enable or disable anti-aliasing. If ``True``, uses ``"msaa"``. If False,
@@ -234,7 +228,10 @@ def plot(
     if show_axes is None:
         show_axes = pl.theme.axes.show
     if show_axes:
-        pl.add_axes()
+        if pl.theme.axes.box:
+            pl.add_box_axes()
+        else:
+            pl.add_axes()
 
     if anti_aliasing:
         if anti_aliasing is True:

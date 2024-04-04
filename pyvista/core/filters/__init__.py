@@ -5,7 +5,7 @@ can easily apply common filters in an intuitive manner.
 
 Examples
 --------
->>> import pyvista
+>>> import pyvista as pv
 >>> from pyvista import examples
 >>> dataset = examples.load_uniform()
 
@@ -22,6 +22,7 @@ Examples
 >>> iso = dataset.contour()
 
 """
+
 # flake8: noqa: F401
 
 import pyvista
@@ -60,7 +61,7 @@ from .composite import CompositeFilters
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
 from .data_set import DataSetFilters
-from .image_data import ImageDataFilters, UniformGridFilters
+from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters
 from .rectilinear_grid import RectilinearGridFilters
 from .structured_grid import StructuredGridFilters
@@ -75,6 +76,5 @@ __all__ = [
     'RectilinearGridFilters',
     'StructuredGridFilters',
     'ImageDataFilters',
-    'UniformGridFilters',
     'UnstructuredGridFilters',
 ]

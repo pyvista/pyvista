@@ -1,6 +1,7 @@
 """Module managing picking events."""
+
 from functools import partial, wraps
-from typing import Tuple
+from typing import Tuple, cast
 import warnings
 import weakref
 
@@ -27,7 +28,7 @@ PICKED_REPRESENTATION_NAMES = {
 }
 
 
-def _launch_pick_event(interactor, event):
+def _launch_pick_event(interactor, _event):
     """Create a Pick event based on coordinate or left-click."""
     click_x, click_y = interactor.GetEventPosition()
     click_z = 0
@@ -71,7 +72,7 @@ class RectangleSelection:
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         frustum_source.Update()
-        return pyvista.wrap(frustum_source.GetOutput())
+        return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
 
     @property
     def viewport(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
@@ -161,7 +162,7 @@ class PointPickingElementHandler:
         """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
-            for i, face in enumerate(cell.faces):
+            for face in cell.faces:
                 contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
                 if contains > -1:
                     break
@@ -169,7 +170,7 @@ class PointPickingElementHandler:
                 # this shouldn't happen
                 raise RuntimeError('Trouble aligning point with face.')
             face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([i])
+            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
@@ -473,7 +474,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self_ = weakref.ref(self)
 
-        def _end_pick_event(picker, event):
+        def _end_pick_event(picker, _event):
             if (
                 not pickable_window
                 and hasattr(picker, 'GetDataSet')
@@ -514,7 +515,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             self.iren.picker = picker
         if hasattr(self.iren.picker, 'SetTolerance'):
             self.iren.picker.SetTolerance(tolerance)
-        self.iren.add_pick_obeserver(_end_pick_event)
+        self.iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
         self._picker_in_use = True
 
@@ -543,7 +544,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     ):
         """Enable rectangle based picking at cells.
 
-        Press ``"r"`` to enable retangle based selection. Press
+        Press ``"r"`` to enable rectangle based selection. Press
         ``"r"`` again to turn it off.
 
         Picking with the rectangle selection tool provides two values that
@@ -631,7 +632,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         self.enable_rubber_band_style()  # TODO: better handle?
         self.iren.picker = 'rendered'
-        self.iren.add_pick_obeserver(_end_pick_helper)
+        self.iren.add_pick_observer(_end_pick_helper)
         self._picker_in_use = True
 
         # Now add text about cell-selection
@@ -895,28 +896,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             clear_on_no_selection=clear_on_no_selection,
         )
 
-    def enable_surface_picking(self, *args, **kwargs):
-        """Surface picking.
-
-        .. deprecated:: 0.40.0
-            This method has been renamed to ``enable_surface_point_picking``.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments.
-
-        **kwargs : dict
-            Keyword arguments.
-
-        """
-        # Deprecated on v0.40.0, estimated removal on v0.42.0
-        warnings.warn(
-            "This method has been renamed to `enable_surface_point_picking`.",
-            PyVistaDeprecationWarning,
-        )
-        self.enable_surface_point_picking(*args, **kwargs)
-
     def enable_mesh_picking(
         self,
         callback=None,
@@ -1015,7 +994,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(_, picker):  # numpydoc ignore=GL08
+        def end_pick_call_back(*args):  # numpydoc ignore=GL08
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)
@@ -1129,7 +1108,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
-                # Inidcates invalid pick
+                # Indicates invalid pick
                 with self_().iren.poked_subplot():
                     self_()._clear_picking_representations()
                 return
@@ -1167,9 +1146,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.Update()
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
-            if picked.n_blocks == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif picked.n_blocks == 1:
                 self_()._picked_cell = picked[0]
@@ -1245,7 +1222,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         def finalize(picked):  # numpydoc ignore=GL08
             if picked is None:
-                # Inidcates invalid pick
+                # Indicates invalid pick
                 with self_().iren.poked_subplot():
                     self_()._clear_picking_representations()
                 return
@@ -1310,9 +1287,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
                 selection.UnRegister(selection)
 
-            if len(picked) == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if len(picked) == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif len(picked) == 1:
                 self_()._picked_cell = picked[0]
@@ -1347,7 +1322,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     ):
         """Enable picking of cells with a rectangle selection tool.
 
-        Press ``"r"`` to enable retangle based selection.  Press
+        Press ``"r"`` to enable rectangle based selection.  Press
         ``"r"`` again to turn it off. Selection will be saved to
         ``self.picked_cells``.
 

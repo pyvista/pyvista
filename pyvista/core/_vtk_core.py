@@ -7,7 +7,11 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+
 # flake8: noqa: F401
+
+from collections import namedtuple
+import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
 
@@ -205,6 +209,7 @@ except ImportError:  # pragma: no cover
 from vtkmodules.vtkCommonExecutionModel import (
     vtkAlgorithm,
     vtkAlgorithmOutput,
+    vtkCompositeDataPipeline,
     vtkImageToStructuredGrid,
 )
 from vtkmodules.vtkCommonMath import vtkMatrix3x3, vtkMatrix4x4
@@ -307,13 +312,14 @@ from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
 
 try:
     from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
-except ModuleNotFoundError:  # pragma: no cover
+except ImportError:  # pragma: no cover
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
     pass
 from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import (
     vtkArcSource,
     vtkArrowSource,
+    vtkCapsuleSource,
     vtkConeSource,
     vtkCubeSource,
     vtkCylinderSource,
@@ -334,6 +340,11 @@ from vtkmodules.vtkFiltersSources import (
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
+
+try:
+    from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
+except ImportError:  # pragma: no cover
+    pass
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
@@ -383,14 +394,18 @@ from vtkmodules.vtkImagingCore import (
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
-from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+
+try:
+    from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
+except ImportError:  # pragma: no cover
+    pass
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
 except ImportError:  # pragma: no cover
     # `vtkmodules.vtkPythonContext2D` is unavailable in some versions of `vtk` (see #3224)
 
-    class vtkPythonItem:  # type: ignore
+    class vtkPythonItem:  # type: ignore[no-redef]
         """Empty placeholder."""
 
         def __init__(self):  # pragma: no cover
@@ -412,3 +427,40 @@ try:
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
 except ImportError:  # pragma: no cover
     pass
+
+try:  # Introduced prior to VTK 9.3
+    from vtkmodules.vtkRenderingCore import vtkViewport
+except ImportError:  # pragma: no cover
+    pass
+
+# 9.3+ imports
+try:
+    from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
+except ImportError:  # pragma: no cover
+    pass
+
+
+def VTKVersionInfo():
+    """Return the vtk version as a namedtuple.
+
+    Returns
+    -------
+    collections.namedtuple
+        Version information as a named tuple.
+
+    """
+    version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
+
+    try:
+        ver = vtkVersion()
+        major = ver.GetVTKMajorVersion()
+        minor = ver.GetVTKMinorVersion()
+        micro = ver.GetVTKBuildVersion()
+    except AttributeError:  # pragma: no cover
+        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        major, minor, micro = (4, 0, 0)
+
+    return version_info(major, minor, micro)
+
+
+vtk_version_info = VTKVersionInfo()

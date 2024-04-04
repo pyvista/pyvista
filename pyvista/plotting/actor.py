@@ -1,11 +1,8 @@
 """Wrap vtkActor module."""
 
-from typing import Optional, Union
+from typing import Optional
 
-import numpy as np
-
-import pyvista as pv
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -53,7 +50,7 @@ class Actor(Prop3D, _vtk.vtkActor):
       X Bounds                    -4.993E-01, 4.993E-01
       Y Bounds                    -4.965E-01, 4.965E-01
       Z Bounds                    -5.000E-01, 5.000E-01
-      User matrix:                Unset
+      User matrix:                Set
       Has mapper:                 True
     ...
 
@@ -88,6 +85,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        else:
+            self.prop = prop
         self._name = name
 
     @property
@@ -138,7 +137,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
-        return self.SetMapper(obj)
+        self.SetMapper(obj)
 
     @property
     def prop(self):  # numpydoc ignore=RT01
@@ -179,7 +178,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> plane = pv.Plane()
-        >>> plane.active_t_coords is not None
+        >>> plane.active_texture_coordinates is not None
         True
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane)
@@ -223,7 +222,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @pickable.setter
     def pickable(self, value):  # numpydoc ignore=GL08
-        return self.SetPickable(value)
+        self.SetPickable(value)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -246,7 +245,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @visibility.setter
     def visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetVisibility(value)
+        self.SetVisibility(value)
 
     def plot(self, **kwargs):
         """Plot just the actor.
@@ -272,7 +271,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         >>> actor.plot()
 
         """
-        pl = pv.Plotter()
+        pl = pyvista.Plotter()
         pl.add_actor(self)
         pl.show(**kwargs)
 
@@ -343,54 +342,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def user_matrix(self) -> Optional[np.ndarray]:  # numpydoc ignore=RT01
-        """Return or set the orientation matrix.
-
-        Examples
-        --------
-        Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
-        is effectively translates the actor by one unit in the Z direction,
-        rotates the actor about the Z axis by approximately 45 degrees, and
-        shrinks the actor by a factor of 0.5.
-
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> arr = np.array(
-        ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2],
-        ...     ]
-        ... )
-        >>> actor.user_matrix = arr
-        >>> pl.show_axes()
-        >>> pl.show()
-
-        """
-        mat = self.GetUserMatrix()
-        if mat is not None:
-            mat = array_from_vtkmatrix(mat)
-        return mat
-
-    @user_matrix.setter
-    def user_matrix(self, value: Union[_vtk.vtkMatrix4x4, np.ndarray]):  # numpydoc ignore=GL08
-        if isinstance(value, np.ndarray):
-            value = vtkmatrix_from_array(value)
-        self.SetUserMatrix(value)
-
-    @property
-    def backface_prop(self) -> Optional['pv.Property']:  # numpydoc ignore=RT01
+    def backface_prop(self) -> Optional['pyvista.Property']:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -431,5 +383,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pv.Property'):  # numpydoc ignore=GL08
+    def backface_prop(self, value: 'pyvista.Property'):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

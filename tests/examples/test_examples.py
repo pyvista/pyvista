@@ -1,4 +1,5 @@
 """Test examples that do not require downloading."""
+
 import numpy as np
 import pytest
 
@@ -40,9 +41,8 @@ def test_load_spline():
     assert mesh.n_points
 
 
-def test_load_random_hills():
-    mesh = examples.load_random_hills()
-    assert mesh.n_cells
+def test_load_random_hills(random_hills):
+    assert random_hills.n_cells
 
 
 def test_load_tetbeam():
@@ -78,3 +78,8 @@ def test_load_hydrogen_orbital():
     assert orbital.point_data['wf'].dtype == np.complex128
     assert 'real_wf' in orbital.point_data
     assert orbital.point_data['real_wf'].dtype == np.float64
+
+
+def test_load_logo():
+    mesh = examples.load_logo()
+    assert mesh.n_points

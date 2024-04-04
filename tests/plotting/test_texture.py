@@ -4,7 +4,7 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
+from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.texture import numpy_to_texture
 
 
@@ -85,11 +85,6 @@ def test_skybox_example():
 
     skybox = texture.to_skybox()
     assert isinstance(skybox, vtk.vtkOpenGLSkybox)
-
-
-def test_flip_deprecated(texture):
-    with pytest.warns(PyVistaDeprecationWarning, match='flip_x'):
-        _ = texture.flip(0)
 
 
 def test_flip_x(texture):
@@ -188,11 +183,12 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, 3), np.float32)
-    with pytest.raises(ValueError, match='Invalid datatype'):
-        if as_str:
-            sphere.point_data['texture'] = texture
+    if as_str:
+        sphere.point_data['texture'] = texture
+        with pytest.raises(ValueError, match='Invalid datatype'):
             sphere.save(filename, texture='texture')
-        else:
+    else:
+        with pytest.raises(ValueError, match='Invalid datatype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):
@@ -215,14 +211,14 @@ def test_texture_coordinates():
     faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
 
     # Create simple texture coordinates
-    t_coords = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+    texture_coordinates = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
     # Create the poly data
     mesh = pv.PolyData(vertices, faces)
     # Attempt setting the texture coordinates
-    mesh.active_t_coords = t_coords
+    mesh.active_texture_coordinates = texture_coordinates
     # now grab the texture coordinates
-    foo = mesh.active_t_coords
-    assert np.allclose(foo, t_coords)
+    foo = mesh.active_texture_coordinates
+    assert np.allclose(foo, texture_coordinates)
 
 
 def test_multiple_texture_coordinates():
@@ -237,4 +233,4 @@ def test_inplace_no_overwrite_texture_coordinates():
     truth = mesh.texture_map_to_plane(inplace=False)
     mesh.texture_map_to_sphere(inplace=True)
     test = mesh.texture_map_to_plane(inplace=True)
-    assert np.allclose(truth.active_t_coords, test.active_t_coords)
+    assert np.allclose(truth.active_texture_coordinates, test.active_texture_coordinates)

@@ -18,6 +18,11 @@ def actor():
 
 
 @pytest.fixture()
+def actor_from_multi_block():
+    return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
+
+
+@pytest.fixture()
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -37,6 +42,16 @@ def test_actor_init_empty():
         actor.not_an_attribute = None
 
     assert actor.memory_address == actor.GetAddressAsString("")
+
+
+def test_actor_from_argument():
+    mapper = pv.DataSetMapper()
+    prop = pv.Property()
+    name = 'Actor'
+    actor = pv.Actor(mapper=mapper, prop=prop, name=name)
+    assert actor.mapper is mapper
+    assert actor.prop is prop
+    assert actor.name == name
 
 
 def test_actor_from_plotter():
@@ -66,6 +81,14 @@ def test_actor_copy_shallow(actor):
     assert actor_copy is not actor
     assert actor_copy.prop is actor.prop
     assert actor_copy.mapper is actor.mapper
+
+
+def test_actor_mblock_copy_shallow(actor_from_multi_block):
+    actor_copy = actor_from_multi_block.copy(deep=False)
+    assert actor_copy is not actor_from_multi_block
+    assert actor_copy.prop is actor_from_multi_block.prop
+    assert actor_copy.mapper is actor_from_multi_block.mapper
+    assert actor_copy.mapper.dataset is actor_from_multi_block.mapper.dataset
 
 
 @skip_mac
@@ -122,7 +145,7 @@ def test_actor_orientation(actor):
 
 
 def test_actor_unit_matrix(actor):
-    assert actor.user_matrix is None
+    assert np.allclose(actor.user_matrix, np.eye(4))
 
     arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
 

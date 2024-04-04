@@ -3,6 +3,9 @@
 The data objects does not have any sort of spatial reference.
 
 """
+
+from typing import Optional, Tuple
+
 import numpy as np
 
 import pyvista
@@ -23,7 +26,7 @@ class Table(_vtk.vtkTable, DataObject):
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> arrays = np.random.rand(100, 3)
+    >>> arrays = np.random.default_rng().random((100, 3))
     >>> table = pv.Table(arrays)
 
     """
@@ -244,7 +247,7 @@ class Table(_vtk.vtkTable, DataObject):
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, field, key):
+    def _remove_array(self, _, key):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
@@ -339,8 +342,10 @@ class Table(_vtk.vtkTable, DataObject):
             "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
         )
 
-    def get_data_range(self, arr=None, preference='row'):
-        """Get the non-NaN min and max of a named array.
+    def get_data_range(
+        self, arr: Optional[str] = None, preference: str = 'row'
+    ) -> Tuple[float, float]:
+        """Get the min and max of a named array.
 
         Parameters
         ----------

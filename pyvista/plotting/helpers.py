@@ -5,6 +5,7 @@ from typing import Tuple
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.helpers import is_pyvista_dataset
 
 
@@ -37,18 +38,18 @@ def plot_arrows(cent, direction, **kwargs):
     Plot a single random arrow.
 
     >>> import numpy as np
-    >>> import pyvista
-    >>> cent = np.random.random(3)
-    >>> direction = np.random.random(3)
-    >>> pyvista.plot_arrows(cent, direction)
+    >>> import pyvista as pv
+    >>> cent = np.random.default_rng().random(3)
+    >>> direction = np.random.default_rng().random(3)
+    >>> pv.plot_arrows(cent, direction)
 
     Plot 100 random arrows.
 
     >>> import numpy as np
-    >>> import pyvista
-    >>> cent = np.random.random((100, 3))
-    >>> direction = np.random.random((100, 3))
-    >>> pyvista.plot_arrows(cent, direction)
+    >>> import pyvista as pv
+    >>> cent = np.random.default_rng().random((100, 3))
+    >>> direction = np.random.default_rng().random((100, 3))
+    >>> pv.plot_arrows(cent, direction)
 
     """
     return pyvista.plot([cent, direction], **kwargs)
@@ -142,7 +143,7 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, negative: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def view_vectors(view: str, negative: bool = False) -> Tuple[NumpyArray[int], NumpyArray[int]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

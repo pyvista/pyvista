@@ -1,4 +1,4 @@
-.. _ref_light_examples:
+.. _light_examples:
 
 Lighting
 --------

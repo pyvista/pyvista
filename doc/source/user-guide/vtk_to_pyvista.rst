@@ -128,12 +128,13 @@ However, with PyVista you only need:
    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 ..
-   This is here so we can generate a plot. We have to repeat
-   everything since jupyter-execute doesn't allow for
-   plain text between command blocks.
+   This is here so we can generate a plot. We used to have to repeat
+   everything since jupyter-execute didn't allow for
+   plain text between command blocks. We have to try again with pyvista-plot.
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :include-source: false
+   :context:
 
    import pyvista as pv
    pv.set_plot_theme('document')
@@ -274,8 +275,10 @@ In the :class:`collision <pyvista.PolyDataFilters.collision>` filter,
 we demonstrate how to calculate the collision between two meshes. For
 example:
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :nofigs:
+   :include-source: false
 
    # must have this here as our global backend may not be static
    import pyvista
@@ -284,7 +287,8 @@ example:
    pyvista.global_theme.anti_aliasing = 'fxaa'
 
 
-.. jupyter-execute::
+.. pyvista-plot::
+   :context:
 
    import pyvista
 
@@ -312,7 +316,7 @@ you may want to use VTK classes directly.
 Note that nothing stops you from using VTK classes and then wrapping
 the output with PyVista. For example:
 
-.. jupyter-execute::
+.. pyvista-plot::
 
    import vtk
    import pyvista

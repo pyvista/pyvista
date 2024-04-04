@@ -1,4 +1,5 @@
 """Utilities routines."""
+
 # flake8: noqa: F401
 
 from .arrays import (
@@ -30,8 +31,10 @@ from .features import (
     merge,
     perlin_noise,
     sample_function,
+    spherical_to_cartesian,
     transform_vectors_sph_to_cart,
     voxelize,
+    voxelize_volume,
 )
 from .fileio import (
     from_meshio,
@@ -39,9 +42,7 @@ from .fileio import (
     is_meshio_mesh,
     read,
     read_exodus,
-    read_legacy,
     read_meshio,
-    read_plot3d,
     read_texture,
     save_meshio,
     set_pickle_format,
@@ -51,6 +52,7 @@ from .geometric_objects import (
     NORMALS,
     Arrow,
     Box,
+    Capsule,
     Circle,
     CircularArc,
     CircularArcFromNormal,
@@ -72,6 +74,8 @@ from .geometric_objects import (
     Pyramid,
     Quadrilateral,
     Rectangle,
+    SolidSphere,
+    SolidSphereGeneric,
     Sphere,
     Superquadric,
     Tetrahedron,
@@ -81,6 +85,28 @@ from .geometric_objects import (
     Wavelet,
     translate,
 )
+from .geometric_sources import (
+    ArrowSource,
+    BoxSource,
+    ConeSource,
+    CubeSource,
+    CylinderSource,
+    DiscSource,
+    LineSource,
+    MultipleLinesSource,
+    PlaneSource,
+    PlatonicSolidSource,
+    PolygonSource,
+    SphereSource,
+    SuperquadricSource,
+    Text3DSource,
+)
+
+try:
+    from .geometric_sources import CapsuleSource
+except ImportError:  # pragma: no cover
+    pass
+
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,

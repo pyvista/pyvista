@@ -7,6 +7,7 @@ Decimation
 Decimate a mesh
 
 """
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
@@ -41,6 +42,11 @@ pro_decimated.plot(cpos=cpos, **dargs)
 
 ###############################################################################
 # Side by side comparison:
+
+# sphinx_gallery_start_ignore
+# text missing in interactive
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 pl = pv.Plotter(shape=(1, 3))
 pl.add_mesh(mesh, **dargs)

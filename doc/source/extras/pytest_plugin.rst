@@ -1,4 +1,4 @@
-.. _ref_pytest_plugin_docs:
+.. _pytest_plugin_docs:
 
 PyVista pytest Plugin
 =====================

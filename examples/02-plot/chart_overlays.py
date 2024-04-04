@@ -20,6 +20,11 @@ import numpy as np
 
 import pyvista as pv
 
+# sphinx_gallery_start_ignore
+# chart background images do not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Data to display
 t = np.linspace(0, 5, 50)

@@ -1,4 +1,4 @@
-.. _filters_ref:
+.. _filters:
 
 Filters
 -------

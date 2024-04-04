@@ -1,11 +1,13 @@
 """Supporting functions for documentation build."""
+
 import inspect
 import os
 import os.path as op
 import sys
+from typing import Dict, Optional
 
 
-def linkcode_resolve(domain, info, edit=False):
+def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -22,7 +24,7 @@ def linkcode_resolve(domain, info, edit=False):
     Returns
     -------
     str
-        The code URL.
+        The code URL. Empty string if there is no valid link.
 
     Notes
     -----
@@ -72,8 +74,8 @@ def linkcode_resolve(domain, info, edit=False):
             return None
         return None
 
-    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
-    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows
+    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
+    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)
@@ -108,7 +110,7 @@ def pv_html_page_context(
 
     """
 
-    def fix_edit_link_button(link: str) -> str:
+    def fix_edit_link_button(link: str) -> Optional[str]:
         """Transform "edit on github" links to the correct url.
 
         This is specific to PyVista to ensure that the "edit this page" link

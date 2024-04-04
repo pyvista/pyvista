@@ -1,4 +1,5 @@
 """Jupyter notebook plotting module."""
+
 # flake8: noqa: F401
 
 import warnings
@@ -11,6 +12,7 @@ ALLOWED_BACKENDS = [
     'client',
     'server',
     'trame',
+    'html',
     'none',
 ]
 
@@ -38,7 +40,7 @@ def _validate_jupyter_backend(backend):
             f'Use one of the following:\n{backend_list_str}'
         )
 
-    if backend in ['server', 'client', 'trame']:
+    if backend in ['server', 'client', 'trame', 'html']:
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:  # pragma: no cover
@@ -79,6 +81,9 @@ def set_jupyter_backend(backend, name=None, **kwargs):
           ``'server'`` and ``'client'`` into one backend. This requires a
           virtual frame buffer.
 
+        * ``'html'`` : Export/serialize the scene graph to be rendered
+          with the Trame client backend but in a static HTML file.
+
         * ``'none'`` : Do not display any plots within jupyterlab,
           instead display using dedicated VTK render windows.  This
           will generate nothing on headless servers even with a
@@ -105,10 +110,3 @@ def set_jupyter_backend(backend, name=None, **kwargs):
 
     """
     pyvista.global_theme._jupyter_backend = _validate_jupyter_backend(backend)
-    if backend in ['server', 'client', 'trame']:
-        # Launch the trame server
-        from pyvista.trame.jupyter import elegantly_launch
-
-        if not name:
-            name = pyvista.global_theme.trame.jupyter_server_name
-        elegantly_launch(name, **kwargs)

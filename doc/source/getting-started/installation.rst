@@ -1,4 +1,4 @@
-.. _install_ref:
+.. _install:
 
 Installation
 ============
@@ -72,13 +72,13 @@ There may be features or bug-fixes that have been implemented in PyVista but
 have not made their way into a release. To install ``pyvista`` from the latest
 up-to-date development branch from github, use one of the following
 
-.. code::
+.. code-block:: bash
 
    pip install -U git+https://github.com/pyvista/pyvista.git@main
 
 Alternatively, you can clone the repository with git and install it with pip.
 
-.. code::
+.. code-block:: bash
 
    git clone https://github.com/pyvista/pyvista.git
    cd pyvista
@@ -214,7 +214,7 @@ time your Docker container is launched:
 
 All you have to do next is include PyVista in your Python requirements and you
 can get to visualizing your data. If you need more help than this on setting up
-PyVista for these types of services, hop on Slack and chat with the developers
+PyVista for these types of services, hop on Discussions page and chat with the developers
 or take a look at `this repository`_ that is currently using PyVista on
 MyBinder.
 

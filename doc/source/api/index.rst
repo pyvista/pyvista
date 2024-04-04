@@ -17,9 +17,9 @@ Highlights of the API include:
 
 * Pythonic interface to VTK's Python bindings
 * Filtering/plotting tools built for interactivity (see :ref:`widgets`)
-* Direct access to common VTK filters (see :ref:`filters_ref`)
+* Direct access to common VTK filters (see :ref:`filters`)
 * Intuitive plotting routines with `matplotlib`_ similar syntax (see
-  :ref:`plotting_ref`)
+  :ref:`plotting`)
 
 
 .. card:: Core API

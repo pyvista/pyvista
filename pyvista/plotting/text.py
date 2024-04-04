@@ -1,11 +1,12 @@
 """Contains the pyvista.Text class."""
+
 from __future__ import annotations
 
-import os
 import pathlib
+from pathlib import Path
 from typing import Sequence
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
@@ -29,7 +30,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     text : str
         Text input.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         Text property.
 
     linear_font_scale_factor : float, optional
@@ -111,7 +112,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
         Returns
         -------
-        TextProperty
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
@@ -150,7 +151,7 @@ class Text(_vtk.vtkTextActor):
     position : Sequence[float], optional
         The position coordinate.
 
-    prop : TextProperty, optional
+    prop : pyvista.TextProperty, optional
         The property of this actor.
 
     Examples
@@ -195,7 +196,7 @@ class Text(_vtk.vtkTextActor):
 
         Returns
         -------
-        str
+        pyvista.TextProperty
             Property of this actor.
         """
         return self.GetTextProperty()
@@ -229,7 +230,7 @@ class TextProperty(_vtk.vtkTextProperty):
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
 
-    color : ColorLike, optional
+    color : pyvista.ColorLike, optional
         Either a string, RGB list, or hex color string.  For example:
         ``color='white'``, ``color='w'``, ``color=[1.0, 1.0, 1.0]``, or
         ``color='#FFFFFF'``. Color will be overridden if scalars are
@@ -249,6 +250,26 @@ class TextProperty(_vtk.vtkTextProperty):
 
     shadow : bool, optional
         If enable the shadow.
+
+    justification_horizontal : str, optional
+        Text's horizontal justification.
+        Should be either "left", "center" or "right".
+
+    justification_vertical : str, optional
+        Text's vertical justification.
+        Should be either "bottom", "center" or "top".
+
+    italic : bool, default: False
+        Italicises title and bar labels.
+
+    bold : bool, default: True
+        Bolds title and bar labels.
+
+    background_color : pyvista.Color, optional
+        Background color of text.
+
+    background_opacity : pyvista.Color, optional
+        Background opacity of text.
 
     Examples
     --------
@@ -281,13 +302,19 @@ class TextProperty(_vtk.vtkTextProperty):
         font_size=None,
         font_file=None,
         shadow=False,
+        justification_horizontal=None,
+        justification_vertical=None,
+        italic=False,
+        bold=False,
+        background_color=None,
+        background_opacity=None,
     ):
         """Initialize text's property."""
         super().__init__()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
             # after creation.
-            self._theme.load_theme(pv.global_theme)
+            self._theme.load_theme(pyvista.global_theme)
         else:
             self._theme.load_theme(theme)
         self.color = color
@@ -300,6 +327,16 @@ class TextProperty(_vtk.vtkTextProperty):
             self.set_font_file(font_file)
         if shadow:
             self.enable_shadow()
+        if justification_horizontal is not None:
+            self.justification_horizontal = justification_horizontal
+        if justification_vertical is not None:
+            self.justification_vertical = justification_vertical
+        self.italic = italic
+        self.bold = bold
+        if background_color is not None:
+            self.background_color = background_color
+        if background_opacity is not None:
+            self.background_opacity = background_opacity
 
     @property
     def color(self) -> Color:
@@ -307,7 +344,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Color of text's property.
 
         """
@@ -343,7 +380,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Background color of text's property.
 
         """
@@ -363,7 +400,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         float
             Background opacity of the text. A single float value that will be applied globally.
-            background opacity of the text and uniformly applied everywhere. Between 0 and 1.
+            Background opacity of the text and uniformly applied everywhere. Between 0 and 1.
 
         """
         return self.GetBackgroundOpacity()
@@ -395,7 +432,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
         Returns
         -------
-        Color
+        pyvista.Color
             Frame color of text property.
         """
         return Color(self.GetFrameColor())
@@ -482,7 +519,97 @@ class TextProperty(_vtk.vtkTextProperty):
         """
         path = pathlib.Path(font_file)
         path = path.resolve()
-        if not os.path.isfile(path):
+        if not Path(path).is_file():
             raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
+
+    @property
+    def justification_horizontal(self) -> str:
+        """Text's justification horizontal.
+
+        Returns
+        -------
+        str
+            Text's horizontal justification.
+            Should be either "left", "center" or "right".
+        """
+        justification = self.GetJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        return justification
+
+    @justification_horizontal.setter
+    def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'left':
+            self.SetJustificationToLeft()
+        elif justification.lower() == 'center':
+            self.SetJustificationToCentered()
+        elif justification.lower() == 'right':
+            self.SetJustificationToRight()
+        else:
+            raise ValueError(
+                f'Invalid {justification} for justification_horizontal. '
+                'Should be either "left", "center" or "right".'
+            )
+
+    @property
+    def justification_vertical(self) -> str:
+        """Text's vertical justification.
+
+        Returns
+        -------
+        str
+            Text's vertical justification.
+            Should be either "bottom", "center" or "top".
+        """
+        justification = self.GetVerticalJustificationAsString().lower()
+        if justification == 'centered':
+            justification = 'center'
+        return justification
+
+    @justification_vertical.setter
+    def justification_vertical(self, justification: str):  # numpydoc ignore=GL08
+        if justification.lower() == 'bottom':
+            self.SetVerticalJustificationToBottom()
+        elif justification.lower() == 'center':
+            self.SetVerticalJustificationToCentered()
+        elif justification.lower() == 'top':
+            self.SetVerticalJustificationToTop()
+        else:
+            raise ValueError(
+                f'Invalid {justification} for justification_vertical. '
+                'Should be either "bottom", "center" or "top".'
+            )
+
+    @property
+    def italic(self) -> bool:
+        """Italic of text's property.
+
+        Returns
+        -------
+        bool
+            If text is italic.
+
+        """
+        return bool(self.GetItalic())
+
+    @italic.setter
+    def italic(self, italic: bool):  # numpydoc ignore=GL08
+        self.SetItalic(italic)
+
+    @property
+    def bold(self) -> bool:
+        """Bold of text's property.
+
+        Returns
+        -------
+        bool
+            If text is bold.
+
+        """
+        return bool(self.GetBold())
+
+    @bold.setter
+    def bold(self, bold: bool):  # numpydoc ignore=GL08
+        self.SetBold(bold)

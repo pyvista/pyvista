@@ -6,12 +6,11 @@ Customize Trame toolbar
 
 Bring more of the power of trame to the jupyter view.
 """
+
 import asyncio
 
-import vtk
-
 import pyvista as pv
-from pyvista.trame.ui.vuetify2 import button, divider, select, slider, text_field
+from pyvista.trame.ui.vuetify3 import button, divider, select, slider, text_field
 
 ###############################################################################
 # Let's first create the menu items we want to add to the trame's toolbar.
@@ -77,15 +76,14 @@ def button_play():
 
 
 ###############################################################################
-# We will do a simple rendering of a Cone using the vtk `vtkConeSouce`
-# algorithm.
+# We will do a simple rendering of a Cone using `ConeSouce`.
 #
 # When using the ``pl.show`` method. The function we created ``custom_tools``
 # should be passed as a ``jupyter_kwargs`` argument under the key
 # ``add_menu_items``.
 
 pl = pv.Plotter(notebook=True)
-algo = vtk.vtkConeSource()
+algo = pv.ConeSource()
 mesh_actor = pl.add_mesh(algo)
 
 widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
@@ -140,14 +138,14 @@ async def _play(play, **kwargs):
 
 @state.change("resolution")
 def update_resolution(resolution, **kwargs):
-    algo.SetResolution(resolution)
+    algo.resolution = resolution
     ctrl.view_update()
 
 
 @state.change("visibility")
 def set_visibility(visibility, **kwargs):
     toggle = {"Hide": 0, "Show": 1}
-    mesh_actor.SetVisibility(toggle[visibility])
+    mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()
 
 

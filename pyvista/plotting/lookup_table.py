@@ -1,9 +1,10 @@
 """Wrap vtkLookupTable."""
-from typing import Any, Optional, Tuple, Union
+
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -16,7 +17,7 @@ RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
-class lookup_table_ndarray(np.ndarray):
+class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
     """An ndarray which references the owning table and the underlying vtkArray.
 
     This class is used to ensure that the internal vtkLookupTable updates when
@@ -244,7 +245,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.annotations = annotations
 
     @property
-    def value_range(self) -> Optional[tuple]:  # numpydoc ignore=RT01
+    def value_range(self) -> Optional[Tuple[float, float]]:  # numpydoc ignore=RT01
         """Return or set the brightness of the mapped lookup table.
 
         This range is only used when creating custom color maps and will return
@@ -276,12 +277,12 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetValueRange()
 
     @value_range.setter
-    def value_range(self, value: tuple):  # numpydoc ignore=GL08
+    def value_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetValueRange(value)
         self.rebuild()
 
     @property
-    def hue_range(self) -> Optional[tuple]:  # numpydoc ignore=RT01
+    def hue_range(self) -> Optional[Tuple[float, float]]:  # numpydoc ignore=RT01
         """Return or set the hue range.
 
         This range is only used when creating custom color maps and will return
@@ -313,7 +314,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetHueRange()
 
     @hue_range.setter
-    def hue_range(self, value: tuple):  # numpydoc ignore=GL08
+    def hue_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetHueRange(value)
         self.rebuild()
 
@@ -389,7 +390,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return '\n'.join(lines)
 
     @property
-    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
+    def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the table range.
 
         This is the range of scalars which will be mapped to colors. Values
@@ -409,11 +410,11 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetTableRange()
 
     @scalar_range.setter
-    def scalar_range(self, value: tuple):  # numpydoc ignore=GL08
+    def scalar_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetTableRange(value)
 
     @property
-    def alpha_range(self) -> tuple:  # numpydoc ignore=RT01
+    def alpha_range(self) -> Optional[Tuple[float, float]]:  # numpydoc ignore=RT01
         """Return or set the alpha range.
 
         This range is only used when creating custom color maps and will return
@@ -438,12 +439,12 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetAlphaRange()
 
     @alpha_range.setter
-    def alpha_range(self, value: tuple):  # numpydoc ignore=GL08
+    def alpha_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetAlphaRange(value)
         self.rebuild()
 
     @property
-    def saturation_range(self) -> tuple:  # numpydoc ignore=RT01
+    def saturation_range(self) -> Optional[Tuple[float, float]]:  # numpydoc ignore=RT01
         """Return or set the saturation range.
 
         This range is only used when creating custom color maps and will return
@@ -468,7 +469,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return self.GetSaturationRange()
 
     @saturation_range.setter
-    def saturation_range(self, value: tuple):  # numpydoc ignore=GL08
+    def saturation_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetSaturationRange(value)
         self.rebuild()
 
@@ -539,7 +540,7 @@ class LookupTable(_vtk.vtkLookupTable):
             return
         color = self.nan_color
         if color is None:
-            color = Color(pv.global_theme.nan_color)
+            color = Color(pyvista.global_theme.nan_color)
         self.nan_color = Color(self.nan_color, opacity=value)
 
     @property
@@ -632,7 +633,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if value in (None, False):
             self.SetUseAboveRangeColor(False)
         elif value is True:
-            self.SetAboveRangeColor(*Color(pv.global_theme.above_range_color).float_rgba)
+            self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
             self.SetUseAboveRangeColor(True)
         else:
             self.SetAboveRangeColor(*Color(value).float_rgba)
@@ -660,7 +661,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def above_range_opacity(self, value):  # numpydoc ignore=GL08
         color = self.above_range_color
         if color is None:
-            color = Color(pv.global_theme.above_range_color)
+            color = Color(pyvista.global_theme.above_range_color)
         self.above_range_color = Color(color, opacity=value)
 
     @property
@@ -696,7 +697,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if value in (None, False):
             self.SetUseBelowRangeColor(False)
         elif value is True:
-            self.SetBelowRangeColor(*Color(pv.global_theme.below_range_color).float_rgba)
+            self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
             self.SetUseBelowRangeColor(True)
         else:
             self.SetBelowRangeColor(*Color(value).float_rgba)
@@ -724,7 +725,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def below_range_opacity(self, value):  # numpydoc ignore=GL08
         color = self.below_range_color
         if color is None:
-            color = Color(pv.global_theme.below_range_color)
+            color = Color(pyvista.global_theme.below_range_color)
         self.below_range_color = Color(color, opacity=value)
 
     def apply_cmap(self, cmap, n_values: int = 256, flip: bool = False):
@@ -906,7 +907,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.ForceBuild()
 
     @property
-    def annotations(self) -> dict:  # numpydoc ignore=RT01
+    def annotations(self) -> Dict[float, str]:  # numpydoc ignore=RT01
         """Return or set annotations.
 
         Pass a dictionary of annotations. Keys are the float values in the
@@ -934,7 +935,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return dict(zip(keys, values))
 
     @annotations.setter
-    def annotations(self, values: Optional[dict]):  # numpydoc ignore=GL08
+    def annotations(self, values: Optional[Dict[float, str]]):  # numpydoc ignore=GL08
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
@@ -945,7 +946,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """Return the lookup type."""
         if self.cmap:
             if hasattr(self.cmap, 'name'):
-                return f'{self.cmap.name}'  # type: ignore
+                return f'{self.cmap.name}'
             else:  # pragma: no cover
                 return f'{self.cmap}'
         elif self._values_manual:
@@ -980,10 +981,10 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         # need a trivial polydata for this
-        mesh = pv.PolyData(np.zeros((2, 3)))
+        mesh = pyvista.PolyData(np.zeros((2, 3)))
         mesh['Lookup Table'] = self.scalar_range
 
-        pl = pv.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
@@ -1026,8 +1027,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> tf = lut.to_color_tf()
         >>> tf
         <vtkmodules.vtkRenderingCore.vtkColorTransferFunction(...) at ...>
@@ -1049,8 +1050,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> tf = lut.to_opacity_tf()
         >>> tf
         <vtkmodules.vtkCommonDataModel.vtkPiecewiseFunction(...) at ...>
@@ -1061,7 +1062,9 @@ class LookupTable(_vtk.vtkLookupTable):
             opacity_tf.AddPoint(ii, value / self.n_values)
         return opacity_tf
 
-    def map_value(self, value: float, opacity: bool = True) -> tuple:
+    def map_value(
+        self, value: float, opacity: bool = True
+    ) -> Union[Tuple[float, float, float], Tuple[float, float, float, float]]:
         """Map a single value through the lookup table, returning an RBG(A) color.
 
         Parameters
@@ -1079,8 +1082,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         Examples
         --------
-        >>> import pyvista
-        >>> lut = pyvista.LookupTable()
+        >>> import pyvista as pv
+        >>> lut = pv.LookupTable()
         >>> rgba_color = lut.map_value(0.0)
         >>> rgba_color
         (1.0, 0.0, 0.0, 1.0)
@@ -1090,7 +1093,9 @@ class LookupTable(_vtk.vtkLookupTable):
         self.GetColor(value, color)
         if opacity:
             color.append(self.GetOpacity(value))
-        return tuple(color)
+        return cast(
+            Union[Tuple[float, float, float], Tuple[float, float, float, float]], tuple(color)
+        )
 
     def __call__(self, value):
         """Implement a Matplotlib colormap-like call."""

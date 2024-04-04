@@ -73,6 +73,11 @@ grid
 #    ``opacity='linear'``. Instead, we use ``[1, 0, 1]`` since we would like
 #    the opacity to be proportional to the absolute value of the scalars.
 
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 pl = pv.Plotter()
 vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
 vol.prop.interpolation_type = 'linear'
@@ -122,6 +127,11 @@ contours.plot(
 #
 # Let's start with a simple one, the :math:`3p_z` orbital.
 
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 
 def plot_orbital(orbital, cpos='iso', clip_plane='x'):
     """Plot an electron orbital using an RGBA colormap."""
@@ -162,6 +172,11 @@ plot_orbital(hydro_orbital, clip_plane='-x')
 ###############################################################################
 # Volumetric Plot: :math:`4d_{z^2}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
@@ -169,6 +184,11 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 ###############################################################################
 # Volumetric Plot: :math:`4d_{xz}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
@@ -186,12 +206,12 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0, zoom_fac=0.5)
 prob = np.abs(hydro_orbital['real_wf']) ** 2
 prob /= prob.sum()
-indices = np.random.choice(hydro_orbital.n_points, 10000, p=prob)
+indices = np.random.default_rng().choice(hydro_orbital.n_points, 10000, p=prob)
 
 # add a small amount of noise to these coordinates to remove the "grid like"
 # structure present in the underlying ImageData
 points = hydro_orbital.points[indices]
-points += np.random.random(points.shape) - 0.5
+points += np.random.default_rng().random(points.shape) - 0.5
 
 # Create a point cloud and add the phase as the active scalars
 point_cloud = pv.PolyData(points)
@@ -224,6 +244,12 @@ pl.show()
 # Density Plot - Gaussian Points Representation
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's plot the same data using the "Gaussian points" representation.
+
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 point_cloud.plot(
     style='points_gaussian',

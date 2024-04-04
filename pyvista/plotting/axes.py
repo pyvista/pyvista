@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkAxes."""
+
 from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor
@@ -25,8 +26,8 @@ class Axes(_vtk.vtkAxes):
     --------
     Create an instance of axes at the pyvista module level.
 
-    >>> import pyvista
-    >>> axes = pyvista.Axes()
+    >>> import pyvista as pv
+    >>> axes = pv.Axes()
 
     """
 
@@ -52,8 +53,8 @@ class Axes(_vtk.vtkAxes):
 
         Examples
         --------
-        >>> import pyvista
-        >>> axes = pyvista.Axes()
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
         >>> axes.origin
         (0.0, 0.0, 0.0)
 

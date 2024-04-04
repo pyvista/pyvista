@@ -2,6 +2,7 @@ import datetime
 import faulthandler
 import locale
 import os
+from pathlib import Path
 import sys
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
@@ -9,7 +10,7 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 faulthandler.enable()
 
-sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
 
@@ -20,6 +21,7 @@ make_tables.make_all_tables()
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -34,9 +36,9 @@ pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
-if not os.path.exists(pyvista.FIGURE_PATH):
-    os.makedirs(pyvista.FIGURE_PATH)
+pyvista.FIGURE_PATH = str(Path("./images/").resolve() / "auto-generated/")
+if not Path(pyvista.FIGURE_PATH).exists():
+    Path(pyvista.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
@@ -61,7 +63,7 @@ warnings.filterwarnings(
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
-sys.path.append(os.path.abspath("./_ext"))
+sys.path.append(str(Path("./_ext").resolve()))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -73,6 +75,7 @@ extensions = [
     "numpydoc",
     "pyvista.ext.coverage",
     "pyvista.ext.plot_directive",
+    "pyvista.ext.viewer_directive",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.linkcode",  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
@@ -82,6 +85,8 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
+    "sphinx_toolbox.more_autodoc.overloads",
+    "sphinx_toolbox.more_autodoc.typevars",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -169,8 +174,24 @@ coverage_ignore_modules = [
 
 # Configuration for sphinx.ext.autodoc
 # Do not expand following type aliases when generating the docs
-autodoc_type_aliases = {"Chart": "pyvista.Chart", "ColorLike": "pyvista.ColorLike"}
+autodoc_type_aliases = {
+    "Chart": "pyvista.Chart",
+    "ColorLike": "pyvista.ColorLike",
+    "ArrayLike": "pyvista.ArrayLike",
+    "VectorLike": "pyvista.VectorLike",
+    "MatrixLike": "pyvista.MatrixLike",
+    "BoundsLike": "pyvista.BoundsLike",
+    "CellsLike": "pyvista.CellsLike",
+    "CellArrayLike": "pyvista.CellArrayLike",
+    "TransformLike": "pyvista.TransformLike",
+}
 
+# Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
+overloads_location = ["bottom"]
+
+# Display long function signatures with each param on a new line.
+# Helps make annotated signatures more readable.
+maximum_signature_line_length = 88
 
 # See https://numpydoc.readthedocs.io/en/latest/install.html
 numpydoc_use_plots = True
@@ -206,7 +227,10 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', (None, '../intersphinx/python-objects.inv')),
+    'python': (
+        'https://docs.python.org/3.11',
+        (None, '../intersphinx/python-objects.inv'),
+    ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
     'scipy': (
         'https://docs.scipy.org/doc/scipy/',
         (None, '../intersphinx/scipy-objects.inv'),
@@ -226,7 +250,7 @@ intersphinx_mapping = {
     ),
     'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
     'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
-    'trimesh': ('https://trimsh.org', (None, '../intersphinx/trimesh-objects.inv')),
+    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -253,7 +277,7 @@ autosummary_context = {
 source_suffix = ".rst"
 
 # The main toctree document.
-master_doc = "index"
+root_doc = "index"
 
 
 # General information about the project.
@@ -332,7 +356,7 @@ try:
     import osmnx, fiona  # noqa: F401,E401 isort: skip
 
     has_osmnx = True
-except:  # noqa: E722
+except:
     pass
 
 
@@ -355,10 +379,8 @@ sphinx_gallery_conf = {
     "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
-    "image_scrapers": ("pyvista", "matplotlib"),
-    "first_notebook_cell": (
-        "%matplotlib inline\n" "from pyvista import set_plot_theme\n" "set_plot_theme('document')\n"
-    ),
+    "image_scrapers": (DynamicScraper(), "matplotlib"),
+    "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
@@ -411,7 +433,7 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme  # noqa
+import pydata_sphinx_theme  # noqa: F401
 
 html_theme = "pydata_sphinx_theme"
 html_context = {
@@ -433,7 +455,7 @@ def get_version_match(semver):
     if semver.endswith("dev0"):
         return "dev"
     major, minor, _ = semver.split(".")
-    return ".".join([major, minor])
+    return f"{major}.{minor}"
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -449,7 +471,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "Slack Community",
-            "url": "http://slack.pyvista.org",
+            "url": "https://communityinviter.com/apps/pyvista/pyvista",
             "icon": "fab fa-slack",
         },
         {
@@ -516,7 +538,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
+    (root_doc, "pyvista.tex", "pyvista Documentation", author, "manual"),
 ]
 
 # -- Options for gettext output -------------------------------------------
@@ -528,7 +550,7 @@ gettext_additional_targets = ["raw"]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
+man_pages = [(root_doc, "pyvista", "pyvista Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output -------------------------------------------
@@ -538,7 +560,7 @@ man_pages = [(master_doc, "pyvista", "pyvista Documentation", [author], 1)]
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc,
+        root_doc,
         "pyvista",
         "pyvista Documentation",
         author,

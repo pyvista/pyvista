@@ -1,6 +1,16 @@
 Contributing
 ============
 
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+   :target: CODE_OF_CONDUCT.md
+
+.. |codetriage| image:: https://www.codetriage.com/pyvista/pyvista/badges/users.svg
+   :target: https://www.codetriage.com/pyvista/pyvista
+   :alt: Code Triage
+
+|Contributor Covenant|
+|codetriage|
+
 We absolutely welcome contributions and we hope that this guide will
 facilitate an understanding of the PyVista code repository. It is
 important to note that the PyVista software package is maintained on a
@@ -33,6 +43,26 @@ running:
    cd pyvista
    python -m pip install -e .
 
+Quick Start Development with Codespaces
+---------------------------------------
+
+.. |Open in GitHub Codespaces| image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/pyvista/pyvista
+   :alt: Open in GitHub Codespaces
+
+|Open in GitHub Codespaces|
+
+A dev container is provided to quickly get started. The default container
+comes with the repository code checked out on a branch of your choice
+and all pyvista dependencies including test dependencies pre-installed.
+In addition, it uses the
+`desktop-lite feature <https://github.com/devcontainers/features/tree/main/src/desktop-lite>`_
+to provide live interaction windows.  Follow directions
+`Connecting to the desktop <https://github.com/devcontainers/features/tree/main/src/desktop-lite#connecting-to-the-desktop>`_
+to use the live interaction.
+
+Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.
+
 Questions
 ---------
 
@@ -41,7 +71,7 @@ software usage, please create a discussion in the
 `Discussions <https://github.com/pyvista/pyvista/discussions>`_
 repository where the community can collectively address your questions.
 
-You are also welcome to join us on `Slack <http://slack.pyvista.org>`_,
+You are also welcome to join us on `Slack <https://communityinviter.com/apps/pyvista/pyvista>`_,
 but Slack should be reserved for ad hoc conversations and community engagement
 rather than technical discussions.
 
@@ -178,17 +208,8 @@ the exception rather than the norm. A uniform code style is enforced
 by `black <https://github.com/psf/black>`_ to prevent energy wasted on
 style disagreements.
 
-As for docstrings, follow the guidelines specified in `PEP 8 Maximum
-Line
-Length <https://www.python.org/dev/peps/pep-0008/#maximum-line-length>`_
-of limiting docstrings to 72 characters per line. This follows the
-directive:
-
-   Some teams strongly prefer a longer line length. For code maintained
-   exclusively or primarily by a team that can reach agreement on this
-   issue, it is okay to increase the line length limit up to 99
-   characters, provided that comments and docstrings are still wrapped
-   at 72 characters.
+As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
+Please also take a look at `Docstrings <#docstrings>`_.
 
 Outside of PEP 8, when coding please consider `PEP 20 - The Zen of
 Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
@@ -357,6 +378,9 @@ directive.
 
 .. code:: python
 
+    import warnings
+    from pyvista.core.errors import PyVistaDeprecationWarning
+
     def addition(a, b):
         """Add two numbers.
 
@@ -378,8 +402,9 @@ directive.
 
         """
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
-        PyVistaDeprecationWarning(
-            '`addition` has been deprecated. Use pyvista.add instead'
+        warnings.warn(
+            '`addition` has been deprecated. Use pyvista.add instead',
+            PyVistaDeprecationWarning
         )
         add(a, b)
 
@@ -393,6 +418,20 @@ In the above code example, note how a comment is made to convert to an error in
 three minor releases and completely remove in the following minor release. For
 significant changes, this can be made longer, and for trivial ones this can be
 kept short.
+
+Here's an example of adding error test codes that raise deprecation warning messages.
+
+.. code:: python
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        addition(a, b)
+        if pv._version.version_info >= (0, 40):
+            raise RuntimeError("Convert error this function")
+        if pv._version.version_info >= (0, 41):
+            raise RuntimeError("Remove this function")
+
+In the above code example, the old test code raises an error in v0.40 and v0.41.
+This will prevent us from forgetting to remove deprecations on version upgrades.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
@@ -424,7 +463,7 @@ changes any given branch is introducing before looking at the code.
    addition
 -  ``junk/``: for any experimental changes that can be deleted if gone
    stale
--  ``maint/``: for general maintenance of the repository or CI routines
+-  ``maint/`` and ``ci/``: for general maintenance of the repository or CI routines
 -  ``doc/``: for any changes only pertaining to documentation
 -  ``no-ci/``: for low impact activity that should NOT trigger the CI
    routines
@@ -450,21 +489,6 @@ dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
 
 Then, if you have everything installed, you can run the various test
 suites.
-
-Using Gitpod Workspace
-~~~~~~~~~~~~~~~~~~~~~~
-
-A gitpod workspace is available for a quick start development
-environment. To start a workspace from the main branch of pyvista, go
-to `<https://gitpod.io/#https://github.com/pyvista/pyvista>`_. See
-`Gitpod Getting Started
-<https://www.gitpod.io/docs/getting-started>`_ for more details.
-
-The workspace has vnc capability through the browser for
-interactive plotting. The workspace also has the ability to view the
-documentation with a live-viewer. Hit the ``Go Live`` button
-and browse to ``doc/_build/html``. The workspace also preloads
-pre-commit environments and installs requirements.
 
 Unit Testing
 ~~~~~~~~~~~~
@@ -638,6 +662,12 @@ The first time you build the documentation locally will take a while as all the
 examples need to be built. After the first build, the documentation should take
 a fraction of the time.
 
+To test this locally you need to run a http server in the html directory with:
+
+.. code:: bash
+
+   make serve-html
+
 Clearing the Local Build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -746,6 +776,17 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you have make a Pull Request. You can comment
+`@pyvista-bot preview` on a pull request to preview documentation.
+Since this command is only available for
+`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
+new contributors kindly request them to comment command.
+This is essential to safeguard the deployment site against
+potentially harmful commits.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -828,10 +869,11 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the tag.
+8.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
+       git push origin HEAD
        git push origin --tags
 
 9.  Create a list of all changes for the release. It is often helpful to
@@ -842,7 +884,7 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-10. Place your release notes from step 8 in the description for `the new
+10. Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
@@ -852,7 +894,7 @@ created the following will occur:
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-12. Announce the new release in the PyVista Slack workspace and
+12. Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps
@@ -879,6 +921,18 @@ should not wait until a minor release. The steps for a patch release
    from conda and follow the directions in step 10 in the minor release
    section.
 
+Dependency version policy
+-------------------------
+
+Python and VTK dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support all supported `Python versions`_ and `VTK versions`_ that
+support those Python versions. As much as we would prefer to follow
+`SPEC 0`_, we follow VTK versions as an interface library of VTK.
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _Python versions: https://endoflife.date/python
+.. _VTK versions: https://pypi.org/project/vtk/
+.. _SPEC 0: https://scientific-python.org/specs/spec-0000/

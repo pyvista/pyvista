@@ -1,5 +1,7 @@
 """Organize Renderers for ``pyvista.Plotter``."""
+
 import collections
+from itertools import product
 from weakref import proxy
 
 import numpy as np
@@ -96,16 +98,16 @@ class Renderers:
             for i in rangen:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
+                    arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
-                    arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
+                    arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
+                    arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:
-                    arenderer.SetViewport(i / m, xsplit, (i + 1) / m, 1)
+                    arenderer.viewport = (i / m, xsplit, (i + 1) / m, 1)
                 self._renderers.append(arenderer)
 
             self._shape = (n + m,)
@@ -179,49 +181,50 @@ class Renderers:
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
                     # Check for overlap with already defined groups:
-                    for i in range(norm_group[0], norm_group[2] + 1):
-                        for j in range(norm_group[1], norm_group[3] + 1):
-                            if self.loc_to_group((i, j)) is not None:
-                                raise ValueError(
-                                    f'Groups cannot overlap. Overlap found at position {(i, j)}.'
-                                )
+                    for i, j in product(
+                        range(norm_group[0], norm_group[2] + 1),
+                        range(norm_group[1], norm_group[3] + 1),
+                    ):
+                        if self.loc_to_group((i, j)) is not None:
+                            raise ValueError(
+                                f'Groups cannot overlap. Overlap found at position {(i, j)}.'
+                            )
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)), axis=0
                     )
             # Create subplot renderers
-            for row in range(shape[0]):
-                for col in range(shape[1]):
-                    group = self.loc_to_group((row, col))
-                    nb_rows = None
-                    nb_cols = None
-                    if group is not None:
-                        if row == self.groups[group, 0] and col == self.groups[group, 1]:
-                            # Only add renderer for first location of the group
-                            nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
-                            nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
-                    else:
-                        nb_rows = 1
-                        nb_cols = 1
-                    if nb_rows is not None:
-                        renderer = Renderer(self._plotter, border, border_color, border_width)
-                        x0 = col_off[col]
-                        y0 = row_off[row + nb_rows]
-                        x1 = col_off[col + nb_cols]
-                        y1 = row_off[row]
-                        renderer.SetViewport(x0, y0, x1, y1)
-                        self._render_idxs[row, col] = len(self)
-                        self._renderers.append(renderer)
-                    else:
-                        self._render_idxs[row, col] = self._render_idxs[
-                            self.groups[group, 0], self.groups[group, 1]
-                        ]
+            for row, col in product(range(shape[0]), range(shape[1])):
+                group = self.loc_to_group((row, col))
+                nb_rows = None
+                nb_cols = None
+                if group is not None:
+                    if row == self.groups[group, 0] and col == self.groups[group, 1]:
+                        # Only add renderer for first location of the group
+                        nb_rows = 1 + self.groups[group, 2] - self.groups[group, 0]
+                        nb_cols = 1 + self.groups[group, 3] - self.groups[group, 1]
+                else:
+                    nb_rows = 1
+                    nb_cols = 1
+                if nb_rows is not None:
+                    renderer = Renderer(self._plotter, border, border_color, border_width)
+                    x0 = col_off[col]
+                    y0 = row_off[row + nb_rows]
+                    x1 = col_off[col + nb_cols]
+                    y1 = row_off[row]
+                    renderer.viewport = (x0, y0, x1, y1)
+                    self._render_idxs[row, col] = len(self)
+                    self._renderers.append(renderer)
+                else:
+                    self._render_idxs[row, col] = self._render_idxs[
+                        self.groups[group, 0], self.groups[group, 1]
+                    ]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self))]
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):
@@ -522,7 +525,9 @@ class Renderers:
         """
         return self._shadow_renderer
 
-    def set_background(self, color, top=None, all_renderers=True):
+    def set_background(
+        self, color, top=None, right=None, side=None, corner=None, all_renderers=True
+    ):
         """Set the background color.
 
         Parameters
@@ -541,6 +546,21 @@ class Renderers:
             ``color`` argument is at the bottom and the color given in ``top``
             will be the color at the top of the renderer.
 
+        right : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the left and the color given in ``right``
+            will be the color at the right of the renderer.
+
+        side : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``side``
+            will be the color at the side of the renderer.
+
+        corner : ColorLike, optional
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the center and the color given in ``corner``
+            will be the color at the corner of the renderer.
+
         all_renderers : bool, default: True
             If ``True``, applies to all renderers in subplots. If ``False``,
             then only applies to the active renderer.
@@ -549,8 +569,8 @@ class Renderers:
         --------
         Set the background color to black.
 
-        >>> import pyvista
-        >>> plotter = pyvista.Plotter()
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
         >>> plotter.set_background('black')
         >>> plotter.background_color
         Color(name='black', hex='#000000ff', opacity=255)
@@ -559,19 +579,21 @@ class Renderers:
         Set the background color at the bottom to black and white at
         the top.  Display a cone as well.
 
-        >>> import pyvista
-        >>> pl = pyvista.Plotter()
-        >>> actor = pl.add_mesh(pyvista.Cone())
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cone())
         >>> pl.set_background('black', top='white')
         >>> pl.show()
 
         """
         if all_renderers:
             for renderer in self:
-                renderer.set_background(color, top=top)
+                renderer.set_background(color, top=top, right=right, side=side, corner=corner)
             self._shadow_renderer.set_background(color)
         else:
-            self.active_renderer.set_background(color, top=top)
+            self.active_renderer.set_background(
+                color, top=top, right=right, side=side, corner=corner
+            )
 
     def set_color_cycler(self, color_cycler, all_renderers=True):
         """Set or reset the color cycler.
@@ -624,14 +646,14 @@ class Renderers:
 
         Examples
         --------
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pyvista.Plotter(shape=(1, 2))
+        >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_mesh(pyvista.Sphere())
+        >>> actor = pl.add_mesh(pv.Sphere())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_mesh(pyvista.Cube())
+        >>> actor = pl.add_mesh(pv.Cube())
         >>> pl.add_background_image(examples.mapfile, as_global=False)
         >>> pl.remove_background_image()
         >>> pl.show()

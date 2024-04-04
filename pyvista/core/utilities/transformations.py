@@ -1,4 +1,5 @@
 """Module implementing point transformations and their matrices."""
+
 import numpy as np
 
 
@@ -112,13 +113,17 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     K = np.zeros((3, 3))
     K[[2, 0, 1], [1, 2, 0]] = axis
     K += -K.T
-    R = np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
 
     # the cos and sin functions can introduce some numerical error
     # round the elements to exact values for special cases where we know
     # sin/cos should evaluate exactly to 0 or 1
+    sin_angle = np.sin(angle)
+    cos_angle = np.cos(angle)
     if angle % (np.pi / 2) == 0:
-        R = np.round(R)
+        cos_angle = round(cos_angle)
+        sin_angle = round(sin_angle)
+
+    R = np.eye(3) + sin_angle * K + (1 - cos_angle) * K @ K
 
     augmented = np.eye(4)
     augmented[:-1, :-1] = R
@@ -260,14 +265,14 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     Scale a set of points in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()
     >>> scale_factor = 2
     >>> tf = scale_factor * np.eye(4)
     >>> tf[3, 3] = 1
-    >>> pyvista.core.utilities.transformations.apply_transformation_to_points(
+    >>> pv.core.utilities.transformations.apply_transformation_to_points(
     ...     tf, points, inplace=True
     ... )
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))

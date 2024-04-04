@@ -1,7 +1,10 @@
 """Affine widget module."""
+
+from typing import Tuple, cast
+
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.misc import try_callback
 
@@ -48,7 +51,7 @@ def _check_callable(func, name='callback'):
 
 def _make_quarter_arc():
     """Make a quarter circle centered at the origin."""
-    circ = pv.Circle(resolution=100)
+    circ = pyvista.Circle(resolution=100)
     circ.faces = np.empty(0, dtype=int)
     circ.lines = np.hstack(([26], np.arange(0, 26)))
     return circ
@@ -121,7 +124,7 @@ class AffineWidget3D:
         the widget geometry to be hidden by other actors in the plotter.
     axes_colors : tuple[ColorLike], optional
         Uses the theme by default. Configure the individual axis colors by
-        modifying either the theme with ``pv.global_theme.axes.x_color =
+        modifying either the theme with ``pyvista.global_theme.axes.x_color =
         <COLOR>`` or setting this with a ``tuple`` as in ``('r', 'g', 'b')``.
     axes : numpy.ndarray, optional
         ``(3, 3)`` Numpy array defining the X, Y, and Z axes. By default this
@@ -179,7 +182,7 @@ class AffineWidget3D:
     ):
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
-        if pv.vtk_version_info < (9, 2):
+        if pyvista.vtk_version_info < (9, 2):
             raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._axes = np.eye(4)
@@ -203,9 +206,9 @@ class AffineWidget3D:
         self._origin = np.array(origin)
         if axes_colors is None:
             axes_colors = (
-                pv.global_theme.axes.x_color,
-                pv.global_theme.axes.y_color,
-                pv.global_theme.axes.z_color,
+                pyvista.global_theme.axes.x_color,
+                pyvista.global_theme.axes.y_color,
+                pyvista.global_theme.axes.z_color,
             )
         self._axes_colors = axes_colors
         self._circ = _make_quarter_arc()
@@ -232,7 +235,7 @@ class AffineWidget3D:
     def _init_actors(self, scale, always_visible):
         """Initialize the widget's actors."""
         for ii, color in enumerate(self._axes_colors):
-            arrow = pv.Arrow(
+            arrow = pyvista.Arrow(
                 (0, 0, 0),
                 direction=GLOBAL_AXES[ii],
                 scale=self._actor_length * scale * 1.15,
@@ -313,19 +316,19 @@ class AffineWidget3D:
 
         # convert camera coordinates to world coordinates
         camera = ren.GetActiveCamera()
-        projection_matrix = pv.array_from_vtkmatrix(
+        projection_matrix = pyvista.array_from_vtkmatrix(
             camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
         )
         inverse_projection_matrix = np.linalg.inv(projection_matrix)
         camera_coords = np.dot(inverse_projection_matrix, [ndc_x, ndc_y, ndc_z, 1])
-        modelview_matrix = pv.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
+        modelview_matrix = pyvista.array_from_vtkmatrix(camera.GetModelViewTransformMatrix())
         inverse_modelview_matrix = np.linalg.inv(modelview_matrix)
         world_coords = np.dot(inverse_modelview_matrix, camera_coords)
 
         # Scale by twice actor length (experimentally determined for good UX)
         return world_coords[:3] * self._actor_length * 2
 
-    def _move_callback(self, interactor, event):
+    def _move_callback(self, interactor, _event):
         """Process actions for the move mouse event."""
         click_x, click_y = interactor.GetEventPosition()
         click_z = 0
@@ -364,7 +367,7 @@ class AffineWidget3D:
                 )
                 trans.Translate(-self._origin)
                 trans.Update()
-                rot_matrix = pv.array_from_vtkmatrix(trans.GetMatrix())
+                rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
 
             if self._user_interact_callback:
@@ -396,7 +399,7 @@ class AffineWidget3D:
                 self._selected_actor = actor
         self._pl.render()
 
-    def _press_callback(self, interactor, event):
+    def _press_callback(self, interactor, _event):
         """Process actions for the mouse button press event."""
         if self._selected_actor:
             self._pl.enable_trackball_actor_style()
@@ -406,7 +409,7 @@ class AffineWidget3D:
             else:
                 self.init_position = self._get_world_coord_trans(interactor)
 
-    def _release_callback(self, interactor, event):
+    def _release_callback(self, _interactor, _event):
         """Process actions for the mouse button release event."""
         self._pl.enable_trackball_style()
         self._pressing_down = False
@@ -448,7 +451,7 @@ class AffineWidget3D:
             actor.user_matrix = matrix
 
     @property
-    def origin(self) -> tuple:
+    def origin(self) -> Tuple[float, float, float]:
         """Origin of the widget.
 
         This is where the origin of the widget will be located and where the
@@ -456,11 +459,11 @@ class AffineWidget3D:
 
         Returns
         -------
-        numpy.ndarray
+        tuple
             Widget origin.
 
         """
-        return tuple(self._origin)
+        return cast(Tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08
@@ -484,10 +487,10 @@ class AffineWidget3D:
             "MouseMoveEvent", self._move_callback
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent", self._press_callback
+            "LeftButtonPressEvent", self._press_callback, interactor_style_fallback=False
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent", self._release_callback
+            "LeftButtonReleaseEvent", self._release_callback, interactor_style_fallback=False
         )
 
     def disable(self):

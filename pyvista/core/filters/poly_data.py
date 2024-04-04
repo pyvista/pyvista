@@ -1,4 +1,5 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
+
 import collections.abc
 import warnings
 
@@ -7,7 +8,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import (
-    DeprecationError,
     MissingDataError,
     NotAllTrianglesError,
     PyVistaFutureWarning,
@@ -51,8 +51,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Plot the mask of points that exceed 45 degrees.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Cube().triangulate().subdivide(4)
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube().triangulate().subdivide(4)
         >>> mask = mesh.edge_mask(45)
         >>> mesh.plot(scalars=mask)
 
@@ -108,26 +108,6 @@ class PolyDataFilters(DataSetFilters):
 
         return _get_output(bfilter)
 
-    def boolean_cut(self, *args, **kwargs):  # pragma: no cover
-        """Cut two meshes.
-
-        .. deprecated:: 0.32.0
-           Use :func:`PolyDataFilters.boolean_difference` instead.
-
-        """
-        raise DeprecationError(
-            '``boolean_cut`` has been deprecated.  Please use ``boolean_difference``.'
-        )
-
-    def boolean_add(self, *args, **kwargs):  # pragma: no cover
-        """Merge two meshes together.
-
-        .. deprecated:: 0.32.0
-           Use :func:`PolyDataFilters.merge` instead.
-
-        """
-        raise DeprecationError('``boolean_add`` has been deprecated.  ' 'Please use ``merge``.')
-
     def boolean_union(self, other_mesh, tolerance=1e-5, progress_bar=False):
         """Perform a boolean union operation on two meshes.
 
@@ -181,11 +161,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean union with two spheres.  Note how the
         final mesh includes both spheres.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_union(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -254,11 +234,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean intersection with two spheres.  Note how
         the final mesh only includes the intersection of the two.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_intersection(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -331,11 +311,11 @@ class PolyDataFilters(DataSetFilters):
         Demonstrate a boolean difference with two spheres.  Note how
         the final mesh only includes ``sphere_a``.
 
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_difference(sphere_b)
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
         ... )
@@ -431,7 +411,7 @@ class PolyDataFilters(DataSetFilters):
         merged = _get_output(append_filter)
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore
+            self.deep_copy(merged)
             return self
 
         return merged
@@ -510,9 +490,9 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        >>> import pyvista
-        >>> sphere_a = pyvista.Sphere()
-        >>> sphere_b = pyvista.Sphere(center=(0.5, 0, 0))
+        >>> import pyvista as pv
+        >>> sphere_a = pv.Sphere()
+        >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> merged = sphere_a.merge(sphere_b)
         >>> merged.plot(style='wireframe', color='lightblue')
 
@@ -544,7 +524,7 @@ class PolyDataFilters(DataSetFilters):
             # maintain data consistency.
             if isinstance(dataset, (list, tuple, pyvista.MultiBlock)):
                 dataset_has_lines_strips = any(
-                    [ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset]
+                    ds.n_lines or ds.n_strips or ds.n_verts for ds in dataset
                 )
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
@@ -553,7 +533,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
-                    merged.points, faces=merged.cells, n_faces=merged.n_cells, deep=False
+                    merged.points, faces=merged.GetCells(), deep=False
                 )
                 # Calling update() will modify the active scalars in this specific
                 # case. Store values to restore after updating.
@@ -656,6 +636,9 @@ class PolyDataFilters(DataSetFilters):
 
     def curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
+
+        See :ref:`connectivity_example` for more examples using this
+        filter.
 
         Parameters
         ----------
@@ -773,8 +756,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Generate a mesh with quadrilateral faces.
 
-        >>> import pyvista
-        >>> plane = pyvista.Plane()
+        >>> import pyvista as pv
+        >>> plane = pv.Plane()
         >>> plane.point_data.clear()
         >>> plane.plot(show_edges=True, line_width=5)
 
@@ -1095,8 +1078,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Decimate a sphere.  First plot the sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
         >>> sphere.plot(show_edges=True, line_width=2)
 
         Now decimate it and plot it.
@@ -1287,8 +1270,8 @@ class PolyDataFilters(DataSetFilters):
         First, create an example coarse sphere mesh and plot it.
 
         >>> from pyvista import examples
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere(phi_resolution=10, theta_resolution=10)
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere(phi_resolution=10, theta_resolution=10)
         >>> mesh.plot(show_edges=True, line_width=3)
 
         Subdivide the sphere mesh using linear subdivision.
@@ -1406,9 +1389,9 @@ class PolyDataFilters(DataSetFilters):
         --------
         First, load the example airplane mesh and plot it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> mesh = pyvista.PolyData(examples.planefile)
+        >>> mesh = pv.PolyData(examples.planefile)
         >>> mesh.plot(show_edges=True, line_width=3)
 
         Subdivide the mesh
@@ -1536,8 +1519,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Decimate a sphere.  First plot the sphere.
 
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere(phi_resolution=60, theta_resolution=60)
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
         >>> sphere.plot(show_edges=True, line_width=2)
 
         Now decimate it by 75% and plot it.
@@ -1604,6 +1587,14 @@ class PolyDataFilters(DataSetFilters):
         present, the edges are split and new points generated to
         prevent blurry edges (due to Phong shading).
 
+        An array named ``"Normals"`` is stored with the mesh.
+
+        .. warning::
+
+           - Normals can only be computed for polygons and triangle strips. Point clouds are not supported.
+           - Triangle strips are broken up into triangle polygons. You may want to restrip the triangles.
+           - Previous arrays named ``"Normals"`` will be overwritten.
+
         Parameters
         ----------
         cell_normals : bool, default: True
@@ -1653,25 +1644,22 @@ class PolyDataFilters(DataSetFilters):
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        Raises
+        ------
+        TypeError
+            If the mesh contains only ``LINE`` or ``VERTEX`` cell types. Normals cannot be computed for these cells.
+
         Returns
         -------
         pyvista.PolyData
             Updated mesh with cell and point normals.
 
-        Notes
-        -----
-        Previous arrays named ``"Normals"`` will be overwritten.
-
-        Normals are computed only for polygons and triangle
-        strips. Normals are not computed for lines or vertices.
-
-        Triangle strips are broken up into triangle polygons. You may
-        want to restrip the triangles.
-
-        It may be easier to run
-        :func:`pyvista.PolyData.point_normals` or
-        :func:`pyvista.PolyData.cell_normals` if you would just
-        like the array of point or cell normals.
+        See Also
+        --------
+        point_normals
+            Returns the array of point normals.
+        cell_normals
+            Returns the array of cell normals.
 
         Examples
         --------
@@ -1717,6 +1705,19 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(normal, progress_bar, 'Computing Normals')
 
         mesh = _get_output(normal)
+        try:
+            mesh['Normals']
+        except KeyError:
+            if (self.n_verts + self.n_lines) == self.n_cells:
+                raise TypeError(
+                    "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
+                    "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells)."
+                )
+            else:  # pragma: no cover
+                raise RuntimeError(
+                    'Normals could not be computed for unknown reasons.\n'
+                    'Please report the issue at https://github.com/pyvista/pyvista/issues.'
+                )
         if point_normals:
             mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:
@@ -1973,7 +1974,7 @@ class PolyDataFilters(DataSetFilters):
         output = _get_output(alg)
 
         # Check output so no segfaults occur
-        if output.n_points < 1:
+        if output.n_points < 1 and self.n_cells > 0:
             raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
@@ -2183,17 +2184,17 @@ class PolyDataFilters(DataSetFilters):
         self.obbTree.IntersectWithLine(np.array(origin), np.array(end_point), points, cell_ids)
 
         intersection_points = _vtk.vtk_to_numpy(points.GetData())
-        if first_point and intersection_points.shape[0] >= 1:
+        has_intersection = intersection_points.shape[0] >= 1
+        if first_point and has_intersection:
             intersection_points = intersection_points[0]
 
         intersection_cells = []
-        if intersection_points.any():
+        if has_intersection:
             if first_point:
                 ncells = 1
             else:
                 ncells = cell_ids.GetNumberOfIds()
-            for i in range(ncells):
-                intersection_cells.append(cell_ids.GetId(i))
+            intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
         intersection_cells = np.array(intersection_cells)
 
         if plot:
@@ -2280,9 +2281,9 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa
-            import rtree  # noqa
-            import trimesh  # noqa
+            import pyembree  # noqa: F401
+            import rtree  # noqa: F401
+            import trimesh
         except ImportError:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
@@ -2291,8 +2292,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        faces_as_array = self.faces.reshape((self.n_faces, 4))[:, 1:]
-        tmesh = trimesh.Trimesh(self.points, faces_as_array)
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins, directions, multiple_hits=not first_point
         )
@@ -2830,7 +2830,7 @@ class PolyDataFilters(DataSetFilters):
         Convert a line to a ribbon and plot it.
 
         >>> import numpy as np
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> n = 1000
         >>> theta = np.linspace(-10 * np.pi, 10 * np.pi, n)
         >>> z = np.linspace(-2, 2, n)
@@ -2838,7 +2838,7 @@ class PolyDataFilters(DataSetFilters):
         >>> x = r * np.sin(theta)
         >>> y = r * np.cos(theta)
         >>> points = np.column_stack((x, y, z))
-        >>> pdata = pyvista.PolyData(points)
+        >>> pdata = pv.PolyData(points)
         >>> pdata.lines = np.hstack((n, range(n)))
         >>> pdata['distance'] = range(n)
         >>> ribbon = pdata.ribbon(width=0.2)
@@ -2934,14 +2934,14 @@ class PolyDataFilters(DataSetFilters):
         --------
         Extrude a half circle arc.
 
-        >>> import pyvista
-        >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+        >>> import pyvista as pv
+        >>> arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
         >>> mesh = arc.extrude([0, 0, 1], capping=False)
         >>> mesh.plot(color='lightblue')
 
         Extrude and cap an 8 sided polygon.
 
-        >>> poly = pyvista.Polygon(n_sides=8)
+        >>> poly = pv.Polygon(n_sides=8)
         >>> mesh = poly.extrude((0, 0, 1.5), capping=True)
         >>> mesh.plot(line_width=5, show_edges=True)
 
@@ -3056,8 +3056,8 @@ class PolyDataFilters(DataSetFilters):
         --------
         Create a "spring" using the rotational extrusion filter.
 
-        >>> import pyvista
-        >>> profile = pyvista.Polygon(
+        >>> import pyvista as pv
+        >>> profile = pv.Polygon(
         ...     center=[1.25, 0.0, 0.0],
         ...     radius=0.2,
         ...     normal=(0, 1, 0),
@@ -3088,7 +3088,7 @@ class PolyDataFilters(DataSetFilters):
         ...         [-0.2, 0, 1.0],
         ...     ]
         ... )
-        >>> spline = pyvista.Spline(points, 30)
+        >>> spline = pv.Spline(points, 30)
         >>> extruded = spline.extrude_rotate(resolution=20, capping=False)
         >>> extruded.plot(color='lightblue')
 
@@ -3191,12 +3191,10 @@ class PolyDataFilters(DataSetFilters):
         --------
         Extrude a disc.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> plane = pyvista.Plane(
-        ...     i_size=2, j_size=2, direction=[0, 0.8, 1]
-        ... )
-        >>> disc = pyvista.Disc(center=(0, 0, -1), c_res=50)
+        >>> plane = pv.Plane(i_size=2, j_size=2, direction=[0, 0.8, 1])
+        >>> disc = pv.Disc(center=(0, 0, -1), c_res=50)
         >>> direction = [0, 0, 1]
         >>> extruded_disc = disc.extrude_trim(direction, plane)
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
@@ -3418,9 +3416,9 @@ class PolyDataFilters(DataSetFilters):
         cube and output the cell indices of the first 10 collisions.
 
         >>> import numpy as np
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere(radius=0.5)
-        >>> mesh_b = pyvista.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere(radius=0.5)
+        >>> mesh_b = pv.Cube((0.5, 0.5, 0.5)).extract_cells([0, 2, 4])
         >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1)
         >>> collision['ContactCells'][:10]
         pyvista_ndarray([464,   0,   0,  29,  29,  27,  27,  28,  28,  23])
@@ -3431,7 +3429,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> scalars = np.zeros(collision.n_cells, dtype=bool)
         >>> scalars[collision.field_data['ContactCells']] = True
-        >>> pl = pyvista.Plotter()
+        >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     collision,
         ...     scalars=scalars,

@@ -1,4 +1,5 @@
 """Define types of cells."""
+
 from enum import IntEnum
 
 from . import _vtk_core as _vtk
@@ -20,7 +21,7 @@ class CellType(IntEnum):
 
     >>> import numpy as np
     >>> from pyvista import CellType
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
     >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
     >>> points = np.array(
@@ -36,7 +37,7 @@ class CellType(IntEnum):
     ...     ],
     ...     dtype=np.float32,
     ... )
-    >>> grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
     >>> grid
     UnstructuredGrid (...)
       N Cells:    1

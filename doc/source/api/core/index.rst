@@ -8,13 +8,13 @@ types that PyVista wraps.
 This chapter is intended to describe these different mesh types and how we wrap
 and implement each of those mesh types in VTK. This chapter also highlights
 how all PyVista types have direct access to common VTK filters
-(see :ref:`filters_ref`).
+(see :ref:`filters`).
 
 .. _Visualization Toolkit: https://vtk.org
 .. _Kitware: https://www.kitware.com
 
 
-All PyVista meshes inherit from the DataSet type (see :ref:`ref_dataset`).
+All PyVista meshes inherit from the DataSet type (see :ref:`dataset`).
 PyVista has the following mesh types:
 
 - :class:`pyvista.PointSet` is used to represent a set of points. This is to provide an interface for datasets that explicitly use "point" arrays to represent geometry. The :class:`pyvista.PointSet` class is an extension of `vtk.vtkPointSet`_.
@@ -53,3 +53,4 @@ PyVista has the following mesh types:
    cells
    helpers
    misc
+   typing

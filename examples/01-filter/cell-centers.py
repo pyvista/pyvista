@@ -9,6 +9,7 @@ Extract the coordinates of the centers of all cells or faces in a mesh.
 Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
 
 """
+
 import pyvista as pv
 
 # sphinx_gallery_thumbnail_number = 3
@@ -89,6 +90,9 @@ pl.show()
 # There is not a method to add labels to cells.
 # If you want to label it, you need to extract the position to label it.
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 grid = pv.ImageData(dimensions=(10, 10, 1))
 points = grid.cell_centers().points
 

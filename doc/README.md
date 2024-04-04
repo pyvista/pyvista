@@ -1,6 +1,6 @@
-# pyvista-docs
+# Deploy the PyVista Documentation
 
-A place where we automatically deploy the PyVista documentation.
+Repository [`pyvista-docs`](https://github.com/pyvista/pyvista-docs) is a place where we automatically deploy the PyVista documentation.
 
 This repository is automatically edited by our army of robots on the
 Azure CI service. Changes to the documentation should not be made

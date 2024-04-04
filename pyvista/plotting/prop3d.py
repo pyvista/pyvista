@@ -1,7 +1,11 @@
 """Prop3D module."""
-from typing import Tuple
 
-from pyvista.core._typing_core import BoundsLike, Vector
+from typing import Tuple, Union
+
+import numpy as np
+
+from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
+from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 from . import _vtk
 
@@ -38,8 +42,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -63,7 +67,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector):  # numpydoc ignore=GL08
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -160,7 +164,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> tuple:  # numpydoc ignore=RT01
+    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity orientation.
 
         Orientation is defined as the rotation from the global axes in degrees
@@ -207,7 +211,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: tuple):  # numpydoc ignore=GL08
+    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -229,7 +233,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> tuple:  # numpydoc ignore=RT01
+    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples
@@ -241,3 +245,74 @@ class Prop3D(_vtk.vtkProp3D):
         (0.5, 0.5, 1)
         """
         return self.GetCenter()
+
+    @property
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the user matrix.
+
+        In addition to the instance variables such as position and orientation, the user
+        can add an additional transformation to the actor.
+
+        This matrix is concatenated with the actor's internal transformation that is
+        implicitly created when the actor is created. This affects the actor/rendering
+        only, not the input data itself.
+
+        The user matrix is the last transformation applied to the actor before
+        rendering.
+
+        Returns
+        -------
+        np.ndarray
+            A 4x4 transformation matrix.
+
+        Examples
+        --------
+        Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
+        effectively translates the actor by one unit in the Z direction,
+        rotates the actor about the Z axis by approximately 45 degrees, and
+        shrinks the actor by a factor of 0.5.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> actor = pl.add_mesh(
+        ...     mesh,
+        ...     color="r",
+        ...     style="wireframe",
+        ...     line_width=5,
+        ...     lighting=False,
+        ... )
+        >>> arr = np.array(
+        ...     [
+        ...         [0.707, -0.707, 0, 0],
+        ...         [0.707, 0.707, 0, 0],
+        ...         [0, 0, 1, 1.500001],
+        ...         [0, 0, 0, 2],
+        ...     ]
+        ... )
+        >>> actor.user_matrix = arr
+        >>> pl.show_axes()
+        >>> pl.show()
+
+        """
+        if self.GetUserMatrix() is None:
+            self.SetUserMatrix(vtkmatrix_from_array(np.eye(4)))
+        return array_from_vtkmatrix(self.GetUserMatrix())
+
+    @user_matrix.setter
+    def user_matrix(
+        self, value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]]
+    ):  # numpydoc ignore=GL08
+        if isinstance(value, np.ndarray):
+            if value.shape != (4, 4):
+                raise ValueError('User matrix array must be 4x4.')
+            value = vtkmatrix_from_array(value)
+
+        if isinstance(value, _vtk.vtkMatrix4x4):
+            self.SetUserMatrix(value)
+        else:
+            raise TypeError(
+                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
+            )

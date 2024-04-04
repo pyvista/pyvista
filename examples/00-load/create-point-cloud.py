@@ -26,7 +26,9 @@ from pyvista import examples
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()
-    ids = np.random.randint(low=0, high=dataset.n_points - 1, size=int(dataset.n_points * subset))
+    ids = np.random.default_rng().integers(
+        low=0, high=dataset.n_points - 1, size=int(dataset.n_points * subset)
+    )
     return dataset.points[ids]
 
 
@@ -48,7 +50,11 @@ np.allclose(points, point_cloud.points)
 ###############################################################################
 # And now that we have a PyVista mesh, we can plot it. Note that we add an
 # option to use eye dome lighting - this is a shading technique to improve
-# depth perception with point clouds (learn more in :ref:`ref_edl`).
+# depth perception with point clouds (learn more in :ref:`edl`).
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 point_cloud.plot(eye_dome_lighting=True)
 
 ###############################################################################
@@ -82,7 +88,7 @@ point_cloud.plot(render_points_as_spheres=True)
 # This time, we're going to create a totally new, random point cloud.
 
 # Create random XYZ points
-points = np.random.rand(100, 3)
+points = np.random.default_rng().random((100, 3))
 # Make PolyData
 point_cloud = pv.PolyData(points)
 

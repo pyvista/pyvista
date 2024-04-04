@@ -13,6 +13,7 @@ to opt out of lighting altogether. Pass ``lighting=False`` to
 mesh:
 
 """
+
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
 from pyvista import examples
@@ -38,4 +39,4 @@ shifted.plot(color='brown', lighting=False)
 
 ###############################################################################
 # For further examples about fine-tuning mesh properties that affect
-# light rendering, see the :ref:`ref_lighting_properties_example` example.
+# light rendering, see the :ref:`lighting_properties_example` example.

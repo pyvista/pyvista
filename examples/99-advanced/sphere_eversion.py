@@ -21,6 +21,7 @@ order to unfold the sphere. It's not obvious that the transformation is truly
 smooth; this was proved in the paper by Bednorz and Bednorz.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
 
@@ -130,7 +131,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa
+            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
     )
     # fmt: on
 
@@ -240,6 +241,12 @@ plotter.close()
 # Looking at the still image of the middle state with ``t = 0``, we see a nice
 # symmetric configuration where two "inside" and two "outside" lobes of the
 # sphere are visible.
+
+# sphinx_gallery_start_ignore
+# lighting does not work for this interactive plot
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 t = q = 0
 xi = p = 1
 eta = eta_final

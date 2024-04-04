@@ -1,16 +1,25 @@
 """Core helper utilities."""
+
 import collections
+from typing import TYPE_CHECKING, Optional, Union, cast
+
+if TYPE_CHECKING:  # pragma: no cover
+    from trimesh import Trimesh
+    from meshio import Mesh
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import NumpyArray
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
 
 
-def wrap(dataset):
+def wrap(
+    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
+) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
@@ -41,7 +50,7 @@ def wrap(dataset):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> points = np.random.random((10, 3))
+    >>> points = np.random.default_rng().random((10, 3))
     >>> cloud = pv.wrap(points)
     >>> cloud
     PolyData (...)
@@ -97,11 +106,11 @@ def wrap(dataset):
     """
     # Return if None
     if dataset is None:
-        return
+        return None
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        return dataset
+        return dataset  # type: ignore[return-value]
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
@@ -142,14 +151,13 @@ def wrap(dataset):
     # wrap trimesh
     if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
-        n_face = dataset.faces.shape[0]
-        faces = np.empty((n_face, 4), dataset.faces.dtype)
-        faces[:, 1:] = dataset.faces
-        faces[:, 0] = 3
-        polydata = pyvista.PolyData(np.asarray(dataset.vertices), faces)
+        dataset = cast('Trimesh', dataset)
+        polydata = pyvista.PolyData.from_regular_faces(
+            np.asarray(dataset.vertices), faces=dataset.faces
+        )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
-            polydata.active_t_coords = np.asarray(dataset.visual.uv)
+            polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
@@ -230,11 +238,11 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     Rotate a set of points by 90 degrees about the x-axis in-place.
 
     >>> import numpy as np
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> points = examples.load_airplane().points
     >>> points_orig = points.copy()
-    >>> pyvista.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
+    >>> pv.axis_rotation(points, 90, axis='x', deg=True, inplace=True)
     >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
     >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
     >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))

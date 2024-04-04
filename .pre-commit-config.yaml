@@ -1,102 +1,126 @@
 # Integration with GitHub Actions
 # See https://pre-commit.ci/
 ci:
-    autofix_prs: false
-    autoupdate_schedule: monthly
+  autofix_prs: false
+  autoupdate_schedule: monthly
 
 repos:
-- repo: https://github.com/psf/black
-  rev: 23.9.1
-  hooks:
-  - id: black
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
 
-- repo: https://github.com/keewis/blackdoc
-  rev: v0.3.8
-  hooks:
-  - id: blackdoc
-    files: '\.py$'
-    exclude: pyvista/plotting/charts.py
+  - repo: https://github.com/keewis/blackdoc
+    rev: v0.3.9
+    hooks:
+      - id: blackdoc
+        files: '\.py$'
+        exclude: pyvista/plotting/charts.py
 
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
-  hooks:
-  - id: isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
 
-- repo: https://github.com/PyCQA/flake8
-  rev: 6.1.0
-  hooks:
-  - id: flake8
-    additional_dependencies: [
-      "flake8-black==0.3.6",
-      "flake8-isort==6.0.0",
-      "flake8-quotes==3.3.2",
-    ]
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
 
-- repo: https://github.com/codespell-project/codespell
-  rev: v2.2.5
-  hooks:
-  - id: codespell
-    args: [
-      "doc examples examples_trame pyvista tests",
-      "*.py *.rst *.md",
-    ]
-    additional_dependencies: [
-      "tomli"
-    ]
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.2.6
+    hooks:
+      - id: codespell
+        args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
+        additional_dependencies: ["tomli"]
 
-- repo: https://github.com/pycqa/pydocstyle
-  rev: 6.3.0
-  hooks:
-  - id: pydocstyle
-    additional_dependencies: [tomli==2.0.1]
-    files: ^(pyvista/|other/)
-    exclude: ^pyvista/ext/
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        additional_dependencies: [tomli==2.0.1]
+        files: ^(pyvista/|other/)
+        exclude: ^pyvista/ext/
 
-- repo: https://github.com/DanielNoord/pydocstringformatter
-  rev: v0.7.3
-  hooks:
-    - id: pydocstringformatter
-      args: [
-        "--style {numpydoc,pep257}",
-        "--no-strip-whitespace",
-        "--no-capitalize-first-letter",
-      ]
+  - repo: https://github.com/DanielNoord/pydocstringformatter
+    rev: v0.7.3
+    hooks:
+      - id: pydocstringformatter
+        args:
+          [
+            "--style {numpydoc,pep257}",
+            "--no-strip-whitespace",
+            "--no-capitalize-first-letter",
+          ]
 
-- repo: https://github.com/numpy/numpydoc
-  rev: v1.6.0rc2
-  hooks:
-  - id: numpydoc-validation
-    files: ^pyvista/
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.7.0
+    hooks:
+      - id: numpydoc-validation
+        files: ^pyvista/
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.5.1
-  hooks:
-  - id: mypy
-    exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
-    additional_dependencies: [
-    "mypy-extensions==1.0.0",
-    "toml==0.10.2",
-  ]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        args:
+          [
+            --disallow-any-generics,
+            --pretty,
+            --show-error-context,
+            --warn-unused-ignores,
+            --enable-error-code,
+            ignore-without-code,
+          ]
+        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
+        additional_dependencies:
+          [
+            "mypy-extensions==1.0.0",
+            "toml==0.10.2",
+            "numpy>=1.21",
+            "npt-promote==0.1",
+          ]
 
-- repo: https://github.com/asottile/pyupgrade
-  rev: v3.10.1
-  hooks:
-  - id: pyupgrade
-    args: [--py38-plus, --keep-runtime-typing]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.2
+    hooks:
+      - id: pyupgrade
+        args: [--py38-plus, --keep-runtime-typing]
 
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-  hooks:
-  - id: check-merge-conflict
-  - id: debug-statements
-  - id: no-commit-to-branch
-    args: [--branch, main]
-  - id: requirements-txt-fixer
-  - id: trailing-whitespace
-    exclude: ^(|pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: no-commit-to-branch
+        args: [--branch, main]
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
+      - id: check-docstring-first
+      - id: end-of-file-fixer
+        exclude: ^(pyvista/examples/.*\.ply|pyvista/examples/.*\.vtk|doc/intersphinx/.*\.inv)
+      - id: mixed-line-ending
+      - id: file-contents-sorter
+        verbose: true
+        files: ^(\.dockerignore)$
 
-# this validates our github workflow files
-- repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.26.3
-  hooks:
-    - id: check-github-workflows
+  # this validates our github workflow files
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.1
+    hooks:
+      - id: check-github-workflows
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        types_or: [yaml, markdown, html, css, scss, javascript, json]

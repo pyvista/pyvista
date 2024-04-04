@@ -53,7 +53,7 @@ threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 ###############################################################################
 # We could then assign a classification array for the two bodies, compute the
 # cell sizes, then extract the volumes of each body. Note that there is a
-# simpler implementation of this below in :ref:`split_vol_ref`.
+# simpler implementation of this below in :ref:`split_vol`.
 
 # Create a classifying array to ID each body
 rng = dataset.get_data_range()
@@ -77,10 +77,11 @@ print(f"Original volume: {dataset.volume}")
 ###############################################################################
 # Or better yet, you could simply extract the largest volume from your
 # dataset directly by passing ``'largest'`` to the ``connectivity`` and
-# specify the same scalar range used earlier for thresholding.
+# specifying the scalar range of interest.
 
 # Grab the largest connected volume within a scalar range
-largest = threshed.connectivity('largest', scalar_range=[0.15, 0.50])
+scalar_range = [0, 77]  # Range corresponding to bottom 15% of values
+largest = threshed.connectivity('largest', scalar_range=scalar_range)
 
 # Get volume as numeric value
 large_volume = largest.volume
@@ -92,7 +93,7 @@ largest.plot(show_grid=True, cpos=[-2, 5, 3])
 ###############################################################################
 # -----
 #
-# .. _split_vol_ref:
+# .. _split_vol:
 #
 # Splitting Volumes
 # +++++++++++++++++

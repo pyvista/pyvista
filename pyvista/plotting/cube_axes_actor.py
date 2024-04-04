@@ -1,9 +1,10 @@
 """Module containing the wrapping of CubeAxesActor."""
+
 from typing import List, Tuple
 
 import numpy as np
 
-import pyvista as pv
+import pyvista
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import convert_string_array
 
@@ -180,15 +181,15 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self._z_label_visibility = z_label_visibility
 
         if x_label_format is None:
-            x_label_format = pv.global_theme.font.fmt
+            x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
                 x_label_format = '%.1f'
         if y_label_format is None:
-            y_label_format = pv.global_theme.font.fmt
+            y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
                 y_label_format = '%.1f'
         if z_label_format is None:
-            z_label_format = pv.global_theme.font.fmt
+            z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
                 z_label_format = '%.1f'
 
@@ -255,6 +256,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @x_axis_range.setter
     def x_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetXAxisRange(value)
+        self._update_x_labels()
 
     @property
     def y_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
@@ -264,6 +266,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @y_axis_range.setter
     def y_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetYAxisRange(value)
+        self._update_y_labels()
 
     @property
     def z_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
@@ -273,6 +276,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @z_axis_range.setter
     def z_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
         self.SetZAxisRange(value)
+        self._update_z_labels()
 
     @property
     def label_offset(self) -> float:  # numpydoc ignore=RT01
@@ -293,12 +297,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pv.Camera':  # numpydoc ignore=RT01
+    def camera(self) -> 'pyvista.Camera':  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: 'pv.Camera'):  # numpydoc ignore=GL08
+    def camera(self, camera: 'pyvista.Camera'):  # numpydoc ignore=GL08
         self.SetCamera(camera)
 
     @property
@@ -499,7 +503,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetXTitle(self._x_title)
             if self._x_label_visibility:
                 self.SetAxisLabels(
-                    0, make_axis_labels(*self.bounds[0:2], self.n_xlabels, self.x_label_format)
+                    0, make_axis_labels(*self.x_axis_range, self.n_xlabels, self.x_label_format)
                 )
             else:
                 self.SetAxisLabels(0, self._empty_str)
@@ -513,7 +517,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetYTitle(self._y_title)
             if self._y_label_visibility:
                 self.SetAxisLabels(
-                    1, make_axis_labels(*self.bounds[2:4], self.n_ylabels, self.y_label_format)
+                    1, make_axis_labels(*self.y_axis_range, self.n_ylabels, self.y_label_format)
                 )
             else:
                 self.SetAxisLabels(1, self._empty_str)
@@ -527,7 +531,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetZTitle(self._z_title)
             if self._z_label_visibility:
                 self.SetAxisLabels(
-                    2, make_axis_labels(*self.bounds[4:6], self.n_zlabels, self.z_label_format)
+                    2, make_axis_labels(*self.z_axis_range, self.n_zlabels, self.z_label_format)
                 )
             else:
                 self.SetAxisLabels(2, self._empty_str)

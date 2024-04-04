@@ -168,9 +168,7 @@ point_array, <function point_array at 0x7f72f5e05820>
 raise_not_matching, <function raise_not_matching at 0x7f72f5e07430>
 read, <function read at 0x7f72f5e02f70>
 read_exodus, <function read_exodus at 0x7f72f5e05160>
-read_legacy, <function read_legacy at 0x7f72f5e02ee0>
 read_meshio, <function read_meshio at 0x7f72f5e05310>
-read_plot3d, <function read_plot3d at 0x7f72f5e051f0>
 read_texture, <function read_texture at 0x7f72f5e050d0>
 reader, <module 'pyvista.utilities.reader' from 'pyvista/utilities/reader.py'>
 regression, <module 'pyvista.utilities.regression' from 'pyvista/utilities/regression.py'>

@@ -1,13 +1,15 @@
 """Internal array utilities."""
+
 import collections.abc
 import enum
+from itertools import product
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumericArray, VectorArray
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -55,13 +57,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[NumericArray, VectorArray], copy: bool = False
-) -> Tuple[np.ndarray, bool]:
+    points: Union[MatrixLike[float], VectorLike[float]], copy: bool = False
+) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : array_like[float]
+    points : MatrixLike[float] | VectorLike[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -123,11 +125,11 @@ def copy_vtk_array(array, deep=True):
     Perform a deep copy of a vtk array.
 
     >>> import vtk
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> arr = vtk.vtkFloatArray()
     >>> _ = arr.SetNumberOfValues(10)
     >>> arr.SetValue(0, 1)
-    >>> arr_copy = pyvista.core.utilities.arrays.copy_vtk_array(arr)
+    >>> arr_copy = pv.core.utilities.arrays.copy_vtk_array(arr)
     >>> arr_copy.GetValue(0)
     1.0
 
@@ -190,7 +192,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
-        VTK array type ID as specified in specified in ``vtkType.h``.
+        VTK array type ID as specified in ``vtkType.h``.
 
     Returns
     -------
@@ -202,14 +204,17 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
-    if isinstance(arr, (list, tuple)):
+    if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
-        arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
+            if arr.ndim > 0:
+                # Do not call ascontiguousarray for scalar strings since this will reshape to 1D
+                # and scalars are already contiguous anyway
+                arr = np.ascontiguousarray(arr)
             vtk_data = convert_string_array(arr)
         else:
             # This will handle numerical data
@@ -231,7 +236,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.ndarray']:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -252,7 +257,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[np.ndarray]:
 
     Returns
     -------
-    pyvista.pyvista_ndarray or ``None``
+    pyvista.pyvista_ndarray or None
         Requested array.  Return ``None`` if there is no array
         matching the ``name`` and ``err=False``.
 
@@ -545,9 +550,11 @@ def vtk_id_list_to_array(vtk_id_list):
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
+    If a scalar string is provided, it is converted to a vtkCharArray
+
     Parameters
     ----------
-    arr : numpy.ndarray
+    arr : numpy.ndarray | str
         Numpy string array to convert.
 
     name : str, optional
@@ -564,13 +571,25 @@ def convert_string_array(arr, name=None):
     to make this faster, please consider opening a pull request.
 
     """
+    arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+        if (
+            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+        ):  # avoids segfault
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
             )
         vtkarr = _vtk.vtkStringArray()
+        if arr.ndim == 0:
+            # distinguish scalar inputs from array inputs by
+            # setting the object name
+            arr = arr.reshape((1,))
+            try:
+                vtkarr.SetObjectName('scalar')
+            except AttributeError:
+                vtkarr.GetObjectName = lambda: 'scalar'
+
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -581,11 +600,17 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    try:
+        if arr.GetObjectName() == 'scalar':
+            return np.array("".join(arr_out))
+    except AttributeError:
+        pass
+    return arr_out
     ########################################
 
 
-def array_from_vtkmatrix(matrix):
+def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -610,9 +635,8 @@ def array_from_vtkmatrix(matrix):
             f' got {type(matrix).__name__} instead.'
         )
     array = np.zeros(shape)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            array[i, j] = matrix.GetElement(i, j)
+    for i, j in product(range(shape[0]), range(shape[1])):
+        array[i, j] = matrix.GetElement(i, j)
     return array
 
 
@@ -640,9 +664,8 @@ def vtkmatrix_from_array(array):
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
-    for i in range(m):
-        for j in range(n):
-            matrix.SetElement(i, j, array[i, j])
+    for i, j in product(range(m), range(n)):
+        matrix.SetElement(i, j, array[i, j])
     return matrix
 
 
@@ -752,3 +775,44 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)"
         )
+
+
+def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
+    """Check and coerce transform-like arg to a 4x4 numpy array.
+
+    Parameters
+    ----------
+    transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
+
+    Returns
+    -------
+    np.ndarray
+        4x4 transformation matrix.
+
+    """
+    transform_array: NumpyArray[float] = np.eye(4)
+    if isinstance(transform_like, _vtk.vtkMatrix4x4):
+        transform_array = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkMatrix3x3):
+        transform_array[:3, :3] = array_from_vtkmatrix(transform_like)
+    elif isinstance(transform_like, _vtk.vtkTransform):
+        transform_array = array_from_vtkmatrix(transform_like.GetMatrix())
+    elif isinstance(transform_like, np.ndarray):
+        if transform_like.shape == (3, 3):
+            transform_array[:3, :3] = transform_like
+        elif transform_like.shape == (4, 4):
+            transform_array = transform_like
+        else:
+            raise ValueError('Transformation array must be 3x3 or 4x4.')
+    else:
+        raise TypeError(
+            'Input transform must be one of:\n'
+            '\tvtk.vtkMatrix4x4\n'
+            '\tvtk.vtkMatrix3x3\n'
+            '\tvtk.vtkTransform\n'
+            '\t4x4 np.ndarray\n'
+            '\t3x3 np.ndarray\n'
+        )
+    return transform_array

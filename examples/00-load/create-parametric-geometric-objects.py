@@ -1,10 +1,10 @@
 """
-.. _ref_parametric_example:
+.. _parametric_example:
 
 Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creating parametric objects
+Creating parametric objects from :ref:`parametric_api`.
 """
 
 from math import pi

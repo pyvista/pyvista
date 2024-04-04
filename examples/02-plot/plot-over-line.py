@@ -11,6 +11,11 @@ Plot the values of a dataset over a line through that dataset
 import pyvista as pv
 from pyvista import examples
 
+# sphinx_gallery_start_ignore
+# white wireframe over white background does not show up in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # Volumetric Mesh
 # +++++++++++++++

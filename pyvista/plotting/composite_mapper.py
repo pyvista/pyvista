@@ -1,19 +1,19 @@
 """Module containing composite data mapper."""
+
 from itertools import cycle
 import sys
 from typing import Optional
 import weakref
 
-import matplotlib
 import numpy as np
 
-import pyvista as pv
+import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
-from pyvista.report import vtk_version_info
 
 from . import _vtk
-from .colors import Color
+from .colors import Color, get_cycler
 from .mapper import _BaseMapper
 
 
@@ -516,12 +516,19 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
             yield self[ii]
 
 
-class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
+class CompositePolyDataMapper(
+    (
+        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
+        if vtk_version_info >= (9, 3)
+        else _vtk.vtkCompositePolyDataMapper2
+    ),
+    _BaseMapper,
+):
     """Composite PolyData mapper.
 
     Parameters
     ----------
-    dataset : pyvista.MultiBlock
+    dataset : pyvista.MultiBlock, optional
         Multiblock dataset.
 
     theme : pyvista.plotting.themes.Theme, optional
@@ -541,16 +548,14 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     """
 
     def __init__(
-        self, dataset, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+        self, dataset=None, theme=None, color_missing_with_nan=None, interpolate_before_map=None
     ):
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
-        self.SetInputDataObject(dataset)
-
         # this must be added to set the color, opacity, and visibility of
         # individual blocks
         self._attr = CompositeAttributes(self, dataset)
-        self._dataset = dataset
+        self.dataset = dataset
 
         if color_missing_with_nan is not None:
             self.color_missing_with_nan = color_missing_with_nan
@@ -558,7 +563,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pv.MultiBlock':  # numpydoc ignore=RT01
+    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -578,6 +583,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
         """
         return self._dataset
+
+    @dataset.setter
+    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
+        self.SetInputDataObject(obj)
+        self._dataset = obj
+        self._attr._dataset = obj
 
     @property
     def block_attr(self) -> CompositeAttributes:  # numpydoc ignore=RT01
@@ -651,10 +662,20 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
     def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self):
+    def set_unique_colors(self, color_cycler=True):
         """Set each block of the dataset to a unique color.
 
-        This uses ``matplotlib``'s color cycler.
+        This uses ``matplotlib``'s color cycler by default.
+
+        When a custom color cycler, or a sequence of
+        color-like objects, is passed it sets the blocks
+        to the corresponding colors.
+
+        Parameters
+        ----------
+        color_cycler : bool | str | cycler.Cycler | sequence[ColorLike]
+            The sequence of colors to cycle through,
+            if ``True``, uses matplotlib cycler.
 
         Examples
         --------
@@ -673,7 +694,12 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
         """
         self.scalar_visibility = False
-        colors = cycle(matplotlib.rcParams['axes.prop_cycle'])
+
+        if isinstance(color_cycler, bool):
+            colors = cycle(get_cycler("matplotlib"))
+        else:
+            colors = cycle(get_cycler(color_cycler))
+
         for attr in self.block_attr:
             attr.color = next(colors)['color']
 
@@ -805,7 +831,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
-        if isinstance(cmap, pv.LookupTable):
+        if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
         else:
             if dtype == np.bool_:
@@ -833,7 +859,7 @@ class CompositePolyDataMapper(_vtk.vtkCompositePolyDataMapper2, _BaseMapper):
 
             if cmap is None:
                 if self._theme is None:
-                    cmap = pv.global_theme.cmap
+                    cmap = pyvista.global_theme.cmap
                 else:
                     cmap = self._theme.cmap
 

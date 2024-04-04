@@ -1,7 +1,11 @@
 """Image regression module."""
+
+from typing import Optional, cast
+
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -64,13 +68,17 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
     """Run a ``vtkWindowToImageFilter`` and get output as array.
 
     Parameters
     ----------
     imfilter : _vtk.vtkWindowToImageFilter
         The ``vtkWindowToImageFilter`` instance to be processed.
+
+    Notes
+    -----
+    An empty array will be returned if an image cannot be extracted.
 
     Returns
     -------
@@ -83,7 +91,9 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter):
     # Update filter and grab pixels
     imfilter.Modified()
     imfilter.Update()
-    image = wrap(imfilter.GetOutput())
+    image = cast(Optional[pyvista.ImageData], wrap(imfilter.GetOutput()))
+    if image is None:
+        return np.empty((0, 0, 0))
     img_size = image.dimensions
     img_array = point_array(image, 'ImageScalars')
     # Reshape and write
@@ -174,19 +184,19 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     --------
     Compare two active plotters.
 
-    >>> import pyvista
-    >>> pl1 = pyvista.Plotter()
-    >>> _ = pl1.add_mesh(pyvista.Sphere(), smooth_shading=True)
-    >>> pl2 = pyvista.Plotter()
-    >>> _ = pl2.add_mesh(pyvista.Sphere(), smooth_shading=False)
-    >>> error = pyvista.compare_images(pl1, pl2)
+    >>> import pyvista as pv
+    >>> pl1 = pv.Plotter()
+    >>> _ = pl1.add_mesh(pv.Sphere(), smooth_shading=True)
+    >>> pl2 = pv.Plotter()
+    >>> _ = pl2.add_mesh(pv.Sphere(), smooth_shading=False)
+    >>> error = pv.compare_images(pl1, pl2)
 
     Compare images from file.
 
-    >>> import pyvista
-    >>> img1 = pyvista.read('img1.png')  # doctest:+SKIP
-    >>> img2 = pyvista.read('img2.png')  # doctest:+SKIP
-    >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> img1 = pv.read('img1.png')  # doctest:+SKIP
+    >>> img2 = pv.read('img2.png')  # doctest:+SKIP
+    >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
     from pyvista import ImageData, Plotter, read, wrap

@@ -156,8 +156,6 @@ Texture, <class 'pyvista.core.texture.Texture'>
 TimeReader, <class 'pyvista.utilities.reader.TimeReader'>
 Triangle, <function Triangle at 0x1641c0af0>
 Tube, <function Tube at 0x1641c04c0>
-UniformGrid, <class 'pyvista.core.grid.UniformGrid'>
-UniformGridFilters, <class 'pyvista.core.filters.uniform_grid.UniformGridFilters'>
 UnstructuredGrid, <class 'pyvista.core.pointset.UnstructuredGrid'>
 UnstructuredGridFilters, <class 'pyvista.core.filters.unstructured_grid.UnstructuredGridFilters'>
 VTKDataSetReader, <class 'pyvista.utilities.reader.VTKDataSetReader'>
@@ -297,9 +295,7 @@ raise_not_matching, <function raise_not_matching at 0x163f40b80>
 # rcParams, None
 read, <function read at 0x163f3e700>
 read_exodus, <function read_exodus at 0x163f3e8b0>
-read_legacy, <function read_legacy at 0x163f3e670>
 read_meshio, <function read_meshio at 0x163f3ea60>
-read_plot3d, <function read_plot3d at 0x163f3e940>
 read_texture, <function read_texture at 0x163f3e820>
 # reader, <module 'pyvista.utilities.reader' from 'pyvista/pyvista/utilities/reader.py'>
 # regression, <module 'pyvista.utilities.regression' from 'pyvista/pyvista/utilities/regression.py'>

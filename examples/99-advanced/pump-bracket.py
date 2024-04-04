@@ -19,6 +19,7 @@ to get an understanding of how the pump bracket responds to different modes of
 vibration.
 
 """
+
 import numpy as np
 
 import pyvista as pv
@@ -105,8 +106,8 @@ pl.enable_anti_aliasing('fxaa')
 n_frames = 16
 pl.open_gif("pump_bracket_mode_shape.gif")
 for phase in np.linspace(0, 2 * np.pi, n_frames, endpoint=False):
-    # use the original unmodified points
-    pl.update_coordinates(dataset.points + ds[mode_shape] * np.cos(phase) * 0.05)
+    # use the original unmodified points, modify copy inplace
+    ds.points = dataset.points + ds[mode_shape] * np.cos(phase) * 0.05
     pl.write_frame()
 
 pl.close()

@@ -58,11 +58,11 @@ Phong
 Postprocessing
 Protobuf
 Ptera
+PyInstaller
 PyPI
 PyThreeJS
 PyVista
 Pydocstyle
-PyInstaller
 Python
 Pytorch
 Resampling
@@ -125,7 +125,6 @@ linenos
 lod
 manylinux
 matplotlib
-matplotlib
 meshio
 monospaced
 msh
@@ -164,7 +163,6 @@ setuptools
 sphinx
 stl
 subpackages
-sympy
 sympy
 tensorflow
 tetgen

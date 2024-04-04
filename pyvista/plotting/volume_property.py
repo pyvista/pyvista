@@ -1,5 +1,6 @@
 """This module contains the VolumeProperty class."""
-import pyvista as pv
+
+import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -108,7 +109,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         if opacity_unit_distance is not None:
             self.opacity_unit_distance = opacity_unit_distance
 
-    def apply_lookup_table(self, lookup_table: 'pv.LookupTable'):
+    def apply_lookup_table(self, lookup_table: 'pyvista.LookupTable'):
         """Apply a lookup table to the volume property.
 
         Applies both the color and opacity of the lookup table as transfer
@@ -138,7 +139,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> pl.show()
 
         """
-        if not isinstance(lookup_table, pv.LookupTable):
+        if not isinstance(lookup_table, pyvista.LookupTable):
             raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
 
         self.SetColor(lookup_table.to_color_tf())

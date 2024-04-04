@@ -5,6 +5,11 @@ Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 ###############################################################################
 # To have more control over reading data files, use a class based reader.
 # This class allows for more fine-grained control over reading datasets from

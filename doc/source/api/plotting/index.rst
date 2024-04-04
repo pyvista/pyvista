@@ -3,7 +3,7 @@
 Plotting
 ========
 
-* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting_ref`).
+* Intuitive plotting routines with `matplotlib`_ like syntax (see :ref:`plotting`).
 * Plotting tools built for interactivity (see :ref:`widgets`).
 
 .. toctree::
@@ -31,12 +31,18 @@ all plotting functionality in PyVista.
    Axes
    AxesActor
    CameraPosition
+   CornerAnnotation
    CubeAxesActor
    DataSetMapper
    LookupTable
    Plotter
+   Prop3D
    Property
    Renderer
+   RenderWindowInteractor
+   Text
+   TextProperty
+   Timer
    plotting.mapper._BaseMapper
    plotting.opts.InterpolationType
    plotting.opts.RepresentationType

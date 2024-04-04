@@ -1,12 +1,20 @@
 """Miscellaneous core utilities."""
-from collections.abc import Iterable
+
+from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
 import sys
 import threading
 import traceback
+from typing import Type, TypeVar, Union
 import warnings
+
+import numpy as np
+
+from .._typing_core import VectorLike
+
+T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
 def assert_empty_kwargs(**kwargs):
@@ -44,13 +52,13 @@ def assert_empty_kwargs(**kwargs):
     raise TypeError(message)
 
 
-def check_valid_vector(point, name=''):
+def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
     """
     Check if a vector contains three components.
 
     Parameters
     ----------
-    point : Iterable[float|int]
+    point : VectorLike[float]
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
@@ -63,12 +71,13 @@ def check_valid_vector(point, name=''):
         If the input does not have exactly three components.
 
     """
-    if not isinstance(point, Iterable):
+    if not isinstance(point, (Sequence, np.ndarray)):
         raise TypeError(f'{name} must be a length three iterable of floats.')
     if len(point) != 3:
         if name == '':
             name = 'Vector'
         raise ValueError(f'{name} must be a length three iterable of floats.')
+    return None
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01
@@ -96,7 +105,9 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
 class AnnotatedIntEnum(int, enum.Enum):
     """Annotated enum type."""
 
-    def __new__(cls, value, annotation):
+    annotation: str
+
+    def __new__(cls, value, annotation: str):
         """Initialize."""
         obj = int.__new__(cls, value)
         obj._value_ = value
@@ -128,7 +139,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls, value):
+    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -149,7 +160,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         if isinstance(value, cls):
             return value
         elif isinstance(value, int):
-            return cls(value)
+            return cls(value)  # type: ignore[call-arg]
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
@@ -261,7 +272,11 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name) or name in cls._new_attr_exceptions:
+        if (
+            hasattr(self, name)
+            or name in cls._new_attr_exceptions
+            or name in self._new_attr_exceptions
+        ):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(
@@ -269,5 +284,31 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
                 f'{self.__class__.__name__}'
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls
+
+
+def _reciprocal(x, tol=1e-8):
+    """Compute the element-wise reciprocal and avoid division by zero.
+
+    The reciprocal of elements with an absolute value less than a
+    specified tolerance is computed as zero.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    tol : float
+        Tolerance value. Values smaller than ``tol`` have a reciprocal of zero.
+
+    Returns
+    -------
+    numpy.ndarray
+        Element-wise reciprocal of the input.
+
+    """
+    x = np.array(x)
+    zero = np.abs(x) < tol
+    x[~zero] = np.reciprocal(x[~zero])
+    x[zero] = 0
+    return x

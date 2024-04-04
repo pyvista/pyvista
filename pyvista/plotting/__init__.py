@@ -1,4 +1,5 @@
 """Plotting routines."""
+
 # flake8: noqa: F401
 
 from pyvista import MAX_N_COLOR_BARS
@@ -31,7 +32,8 @@ from .mapper import (
 )
 from .picking import PickingHelper
 from .plotter import _ALL_PLOTTERS, BasePlotter, Plotter, close_all
-from .render_window_interactor import RenderWindowInteractor
+from .prop3d import Prop3D
+from .render_window_interactor import RenderWindowInteractor, Timer
 from .renderer import CameraPosition, Renderer, scale_point
 from .text import CornerAnnotation, Text, TextProperty
 from .texture import Texture, image_to_texture, numpy_to_texture
@@ -90,7 +92,7 @@ class QtInteractor:  # numpydoc ignore=PR01
         raise QtDeprecationError('QtInteractor')
 
 
-global_theme = _GlobalTheme()
+global_theme: _GlobalTheme = _GlobalTheme()
 
 # Set preferred plot theme
 _set_plot_theme_from_env()

@@ -11,6 +11,7 @@ swept surface. For example, sweeping a line results in a
 cylindrical shell, and sweeping a circle creates a torus.
 
 """
+
 import numpy as np
 
 import pyvista
@@ -24,6 +25,11 @@ poly
 ###############################################################################
 # Plot the extruded line
 # ~~~~~~~~~~~~~~~~~~~~~~
+
+
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 plotter = pyvista.Plotter(shape=(2, 1))
 plotter.subplot(0, 0)

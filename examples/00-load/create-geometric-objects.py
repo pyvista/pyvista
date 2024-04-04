@@ -1,11 +1,13 @@
 """
-.. _ref_geometric_example:
+.. _geometric_example:
 
 Geometric Objects
 ~~~~~~~~~~~~~~~~~
 
-The "Hello, world!" of VTK
+The "Hello, world!" of VTK.
+Uses objects from :ref:`geometry_api`.
 """
+
 import pyvista as pv
 
 ###############################################################################

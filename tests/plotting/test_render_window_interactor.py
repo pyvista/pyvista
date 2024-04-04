@@ -6,6 +6,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 def empty_callback():
@@ -59,7 +60,8 @@ def test_observers():
     assert obs_move not in pl.iren._observers
     # Remove all observers of a specific event
     pl.iren.remove_observers(_vtk.vtkCommand.LeftButtonDoubleClickEvent)
-    assert obs_double1 not in pl.iren._observers and obs_double2 not in pl.iren._observers
+    assert obs_double1 not in pl.iren._observers
+    assert obs_double2 not in pl.iren._observers
     # Remove all (remaining) observers
     pl.iren.remove_observers()
     assert len(pl.iren._observers) == 0
@@ -71,7 +73,7 @@ def test_clear_key_event_callbacks():
     pl.reset_key_events()
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_track_mouse_position():
     pl = pv.Plotter()
     pl.track_mouse_position()
@@ -85,7 +87,7 @@ def test_track_mouse_position():
     assert "MouseMoveEvent" not in pl.iren._observers.values()
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_track_click_position_multi_render():
     points = []
 
@@ -109,7 +111,7 @@ def test_track_click_position_multi_render():
     assert len(points) == 1
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_track_click_position():
     events = []
 
@@ -126,14 +128,19 @@ def test_track_click_position():
 
     # Test single and double clicks:
     pl.iren._mouse_left_button_click(10, 10)
-    assert len(events) == 1 and events.pop(0) == "single"
+    assert len(events) == 1
+    assert events.pop(0) == "single"
     pl.iren._mouse_left_button_click(50, 50, count=2)
-    assert len(events) == 2 and events.pop(1) == "double" and events.pop(0) == "single"
+    assert len(events) == 2
+    assert events.pop(1) == "double"
+    assert events.pop(0) == "single"
 
     # Test triple click behaviour:
     pl.iren._mouse_left_button_click(10, 10, count=3)
     assert len(events) == 3
-    assert events.pop(2) == "single" and events.pop(1) == "double" and events.pop(0) == "single"
+    assert events.pop(2) == "single"
+    assert events.pop(1) == "double"
+    assert events.pop(0) == "single"
 
 
 @pytest.mark.skipif(
@@ -187,7 +194,22 @@ def test_timer():
     assert len(events) == E
 
 
-@pytest.mark.skip_plotting
+def test_add_timer_event():
+    sphere = pv.Sphere()
+
+    pl = pv.Plotter()
+    actor = pl.add_mesh(sphere)
+
+    def callback(step):
+        actor.position = [step / 100.0, step / 100.0, 0]
+
+    pl.add_timer_event(max_steps=200, duration=500, callback=callback)
+
+    cpos = [(0.0, 0.0, 10.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    pl.show(cpos=cpos)
+
+
+@pytest.mark.skip_plotting()
 def test_poked_subplot_loc():
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
@@ -206,7 +228,7 @@ def test_poked_subplot_loc():
     pl.close()
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_poked_subplot_context(verify_image_cache):
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
@@ -227,3 +249,48 @@ def test_poked_subplot_context(verify_image_cache):
         pl.add_mesh(pv.Arrow(), color=True)
 
     pl.show()
+
+
+@pytest.mark.skip_plotting()
+def test_add_pick_observer():
+    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
+        pl = pv.Plotter()
+        pl.iren.add_pick_obeserver(empty_callback)
+    pl = pv.Plotter()
+    pl.iren.add_pick_observer(empty_callback)
+
+
+@pytest.mark.needs_vtk_version(9, 1)
+@pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
+def test_release_button_observers(event):
+    class CallBack:
+        def __init__(self):
+            self._i = 0
+
+        def __call__(self, *_):
+            self._i += 1
+
+    cb = CallBack()
+    pl = pv.Plotter()
+    pl.iren.add_observer(event, cb)
+
+    pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
+    assert cb._i == 1
+
+    pl.iren.interactor.GetInteractorStyle().InvokeEvent(event)
+    assert cb._i == 2
+
+
+def test_enable_custom_trackball_style():
+    pl = pv.Plotter()
+    pl.enable_custom_trackball_style()
+    pl.close()
+
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match="Action 'not an option' not in the allowed"):
+        pl.enable_custom_trackball_style(left="not an option")
+
+
+def test_enable_2d_style():
+    pl = pv.Plotter()
+    pl.enable_2d_style()

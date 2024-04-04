@@ -1,5 +1,6 @@
 """Cubemap utilities."""
-import os
+
+from pathlib import Path
 
 import pyvista
 from pyvista.plotting import _vtk
@@ -53,14 +54,14 @@ def cubemap(path='', prefix='', ext='.jpg'):
     --------
     Load a skybox given a directory, prefix, and file extension.
 
-    >>> import pyvista
-    >>> skybox = pyvista.cubemap(
+    >>> import pyvista as pv
+    >>> skybox = pv.cubemap(
     ...     'my_directory', 'skybox', '.jpeg'
     ... )  # doctest:+SKIP
 
     """
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
-    image_paths = [os.path.join(path, f'{prefix}{suffix}{ext}') for suffix in sets]
+    image_paths = [str(Path(path) / f'{prefix}{suffix}{ext}') for suffix in sets]
     return _cubemap_from_paths(image_paths)
 
 
@@ -98,7 +99,7 @@ def cubemap_from_filenames(image_paths):
     ...     '/home/user/_pz.jpg',
     ...     '/home/user/_nz.jpg',
     ... ]
-    >>> skybox = pyvista.cubemap(image_paths=image_paths)  # doctest:+SKIP
+    >>> skybox = pv.cubemap(image_paths=image_paths)  # doctest:+SKIP
 
     """
     if len(image_paths) != 6:
@@ -110,7 +111,7 @@ def cubemap_from_filenames(image_paths):
 def _cubemap_from_paths(image_paths):
     """Construct a cubemap from image paths."""
     for image_path in image_paths:
-        if not os.path.isfile(image_path):
+        if not Path(image_path).is_file():
             file_str = '\n'.join(image_paths)
             raise FileNotFoundError(
                 f'Unable to locate {image_path}\n'

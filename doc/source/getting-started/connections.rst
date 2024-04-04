@@ -62,7 +62,7 @@ Many More
 .. _mne-python: https://github.com/mne-tools/mne-python
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _pyleecan: https://github.com/Eomys/pyleecan
-.. _pymapdl: https://github.com/pyansys/pymapdl
+.. _pymapdl: https://github.com/ansys/pymapdl
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _pyprocar: https://github.com/romerogroup/pyprocar
 .. _tetgen: https://github.com/pyvista/tetgen

@@ -4,7 +4,7 @@ PyVista Data Model
 ==================
 This section of the user guide explains in detail how to construct
 meshes from scratch and to utilize the underlying VTK data model but
-using the PyVista framework. Many of our :ref:`ref_examples` simply
+using the PyVista framework. Many of our :ref:`examples` simply
 load data from files, but don't explain how to construct meshes or
 place data within datasets.
 
@@ -50,15 +50,17 @@ will help improve your understanding of why data sets are structured
 the way they are in libraries like VTK.
 
 At the most fundamental level, all PyVista geometry classes inherit
-from the :ref:`ref_dataset` class. A dataset has geometry, topology,
+from the :ref:`dataset` class. A dataset has geometry, topology,
 and attributes describing that geometry in the form of point, cell, or
 field arrays.
 
 Geometry in PyVista is represented as points and cells. For example,
 consider a single cell within a |PolyData|:
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+   :force_static:
 
    import pyvista
    pyvista.set_plot_theme('document')
@@ -81,8 +83,10 @@ we've done above (lists of arrays with indices). VTK (and hence
 PyVista) have multiple classes that represent different data
 shapes. The most important dataset classes are shown below:
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+
 
    from pyvista import demos
    demos.plot_datasets()
@@ -98,7 +102,7 @@ floats can describe the shape, so it takes the least amount of memory
 to store.
 
 This is because in |PolyData| or
-|UnstructuredGrid|, points and cells must be explicitly
+|UnstructuredGrid|, points, and cells must be explicitly
 defined. In other data types, such as |ImageData|,
 the cells (and even points) are defined as an emergent property based
 on the dimensionality of the grid.
@@ -316,6 +320,7 @@ While we're at it, let's annotate this plot to describe this mesh.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
@@ -410,6 +415,7 @@ Let's also plot this basic mesh:
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
@@ -486,6 +492,7 @@ assigned.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
@@ -561,6 +568,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
@@ -688,7 +696,7 @@ Active Texture Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 The :attr:`active_t_coords
 <pyvista.DataSet.active_t_coords>` array is used for
-rendering textures. See :ref:`ref_texture_example` for examples using
+rendering textures. See :ref:`texture_example` for examples using
 this array.
 
 

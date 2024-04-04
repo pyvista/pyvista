@@ -26,6 +26,22 @@ Object Conversions or Wrapping
    vtkmatrix_from_array
    wrap
 
+Features
+~~~~~~~~
+
+.. autosummary::
+   :toctree: _autosummary
+
+   cartesian_to_spherical
+   create_grid
+   grid_from_sph_coords
+   merge
+   perlin_noise
+   sample_function
+   spherical_to_cartesian
+   transform_vectors_sph_to_cart
+   voxelize
+   voxelize_volume
 
 File IO
 ~~~~~~~
@@ -34,7 +50,6 @@ File IO
 
    read
    read_exodus
-   read_legacy
    read_texture
    save_meshio
 
@@ -89,6 +104,18 @@ Miscellaneous
 
    Report
 
+PyVista Version Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The PyVista library provides a way of getting the version installed in your
+environment.
+
+.. code:: python
+
+   Output the version of PyVista.
+
+   >>> import pyvista
+   >>> pyvista.version_info
+   (0, 44, 0)
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -4,11 +4,16 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+
+import os
+from pathlib import Path
+
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
-from pyvista.core.errors import DeprecationError, MissingDataError
+from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -142,6 +147,17 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
 
 
+@pytest.mark.parametrize('split_sharp_edges', [True, False])
+def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
+    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
+    assert point_cloud.n_verts == point_cloud.n_cells
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        point_cloud, None, True, split_sharp_edges, False, None
+    )
+    assert scalars is None
+    assert "Normals" not in mesh.point_data
+
+
 def test_smooth_shading_shallow_copy(sphere):
     """See also ``test_compute_normals_inplace``."""
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
@@ -167,7 +183,8 @@ def test_get_datasets(sphere, hexbeam):
     pl.add_mesh(hexbeam)
     datasets = pl._datasets
     assert len(datasets) == 2
-    assert sphere in datasets and hexbeam in datasets
+    assert sphere in datasets
+    assert hexbeam in datasets
 
 
 def test_remove_scalars_single(sphere, hexbeam):
@@ -195,8 +212,8 @@ def test_active_scalars_remain(sphere, hexbeam):
     hexbeam.clear_data()
     point_data_name = "point_data"
     cell_data_name = "cell_data"
-    sphere[point_data_name] = np.random.random(sphere.n_points)
-    hexbeam[cell_data_name] = np.random.random(hexbeam.n_cells)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
+    hexbeam[cell_data_name] = np.random.default_rng().random(hexbeam.n_cells)
     assert sphere.point_data.active_scalars_name == point_data_name
     assert hexbeam.cell_data.active_scalars_name == cell_data_name
 
@@ -211,7 +228,7 @@ def test_active_scalars_remain(sphere, hexbeam):
 
 def test_no_added_with_scalar_bar(sphere):
     point_data_name = "data"
-    sphere[point_data_name] = np.random.random(sphere.n_points)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
     assert sphere.n_arrays == 1
@@ -240,7 +257,7 @@ def test_plotter_remains_shallow():
 
 def test_add_multiple(sphere):
     point_data_name = 'data'
-    sphere[point_data_name] = np.random.random(sphere.n_points)
+    sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
     pl.add_mesh(sphere, copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points), copy_mesh=True)
@@ -284,7 +301,7 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-@pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
+@pytest.mark.parametrize(("connected", "n_lines"), [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
     pl = pv.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
@@ -366,16 +383,6 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
         pl.add_volume(sphere)
 
 
-def test_deprecated_store_image():
-    """Test to make sure store_image is deprecated."""
-    pl = pv.Plotter()
-    with pytest.raises(DeprecationError):
-        assert isinstance(pl.store_image, bool)
-
-    with pytest.raises(DeprecationError):
-        pl.store_image = True
-
-
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
     arr = uniform.x.astype(np.uint8)
@@ -404,8 +411,36 @@ def test_plotter_meshes(sphere, cube):
     assert len(pl.meshes) == 2
 
 
+def test_multi_block_color_cycler():
+    """Test passing a custom color cycler"""
+    plotter = pv.Plotter()
+    data = {
+        "sphere1": pv.Sphere(center=(1, 0, 0)),
+        "sphere2": pv.Sphere(center=(2, 0, 0)),
+        "sphere3": pv.Sphere(center=(3, 0, 0)),
+        "sphere4": pv.Sphere(center=(4, 0, 0)),
+    }
+    spheres = pv.MultiBlock(data)
+    actor, mapper = plotter.add_composite(spheres)
+
+    # pass custom cycler
+    mapper.set_unique_colors(['red', 'green', 'blue'])
+
+    assert mapper.block_attr[0].color.name == 'red'
+    assert mapper.block_attr[1].color.name == 'green'
+    assert mapper.block_attr[2].color.name == 'blue'
+    assert mapper.block_attr[3].color.name == 'red'
+
+    # test wrong args
+    with pytest.raises(ValueError):  # noqa: PT011
+        mapper.set_unique_colors('foo')
+
+    with pytest.raises(TypeError):
+        mapper.set_unique_colors(5)
+
+
 @pytest.mark.parametrize(
-    'face, normal',
+    ('face', 'normal'),
     [
         ('-Z', (0, 0, 1)),
         ('-Y', (0, 1, 0)),
@@ -425,3 +460,65 @@ def test_plotter_add_floor_raise_error():
     pl = pv.Plotter()
     with pytest.raises(NotImplementedError, match='not implemented'):
         pl.add_floor(face='invalid')
+
+
+def test_plotter_zoom_camera():
+    pl = pv.Plotter()
+    pl.zoom_camera(1.05)
+
+
+def test_plotter_reset_key_events():
+    pl = pv.Plotter()
+    pl.reset_key_events()
+
+
+def test_plotter_update_coordinates(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        pl = pv.Plotter()
+        pl.add_mesh(sphere)
+        pl.update_coordinates(sphere.points * 2.0)
+        if pv._version.version_info >= (0, 46):
+            raise RuntimeError("Convert error this method")
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError("Remove this method")
+
+
+def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
+    pv.FIGURE_PATH = str(tmpdir)
+    pv.ON_SCREENSHOT = True
+
+    entries = os.listdir(pv.FIGURE_PATH)
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show()
+    entries_after = os.listdir(pv.FIGURE_PATH)
+    assert len(entries) + 1 == len(entries_after)
+
+    res_file = list(set(entries_after) - set(entries))[0]
+    pv.ON_SCREENSHOT = False
+    sphere_screenshot = "sphere_screenshot.png"
+    pl = pv.Plotter()
+    pl.add_mesh(sphere)
+    pl.show(screenshot=sphere_screenshot)
+    sphere_path = str(Path(pv.FIGURE_PATH) / sphere_screenshot)
+    res_path = str(Path(pv.FIGURE_PATH) / res_file)
+    error = pv.compare_images(sphere_path, res_path)
+    assert error < 100
+
+
+def test_legend_font(sphere):
+    plotter = pv.Plotter()
+    plotter.add_mesh(sphere)
+    legend_labels = [['sphere', 'r']]
+    legend = plotter.add_legend(
+        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+    )
+    assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
+
+
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+def test_edge_opacity(sphere):
+    edge_opacity = np.random.default_rng().random()
+    pl = pv.Plotter(sphere)
+    actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
+    assert actor.prop.edge_opacity == edge_opacity

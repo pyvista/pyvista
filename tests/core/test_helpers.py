@@ -36,7 +36,7 @@ def test_wrap_pyvista_ndarray(sphere):
 )
 def test_wrap_pyvista_ndarray_vtk(dtypes):
     np_dtype, vtk_class = dtypes
-    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]], dtype=np_dtype)
+    np_array = np.array([[0, 10, 20], [-10, -200, 0], [0.5, 0.667, 0]]).astype(np_dtype)
 
     vtk_array = vtk_class()
     vtk_array.SetNumberOfComponents(3)
@@ -59,21 +59,21 @@ def test_wrap_trimesh():
     assert np.allclose(tmesh.vertices, mesh.points)
     assert np.allclose(tmesh.faces, mesh.faces[1:])
 
-    assert mesh.active_t_coords is None
+    assert mesh.active_texture_coordinates is None
 
     uvs = [[0, 0], [0, 1], [1, 0]]
     tmesh.visual = trimesh.visual.TextureVisuals(uv=uvs)
     mesh_with_uv = pv.wrap(tmesh)
 
-    assert mesh_with_uv.active_t_coords is not None
-    assert np.allclose(mesh_with_uv.active_t_coords, uvs)
+    assert mesh_with_uv.active_texture_coordinates is not None
+    assert np.allclose(mesh_with_uv.active_texture_coordinates, uvs)
 
 
 def test_make_tri_mesh(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         make_tri_mesh(sphere.points, sphere.faces)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         make_tri_mesh(sphere.points[:, :1], sphere.faces)
 
     faces = sphere.faces.reshape(-1, 4)[:, 1:]
@@ -90,8 +90,6 @@ def test_wrappers():
 
     class Foo(pv.PolyData):
         """A user defined subclass of pv.PolyData."""
-
-        pass
 
     default_wrappers = pv._wrappers.copy()
     # Use try...finally to set and reset _wrappers
@@ -339,7 +337,9 @@ def test_vtk_points_deep_shallow():
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
 
-@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+@pytest.mark.parametrize(
+    ("force_float", "expected_data_type"), [(False, np.int64), (True, np.float32)]
+)
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:

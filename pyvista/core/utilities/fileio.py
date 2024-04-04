@@ -1,7 +1,7 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
-import os
 import pathlib
+from pathlib import Path
 import warnings
 
 import numpy as np
@@ -61,10 +61,13 @@ def get_ext(filename):
         extension is returned as well.
 
     """
-    base, ext = os.path.splitext(filename)
+    path = Path(filename)
+    base = str(path.parent / path.stem)
+    ext = path.suffix
     ext = ext.lower()
     if ext == ".gz":
-        ext_pre = os.path.splitext(base)[1].lower()
+        path = Path(base)
+        ext_pre = path.suffix.lower()
         ext = f"{ext_pre}{ext}"
     return ext
 
@@ -103,50 +106,8 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def read_legacy(filename, progress_bar=False):
-    """Use VTK's legacy reader to read a file.
-
-    .. deprecated:: 0.35.0
-       This function is deprecated. Use :func:`pyvista.read` instead.
-
-    This uses ``vtk.vtkDataSetReader`` to read the data.
-
-    Parameters
-    ----------
-    filename : str
-        The string path to the file to read.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.DataSet
-        Wrapped pyvista mesh.
-
-    Examples
-    --------
-    Load an example mesh using the legacy reader.
-
-    >>> import pyvista
-    >>> from pyvista import examples
-    >>> mesh = pyvista.read_legacy(examples.uniformfile)  # doctest:+SKIP
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_legacy is deprecated. Use pyvista.read instead", PyVistaDeprecationWarning
-    )
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    return read(filename, progress_bar=progress_bar)
-
-
-def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=False):
+def read(filename, force_ext=None, file_format=None, progress_bar=False):
     """Read any file type supported by ``vtk`` or ``meshio``.
-
-    .. deprecated:: 0.35.0
-        Use of `attrs` is deprecated.
-        Use a reader class using :func:`pyvista.get_reader`
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
@@ -165,13 +126,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
-
-    attrs : dict, optional
-        Deprecated. Use a Reader class using :func:`pyvista.get_reader`.
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
 
     force_ext : str, optional
         If specified, the reader will be chosen by an extension which
@@ -193,18 +147,18 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     --------
     Load an example mesh.
 
-    >>> import pyvista
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = pyvista.read(examples.antfile)
+    >>> mesh = pv.read(examples.antfile)
     >>> mesh.plot(cpos='xz')
 
     Load a vtk file.
 
-    >>> mesh = pyvista.read('my_mesh.vtk')  # doctest:+SKIP
+    >>> mesh = pv.read('my_mesh.vtk')  # doctest:+SKIP
 
     Load a meshio file.
 
-    >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
@@ -213,13 +167,13 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
         multi = pyvista.MultiBlock()
         for each in filename:
             if isinstance(each, (str, pathlib.Path)):
-                name = os.path.basename(str(each))
+                name = Path(str(each)).name
             else:
                 name = None
-            multi.append(read(each, attrs=attrs, file_format=file_format), name)
+            multi.append(read(each, file_format=file_format), name)
         return multi
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-    if not os.path.isfile(filename):
+    filename = str(Path(str(filename)).expanduser().resolve())
+    if not Path(filename).is_file() and not Path(filename).is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present
@@ -245,8 +199,6 @@ def read(filename, attrs=None, force_ext=None, file_format=None, progress_bar=Fa
     else:
         observer = Observer()
         observer.observe(reader.reader)
-        if attrs is not None:
-            _apply_attrs_to_reader(reader, attrs)
         if progress_bar:
             reader.show_progress()
         mesh = reader.read()
@@ -285,7 +237,7 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
-def read_texture(filename, attrs=None, progress_bar=False):
+def read_texture(filename, progress_bar=False):
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -295,12 +247,6 @@ def read_texture(filename, attrs=None, progress_bar=False):
     ----------
     filename : str
         The path of the texture file to read.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
 
     progress_bar : bool, default: False
         Optionally show a progress bar.
@@ -314,21 +260,21 @@ def read_texture(filename, attrs=None, progress_bar=False):
     --------
     Read in an example jpg map file as a texture.
 
-    >>> import os
-    >>> import pyvista
+    >>> from pathlib import Path
+    >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> os.path.basename(examples.mapfile)
+    >>> Path(examples.mapfile).name
     '2k_earth_daymap.jpg'
-    >>> texture = pyvista.read_texture(examples.mapfile)
+    >>> texture = pv.read_texture(examples.mapfile)
     >>> type(texture)
     <class 'pyvista.plotting.texture.Texture'>
 
     """
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = str(Path(filename).expanduser().resolve())
     try:
         # initialize the reader using the extension to find it
 
-        image = read(filename, attrs=attrs, progress_bar=progress_bar)
+        image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)
@@ -429,59 +375,6 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None, progress_bar=False):
-    """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
-
-    .. deprecated:: 0.35.0
-        This function is deprecated and will be removed in a future version.
-        Use :class:`pyvista.MultiBlockPlot3DReader`.
-
-    Parameters
-    ----------
-    filename : str
-        The string filename to the data file to read.
-
-    q_filenames : str or sequence[str], default: ()
-        The string filename of the q-file, or iterable of such
-        filenames.
-
-    auto_detect : bool, default: True
-        When this option is turned on, the reader will try to figure
-        out the values of various options such as byte order, byte
-        count etc.
-
-    attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of
-        dictionary are the attribute/method names and values are the
-        arguments passed to those calls. If you do not have any
-        attributes to call, pass ``None`` as the value.
-
-    progress_bar : bool, default: False
-        Optionally show a progress bar.
-
-    Returns
-    -------
-    pyvista.MultiBlock
-        Data read from the file.
-
-    """
-    # Deprecated on v0.35.0, estimated removal on v0.40.0
-    warnings.warn(
-        "Using read_plot3d is deprecated.  Use :class:`pyvista.MultiBlockPlot3DReader`",
-        PyVistaDeprecationWarning,
-    )
-
-    filename = _process_filename(filename)
-    reader = pyvista.MultiBlockPlot3DReader(filename)
-    reader.add_q_files(q_filenames)
-    reader.auto_detect_format = auto_detect
-    if attrs is not None:
-        _apply_attrs_to_reader(reader, attrs)
-    if progress_bar:
-        reader.show_progress()
-    return reader.read()
-
-
 def is_meshio_mesh(obj):
     """Test if passed object is instance of ``meshio.Mesh``.
 
@@ -533,10 +426,27 @@ def from_meshio(mesh):
     cells = []
     cell_type = []
     for c in mesh.cells:
-        vtk_type = meshio_to_vtk_type[c.type]
-        numnodes = vtk_type_to_numnodes[vtk_type]
-        fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-        cells.append(np.hstack((fill_values, c.data)).ravel())
+        if c.type.startswith("polyhedron"):
+            vtk_type = meshio_to_vtk_type["polyhedron"]
+
+            for cell in c.data:
+                connectivity = [len(cell)]
+                for face in cell:
+                    connectivity += [len(face), *face]
+
+                connectivity.insert(0, len(connectivity))
+                cells.append(connectivity)
+
+        else:
+            vtk_type = meshio_to_vtk_type[c.type]
+            numnodes = vtk_type_to_numnodes[vtk_type]
+            if numnodes == -1:
+                # Count nodes in each cell
+                fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
+            else:
+                fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
+            cells.append(np.hstack((fill_values, c.data)).ravel())
+
         cell_type += [vtk_type] * len(c.data)
 
     # Extract cell data from meshio.Mesh object
@@ -545,7 +455,7 @@ def from_meshio(mesh):
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
 
-    # convert to 3D if points are 2D
+    # Convert to 3D if points are 2D
     if points.shape[1] == 2:
         zero_points = np.zeros((len(points), 1), dtype=points.dtype)
         points = np.hstack((points, zero_points))
@@ -596,7 +506,7 @@ def read_meshio(filename, file_format=None):
         raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    filename = str(Path(str(filename)).expanduser().resolve())
     # Read mesh file
     mesh = meshio.read(filename, file_format)
     return from_meshio(mesh)
@@ -626,9 +536,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     --------
     Save a pyvista sphere to a Abaqus data file.
 
-    >>> import pyvista
-    >>> sphere = pyvista.Sphere()
-    >>> pyvista.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
+    >>> import pyvista as pv
+    >>> sphere = pv.Sphere()
+    >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     try:
@@ -638,11 +548,11 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
-    except:  # noqa: E722 pragma: no cover
+    except:  # pragma: no cover
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    filename = str(Path(str(filename)).expanduser().resolve())
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
@@ -662,36 +572,40 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     # Get cells
     cells = []
     c = 0
-    for offset, cell_type in zip(vtk_offset, vtk_cell_type):
-        numnodes = vtk_cells[offset + c]
-        cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
-        c += 1
-        cell = (
-            cell
-            if cell_type not in pixel_voxel
-            else cell[[0, 1, 3, 2]]
-            if cell_type == 8
-            else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
-        )
-        cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
-        cell_type = vtk_to_meshio_type[cell_type] if cell_type != 7 else f"polygon{numnodes}"
+    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+        if cell_type == 42:
+            cell_ = mesh.get_cell(i)
+            cell = [face.point_ids for face in cell_.faces]
+            cell_type = f"polyhedron{cell_.n_points}"
+
+        else:
+            numnodes = vtk_cells[offset + c]
+            cell = vtk_cells[offset + 1 + c : offset + 1 + c + numnodes]
+            c += 1
+            cell = (
+                cell
+                if cell_type not in pixel_voxel
+                else cell[[0, 1, 3, 2]] if cell_type == 8 else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+            )
+            cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
+            cell_type = vtk_to_meshio_type[cell_type]
 
         if len(cells) > 0 and cells[-1][0] == cell_type:
             cells[-1][1].append(cell)
         else:
             cells.append((cell_type, [cell]))
 
-    for k, c in enumerate(cells):
-        cells[k] = (c[0], np.array(c[1]))
-
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_data.items()}
 
     # Get cell data
     vtk_cell_data = mesh.cell_data
-    n_cells = np.cumsum([len(c[1]) for c in cells[:-1]])
+    indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = (
-        {k.replace(" ", "_"): np.split(v, n_cells) for k, v in vtk_cell_data.items()}
+        {
+            k.replace(" ", "_"): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+            for k, v in vtk_cell_data.items()
+        }
         if vtk_cell_data
         else {}
     )
@@ -709,7 +623,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 
 def _process_filename(filename):
-    return os.path.abspath(os.path.expanduser(str(filename)))
+    return str(Path(str(filename)).expanduser().resolve())
 
 
 def _try_imageio_imread(filename):

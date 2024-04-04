@@ -296,8 +296,8 @@ class Light(vtkLight):
         --------
         Create a light and set its ambient color to red.
 
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.ambient_color = 'red'
         >>> light.ambient_color
         Color(name='red', hex='#ff0000ff', opacity=255)
@@ -1073,8 +1073,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_headlight()
         >>> light.light_type
         <LightType.HEADLIGHT: 1>
@@ -1095,8 +1095,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_camera_light()
         >>> light.light_type
         <LightType.CAMERA_LIGHT: 2>
@@ -1113,8 +1113,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.set_scene_light()
         >>> light.light_type
         <LightType.SCENE_LIGHT: 3>
@@ -1202,8 +1202,8 @@ class Light(vtkLight):
 
         Examples
         --------
-        >>> import pyvista
-        >>> light = pyvista.Light()
+        >>> import pyvista as pv
+        >>> light = pv.Light()
         >>> light.hide_actor()
 
         """

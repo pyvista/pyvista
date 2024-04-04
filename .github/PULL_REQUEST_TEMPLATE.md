@@ -6,9 +6,7 @@
 
 <!-- If this fully addresses an issue, please use the keyword `resolves` in front of that issue number. -->
 
-
 ### Details
 
 - < feature1 or bug1 description >
 - < feature2 or bug2 description >
-

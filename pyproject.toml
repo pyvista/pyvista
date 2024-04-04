@@ -24,10 +24,11 @@ classifiers = [
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
 dependencies = [
     'matplotlib>=3.0.1',
-    'numpy',
+    'numpy>=1.21.0',  # minimum typing support
     'pillow',
     'pooch',
     'scooby>=0.5.1',
@@ -36,7 +37,7 @@ dependencies = [
 dynamic = ['version']
 
 [project.optional-dependencies]
-all = ['pyvista[colormaps,io,jupyter,trame]']
+all = ['pyvista[colormaps,io,jupyter]']
 colormaps = [
     'cmocean',
     'colorcet',
@@ -50,7 +51,7 @@ jupyter = [
     'jupyter-server-proxy',
     'nest_asyncio',
     'trame>=2.5.2',
-    'trame-client>=2.10.0',
+    'trame-client>=2.12.7',
     'trame-server>=2.11.7',
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
@@ -82,6 +83,7 @@ pyvista = [
     'globe.vtk',
     'hexbeam.vtk',
     'nut.ply',
+    'pyvista_logo.png',
     'rectilinear.vtk',
     'sphere.ply',
     'uniform.vtk',
@@ -157,6 +159,15 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+disallow_any_generics = true
+pretty = true
+show_error_context = true
+warn_unused_ignores = true
+plugins = ['numpy.typing.mypy_plugin','npt_promote']
+enable_error_code = [
+    "ignore-without-code",
+]
+
 
 [tool.numpydoc_validation]
 checks = [
@@ -164,6 +175,8 @@ checks = [
     "GL01",  # Contradicts numpydoc examples
     "GL02",  # Permit a blank line after the end of our docstring
     "GL03",  # Considering enforcing
+    "GL06",  # Found unknown section
+    "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
     "GL09",  # Deprecation warning should precede extended summary (check broken)
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
@@ -224,7 +237,7 @@ exclude = [  # don't report on objects that match any of these regex
     '^viewer_directive\..*$',
     '^plot_directive\..*$',
     '^coverage\..*$',
-    '\.pv_html_page_context$',    
+    '\.pv_html_page_context$',
     # Internal
     '^observers\..*$',
     # methods we probably should make private
@@ -250,6 +263,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -268,3 +288,80 @@ exclude = [  # don't report on objects that match any of these regex
     '\.PyVistaRemoteLocalView(\.|$)',
     '\.Texture(\.|$)',  # awaiting Texture refactor
 ]
+
+[tool.ruff]
+exclude = [
+    '.git',
+    'pycache__',
+    'build',
+    'dist',
+    'doc/examples',
+    'doc/_build',
+]
+line-length = 100
+indent-width = 4
+target-version = 'py39'
+
+[tool.ruff.lint]
+external = ["E131", "D102", "D105"]
+ignore = [
+    # whitespace before ':'
+    "E203",
+    # line break before binary operator
+    # "W503",
+    # line length too long
+    "E501",
+    # do not assign a lambda expression, use a def
+    "E731",
+    # too many leading '#' for block comment
+    "E266",
+    # ambiguous variable name
+    "E741",
+    # module level import not at top of file
+    "E402",
+    # Quotes (temporary)
+    "Q0",
+    # bare excepts (temporary)
+    # "B001", "E722",
+    "E722",
+    # we already check black
+    # "BLK100",
+    # 'from module import *' used; unable to detect undefined names
+    "F403",
+    # https://github.com/pyvista/pyvista/pull/5837
+    "SIM118",
+]
+fixable = ["ALL"]
+unfixable = []
+extend-select = [
+    "B007",
+    "B010",
+    "C4",
+    "F",
+    "FLY",
+    "NPY",
+    "PERF401",
+    "PGH004",
+    "PIE",
+    "PT",
+    "PTH",
+    "RSE",
+    "RUF005",
+    "RUF010",
+    "RUF100",
+    "SIM114",
+    "SIM201",
+    "SIM211",
+    "SIM212",
+    "SIM220",
+    "SIM221",
+    "SIM222",
+    "SIM223",
+    "SIM300",
+    "SIM401",
+    "SIM910",
+    "SIM911",
+]
+
+[tool.ruff.lint.flake8-comprehensions]
+allow-dict-calls-with-keyword-arguments = true

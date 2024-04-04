@@ -13,7 +13,7 @@ pull and run the image with:
 Finally, open the link that shows up from the terminal output and
 start playing around with pyvista in jupyterlab. For example:
 
-.. code::
+.. code-block:: bash
 
     To access the notebook, open this file in a browser:
         file:///home/jovyan/.local/share/jupyter/runtime/nbserver-6-open.html
@@ -48,13 +48,13 @@ Clone PyVista and cd into this directory to create your own customized docker im
   docker push $IMAGE
 
 If you wish to have off-screen GPU support when rending on jupyterlab,
-see the notes about building with EGL at :ref:`ref_building_vtk`,
+see the notes about building with EGL at :ref:`building_vtk`,
 or use the custom, pre-built wheels at
 `Release 0.27.0 <https://github.com/pyvista/pyvista/releases/tag/0.27.0>`_.
 Install that customized vtk wheel onto your docker image by modifying
 the docker image at ``pyvista/docker/jupyter.Dockerfile`` with:
 
-.. code-block::
+.. code-block:: docker
 
   COPY vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl /tmp/
   RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl
@@ -67,7 +67,7 @@ version on your image. Since you will be using the underlying kernel
 module, there's no reason to build it on the container (and trying
 will only result in an error).
 
-.. code::
+.. code-block:: docker
 
   COPY NVIDIA-Linux-x86_64-450.51.06.run nvidia_drivers.run
   RUN sudo apt-get install kmod libglvnd-dev pkg-config -yq
@@ -76,7 +76,7 @@ will only result in an error).
 To verify that you're rendering on a GPU, first check the output of
 ``nvidia-smi``. You should get something like:
 
-.. code::
+.. code-block:: bash
 
   $ nvidia-smi
   Sun Nov  8 05:48:46 2020
@@ -98,7 +98,7 @@ and verify it matches the version you installed on your docker image.
 Finally, check that your render window is using NVIDIA by running
 ``ReportCapabilities``:
 
-.. code:: python
+.. code-block:: python
 
   >>> import pyvista
   >>> pl = pyvista.Plotter()

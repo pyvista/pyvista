@@ -1,0 +1,22 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
+      "packages": "libosmesa6"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "onCreateCommand": "./.devcontainer/offscreen/oncreatecommand.sh",
+  "remoteEnv": {
+    "PYVISTA_OFF_SCREEN": "true"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"],
+      "settings": {
+        "python.testing.pytestArgs": ["tests"],
+        "python.testing.pytestEnabled": true
+      }
+    }
+  }
+}

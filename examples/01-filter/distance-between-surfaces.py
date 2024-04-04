@@ -30,6 +30,7 @@ inside a cell of the top mesh.  This will be the shortest distance from the vert
 to the top surface, unlike the first two examples.
 
 """
+
 import numpy as np
 
 import pyvista as pv
@@ -37,7 +38,7 @@ import pyvista as pv
 
 def hill(seed):
     """A helper to make a random surface."""
-    mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50, hillamplitude=0.5)
+    mesh = pv.ParametricRandomHills(random_seed=seed, u_res=50, v_res=50, hill_amplitude=0.5)
     mesh.rotate_y(-10, inplace=True)  # give the surfaces some tilt
 
     return mesh

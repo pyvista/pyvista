@@ -2,14 +2,16 @@
 
 from collections import deque
 from itertools import count, islice
+from typing import Tuple, Union
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import MatrixLike, NumpyArray
 
 
-def ncells_from_cells(cells):
+def ncells_from_cells(cells: NumpyArray[int]) -> int:
     """Get the number of cells from a VTK cell connectivity array.
 
     Parameters
@@ -23,17 +25,19 @@ def ncells_from_cells(cells):
         The number of cells extracted from the given cell connectivity array.
 
     """
-    consumer = deque(maxlen=0)
+    consumer: deque[NumpyArray[int]] = deque(maxlen=0)
     it = cells.flat
     for n_cells in count():  # noqa: B007
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))
+        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 
-def numpy_to_idarr(ind, deep=False, return_ind=False):
+def numpy_to_idarr(
+    ind: MatrixLike[int], deep: bool = False, return_ind: bool = False
+) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters

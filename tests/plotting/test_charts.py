@@ -19,9 +19,8 @@ skip_mac = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
+def skip_check_gc(skip_check_gc):  # noqa: PT004
     """A large number of tests here fail gc."""
-    pass
 
 
 # skip all tests if VTK<9.2.0
@@ -61,29 +60,29 @@ class PlotterChanged:
         return changed
 
 
-@pytest.fixture
+@pytest.fixture()
 def pl():
     p = pv.Plotter(window_size=(600, 600))
     p.background_color = 'w'
     return p
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_2d():
     return pv.Chart2D()
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_box():
     return pv.ChartBox([[1, 2, 3]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_pie():
     return pv.ChartPie([1, 2, 3])
 
 
-@pytest.fixture
+@pytest.fixture()
 def chart_mpl():
     import matplotlib.pyplot as plt
 
@@ -92,42 +91,42 @@ def chart_mpl():
     return pv.ChartMPL(f)
 
 
-@pytest.fixture
+@pytest.fixture()
 def line_plot_2d(chart_2d):
     return chart_2d.line([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture
+@pytest.fixture()
 def scatter_plot_2d(chart_2d):
     return chart_2d.scatter([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture
+@pytest.fixture()
 def area_plot(chart_2d):
     return chart_2d.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
 
 
-@pytest.fixture
+@pytest.fixture()
 def bar_plot(chart_2d):
     return chart_2d.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def stack_plot(chart_2d):
     return chart_2d.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture
+@pytest.fixture()
 def box_plot(chart_box):
     return chart_box.plot
 
 
-@pytest.fixture
+@pytest.fixture()
 def pie_plot(chart_pie):
     return chart_pie.plot
 
 
-@pytest.fixture
+@pytest.fixture()
 def axis(chart_2d):
     # Test properties, using the y axis of a 2D chart
     chart_2d.line([0, 1], [1, 10])
@@ -162,7 +161,7 @@ def test_pen():
     pen.style = s_dot
     assert pen.style == s_dot
     assert pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]["id"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pen.style = s_inv
 
 
@@ -220,7 +219,8 @@ def test_axis_init():
     # Test constructor arguments
     axis = charts.Axis(label=label, range=r_fix, grid=True)
     assert axis.label == label
-    assert np.allclose(axis.range, r_fix) and axis.behavior == "fixed"
+    assert np.allclose(axis.range, r_fix)
+    assert axis.behavior == "fixed"
     assert axis.grid
 
 
@@ -250,7 +250,7 @@ def test_axis_range(axis):
     axis.behavior = "auto"
     assert axis.behavior == "auto"
     assert axis.GetBehavior() == charts.Axis.BEHAVIORS["auto"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         axis.behavior = "invalid"
 
 
@@ -261,7 +261,7 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
     chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
@@ -388,8 +388,8 @@ def test_axis_label_font_size(chart_2d):
     assert axis.GetLabelProperties().GetFontSize() == font_size
 
 
-@pytest.mark.skip_plotting
-@pytest.mark.parametrize("chart_f", ("chart_2d", "chart_box", "chart_pie", "chart_mpl"))
+@pytest.mark.skip_plotting()
+@pytest.mark.parametrize("chart_f", [("chart_2d"), ("chart_box"), ("chart_pie"), ("chart_mpl")])
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
@@ -403,7 +403,8 @@ def test_chart_common(pl, chart_f, request):
     assert chart._renderer is None
     pl.add_chart(chart)
     assert chart._scene is pl.renderer._charts._scene
-    assert chart._renderer is pl.renderer and chart._renderer is pl.renderer._charts._renderer
+    assert chart._renderer is pl.renderer
+    assert chart._renderer is pl.renderer._charts._renderer
 
     with pytest.raises((AssertionError, ValueError)):
         chart.size = (-1, 1)
@@ -468,15 +469,15 @@ def test_chart_common(pl, chart_f, request):
 
 @pytest.mark.parametrize(
     "plot_f",
-    (
-        "line_plot_2d",
-        "scatter_plot_2d",
-        "area_plot",
-        "bar_plot",
-        "stack_plot",
-        "box_plot",
-        "pie_plot",
-    ),
+    [
+        ("line_plot_2d"),
+        ("scatter_plot_2d"),
+        ("area_plot"),
+        ("bar_plot"),
+        ("stack_plot"),
+        ("box_plot"),
+        ("pie_plot"),
+    ],
 )
 def test_plot_common(plot_f, request):
     # Test the common plot functionalities
@@ -512,7 +513,7 @@ def test_plot_common(plot_f, request):
     assert plot.GetVisible()
 
 
-@pytest.mark.parametrize("plot_f", ("bar_plot", "stack_plot", "box_plot", "pie_plot"))
+@pytest.mark.parametrize("plot_f", [("bar_plot"), ("stack_plot"), ("box_plot"), ("pie_plot")])
 def test_multicomp_plot_common(plot_f, request):
     # Test the common multicomp plot functionalities
     plot = request.getfixturevalue(plot_f)
@@ -557,7 +558,8 @@ def test_multicomp_plot_common(plot_f, request):
 
     plot.color = colors[1]
     assert plot.color == colors[1]
-    assert len(plot.colors) == 1 and plot.colors[0] == colors[1]
+    assert len(plot.colors) == 1
+    assert plot.colors[0] == colors[1]
     assert plot.brush.color == colors[1]
 
     plot.labels = labels
@@ -634,7 +636,7 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     scatter_plot_2d.marker_style = st
     assert scatter_plot_2d.marker_style == st
     assert scatter_plot_2d.GetMarkerStyle() == scatter_plot_2d.MARKER_STYLES[st]["id"]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         scatter_plot_2d.marker_style = st_inv
 
 
@@ -688,12 +690,12 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y, c[0], ori, l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y[0], c, ori, l[0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y[0], c[0], ori, l)
 
     # Test remaining properties
@@ -704,7 +706,7 @@ def test_barplot(chart_2d, bar_plot):
     bar_plot.orientation = ori
     assert bar_plot.orientation == ori
     assert bar_plot.GetOrientation() == bar_plot.ORIENTATIONS[ori]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         bar_plot.orientation = ori_inv
 
 
@@ -731,12 +733,12 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.label == l[0]
 
     # Test multi and single comp constructors with inconsistent arguments
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.StackPlot(chart_2d, x, ys, c[0], l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.StackPlot(chart_2d, x, ys[0], c, l[0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         charts.StackPlot(chart_2d, x, ys[0], c[0], l)
 
     # Test remaining properties
@@ -745,7 +747,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert np.allclose(stack_plot.ys, ys)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -799,21 +801,26 @@ def test_chart_2d(pl, chart_2d):
 
     # Test plotting methods
     s, l = chart_2d.plot(x, y, "")
-    assert s is None and l is None
+    assert s is None
+    assert l is None
     assert len([*chart_2d.plots()]) == 0
     s, l = chart_2d.plot(y, "-")
-    assert s is None and l is not None
+    assert s is None
+    assert l is not None
     assert l in chart_2d.plots("line")
     chart_2d.remove_plot(l)
     assert len([*chart_2d.plots()]) == 0
     s, l = chart_2d.plot(y, "x")
-    assert s is not None and l is None
+    assert s is not None
+    assert l is None
     assert s in chart_2d.plots("scatter")
     chart_2d.clear("scatter")
     assert len([*chart_2d.plots()]) == 0
     s, l = chart_2d.plot(x, y, "x-")
-    assert s is not None and l is not None
-    assert s in chart_2d.plots("scatter") and l in chart_2d.plots("line")
+    assert s is not None
+    assert l is not None
+    assert s in chart_2d.plots("scatter")
+    assert l in chart_2d.plots("line")
     chart_2d.plot(x, y, "x-")  # Check clearing of multiple plots (of the same type)
     chart_2d.clear()
     assert len([*chart_2d.plots()]) == 0
@@ -872,7 +879,7 @@ def test_chart_2d(pl, chart_2d):
     assert len([*chart_2d.plots()]) == 5
     chart_2d.clear()
     assert len([*chart_2d.plots()]) == 0
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         chart_2d.remove_plot(s)
 
     # Check remaining properties
@@ -895,20 +902,19 @@ def test_chart_2d(pl, chart_2d):
 
     chart_2d.grid = True
     assert chart_2d.grid
-    assert chart_2d.x_axis.grid and chart_2d.y_axis.grid
+    assert chart_2d.x_axis.grid
+    assert chart_2d.y_axis.grid
 
     chart_2d.hide_axes()
     for axis in (chart_2d.x_axis, chart_2d.y_axis):
-        assert not (
-            axis.visible
-            or axis.label_visible
-            or axis.ticks_visible
-            or axis.tick_labels_visible
-            or axis.grid
-        )
+        assert not axis.visible
+        assert not axis.label_visible
+        assert not axis.ticks_visible
+        assert not axis.tick_labels_visible
+        assert not axis.grid
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_chart_box(pl, chart_box, box_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -944,7 +950,7 @@ def test_chart_box(pl, chart_box, box_plot):
     assert np.allclose(box_plot.stats, stats)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_chart_pie(pl, chart_pie, pie_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -978,7 +984,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     assert np.allclose(pie_plot.data, data)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
@@ -1011,7 +1017,7 @@ def test_chart_mpl(pl, chart_mpl):
         chart.position = (1, 2, 3)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 
@@ -1040,7 +1046,7 @@ def test_chart_mpl_update(pl):
     assert pl_changed()
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_charts(pl):
     win_size = pl.window_size
     top_left = pv.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
@@ -1072,8 +1078,7 @@ def test_charts(pl):
     # Test deep_clean
     pl.add_chart(top_left, bottom_right)
     pl.deep_clean()
-    assert len(pl.renderer._charts) == 0
-    assert pl.renderer._charts._scene is None
+    assert pl.renderer._charts is None
 
     pl.add_chart(top_left, bottom_right)
     pl.clear()  # also calls deep_clean()
@@ -1081,7 +1086,7 @@ def test_charts(pl):
     assert pl.renderer._charts._scene is None
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_iren_context_style(pl):
     chart = pv.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
     win_size = pl.window_size
@@ -1105,7 +1110,7 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 @pytest.mark.needs_vtk_version(
     9, 3, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
 )
@@ -1127,42 +1132,56 @@ def test_chart_interaction():
 
     # Check set_chart_interaction bool
     ics = pl.set_chart_interaction(True)
-    assert chart_bl in ics and chart_br in ics
-    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert chart_bl in ics
+    assert chart_br in ics
+    assert chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene() == chart_bl._scene
     ics = pl.set_chart_interaction(False)
     assert not ics
-    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert not chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     assert pl.iren._style_class != pl.iren._context_style
     assert pl.iren._context_style.GetScene() is None
 
     # Check set_chart_interaction Chart/id
     ics = pl.set_chart_interaction(chart_bl)
-    assert chart_bl in ics and chart_br not in ics
-    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert chart_bl in ics
+    assert chart_br not in ics
+    assert chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     ics = pl.set_chart_interaction(1)
-    assert chart_bl not in ics and chart_br in ics
-    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert chart_bl not in ics
+    assert chart_br in ics
+    assert not chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
     ics = pl.set_chart_interaction([0, 1])
-    assert chart_bl in ics and chart_br in ics
-    assert chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert chart_bl in ics
+    assert chart_br in ics
+    assert chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
 
     # Check set_chart_interaction toggle
     ics = pl.set_chart_interaction(chart_bl, toggle=True)
-    assert chart_bl not in ics and chart_br in ics
-    assert not chart_bl.GetInteractive() and chart_br.GetInteractive()
+    assert chart_bl not in ics
+    assert chart_br in ics
+    assert not chart_bl.GetInteractive()
+    assert chart_br.GetInteractive()
 
     # Check wrong charts
     ics = pl.set_chart_interaction(chart_t)
     assert not ics
     assert not chart_t.GetInteractive()
-    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert not chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     assert pl.iren._context_style.GetScene() is None
     ics = pl.set_chart_interaction([chart_t, chart_bl])
-    assert chart_t not in ics and chart_bl in ics
+    assert chart_t not in ics
+    assert chart_bl in ics
     assert not chart_t.GetInteractive()
-    assert chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     assert pl.iren._context_style.GetScene() == chart_bl._scene
 
     # Check double click interaction toggle in multi renderer case
@@ -1171,13 +1190,15 @@ def test_chart_interaction():
     # Simulate double left click on the top chart:
     pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert chart_t.GetInteractive()
-    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert not chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene() == chart_t._scene
     # Simulate second double left click on the top chart:
     pl.iren._mouse_left_button_click(int(0.25 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert not chart_t.GetInteractive()
-    assert not chart_bl.GetInteractive() and not chart_br.GetInteractive()
+    assert not chart_bl.GetInteractive()
+    assert not chart_br.GetInteractive()
     assert pl.iren._style_class != pl.iren._context_style
     assert pl.iren._context_style.GetScene() is None
 

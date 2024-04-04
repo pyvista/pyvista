@@ -72,8 +72,10 @@ Here are some brief interactive examples that demonstrate how you
 might want to use PyVista:
 
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+   :force_static:
 
    import pyvista
    pyvista.set_jupyter_backend('static')
@@ -88,7 +90,8 @@ Maps and Geoscience
 ~~~~~~~~~~~~~~~~~~~
 Download the surface elevation map of Mount St. Helens and plot it.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     from pyvista import examples
     mesh = examples.download_st_helens()
@@ -102,7 +105,9 @@ Finite Element Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~
 Plot the 'X' component of elastic stress of a 3D notch specimen.
 
-.. jupyter-execute::
+
+.. pyvista-plot::
+   :context:
 
    from pyvista import examples
    mesh = examples.download_notch_stress()
@@ -115,7 +120,9 @@ Easily integrate with NumPy and create a variety of geometries and plot
 them. You could use any geometry to create your glyphs, or even plot
 the points directly.
 
-.. jupyter-execute::
+
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista
@@ -134,7 +141,8 @@ Plot a Spline
 ~~~~~~~~~~~~~
 Generate a spline from an array of NumPy points.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import numpy as np
     import pyvista
@@ -155,7 +163,8 @@ Boolean Operations on Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Subtract a sphere from a cube mesh.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista
     import numpy as np
@@ -183,7 +192,9 @@ Plot the :math:`3d_{xy}` orbital of a hydrogen atom.
 .. note::
    This example requires `sympy <https://www.sympy.org/>`_.
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
+    :force_static:
 
     from pyvista import examples
     grid = examples.load_hydrogen_orbital(3, 2, -2)
@@ -205,10 +216,10 @@ There is a `pyvista translation page`_ for pyvista (main) documentation.
 6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
 7. Translation is backed up in `pyvista-doc-translations`_.
 
-Details can be found here: https://docs.transifex.com/getting-started-1/translators
+Details can be found here: https://help.transifex.com/en/
 
-.. _`pyvista translation page`: https://app.transifex.com/tkoyama010/pyvista-doc/
-.. _Transifex: https://app.transifex.com/
+.. _`pyvista translation page`: https://app.transifex.com/signin/?next=/tkoyama010/pyvista-doc/
+.. _Transifex: https://app.transifex.com/signin/?next=/home/
 .. _`GitHub Pages`: https://pyvista.github.io/pyvista-docs-dev-ja/index.html
 .. _`GitHub repository`: https://github.com/pyvista/pyvista-docs-dev-ja
 .. _`pyvista-doc-translations`: https://github.com/pyvista/pyvista-doc-translations
@@ -227,10 +238,10 @@ Status
    :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pyvista/pyvista
+   :target: https://app.codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
-   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
+   :target: https://app.codacy.com/gh/pyvista/pyvista/dashboard
 
 .. |contributors| image:: https://img.shields.io/github/contributors/pyvista/pyvista.svg?logo=github&logoColor=white
    :target: https://github.com/pyvista/pyvista/graphs/contributors/
@@ -239,17 +250,17 @@ Status
    :target: https://github.com/pyvista/pyvista
    :alt: GitHub
 
-.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
-   :target: https://zenodo.org/badge/latestdoi/92974124
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
+   :target: https://zenodo.org/records/8415866
 
 .. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
+   :target: https://opensource.org/license/mit/
 
 .. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
-   :target: http://slack.pyvista.org
+   :target: https://communityinviter.com/apps/pyvista/pyvista
 
 .. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
    :target: https://pypi.org/project/pyvista/
@@ -280,6 +291,25 @@ Status
 +----------------------+----------------+-------------+
 | Community            | |slack|        | |discuss|   |
 +----------------------+----------------+-------------+
+
+
+Professional Support
+********************
+
+While PyVista is an Open Source project with a big community, you might be looking for professional support.
+This section aims to list companies with VTK/PyVista expertise who can help you with your software project.
+
++---------------+-----------------------------------------+
+| Company Name  | Kitware Inc.                            |
++---------------+-----------------------------------------+
+| Description   | Kitware is dedicated to build solutions |
+|               | for our customers based on our          |
+|               | well-established open source platforms. |
++---------------+-----------------------------------------+
+| Expertise     | CMake, VTK, PyVista, ParaView, Trame    |
++---------------+-----------------------------------------+
+| Contact       | https://www.kitware.com/contact/        |
++---------------+-----------------------------------------+
 
 
 Project Index

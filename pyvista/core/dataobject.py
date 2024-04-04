@@ -3,13 +3,14 @@
 from abc import abstractmethod
 import collections.abc
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Type, Union
+from typing import Any, DefaultDict, Dict, Optional, Type, Union
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
+from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
 from .utilities.fileio import read, set_vtkwriter_mode
@@ -41,16 +42,16 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
+        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict = collections.defaultdict(set)
+        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
 
         Parameters
@@ -60,8 +61,9 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
+        return None
 
-    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> _vtk.vtkDataObject:
+    def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
 
         Parameters
@@ -71,6 +73,7 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
+        return None
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
@@ -85,9 +88,13 @@ class DataObject:
 
     def _post_file_load_processing(self):
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
-        pass
 
-    def save(self, filename: str, binary=True, texture=None):
+    def save(
+        self,
+        filename: Union[Path, str],
+        binary: bool = True,
+        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+    ) -> None:
         """Save this vtk object to file.
 
         Parameters
@@ -152,11 +159,12 @@ class DataObject:
                 writer.SetArrayName(array_name)
 
             # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore
+            if self[array_name].shape[-1] == 4:  # type: ignore[index]
                 writer.SetEnableAlpha(True)
         writer.Write()
+        return None
 
-    def _store_metadata(self):
+    def _store_metadata(self) -> None:
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -166,8 +174,9 @@ class DataObject:
                 if array_names:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
+        return None
 
-    def _restore_metadata(self):
+    def _restore_metadata(self) -> None:
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in
@@ -183,6 +192,7 @@ class DataObject:
                     assoc_data = getattr(self, f'_association_{assoc_name}_names')
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
+        return None
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
@@ -279,7 +289,7 @@ class DataObject:
             Keyword arguments.
 
         """
-        pass  # called only by the inherited class
+        # called only by the inherited class
 
     def copy(self, deep=True):
         """Return a copy of the object.
@@ -301,8 +311,8 @@ class DataObject:
         --------
         Create and make a deep copy of a PolyData object.
 
-        >>> import pyvista
-        >>> mesh_a = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh_a = pv.Sphere()
         >>> mesh_b = mesh_a.copy()
         >>> mesh_a == mesh_b
         True
@@ -318,7 +328,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -349,7 +359,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: np.ndarray, name: str, deep=True):
+    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True):
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -372,16 +382,16 @@ class DataObject:
         --------
         Add field data to a PolyData dataset.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.add_field_data(np.arange(10), 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
         Add field data to a ImageData dataset.
 
-        >>> mesh = pyvista.ImageData(dimensions=(2, 2, 1))
+        >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
         >>> mesh.add_field_data(
         ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
         ... )
@@ -390,9 +400,9 @@ class DataObject:
 
         Add field data to a MultiBlock dataset.
 
-        >>> blocks = pyvista.MultiBlock()
-        >>> blocks.append(pyvista.Sphere())
-        >>> blocks["cube"] = pyvista.Cube(center=(0, 0, -1))
+        >>> blocks = pv.MultiBlock()
+        >>> blocks.append(pv.Sphere())
+        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
@@ -420,9 +430,9 @@ class DataObject:
         --------
         Add field data to a PolyData dataset and then return it.
 
-        >>> import pyvista
+        >>> import pyvista as pv
         >>> import numpy as np
-        >>> mesh = pyvista.Sphere()
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = np.arange(10)
         >>> mesh.field_data['my-field-data']
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -432,15 +442,15 @@ class DataObject:
             self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
         )
 
-    def clear_field_data(self):
+    def clear_field_data(self) -> None:
         """Remove all field data.
 
         Examples
         --------
         Add field data to a PolyData dataset and then remove it.
 
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.field_data['my-field-data'] = range(10)
         >>> len(mesh.field_data)
         1
@@ -453,6 +463,7 @@ class DataObject:
             raise NotImplementedError(f'`{type(self)}` does not support field data')
 
         self.field_data.clear()
+        return None
 
     @property
     def memory_address(self) -> str:  # numpydoc ignore=RT01
@@ -465,8 +476,8 @@ class DataObject:
 
         Examples
         --------
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
         >>> mesh.memory_address
         'Addr=...'
 
@@ -493,7 +504,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: _vtk.vtkDataSet):
+    def copy_structure(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Parameters
@@ -511,8 +522,9 @@ class DataObject:
 
         """
         self.CopyStructure(dataset)
+        return None
 
-    def copy_attributes(self, dataset: _vtk.vtkDataSet):
+    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -531,6 +543,7 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
+        return None
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.

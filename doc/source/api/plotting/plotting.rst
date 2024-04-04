@@ -1,4 +1,4 @@
-.. _plotting_ref:
+.. _plotting:
 
 Plotting
 --------

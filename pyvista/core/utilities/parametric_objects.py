@@ -1,11 +1,13 @@
 """Module managing parametric objects."""
 
 from math import pi
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .geometric_objects import translate
 from .helpers import wrap
@@ -187,8 +189,8 @@ def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
     --------
     Create a ParametricBohemianDome mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBohemianDome()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBohemianDome()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -225,8 +227,8 @@ def ParametricBour(**kwargs):
     --------
     Create a ParametricBour mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBour()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBour()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -268,8 +270,8 @@ def ParametricBoy(zscale=None, **kwargs):
     --------
     Create a ParametricBoy mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricBoy()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricBoy()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -306,8 +308,8 @@ def ParametricCatalanMinimal(**kwargs):
     --------
     Create a ParametricCatalanMinimal mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCatalanMinimal()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricCatalanMinimal()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -358,8 +360,8 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     --------
     Create a ParametricConicSpiral mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricConicSpiral()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricConicSpiral()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -406,8 +408,8 @@ def ParametricCrossCap(**kwargs):
     --------
     Create a ParametricCrossCap mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricCrossCap()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricCrossCap()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -450,8 +452,8 @@ def ParametricDini(a=None, b=None, **kwargs):
     --------
     Create a ParametricDini mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricDini()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricDini()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -504,8 +506,8 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
     --------
     Create a ParametricEllipsoid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricEllipsoid()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -561,8 +563,8 @@ def ParametricEnneper(**kwargs):
     --------
     Create a ParametricEnneper mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricEnneper()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEnneper()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -601,8 +603,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     --------
     Create a ParametricFigure8Klein mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricFigure8Klein()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricFigure8Klein()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -635,8 +637,8 @@ def ParametricHenneberg(**kwargs):
     --------
     Create a ParametricHenneberg mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricHenneberg()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricHenneberg()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -673,8 +675,8 @@ def ParametricKlein(**kwargs):
     --------
     Create a ParametricKlein mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricKlein()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricKlein()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -715,8 +717,8 @@ def ParametricKuen(deltav0=None, **kwargs):
     --------
     Create a ParametricKuen mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricKuen()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricKuen()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -752,8 +754,8 @@ def ParametricMobius(radius=None, **kwargs):
     --------
     Create a ParametricMobius mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricMobius()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricMobius()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -793,8 +795,8 @@ def ParametricPluckerConoid(n=None, **kwargs):
     --------
     Create a ParametricPluckerConoid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricPluckerConoid()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricPluckerConoid()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -833,8 +835,8 @@ def ParametricPseudosphere(**kwargs):
     --------
     Create a ParametricPseudosphere mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricPseudosphere()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricPseudosphere()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -857,6 +859,14 @@ def ParametricRandomHills(
     xvariancescalefactor=None,
     yvariancescalefactor=None,
     amplitudescalefactor=None,
+    number_of_hills=None,
+    hill_x_variance=None,
+    hill_y_variance=None,
+    hill_amplitude=None,
+    random_seed=None,
+    x_variance_scale_factor=None,
+    y_variance_scale_factor=None,
+    amplitude_scale_factor=None,
     **kwargs,
 ):
     """Generate a surface covered with randomly placed hills.
@@ -873,27 +883,77 @@ def ParametricRandomHills(
     numberofhills : int, default: 30
         The number of hills.
 
+        .. versionchanged:: 0.43.0
+            The ``numberofhills`` parameter has been renamed to ``number_of_hills``.
+
     hillxvariance : float, default: 2.5
         The hill variance in the x-direction.
+
+        .. versionchanged:: 0.43.0
+            The ``hillxvariance`` parameter has been renamed to ``hill_x_variance``.
 
     hillyvariance : float, default: 2.5
         The hill variance in the y-direction.
 
+        .. versionchanged:: 0.43.0
+            The ``hillyvariance`` parameter has been renamed to ``hill_y_variance``.
+
     hillamplitude : float, default: 2
         The hill amplitude (height).
+
+        .. versionchanged:: 0.43.0
+            The ``hillamplitude`` parameter has been renamed to ``hill_amplitude``.
 
     randomseed : int, default: 1
         The Seed for the random number generator,
         a value of 1 will initialize the random number generator,
         a negative value will initialize it with the system time.
 
+        .. versionchanged:: 0.43.0
+            The ``randomseed`` parameter has been renamed to ``random_seed``.
+
     xvariancescalefactor : float, default: 13
         The scaling factor for the variance in the x-direction.
+
+        .. versionchanged:: 0.43.0
+            The ``xvariancescalefactor`` parameter has been renamed to ``x_variance_scale_factor``.
 
     yvariancescalefactor : float, default: 13
         The scaling factor for the variance in the y-direction.
 
+        .. versionchanged:: 0.43.0
+            The ``yvariancescalefactor`` parameter has been renamed to ``y_variance_scale_factor``.
+
     amplitudescalefactor : float, default: 13
+        The scaling factor for the amplitude.
+
+        .. versionchanged:: 0.43.0
+            The ``amplitudescalefactor`` parameter has been renamed to ``amplitude_scale_factor``.
+
+    number_of_hills : int, default: 30
+        The number of hills.
+
+    hill_x_variance : float, default: 2.5
+        The hill variance in the x-direction.
+
+    hill_y_variance : float, default: 2.5
+        The hill variance in the y-direction.
+
+    hill_amplitude : float, default: 2
+        The hill amplitude (height).
+
+    random_seed : int, default: 1
+        The Seed for the random number generator,
+        a value of 1 will initialize the random number generator,
+        a negative value will initialize it with the system time.
+
+    x_variance_scale_factor : float, default: 13
+        The scaling factor for the variance in the x-direction.
+
+    y_variance_scale_factor : float, default: 13
+        The scaling factor for the variance in the y-direction.
+
+    amplitude_scale_factor : float, default: 13
         The scaling factor for the amplitude.
 
     **kwargs : dict, optional
@@ -908,35 +968,91 @@ def ParametricRandomHills(
     --------
     Create a ParametricRandomHills mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricRandomHills()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricRandomHills()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
     parametric_function = _vtk.vtkParametricRandomHills()
     if numberofhills is not None:
         parametric_function.SetNumberOfHills(numberofhills)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`numberofhills` argument is deprecated. Please use `number_of_hills`.',
+            PyVistaDeprecationWarning,
+        )
+    elif number_of_hills is not None:
+        parametric_function.SetNumberOfHills(number_of_hills)
 
     if hillxvariance is not None:
         parametric_function.SetHillXVariance(hillxvariance)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillxvariance` argument is deprecated. Please use `hill_x_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_x_variance is not None:
+        parametric_function.SetHillXVariance(hill_x_variance)
 
     if hillyvariance is not None:
         parametric_function.SetHillYVariance(hillyvariance)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillyvariance` argument is deprecated. Please use `hill_y_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_y_variance is not None:
+        parametric_function.SetHillYVariance(hill_y_variance)
 
     if hillamplitude is not None:
         parametric_function.SetHillAmplitude(hillamplitude)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`hillvariance` argument is deprecated. Please use `hill_variance`.',
+            PyVistaDeprecationWarning,
+        )
+    elif hill_amplitude is not None:
+        parametric_function.SetHillAmplitude(hill_amplitude)
 
     if randomseed is not None:
         parametric_function.SetRandomSeed(randomseed)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`randomseed` argument is deprecated. Please use `random_seed`.',
+            PyVistaDeprecationWarning,
+        )
+    elif random_seed is not None:
+        parametric_function.SetRandomSeed(random_seed)
 
     if xvariancescalefactor is not None:
         parametric_function.SetXVarianceScaleFactor(xvariancescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`xvariancescalefactor` argument is deprecated. Please use `x_variance_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif x_variance_scale_factor is not None:
+        parametric_function.SetXVarianceScaleFactor(x_variance_scale_factor)
 
     if yvariancescalefactor is not None:
         parametric_function.SetYVarianceScaleFactor(yvariancescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`yvariancescalefactor` argument is deprecated. Please use `y_variance_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif y_variance_scale_factor is not None:
+        parametric_function.SetYVarianceScaleFactor(y_variance_scale_factor)
 
     if amplitudescalefactor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
+        # Deprecated on v0.43.0, estimated removal on v0.46.0
+        warnings.warn(
+            '`amplitudescalefactor` argument is deprecated. Please use `amplitude_scale_factor`.',
+            PyVistaDeprecationWarning,
+        )
+    elif amplitude_scale_factor is not None:
+        parametric_function.SetAmplitudeScaleFactor(amplitude_scale_factor)
 
     center = kwargs.pop('center', [0.0, 0.0, 0.0])
     direction = kwargs.pop('direction', [1.0, 0.0, 0.0])
@@ -967,8 +1083,8 @@ def ParametricRoman(radius=None, **kwargs):
     --------
     Create a ParametricRoman mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricRoman()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricRoman()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1030,13 +1146,13 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
     Create a ParametricSuperEllipsoid surface that looks like a box
     with smooth edges.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricSuperEllipsoid(n1=0.02, n2=0.02)
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricSuperEllipsoid(n1=0.02, n2=0.02)
     >>> mesh.plot(color='w', smooth_shading=True)
 
     Create one that looks like a spinning top.
 
-    >>> mesh = pyvista.ParametricSuperEllipsoid(n1=4, n2=0.5)
+    >>> mesh = pv.ParametricSuperEllipsoid(n1=4, n2=0.5)
     >>> mesh.plot(color='w', smooth_shading=True, cpos='xz')
 
     """
@@ -1129,8 +1245,8 @@ def ParametricSuperToroid(
     --------
     Create a ParametricSuperToroid mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricSuperToroid(n1=2, n2=0.3)
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricSuperToroid(n1=2, n2=0.3)
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1188,8 +1304,8 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     --------
     Create a ParametricTorus mesh.
 
-    >>> import pyvista
-    >>> mesh = pyvista.ParametricTorus()
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricTorus()
     >>> mesh.plot(color='w', smooth_shading=True)
 
     """
@@ -1271,7 +1387,9 @@ def parametric_keywords(
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
-def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clean=False):
+def surface_from_para(
+    parametric_function, u_res=100, v_res=100, w_res=100, clean=False, texture_coordinates=False
+):
     """Construct a mesh from a parametric function.
 
     Parameters
@@ -1292,6 +1410,11 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
         Clean and merge duplicate points to avoid "creases" when
         plotting with smooth shading.
 
+    texture_coordinates : bool, default: False
+        The generation of texture coordinates.
+        This is off by default. Note that this is only applicable to parametric surfaces whose parametric dimension is 2.
+        Note that texturing may fail in some cases.
+
     Returns
     -------
     pyvista.PolyData
@@ -1304,6 +1427,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100, w_res=100, clea
     para_source.SetUResolution(u_res)
     para_source.SetVResolution(v_res)
     para_source.SetWResolution(w_res)
+    para_source.SetGenerateTextureCoordinates(texture_coordinates)
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:

@@ -1,21 +1,23 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+
 from collections.abc import Iterable
 from typing import Union
 
 import numpy as np
 
 from . import _vtk_core as _vtk
+from ._typing_core import ArrayLike, NumpyArray
 from .utilities.arrays import FieldAssociation, convert_array
 
 
-class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
+class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
 
     Parameters
     ----------
-    array : Iterable or vtk.vtkAbstractArray
+    array : Array or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -44,7 +46,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Iterable, _vtk.vtkAbstractArray],
+        array: Union[ArrayLike[float], _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -73,7 +75,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
         #
-        # the VTKArray class uses attributes called `DataSet` and `Assocation`
+        # the VTKArray class uses attributes called `DataSet` and `Association`
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
@@ -87,7 +89,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, np.ndarray], value):
+    def __setitem__(self, key: Union[int, NumpyArray[int]], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

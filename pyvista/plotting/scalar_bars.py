@@ -1,4 +1,5 @@
 """PyVista Scalar bar module."""
+
 import weakref
 
 import numpy as np
@@ -43,7 +44,7 @@ class ScalarBars:
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
             title = f'"{title}"'
-            lines.append(f'{title:20} {str(interactive):5}')
+            lines.append(f'{title:20} {interactive!s:5}')
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(
@@ -182,6 +183,7 @@ class ScalarBars:
         fill=False,
         render=False,
         theme=None,
+        unconstrained_font_size=False,
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -303,6 +305,14 @@ class ScalarBars:
             Plot-specific theme.  By default, calling from the
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
+
+        unconstrained_font_size : bool, default: False
+            Whether the font size of title and labels is unconstrained.
+            When it is constrained, the size of the scalar bar will constrain the font size.
+            When it is not, the size of the font will always be respected.
+            Using custom labels will force this to be ``True``.
+
+            .. versionadded:: 0.44.0
 
         Returns
         -------
@@ -551,6 +561,9 @@ class ScalarBars:
             frame_prop.SetColor(color.float_rgb)
         else:
             scalar_bar.SetDrawFrame(False)
+
+        if unconstrained_font_size:
+            scalar_bar.SetUnconstrainedFontSize(True)
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)
