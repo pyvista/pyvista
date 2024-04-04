@@ -527,9 +527,21 @@ class DatasetCard:
         |
         |      .. grid-item::
         |
+        |         :octicon:`info` **Dataset Info**
+        |
+        |         .. raw:: html
+        |
+        |            <hr />
+        |
         |         {}
         |
         |      .. grid-item::
+        |
+        |         :octicon:`file` **File Info**
+        |
+        |         .. raw:: html
+        |
+        |            <hr />
         |
         |         {}
         |
@@ -576,7 +588,7 @@ class DatasetCard:
     image_template = _aligned_dedent(
         """
         |.. card::
-        |   :margin: 0
+        |   :margin: 1
         |
         |   .. image:: /{}
         """
@@ -596,13 +608,18 @@ class DatasetCard:
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: 2
+        |   :margin: 1
+        |   :gutter: 1
         |
         |   .. grid-item::
+        |      :columns: auto
+        |      :class: sd-text-nowrap
         |
-        |      {}
+        |      **{}**
         |
         |   .. grid-item::
-        |      :class: sd-text-right
+        |      :columns: 12 6 6 6
+        |      :class: sd-text-right sd-text-nowrap
         |
         |      {}
         |
@@ -610,12 +627,12 @@ class DatasetCard:
     )[1:-1]
 
     # If the field has more than one value, set max column width
-    # so that each value is on its own line
+    # so that each extra value is on its own line
     field_grid_extra_values_template = _aligned_dedent(
         """
         |   .. grid-item::
         |      :columns: 12
-        |      :class: sd-text-right
+        |      :class: sd-text-right sd-text-nowrap
         |
         |      {}
         |
@@ -716,7 +733,7 @@ class DatasetCard:
             if fmt == 'exp':
                 num_fmt = f"{num:.3e}"
             elif fmt == 'spaced':
-                num_fmt = f"{num:,}``".replace(',', ' ')
+                num_fmt = f"{num:,}".replace(',', ' ')
             else:
                 num_fmt = str(num)
             return f"``{num_fmt}``"
