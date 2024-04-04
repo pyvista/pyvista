@@ -579,7 +579,6 @@ class DatasetCard:
         |.. _{}:
         |
         |{}
-        |{}
         """
     )[1:-1]
 
@@ -734,9 +733,7 @@ class DatasetCard:
         header_item_indented = _indent_multi_line_string(
             header_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
         )
-        title_with_ref_item = self.dataset_title_with_ref_template.format(
-            index_name, header_name, _repeat_string('-', len(header_name))
-        )
+        title_with_ref_item = self.dataset_title_with_ref_template.format(index_name, header_name)
         title_with_ref_indented = _indent_multi_line_string(
             title_with_ref_item, indent_level=self.REF_ANCHOR_INDENT_LEVEL
         )
