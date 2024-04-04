@@ -508,11 +508,11 @@ class DatasetCard:
     card_template = _aligned_dedent(
         """
         |.. card::
-        |   :class-header: sd-text-center sd-fs-4
         |
         |   {}
         |
         |   {}
+        |
         |   ^^^
         |
         |   .. grid:: 1 2 2 2
@@ -546,9 +546,19 @@ class DatasetCard:
     # Template for dataset name and badges
     header_template = _aligned_dedent(
         """
-        |**{}**
+        |.. grid:: 1
+        |   :margin: 0
         |
-        |{}
+        |   .. grid-item::
+        |      :class: sd-text-center sd-fs-5
+        |
+        |      **{}**
+        |
+        |   .. grid-item::
+        |      :class: sd-text-center
+        |
+        |      {}
+        |
         """
     )[1:-1]
 
