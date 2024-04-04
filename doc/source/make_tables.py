@@ -576,6 +576,14 @@ class DatasetCard:
         """
     )[1:-1]
 
+    # Template for index
+    index_template = _aligned_dedent(
+        """
+        |.. index:: {}
+        |   :name: {}
+        |
+        """
+    )[1:-1]
     # Template for dataset func and doc
     dataset_info_template = _aligned_dedent(
         """
@@ -687,8 +695,8 @@ class DatasetCard:
         dataset_name = self.dataset_name
         loader = self.loader
         # Get dataset name-related info
-        index_name, ref_label, header_name, func_ref, func_doc, func_name = (
-            self._format_dataset_name(dataset_name)
+        index_name, header_name, func_ref, func_doc, func_name = self._format_dataset_name(
+            dataset_name
         )
         # Get file and instance metadata
         try:
@@ -722,6 +730,10 @@ class DatasetCard:
         carousel_badges = self._format_carousel_badges(self._badges)
         celltype_badges = self._format_celltype_badges(self._badges)
 
+        index_item = self.index_template.format(header_name, index_name)
+        index_item_indented = _indent_multi_line_string(
+            index_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
+        )
         header_item = self.header_template.format(header_name, carousel_badges)
         header_item_indented = _indent_multi_line_string(
             header_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
@@ -825,7 +837,7 @@ class DatasetCard:
         )
         # Create separate version of the card with a ref label
         card_with_ref = self.card_template.format(
-            ref_label,
+            index_item_indented,
             header_item_indented,
             dataset_info_item_indented,
             image_item_indented,
@@ -840,7 +852,6 @@ class DatasetCard:
     def _format_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
-        ref_label = f'.. _{index_name}:'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the corresponding 'download' function of the loader
@@ -850,7 +861,7 @@ class DatasetCard:
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
         func_doc = _get_doc(func)
-        return index_name, ref_label, header, func_ref, func_doc, func_name
+        return index_name, header, func_ref, func_doc, func_name
 
     @staticmethod
     def _format_file_size(loader: _dataset_loader._FileProps):
