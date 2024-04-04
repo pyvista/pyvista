@@ -739,11 +739,34 @@ _dataset_tensors = _SingleFileDownloadableLoadable('tensors.vtk')
 def download_head(load=True):  # pragma: no cover
     """Download head dataset.
 
+    .. seealso::
+
+        download_head
+
+        download_head_2
+
+        :func:`download_head`
+
+        :ref:`head_dataset`
+            This dataset's entry in the Dataset Gallery with more info.
+
+        :ref:`head_2_dataset`
+
+        :ref:`medical_dataset_gallery`
+
+
     See Also
     --------
+    download_head
+
+    download_head_2
+
+    :any:`head_dataset`
+        This dataset's entry in the Dataset Gallery with more info.
     :ref:`head_dataset`
         This dataset's entry in the Dataset Gallery with more info.
     :ref:`head_2_dataset`
+
     :ref:`medical_dataset_gallery`
 
     Parameters
@@ -774,6 +797,11 @@ def download_head(load=True):  # pragma: no cover
     See :ref:`volume_rendering_example` for an example using this
     dataset.
 
+    :func:`download_head`
+
+    :ref:`head_dataset`
+
+    This dataset's entry in the Dataset Gallery with more info.
     """
     return _download_dataset(_dataset_head, load=load)
 
