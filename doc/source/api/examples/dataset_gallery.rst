@@ -9,6 +9,7 @@ Browse Datasets by Module
 Datasets in this section are organized by the module they are imported from.
 
 .. dropdown:: Downloads
+   :name: downloads_gallery
    :open:
 
     .. tab-set::
@@ -36,7 +37,8 @@ Point Sets
 **********
 Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for details.
 
-.. dropdown:: Point Sets
+.. dropdown:: Point Set Data Types
+   :name: pointset_datatype_gallery
 
     .. tab-set::
 
@@ -64,6 +66,7 @@ Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for detai
 Browse point sets with a specific kind of representation.
 
 .. dropdown:: Point Clouds and Surface Meshes
+   :name: pointcloud_surfacemesh_gallery
 
     .. tab-set::
 
@@ -81,7 +84,8 @@ Gridded Data
 Datasets with topologically regular point spacing and implicit geometry.
 See :doc:`/api/core/grids` for details.
 
-.. dropdown:: Gridded Data
+.. dropdown:: Gridded Data Types
+   :name: grid_datatype_gallery
 
     .. tab-set::
 
@@ -96,6 +100,7 @@ See :doc:`/api/core/grids` for details.
 Browse gridded data with a specific kind of representation.
 
 .. dropdown:: Volumes, Images, and Textures
+   :name: imagedata_texture_gallery
 
     .. tab-set::
 
@@ -128,6 +133,7 @@ Composite Datasets
 Composite classes which hold many data sets. See :doc:`/api/core/composite` for details.
 
 .. dropdown:: Composite Datasets
+   :name: composite_dataset_gallery
 
     .. tab-set::
 
@@ -152,6 +158,7 @@ Miscellaneous Datasets
 **********************
 
 .. dropdown:: Miscellaneous Datasets
+   :name: misc_dataset_gallery
 
     .. tab-set::
 
@@ -163,9 +170,8 @@ Miscellaneous Datasets
 Browse Datasets by Category
 ---------------------------
 
-.. _medical_dataset_gallery:
-
 .. dropdown:: Medical Datasets
+   :name: medical_dataset_gallery
 
     .. tab-set::
 
