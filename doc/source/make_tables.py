@@ -526,6 +526,7 @@ class DatasetCard:
         |         {}
         |
         |      .. grid-item::
+        |         :class: sd-text-center sd-pb-0 sd-mb-0
         |
         |         :octicon:`info` **Dataset Info**
         |
@@ -536,12 +537,13 @@ class DatasetCard:
         |         {}
         |
         |      .. grid-item::
+        |         :class: sd-text-center sd-pb-0 sd-mb-0
         |
         |         :octicon:`file` **File Info**
         |
         |         .. raw:: html
         |
-        |            <hr />
+        |            <hr style="height: 2px"/>
         |
         |         {}
         |
@@ -597,17 +599,33 @@ class DatasetCard:
     footer_template = _aligned_dedent(
         """
         |.. dropdown:: Data Source
+        |   :icon: mark-github
         |
         |   {}
         """
     )[1:-1]
 
-    # Format fields in a grid with two columns where the
-    # first item is always a left-justified name
-    # and second is always a right-justified value
+    # Format fields in a grid where the first item is a left-justified
+    # name and the second is a right-justified value.
+    # The grid boxes are justified to push them toward opposite sides.
+    #
+    #   Smaller entries should fit on one line:
+    #       | Field      Value |
+    #
+    #   Longer entries should fit on two lines:
+    #       | LongField        |
+    #       |        LongValue |
+    #
+    #   Fields with many values should align to the right
+    #   and can stack together on one line if they fit.
+    #       | LongField        |
+    #       |        LongValue |
+    #       |   ExtraLongValue |
+    #       |    Value3 Value4 |
     field_grid_template = _aligned_dedent(
         """
-        |.. grid:: 2
+        |.. grid:: auto
+        |   :class: sd-align-major-justify sd-px-1
         |   :margin: 1
         |   :gutter: 1
         |
@@ -618,7 +636,7 @@ class DatasetCard:
         |      **{}**
         |
         |   .. grid-item::
-        |      :columns: 12 6 6 6
+        |      :columns: auto
         |      :class: sd-text-right sd-text-nowrap
         |
         |      {}
@@ -626,12 +644,22 @@ class DatasetCard:
         """
     )[1:-1]
 
-    # If the field has more than one value, set max column width
-    # so that each extra value is on its own line
-    field_grid_extra_values_template = _aligned_dedent(
+    # If the field has more than one value, all additional values are
+    # placed in a second grid and aligned towards the 'right' side
+    # of the grid.
+    field_grid_extra_values_grid_template = _aligned_dedent(
+        """
+        |.. grid:: auto
+        |   :class: sd-align-major-end sd-px-1
+        |   :margin: 1
+        |   :gutter: 1
+        |
+        """
+    )[1:-1]
+    field_grid_extra_values_item_template = _aligned_dedent(
         """
         |   .. grid-item::
-        |      :columns: 12
+        |      :columns: auto
         |      :class: sd-text-right sd-text-nowrap
         |
         |      {}
@@ -715,11 +743,14 @@ class DatasetCard:
             value_lines = str(field_values).splitlines()
             first_value = value_lines.pop(0)
             field = self.field_grid_template.format(field_name, first_value)
-            extra_values = [
-                self.field_grid_extra_values_template.format(val) for val in value_lines
-            ]
-
-            return '\n'.join([field, *extra_values])
+            if len(value_lines) >= 1:
+                # Add another grid for extra values
+                extra_values_grid = self.field_grid_extra_values_grid_template
+                extra_values = [
+                    self.field_grid_extra_values_item_template.format(val) for val in value_lines
+                ]
+                return '\n'.join([field, extra_values_grid, *extra_values])
+            return field
 
         def _try_getattr(dataset, attr: str):
             try:
@@ -1211,7 +1242,6 @@ class CellTypeBadge(_BaseDatasetBadge):
     """
 
     name: str
-    ref: str = None
 
     @classmethod
     def __post_init__(cls):
