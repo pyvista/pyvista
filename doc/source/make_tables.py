@@ -568,8 +568,7 @@ class DatasetCard:
         |.. card::
         |   :margin: 0
         |
-        |   .. figure:: /{}
-        |      :figwidth: image
+        |   .. image:: /{}
         """
     )[1:-1]
 
