@@ -589,12 +589,11 @@ class DatasetCard:
         |.. grid:: 2
         |
         |   .. grid-item::
-        |      :sd-text-left:
         |
         |      {}
         |
         |   .. grid-item::
-        |      :sd-text-right:
+        |      :class: sd-text-right
         |
         |      {}
         |
@@ -607,7 +606,7 @@ class DatasetCard:
         """
         |   .. grid-item::
         |      :columns: 12
-        |      :sd-text-right:
+        |      :class: sd-text-right
         |
         |      {}
         |
