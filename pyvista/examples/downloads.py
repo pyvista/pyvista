@@ -326,6 +326,7 @@ def download_masonry_texture(load=True):  # pragma: no cover
 
         :ref:`Masonry Texture Dataset <masonry_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_masonry_texture, load=load)
 
@@ -359,6 +360,7 @@ def download_usa_texture(load=True):  # pragma: no cover
         :ref:`Usa Texture Dataset <usa_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Usa Dataset <usa_dataset>`
+
     """
     return _download_dataset(_dataset_usa_texture, load=load)
 
@@ -394,6 +396,7 @@ def download_puppy_texture(load=True):  # pragma: no cover
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Puppy Dataset <puppy_dataset>`
+
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
 
@@ -426,6 +429,7 @@ def download_puppy(load=True):  # pragma: no cover
         :ref:`Puppy Dataset <puppy_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
+
     """
     return _download_dataset(_dataset_puppy, load=load)
 
@@ -458,6 +462,7 @@ def download_usa(load=True):  # pragma: no cover
         :ref:`Usa Dataset <usa_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Usa Texture Dataset <usa_texture_dataset>`
+
     """
     return _download_dataset(_dataset_usa, load=load)
 
@@ -499,6 +504,7 @@ def download_st_helens(load=True):  # pragma: no cover
 
         :ref:`St Helens Dataset <st_helens_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_st_helens, load=load)
 
@@ -540,6 +546,7 @@ def download_bunny(load=True):  # pragma: no cover
         :ref:`Bunny Dataset <bunny_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
+
     """
     return _download_dataset(_dataset_bunny, load=load)
 
@@ -576,6 +583,7 @@ def download_bunny_coarse(load=True):  # pragma: no cover
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Bunny Dataset <bunny_dataset>`
+
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
 
@@ -623,6 +631,7 @@ def download_cow(load=True):  # pragma: no cover
         :ref:`Cow Dataset <cow_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cow Head Dataset <cow_head_dataset>`
+
     """
     return _download_dataset(_dataset_cow, load=load)
 
@@ -655,6 +664,7 @@ def download_cow_head(load=True):  # pragma: no cover
         :ref:`Cow Head Dataset <cow_head_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cow Dataset <cow_dataset>`
+
     """
     return _download_dataset(_dataset_cow_head, load=load)
 
@@ -686,6 +696,7 @@ def download_faults(load=True):  # pragma: no cover
 
         :ref:`Faults Dataset <faults_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_faults, load=load)
 
@@ -717,6 +728,7 @@ def download_tensors(load=True):  # pragma: no cover
 
         :ref:`Tensors Dataset <tensors_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_tensors, load=load)
 
@@ -761,6 +773,7 @@ def download_head(load=True):  # pragma: no cover
         :ref:`Head 2 Dataset <head_2_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_head, load=load)
 
@@ -805,6 +818,7 @@ def download_head_2(load=True):  # pragma: no cover
         :ref:`Head Dataset <head_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_head_2, load=load)
 
@@ -852,6 +866,7 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
         :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
 
@@ -892,6 +907,7 @@ def download_clown(load=True):  # pragma: no cover
 
         :ref:`Clown Dataset <clown_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_clown, load=load)
 
@@ -928,6 +944,7 @@ def download_topo_global(load=True):  # pragma: no cover
 
         :ref:`Topo Global Dataset <topo_global_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_topo_global, load=load)
 
@@ -966,6 +983,7 @@ def download_topo_land(load=True):  # pragma: no cover
 
         :ref:`Topo Land Dataset <topo_land_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_topo_land, load=load)
 
@@ -997,6 +1015,7 @@ def download_coastlines(load=True):  # pragma: no cover
 
         :ref:`Coastlines Dataset <coastlines_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_coastlines, load=load)
 
@@ -1037,6 +1056,7 @@ def download_knee(load=True):  # pragma: no cover
         :ref:`Knee Full Dataset <knee_full_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_knee, load=load)
 
@@ -1083,6 +1103,7 @@ def download_knee_full(load=True):  # pragma: no cover
         :ref:`Knee Dataset <knee_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_knee_full, load=load)
 
@@ -1119,6 +1140,7 @@ def download_lidar(load=True):  # pragma: no cover
 
         :ref:`Lidar Dataset <lidar_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_lidar, load=load)
 
@@ -1150,6 +1172,7 @@ def download_exodus(load=True):  # pragma: no cover
 
         :ref:`Exodus Dataset <exodus_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_exodus, load=load)
 
@@ -1190,6 +1213,7 @@ def download_nefertiti(load=True):  # pragma: no cover
 
         :ref:`Nefertiti Dataset <nefertiti_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_nefertiti, load=load)
 
@@ -1229,6 +1253,7 @@ def download_blood_vessels(load=True):  # pragma: no cover
 
         :ref:`Blood Vessels Dataset <blood_vessels_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_blood_vessels, load=load)
 
@@ -1269,6 +1294,7 @@ def download_iron_protein(load=True):  # pragma: no cover
 
         :ref:`Iron Protein Dataset <iron_protein_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_iron_protein, load=load)
 
@@ -1303,6 +1329,7 @@ def download_tetrahedron(load=True):  # pragma: no cover
 
         :ref:`Tetrahedron Dataset <tetrahedron_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_tetrahedron, load=load)
 
@@ -1337,6 +1364,7 @@ def download_saddle_surface(load=True):  # pragma: no cover
 
         :ref:`Saddle Surface Dataset <saddle_surface_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_saddle_surface, load=load)
 
@@ -1375,6 +1403,7 @@ def download_sparse_points(load=True):  # pragma: no cover
 
         :ref:`Sparse Points Dataset <sparse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_sparse_points, load=load)
 
@@ -1426,6 +1455,7 @@ def download_foot_bones(load=True):  # pragma: no cover
 
         :ref:`Foot Bones Dataset <foot_bones_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_foot_bones, load=load)
 
@@ -1458,6 +1488,7 @@ def download_guitar(load=True):  # pragma: no cover
         :ref:`Guitar Dataset <guitar_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Trumpet Dataset <trumpet_dataset>`
+
     """
     return _download_dataset(_dataset_guitar, load=load)
 
@@ -1492,6 +1523,7 @@ def download_quadratic_pyramid(load=True):  # pragma: no cover
 
         :ref:`Quadratic Pyramid Dataset <quadratic_pyramid_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_quadratic_pyramid, load=load)
 
@@ -1524,6 +1556,7 @@ def download_bird(load=True):  # pragma: no cover
         :ref:`Bird Dataset <bird_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Bird Texture Dataset <bird_texture_dataset>`
+
     """
     return _download_dataset(_dataset_bird, load=load)
 
@@ -1556,6 +1589,7 @@ def download_bird_texture(load=True):  # pragma: no cover
         :ref:`Bird Texture Dataset <bird_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Bird Dataset <bird_dataset>`
+
     """
     return _download_dataset(_dataset_bird_texture, load=load)
 
@@ -1590,6 +1624,7 @@ def download_office(load=True):  # pragma: no cover
 
         :ref:`Office Dataset <office_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_office, load=load)
 
@@ -1622,6 +1657,7 @@ def download_horse_points(load=True):  # pragma: no cover
         :ref:`Horse Points Dataset <horse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Horse Dataset <horse_dataset>`
+
     """
     return _download_dataset(_dataset_horse_points, load=load)
 
@@ -1657,6 +1693,7 @@ def download_horse(load=True):  # pragma: no cover
         :ref:`Horse Dataset <horse_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Horse Points Dataset <horse_points_dataset>`
+
     """
     return _download_dataset(_dataset_horse, load=load)
 
@@ -1689,6 +1726,7 @@ def download_cake_easy(load=True):  # pragma: no cover
         :ref:`Cake Easy Dataset <cake_easy_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cake Easy Texture Dataset <cake_easy_texture_dataset>`
+
     """
     return _download_dataset(_dataset_cake_easy, load=load)
 
@@ -1721,6 +1759,7 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
         :ref:`Cake Easy Texture Dataset <cake_easy_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cake Easy Dataset <cake_easy_dataset>`
+
     """
     return _download_dataset(_dataset_cake_easy_texture, load=load)
 
@@ -1756,6 +1795,7 @@ def download_rectilinear_grid(load=True):  # pragma: no cover
 
         :ref:`Rectilinear Grid Dataset <rectilinear_grid_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_rectilinear_grid, load=load)
 
@@ -1795,6 +1835,7 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+
     """
     example = __gourds2 if zoom else _dataset_gourds
     return _download_dataset(example, load=load)
@@ -1836,6 +1877,7 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Gourds Dataset <gourds_dataset>`
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+
     """
     example = __gourds2_texture if zoom else _dataset_gourds_texture
     return _download_dataset(example, load=load)
@@ -1874,6 +1916,7 @@ def download_gourds_pnm(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Gourds Dataset <gourds_dataset>`
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+
     """
     return _download_dataset(_dataset_gourds_pnm, load=load)
 
@@ -1905,6 +1948,7 @@ def download_unstructured_grid(load=True):  # pragma: no cover
 
         :ref:`Unstructured Grid Dataset <unstructured_grid_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_unstructured_grid, load=load)
 
@@ -1937,6 +1981,7 @@ def download_letter_k(load=True):  # pragma: no cover
         :ref:`Letter K Dataset <letter_k_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Letter A Dataset <letter_a_dataset>`
+
     """
     return _download_dataset(_dataset_letter_k, load=load)
 
@@ -1972,6 +2017,7 @@ def download_letter_a(load=True):  # pragma: no cover
         :ref:`Letter A Dataset <letter_a_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Letter K Dataset <letter_k_dataset>`
+
     """
     return _download_dataset(_dataset_letter_a, load=load)
 
@@ -2003,6 +2049,7 @@ def download_poly_line(load=True):  # pragma: no cover
 
         :ref:`Poly Line Dataset <poly_line_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_poly_line, load=load)
 
@@ -2037,6 +2084,7 @@ def download_cad_model(load=True):  # pragma: no cover
 
         :ref:`Cad Model Dataset <cad_model_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_cad_model, load=load)
 
@@ -2081,6 +2129,7 @@ def download_frog(load=True):  # pragma: no cover
         :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_frog, load=load)
 
@@ -2174,6 +2223,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
         :ref:`Frog Dataset <frog_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_frog_tissue, load=load)
 
@@ -2217,6 +2267,7 @@ def download_chest(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_chest, load=load)
 
@@ -2251,6 +2302,7 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
         :ref:`Brain Dataset <brain_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_brain_atlas_with_sides, load=load)
 
@@ -2284,6 +2336,7 @@ def download_prostate(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_prostate, load=load)
 
@@ -2315,6 +2368,7 @@ def download_filled_contours(load=True):  # pragma: no cover
 
         :ref:`Filled Contours Dataset <filled_contours_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_filled_contours, load=load)
 
@@ -2349,6 +2403,7 @@ def download_doorman(load=True):  # pragma: no cover
 
         :ref:`Doorman Dataset <doorman_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     # TODO: download textures as well
     return _download_dataset(_dataset_doorman, load=load)
@@ -2381,6 +2436,7 @@ def download_mug(load=True):  # pragma: no cover
 
         :ref:`Mug Dataset <mug_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_mug, load=load)
 
@@ -2412,6 +2468,7 @@ def download_oblique_cone(load=True):  # pragma: no cover
 
         :ref:`Oblique Cone Dataset <oblique_cone_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_oblique_cone, load=load)
 
@@ -2444,6 +2501,7 @@ def download_emoji(load=True):  # pragma: no cover
         :ref:`Emoji Dataset <emoji_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Emoji Texture Dataset <emoji_texture_dataset>`
+
     """
     return _download_dataset(_dataset_emoji, load=load)
 
@@ -2476,6 +2534,7 @@ def download_emoji_texture(load=True):  # pragma: no cover
         :ref:`Emoji Texture Dataset <emoji_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Emoji Dataset <emoji_dataset>`
+
     """
     return _download_dataset(_dataset_emoji_texture, load=load)
 
@@ -2512,6 +2571,7 @@ def download_teapot(load=True):  # pragma: no cover
 
         :ref:`Teapot Dataset <teapot_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_teapot, load=load)
 
@@ -2554,6 +2614,7 @@ def download_brain(load=True):  # pragma: no cover
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_brain, load=load)
 
@@ -2586,6 +2647,7 @@ def download_structured_grid(load=True):  # pragma: no cover
         :ref:`Structured Grid Dataset <structured_grid_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Structured Grid Two Dataset <structured_grid_two_dataset>`
+
     """
     return _download_dataset(_dataset_structured_grid, load=load)
 
@@ -2618,6 +2680,7 @@ def download_structured_grid_two(load=True):  # pragma: no cover
         :ref:`Structured Grid Two Dataset <structured_grid_two_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Structured Grid Dataset <structured_grid_dataset>`
+
     """
     return _download_dataset(_dataset_structured_grid_two, load=load)
 
@@ -2650,6 +2713,7 @@ def download_trumpet(load=True):  # pragma: no cover
         :ref:`Trumpet Dataset <trumpet_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Guitar Dataset <guitar_dataset>`
+
     """
     return _download_dataset(_dataset_trumpet, load=load)
 
@@ -2686,6 +2750,7 @@ def download_face(load=True):  # pragma: no cover
         :ref:`Face Dataset <face_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Face2 Dataset <face2_dataset>`
+
     """
     # TODO: there is a texture with this
     return _download_dataset(_dataset_face, load=load)
@@ -2720,6 +2785,7 @@ def download_sky_box_nz(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+
     """
     return _download_dataset(_dataset_sky_box_nz, load=load)
 
@@ -2753,6 +2819,7 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+
     """
     return _download_dataset(_dataset_sky_box_nz_texture, load=load)
 
@@ -2786,6 +2853,7 @@ def download_disc_quads(load=True):  # pragma: no cover
 
         :ref:`Disc Quads Dataset <disc_quads_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_disc_quads, load=load)
 
@@ -2822,6 +2890,7 @@ def download_honolulu(load=True):  # pragma: no cover
 
         :ref:`Honolulu Dataset <honolulu_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_honolulu, load=load)
 
@@ -2853,6 +2922,7 @@ def download_motor(load=True):  # pragma: no cover
 
         :ref:`Motor Dataset <motor_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_motor, load=load)
 
@@ -2889,6 +2959,7 @@ def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
 
         :ref:`Tri Quadratic Hexahedron Dataset <tri_quadratic_hexahedron_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_tri_quadratic_hexahedron, load=load)
 
@@ -2927,6 +2998,7 @@ def download_human(load=True):  # pragma: no cover
 
         :ref:`Human Dataset <human_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_human, load=load)
 
@@ -2959,6 +3031,7 @@ def download_vtk(load=True):  # pragma: no cover
         :ref:`Vtk Dataset <vtk_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
+
     """
     return _download_dataset(_dataset_vtk, load=load)
 
@@ -2990,6 +3063,7 @@ def download_spider(load=True):  # pragma: no cover
 
         :ref:`Spider Dataset <spider_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_spider, load=load)
 
@@ -3035,6 +3109,7 @@ def download_carotid(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_carotid, load=load)
 
@@ -3083,6 +3158,7 @@ def download_blow(load=True):  # pragma: no cover
 
         :ref:`Blow Dataset <blow_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_blow, load=load)
 
@@ -3119,6 +3195,7 @@ def download_shark(load=True):  # pragma: no cover
 
         :ref:`Shark Dataset <shark_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_shark, load=load)
 
@@ -3157,6 +3234,7 @@ def download_dragon(load=True):  # pragma: no cover
 
         :ref:`Dragon Dataset <dragon_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_dragon, load=load)
 
@@ -3195,6 +3273,7 @@ def download_armadillo(load=True):  # pragma: no cover
 
         :ref:`Armadillo Dataset <armadillo_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_armadillo, load=load)
 
@@ -3235,6 +3314,7 @@ def download_gears(load=True):  # pragma: no cover
 
         :ref:`Gears Dataset <gears_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_gears, load=load)
 
@@ -3266,6 +3346,7 @@ def download_torso(load=True):  # pragma: no cover
 
         :ref:`Torso Dataset <torso_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_torso, load=load)
 
@@ -3309,6 +3390,7 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
         :ref:`Kitchen Dataset <kitchen_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     if load and split:
         return _download_dataset(__kitchen_split, load=load)
@@ -3373,6 +3455,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
 
         :ref:`Tetra Dc Mesh Dataset <tetra_dc_mesh_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_tetra_dc_mesh)
@@ -3427,6 +3510,7 @@ def download_model_with_variance(load=True):  # pragma: no cover
     .. seealso::
 
         model_with_variance
+
     """
     return _download_dataset(_dataset_model_with_variance, load=load)
 
@@ -3462,6 +3546,7 @@ def download_thermal_probes(load=True):  # pragma: no cover
 
         :ref:`Thermal Probes Dataset <thermal_probes_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_thermal_probes, load=load)
 
@@ -3493,6 +3578,7 @@ def download_carburetor(load=True):  # pragma: no cover
 
         :ref:`Carburetor Dataset <carburetor_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_carburetor, load=load)
 
@@ -3524,6 +3610,7 @@ def download_turbine_blade(load=True):  # pragma: no cover
 
         :ref:`Turbine Blade Dataset <turbine_blade_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_turbine_blade, load=load)
 
@@ -3557,6 +3644,7 @@ def download_pine_roots(load=True):  # pragma: no cover
 
         :ref:`Pine Roots Dataset <pine_roots_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_pine_roots, load=load)
 
@@ -3593,6 +3681,7 @@ def download_crater_topo(load=True):  # pragma: no cover
 
         :ref:`Crater Topo Dataset <crater_topo_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_crater_topo, load=load)
 
@@ -3631,6 +3720,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
 
         :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
 
@@ -3664,6 +3754,7 @@ def download_dolfin(load=True):  # pragma: no cover
 
         :ref:`Dolfin Dataset <dolfin_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_dolfin, load=load)
 
@@ -3706,6 +3797,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
         :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
 
@@ -3744,6 +3836,7 @@ def download_delaunay_example(load=True):  # pragma: no cover
 
         :ref:`Delaunay Example Dataset <delaunay_example_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_delaunay_example, load=load)
 
@@ -3783,6 +3876,7 @@ def download_embryo(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_embryo, load=load)
 
@@ -3825,6 +3919,7 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
 
         :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
 
@@ -3863,6 +3958,7 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
 
         :ref:`Room Surface Mesh Dataset <room_surface_mesh_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_room_surface_mesh, load=load)
 
@@ -3894,6 +3990,7 @@ def download_beach(load=True):  # pragma: no cover
 
         :ref:`Beach Dataset <beach_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_beach, load=load)
 
@@ -3927,6 +4024,7 @@ def download_rgba_texture(load=True):  # pragma: no cover
 
         :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
 
@@ -3959,6 +4057,7 @@ def download_vtk_logo(load=True):  # pragma: no cover
         :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Vtk Dataset <vtk_dataset>`
+
     """
     return _download_dataset(_dataset_vtk_logo, load=load)
 
@@ -3993,6 +4092,7 @@ def download_sky_box_cube_map():  # pragma: no cover
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_sky_box_cube_map)
@@ -4051,6 +4151,7 @@ def download_cubemap_park():  # pragma: no cover
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_cubemap_park)
@@ -4100,6 +4201,7 @@ def download_cubemap_space_4k():  # pragma: no cover
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_cubemap_space_4k)
@@ -4155,6 +4257,7 @@ def download_cubemap_space_16k():  # pragma: no cover
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_cubemap_space_16k)
@@ -4189,6 +4292,7 @@ def download_backward_facing_step(load=True):  # pragma: no cover
 
         :ref:`Backward Facing Step Dataset <backward_facing_step_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_backward_facing_step, load=load)
 
@@ -4232,6 +4336,7 @@ def download_gpr_data_array(load=True):  # pragma: no cover
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
+
     """
     return _download_dataset(_dataset_gpr_data_array, load=load)
 
@@ -4266,6 +4371,7 @@ def download_gpr_path(load=True):  # pragma: no cover
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
+
     """
     return _download_dataset(_dataset_gpr_path, load=load)
 
@@ -4308,6 +4414,7 @@ def download_woman(load=True):  # pragma: no cover
 
         :ref:`Woman Dataset <woman_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_woman, load=load)
 
@@ -4341,6 +4448,7 @@ def download_lobster(load=True):  # pragma: no cover
 
         :ref:`Lobster Dataset <lobster_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_lobster, load=load)
 
@@ -4375,6 +4483,7 @@ def download_face2(load=True):  # pragma: no cover
         :ref:`Face2 Dataset <face2_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Face Dataset <face_dataset>`
+
     """
     return _download_dataset(_dataset_face2, load=load)
 
@@ -4413,6 +4522,7 @@ def download_urn(load=True):  # pragma: no cover
 
         :ref:`Urn Dataset <urn_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_urn, load=load)
 
@@ -4446,6 +4556,7 @@ def download_pepper(load=True):  # pragma: no cover
 
         :ref:`Pepper Dataset <pepper_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_pepper, load=load)
 
@@ -4479,6 +4590,7 @@ def download_drill(load=True):  # pragma: no cover
 
         :ref:`Drill Dataset <drill_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_drill, load=load)
 
@@ -4533,6 +4645,7 @@ def download_action_figure(load=True):  # pragma: no cover
 
         :ref:`Action Figure Dataset <action_figure_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_action_figure, load=load)
 
@@ -4568,6 +4681,7 @@ def download_notch_stress(load=True):  # pragma: no cover
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
+
     """
     return _download_dataset(_dataset_notch_stress, load=load)
 
@@ -4603,6 +4717,7 @@ def download_notch_displacement(load=True):  # pragma: no cover
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
+
     """
     return _download_dataset(_dataset_notch_displacement, load=load)
 
@@ -4653,6 +4768,7 @@ def download_louis_louvre(load=True):  # pragma: no cover
 
         :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
 
@@ -4686,6 +4802,7 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
 
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_cylinder_crossflow, load=load)
 
@@ -4734,6 +4851,7 @@ def download_naca(load=True):  # pragma: no cover
 
         :ref:`Naca Dataset <naca_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_naca, load=load)
 
@@ -4776,6 +4894,7 @@ def download_lshape(load=True):  # pragma: no cover
 
         :ref:`Lshape Dataset <lshape_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_lshape, load=load)
 
@@ -4822,6 +4941,7 @@ def download_wavy(load=True):  # pragma: no cover
 
         :ref:`Wavy Dataset <wavy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_wavy, load=load)
 
@@ -4877,6 +4997,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
         :ref:`Single Sphere Animation Dataset <single_sphere_animation_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Dual Sphere Animation Dataset <dual_sphere_animation_dataset>`
+
     """
     return _download_dataset(_dataset_single_sphere_animation, load=load)
 
@@ -4934,6 +5055,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
         :ref:`Dual Sphere Animation Dataset <dual_sphere_animation_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Single Sphere Animation Dataset <single_sphere_animation_dataset>`
+
     """
     return _download_dataset(_dataset_dual_sphere_animation, load=load)
 
@@ -4975,6 +5097,7 @@ def download_osmnx_graph():  # pragma: no cover
 
         :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     try:
         import osmnx  # noqa: F401
@@ -5023,6 +5146,7 @@ def download_cavity(load=True):  # pragma: no cover
 
         :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_cavity, load=load)
 
@@ -5077,6 +5201,7 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
 
         :ref:`Openfoam Tubes Dataset <openfoam_tubes_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_openfoam_tubes, load=load)
 
@@ -5147,6 +5272,7 @@ def download_lucy(load=True):  # pragma: no cover
 
         :ref:`Lucy Dataset <lucy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_lucy, load=load)
 
@@ -5212,6 +5338,7 @@ def download_pump_bracket(load=True):  # pragma: no cover
 
         :ref:`Pump Bracket Dataset <pump_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_pump_bracket, load=load)
 
@@ -5293,6 +5420,7 @@ def download_electronics_cooling(load=True):  # pragma: no cover
 
         :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
 
@@ -5347,6 +5475,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
+
     """
     if partial:
         return _download_dataset(__can_partial, load=load)
@@ -5408,6 +5537,7 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
         :ref:`Can Dataset <can_dataset>`
+
     """
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
 
@@ -5449,6 +5579,7 @@ def download_can_crushed_vtu(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
         :ref:`Can Dataset <can_dataset>`
+
     """
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
 
@@ -5489,6 +5620,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
         :ref:`Cgns Structured Dataset <cgns_structured_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cgns Multi Dataset <cgns_multi_dataset>`
+
     """
     return _download_dataset(_dataset_cgns_structured, load=load)
 
@@ -5528,6 +5660,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
 
         :ref:`Tecplot Ascii Dataset <tecplot_ascii_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_tecplot_ascii, load=load)
 
@@ -5578,6 +5711,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
         :ref:`Cgns Multi Dataset <cgns_multi_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cgns Structured Dataset <cgns_structured_dataset>`
+
     """
     return _download_dataset(_dataset_cgns_multi, load=load)
 
@@ -5648,6 +5782,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
             See this dataset in the Dataset Gallery for more info.
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
     """
     return _download_dataset(_dataset_dicom_stack, load=load)
 
@@ -5679,6 +5814,7 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
         :ref:`Parched Canal 4k Dataset <parched_canal_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_parched_canal_4k, load=load)
 
@@ -5712,6 +5848,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
         :ref:`Cells Nd Dataset <cells_nd_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_cells_nd, load=load)
 
@@ -5758,6 +5895,7 @@ def download_moonlanding_image(load=True):  # pragma: no cover
 
         :ref:`Moonlanding Image Dataset <moonlanding_image_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_moonlanding_image, load=load)
 
@@ -5789,6 +5927,7 @@ def download_angular_sector(load=True):  # pragma: no cover
 
         :ref:`Angular Sector Dataset <angular_sector_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_angular_sector, load=load)
 
@@ -5831,6 +5970,7 @@ def download_mount_damavand(load=True):  # pragma: no cover
 
         :ref:`Mount Damavand Dataset <mount_damavand_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_mount_damavand, load=load)
 
@@ -5874,6 +6014,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
 
         :ref:`Particles Lethe Dataset <particles_lethe_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_particles_lethe, load=load)
 
@@ -5923,6 +6064,7 @@ def download_gif_simple(load=True):  # pragma: no cover
 
         :ref:`Gif Simple Dataset <gif_simple_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_gif_simple, load=load)
 
@@ -5981,6 +6123,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
 
@@ -6042,6 +6185,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
             See this dataset in the Dataset Gallery for more info.
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+
     """
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
 
@@ -6112,6 +6256,7 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
 
         :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
 
@@ -6159,6 +6304,7 @@ def download_fea_bracket(load=True):  # pragma: no cover
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
+
     """
     return _download_dataset(_dataset_fea_bracket, load=load)
 
@@ -6222,6 +6368,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
+
     """
     return _download_dataset(_dataset_fea_hertzian_contact_cylinder, load=load)
 
@@ -6280,6 +6427,7 @@ def download_black_vase(load=True):  # pragma: no cover
 
         :ref:`Black Vase Dataset <black_vase_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_black_vase, load=load)
 
@@ -6341,6 +6489,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
         :ref:`Ivan Angel Dataset <ivan_angel_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_ivan_angel, load=load)
 
@@ -6397,6 +6546,7 @@ def download_bird_bath(load=True):  # pragma: no cover
 
         :ref:`Bird Bath Dataset <bird_bath_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_bird_bath, load=load)
 
@@ -6458,6 +6608,7 @@ def download_owl(load=True):  # pragma: no cover
 
         :ref:`Owl Dataset <owl_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_owl, load=load)
 
@@ -6512,6 +6663,7 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
         :ref:`Plastic Vase Dataset <plastic_vase_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_plastic_vase, load=load)
 
@@ -6568,6 +6720,7 @@ def download_sea_vase(load=True):  # pragma: no cover
 
         :ref:`Sea Vase Dataset <sea_vase_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_sea_vase, load=load)
 
@@ -6602,6 +6755,7 @@ def download_dikhololo_night():  # pragma: no cover
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     # TODO: add `load` parameter
     return _download_dataset(_dataset_dikhololo_night)
@@ -6663,6 +6817,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
         :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_cad_model_case, load=load)
 
@@ -6753,6 +6908,7 @@ def download_aero_bracket(load=True):  # pragma: no cover
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
+
     """
     return _download_dataset(_dataset_aero_bracket, load=load)
 
@@ -6847,6 +7003,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
 
         :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
 
@@ -6880,6 +7037,7 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
 
         :ref:`Meshio Xdmf Dataset <meshio_xdmf_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_meshio_xdmf, load=load)
 
@@ -6927,6 +7085,7 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
 
         :ref:`Victorian Goblet Face Illusion Dataset <victorian_goblet_face_illusion_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_victorian_goblet_face_illusion, load=load)
 
