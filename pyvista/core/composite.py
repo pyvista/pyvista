@@ -898,9 +898,7 @@ class MultiBlock(
                 self[i].clean()
                 if self[i].n_blocks < 1:
                     null_blocks.append(i)
-            elif self[i] is None:
-                null_blocks.append(i)
-            elif empty and self[i].n_points < 1:
+            elif self[i] is None or empty and self[i].n_points < 1:
                 null_blocks.append(i)
         # Now remove the null/empty meshes
         null_blocks = np.array(null_blocks, dtype=int)

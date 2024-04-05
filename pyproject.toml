@@ -328,6 +328,8 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/5837
+    "SIM118",
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -347,6 +349,18 @@ extend-select = [
     "RUF005",
     "RUF010",
     "RUF100",
+    "SIM114",
+    "SIM201",
+    "SIM211",
+    "SIM212",
+    "SIM220",
+    "SIM221",
+    "SIM222",
+    "SIM223",
+    "SIM300",
+    "SIM401",
+    "SIM910",
+    "SIM911",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]

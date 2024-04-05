@@ -393,9 +393,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             # check if a valid camera position
             if not isinstance(camera_location, CameraPosition):
-                if not len(camera_location) == 3:
-                    raise InvalidCameraError
-                elif any(len(item) != 3 for item in camera_location):
+                if not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
             # everything is set explicitly
@@ -850,9 +848,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
-        if reset_camera:
-            self.reset_camera(render)
-        elif not self.camera_set and reset_camera is None and not rv:
+        if reset_camera or not self.camera_set and reset_camera is None and not rv:
             self.reset_camera(render)
         elif render:
             self.parent.render()
@@ -1765,11 +1761,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # here since it's the default "screen size".
         cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
-        self.cube_axes_actor = cube_axes_actor
-
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
+
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
+        self.cube_axes_actor = cube_axes_actor
 
         self.Modified()
         return cube_axes_actor
@@ -2509,9 +2505,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     name = k
         self._actors.pop(name, None)
         self.update_bounds_axes()
-        if reset_camera:
-            self.reset_camera(render=render)
-        elif not self.camera_set and reset_camera is None:
+        if reset_camera or not self.camera_set and reset_camera is None:
             self.reset_camera(render=render)
         elif render:
             self.parent.render()
