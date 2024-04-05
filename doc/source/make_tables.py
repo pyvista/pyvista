@@ -514,6 +514,7 @@ class DatasetCard:
         |   ^^^
         |
         |   .. grid:: 1 2 2 2
+        |      :margin: 1
         |
         |      .. grid-item::
         |         :columns: 12 8 8 8
@@ -529,7 +530,8 @@ class DatasetCard:
         |
         |         .. card::
         |            :shadow: none
-        |            :class-header: sd-text-center sd-font-weight-bold
+        |            :class-header: sd-text-center sd-font-weight-bold sd-px-0 sd-border-right-0 sd-border-left-0 sd-border-top-0
+        |            :class-body: sd-border-0
         |
         |            :octicon:`info` Dataset Info
         |            ^^^
@@ -538,7 +540,9 @@ class DatasetCard:
         |      .. grid-item::
         |
         |         .. card::
-        |            :class-header: sd-text-center sd-font-weight-bold
+        |            :shadow: none
+        |            :class-header: sd-text-center sd-font-weight-bold sd-px-0 sd-border-right-0 sd-border-left-0 sd-border-top-0
+        |            :class-body: sd-border-0
         |
         |            :octicon:`file` File Info
         |            ^^^
@@ -598,7 +602,7 @@ class DatasetCard:
     image_template = _aligned_dedent(
         """
         |.. card::
-        |   :class-body: sd-px-0 sd-py-0
+        |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
         |   :margin: 1
         |
         |   .. image:: /{}
@@ -634,8 +638,7 @@ class DatasetCard:
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-d-flex-row sd-align-major-justify sd-px-0
-        |   :margin: 1
+        |   :class-row: sd-align-major-justify sd-px-0
         |   :gutter: 1
         |
         |   .. grid-item::
@@ -659,8 +662,7 @@ class DatasetCard:
     field_grid_extra_values_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-d-flex-row sd-align-major-end sd-px-1
-        |   :margin: 1
+        |   :class-row: sd-align-major-justify sd-px-0
         |   :gutter: 1
         |
         """

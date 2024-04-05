@@ -41,7 +41,7 @@ You can browse the gallery to find a particular kind of dataset and
 view file and instance metadata for all datasets.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    /api/examples/dataset_gallery
 
