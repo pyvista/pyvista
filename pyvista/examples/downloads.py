@@ -5959,7 +5959,7 @@ def download_cells_nd(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`Cells Nd Dataset <cells_nd_dataset>`
+        :ref:`CellsNd Dataset <cells_nd_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
