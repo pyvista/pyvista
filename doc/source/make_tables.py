@@ -704,40 +704,21 @@ class DatasetCard:
         dataset_name = self.dataset_name
         loader = self.loader
         # Get dataset name-related info
-        index_name, header_name, func_ref, func_doc, func_name = self._format_dataset_name(
+        index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
             dataset_name
         )
         # Get file and instance metadata
-        try:
-            loader.download()
-        except VTKVersionError:
-            # Exception is caused by 'download_can'
-            # Set default values
-            NOT_AVAILABLE = '``Not available``'
-            NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
-            file_size = NOT_AVAILABLE
-            num_files = NOT_AVAILABLE
-            file_ext = NOT_AVAILABLE
-            reader_type = NOT_AVAILABLE
-            dataset_type = NOT_AVAILABLE
-            datasource_links = NOT_AVAILABLE_NO_BACKTICKS
-            img_path = self._NOT_AVAILABLE_IMG_PATH
-        else:
-            # Get data from loader
-            file_size = self._format_file_size(loader)
-            num_files = self._format_num_files(loader)
-            file_ext = self._format_file_ext(loader)
-            reader_type = self._format_reader_type(loader)
-            dataset_type = self._format_dataset_type(loader)
-            datasource_links = self._format_datasource_links(loader)
+        file_size, num_files, file_ext, reader_type, dataset_type, datasource_links = (
+            DatasetCard._generate_dataset_properties(self.loader)
+        )
 
-            img_path = self._search_image_path(func_name)
-
+        # Process dataset image
+        img_path = self._search_image_path(func_name)
         self._process_img(img_path)
 
         # Format badges
-        carousel_badges = self._format_carousel_badges(self._badges)
-        celltype_badges = self._format_celltype_badges(self._badges)
+        carousel_badges = self._generate_carousel_badges(self._badges)
+        celltype_badges = self._generate_celltype_badges(self._badges)
 
         header_item = self.header_template.format(header_name, carousel_badges)
         header_item_indented = _indent_multi_line_string(
@@ -783,7 +764,7 @@ class DatasetCard:
             except AttributeError:
                 return None
 
-        def _format_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
+        def _generate_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
             if num is None:
                 return None
             if fmt == 'exp':
@@ -798,19 +779,21 @@ class DatasetCard:
             _generate_field_grid('Data Type', dataset_type),
             _generate_field_grid('Cell Type', celltype_badges),
             _generate_field_grid(
-                'N Cells', _format_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
+                'N Cells', _generate_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
             ),
             _generate_field_grid(
-                'N Points', _format_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
+                'N Points', _generate_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
             ),
             _generate_field_grid(
-                'Length', _format_num(_try_getattr(loader.dataset, 'length'), fmt='exp')
+                'Length', _generate_num(_try_getattr(loader.dataset, 'length'), fmt='exp')
             ),
             _generate_field_grid(
-                'Dimensions', _format_num(_try_getattr(loader.dataset, 'dimensions'))
+                'Dimensions', _generate_num(_try_getattr(loader.dataset, 'dimensions'))
             ),
-            _generate_field_grid('Spacing', _format_num(_try_getattr(loader.dataset, 'spacing'))),
-            _generate_field_grid('N Arrays', _format_num(_try_getattr(loader.dataset, 'n_arrays'))),
+            _generate_field_grid('Spacing', _generate_num(_try_getattr(loader.dataset, 'spacing'))),
+            _generate_field_grid(
+                'N Arrays', _generate_num(_try_getattr(loader.dataset, 'n_arrays'))
+            ),
         ]
 
         def _generate_field_block(lines: List[Union[str, None]], indent: int = 0):
@@ -860,7 +843,32 @@ class DatasetCard:
         return card_no_ref, card_with_ref
 
     @staticmethod
-    def _format_dataset_name(dataset_name: str):
+    def _generate_dataset_properties(loader):
+        try:
+            # Get data from loader
+            loader.download()
+
+            file_size = DatasetPropsGenerator.generate_file_size(loader)
+            num_files = DatasetPropsGenerator.generate_num_files(loader)
+            file_ext = DatasetPropsGenerator.generate_file_ext(loader)
+            reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+            dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+            datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+        except VTKVersionError:
+            # Exception is caused by 'download_can'
+            # Set default values
+            NOT_AVAILABLE = '``Not available``'
+            NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
+            file_size = NOT_AVAILABLE
+            num_files = NOT_AVAILABLE
+            file_ext = NOT_AVAILABLE
+            reader_type = NOT_AVAILABLE
+            dataset_type = NOT_AVAILABLE
+            datasource_links = NOT_AVAILABLE_NO_BACKTICKS
+        return file_size, num_files, file_ext, reader_type, dataset_type, datasource_links
+
+    @staticmethod
+    def _generate_dataset_name(dataset_name: str):
         # Format dataset name for indexing and section heading
         index_name = dataset_name + '_dataset'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
@@ -875,63 +883,7 @@ class DatasetCard:
         return index_name, header, func_ref, func_doc, func_name
 
     @staticmethod
-    def _format_file_size(loader: _dataset_loader._FileProps):
-        return '``' + loader.total_size + '``'
-
-    @staticmethod
-    def _format_num_files(loader: _dataset_loader._FileProps):
-        return '``' + str(loader.num_files) + '``'
-
-    @staticmethod
-    def _format_file_ext(loader: _dataset_loader._FileProps):
-        # Format extension as single str with rst backticks
-        # Multiple extensions are comma-separated
-        file_ext = loader.unique_extension
-        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-        file_ext = '``\'' + file_ext.replace(' ', '\'``\n ``\'') + '\'``'
-        return file_ext
-
-    @staticmethod
-    def _format_reader_type(loader: _dataset_loader._FileProps):
-        """Format reader type(s) with doc references to reader class(es)."""
-        reader_type = (
-            repr(loader.unique_reader_type)
-            .replace('<class \'', ':class:`~')
-            .replace('\'>', '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
-        return reader_type
-
-    @staticmethod
-    def _format_dataset_type(loader: _dataset_loader._FileProps):
-        """Format dataset type(s) with doc references to dataset class(es)."""
-        dataset_type = (
-            repr(loader.unique_dataset_type)
-            .replace('<class \'', ':class:`~')
-            .replace('\'>', '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
-        return dataset_type
-
-    @staticmethod
-    def _format_dataset_repr(loader: _dataset_loader._FileProps, indent_level: int) -> str:
-        """Format the dataset's representation as a single multi-line string.
-
-        The returned string is indented up to the specified indent level.
-        """
-        # Replace any hex code memory addresses with ellipses
-        dataset_repr = repr(loader.dataset)
-        dataset_repr = re.sub(
-            pattern=r'0x[0-9a-f]*',
-            repl='...',
-            string=dataset_repr,
-        )
-        return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
-
-    @staticmethod
-    def _format_carousel_badges(badges: List[_BaseDatasetBadge]):
+    def _generate_carousel_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
         for badge in badges:
@@ -952,31 +904,13 @@ class DatasetCard:
         return rst
 
     @staticmethod
-    def _format_celltype_badges(badges: List[_BaseDatasetBadge]):
+    def _generate_celltype_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
         rst = ' '.join([badge.generate() for badge in celltype_badges])
         if rst == '':
             rst = '``None``'
         return rst
-
-    @staticmethod
-    def _format_datasource_links(loader: _dataset_loader._Downloadable) -> str:
-        def _rst_link(name, url):
-            return f'`{name} <{url}>`_'
-
-        # Collect url names and links as sequences
-        names = [name] if isinstance(name := loader.source_name, str) else name
-        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
-
-        # Use dict to create an ordered set to make sure links are unique
-        url_dict = {}
-        for name, url in zip(names, urls):
-            url_dict[url] = name
-
-        rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
-        rst_links = '\n'.join(rst_links)
-        return rst_links
 
     @staticmethod
     def _search_image_path(dataset_download_func_name: str):
@@ -1039,6 +973,84 @@ class DatasetCard:
             if img.width > IMG_WIDTH or img.height > IMG_HEIGHT:
                 img.thumbnail(size=(IMG_WIDTH, IMG_HEIGHT))
                 img.save(img_path)
+
+
+class DatasetPropsGenerator:
+    """Static class to generate rst for dataset properties collected by a dataset loader."""
+
+    @staticmethod
+    def generate_file_size(loader: _dataset_loader._FileProps):
+        return '``' + loader.total_size + '``'
+
+    @staticmethod
+    def generate_num_files(loader: _dataset_loader._FileProps):
+        return '``' + str(loader.num_files) + '``'
+
+    @staticmethod
+    def generate_file_ext(loader: _dataset_loader._FileProps):
+        # Format extension as single str with rst backticks
+        # Multiple extensions are comma-separated
+        file_ext = loader.unique_extension
+        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
+        file_ext = '``\'' + file_ext.replace(' ', '\'``\n ``\'') + '\'``'
+        return file_ext
+
+    @staticmethod
+    def generate_reader_type(loader: _dataset_loader._FileProps):
+        """Format reader type(s) with doc references to reader class(es)."""
+        reader_type = (
+            repr(loader.unique_reader_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        ).replace(', ', '\n')
+        return reader_type
+
+    @staticmethod
+    def generate_dataset_type(loader: _dataset_loader._FileProps):
+        """Format dataset type(s) with doc references to dataset class(es)."""
+        dataset_type = (
+            repr(loader.unique_dataset_type)
+            .replace('<class \'', ':class:`~')
+            .replace('\'>', '`')
+            .replace('(', '')
+            .replace(')', '')
+        ).replace(', ', '\n')
+        return dataset_type
+
+    @staticmethod
+    def _generate_dataset_repr(loader: _dataset_loader._FileProps, indent_level: int) -> str:
+        """Format the dataset's representation as a single multi-line string.
+
+        The returned string is indented up to the specified indent level.
+        """
+        # Replace any hex code memory addresses with ellipses
+        dataset_repr = repr(loader.dataset)
+        dataset_repr = re.sub(
+            pattern=r'0x[0-9a-f]*',
+            repl='...',
+            string=dataset_repr,
+        )
+        return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
+
+    @staticmethod
+    def generate_datasource_links(loader: _dataset_loader._Downloadable) -> str:
+        def _rst_link(name, url):
+            return f'`{name} <{url}>`_'
+
+        # Collect url names and links as sequences
+        names = [name] if isinstance(name := loader.source_name, str) else name
+        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
+
+        # Use dict to create an ordered set to make sure links are unique
+        url_dict = {}
+        for name, url in zip(names, urls):
+            url_dict[url] = name
+
+        rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
+        rst_links = '\n'.join(rst_links)
+        return rst_links
 
 
 class DatasetCardFetcher:
