@@ -6,7 +6,7 @@ ipywidgets<9.0.0
 jupyter-server-proxy
 jupyterlab<5.0.0
 meshio
-trame>=2.5.2
 trame-vtk>=2.5.8
 trame-vuetify>=2.3.1
+trame>=2.5.2
 trimesh
