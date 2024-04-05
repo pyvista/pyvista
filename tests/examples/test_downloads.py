@@ -13,7 +13,7 @@ import pyvista as pv
 from pyvista import examples
 import pyvista.examples
 from pyvista.examples import downloads
-from pyvista.examples._example_loader import (
+from pyvista.examples._dataset_loader import (
     _Downloadable,
     _load_and_merge,
     _load_as_multiblock,
@@ -37,7 +37,7 @@ def _generate_example_loader_test_cases() -> List[ExampleTestCaseData]:
 
     test_cases_dict: Dict = {}
 
-    def add_to_dict(func_name: str, func: Callable[[], Any]) -> List[ExampleTestCaseData]:
+    def add_to_dict(func_name: str, func: Callable[[], Any]):
         # Function for stuffing example functions into a dict.
         # We use a dict to allow for any entry to be made based on example name alone.
         # This way, we can defer checking for any mismatch between the download functions

@@ -33,7 +33,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.examples._example_loader import (
+from pyvista.examples._dataset_loader import (
     _download_example,
     _load_and_merge,
     _load_as_cubemap,
