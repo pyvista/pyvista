@@ -5,6 +5,11 @@ from pyvista import PartitionedDataSet
 from pyvista.core.errors import PartitionedDataSetsNotSupported
 
 
+def partitions_from_datasets(*datasets):
+    """Return pyvista partitions of any number of datasets."""
+    return PartitionedDataSet(datasets)
+
+
 def test_reverse(sphere):
     partitions = PartitionedDataSet([sphere for i in range(3)])
     partitions.append(pv.Cube())
@@ -26,3 +31,23 @@ def test_pop():
     match = "The requested operation is not supported for PartitionedDataSetss."
     with pytest.raises(PartitionedDataSetsNotSupported, match=match):
         partitions.pop()
+
+
+def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    assert partitions[:] == partitions[0 : len(partitions)]
+
+
+def test_del_slice(sphere):
+    partitions = PartitionedDataSet([sphere for i in range(10)])
+    match = "The requested operation is not supported for PartitionedDataSetss."
+    with pytest.raises(PartitionedDataSetsNotSupported, match=match):
+        del partitions[0:10:2]
+
+
+def test_partitioned_dataset_repr(ant, sphere, uniform, airplane):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, None)
+    assert partitions.n_partitions == 5
+    assert partitions._repr_html_() is not None
+    assert repr(partitions) is not None
+    assert str(partitions) is not None
