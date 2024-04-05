@@ -603,7 +603,6 @@ class DatasetCard:
         """
         |.. card::
         |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
-        |   :margin: 1
         |
         |   .. image:: /{}
         """
@@ -638,7 +637,10 @@ class DatasetCard:
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
+        |   :class-container: sd-align-major-justify sd-px-0
         |   :class-row: sd-align-major-justify sd-px-0
+        |   :margin: 1
+        |   :padding: 0
         |   :gutter: 1
         |
         |   .. grid-item::
@@ -650,6 +652,7 @@ class DatasetCard:
         |   .. grid-item::
         |      :columns: auto
         |      :class: sd-text-right sd-text-nowrap
+        |      :child-align: justify
         |
         |      {}
         |
@@ -662,7 +665,10 @@ class DatasetCard:
     field_grid_extra_values_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-row: sd-align-major-justify sd-px-0
+        |   :class-container: sd-align-major-end sd-px-0
+        |   :class-row: sd-align-major-end sd-px-0
+        |   :margin: 1
+        |   :padding: 0
         |   :gutter: 1
         |
         """
