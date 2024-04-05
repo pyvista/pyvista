@@ -1276,7 +1276,7 @@ class CellTypeBadge(_BaseDatasetBadge):
         cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
 
 
-class GalleryCarousel(DocTable):
+class DatasetGalleryCarousel(DocTable):
     # Print the doc, badges, and dataset count
     # The header defines the start of the card carousel
     header_template = _aligned_dedent(
@@ -1356,7 +1356,7 @@ class GalleryCarousel(DocTable):
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
 
 
-class DownloadsGalleryCarousel(GalleryCarousel):
+class DownloadsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the downloads module."""
 
     name = 'downloads_carousel'
@@ -1373,7 +1373,7 @@ class DownloadsGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.DATASET_CARDS_RST_REF[dataset_name]
 
 
-class BuiltinGalleryCarousel(GalleryCarousel):
+class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     # TODO: add builtin datasets
@@ -1382,7 +1382,7 @@ class BuiltinGalleryCarousel(GalleryCarousel):
     badge = ModuleBadge('Built-in', ref='builtins_gallery')
 
 
-class PlanetsGalleryCarousel(GalleryCarousel):
+class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
     # TODO: add planets datasets
@@ -1391,7 +1391,7 @@ class PlanetsGalleryCarousel(GalleryCarousel):
     badge = ModuleBadge('Planets', ref='planets_gallery')
 
 
-class PointSetGalleryCarousel(GalleryCarousel):
+class PointSetCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of PointSet cards."""
 
     name = 'pointset_carousel'
@@ -1403,7 +1403,7 @@ class PointSetGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PointSet)
 
 
-class PolyDataGalleryCarousel(GalleryCarousel):
+class PolyDataCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of PolyData cards."""
 
     name = 'polydata_carousel'
@@ -1415,7 +1415,7 @@ class PolyDataGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.PolyData)
 
 
-class UnstructuredGridGalleryCarousel(GalleryCarousel):
+class UnstructuredGridCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of UnstructuredGrid cards."""
 
     name = 'unstructuredgrid_carousel'
@@ -1427,7 +1427,7 @@ class UnstructuredGridGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.UnstructuredGrid)
 
 
-class StructuredGridGalleryCarousel(GalleryCarousel):
+class StructuredGridCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of StructuredGrid cards."""
 
     name = 'structuredgrid_carousel'
@@ -1439,7 +1439,7 @@ class StructuredGridGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.StructuredGrid)
 
 
-class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
+class ExplicitStructuredGridCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of ExplicitStructuredGrid cards."""
 
     name = 'explicitstructuredgrid_carousel'
@@ -1451,7 +1451,7 @@ class ExplicitStructuredGridGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ExplicitStructuredGrid)
 
 
-class PointCloudGalleryCarousel(GalleryCarousel):
+class PointCloudCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of point cloud cards."""
 
     name = 'pointcloud_carousel'
@@ -1468,7 +1468,7 @@ class PointCloudGalleryCarousel(GalleryCarousel):
         return sorted(list(pointset_names) + list(vertex_polydata_names))
 
 
-class SurfaceMeshGalleryCarousel(GalleryCarousel):
+class SurfaceMeshCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of surface mesh cards."""
 
     name = 'surfacemesh_carousel'
@@ -1485,7 +1485,7 @@ class SurfaceMeshGalleryCarousel(GalleryCarousel):
         return sorted(surface_polydata_names)
 
 
-class RectilinearGridGalleryCarousel(GalleryCarousel):
+class RectilinearGridCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of RectilinearGrid cards."""
 
     name = 'rectilineargrid_carousel'
@@ -1497,7 +1497,7 @@ class RectilinearGridGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.RectilinearGrid)
 
 
-class ImageDataGalleryCarousel(GalleryCarousel):
+class ImageDataCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of ImageData cards."""
 
     name = 'imagedata_carousel'
@@ -1509,7 +1509,7 @@ class ImageDataGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.ImageData)
 
 
-class ImageData3DGalleryCarousel(GalleryCarousel):
+class ImageData3DCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of 3D ImageData cards."""
 
     name = 'imagedata_3d_carousel'
@@ -1524,7 +1524,7 @@ class ImageData3DGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
 
-class ImageData2DGalleryCarousel(GalleryCarousel):
+class ImageData2DCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of 2D ImageData cards."""
 
     name = 'imagedata_2d_carousel'
@@ -1539,7 +1539,7 @@ class ImageData2DGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
 
-class TextureGalleryCarousel(GalleryCarousel):
+class TextureCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of all Texture cards."""
 
     name = 'texture_carousel'
@@ -1551,7 +1551,7 @@ class TextureGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.Texture)
 
 
-class CubemapGalleryCarousel(GalleryCarousel):
+class CubemapCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of cubemap cards."""
 
     name = 'cubemap_carousel'
@@ -1564,7 +1564,7 @@ class CubemapGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_and_filter(cube_map_filter)
 
 
-class MultiBlockGalleryCarousel(GalleryCarousel):
+class MultiBlockCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of MultiBlock dataset cards."""
 
     name = 'multiblock_carousel'
@@ -1576,7 +1576,7 @@ class MultiBlockGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_datatype(pv.MultiBlock)
 
 
-class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
+class MultiBlockHeteroCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of heterogeneous MultiBlock dataset cards."""
 
     name = 'multiblock_hetero_carousel'
@@ -1588,7 +1588,7 @@ class MultiBlockHeteroGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_multiblock('hetero')
 
 
-class MultiBlockHomoGalleryCarousel(GalleryCarousel):
+class MultiBlockHomoCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of homogeneous MultiBlock dataset cards."""
 
     name = 'multiblock_homo_carousel'
@@ -1600,7 +1600,7 @@ class MultiBlockHomoGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_multiblock('homo')
 
 
-class MultiBlockSingleGalleryCarousel(GalleryCarousel):
+class MultiBlockSingleCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of MultiBlock dataset cards which contain a single mesh."""
 
     name = 'multiblock_single_carousel'
@@ -1612,7 +1612,7 @@ class MultiBlockSingleGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_multiblock('single')
 
 
-class MiscGalleryCarousel(GalleryCarousel):
+class MiscCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel of misc dataset cards."""
 
     name = 'misc_carousel'
@@ -1627,7 +1627,7 @@ class MiscGalleryCarousel(GalleryCarousel):
         return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 
 
-class MedicalGalleryCarousel(GalleryCarousel):
+class MedicalCarousel(DatasetGalleryCarousel):
     """Class to generate a table of medical dataset cards."""
 
     name = 'medical_carousel'
@@ -1656,7 +1656,7 @@ class MedicalGalleryCarousel(GalleryCarousel):
         )
 
 
-def make_all_carousels(carousels: List[GalleryCarousel]):
+def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 
@@ -1690,27 +1690,27 @@ def make_all_tables():
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(
         [
-            DownloadsGalleryCarousel,
-            PointSetGalleryCarousel,
-            PolyDataGalleryCarousel,
-            UnstructuredGridGalleryCarousel,
-            StructuredGridGalleryCarousel,
+            DownloadsCarousel,
+            PointSetCarousel,
+            PolyDataCarousel,
+            UnstructuredGridCarousel,
+            StructuredGridCarousel,
             # TODO: There is no dataset of this type yet.
             #  Add new dataset and uncomment this line
-            # ExplicitStructuredGridGalleryCarousel,
-            PointCloudGalleryCarousel,
-            SurfaceMeshGalleryCarousel,
-            RectilinearGridGalleryCarousel,
-            ImageDataGalleryCarousel,
-            ImageData3DGalleryCarousel,
-            ImageData2DGalleryCarousel,
-            TextureGalleryCarousel,
-            CubemapGalleryCarousel,
-            MultiBlockGalleryCarousel,
-            MultiBlockHomoGalleryCarousel,
-            MultiBlockHeteroGalleryCarousel,
-            MultiBlockSingleGalleryCarousel,
-            MiscGalleryCarousel,
-            MedicalGalleryCarousel,
+            # ExplicitStructuredGridCarousel,
+            PointCloudCarousel,
+            SurfaceMeshCarousel,
+            RectilinearGridCarousel,
+            ImageDataCarousel,
+            ImageData3DCarousel,
+            ImageData2DCarousel,
+            TextureCarousel,
+            CubemapCarousel,
+            MultiBlockCarousel,
+            MultiBlockHomoCarousel,
+            MultiBlockHeteroCarousel,
+            MultiBlockSingleCarousel,
+            MiscCarousel,
+            MedicalCarousel,
         ]
     )
