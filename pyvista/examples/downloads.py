@@ -319,13 +319,13 @@ def download_masonry_texture(load=True):  # pragma: no cover
     >>> surf = pv.Cylinder()
     >>> surf.plot(texture=texture)
 
-    See :ref:`texture_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Masonry Texture Dataset <masonry_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`texture_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_masonry_texture, load=load)
@@ -359,6 +359,7 @@ def download_usa_texture(load=True):  # pragma: no cover
 
         :ref:`Usa Texture Dataset <usa_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Usa Dataset <usa_dataset>`
 
     """
@@ -388,14 +389,15 @@ def download_puppy_texture(load=True):  # pragma: no cover
     >>> dataset = examples.download_puppy_texture()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`texture_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Puppy Dataset <puppy_dataset>`
+
+        :ref:`texture_example`
+            Example which uses this dataset.
 
     """
     return _download_dataset(_dataset_puppy_texture, load=load)
@@ -428,6 +430,7 @@ def download_puppy(load=True):  # pragma: no cover
 
         :ref:`Puppy Dataset <puppy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Puppy Texture Dataset <puppy_texture_dataset>`
 
     """
@@ -461,6 +464,7 @@ def download_usa(load=True):  # pragma: no cover
 
         :ref:`Usa Dataset <usa_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Usa Texture Dataset <usa_texture_dataset>`
 
     """
@@ -490,20 +494,20 @@ def download_st_helens(load=True):  # pragma: no cover
     >>> dataset = examples.download_st_helens()
     >>> dataset.plot(cmap="gist_earth")
 
-    This dataset is used in the following examples:
-
-    * :ref:`colormap_example`
-    * :ref:`lighting_properties_example`
-    * :ref:`plot_opacity_example`
-    * :ref:`orbiting_example`
-    * :ref:`plot_over_line_example`
-    * :ref:`plotter_lighting_example`
-    * :ref:`themes_example`
-
     .. seealso::
 
         :ref:`St Helens Dataset <st_helens_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`colormap_example`
+        * :ref:`lighting_properties_example`
+        * :ref:`plot_opacity_example`
+        * :ref:`orbiting_example`
+        * :ref:`plot_over_line_example`
+        * :ref:`plotter_lighting_example`
+        * :ref:`themes_example`
 
     """
     return _download_dataset(_dataset_st_helens, load=load)
@@ -532,20 +536,21 @@ def download_bunny(load=True):  # pragma: no cover
     >>> dataset = examples.download_bunny()
     >>> dataset.plot(cpos="xy")
 
-    This dataset is used in the following examples:
-
-    * :ref:`read_file_example`
-    * :ref:`clip_with_surface_example`
-    * :ref:`extract_edges_example`
-    * :ref:`subdivide_example`
-    * :ref:`silhouette_example`
-    * :ref:`light_types_example`
-
     .. seealso::
 
         :ref:`Bunny Dataset <bunny_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
+
+        This dataset is used in the following examples:
+
+        * :ref:`read_file_example`
+        * :ref:`clip_with_surface_example`
+        * :ref:`extract_edges_example`
+        * :ref:`subdivide_example`
+        * :ref:`silhouette_example`
+        * :ref:`light_types_example`
 
     """
     return _download_dataset(_dataset_bunny, load=load)
@@ -574,15 +579,18 @@ def download_bunny_coarse(load=True):  # pragma: no cover
     >>> dataset = examples.download_bunny_coarse()
     >>> dataset.plot(cpos="xy")
 
-    * :ref:`read_file_example`
-    * :ref:`clip_with_surface_example`
-    * :ref:`subdivide_example`
-
     .. seealso::
 
         :ref:`Bunny Coarse Dataset <bunny_coarse_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Bunny Dataset <bunny_dataset>`
+
+        This dataset is used in the following examples:
+
+        * :ref:`read_file_example`
+        * :ref:`clip_with_surface_example`
+        * :ref:`subdivide_example`
 
     """
     return _download_dataset(_dataset_bunny_coarse, load=load)
@@ -618,19 +626,20 @@ def download_cow(load=True):  # pragma: no cover
     >>> dataset = examples.download_cow()
     >>> dataset.plot(cpos="xy")
 
-    This dataset is used in the following examples:
-
-    * :ref:`extract_edges_example`
-    * :ref:`mesh_quality_example`
-    * :ref:`rotate_example`
-    * :ref:`linked_views_example`
-    * :ref:`light_actors_example`
-
     .. seealso::
 
         :ref:`Cow Dataset <cow_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cow Head Dataset <cow_head_dataset>`
+
+        This dataset is used in the following examples:
+
+        * :ref:`extract_edges_example`
+        * :ref:`mesh_quality_example`
+        * :ref:`rotate_example`
+        * :ref:`linked_views_example`
+        * :ref:`light_actors_example`
 
     """
     return _download_dataset(_dataset_cow, load=load)
@@ -663,6 +672,7 @@ def download_cow_head(load=True):  # pragma: no cover
 
         :ref:`Cow Head Dataset <cow_head_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cow Dataset <cow_dataset>`
 
     """
@@ -764,15 +774,18 @@ def download_head(load=True):  # pragma: no cover
     ... ]
     >>> pl.show()
 
-    See :ref:`volume_rendering_example` for an example using this
-    dataset.
     .. seealso::
 
         :ref:`Head Dataset <head_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Head 2 Dataset <head_2_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        :ref:`volume_rendering_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_head, load=load)
@@ -815,7 +828,9 @@ def download_head_2(load=True):  # pragma: no cover
 
         :ref:`Head 2 Dataset <head_2_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Head Dataset <head_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -859,13 +874,13 @@ def download_bolt_nut(load=True):  # pragma: no cover
     ... ]
     >>> pl.show()
 
-    See :ref:`volume_rendering_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Bolt Nut Dataset <bolt_nut_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`volume_rendering_example`
+            Example which uses this dataset.
 
     """
     return _download_dataset(_dataset_bolt_nut, load=load)
@@ -935,15 +950,15 @@ def download_topo_global(load=True):  # pragma: no cover
     >>> dataset = examples.download_topo_global()
     >>> dataset.plot(cmap="gist_earth")
 
-    This dataset is used in the following examples:
-
-    * :ref:`surface_normal_example`
-    * :ref:`background_image_example`
-
     .. seealso::
 
         :ref:`Topo Global Dataset <topo_global_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`surface_normal_example`
+        * :ref:`background_image_example`
 
     """
     return _download_dataset(_dataset_topo_global, load=load)
@@ -974,15 +989,15 @@ def download_topo_land(load=True):  # pragma: no cover
     ...     clim=[-2000, 3000], cmap="gist_earth", show_scalar_bar=False
     ... )
 
-    This dataset is used in the following examples:
-
-    * :ref:`geodesic_example`
-    * :ref:`background_image_example`
-
     .. seealso::
 
         :ref:`Topo Land Dataset <topo_land_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`geodesic_example`
+        * :ref:`background_image_example`
 
     """
     return _download_dataset(_dataset_topo_land, load=load)
@@ -1043,19 +1058,21 @@ def download_knee(load=True):  # pragma: no cover
     >>> dataset = examples.download_knee()
     >>> dataset.plot(cpos="xy", show_scalar_bar=False)
 
-    This dataset is used in the following examples:
-
-    * :ref:`plot_opacity_example`
-    * :ref:`volume_rendering_example`
-    * :ref:`slider_bar_widget_example`
-
     .. seealso::
 
         :ref:`Knee Dataset <knee_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Knee Full Dataset <knee_full_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        This dataset is used in the following examples:
+
+        * :ref:`plot_opacity_example`
+        * :ref:`volume_rendering_example`
+        * :ref:`slider_bar_widget_example`
 
     """
     return _download_dataset(_dataset_knee, load=load)
@@ -1091,18 +1108,20 @@ def download_knee_full(load=True):  # pragma: no cover
     ...     volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False
     ... )
 
-    This dataset is used in the following examples:
-
-    * :ref:`volume_rendering_example`
-    * :ref:`slider_bar_widget_example`
-
     .. seealso::
 
         :ref:`Knee Full Dataset <knee_full_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Knee Dataset <knee_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        This dataset is used in the following examples:
+
+        * :ref:`volume_rendering_example`
+        * :ref:`slider_bar_widget_example`
 
     """
     return _download_dataset(_dataset_knee_full, load=load)
@@ -1131,15 +1150,15 @@ def download_lidar(load=True):  # pragma: no cover
     >>> dataset = examples.download_lidar()
     >>> dataset.plot(cmap="gist_earth")
 
-    This dataset is used in the following examples:
-
-    * :ref:`create_point_cloud`
-    * :ref:`edl`
-
     .. seealso::
 
         :ref:`Lidar Dataset <lidar_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`create_point_cloud`
+        * :ref:`edl`
 
     """
     return _download_dataset(_dataset_lidar, load=load)
@@ -1200,19 +1219,19 @@ def download_nefertiti(load=True):  # pragma: no cover
     >>> dataset = examples.download_nefertiti()
     >>> dataset.plot(cpos="xz")
 
-    This dataset is used in the following examples:
-
-    * :ref:`surface_normal_example`
-    * :ref:`extract_edges_example`
-    * :ref:`show_edges_example`
-    * :ref:`edl`
-    * :ref:`pbr_example`
-    * :ref:`box_widget_example`
-
     .. seealso::
 
         :ref:`Nefertiti Dataset <nefertiti_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`surface_normal_example`
+        * :ref:`extract_edges_example`
+        * :ref:`show_edges_example`
+        * :ref:`edl`
+        * :ref:`pbr_example`
+        * :ref:`box_widget_example`
 
     """
     return _download_dataset(_dataset_nefertiti, load=load)
@@ -1243,16 +1262,16 @@ def download_blood_vessels(load=True):  # pragma: no cover
     >>> dataset = examples.download_blood_vessels()
     >>> dataset.plot()
 
-    This dataset is used in the following examples:
-
-    * :ref:`read_parallel_example`
-    * :ref:`streamlines_example`
-    * :ref:`integrate_example`
-
     .. seealso::
 
         :ref:`Blood Vessels Dataset <blood_vessels_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`read_parallel_example`
+        * :ref:`streamlines_example`
+        * :ref:`integrate_example`
 
     """
     return _download_dataset(_dataset_blood_vessels, load=load)
@@ -1357,13 +1376,13 @@ def download_saddle_surface(load=True):  # pragma: no cover
     >>> dataset = examples.download_saddle_surface()
     >>> dataset.plot()
 
-    See :ref:`interpolate_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Saddle Surface Dataset <saddle_surface_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`interpolate_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_saddle_surface, load=load)
@@ -1396,13 +1415,13 @@ def download_sparse_points(load=True):  # pragma: no cover
     ...     scalars="val", render_points_as_spheres=True, point_size=50
     ... )
 
-    See :ref:`interpolate_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Sparse Points Dataset <sparse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`interpolate_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_sparse_points, load=load)
@@ -1448,13 +1467,13 @@ def download_foot_bones(load=True):  # pragma: no cover
     >>> dataset = examples.download_foot_bones()
     >>> dataset.plot()
 
-    See :ref:`voxelize_surface_mesh_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Foot Bones Dataset <foot_bones_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`voxelize_surface_mesh_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_foot_bones, load=load)
@@ -1487,6 +1506,7 @@ def download_guitar(load=True):  # pragma: no cover
 
         :ref:`Guitar Dataset <guitar_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Trumpet Dataset <trumpet_dataset>`
 
     """
@@ -1555,6 +1575,7 @@ def download_bird(load=True):  # pragma: no cover
 
         :ref:`Bird Dataset <bird_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Bird Texture Dataset <bird_texture_dataset>`
 
     """
@@ -1588,6 +1609,7 @@ def download_bird_texture(load=True):  # pragma: no cover
 
         :ref:`Bird Texture Dataset <bird_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Bird Dataset <bird_dataset>`
 
     """
@@ -1617,13 +1639,13 @@ def download_office(load=True):  # pragma: no cover
     >>> dataset = examples.download_office()
     >>> dataset.contour().plot()
 
-    See :ref:`clip_with_plane_box_example` for an example using this
-    dataset.
-
     .. seealso::
 
         :ref:`Office Dataset <office_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`clip_with_plane_box_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_office, load=load)
@@ -1656,6 +1678,7 @@ def download_horse_points(load=True):  # pragma: no cover
 
         :ref:`Horse Points Dataset <horse_points_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Horse Dataset <horse_dataset>`
 
     """
@@ -1685,14 +1708,15 @@ def download_horse(load=True):  # pragma: no cover
     >>> dataset = examples.download_horse()
     >>> dataset.plot(smooth_shading=True)
 
-    See :ref:`disabling_mesh_lighting_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Horse Dataset <horse_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Horse Points Dataset <horse_points_dataset>`
+
+        :ref:`disabling_mesh_lighting_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_horse, load=load)
@@ -1725,6 +1749,7 @@ def download_cake_easy(load=True):  # pragma: no cover
 
         :ref:`Cake Easy Dataset <cake_easy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cake Easy Texture Dataset <cake_easy_texture_dataset>`
 
     """
@@ -1758,6 +1783,7 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
 
         :ref:`Cake Easy Texture Dataset <cake_easy_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cake Easy Dataset <cake_easy_dataset>`
 
     """
@@ -1826,15 +1852,17 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
     >>> dataset = examples.download_gourds()
     >>> dataset.plot(rgba=True, cpos="xy")
 
-    See :ref:`gaussian_smoothing_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Gourds Dataset <gourds_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
+
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
+
+        :ref:`gaussian_smoothing_example`
+            Example using this dataset.
 
     """
     example = __gourds2 if zoom else _dataset_gourds
@@ -1875,7 +1903,9 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Gourds Dataset <gourds_dataset>`
+
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
 
     """
@@ -1914,7 +1944,9 @@ def download_gourds_pnm(load=True):  # pragma: no cover
 
         :ref:`Gourds Pnm Dataset <gourds_pnm_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Gourds Dataset <gourds_dataset>`
+
         :ref:`Gourds Texture Dataset <gourds_texture_dataset>`
 
     """
@@ -1980,6 +2012,7 @@ def download_letter_k(load=True):  # pragma: no cover
 
         :ref:`Letter K Dataset <letter_k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Letter A Dataset <letter_a_dataset>`
 
     """
@@ -2009,14 +2042,15 @@ def download_letter_a(load=True):  # pragma: no cover
     >>> dataset = examples.download_letter_a()
     >>> dataset.plot(cpos="xy", show_edges=True)
 
-    See :ref:`cell_centers_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Letter A Dataset <letter_a_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Letter K Dataset <letter_k_dataset>`
+
+        :ref:`cell_centers_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_letter_a, load=load)
@@ -2077,13 +2111,13 @@ def download_cad_model(load=True):  # pragma: no cover
     >>> dataset = examples.download_cad_model()
     >>> dataset.plot()
 
-    See :ref:`read_file_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Cad Model Dataset <cad_model_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`read_file_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_cad_model, load=load)
@@ -2117,18 +2151,19 @@ def download_frog(load=True):  # pragma: no cover
     >>> dataset = examples.download_frog()
     >>> dataset.plot(volume=True, cpos=cpos)
 
-    See :func:`download_frog_tissue` for segmentation labels associated
-    with this dataset.
-
-    See :ref:`volume_rendering_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Frog Dataset <frog_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
+            Segmentation labels associated with this dataset.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        :ref:`volume_rendering_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_frog, load=load)
@@ -2220,7 +2255,9 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
         :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Frog Dataset <frog_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -2258,15 +2295,16 @@ def download_chest(load=True):  # pragma: no cover
     >>> dataset = examples.download_chest()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`volume_rendering_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Chest Dataset <chest_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        :ref:`volume_rendering_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_chest, load=load)
@@ -2299,7 +2337,9 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
 
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Brain Dataset <brain_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -2334,6 +2374,7 @@ def download_prostate(load=True):  # pragma: no cover
 
         :ref:`Prostate Dataset <prostate_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -2396,13 +2437,13 @@ def download_doorman(load=True):  # pragma: no cover
     >>> dataset = examples.download_doorman()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`read_file_example` for an example using
-    this dataset.
-
     .. seealso::
 
         :ref:`Doorman Dataset <doorman_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`read_file_example`
+            Example using this dataset.
 
     """
     # TODO: download textures as well
@@ -2500,6 +2541,7 @@ def download_emoji(load=True):  # pragma: no cover
 
         :ref:`Emoji Dataset <emoji_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Emoji Texture Dataset <emoji_texture_dataset>`
 
     """
@@ -2533,6 +2575,7 @@ def download_emoji_texture(load=True):  # pragma: no cover
 
         :ref:`Emoji Texture Dataset <emoji_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Emoji Dataset <emoji_dataset>`
 
     """
@@ -2562,15 +2605,15 @@ def download_teapot(load=True):  # pragma: no cover
     >>> dataset = examples.download_teapot()
     >>> dataset.plot(cpos="xy")
 
-    This dataset is used in the following examples:
-
-    * :ref:`read_file_example`
-    * :ref:`cell_centers_example`
-
     .. seealso::
 
         :ref:`Teapot Dataset <teapot_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`read_file_example`
+        * :ref:`cell_centers_example`
 
     """
     return _download_dataset(_dataset_teapot, load=load)
@@ -2599,21 +2642,23 @@ def download_brain(load=True):  # pragma: no cover
     >>> dataset = examples.download_brain()
     >>> dataset.plot(volume=True)
 
-    This dataset is used in the following examples:
-
-    * :ref:`gaussian_smoothing_example`
-    * :ref:`slice_example`
-    * :ref:`depth_peeling_example`
-    * :ref:`moving_isovalue_example`
-    * :ref:`plane_widget_example`
-
     .. seealso::
 
         :ref:`Brain Dataset <brain_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Brain Atlas With Sides Dataset <brain_atlas_with_sides_dataset>`
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        This dataset is used in the following examples:
+
+        * :ref:`gaussian_smoothing_example`
+        * :ref:`slice_example`
+        * :ref:`depth_peeling_example`
+        * :ref:`moving_isovalue_example`
+        * :ref:`plane_widget_example`
 
     """
     return _download_dataset(_dataset_brain, load=load)
@@ -2646,6 +2691,7 @@ def download_structured_grid(load=True):  # pragma: no cover
 
         :ref:`Structured Grid Dataset <structured_grid_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Structured Grid Two Dataset <structured_grid_two_dataset>`
 
     """
@@ -2679,6 +2725,7 @@ def download_structured_grid_two(load=True):  # pragma: no cover
 
         :ref:`Structured Grid Two Dataset <structured_grid_two_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Structured Grid Dataset <structured_grid_dataset>`
 
     """
@@ -2712,6 +2759,7 @@ def download_trumpet(load=True):  # pragma: no cover
 
         :ref:`Trumpet Dataset <trumpet_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Guitar Dataset <guitar_dataset>`
 
     """
@@ -2741,15 +2789,15 @@ def download_face(load=True):  # pragma: no cover
     >>> dataset = examples.download_face()
     >>> dataset.plot()
 
-    See :ref:`decimate_example` for an example using
-    this dataset.
-
-
     .. seealso::
 
         :ref:`Face Dataset <face_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Face2 Dataset <face2_dataset>`
+
+        :ref:`decimate_example`
+            Example using this dataset.
 
     """
     # TODO: there is a texture with this
@@ -2783,7 +2831,9 @@ def download_sky_box_nz(load=True):  # pragma: no cover
 
         :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
+
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
@@ -2817,7 +2867,9 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
 
         :ref:`Sky Box Nz Texture Dataset <sky_box_nz_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Sky Box Nz Dataset <sky_box_nz_dataset>`
+
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
@@ -3030,6 +3082,7 @@ def download_vtk(load=True):  # pragma: no cover
 
         :ref:`Vtk Dataset <vtk_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
 
     """
@@ -3096,19 +3149,20 @@ def download_carotid(load=True):  # pragma: no cover
     >>> dataset = examples.download_carotid()
     >>> dataset.plot(volume=True, cpos=cpos)
 
-    This dataset is used in the following examples:
-
-    * :ref:`glyph_example`
-    * :ref:`gradients_example`
-    * :ref:`streamlines_example`
-    * :ref:`plane_widget_example`
-
     .. seealso::
 
         :ref:`Carotid Dataset <carotid_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        This dataset is used in the following examples:
+
+        * :ref:`glyph_example`
+        * :ref:`gradients_example`
+        * :ref:`streamlines_example`
+        * :ref:`plane_widget_example`
 
     """
     return _download_dataset(_dataset_carotid, load=load)
@@ -3223,17 +3277,17 @@ def download_dragon(load=True):  # pragma: no cover
     >>> dataset = examples.download_dragon()
     >>> dataset.plot(cpos="xy")
 
-    This dataset is used in the following examples:
-
-    * :ref:`floors_example`
-    * :ref:`orbiting_example`
-    * :ref:`silhouette_example`
-    * :ref:`light_shadows_example`
-
     .. seealso::
 
         :ref:`Dragon Dataset <dragon_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`floors_example`
+        * :ref:`orbiting_example`
+        * :ref:`silhouette_example`
+        * :ref:`light_shadows_example`
 
     """
     return _download_dataset(_dataset_dragon, load=load)
@@ -3381,15 +3435,15 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     >>> dataset = examples.download_kitchen()
     >>> dataset.streamlines(n_points=5).plot()
 
-    This dataset is used in the following examples:
-
-    * :ref:`plot_over_line_example`
-    * :ref:`line_widget_example`
-
     .. seealso::
 
         :ref:`Kitchen Dataset <kitchen_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`plot_over_line_example`
+        * :ref:`line_widget_example`
 
     """
     if load and split:
@@ -3505,11 +3559,13 @@ def download_model_with_variance(load=True):  # pragma: no cover
     >>> dataset = examples.download_model_with_variance()
     >>> dataset.plot()
 
-    See :ref:`plot_opacity_example` for an example using this dataset.
-
     .. seealso::
 
-        model_with_variance
+        :ref:`Model With Variance Dataset <model_with_variance_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`plot_opacity_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_model_with_variance, load=load)
@@ -3540,12 +3596,13 @@ def download_thermal_probes(load=True):  # pragma: no cover
     ...     render_points_as_spheres=True, point_size=5, cpos="xy"
     ... )
 
-    See :ref:`interpolate_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Thermal Probes Dataset <thermal_probes_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`interpolate_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_thermal_probes, load=load)
@@ -3638,12 +3695,13 @@ def download_pine_roots(load=True):  # pragma: no cover
     >>> dataset = examples.download_pine_roots()
     >>> dataset.plot()
 
-    See :ref:`connectivity_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Pine Roots Dataset <pine_roots_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`connectivity_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_pine_roots, load=load)
@@ -3672,15 +3730,15 @@ def download_crater_topo(load=True):  # pragma: no cover
     >>> dataset = examples.download_crater_topo()
     >>> dataset.plot(cmap="gist_earth", cpos="xy")
 
-    This dataset is used in the following examples:
-
-    * :ref:`terrain_following_mesh_example`
-    * :ref:`topo_map_example`
-
     .. seealso::
 
         :ref:`Crater Topo Dataset <crater_topo_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        This dataset is used in the following examples:
+
+        * :ref:`terrain_following_mesh_example`
+        * :ref:`topo_map_example`
 
     """
     return _download_dataset(_dataset_crater_topo, load=load)
@@ -3714,12 +3772,13 @@ def download_crater_imagery(load=True):  # pragma: no cover
     >>> texture = examples.download_crater_imagery()
     >>> texture.plot(cpos=cpos)
 
-    See :ref:`topo_map_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Crater Imagery Dataset <crater_imagery_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`topo_map_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_crater_imagery, load=load)
@@ -3791,12 +3850,13 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     ...     cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True
     ... )
 
-    See :ref:`volume_rendering_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Damavand Volcano Dataset <damavand_volcano_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`volume_rendering_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_damavand_volcano, load=load)
@@ -3864,18 +3924,19 @@ def download_embryo(load=True):  # pragma: no cover
     >>> dataset = examples.download_embryo()
     >>> dataset.plot(volume=True)
 
-    This dataset is used in the following examples:
-
-    * :ref:`contouring_example`
-    * :ref:`resampling_example`
-    * :ref:`orthogonal_slices_example`
-
     .. seealso::
 
         :ref:`Embryo Dataset <embryo_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
+
+        This dataset is used in the following examples:
+
+        * :ref:`contouring_example`
+        * :ref:`resampling_example`
+        * :ref:`orthogonal_slices_example`
 
     """
     return _download_dataset(_dataset_embryo, load=load)
@@ -3913,12 +3974,13 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     ...     cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True
     ... )
 
-    See :ref:`antarctica_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Antarctica Velocity Dataset <antarctica_velocity_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`antarctica_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_antarctica_velocity, load=load)
@@ -3952,12 +4014,13 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
     >>> dataset = examples.download_room_surface_mesh()
     >>> dataset.plot()
 
-    See :ref:`depth_peeling_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Room Surface Mesh Dataset <room_surface_mesh_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`depth_peeling_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_room_surface_mesh, load=load)
@@ -4018,12 +4081,13 @@ def download_rgba_texture(load=True):  # pragma: no cover
     >>> dataset = examples.download_rgba_texture()
     >>> dataset.plot(cpos="xy")
 
-    See :ref:`texture_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Rgba Texture Dataset <rgba_texture_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`texture_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_rgba_texture, load=load)
@@ -4056,6 +4120,7 @@ def download_vtk_logo(load=True):  # pragma: no cover
 
         :ref:`Vtk Logo Dataset <vtk_logo_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Vtk Dataset <vtk_dataset>`
 
     """
@@ -4083,15 +4148,19 @@ def download_sky_box_cube_map():  # pragma: no cover
     >>> pl.set_environment_texture(dataset)
     >>> pl.show()
 
-    See :ref:`pbr_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
+
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+
+        :ref:`pbr_example`
+            Example using this dataset.
 
     """
     # TODO: add `load` parameter
@@ -4148,8 +4217,11 @@ def download_cubemap_park():  # pragma: no cover
 
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
+
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
@@ -4198,8 +4270,11 @@ def download_cubemap_space_4k():  # pragma: no cover
 
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
+
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
@@ -4254,8 +4329,11 @@ def download_cubemap_space_16k():  # pragma: no cover
 
         :ref:`Cubemap Space 16k Dataset <cubemap_space_16k_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cubemap Space 4k Dataset <cubemap_space_4k_dataset>`
+
         :ref:`Cubemap Park Dataset <cubemap_park_dataset>`
+
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
@@ -4329,13 +4407,15 @@ def download_gpr_data_array(load=True):  # pragma: no cover
            [ 0.,  0.,  0., ...,  0.,  0.,  0.],
            [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 
-    See :ref:`create_draped_surf_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
+
+        :ref:`create_draped_surf_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_gpr_data_array, load=load)
@@ -4364,13 +4444,15 @@ def download_gpr_path(load=True):  # pragma: no cover
     >>> dataset = examples.download_gpr_path()
     >>> dataset.plot()
 
-    See :ref:`create_draped_surf_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Gpr Path Dataset <gpr_path_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Gpr Data Array Dataset <gpr_data_array_dataset>`
+
+        :ref:`create_draped_surf_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_gpr_path, load=load)
@@ -4482,6 +4564,7 @@ def download_face2(load=True):  # pragma: no cover
 
         :ref:`Face2 Dataset <face2_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Face Dataset <face_dataset>`
 
     """
@@ -4677,9 +4760,13 @@ def download_notch_stress(load=True):  # pragma: no cover
 
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
+
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
+
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
+
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
 
     """
@@ -4713,9 +4800,13 @@ def download_notch_displacement(load=True):  # pragma: no cover
 
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
+
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
+
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
+
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
 
     """
@@ -4762,12 +4853,13 @@ def download_louis_louvre(load=True):  # pragma: no cover
     ... ]
     >>> pl.show()
 
-    See :ref:`pbr_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Louis Louvre Dataset <louis_louvre_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`pbr_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_louis_louvre, load=load)
@@ -4796,12 +4888,13 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
     >>> dataset = examples.download_cylinder_crossflow()
     >>> dataset.plot(cpos='xy', cmap='blues', rng=[-200, 500])
 
-    See :ref:`2d_streamlines_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Cylinder Crossflow Dataset <cylinder_crossflow_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`2d_streamlines_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_cylinder_crossflow, load=load)
@@ -4845,12 +4938,13 @@ def download_naca(load=True):  # pragma: no cover
     >>> dataset = examples.download_naca()
     >>> dataset.plot(cpos=cpos, cmap="jet")
 
-    See :ref:`reader_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Naca Dataset <naca_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`reader_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_naca, load=load)
@@ -4935,12 +5029,13 @@ def download_wavy(load=True):  # pragma: no cover
     >>> dataset = examples.download_wavy()
     >>> dataset.plot()
 
-    See :ref:`reader_example` for an example using this dataset.
-
     .. seealso::
 
         :ref:`Wavy Dataset <wavy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`reader_example`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_wavy, load=load)
@@ -4996,6 +5091,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
         :ref:`Single Sphere Animation Dataset <single_sphere_animation_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Dual Sphere Animation Dataset <dual_sphere_animation_dataset>`
 
     """
@@ -5054,6 +5150,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
         :ref:`Dual Sphere Animation Dataset <dual_sphere_animation_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Single Sphere Animation Dataset <single_sphere_animation_dataset>`
 
     """
@@ -5091,12 +5188,13 @@ def download_osmnx_graph():  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
-    See :ref:`open_street_map_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`open_street_map_example`
+            Full example using this dataset.
 
     """
     try:
@@ -5140,12 +5238,13 @@ def download_cavity(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> dataset = examples.download_cavity()  # doctest:+SKIP
 
-    See :ref:`openfoam_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`openfoam_example`
+            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_cavity, load=load)
@@ -5195,12 +5294,13 @@ def download_openfoam_tubes(load=True):  # pragma: no cover
     >>> pl.enable_anti_aliasing()
     >>> pl.show()
 
-    See :ref:`openfoam_tubes_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Openfoam Tubes Dataset <openfoam_tubes_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`openfoam_tubes_example`
+            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_openfoam_tubes, load=load)
@@ -5266,12 +5366,13 @@ def download_lucy(load=True):  # pragma: no cover
     >>> pl.background_color = 'k'
     >>> pl.show()
 
-    See :ref:`jupyter_plotting` for another example using this dataset.
-
     .. seealso::
 
         :ref:`Lucy Dataset <lucy_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`jupyter_plotting`
+            Example using this dataset.
 
     """
     return _download_dataset(_dataset_lucy, load=load)
@@ -5332,12 +5433,13 @@ def download_pump_bracket(load=True):  # pragma: no cover
     ...     anti_aliasing='fxaa',
     ... )
 
-    See :ref:`pump_bracket_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Pump Bracket Dataset <pump_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`pump_bracket_example`
+            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_pump_bracket, load=load)
@@ -5376,6 +5478,9 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> structure, air = examples.download_electronics_cooling()
+
+    Show the type and bounds of the datasets.
+
     >>> structure, air
     (PolyData (...)
       N Cells:    344270
@@ -5412,14 +5517,13 @@ def download_electronics_cooling(load=True):  # pragma: no cover
     >>> pl.enable_anti_aliasing('fxaa')
     >>> pl.show()
 
-    Show the type and bounds of the datasets.
-
-    See :ref:`openfoam_cooling_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Electronics Cooling Dataset <electronics_cooling_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`openfoam_cooling_example`
+            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_electronics_cooling, load=load)
@@ -5473,7 +5577,9 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
         :ref:`Can Dataset <can_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
+
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
 
     """
@@ -5535,7 +5641,9 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
 
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
+
         :ref:`Can Dataset <can_dataset>`
 
     """
@@ -5577,7 +5685,9 @@ def download_can_crushed_vtu(load=True):  # pragma: no cover
 
         :ref:`Can Crushed Vtu Dataset <can_crushed_vtu_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Can Crushed Hdf Dataset <can_crushed_hdf_dataset>`
+
         :ref:`Can Dataset <can_dataset>`
 
     """
@@ -5619,6 +5729,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
 
         :ref:`Cgns Structured Dataset <cgns_structured_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cgns Multi Dataset <cgns_multi_dataset>`
 
     """
@@ -5710,6 +5821,7 @@ def download_cgns_multi(load=True):  # pragma: no cover
 
         :ref:`Cgns Multi Dataset <cgns_multi_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cgns Structured Dataset <cgns_structured_dataset>`
 
     """
@@ -5780,6 +5892,7 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
 
         :ref:`Dicom Stack Dataset <dicom_stack_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
@@ -5889,12 +6002,13 @@ def download_moonlanding_image(load=True):  # pragma: no cover
     ...     show_scalar_bar=False,
     ... )
 
-    See :ref:`image_fft_example` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Moonlanding Image Dataset <moonlanding_image_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`image_fft_example`
+            Full example using this dataset.
 
     """
     return _download_dataset(_dataset_moonlanding_image, load=load)
@@ -6116,13 +6230,15 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     ...     zoom=2,
     ... )
 
-    See the :ref:`plotting_point_clouds` for a full example using this dataset.
-
     .. seealso::
 
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
+
+        :ref:`plotting_point_clouds`
+            Full example using this dataset
 
     """
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
@@ -6177,14 +6293,15 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     ...     zoom=2,
     ... )
 
-    See the :ref:`plotting_point_clouds` for more details on how to plot point
-    clouds.
-
     .. seealso::
 
         :ref:`Cloud Dark Matter Dense Dataset <cloud_dark_matter_dense_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Cloud Dark Matter Dataset <cloud_dark_matter_dataset>`
+
+        :ref:`plotting_point_clouds`
+            More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
@@ -6249,13 +6366,13 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
       Z Bounds:   -9.788e+02, 9.702e+02
       N Arrays:   3
 
-    See the :ref:`plotting_point_clouds` for more details on how to plot point
-    clouds.
-
     .. seealso::
 
         :ref:`Stars Cloud Hyg Dataset <stars_cloud_hyg_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`plotting_point_clouds`
+            More details on how to plot point clouds.
 
     """
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
@@ -6300,9 +6417,13 @@ def download_fea_bracket(load=True):  # pragma: no cover
 
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
+
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
+
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
+
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
 
     """
@@ -6364,10 +6485,15 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
 
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
+
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
+
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
+
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
+
 
     """
     return _download_dataset(_dataset_fea_hertzian_contact_cylinder, load=load)
@@ -6421,7 +6547,6 @@ def download_black_vase(load=True):  # pragma: no cover
       Y Bounds:   -1.200e+02, 1.415e+02
       Z Bounds:   1.666e+01, 4.077e+02
       N Arrays:   0
-
 
     .. seealso::
 
@@ -6815,7 +6940,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
     .. seealso::
 
-        :ref:`Dikhololo Night Dataset <dikhololo_night_dataset>`
+        :ref:`Cad Model Case Dataset <cad_model_case_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
     """
@@ -6904,9 +7029,13 @@ def download_aero_bracket(load=True):  # pragma: no cover
 
         :ref:`Aero Bracket Dataset <aero_bracket_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
         :ref:`Notch Stress Dataset <notch_stress_dataset>`
+
         :ref:`Notch Displacement Dataset <notch_displacement_dataset>`
+
         :ref:`Fea Bracket Dataset <fea_bracket_dataset>`
+
         :ref:`Fea Hertzian Contact Cylinder Dataset <fea_hertzian_contact_cylinder_dataset>`
 
     """
@@ -6996,13 +7125,13 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> pl.camera.zoom(2)
     >>> pl.show()
 
-    See the :ref:`magnetic_fields_example` for more details on how to plot with
-    this dataset.
-
     .. seealso::
 
         :ref:`Coil Magnetic Field Dataset <coil_magnetic_field_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
+        :ref:`magnetic_fields_example`
+            More details on how to plot with this dataset.
 
     """
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
