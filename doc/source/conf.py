@@ -383,7 +383,6 @@ sphinx_gallery_conf = {
     "first_notebook_cell": "%matplotlib inline",
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
-    "plot_gallery": 'False',
 }
 
 import re
