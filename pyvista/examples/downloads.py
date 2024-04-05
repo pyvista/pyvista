@@ -3230,6 +3230,7 @@ def download_gears(load=True):  # pragma: no cover
     ...     body.point_data["Body ID"] = bid
     ...
     >>> bodies.plot(cmap='jet')
+
     .. seealso::
 
         :ref:`Gears Dataset <gears_dataset>`
