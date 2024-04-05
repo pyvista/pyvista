@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Type, Union, final
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Type, Union, final
 
 import numpy as np
 
@@ -701,143 +701,64 @@ class DatasetCard:
         self._badges.append(badge)
 
     def generate(self):
-        dataset_name = self.dataset_name
-        loader = self.loader
-        # Get dataset name-related info
+        # Get rst dataset name-related info
         index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
-            dataset_name
+            self.dataset_name
         )
-        # Get file and instance metadata
-        file_size, num_files, file_ext, reader_type, dataset_type, datasource_links = (
-            DatasetCard._generate_dataset_properties(self.loader)
-        )
-
         # Process dataset image
         img_path = self._search_image_path(func_name)
         self._process_img(img_path)
 
-        # Format badges
+        # Get rst file and instance metadata
+        (
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            datasource_links,
+            n_cells,
+            n_points,
+            length,
+            dimensions,
+            spacing,
+            n_arrays,
+        ) = DatasetCard._generate_dataset_properties(self.loader)
+
+        # Generate rst for badges
         carousel_badges = self._generate_carousel_badges(self._badges)
         celltype_badges = self._generate_celltype_badges(self._badges)
 
-        header_item = self.header_template.format(header_name, carousel_badges)
-        header_item_indented = _indent_multi_line_string(
-            header_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
+        # Assemble rst parts into main blocks used by the card
+        header_block, header_ref_block = self._create_header_block(
+            index_name, header_name, carousel_badges
         )
-        title_with_ref_item = self.dataset_title_with_ref_template.format(index_name, header_name)
-        title_with_ref_indented = _indent_multi_line_string(
-            title_with_ref_item, indent_level=self.REF_ANCHOR_INDENT_LEVEL
+        info_block = self._create_info_block(func_ref, func_doc)
+        img_block = self._create_image_block(img_path)
+        dataset_props_block = self._create_dataset_props_block(
+            dataset_type, celltype_badges, n_cells, n_points, length, dimensions, spacing, n_arrays
         )
-        header_item_ref = self.header_template.format(title_with_ref_indented, carousel_badges)
-        header_item_ref_indented = _indent_multi_line_string(
-            header_item_ref, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
-        )
+        file_info_block = self._create_file_props_block(file_size, num_files, file_ext, reader_type)
+        footer_block = self._create_footer_block(datasource_links)
 
-        image_item = self.image_template.format(img_path)
-        image_item_indented = _indent_multi_line_string(
-            image_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
-        )
-
-        dataset_info_item = self.dataset_info_template.format(func_ref, func_doc)
-        dataset_info_item_indented = _indent_multi_line_string(
-            dataset_info_item, indent_level=self.GRID_ITEM_INDENT_LEVEL
-        )
-
-        def _generate_field_grid(field_name, field_values):
-            if field_values in [None, '']:
-                return None
-            value_lines = str(field_values).splitlines()
-            first_value = value_lines.pop(0)
-            field = self.field_grid_template.format(field_name, first_value)
-            if len(value_lines) >= 1:
-                # Add another grid for extra values
-                extra_values_grid = self.field_grid_extra_values_grid_template
-                extra_values = [
-                    self.field_grid_extra_values_item_template.format(val) for val in value_lines
-                ]
-                return '\n'.join([field, extra_values_grid, *extra_values])
-            return field
-
-        def _try_getattr(dataset, attr: str):
-            try:
-                return getattr(dataset, attr)
-            except AttributeError:
-                return None
-
-        def _generate_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
-            if num is None:
-                return None
-            if fmt == 'exp':
-                num_fmt = f"{num:.3e}"
-            elif fmt == 'spaced':
-                num_fmt = f"{num:,}".replace(',', ' ')
-            else:
-                num_fmt = str(num)
-            return f"``{num_fmt}``"
-
-        dataset_fields = [
-            _generate_field_grid('Data Type', dataset_type),
-            _generate_field_grid('Cell Type', celltype_badges),
-            _generate_field_grid(
-                'N Cells', _generate_num(_try_getattr(loader.dataset, 'n_cells'), fmt='spaced')
-            ),
-            _generate_field_grid(
-                'N Points', _generate_num(_try_getattr(loader.dataset, 'n_points'), fmt='spaced')
-            ),
-            _generate_field_grid(
-                'Length', _generate_num(_try_getattr(loader.dataset, 'length'), fmt='exp')
-            ),
-            _generate_field_grid(
-                'Dimensions', _generate_num(_try_getattr(loader.dataset, 'dimensions'))
-            ),
-            _generate_field_grid('Spacing', _generate_num(_try_getattr(loader.dataset, 'spacing'))),
-            _generate_field_grid(
-                'N Arrays', _generate_num(_try_getattr(loader.dataset, 'n_arrays'))
-            ),
-        ]
-
-        def _generate_field_block(lines: List[Union[str, None]], indent: int = 0):
-            # Join fields if they exist
-            lines = '\n'.join([field for field in lines if field])
-            return _indent_multi_line_string(lines, indent_level=indent)
-
-        dataset_field_block = _generate_field_block(
-            dataset_fields, indent=self.GRID_ITEM_FIELDS_INDENT_LEVEL
-        )
-        downloads_fields = [
-            _generate_field_grid('File Size', file_size),
-            _generate_field_grid('Num Files', num_files),
-            _generate_field_grid('File Ext', file_ext),
-            _generate_field_grid('Reader', reader_type),
-        ]
-        downloads_field_block = _generate_field_block(
-            downloads_fields, indent=self.GRID_ITEM_FIELDS_INDENT_LEVEL
-        )
-
-        # indent links one level from drop down
-        datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
-        # Insert link in footer template
-        datasource_links_item = self.footer_template.format(datasource_links)
-        datasource_links_item_indented = _indent_multi_line_string(
-            datasource_links_item, indent_level=self.HEADER_FOOTER_INDENT_LEVEL
-        )
-
+        # Create two versions of the card
+        # First version has no ref label
         card_no_ref = self.card_template.format(
-            header_item_indented,
-            dataset_info_item_indented,
-            image_item_indented,
-            dataset_field_block,
-            downloads_field_block,
-            datasource_links_item_indented,
+            header_block,
+            info_block,
+            img_block,
+            dataset_props_block,
+            file_info_block,
+            footer_block,
         )
-        # Create separate version of the card with a ref label
+        # Second version has a ref label in header
         card_with_ref = self.card_template.format(
-            header_item_ref_indented,
-            dataset_info_item_indented,
-            image_item_indented,
-            dataset_field_block,
-            downloads_field_block,
-            datasource_links_item_indented,
+            header_ref_block,
+            info_block,
+            img_block,
+            dataset_props_block,
+            file_info_block,
+            footer_block,
         )
 
         return card_no_ref, card_with_ref
@@ -848,24 +769,54 @@ class DatasetCard:
             # Get data from loader
             loader.download()
 
+            # properties collected by the loader
             file_size = DatasetPropsGenerator.generate_file_size(loader)
             num_files = DatasetPropsGenerator.generate_num_files(loader)
             file_ext = DatasetPropsGenerator.generate_file_ext(loader)
             reader_type = DatasetPropsGenerator.generate_reader_type(loader)
             dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
             datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+
+            # properties collected directly from the dataset
+            n_cells = DatasetPropsGenerator.generate_n_cells(loader)
+            n_points = DatasetPropsGenerator.generate_n_points(loader)
+            length = DatasetPropsGenerator.generate_length(loader)
+            dimensions = DatasetPropsGenerator.generate_dimensions(loader)
+            spacing = DatasetPropsGenerator.generate_spacing(loader)
+            n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
+
         except VTKVersionError:
             # Exception is caused by 'download_can'
             # Set default values
             NOT_AVAILABLE = '``Not available``'
-            NOT_AVAILABLE_NO_BACKTICKS = NOT_AVAILABLE.replace('`', '')
             file_size = NOT_AVAILABLE
             num_files = NOT_AVAILABLE
             file_ext = NOT_AVAILABLE
             reader_type = NOT_AVAILABLE
             dataset_type = NOT_AVAILABLE
-            datasource_links = NOT_AVAILABLE_NO_BACKTICKS
-        return file_size, num_files, file_ext, reader_type, dataset_type, datasource_links
+            datasource_links = NOT_AVAILABLE
+
+            n_cells = None
+            n_points = None
+            length = None
+            dimensions = None
+            spacing = None
+            n_arrays = None
+
+        return (
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
+            dataset_type,
+            datasource_links,
+            n_cells,
+            n_points,
+            length,
+            dimensions,
+            spacing,
+            n_arrays,
+        )
 
     @staticmethod
     def _generate_dataset_name(dataset_name: str):
@@ -974,9 +925,140 @@ class DatasetCard:
                 img.thumbnail(size=(IMG_WIDTH, IMG_HEIGHT))
                 img.save(img_path)
 
+    @staticmethod
+    def _format_and_indent_from_template(*args, template=None, indent_level=None):
+        """Format args using a template and indent all formatted lines by some amount."""
+        assert template is not None
+        assert indent_level is not None
+        formatted = template.format(*args)
+        indented = _indent_multi_line_string(formatted, indent_level=indent_level)
+        return indented
+
+    @classmethod
+    def _generate_field_grid(cls, field_name, field_values):
+        """Generate a rst grid with field data.
+
+        The grid uses the class templates for the field name and field value(s).
+        """
+        if field_values in [None, '']:
+            return None
+        value_lines = str(field_values).splitlines()
+        first_value = value_lines.pop(0)
+        field = cls.field_grid_template.format(field_name, first_value)
+        if len(value_lines) >= 1:
+            # Add another grid for extra values
+            extra_values_grid = cls.field_grid_extra_values_grid_template
+            extra_values = [
+                cls.field_grid_extra_values_item_template.format(val) for val in value_lines
+            ]
+            return '\n'.join([field, extra_values_grid, *extra_values])
+        return field
+
+    @staticmethod
+    def _generate_field_block(fields: List[Tuple[str, Union[str, None]]], indent_level: int = 0):
+        """Generate a grid for each field and combine the grids into an indented multi-line rst block.
+
+        Any fields with a `None` value are completely excluded from the block.
+        """
+        field_grids = [DatasetCard._generate_field_grid(name, value) for name, value in fields]
+        block = '\n'.join([grid for grid in field_grids if grid])
+        return _indent_multi_line_string(block, indent_level=indent_level)
+
+    @classmethod
+    def _create_header_block(cls, index_name, header_name, carousel_badges):
+        """Generate header rst block."""
+        # Two headers are created: one with a reference target and one without
+        header = cls._format_and_indent_from_template(
+            header_name,
+            carousel_badges,
+            template=cls.header_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+
+        header_name_with_ref = DatasetCard._format_and_indent_from_template(
+            index_name,
+            header_name,
+            template=cls.dataset_title_with_ref_template,
+            indent_level=cls.REF_ANCHOR_INDENT_LEVEL,
+        )
+        header_ref = DatasetCard._format_and_indent_from_template(
+            header_name_with_ref,
+            carousel_badges,
+            template=cls.header_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+        return header, header_ref
+
+    @classmethod
+    def _create_image_block(cls, img_path):
+        """Generate rst block for the dataset image."""
+        block = cls._format_and_indent_from_template(
+            img_path,
+            template=cls.image_template,
+            indent_level=cls.GRID_ITEM_INDENT_LEVEL,
+        )
+        return block
+
+    @classmethod
+    def _create_info_block(cls, func_ref, func_doc):
+        block = cls._format_and_indent_from_template(
+            func_ref,
+            func_doc,
+            template=cls.dataset_info_template,
+            indent_level=cls.GRID_ITEM_INDENT_LEVEL,
+        )
+        return block
+
+    @classmethod
+    def _create_dataset_props_block(
+        cls, dataset_type, celltype_badges, n_cells, n_points, length, dimensions, spacing, n_arrays
+    ):
+        dataset_fields = [
+            ('Data Type', dataset_type),
+            ('Cell Type', celltype_badges),
+            ('N Cells', n_cells),
+            ('N Points', n_points),
+            ('Length', length),
+            ('Dimensions', dimensions),
+            ('Spacing', spacing),
+            ('N Arrays', n_arrays),
+        ]
+        dataset_fields_block = cls._generate_field_block(
+            dataset_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+        )
+        return dataset_fields_block
+
+    @classmethod
+    def _create_file_props_block(cls, file_size, num_files, file_ext, reader_type):
+        file_info_fields = [
+            ('File Size', file_size),
+            ('Num Files', num_files),
+            ('File Ext', file_ext),
+            ('Reader', reader_type),
+        ]
+        file_info_fields_block = DatasetCard._generate_field_block(
+            file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+        )
+        return file_info_fields_block
+
+    @classmethod
+    def _create_footer_block(cls, datasource_links):
+        # indent links one level from the dropdown directive in template
+        datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
+        footer_block = cls._format_and_indent_from_template(
+            datasource_links,
+            template=cls.footer_template,
+            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+        )
+        return footer_block
+
 
 class DatasetPropsGenerator:
-    """Static class to generate rst for dataset properties collected by a dataset loader."""
+    """Static class to generate rst for dataset properties collected by a dataset loader.
+
+    This class is purely static and is only useful to separate rst generation from the
+    dataset loader from all other rst generation.
+    """
 
     @staticmethod
     def generate_file_size(loader: _dataset_loader._FileProps):
@@ -1051,6 +1133,61 @@ class DatasetPropsGenerator:
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         rst_links = '\n'.join(rst_links)
         return rst_links
+
+    @staticmethod
+    def generate_n_cells(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'), fmt='spaced'
+        )
+
+    @staticmethod
+    def generate_n_points(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'), fmt='spaced'
+        )
+
+    @staticmethod
+    def generate_length(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'), fmt='exp'
+        )
+
+    @staticmethod
+    def generate_dimensions(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'dimensions')
+        )
+
+    @staticmethod
+    def generate_spacing(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'spacing')
+        )
+
+    @staticmethod
+    def generate_n_arrays(loader):
+        return DatasetPropsGenerator._generate_num(
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_arrays')
+        )
+
+    @staticmethod
+    def _try_getattr(dataset, attr: str):
+        try:
+            return getattr(dataset, attr)
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _generate_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
+        if num is None:
+            return None
+        if fmt == 'exp':
+            num_fmt = f"{num:.3e}"
+        elif fmt == 'spaced':
+            num_fmt = f"{num:,}".replace(',', ' ')
+        else:
+            num_fmt = str(num)
+        return f"``{num_fmt}``"
 
 
 class DatasetCardFetcher:
