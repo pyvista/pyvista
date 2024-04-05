@@ -121,12 +121,6 @@ Browse gridded data with a specific kind of representation.
             .. include:: /api/examples/dataset-gallery/cubemap_carousel.rst
 
 
-:func:`download_head`
-
-:ref:`head_dataset`
-    This dataset's entry in the Dataset Gallery with more info.
-
-
 Composite Datasets
 ******************
 
