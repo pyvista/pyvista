@@ -45,9 +45,11 @@ class Timer:
 
     def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
+        # https://github.com/pyvista/pyvista/pull/5618
+        iren = obj
+
         while self.step < self.max_steps:
             self.callback(self.step)
-            iren = obj
             iren.GetRenderWindow().Render()
             self.step += 1
         if self.id:
