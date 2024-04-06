@@ -1549,16 +1549,19 @@ class DatasetGalleryCarousel(DocTable):
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
 
 
-class DownloadsCarousel(DatasetGalleryCarousel):
-    """Class to generate a carousel with cards from the downloads module."""
+class AllDatasetsCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards for all datasets.
 
-    name = 'downloads_carousel'
-    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
-    badge = ModuleBadge('Downloads', ref='modules_gallery')
+    Cards in this carousel also include a reference target to link directly
+    to the card.
+    """
+
+    name = 'all_datasets_carousel'
+    doc = 'Browse all loadable PyVista datasets. Datasets are sorted alphabetically.'
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.downloads)
+        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
 
     @classmethod
     def get_row(cls, _, dataset_name):
@@ -1577,10 +1580,17 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.examples)
 
+
+class DownloadsCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the downloads module."""
+
+    name = 'downloads_carousel'
+    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    badge = ModuleBadge('Downloads', ref='modules_gallery')
+
     @classmethod
-    def get_row(cls, _, dataset_name):
-        # Override method since we want to include a reference label for each card
-        return DatasetCardFetcher.DATASET_CARDS_RST_REF[dataset_name]
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.downloads)
 
 
 class PlanetsCarousel(DatasetGalleryCarousel):
@@ -1891,8 +1901,9 @@ def make_all_tables():
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(
         [
-            DownloadsCarousel,
+            AllDatasetsCarousel,
             BuiltinCarousel,
+            DownloadsCarousel,
             PointSetCarousel,
             PolyDataCarousel,
             UnstructuredGridCarousel,
