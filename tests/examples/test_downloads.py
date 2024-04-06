@@ -6,21 +6,24 @@ from types import FunctionType
 from typing import Any, Callable, Dict, List, Tuple, Union
 
 import pytest
+import requests
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
 from pyvista.examples._dataset_loader import (
     _MultiFileDownloadableLoadable,
-    _SingleFileDownloadableLoadable,
+    _SingleFileDownloadableDatasetLoader,
 )
 
 
 @dataclass
 class ExampleTestCaseData:
-    name: str
+    dataset_name: str
     download_func: Tuple[str, FunctionType]
-    load_func: Tuple[str, Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable]]
+    load_func: Tuple[
+        str, Union[_SingleFileDownloadableDatasetLoader, _MultiFileDownloadableLoadable]
+    ]
 
 
 def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
@@ -57,20 +60,22 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
     [add_to_dict(name, func) for name, func in download_dataset_functions.items()]
 
     # Collect all `_dataset_<name>` file loaders
-    example_file_loaders = {
+    dataset_file_loaders = {
         name: item
         for name, item in module_members.items()
         if name.startswith('_dataset_')
-        and isinstance(item, (_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable))
+        and isinstance(item, (_SingleFileDownloadableDatasetLoader, _MultiFileDownloadableLoadable))
     }
-    [add_to_dict(name, func) for name, func in example_file_loaders.items()]
+    [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
 
     # Flatten dict
     test_cases_list: List[ExampleTestCaseData] = []
     for name, content in sorted(test_cases_dict.items()):
         download_func = content.setdefault('download_func', None)
         load_func = content.setdefault('load_func', None)
-        test_case = ExampleTestCaseData(name=name, download_func=download_func, load_func=load_func)
+        test_case = ExampleTestCaseData(
+            dataset_name=name, download_func=download_func, load_func=load_func
+        )
         test_cases_list.append(test_case)
 
     return test_cases_list
@@ -79,9 +84,9 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
-        # Generate a separate test case for each downloadable example
+        # Generate a separate test case for each downloadable dataset
         test_cases = _generate_dataset_loader_test_cases()
-        ids = [case.name for case in test_cases]
+        ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
@@ -90,13 +95,13 @@ def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
         return (
             f"A file loader:\n\t\'{test_case.load_func[0]}\'\n\t{test_case.load_func[1]}\n"
             f"was found but is missing a corresponding download function.\n\n"
-            f"Expected to find a function named:\n\t\'download_{test_case.name}\'\nGot: {test_case.download_func}"
+            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.download_func}"
         )
     elif test_case.load_func is None:
         return (
             f"A download function:\n\t\'{test_case.download_func[0]}\'\n\t{test_case.download_func[1]}\n"
             f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_dataset_{test_case.name}\'\nGot: {test_case.load_func}"
+            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.load_func}"
         )
     else:
         return None
@@ -105,6 +110,29 @@ def _get_mismatch_fail_msg(test_case: ExampleTestCaseData):
 def test_dataset_loader_name_matches_download_name(test_case: ExampleTestCaseData):
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
+
+
+def _is_valid_url(url):
+    try:
+        requests.get(url)
+        return True
+    except requests.RequestException:
+        return False
+
+
+def test_dataset_loader_source_url_blob(test_case: ExampleTestCaseData):
+    try:
+        # Skip test if not loadable
+        sources = test_case.load_func[1].source_url_blob
+    except pv.VTKVersionError as e:
+        reason = e.args[0]
+        pytest.skip(reason)
+
+    # Test valid url
+    sources = [sources] if isinstance(sources, str) else sources  # Make iterable
+    for url in sources:
+        if not _is_valid_url(url):
+            pytest.fail(f"Invalid blob URL for {ExampleTestCaseData.dataset_name}:\n{url}")
 
 
 def test_delete_downloads(tmpdir):
