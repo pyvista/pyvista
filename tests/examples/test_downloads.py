@@ -29,7 +29,7 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
 
     test_cases_dict: Dict = {}
 
-    def add_to_dict(func_name: str, func: Callable[[], Any]) -> List[ExampleTestCaseData]:
+    def add_to_dict(func_name: str, func: Callable[[], Any]):
         # Function for stuffing example functions into a dict.
         # We use a dict to allow for any entry to be made based on example name alone.
         # This way, we can defer checking for any mismatch between the download functions
