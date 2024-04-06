@@ -382,7 +382,7 @@ class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str
         return tuple(filename)
 
 
-def _download_example(
+def _download_dataset(
     example: Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable],
     load: bool = True,
     metafiles: bool = False,
