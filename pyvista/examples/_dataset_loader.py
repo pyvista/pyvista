@@ -64,10 +64,8 @@ from pyvista.core.utilities.fileio import get_ext
 _FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
 _FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
 
-DatasetType = Union[pv.DataSet, pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetTypeType = Union[
-    Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]
-]
+DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
+DatasetType = Union[Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
@@ -135,7 +133,7 @@ class _MultiFilePropsProtocol(_BaseFilePropsProtocol[Tuple[str, ...], Tuple[int,
 
 @runtime_checkable
 class _Downloadable(Protocol[_FilePropStrType_co]):
-    """Class which downloads a file  a 'download' method."""
+    """Class which downloads file(s) from a source."""
 
     @property
     @abstractmethod
@@ -180,28 +178,28 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 class _DatasetLoader:
     """Load a dataset."""
 
-    def __init__(self, load_func: Callable[..., DatasetType]):
+    def __init__(self, load_func: Callable[..., DatasetObject]):
         self._load_func = load_func
-        self._dataset: Optional[DatasetType] = None
+        self._dataset: Optional[DatasetObject] = None
 
     @property
     @final
-    def dataset(self) -> Optional[DatasetType]:
+    def dataset(self) -> Optional[DatasetObject]:
         """Return the loaded dataset object(s)."""
         return self._dataset
 
     @final
-    def load(self, *args, **kwargs) -> DatasetType:
+    def load(self, *args, **kwargs) -> DatasetObject:
         """Load and return the dataset."""
         dataset = self.dataset
         return dataset if dataset else self._load(*args, **kwargs)
 
-    def _load(self, *args, **kwargs) -> DatasetType:
+    def _load(self, *args, **kwargs) -> DatasetObject:
         # Subclasses should override this method as needed
         return self._load_func(*args, **kwargs)
 
     @final
-    def load_and_store_dataset(self) -> DatasetType:
+    def load_and_store_dataset(self) -> DatasetObject:
         """Load the dataset and store it."""
         dataset = self.load()
         self._dataset = dataset
@@ -213,7 +211,8 @@ class _DatasetLoader:
         del self._dataset
 
     @property
-    def dataset_iterable(self) -> Tuple[DatasetType, ...]:
+    @final
+    def dataset_iterable(self) -> Tuple[DatasetObject, ...]:
         """Return a tuple of all dataset object(s), including any nested objects.
 
         If the dataset is a MultiBlock, the MultiBlock itself is also returned as the first
@@ -245,13 +244,15 @@ class _DatasetLoader:
         return tuple(flat)
 
     @property
+    @final
     def unique_dataset_type(
         self,
-    ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+    ) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
         """Return unique dataset type(s) from all datasets."""
         return _get_unique_dataset_type(self.dataset_iterable)
 
     @property
+    @final
     def unique_cell_types(
         self,
     ) -> Tuple[pv.CellType, ...]:
@@ -338,7 +339,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
     def __init__(
         self,
         path: str,
-        read_func: Optional[Callable[[str], DatasetType]] = None,
+        read_func: Optional[Callable[[str], DatasetObject]] = None,
         load_func: Optional[Callable[[pv.DataSet], Any]] = None,
     ):
         _SingleFile.__init__(self, path)
@@ -441,7 +442,7 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
     def __init__(
         self,
         path: str,
-        read_func: Optional[Callable[[str], DatasetType]] = None,
+        read_func: Optional[Callable[[str], DatasetObject]] = None,
         load_func: Optional[Callable[[pv.DataSet], Any]] = None,
         target_file: Optional[str] = None,
     ):
@@ -761,10 +762,10 @@ def _get_unique_reader_type(
 
 
 def _get_unique_dataset_type(
-    dataset_iterable: Tuple[DatasetType, ...],
-) -> Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]:
+    dataset_iterable: Tuple[DatasetObject, ...],
+) -> Union[DatasetType, Tuple[DatasetType, ...]]:
     """Return a dataset type or tuple of unique dataset types."""
-    dataset_types: Dict[DatasetTypeType, None] = {}  # use dict as an ordered set
+    dataset_types: Dict[DatasetType, None] = {}  # use dict as an ordered set
     for dataset in dataset_iterable:
         dataset_types[type(dataset)] = None
     output = tuple(dataset_types.keys())
