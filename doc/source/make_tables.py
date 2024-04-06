@@ -1219,7 +1219,7 @@ class DatasetCardFetcher:
 
     @classmethod
     def init_cards(cls):
-        """Download and load all datasets and initialize a card objects for each dataset."""
+        """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_builtins()
         cls._init_downloads()
 
@@ -1244,6 +1244,8 @@ class DatasetCardFetcher:
                 # Create a card for this dataset
                 dataset_name = name.replace('_dataset_', '')
                 dataset_loader = item
+                # Store module as a dynamic property for access later
+                dataset_loader.module = module
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
@@ -1286,9 +1288,20 @@ class DatasetCardFetcher:
                 yield name
 
     @classmethod
+    def fetch_dataset_names_by_module(cls, module) -> List[str]:
+        for name, loader in cls.fetch_all_dataset_loaders():
+            if loader.module is module:
+                yield name
+
+    @classmethod
     def fetch_all_dataset_objects(cls) -> Dict[str, Iterable[Any]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader.dataset_iterable
+
+    @classmethod
+    def fetch_all_dataset_loaders(cls) -> Dict[str, Iterable[Any]]:
+        for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
+            yield name, card.loader
 
     @classmethod
     def fetch_and_filter(cls, filter_func: Callable[[], bool]) -> List[str]:
@@ -1540,11 +1553,11 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 
     name = 'downloads_carousel'
     doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
-    badge = ModuleBadge('Downloads', ref='downloads_gallery')
+    badge = ModuleBadge('Downloads', ref='modules_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.downloads)
 
     @classmethod
     def get_row(cls, _, dataset_name):
@@ -1555,10 +1568,18 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
-    # TODO: add builtin datasets
     name = 'builtin_carousel'
     doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
-    badge = ModuleBadge('Built-in', ref='builtins_gallery')
+    badge = ModuleBadge('Built-in', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.examples)
+
+    @classmethod
+    def get_row(cls, _, dataset_name):
+        # Override method since we want to include a reference label for each card
+        return DatasetCardFetcher.DATASET_CARDS_RST_REF[dataset_name]
 
 
 class PlanetsCarousel(DatasetGalleryCarousel):
@@ -1807,7 +1828,7 @@ class MiscCarousel(DatasetGalleryCarousel):
 
 
 class MedicalCarousel(DatasetGalleryCarousel):
-    """Class to generate a table of medical dataset cards."""
+    """Class to generate a carousel of medical dataset cards."""
 
     name = 'medical_carousel'
     doc = 'Medical datasets.'
@@ -1870,6 +1891,7 @@ def make_all_tables():
     make_all_carousels(
         [
             DownloadsCarousel,
+            BuiltinCarousel,
             PointSetCarousel,
             PolyDataCarousel,
             UnstructuredGridCarousel,

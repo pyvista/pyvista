@@ -8,20 +8,19 @@ Browse Datasets by Module
 -------------------------
 Datasets in this section are organized by the module they are imported from.
 
-.. dropdown:: Downloads
-    :name: downloads_gallery
+.. dropdown:: All Datasets
+    :name: modules_gallery
     :open:
 
     .. tab-set::
 
-        .. tab-item:: All
+        .. tab-item:: Built-in
+
+            .. include:: /api/examples/dataset-gallery/builtin_carousel.rst
+
+        .. tab-item:: Downloads
 
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rst
-
-            ..
-                TODO: add builtin datasets
-                .. tab-item:: Built-in
-                .. include:: /api/examples/dataset-gallery/builtin_carousel.rst
 
             ..
                 TODO: add planets
