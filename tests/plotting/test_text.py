@@ -2,7 +2,7 @@
 Tests for text objects
 """
 
-import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -68,7 +68,7 @@ def test_property_opacity(prop):
     opacity = 0.5
     prop.opacity = opacity
     assert prop.opacity == opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.opacity = 2
 
 
@@ -81,7 +81,7 @@ def test_property_background_opacity(prop):
     background_opacity = 0.5
     prop.background_opacity = background_opacity
     assert prop.background_opacity == background_opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.background_opacity = 2
 
 
@@ -126,7 +126,7 @@ def test_property_orientation(prop):
 
 
 def test_property_set_font_file(prop):
-    font_file = os.path.join(os.path.dirname(__file__), "fonts/Mplus2-Regular.ttf")
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     prop.set_font_file(font_file)
     with pytest.raises(FileNotFoundError):
         prop.set_font_file("foo.ttf")
@@ -157,9 +157,9 @@ def test_property_justification_vertical(prop, justification):
 
 
 def test_property_justification_invalid(prop):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_horizontal = "invalid"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.justification_vertical = "invalid"
 
 

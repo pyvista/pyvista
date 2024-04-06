@@ -9,9 +9,9 @@ import time
 import warnings
 import weakref
 
+from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .opts import PickerType

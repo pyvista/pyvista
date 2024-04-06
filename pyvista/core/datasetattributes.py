@@ -1,12 +1,14 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array, Matrix, NumpyArray
+from ._typing_core import ArrayLike, MatrixLike, NumpyArray
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
@@ -131,7 +133,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def __init__(
         self,
         vtkobject: _vtk.vtkFieldData,
-        dataset: Union[_vtk.vtkDataSet, 'DataSet'],
+        dataset: Union[_vtk.vtkDataSet, DataSet],
         association: FieldAssociation,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
@@ -157,8 +159,19 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
-
-                line = f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
+                # special treatment for string field data
+                if self.association == FieldAssociation.NONE and isinstance(array, str):
+                    dtype = 'str'
+                    # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
+                    if len(array) > 18:
+                        val = f'{array[:15]}...'
+                    else:
+                        val = array
+                    line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
+                else:
+                    line = (
+                        f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
+                    )
                 lines.append(line)
             array_info = '\n    ' + '\n    '.join(lines)
 
@@ -218,7 +231,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
-    def __setitem__(self, key: str, value: Array[Any]):  # numpydoc ignore=PR01,RT01
+    def __setitem__(self, key: str, value: ArrayLike[Any]):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
             raise TypeError('Only strings are valid keys for DataSetAttributes.')
@@ -406,7 +419,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
         )
-        self.active_texture_coordinates = t_coords  # type: ignore
+        self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     @property
     def active_t_coords_name(self) -> Optional[str]:  # numpydoc ignore=RT01
@@ -515,9 +528,17 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             # remove singleton dimensions to match the behavior of the rest of 1D
             # VTK arrays
             narray = narray.squeeze()
+        elif (
+            narray.association == FieldAssociation.NONE
+            and np.issubdtype(narray.dtype, np.str_)
+            and narray.ndim == 0
+        ):
+            # For field data with a string scalar, return the string itself instead of a scalar array
+            narray = narray.tolist()
+
         return narray
 
-    def set_array(self, data: Array[float], name: str, deep_copy=False) -> None:
+    def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -531,7 +552,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        data : Array
+        data : ArrayLike[float]
             Array of data.
 
         name : str
@@ -580,7 +601,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: Array[float], name='scalars', deep_copy=False):
+    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -593,7 +614,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        scalars : Array
+        scalars : ArrayLike[float]
             Array of data.
 
         name : str, default: 'scalars'
@@ -632,7 +653,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: Matrix[float], name: str, deep_copy=False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy=False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
@@ -643,7 +664,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Parameters
         ----------
-        vectors : Matrix
+        vectors : MatrixLike
             Data shaped ``(n, 3)`` where n matches the number of points or cells.
 
         name : str
@@ -704,7 +725,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: Array[float], name: str, deep_copy: bool
+        self, data: ArrayLike[float], name: str, deep_copy: bool
     ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
@@ -728,13 +749,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         else:
             array_len = 1 if data.ndim == 0 else data.shape[0]
 
-        # Fixup input array length for scalar input
-        if not isinstance(data, np.ndarray) or np.ndim(data) == 0:
-            tmparray = np.empty(array_len)
-            tmparray.fill(data)
-            data = tmparray
-        if data.shape[0] != array_len:
-            raise ValueError(f'data length of ({data.shape[0]}) != required length ({array_len})')
+        if np.issubdtype(data.dtype, np.str_) and data.ndim == 0:
+            pass  # Do not reshape string scalars
+        else:
+            # Fixup input array length for scalar input
+            if np.ndim(data) == 0:
+                tmparray = np.empty(array_len, dtype=data.dtype)
+                tmparray.fill(data)
+                data = tmparray
+            if data.shape[0] != array_len:
+                raise ValueError(
+                    f'data length of ({data.shape[0]}) != required length ({array_len})'
+                )
 
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
@@ -1000,7 +1026,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], 'DataSetAttributes']):
+    def update(self, array_dict: Union[Dict[str, NumpyArray[float]], DataSetAttributes]):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
@@ -1241,12 +1267,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: Matrix[float]):  # numpydoc ignore=GL08
+    def active_normals(self, normals: MatrixLike[float]):  # numpydoc ignore=GL08
         """Set the normals.
 
         Parameters
         ----------
-        normals : Matrix
+        normals : MatrixLike
             Normals of this dataset attribute.
 
         """

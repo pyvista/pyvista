@@ -4,7 +4,7 @@ from typing import Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, NumpyArray, Vector
+from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 from . import _vtk
@@ -42,8 +42,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector[float]):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -67,7 +67,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):

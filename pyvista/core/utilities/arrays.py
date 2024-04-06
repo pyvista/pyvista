@@ -9,7 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray, TransformLike, Vector
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -57,13 +57,13 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[Matrix[float], Vector[float]], copy: bool = False
+    points: Union[MatrixLike[float], VectorLike[float]], copy: bool = False
 ) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : Matrix[float] | Vector[float]
+    points : MatrixLike[float] | VectorLike[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -192,7 +192,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
-        VTK array type ID as specified in specified in ``vtkType.h``.
+        VTK array type ID as specified in ``vtkType.h``.
 
     Returns
     -------
@@ -204,14 +204,17 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
-    if isinstance(arr, (list, tuple)):
+    if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
-        arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
+            if arr.ndim > 0:
+                # Do not call ascontiguousarray for scalar strings since this will reshape to 1D
+                # and scalars are already contiguous anyway
+                arr = np.ascontiguousarray(arr)
             vtk_data = convert_string_array(arr)
         else:
             # This will handle numerical data
@@ -547,9 +550,11 @@ def vtk_id_list_to_array(vtk_id_list):
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
+    If a scalar string is provided, it is converted to a vtkCharArray
+
     Parameters
     ----------
-    arr : numpy.ndarray
+    arr : numpy.ndarray | str
         Numpy string array to convert.
 
     name : str, optional
@@ -566,13 +571,25 @@ def convert_string_array(arr, name=None):
     to make this faster, please consider opening a pull request.
 
     """
+    arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+        if (
+            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+        ):  # avoids segfault
             raise ValueError(
                 'String array contains non-ASCII characters that are not supported by VTK.'
             )
         vtkarr = _vtk.vtkStringArray()
+        if arr.ndim == 0:
+            # distinguish scalar inputs from array inputs by
+            # setting the object name
+            arr = arr.reshape((1,))
+            try:
+                vtkarr.SetObjectName('scalar')
+            except AttributeError:
+                vtkarr.GetObjectName = lambda: 'scalar'
+
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -583,7 +600,13 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    try:
+        if arr.GetObjectName() == 'scalar':
+            return np.array("".join(arr_out))
+    except AttributeError:
+        pass
+    return arr_out
     ########################################
 
 

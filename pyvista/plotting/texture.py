@@ -46,11 +46,11 @@ class Texture(_vtk.vtkTexture, DataObject):
     --------
     Load a texture from file. File should be a "image" or "image-like" file.
 
-    >>> import os
+    >>> from pathlib import Path
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> path = examples.download_masonry_texture(load=False)
-    >>> os.path.basename(path)
+    >>> Path(path).name
     'masonry.bmp'
     >>> texture = pv.Texture(path)
     >>> texture
@@ -582,7 +582,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
 
-        return Texture.WrapType(self.GetWrap())  # type: ignore
+        return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
     def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08

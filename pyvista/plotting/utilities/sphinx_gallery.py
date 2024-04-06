@@ -1,6 +1,6 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
-import os
+from pathlib import Path
 import shutil
 from typing import Iterator, List
 
@@ -105,7 +105,8 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         _process_events_before_scraping(plotter)
         fname = next(image_path_iterator)
         # Make sure the extension is "png"
-        fname_withoutextension, _ = os.path.splitext(fname)
+        path = Path(fname)
+        fname_withoutextension = str(path.parent / path.stem)
         fname = fname_withoutextension + ".png"
 
         if hasattr(plotter, "_gif_filename"):
@@ -119,7 +120,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
                 image_names.append(fname)
             else:  # pragma: no cover
                 fname = fname[:-3] + "vtksz"
-                with open(fname, "wb") as f:
+                with Path(fname).open("wb") as f:
                     f.write(plotter.last_vtksz)
                     image_names.append(fname)
 
@@ -210,7 +211,7 @@ class DynamicScraper:  # pragma: no cover
             # Just in case force_static is None at this point
             force_static = False
 
-        dynamic = False if force_static else True
+        dynamic = not force_static
 
         image_path_iterator = block_vars["image_path_iterator"]
         image_names = generate_images(image_path_iterator, dynamic=dynamic)
