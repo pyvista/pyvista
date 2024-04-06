@@ -13,7 +13,20 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Type, Union, final
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    final,
+)
 
 import numpy as np
 
@@ -21,7 +34,7 @@ import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _dataset_loader
-from pyvista.examples._dataset_loader import _DatasetLoader, _Downloadable
+from pyvista.examples._dataset_loader import DatasetObject, _DatasetLoader, _Downloadable
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -1220,16 +1233,13 @@ class DatasetCardFetcher:
     @classmethod
     def init_cards(cls):
         """Download and load all datasets and initialize a card object for each dataset."""
-        cls._init_builtins()
-        cls._init_downloads()
-
-    @classmethod
-    def _init_builtins(cls):
         cls._init_cards_from_module(pv.examples.examples)
+        cls._init_cards_from_module(pv.examples.downloads)
 
     @classmethod
-    def _init_downloads(cls):
-        cls._init_cards_from_module(pv.examples.downloads)
+    def clear_datasets(cls):
+        """Clear loaded datasets."""
+        [loader.clear_dataset() for _, loader in cls.fetch_all_dataset_loaders()]
 
     @classmethod
     def _init_cards_from_module(cls, module: ModuleType):
@@ -1295,12 +1305,12 @@ class DatasetCardFetcher:
                 yield name
 
     @classmethod
-    def fetch_all_dataset_objects(cls) -> Dict[str, Iterable[Any]]:
+    def fetch_all_dataset_objects(cls) -> Generator[str, Iterable[DatasetObject]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader.dataset_iterable
 
     @classmethod
-    def fetch_all_dataset_loaders(cls) -> Dict[str, Iterable[Any]]:
+    def fetch_all_dataset_loaders(cls) -> Generator[str, _DatasetLoader]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader
 
@@ -1887,6 +1897,9 @@ def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
 
     # Generate rst for all carousels
     [carousel.generate() for carousel in carousels]
+
+    # Clear loaded datasets from memo
+    DatasetCardFetcher.clear_datasets()
 
 
 def make_all_tables():

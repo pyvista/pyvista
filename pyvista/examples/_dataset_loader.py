@@ -188,14 +188,9 @@ class _DatasetLoader:
         """Return the loaded dataset object(s)."""
         return self._dataset
 
-    @final
     def load(self, *args, **kwargs) -> DatasetObject:
         """Load and return the dataset."""
-        dataset = self.dataset
-        return dataset if dataset else self._load(*args, **kwargs)
-
-    def _load(self, *args, **kwargs) -> DatasetObject:
-        # Subclasses should override this method as needed
+        # Subclasses should override this as needed
         return self._load_func(*args, **kwargs)
 
     @final
@@ -206,8 +201,8 @@ class _DatasetLoader:
         return dataset
 
     @final
-    def unload(self):
-        """Clear the loaded dataset object from memory."""
+    def clear_dataset(self):
+        """Clear the stored dataset object from memory."""
         del self._dataset
 
     @property
@@ -362,7 +357,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
             # Cannot be read directly (requires custom reader)
             return None
 
-    def _load(self):
+    def load(self):
         try:
             return (
                 self._read_func(self.path)
@@ -546,7 +541,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
             reader_out.extend(r) if isinstance(r, Sequence) else reader_out.append(r)
         return tuple(reader_out)
 
-    def _load(self):
+    def load(self):
         return self._load_func(self._file_objects)
 
 

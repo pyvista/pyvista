@@ -282,11 +282,11 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
         assert np.array_equal(dataset_loaded[0].points, dataset_stored[0].points)
     else:
         assert np.array_equal(dataset_loaded.points, dataset_stored.points)
-    # test calling load() again will now return the same instance
-    dataset_loaded = multi_file_loader.load()
-    assert dataset_loaded is dataset_stored
+    # test calling load() again still returns yet another instance
+    dataset_loaded2 = multi_file_loader.load()
+    assert dataset_loaded2 is not dataset_stored
+    assert dataset_loaded2 is not dataset_loaded
 
-    assert multi_file_loader.dataset is dataset_loaded
     if load_func is _load_as_multiblock or None:
         assert isinstance(dataset_loaded, pv.MultiBlock)
         assert dataset_loaded.keys() == ['airplane', 'hexbeam']
