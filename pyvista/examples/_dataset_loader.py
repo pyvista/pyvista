@@ -263,10 +263,16 @@ class _DatasetLoader:
             if isinstance(data, pv.Texture):
                 data = cast(pv.ImageData, pv.wrap(data.GetInput()))
             try:
-                for cell_type in pv.CellType:
-                    extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
-                    if extracted.n_cells > 0:
-                        cell_types[cell_type] = None
+                if isinstance(data, pv.ExplicitStructuredGrid):
+                    # extract_cells_by_type does not support this datatype
+                    # so get cells manually
+                    cells = (c.type for c in data.cell)
+                    [cell_types.update({cell_type: None}) for cell_type in cells]
+                else:
+                    for cell_type in pv.CellType:
+                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        if extracted.n_cells > 0:
+                            cell_types[cell_type] = None
             except AttributeError:
                 continue
         return tuple(sorted(cell_types.keys()))

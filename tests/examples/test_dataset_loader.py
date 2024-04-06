@@ -39,27 +39,25 @@ def _generate_dataset_loader_test_cases_from_module(
 
     test_cases_dict: Dict = {}
 
-    def add_to_dict(dataset_function_name: str, dataset_function: Callable[[], Any]):
+    def add_to_dict(func: str, dataset_function: Callable[[], Any]):
         # Function for stuffing example functions into a dict.
         # We use a dict to allow for any entry to be made based on example name alone.
         # This way, we can defer checking for any mismatch between the download functions
         # and file loaders to test time.
         nonlocal test_cases_dict
-        if dataset_function_name.startswith('_dataset_'):
-            dataset_name = dataset_function_name.split('_dataset_')[1]
+        if func.startswith('_dataset_'):
+            dataset_name = func.split('_dataset_')[1]
             key = 'dataset_loader'
-        elif dataset_function_name.startswith('download_'):
-            dataset_name = dataset_function_name.split('download_')[1]
+        elif func.startswith('download_'):
+            dataset_name = func.split('download_')[1]
             key = 'dataset_function'
-        elif dataset_function_name.startswith('load_'):
-            dataset_name = dataset_function_name.split('load_')[1]
+        elif func.startswith('load_'):
+            dataset_name = func.split('load_')[1]
             key = 'dataset_function'
         else:
-            raise RuntimeError(
-                f'Invalid case specified: {(dataset_function_name, dataset_function)}'
-            )
+            raise RuntimeError(f'Invalid case specified: {(func, dataset_function)}')
         test_cases_dict.setdefault(dataset_name, {})
-        test_cases_dict[dataset_name][key] = (dataset_function_name, dataset_function)
+        test_cases_dict[dataset_name][key] = (func, dataset_function)
 
     module_members = dict(inspect.getmembers(module))
 
@@ -601,6 +599,12 @@ def test_load_dataset_no_reader(dataset_loader_one_file):
     match = 'Error loading dataset from path'
     with pytest.raises(RuntimeError, match=match):
         loader.load()
+
+
+def test_unique_cell_types_explicit_structured_grid():
+    loader = examples._dataset_explicit_structured
+    loader.load_and_store_dataset()
+    assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
 
 
 def test_format_file_size():
