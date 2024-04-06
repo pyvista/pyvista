@@ -49,6 +49,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    final,
     runtime_checkable,
 )
 
@@ -132,11 +133,84 @@ class _MultiFilePropsProtocol(_BaseFilePropsProtocol[Tuple[str, ...], Tuple[int,
     """Define file properties of multiple files."""
 
 
-class _DatasetPropsMixin:
+@runtime_checkable
+class _Downloadable(Protocol[_FilePropStrType_co]):
+    """Class which downloads a file  a 'download' method."""
+
     @property
+    @abstractmethod
+    def source_name(self) -> _FilePropStrType_co:
+        """Return the name of the download file relative to the source repository."""
+
+    @property
+    def source_url_raw(self) -> _FilePropStrType_co:
+        """Return the raw source of the download.
+
+        This is the full URL used to download the data directly.
+        """
+        from pyvista.examples.downloads import SOURCE
+
+        # Make single urls iterable and replace 'raw' with 'blob'
+        name_iter = [name] if isinstance(name := self.source_name, str) else name
+        url_raw = [os.path.join(SOURCE, name) for name in name_iter]
+        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
+
+    @property
+    def source_url_blob(self) -> _FilePropStrType_co:
+        """Return the blob source of the download.
+
+        This URL is useful for linking to the source webpage for
+        a human to open on a browser.
+        """
+        # Make single urls iterable and replace 'raw' with 'blob'
+        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
+        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
+        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
+
+    @property
+    @abstractmethod
+    def path(self) -> _FilePropStrType_co:
+        """Return the file path of downloaded file."""
+
+    @abstractmethod
+    def download(self) -> _FilePropStrType_co:
+        """Download and return the file path(s)."""
+
+
+class _DatasetLoader:
+    """Load a dataset."""
+
+    def __init__(self, load_func: Callable[..., DatasetType]):
+        self._load_func = load_func
+        self._dataset: Optional[DatasetType] = None
+
+    @property
+    @final
     def dataset(self) -> Optional[DatasetType]:
-        """Return the dataset."""
-        return None
+        """Return the loaded dataset object(s)."""
+        return self._dataset
+
+    @final
+    def load(self, *args, **kwargs) -> DatasetType:
+        """Load and return the dataset."""
+        dataset = self.dataset
+        return dataset if dataset else self._load(*args, **kwargs)
+
+    def _load(self, *args, **kwargs) -> DatasetType:
+        # Subclasses should override this method as needed
+        return self._load_func(*args, **kwargs)
+
+    @final
+    def load_and_store_dataset(self) -> DatasetType:
+        """Load the dataset and store it."""
+        dataset = self.load()
+        self._dataset = dataset
+        return dataset
+
+    @final
+    def unload(self):
+        """Clear the loaded dataset object from memory."""
+        del self._dataset
 
     @property
     def dataset_iterable(self) -> Tuple[DatasetType, ...]:
@@ -195,91 +269,6 @@ class _DatasetPropsMixin:
             except AttributeError:
                 continue
         return tuple(sorted(cell_types.keys()))
-
-
-@runtime_checkable
-class _Downloadable(Protocol[_FilePropStrType_co]):
-    """Class which downloads a file  a 'download' method."""
-
-    @property
-    @abstractmethod
-    def source_name(self) -> _FilePropStrType_co:
-        """Return the name of the download file relative to the source repository."""
-
-    @property
-    def source_url_raw(self) -> _FilePropStrType_co:
-        """Return the raw source of the download.
-
-        This is the full URL used to download the data directly.
-        """
-        from pyvista.examples.downloads import SOURCE
-
-        # Make single urls iterable and replace 'raw' with 'blob'
-        name_iter = [name] if isinstance(name := self.source_name, str) else name
-        url_raw = [os.path.join(SOURCE, name) for name in name_iter]
-        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
-
-    @property
-    def source_url_blob(self) -> _FilePropStrType_co:
-        """Return the blob source of the download.
-
-        This URL is useful for linking to the source webpage for
-        a human to open on a browser.
-        """
-        # Make single urls iterable and replace 'raw' with 'blob'
-        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
-        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
-        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
-
-    @property
-    @abstractmethod
-    def path(self) -> _FilePropStrType_co:
-        """Return the file path of downloaded file."""
-
-    @abstractmethod
-    def download(self) -> _FilePropStrType_co:
-        """Download and return the file path(s)."""
-
-
-@runtime_checkable
-class _Loadable(Protocol):
-    """Class which loads a dataset from file."""
-
-    @property
-    @abstractmethod
-    def dataset(self) -> Optional[DatasetType]:
-        """Return the loaded dataset object(s)."""
-        return self._dataset
-
-    def load(self, *args, **kwargs) -> DatasetType:
-        """Load and return the dataset."""
-        return self._dataset if self.dataset else self._load(*args, **kwargs)
-
-    @abstractmethod
-    def _load(self, *args, **kwargs) -> DatasetType:
-        """Load and return the dataset."""
-
-    def load_and_store_dataset(self) -> DatasetType:
-        """Load the dataset and store it."""
-        self._dataset = self.load()
-        return self.dataset
-
-    def unload(self):
-        """Clear the loaded dataset object from memory."""
-        del self._dataset
-
-
-class _DatasetLoader(_Loadable, _DatasetPropsMixin):
-    def __init__(self, load_func: Callable[..., DatasetType]):
-        self._load_func = load_func
-        self._dataset: Optional[DatasetType] = None
-
-    @property
-    def dataset(self) -> Optional[DatasetType]:
-        return self._dataset
-
-    def _load(self, *args, **kwargs) -> DatasetType:
-        return self._load_func(*args, **kwargs)
 
 
 class _SingleFile(_SingleFilePropsProtocol):
@@ -355,10 +344,6 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
         _SingleFile.__init__(self, path)
         _DatasetLoader.__init__(self, load_func)  # type: ignore[arg-type]
         self._read_func = pv.read if path and read_func is None else read_func
-
-    @property
-    def dataset(self) -> Optional[DatasetType]:
-        return self._dataset
 
     @property
     def _reader(self) -> Optional[pv.BaseReader]:
@@ -554,10 +539,6 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
             reader_out.extend(r) if isinstance(r, Sequence) else reader_out.append(r)
         return tuple(reader_out)
 
-    @property
-    def dataset(self) -> Optional[DatasetType]:
-        return self._dataset
-
     def _load(self):
         return self._load_func(self._file_objects)
 
@@ -649,7 +630,7 @@ def _load_as_multiblock(
     If the use of the ``names`` parameter is needed, use :class:`functools.partial`
     to partially specify the names parameter before passing it as loading function.
     """
-    block = pv.MultiBlock()
+    multi = pv.MultiBlock()
     try:
         names = (
             [os.path.splitext(os.path.basename(file.path))[0] for file in files]  # type: ignore[misc, type-var]
@@ -659,12 +640,16 @@ def _load_as_multiblock(
     except TypeError:
         names = [f'dataset{num}' for num in range(len(files))]
     assert len(names) == len(files)
-    [
-        block.append(file.load(), name)
-        for file, name in zip(files, names)
-        if isinstance(file, _Loadable)
-    ]
-    return block
+
+    for file, name in zip(files, names):
+        if not isinstance(file, _DatasetLoader):
+            continue
+        loaded = file.load()
+        assert isinstance(
+            loaded, (pv.MultiBlock, pv.DataSet)
+        ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
+        multi.append(loaded, name)
+    return multi
 
 
 def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pv.Texture:
@@ -693,7 +678,7 @@ def _load_as_dataset_or_multiblock(files):
 
 def _load_and_merge(files: Sequence[_SingleFile]):
     """Load all loadable files as separate datasets and merge them."""
-    loaded = [file.load() for file in files if isinstance(file, _Loadable)]
+    loaded = [file.load() for file in files if isinstance(file, _DatasetLoader)]
     assert len(loaded) > 0
     return pv.merge(loaded)
 

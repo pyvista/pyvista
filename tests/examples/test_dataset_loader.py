@@ -19,7 +19,6 @@ from pyvista.examples._dataset_loader import (
     _load_and_merge,
     _load_as_cubemap,
     _load_as_multiblock,
-    _Loadable,
     _MultiFileDownloadableDatasetLoader,
     _SingleFileDatasetLoader,
     _SingleFileDownloadableDatasetLoader,
@@ -214,7 +213,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test load
     if isinstance(file_loader, (_SingleFileDatasetLoader, _SingleFileDownloadableDatasetLoader)):
-        assert isinstance(file_loader, _Loadable)
+        assert isinstance(file_loader, _DatasetLoader)
         dataset = file_loader.load()
         assert file_loader.dataset is None
         file_loader.load_and_store_dataset()
