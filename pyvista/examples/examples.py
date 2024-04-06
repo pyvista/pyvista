@@ -310,13 +310,7 @@ def load_spline():
     >>> spline.plot()
 
     """
-    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-    z = np.linspace(-2, 2, 100)
-    r = z**2 + 1
-    x = r * np.sin(theta)
-    y = r * np.cos(theta)
-    points = np.column_stack((x, y, z))
-    return pyvista.Spline(points, 1000)
+    return _dataset_spline.load()
 
 
 def _spline_load_func():
@@ -357,8 +351,7 @@ def load_random_hills():
     >>> mesh.plot()
 
     """
-    mesh = pyvista.ParametricRandomHills()
-    return mesh.elevation()
+    return _dataset_random_hills.load()
 
 
 def _random_hills_load_func():
@@ -393,6 +386,7 @@ def load_sphere_vectors():
         vectors                 float32    (842, 3)             VECTORS
 
     """
+    return _dataset_sphere_vectors.load()
 
 
 def _sphere_vectors_load_func() -> pyvista.PolyData:
