@@ -1073,8 +1073,8 @@ class DatasetPropsGenerator:
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         file_ext = loader.unique_extension
-        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-        file_ext = '``\'' + file_ext.replace(' ', '\'``\n ``\'') + '\'``'
+        file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
+        file_ext = '\n'.join(['``\'' + ext + '\'``' for ext in file_ext])
         return file_ext
 
     @staticmethod
