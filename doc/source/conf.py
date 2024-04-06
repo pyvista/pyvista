@@ -11,8 +11,6 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
-import make_external_gallery
-import make_tables
 
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
