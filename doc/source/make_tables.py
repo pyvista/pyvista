@@ -858,7 +858,7 @@ class DatasetCard:
     def _generate_celltype_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
-        rst = ' '.join([badge.generate() for badge in celltype_badges])
+        rst = '\n'.join([badge.generate() for badge in celltype_badges])
         if rst == '':
             rst = '``None``'
         return rst
