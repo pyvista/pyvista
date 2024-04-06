@@ -20,16 +20,8 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples import _dataset_loader, downloads
-from pyvista.examples._dataset_loader import (
-    _MultiFileDownloadableLoadable,
-    _SingleFileDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
-
-DatasetLoaderObj = Union[
-    _MultiFileDownloadableLoadable, _SingleFileDownloadableDatasetLoader, _SingleFileDatasetLoader
-]
+from pyvista.examples import _dataset_loader
+from pyvista.examples._dataset_loader import _DatasetLoader, _Downloadable
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -467,11 +459,13 @@ def _indent_multi_line_string(
 
     """
     lines = string.splitlines()
-    indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
-    first_line = lines.pop(0) if omit_first_line else None
-    lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
-    lines.insert(0, first_line) if first_line else None
-    return '\n'.join(lines)
+    if len(lines) > 0:
+        indentation = _repeat_string(' ', num_repeat=indent_size * indent_level)
+        first_line = lines.pop(0) if omit_first_line else None
+        lines = _pad_lines(lines, pad_left=indentation) if len(lines) > 0 else lines
+        lines.insert(0, first_line) if first_line else None
+        return '\n'.join(lines)
+    return string
 
 
 def _as_iterable(item) -> Iterable[Any]:
@@ -692,7 +686,7 @@ class DatasetCard:
     def __init__(
         self,
         dataset_name: str,
-        loader: DatasetLoaderObj,
+        loader: _DatasetLoader,
     ):
         self.dataset_name = dataset_name
         self.loader = loader
@@ -770,7 +764,8 @@ class DatasetCard:
     def _generate_dataset_properties(loader):
         try:
             # Get data from loader
-            loader.download()
+            if isinstance(loader, _Downloadable):
+                loader.download()
 
             # properties collected by the loader
             file_size = DatasetPropsGenerator.generate_file_size(loader)
@@ -827,9 +822,13 @@ class DatasetCard:
         index_name = dataset_name + '_dataset'
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
-        # Get the corresponding 'download' function of the loader
-        func_name = 'download_' + dataset_name
-        func = getattr(downloads, func_name)
+        # Get the corresponding function of the loader
+        try:
+            func_name = 'download_' + dataset_name
+            func = getattr(pyvista.examples.downloads, func_name)
+        except AttributeError:
+            func_name = 'load_' + dataset_name
+            func = getattr(pyvista.examples.examples, func_name)
 
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
@@ -1046,14 +1045,17 @@ class DatasetCard:
 
     @classmethod
     def _create_footer_block(cls, datasource_links):
-        # indent links one level from the dropdown directive in template
-        datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
-        footer_block = cls._format_and_indent_from_template(
-            datasource_links,
-            template=cls.footer_template,
-            indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
-        )
-        return footer_block
+        if datasource_links:
+            # indent links one level from the dropdown directive in template
+            datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
+            footer_block = cls._format_and_indent_from_template(
+                datasource_links,
+                template=cls.footer_template,
+                indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
+            )
+            return footer_block
+        # Return empty footer content
+        return ''
 
 
 class DatasetPropsGenerator:
@@ -1065,35 +1067,42 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_file_size(loader: _dataset_loader._BaseFilePropsProtocol):
-        return '``' + loader.total_size + '``'
+        sz = DatasetPropsGenerator._try_getattr(loader, 'total_size')
+        return '``' + sz + '``' if sz else None
 
     @staticmethod
     def generate_num_files(loader: _dataset_loader._BaseFilePropsProtocol):
-        return '``' + str(loader.num_files) + '``'
+        num = DatasetPropsGenerator._try_getattr(loader, 'num_files')
+        return '``' + str(num) + '``' if num else None
 
     @staticmethod
     def generate_file_ext(loader: _dataset_loader._BaseFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
-        file_ext = loader.unique_extension
-        file_ext = file_ext if isinstance(file_ext, str) else ' '.join(ext for ext in file_ext)
-        file_ext = '``\'' + file_ext.replace(' ', '\'``\n ``\'') + '\'``'
-        return file_ext
+        ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
+        if ext:
+            ext = ext if isinstance(ext, str) else ' '.join(ext for ext in ext)
+            ext = '``\'' + ext.replace(' ', '\'``\n ``\'') + '\'``'
+            return ext
+        return None
 
     @staticmethod
-    def generate_reader_type(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_reader_type(loader: _DatasetLoader):
         """Format reader type(s) with doc references to reader class(es)."""
-        reader_type = (
-            repr(loader.unique_reader_type)
-            .replace('<class \'', ':class:`~')
-            .replace('\'>', '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
-        return reader_type
+        typ = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if typ:
+            reader_type = (
+                repr(loader.unique_reader_type)
+                .replace('<class \'', ':class:`~')
+                .replace('\'>', '`')
+                .replace('(', '')
+                .replace(')', '')
+            ).replace(', ', '\n')
+            return reader_type
+        return None
 
     @staticmethod
-    def generate_dataset_type(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
         dataset_type = (
             repr(loader.unique_dataset_type)
@@ -1105,9 +1114,7 @@ class DatasetPropsGenerator:
         return dataset_type
 
     @staticmethod
-    def _generate_dataset_repr(
-        loader: _dataset_loader._BaseFilePropsProtocol, indent_level: int
-    ) -> str:
+    def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
         """Format the dataset's representation as a single multi-line string.
 
         The returned string is indented up to the specified indent level.
@@ -1122,10 +1129,12 @@ class DatasetPropsGenerator:
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
-    def generate_datasource_links(loader: _dataset_loader._Downloadable) -> str:
+    def generate_datasource_links(loader: _Downloadable) -> Optional[str]:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
 
+        if not isinstance(loader, _Downloadable):
+            return None
         # Collect url names and links as sequences
         names = [name] if isinstance(name := loader.source_name, str) else name
         urls = [url] if isinstance(url := loader.source_url_blob, str) else url
@@ -1204,7 +1213,7 @@ class DatasetCardFetcher:
     DATASET_CARDS_RST: Dict[str, str] = {}
 
     @classmethod
-    def _add_dataset_card(cls, dataset_name: str, dataset_loader: DatasetLoaderObj):
+    def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
         """Add a new dataset card so that it can be fetched later."""
         cls.DATASET_CARDS_OBJ[dataset_name] = DatasetCard(dataset_name, dataset_loader)
 
@@ -1216,7 +1225,7 @@ class DatasetCardFetcher:
 
     @classmethod
     def _init_builtins(cls):
-        cls._init_cards_from_module(pv.examples)
+        cls._init_cards_from_module(pv.examples.examples)
 
     @classmethod
     def _init_downloads(cls):
@@ -1230,14 +1239,7 @@ class DatasetCardFetcher:
         for name, item in sorted(module_members.items()):
             # Extract data set name from loader name
 
-            if name.startswith('_dataset_') and isinstance(
-                item,
-                (
-                    _SingleFileDatasetLoader,
-                    _SingleFileDownloadableDatasetLoader,
-                    _MultiFileDownloadableLoadable,
-                ),
-            ):
+            if name.startswith('_dataset_') and isinstance(item, _DatasetLoader):
 
                 # Create a card for this dataset
                 dataset_name = name.replace('_dataset_', '')
@@ -1247,7 +1249,7 @@ class DatasetCardFetcher:
 
                 # Load data
                 try:
-                    if isinstance(dataset_loader, _dataset_loader._Downloadable):
+                    if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
                 except pyvista.VTKVersionError:
                     # caused by 'download_can', this error is handled later

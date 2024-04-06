@@ -1,7 +1,10 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+from dataclasses import dataclass
+import inspect
 import os
 import shutil
-from typing import Tuple
+from types import FunctionType, ModuleType
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pytest
@@ -9,6 +12,7 @@ import pytest
 import pyvista as pv
 from pyvista.examples import downloads, examples
 from pyvista.examples._dataset_loader import (
+    _DatasetLoader,
     _Downloadable,
     _DownloadableFile,
     _format_file_size,
@@ -16,10 +20,101 @@ from pyvista.examples._dataset_loader import (
     _load_as_cubemap,
     _load_as_multiblock,
     _Loadable,
-    _MultiFileDownloadableLoadable,
+    _MultiFileDownloadableDatasetLoader,
     _SingleFileDatasetLoader,
     _SingleFileDownloadableDatasetLoader,
 )
+
+
+@dataclass
+class DatasetLoaderTestCase:
+    dataset_name: str
+    dataset_function: Tuple[str, FunctionType]
+    dataset_loader: Tuple[str, _DatasetLoader]
+
+
+def _generate_dataset_loader_test_cases_from_module(
+    module: ModuleType,
+) -> List[DatasetLoaderTestCase]:
+    """Generate test cases by module with all dataset functions and their respective file loaders."""
+
+    test_cases_dict: Dict = {}
+
+    def add_to_dict(dataset_function_name: str, dataset_function: Callable[[], Any]):
+        # Function for stuffing example functions into a dict.
+        # We use a dict to allow for any entry to be made based on example name alone.
+        # This way, we can defer checking for any mismatch between the download functions
+        # and file loaders to test time.
+        nonlocal test_cases_dict
+        if dataset_function_name.startswith('_dataset_'):
+            dataset_name = dataset_function_name.split('_dataset_')[1]
+            key = 'dataset_loader'
+        elif dataset_function_name.startswith('download_'):
+            dataset_name = dataset_function_name.split('download_')[1]
+            key = 'dataset_function'
+        elif dataset_function_name.startswith('load_'):
+            dataset_name = dataset_function_name.split('load_')[1]
+            key = 'dataset_function'
+        else:
+            raise RuntimeError(
+                f'Invalid case specified: {(dataset_function_name, dataset_function)}'
+            )
+        test_cases_dict.setdefault(dataset_name, {})
+        test_cases_dict[dataset_name][key] = (dataset_function_name, dataset_function)
+
+    module_members = dict(inspect.getmembers(module))
+
+    # Collect all `download_<name> or `load_<name>` functions
+    def _is_dataset_function(name, item):
+        return (
+            isinstance(item, FunctionType)
+            and name.startswith('download_')
+            or name.startswith('load_')
+        )
+
+    dataset_functions = {
+        name: item for name, item in module_members.items() if _is_dataset_function(name, item)
+    }
+    # Remove special case which is not a dataset function
+    dataset_functions.pop('download_file', None)
+    [add_to_dict(name, func) for name, func in dataset_functions.items()]
+
+    # Collect all `_dataset_<name>` file loaders
+    dataset_file_loaders = {
+        name: item
+        for name, item in module_members.items()
+        if name.startswith('_dataset_') and isinstance(item, _DatasetLoader)
+    }
+    [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
+
+    # Flatten dict
+    test_cases_list: List[DatasetLoaderTestCase] = []
+    for name, content in sorted(test_cases_dict.items()):
+        dataset_function = content.setdefault('dataset_function', None)
+        dataset_loader = content.setdefault('dataset_loader', None)
+        test_case = DatasetLoaderTestCase(
+            dataset_name=name, dataset_function=dataset_function, dataset_loader=dataset_loader
+        )
+        test_cases_list.append(test_case)
+
+    return test_cases_list
+
+
+def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
+    if test_case.dataset_function is None:
+        return (
+            f"A file loader:\n\t\'{test_case.dataset_loader[0]}\'\n\t{test_case.dataset_loader[1]}\n"
+            f"was found but is missing a corresponding download function.\n\n"
+            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.dataset_function}"
+        )
+    elif test_case.dataset_loader is None:
+        return (
+            f"A download function:\n\t\'{test_case.dataset_function[0]}\'\n\t{test_case.dataset_function[1]}\n"
+            f"was found but is missing a corresponding file loader.\n\n"
+            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.dataset_loader}"
+        )
+    else:
+        return None
 
 
 @pytest.fixture()
@@ -146,7 +241,7 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     def files_func():
         return file_loaded1, file_loaded2, file_not_loaded
 
-    multi_file_loader = _MultiFileDownloadableLoadable(files_func, load_func=load_func)
+    multi_file_loader = _MultiFileDownloadableDatasetLoader(files_func, load_func=load_func)
     # test files func is not called when initialized
     assert multi_file_loader._file_loaders_ is None
 
@@ -229,7 +324,7 @@ def dataset_loader_two_files_one_loadable():
         not_loadable = _DownloadableFile('HeadMRVolume.raw')
         return loadable, not_loadable
 
-    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
     loader.load()
     return loader
@@ -270,7 +365,7 @@ def dataset_loader_two_files_both_loadable():
         loadable2 = _SingleFileDownloadableDatasetLoader('nut.slc')
         return loadable1, loadable2
 
-    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
     loader.load()
     return loader
@@ -381,7 +476,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     def files_func():
         return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 
-    loader = _MultiFileDownloadableLoadable(files_func, load_func=_load_as_multiblock)
+    loader = _MultiFileDownloadableDatasetLoader(files_func, load_func=_load_as_multiblock)
     loader.download()
     assert len(loader.path) == 4
     assert loader.num_files == 6

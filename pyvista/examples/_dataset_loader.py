@@ -559,7 +559,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         return self.dataset
 
 
-class _MultiFileDownloadableLoadable(_MultiFileDatasetLoader, _Downloadable[Tuple[str, ...]]):
+class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable[Tuple[str, ...]]):
     """Wrap multiple files for downloading and loading."""
 
     @property
@@ -590,7 +590,9 @@ def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_Scala
 
 
 def _download_dataset(
-    dataset: Union[_SingleFileDownloadableDatasetLoader, _MultiFileDownloadableLoadable],
+    dataset_loader: Union[
+        _SingleFileDownloadableDatasetLoader, _MultiFileDownloadableDatasetLoader
+    ],
     load: bool = True,
     metafiles: bool = False,
 ):
@@ -598,7 +600,7 @@ def _download_dataset(
 
     Parameters
     ----------
-    dataset
+    dataset_loader
         SingleFile or MultiFile object(s) of the dataset(s) to download or load.
 
     load
@@ -623,15 +625,15 @@ def _download_dataset(
 
     """
     # Download all files for the dataset, include any metafiles
-    path = dataset.download()
+    path = dataset_loader.download()
 
     # Exclude non-loadable metafiles from result (if any)
-    if not metafiles and isinstance(dataset, _MultiFileDownloadableLoadable):
-        path = dataset.path_loadable
+    if not metafiles and isinstance(dataset_loader, _MultiFileDownloadableDatasetLoader):
+        path = dataset_loader.path_loadable
         # Return scalar if only one loadable file
         path = path[0] if len(path) == 1 else path
 
-    return dataset.load() if load else path
+    return dataset_loader.load() if load else path
 
 
 def _load_as_multiblock(

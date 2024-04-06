@@ -42,7 +42,7 @@ from pyvista.examples._dataset_loader import (
     _load_and_merge,
     _load_as_cubemap,
     _load_as_multiblock,
-    _MultiFileDownloadableLoadable,
+    _MultiFileDownloadableDatasetLoader,
     _SingleFileDownloadableDatasetLoader,
 )
 
@@ -800,7 +800,7 @@ def _head_files_func():
     return head_mhd, head_raw
 
 
-_dataset_head = _MultiFileDownloadableLoadable(_head_files_func)
+_dataset_head = _MultiFileDownloadableDatasetLoader(_head_files_func)
 
 
 def download_head_2(load=True):  # pragma: no cover
@@ -895,7 +895,7 @@ def _bolt_nut_files_func():  # pragma: no cover
     return bolt, nut
 
 
-_dataset_bolt_nut = _MultiFileDownloadableLoadable(
+_dataset_bolt_nut = _MultiFileDownloadableDatasetLoader(
     _bolt_nut_files_func, load_func=_load_as_multiblock
 )
 
@@ -2180,7 +2180,7 @@ def _frog_files_func():  # pragma: no cover
     return frog_mhd, frog_zraw
 
 
-_dataset_frog = _MultiFileDownloadableLoadable(_frog_files_func)
+_dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
 def download_frog_tissue(load=True):  # pragma: no cover
@@ -2276,7 +2276,7 @@ def _frog_tissue_files_func():
     return frog_tissue_mhd, frog_tissue_zraw
 
 
-_dataset_frog_tissue = _MultiFileDownloadableLoadable(_frog_tissue_files_func)
+_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
 
 
 def download_chest(load=True):  # pragma: no cover
@@ -3539,7 +3539,7 @@ def _tetra_dc_mesh_files_func():  # pragma: no cover
     return fwd, inv
 
 
-_dataset_tetra_dc_mesh = _MultiFileDownloadableLoadable(
+_dataset_tetra_dc_mesh = _MultiFileDownloadableDatasetLoader(
     _tetra_dc_mesh_files_func,
     load_func=functools.partial(_load_as_multiblock, names=['forward', 'inverse']),
 )
@@ -4187,7 +4187,7 @@ def _sky_box_cube_map_files_func():
     return posx, negx, posy, negy, posz, negz
 
 
-_dataset_sky_box_cube_map = _MultiFileDownloadableLoadable(
+_dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
     files_func=_sky_box_cube_map_files_func, load_func=_load_as_cubemap
 )
 
@@ -4919,7 +4919,7 @@ def _cylinder_crossflow_files_func():  # pragma: no cover
     return case, geo, scl1, scl2, vel
 
 
-_dataset_cylinder_crossflow = _MultiFileDownloadableLoadable(
+_dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
     files_func=_cylinder_crossflow_files_func
 )
 
@@ -4968,7 +4968,7 @@ def _naca_files_func():
     return case, dens1, dens3, geo
 
 
-_dataset_naca = _MultiFileDownloadableLoadable(files_func=_naca_files_func)
+_dataset_naca = _MultiFileDownloadableDatasetLoader(files_func=_naca_files_func)
 
 
 def download_lshape(load=True):  # pragma: no cover
@@ -5016,7 +5016,7 @@ def _lshape_files_func():  # pragma: no cover
     return case, geo, var
 
 
-_dataset_lshape = _MultiFileDownloadableLoadable(files_func=_lshape_files_func)
+_dataset_lshape = _MultiFileDownloadableDatasetLoader(files_func=_lshape_files_func)
 
 
 def download_wavy(load=True):  # pragma: no cover
@@ -5551,7 +5551,7 @@ def _electronics_cooling_files_func():  # pragma: no cover
     return _structure, _air
 
 
-_dataset_electronics_cooling = _MultiFileDownloadableLoadable(
+_dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
     _electronics_cooling_files_func, load_func=_load_as_multiblock
 )
 
@@ -5613,7 +5613,7 @@ def _dataset_can_files_func():  # pragma: no cover
     return can_0, can_1, can_2
 
 
-_dataset_can = _MultiFileDownloadableLoadable(
+_dataset_can = _MultiFileDownloadableDatasetLoader(
     files_func=_dataset_can_files_func, load_func=_load_and_merge
 )
 __can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
@@ -7195,7 +7195,7 @@ def _meshio_xdmf_files_func():
     return xdmf, h5
 
 
-_dataset_meshio_xdmf = _MultiFileDownloadableLoadable(files_func=_meshio_xdmf_files_func)
+_dataset_meshio_xdmf = _MultiFileDownloadableDatasetLoader(files_func=_meshio_xdmf_files_func)
 
 
 def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
