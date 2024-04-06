@@ -1257,7 +1257,7 @@ class DatasetCardFetcher:
                     # caused by 'download_can', this error is handled later
                     pass
                 else:
-                    dataset_loader.load()
+                    dataset_loader.load_and_store_dataset()
                     assert dataset_loader.dataset is not None
 
     @classmethod

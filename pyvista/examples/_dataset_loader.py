@@ -142,7 +142,7 @@ class _DatasetPropsMixin:
     def dataset_iterable(self) -> Tuple[DatasetType, ...]:
         """Return a tuple of all dataset object(s), including any nested objects.
 
-        If the dataset is a MultiBlock, the block itself is also returned as the first
+        If the dataset is a MultiBlock, the MultiBlock itself is also returned as the first
         item. Any nested MultiBlocks are not included, only their datasets.
 
         E.g. for a composite dataset:
@@ -249,18 +249,24 @@ class _Loadable(Protocol):
     @abstractmethod
     def dataset(self) -> Optional[DatasetType]:
         """Return the loaded dataset object(s)."""
+        return self._dataset
+
+    def load(self, *args, **kwargs) -> DatasetType:
+        """Load and return the dataset."""
+        return self._dataset if self.dataset else self._load(*args, **kwargs)
 
     @abstractmethod
-    def load(self) -> DatasetType:
-        """Load the dataset."""
+    def _load(self, *args, **kwargs) -> DatasetType:
+        """Load and return the dataset."""
 
-    def unload(self) -> None:
+    def load_and_store_dataset(self) -> DatasetType:
+        """Load the dataset and store it."""
+        self._dataset = self.load()
+        return self.dataset
+
+    def unload(self):
         """Clear the loaded dataset object from memory."""
-        if isinstance(dataset := self.dataset, Sequence):
-            for data in dataset:
-                del data
-        else:
-            del dataset
+        del self._dataset
 
 
 class _DatasetLoader(_Loadable, _DatasetPropsMixin):
@@ -272,9 +278,8 @@ class _DatasetLoader(_Loadable, _DatasetPropsMixin):
     def dataset(self) -> Optional[DatasetType]:
         return self._dataset
 
-    def load(self, *args, **kwargs) -> DatasetType:
-        self._dataset = self._load_func(*args, **kwargs)
-        return self._dataset
+    def _load(self, *args, **kwargs) -> DatasetType:
+        return self._load_func(*args, **kwargs)
 
 
 class _SingleFile(_SingleFilePropsProtocol):
@@ -365,17 +370,15 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
             # Cannot be read directly (requires custom reader)
             return None
 
-    def load(self):
+    def _load(self):
         try:
-            self._dataset = (
+            return (
                 self._read_func(self.path)
                 if self._load_func is None
                 else self._load_func(self._read_func(self.path))
             )
         except Exception:
             raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
-
-        return self.dataset
 
 
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
@@ -499,7 +502,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         self._files_func = files_func
         self._file_loaders_ = None
         if load_func is None:
-            load_func = _load_all
+            load_func = _load_as_dataset_or_multiblock
 
         _DatasetLoader.__init__(self, load_func)
 
@@ -555,9 +558,8 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     def dataset(self) -> Optional[DatasetType]:
         return self._dataset
 
-    def load(self):
-        self._dataset = self._load_func(self._file_objects)
-        return self.dataset
+    def _load(self):
+        return self._load_func(self._file_objects)
 
 
 class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable[Tuple[str, ...]]):
@@ -684,15 +686,16 @@ def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> p
     )
 
 
-def _load_all(files: Sequence[_SingleFile]):
-    """Load all loadable files."""
-    loaded = [file.load() for file in files if isinstance(file, _Loadable)]
-    assert len(loaded) > 0
-    return loaded[0] if len(loaded) == 1 else tuple(loaded)
+def _load_as_dataset_or_multiblock(files):
+    multiblock = _load_as_multiblock(files)
+    return multiblock[0] if len(multiblock) == 1 else multiblock
 
 
 def _load_and_merge(files: Sequence[_SingleFile]):
-    return pv.merge(_load_all(files))
+    """Load all loadable files as separate datasets and merge them."""
+    loaded = [file.load() for file in files if isinstance(file, _Loadable)]
+    assert len(loaded) > 0
+    return pv.merge(loaded)
 
 
 def _get_file_or_folder_size(filepath) -> int:

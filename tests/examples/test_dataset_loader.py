@@ -216,7 +216,8 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
     if isinstance(file_loader, (_SingleFileDatasetLoader, _SingleFileDownloadableDatasetLoader)):
         assert isinstance(file_loader, _Loadable)
         dataset = file_loader.load()
-        assert dataset is file_loader.dataset
+        assert file_loader.dataset is None
+        file_loader.load_and_store_dataset()
         assert isinstance(dataset, pv.DataSet)
     else:
         with pytest.raises(AttributeError):
@@ -271,31 +272,41 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     ]
 
     # test load
+    # test calling load does not store the dataset internally
     assert multi_file_loader.dataset is None
-    dataset = multi_file_loader.load()
-    assert multi_file_loader.dataset is dataset
-    if load_func is None:
-        assert isinstance(dataset, tuple)
-        assert np.array_equal(dataset[0].points, expected_airplane.points)
-        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
-        assert len(dataset) == 2
-    elif load_func is _load_as_multiblock:
-        assert isinstance(dataset, pv.MultiBlock)
-        assert dataset.keys() == ['airplane', 'hexbeam']
-        assert np.array_equal(dataset[0].points, expected_airplane.points)
-        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
-        assert len(dataset) == 2
+    dataset_loaded = multi_file_loader.load()
+    assert multi_file_loader.dataset is None
+
+    # test load and store the dataset
+    dataset_stored = multi_file_loader.load_and_store_dataset()
+    # same dataset is stored, but different instance from previously loaded
+    assert dataset_loaded is not dataset_stored
+    if isinstance(dataset_loaded, pv.MultiBlock):
+        assert np.array_equal(dataset_loaded[0].points, dataset_stored[0].points)
+    else:
+        assert np.array_equal(dataset_loaded.points, dataset_stored.points)
+    # test calling load() again will now return the same instance
+    dataset_loaded = multi_file_loader.load()
+    assert dataset_loaded is dataset_stored
+
+    assert multi_file_loader.dataset is dataset_loaded
+    if load_func is _load_as_multiblock or None:
+        assert isinstance(dataset_loaded, pv.MultiBlock)
+        assert dataset_loaded.keys() == ['airplane', 'hexbeam']
+        assert np.array_equal(dataset_loaded[0].points, expected_airplane.points)
+        assert np.array_equal(dataset_loaded[1].points, expected_hexbeam.points)
+        assert len(dataset_loaded) == 2
     elif load_func is _load_and_merge:
-        assert isinstance(dataset, pv.UnstructuredGrid)
+        assert isinstance(dataset_loaded, pv.UnstructuredGrid)
         expected = pv.merge((expected_airplane, expected_hexbeam))
-        assert np.array_equal(dataset.points, expected.points)
+        assert np.array_equal(dataset_loaded.points, expected.points)
 
 
 @pytest.fixture()
 def dataset_loader_one_file():
     loader = _SingleFileDownloadableDatasetLoader('cow.vtp')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -326,7 +337,7 @@ def dataset_loader_two_files_one_loadable():
 
     loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -367,7 +378,7 @@ def dataset_loader_two_files_both_loadable():
 
     loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -384,13 +395,14 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert isinstance(loader._reader[0], pv.SLCReader)
     assert isinstance(loader._reader[1], pv.SLCReader)
     assert loader.unique_reader_type is pv.SLCReader
-    assert isinstance(loader.dataset, Tuple)
+    assert isinstance(loader.dataset, pv.MultiBlock)
     dataset1, dataset2 = loader.dataset
     assert isinstance(dataset1, pv.ImageData)
     assert isinstance(dataset2, pv.ImageData)
-    assert isinstance(loader.dataset_iterable[0], pv.ImageData)
+    assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert isinstance(loader.dataset_iterable[1], pv.ImageData)
-    assert loader.unique_dataset_type is pv.ImageData
+    assert isinstance(loader.dataset_iterable[2], pv.ImageData)
+    assert loader.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
     assert loader.source_name == ('bolt.slc', 'nut.slc')
     assert loader.source_url_raw == (
         'https://github.com/pyvista/vtk-data/raw/master/Data/bolt.slc',
@@ -410,7 +422,7 @@ def dataset_loader_cubemap():
         read_func=_load_as_cubemap,
     )
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -441,7 +453,7 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
 def dataset_loader_dicom():
     loader = _SingleFileDownloadableDatasetLoader('DICOM_Stack/data.zip', target_file='data')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -501,7 +513,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     }
     assert loader.dataset is None
     assert loader.unique_dataset_type is type(None)
-    loader.load()
+    loader.load_and_store_dataset()
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert isinstance(loader.dataset_iterable[1], pv.PolyData)
@@ -539,7 +551,7 @@ def test_dataset_loader_from_nested_files_and_directory(
 def dataset_loader_nested_multiblock():
     loader = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
