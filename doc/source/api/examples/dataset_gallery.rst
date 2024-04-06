@@ -57,10 +57,9 @@ Browse datasets with explicit geometry. See :doc:`/api/core/pointsets` for detai
 
             .. include:: /api/examples/dataset-gallery/structuredgrid_carousel.rst
 
-            ..
-                TODO: Add this dataset and carousel
-                .. tab-item:: ExplicitStructuredGrid
-                .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rst
+        .. tab-item:: ExplicitStructuredGrid
+
+            .. include:: /api/examples/dataset-gallery/explicitstructuredgrid_carousel.rst
 
 Browse point sets with a specific kind of representation.
 

@@ -266,14 +266,15 @@ class _Loadable(Protocol):
 class _DatasetLoader(_Loadable, _DatasetPropsMixin):
     def __init__(self, load_func: Callable[..., DatasetType]):
         self._load_func = load_func
-        self._dataset = None
+        self._dataset: Optional[DatasetType] = None
 
     @property
     def dataset(self) -> Optional[DatasetType]:
         return self._dataset
 
     def load(self, *args, **kwargs) -> DatasetType:
-        return self._load_func(*args, **kwargs)
+        self._dataset = self._load_func(*args, **kwargs)
+        return self._dataset
 
 
 class _SingleFile(_SingleFilePropsProtocol):

@@ -1258,6 +1258,7 @@ class DatasetCardFetcher:
                     pass
                 else:
                     dataset_loader.load()
+                    assert dataset_loader.dataset is not None
 
     @classmethod
     def generate(cls):
@@ -1896,9 +1897,7 @@ def make_all_tables():
             PolyDataCarousel,
             UnstructuredGridCarousel,
             StructuredGridCarousel,
-            # TODO: There is no dataset of this type yet.
-            #  Add new dataset and uncomment this line
-            # ExplicitStructuredGridCarousel,
+            ExplicitStructuredGridCarousel,
             PointCloudCarousel,
             SurfaceMeshCarousel,
             RectilinearGridCarousel,
