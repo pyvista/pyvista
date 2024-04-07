@@ -767,13 +767,21 @@ For loading complex datasets with multiple files or special processing
 requirements, see the private ``pyvista/examples/_dataset_loader.py``
 module for more details on how to create a suitable dataset loader.
 
-Using the dataset loaders this way will enable any metadata for the new
-dataset to be automatically included in the :ref:`dataset_gallery`.
+Using the dataset loaders this way will enable metadata to be collected
+for the new dataset. A new dataset card titled ``My New Mesh Dataset``
+will automatically be generated and included in the :ref:`dataset_gallery`.
 
-New datasets should also provide a sample plot of the dataset in the
-``Examples`` section of the docstring of the new function, e.g.:
+In the docstring of the new ``download_my_new_mesh`` function, be sure
+to also include:
 
-.. code::
+#. A sample plot of the dataset in the examples section
+
+#. A reference link to the dataset's new (auto-generated) gallery card
+   in the see also section
+
+For example:
+
+.. code:: python
 
    def download_my_new_mesh(load=True):
       """Download my new mesh.
@@ -783,12 +791,22 @@ New datasets should also provide a sample plot of the dataset in the
       >>> from pyvista import examples
       >>> dataset = examples.download_my_new_mesh()
       >>> dataset.plot()
+
+      .. seealso::
+
+         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+             See this dataset in the Dataset Gallery for more info.
+
       """
+
+Note that the rst ``seealso`` directive must be used instead of the
+``See Also`` heading due to limitations with how `numpydoc` parses
+explicit references.
 
 In addition, the output plot image must be manually added to
 ``pyvista/doc/source/images/dataset-gallery`` for it to be used as a
-thumbnail in the :ref:`dataset_gallery`. The file name should follow the
-same convention as existing files in that directory.
+thumbnail in the :ref:`dataset_gallery`. The file name for the image
+should follow the same convention as existing files in that directory.
 
 Extending the Dataset Gallery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
