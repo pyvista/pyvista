@@ -98,7 +98,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     ):
         """Set a partition with a VTK data object."""
         if isinstance(index, slice):
-            self.SetPartition([self[i] for i in range(self.n_partitions)[index]])
+            for i, d in zip(range(self.n_partitions)[index], data):
+                self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
                 raise IndexError(f'index ({index}) out of range for this dataset.')

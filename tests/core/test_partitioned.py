@@ -35,6 +35,27 @@ def test_pop():
         partitions.pop()
 
 
+def test_partitions_slice_index(ant, sphere, uniform, airplane, tetbeam):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    sub = partitions[0:3]
+    assert len(sub) == 3
+    for i in range(len(sub)):
+        assert sub[i] is partitions[i]
+    sub = partitions[0:-1]
+    assert len(sub) + 1 == len(partitions)
+    for i in range(len(sub)):
+        assert sub[i] is partitions[i]
+    sub = partitions[0:-1:2]
+    assert len(sub) == 2
+    for i in range(len(sub)):
+        j = i * 2
+        assert sub[i] is partitions[j]
+    sub = [airplane, tetbeam]
+    partitions[0:2] = sub
+    assert partitions[0] is airplane
+    assert partitions[1] is tetbeam
+
+
 def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
     partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     assert partitions[:] == partitions[0 : len(partitions)]
