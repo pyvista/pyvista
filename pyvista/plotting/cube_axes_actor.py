@@ -34,13 +34,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):
-        if fmt:
-            if fmt.startswith('%'):
-                label = fmt % v
-            else:
-                label = fmt.format(v)
-        else:
-            label = f'{v}'
+        label = (fmt % v if fmt.startswith('%') else fmt.format(v)) if fmt else f'{v}'
         labels.InsertNextValue(label)
     return labels
 

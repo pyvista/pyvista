@@ -163,10 +163,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if self.association == FieldAssociation.NONE and isinstance(array, str):
                     dtype = 'str'
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
-                    if len(array) > 18:
-                        val = f'{array[:15]}...'
-                    else:
-                        val = array
+                    val = f'{array[:15]}...' if len(array) > 18 else array
                     line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
                 else:
                     line = (
