@@ -795,17 +795,17 @@ Extending the Dataset Gallery
 If you have multiple related datasets to contribute, or would like to
 group any existing datasets together that share similar properties,
 the :ref:`dataset_gallery` can easily be extended to feature these
-datasets in a new `card carousel<https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
+datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
 
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
 featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
 :func:`pyvista.examples.download_trumpet`, complete the following steps:
 
-1. Define a new carousel in ``pyvista/doc/source/make_tables.py``, e.g.:
+#. Define a new carousel in ``pyvista/doc/source/make_tables.py``, e.g.:
 
     .. code:: python
 
-        class InstrumentsCarousel(DatasetGalleryCarousel):
+        class InstrumentCarousel(DatasetGalleryCarousel):
             """Class to generate a carousel of instrument dataset cards."""
 
             name = 'instrument_carousel'
@@ -827,7 +827,7 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
       ``.rst`` file for the carousel
 
    -  ``doc`` is a short text description of the carousel which will
-      appear in the documentation above
+      appear in the documentation in the header above the carousel
 
    -  ``badge`` is used to give all datasets in the carousel a reference
       tag. The ``ref`` argument for the badge should be a new reference
@@ -837,11 +837,11 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
       to be included in the carousel. The dataset names should not include
       any ``load_``, ``download_``, or ``dataset_`` prefix.
 
-1. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
+#. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
    in ``pyvista/doc/source/make_tables.py``. This will enable the rst to be
    auto-generated for the carousel.
 
-1. Update the ``pyvista/doc/source/api/examples/dataset_gallery.rst`` file to
+#. Update the ``pyvista/doc/source/api/examples/dataset_gallery.rst`` file to
    include the new generated ``<name>_carousel.rst`` file. E.g. to add the
    carousel as a new drop-down item, add the following:
 
@@ -855,9 +855,8 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
    where
 
    -  the dropdown name ``:name: <reference>`` should be the badge's ``ref``
-      variable defined earlier. This will make it so that clicking the new
-      ``Instrument`` badge given to all datasets in this carousel will link to
-      the new dropdown menu.
+      variable defined earlier. This will make it so that clicking on the new
+      badge will link to the new dropdown menu.
 
    -  the name of the included ``.rst`` file should match the ``name``
       variable defined in the new ``Carousel`` class.
