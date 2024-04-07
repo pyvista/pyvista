@@ -156,8 +156,6 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
-    | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
-    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -2513,26 +2511,6 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def _set_defaults_post(self):
         self._active_time_value = self.time_values[0]
         self.set_active_time_value(self._active_time_value)
-
-
-class XMLPartitionedDataSetReader(BaseReader):
-    """XML PartitionedDataSet Reader for reading .vtpd files.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-    >>> partitions = pv.PartitionedDataSet(
-    ...     [
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)),
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 5, 10)),
-    ...     ]
-    ... )
-    >>> partitions.save("my_partitions.vtpd")
-    >>> _ = pv.read("my_partitions.vtpd")
-    """
-
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
 CLASS_READERS = {
