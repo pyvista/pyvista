@@ -997,17 +997,13 @@ def test_try_imageio_imread():
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join("temp.vtpd")
-
     partitions = pv.PartitionedDataSet(
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))]
     )
-
     partitions.save(tmpfile.strpath)
     new_partitions = pv.read(tmpfile.strpath)
-
     assert isinstance(new_partitions, pv.PartitionedDataSet)
     assert len(new_partitions) == len(partitions)
-
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partitions[i].n_cells == partitions[i].n_cells
