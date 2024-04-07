@@ -369,7 +369,6 @@ from vtkmodules.vtkIOXML import (
     vtkXMLImageDataWriter,
     vtkXMLMultiBlockDataReader,
     vtkXMLMultiBlockDataWriter,
-    vtkXMLPartitionedDataSetReader,
     vtkXMLPImageDataReader,
     vtkXMLPolyDataReader,
     vtkXMLPolyDataWriter,
