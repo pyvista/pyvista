@@ -1571,7 +1571,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     @classmethod
     def fetch_dataset_names(cls):
-        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
+        return sorted(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
 
     @classmethod
     def get_row(cls, _, dataset_name):
