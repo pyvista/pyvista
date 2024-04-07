@@ -245,8 +245,14 @@ class DataSet(DataSetFilters, DataObject):
         # verify this field is still valid
         if (
             name is not None
-            and (field is FieldAssociation.POINT or field is FieldAssociation.CELL)
+            and field is FieldAssociation.POINT
             and self.point_data.active_vectors_name != name
+        ):
+            name = None
+        if (
+            name is not None
+            and field is FieldAssociation.CELL
+            and self.cell_data.active_vectors_name != name
         ):
             name = None
 
