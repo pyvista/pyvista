@@ -1,7 +1,8 @@
 """PyVista plotting module."""
 
 import collections.abc
-from contextlib import contextmanager
+import contextlib
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -2756,10 +2757,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()
                 if point_name and cell_name:
-                    if preference == 'point':
-                        scalars = point_name
-                    else:
-                        scalars = cell_name
+                    scalars = point_name if preference == "point" else cell_name
                 else:
                     scalars = point_name if point_name is not None else cell_name
 
@@ -4072,10 +4070,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
 
         # Avoid mutating input
-        if scalar_bar_args is None:
-            scalar_bar_args = {}
-        else:
-            scalar_bar_args = scalar_bar_args.copy()
+        scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
             # Deprecated on ..., estimated removal on v0.40.0
@@ -4137,10 +4132,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         block_resolution = resolution
                 else:
                     block_resolution = resolution
-                if multi_colors:
-                    color = next(cycler)
-                else:
-                    color = cmap
+                color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
                     block,
@@ -4635,10 +4627,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        if len(args):
-            title = args[0]
-        else:
-            title = kwargs.get('title', '')
+        title = args[0] if len(args) else kwargs.get("title", "")
         if title is None:
             title = ''
         kwargs['title'] = title
@@ -4722,12 +4711,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         s[:] = scalars
         vtk_scalars.Modified()
         data.Modified()
-        try:
+        with contextlib.suppress(Exception):
             # Why are the points updated here? Not all datasets have points
             # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
-        except:
-            pass
 
         if render:
             self.render()
@@ -4825,10 +4812,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # end movie
         if hasattr(self, 'mwriter'):
-            try:
+            with suppress(BaseException):
                 self.mwriter.close()
-            except BaseException:
-                pass
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -6124,10 +6109,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         def orbit():
             """Define the internal thread for running the orbit."""
-            if progress_bar:
-                points_seq = tqdm(points)
-            else:
-                points_seq = points
+            points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
                 tstart = time.time()  # include the render time in the step time
@@ -6836,10 +6818,8 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            try:
+            with suppress(ImportError):
                 self.last_vtksz = self.export_vtksz(filename=None)
-            except ImportError:
-                pass
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:

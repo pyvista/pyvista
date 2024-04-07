@@ -1,6 +1,7 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 
 import collections.abc
+import contextlib
 from functools import wraps
 import numbers
 import pathlib
@@ -136,10 +137,7 @@ class _PointSet(DataSet):
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
-        if inplace:
-            target = self
-        else:
-            target = self.copy()
+        target = self if inplace else self.copy()
 
         target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
@@ -1424,10 +1422,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            try:
+            with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
-            except TypeError:
-                pass
 
         # validate texture
         if ftype == '.ply' and texture is not None:

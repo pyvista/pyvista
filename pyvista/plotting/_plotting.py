@@ -81,10 +81,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
-        if use_points:
-            indices_array = 'vtkOriginalPointIds'
-        else:
-            indices_array = 'vtkOriginalCellIds'
+        indices_array = 'vtkOriginalPointIds' if use_points else 'vtkOriginalCellIds'
 
     try:
         if split_sharp_edges:
@@ -237,10 +234,7 @@ def _common_arg_parser(
         _default = theme.show_scalar_bar or scalar_bar_args
         show_scalar_bar = False if rgb else _default
     # Avoid mutating input
-    if scalar_bar_args is None:
-        scalar_bar_args = {'n_colors': n_colors}
-    else:
-        scalar_bar_args = scalar_bar_args.copy()
+    scalar_bar_args = {'n_colors': n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
 
     # theme based parameters
     if split_sharp_edges is None:
@@ -253,10 +247,7 @@ def _common_arg_parser(
             render_points_as_spheres = theme.render_points_as_spheres
 
     if smooth_shading is None:
-        if pbr:
-            smooth_shading = True
-        else:
-            smooth_shading = theme.smooth_shading
+        smooth_shading = True if pbr else theme.smooth_shading
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
