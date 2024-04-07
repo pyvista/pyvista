@@ -428,6 +428,7 @@ with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.3
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 
+# 9.1+ imports
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
