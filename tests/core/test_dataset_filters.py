@@ -1586,10 +1586,7 @@ def test_sample_composite():
 def test_probe(categorical, use_points, locator):
     mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
-    if use_points:
-        dataset = np.array(mesh.points)
-    else:
-        dataset = mesh
+    dataset = np.array(mesh.points) if use_points else mesh
     with pytest.warns(PyVistaDeprecationWarning):
         result = data_to_probe.probe(
             dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator

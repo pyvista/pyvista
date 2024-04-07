@@ -201,10 +201,7 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                if use_planes:
-                    args = [planes]
-                else:
-                    args = [the_box]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
@@ -2373,10 +2370,7 @@ class WidgetHelper:
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
-                if num > 1:
-                    args = [point, index]
-                else:
-                    args = [point]
+                args = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
@@ -2386,10 +2380,7 @@ class WidgetHelper:
             indices = list(range(num))
 
         for i in range(num):
-            if center.ndim > 1:
-                loc = center[i]
-            else:
-                loc = center
+            loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":
