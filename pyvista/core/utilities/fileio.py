@@ -166,10 +166,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
-            if isinstance(each, (str, pathlib.Path)):
-                name = Path(str(each)).name
-            else:
-                name = None
+            name = Path(str(each)).name if isinstance(each, (str, pathlib.Path)) else None
             multi.append(read(each, file_format=file_format), name)
         return multi
     filename = str(Path(str(filename)).expanduser().resolve())

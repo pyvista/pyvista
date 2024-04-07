@@ -740,10 +740,7 @@ class Color:
 
         # Use default color if no color is provided
         if color is None:
-            if default_color is None:
-                color = pyvista.global_theme.color
-            else:
-                color = default_color
+            color = pyvista.global_theme.color if default_color is None else default_color
 
         try:
             if isinstance(color, Color):

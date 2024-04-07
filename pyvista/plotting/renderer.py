@@ -835,12 +835,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor.name = name
 
         if name is None:
-            if isinstance(actor, Actor):
-                name = actor.name
-            else:
-                # Fallback for non-wrapped actors
-                # e.g., vtkScalarBarActor
-                name = actor.GetAddressAsString("")
+            # Fallback for non-wrapped actors
+            # e.g., vtkScalarBarActor
+            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString("")
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
