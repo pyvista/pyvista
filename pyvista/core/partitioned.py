@@ -77,6 +77,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         if isinstance(index, slice):
             return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
+            if index < -self.n_partitions or index >= self.n_partitions:
+                raise IndexError(f'index ({index}) out of range for this dataset.')
             if index < 0:
                 index = self.n_partitions + index
             return wrap(self.GetPartition(index))
@@ -95,7 +97,14 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         data,
     ):
         """Set a partition with a VTK data object."""
-        self.SetPartition(index, data)
+        if isinstance(index, slice):
+            self.SetPartition([self[i] for i in range(self.n_partitions)[index]])
+        else:
+            if index < -self.n_partitions or index >= self.n_partitions:
+                raise IndexError(f'index ({index}) out of range for this dataset.')
+            if index < 0:
+                index = self.n_partitions + index
+            self.SetPartition(index, data)
 
     def __delitem__(self, index: Union[int, slice]) -> None:
         """Remove a partition at the specified index are not supported."""

@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 import pyvista as pv
@@ -36,6 +38,25 @@ def test_pop():
 def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
     partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     assert partitions[:] == partitions[0 : len(partitions)]
+
+
+def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetbeam):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    assert id(partitions[-1]) == id(partitions[4])
+    assert id(partitions[-2]) == id(partitions[3])
+    assert id(partitions[-3]) == id(partitions[2])
+    assert id(partitions[-4]) == id(partitions[1])
+    assert id(partitions[-5]) == id(partitions[0])
+    with pytest.raises(IndexError):
+        _ = partitions[-6]
+    partitions[-1] = ant
+    assert partitions[4] == ant
+    partitions[-5] = tetbeam
+    assert partitions[0] == tetbeam
+    index = -6
+    match = re.escape(f'index ({index}) out of range for this dataset.')
+    with pytest.raises(IndexError, match=match):
+        partitions[index] = uniform
 
 
 def test_del_slice(sphere):
