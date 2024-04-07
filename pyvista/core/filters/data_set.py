@@ -1887,7 +1887,7 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
-        if scalars_name not in output.point_data and 'Unnamed_0' in output.point_data:
+        if (scalars_name not in output.point_data) and ('Unnamed_0' in output.point_data):
             output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
 
         return output
