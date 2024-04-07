@@ -2568,5 +2568,4 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
-    '.vtpd': XMLPartitionedDataSetReader,
 }
