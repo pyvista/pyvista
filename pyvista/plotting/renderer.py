@@ -1,6 +1,7 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+import contextlib
 from functools import partial, wraps
 from typing import Sequence, cast
 import warnings
@@ -860,15 +861,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if culling:
             if culling in [True, 'back', 'backface', 'b']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             elif culling in ['front', 'frontface', 'f']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
@@ -2219,10 +2216,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
-                try:
+                with contextlib.suppress(KeyError):
                     self.remove_actor(actor, reset_camera=False, render=False)
-                except KeyError:
-                    pass
             self.Modified()
 
     def clear(self):
@@ -2493,10 +2488,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        try:
+        with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        except (AttributeError, ReferenceError):
-            pass
         self.RemoveActor(actor)
 
         if name is None:
