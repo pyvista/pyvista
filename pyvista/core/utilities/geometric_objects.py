@@ -19,6 +19,7 @@ as well as some pure-python helpers.
 
 """
 
+import contextlib
 from itertools import product
 
 import numpy as np
@@ -45,10 +46,8 @@ from .geometric_sources import (
     translate,
 )
 
-try:
+with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
-except ImportError:  # pragma: no cover
-    pass
 
 from .helpers import wrap
 from .misc import check_valid_vector

@@ -1,7 +1,8 @@
 """PyVista plotting module."""
 
 import collections.abc
-from contextlib import contextmanager
+import contextlib
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -4722,12 +4723,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         s[:] = scalars
         vtk_scalars.Modified()
         data.Modified()
-        try:
+        with contextlib.suppress(Exception):
             # Why are the points updated here? Not all datasets have points
             # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
-        except:
-            pass
 
         if render:
             self.render()
@@ -4825,10 +4824,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # end movie
         if hasattr(self, 'mwriter'):
-            try:
+            with suppress(BaseException):
                 self.mwriter.close()
-            except BaseException:
-                pass
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -6836,10 +6833,8 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            try:
+            with suppress(ImportError):
                 self.last_vtksz = self.export_vtksz(filename=None)
-            except ImportError:
-                pass
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:
