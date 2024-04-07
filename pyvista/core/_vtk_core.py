@@ -431,7 +431,6 @@ with contextlib.suppress(ImportError):
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
-
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple.
 
