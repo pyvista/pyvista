@@ -34,6 +34,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import functools
 import os
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -138,7 +139,12 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
     @property
     @abstractmethod
     def source_name(self) -> _FilePropStrType_co:
-        """Return the name of the download file relative to the source repository."""
+        """Return the name of the download relative to the base url."""
+
+    @property
+    @abstractmethod
+    def base_url(self) -> _FilePropStrType_co:
+        """Return the base url of the download."""
 
     @property
     def source_url_raw(self) -> _FilePropStrType_co:
@@ -146,11 +152,9 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
         This is the full URL used to download the data directly.
         """
-        from pyvista.examples.downloads import SOURCE
-
-        # Make single urls iterable and replace 'raw' with 'blob'
         name_iter = [name] if isinstance(name := self.source_name, str) else name
-        url_raw = [os.path.join(SOURCE, name) for name in name_iter]
+        base_url_iter = [url] if isinstance(url := self.base_url, str) else url
+        url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
     @property
@@ -386,14 +390,29 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         _SingleFile.__init__(self, path)
 
         from pyvista.examples.downloads import (
+            SOURCE,
             USER_DATA_PATH,
             _download_archive_file_or_folder,
             download_file,
             file_from_files,
         )
+        from pyvista.examples.examples import dir_path
 
-        self._download_source = path
-        self._download_func = download_file
+        if Path(path).is_absolute():
+            # Absolute path must point to a built-in dataset
+            assert Path(path).parent == Path(
+                dir_path
+            ), "Absolute path must point to a built-in dataset."
+            self._base_url = "https://github.com/pyvista/pyvista/raw/main/pyvista/examples/"
+            self._source_name = Path(path).name
+            # the dataset is already downloaded (it's built-in)
+            # so make download() simply return the local filepath
+            self._download_func = lambda source: path
+        else:
+            # Relative path, use vars from downloads.py
+            self._base_url = SOURCE
+            self._download_func = download_file
+            self._source_name = Path(path).name if Path(path).is_absolute() else path
 
         target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
         if target_file is not None:
@@ -419,10 +438,14 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
 
     @property
     def source_name(self) -> str:
-        return self._download_source
+        return self._source_name
+
+    @property
+    def base_url(self) -> str:
+        return self._base_url
 
     def download(self) -> str:
-        path = self._download_func(self._download_source)
+        path = self._download_func(self._source_name)
         assert os.path.isfile(path) or os.path.isdir(path)
         # Reset the path since the full path for archive files
         # isn't known until after downloading
@@ -552,6 +575,11 @@ class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable
     def source_name(self) -> Tuple[str, ...]:
         name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(name))
+
+    @property
+    def base_url(self) -> Tuple[str, ...]:
+        url = [file.base_url for file in self._file_objects if isinstance(file, _Downloadable)]
+        return tuple(_flatten_nested_sequence(url))
 
     def download(self) -> Tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]

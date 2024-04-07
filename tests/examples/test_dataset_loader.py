@@ -300,6 +300,39 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
 
 
 @pytest.fixture()
+def dataset_loader_one_file_local():
+    # Test 'download' for a local built-in dataset
+    loader = _SingleFileDownloadableDatasetLoader(examples.antfile)
+    loader.download()
+    loader.load_and_store_dataset()
+    return loader
+
+
+def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
+    loader = dataset_loader_one_file_local
+    assert isinstance(loader.path, str)
+    assert loader.num_files == 1
+    assert loader._total_size_bytes == 17941
+    assert loader.total_size == '17.9 KB'
+    assert loader.unique_extension == '.ply'
+    assert isinstance(loader._reader, pv.PLYReader)
+    assert loader.unique_reader_type is pv.PLYReader
+    assert isinstance(loader.dataset, pv.PolyData)
+    assert isinstance(loader.dataset_iterable[0], pv.PolyData)
+    assert loader.unique_dataset_type is pv.PolyData
+    assert loader.source_name == 'ant.ply'
+    assert (
+        loader.source_url_raw
+        == 'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/ant.ply'
+    )
+    assert (
+        loader.source_url_blob
+        == 'https://github.com/pyvista/pyvista/blob/main/pyvista/examples/ant.ply'
+    )
+    assert loader.unique_cell_types == (pv.CellType.TRIANGLE,)
+
+
+@pytest.fixture()
 def dataset_loader_one_file():
     loader = _SingleFileDownloadableDatasetLoader('cow.vtp')
     loader.download()
