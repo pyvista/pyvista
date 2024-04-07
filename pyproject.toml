@@ -361,6 +361,7 @@ extend-select = [
     "SIM401",
     "SIM910",
     "SIM911",
+    "TRY201",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]
