@@ -1,5 +1,6 @@
 """PyVista Scalar bar module."""
 
+import contextlib
 import weakref
 
 import numpy as np
@@ -63,10 +64,8 @@ class ScalarBars:
 
         # NOTE: keys to list to prevent iterator changing during loop
         for name in list(self._scalar_bar_mappers):
-            try:
+            with contextlib.suppress(ValueError):
                 self._scalar_bar_mappers[name].remove(mapper)
-            except ValueError:
-                pass
 
             if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
