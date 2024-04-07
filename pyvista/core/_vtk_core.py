@@ -440,11 +440,6 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
-try:
-    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
-except ImportError:  # pragma: no cover
-    pass
-
 
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple.
