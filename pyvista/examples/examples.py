@@ -45,6 +45,11 @@ def load_ant():
     >>> dataset = examples.load_ant()
     >>> dataset.plot()
 
+    .. seealso::
+
+        :ref:`Ant Dataset <ant_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_ant.load()
 
@@ -65,6 +70,11 @@ def load_airplane():
     >>> from pyvista import examples
     >>> dataset = examples.load_airplane()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Airplane Dataset <airplane_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_airplane.load()
@@ -87,6 +97,11 @@ def load_sphere():
     >>> dataset = examples.load_sphere()
     >>> dataset.plot()
 
+    .. seealso::
+
+        :ref:`Sphere Dataset <sphere_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_sphere.load()
 
@@ -108,6 +123,11 @@ def load_uniform():
     >>> dataset = examples.load_uniform()
     >>> dataset.plot()
 
+    .. seealso::
+
+        :ref:`Uniform Dataset <uniform_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_uniform.load()
 
@@ -128,6 +148,11 @@ def load_rectilinear():
     >>> from pyvista import examples
     >>> dataset = examples.load_rectilinear()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Rectilinear Dataset <rectilinear_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_rectilinear.load()
@@ -152,6 +177,11 @@ def load_hexbeam():
     >>> dataset = examples.load_hexbeam()
     >>> dataset.plot()
 
+    .. seealso::
+
+        :ref:`Hexbeam Dataset <hexbeam_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_hexbeam.load()
 
@@ -174,6 +204,11 @@ def load_tetbeam():
     >>> from pyvista import examples
     >>> dataset = examples.load_tetbeam()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Tetbeam Dataset <tetbeam_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_tetbeam.load()
@@ -204,6 +239,11 @@ def load_structured():
     >>> from pyvista import examples
     >>> dataset = examples.load_structured()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Structured Dataset <structured_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_structured.load()
@@ -236,6 +276,11 @@ def load_globe():
     >>> texture = examples.load_globe_texture()
     >>> dataset.plot(texture=texture)
 
+    .. seealso::
+
+        :ref:`Globe Dataset <globe_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_globe.load()
 
@@ -256,6 +301,11 @@ def load_globe_texture():
     >>> from pyvista import examples
     >>> dataset = examples.load_globe_texture()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Globe Texture Dataset <globe_texture_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_globe_texture.load()
@@ -279,6 +329,11 @@ def load_channels():
     >>> from pyvista import examples
     >>> dataset = examples.load_channels()
     >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Channels Dataset <channels_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_channels.load()
@@ -314,6 +369,11 @@ def load_spline():
     >>> from pyvista import examples
     >>> spline = examples.load_spline()
     >>> spline.plot()
+
+    .. seealso::
+
+        :ref:`Spline Dataset <spline_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_spline.load()
@@ -356,6 +416,11 @@ def load_random_hills():
     >>> mesh = examples.load_random_hills()
     >>> mesh.plot()
 
+    .. seealso::
+
+        :ref:`Random Hills Dataset <random_hills_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
     """
     return _dataset_random_hills.load()
 
@@ -390,6 +455,11 @@ def load_sphere_vectors():
     Contains arrays :
         Normals                 float32    (842, 3)             NORMALS
         vectors                 float32    (842, 3)             VECTORS
+
+    .. seealso::
+
+        :ref:`Sphere Vectors Dataset <sphere_vectors_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_sphere_vectors.load()
@@ -436,6 +506,11 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     >>> from pyvista import examples
     >>> grid = examples.load_explicit_structured()
     >>> grid.plot(show_edges=True)
+
+    .. seealso::
+
+        :ref:`Explicit Structured Dataset <explicit_structured_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_explicit_structured.load(dimensions=dimensions, spacing=spacing)
@@ -487,6 +562,11 @@ def load_nut():
     >>> from pyvista import examples
     >>> mesh = examples.load_nut()
     >>> mesh.plot(smooth_shading=True, split_sharp_edges=True)
+
+    .. seealso::
+
+        :ref:`Nut Dataset <nut_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_nut.load()
@@ -547,6 +627,11 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     See :ref:`plot_atomic_orbitals_example` for additional examples using
     this function.
+
+    .. seealso::
+
+        :ref:`Hydrogen Orbital Dataset <hydrogen_orbital_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_hydrogen_orbital.load(n=n, l=l, m=m, zoom_fac=zoom_fac)
@@ -610,6 +695,11 @@ def load_logo():
     >>> from pyvista import examples
     >>> logo = examples.load_logo()
     >>> logo.plot()
+
+    .. seealso::
+
+        :ref:`Logo Dataset <logo_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _dataset_logo.load()
