@@ -686,10 +686,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.lookup_table.scalar_range = self.scalar_range
             # Set default map
             if cmap is None:
-                if self._theme is None:
-                    cmap = pyvista.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
+                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -839,10 +836,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 f"number of cells ({self.dataset.n_cells})."
             )
 
-        if self._theme is not None:
-            default_color = self._theme.color
-        else:
-            default_color = pyvista.global_theme.color
+        default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
