@@ -1080,13 +1080,17 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_reader_type(loader: _dataset_loader._FileProps):
         """Format reader type(s) with doc references to reader class(es)."""
-        reader_type = (
-            repr(loader.unique_reader_type)
-            .replace('<class \'', ':class:`~')
-            .replace('\'>', '`')
-            .replace('(', '')
-            .replace(')', '')
-        ).replace(', ', '\n')
+        reader_type = loader.unique_reader_type
+        if reader_type is None:
+            return "``None``"
+        else:
+            reader_type = (
+                repr(loader.unique_reader_type)
+                .replace('<class \'', ':class:`~')
+                .replace('\'>', '`')
+                .replace('(', '')
+                .replace(')', '')
+            ).replace(', ', '\n')
         return reader_type
 
     @staticmethod
