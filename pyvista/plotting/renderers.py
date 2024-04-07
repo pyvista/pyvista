@@ -65,10 +65,7 @@ class Renderers:
 
         # by default add border for multiple plots
         if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
+            border = True if shape != (1, 1) else False
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -88,10 +85,7 @@ class Renderers:
                 splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
-                if n >= m:
-                    xsplit = m / (n + m)
-                else:
-                    xsplit = 1 - n / (n + m)
+                xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
             else:
                 xsplit = splitting_position
 

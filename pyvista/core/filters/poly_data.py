@@ -2189,10 +2189,7 @@ class PolyDataFilters(DataSetFilters):
 
         intersection_cells = []
         if has_intersection:
-            if first_point:
-                ncells = 1
-            else:
-                ncells = cell_ids.GetNumberOfIds()
+            ncells = 1 if first_point else cell_ids.GetNumberOfIds()
             intersection_cells = [cell_ids.GetId(i) for i in range(ncells)]
         intersection_cells = np.array(intersection_cells)
 
@@ -2511,10 +2508,7 @@ class PolyDataFilters(DataSetFilters):
 
         f = self.faces.reshape(-1, 4)[:, 1:]
         vmask = remove_mask.take(f)
-        if mode == 'all':
-            fmask = ~(vmask).all(1)
-        else:
-            fmask = ~(vmask).any(1)
+        fmask = ~vmask.all(1) if mode == 'all' else ~vmask.any(1)
 
         # Regenerate face and point arrays
         uni = np.unique(f.compress(fmask, 0), return_inverse=True)
@@ -2757,10 +2751,7 @@ class PolyDataFilters(DataSetFilters):
         if origin is None:
             origin = np.array(self.center) - np.array(normal) * self.length / 2.0
         # choose what mesh to use
-        if not inplace:
-            mesh = self.copy()
-        else:
-            mesh = self
+        mesh = self.copy() if not inplace else self
         # Make plane
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh

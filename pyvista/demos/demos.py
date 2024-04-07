@@ -508,10 +508,7 @@ def plot_datasets(dataset_type=None):
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    if dataset_type is not None:
-        pl = pyvista.Plotter()
-    else:
-        pl = pyvista.Plotter(shape='3/2')
+    pl = pyvista.Plotter() if dataset_type is not None else pyvista.Plotter(shape='3/2')
 
     # polydata
     if dataset_type is None:

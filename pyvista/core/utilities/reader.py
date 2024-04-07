@@ -2359,7 +2359,7 @@ class HDFReader(BaseReader):
                     f'see {HDF_HELP} for more details.'
                 )
             else:
-                raise err
+                raise
 
 
 class GLTFReader(BaseReader):

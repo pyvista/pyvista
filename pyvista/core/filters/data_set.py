@@ -6565,10 +6565,7 @@ class DataSetFilters:
             for num_in, num_out in zip(label_numbers_in, label_numbers_out):
                 packed_array[arr == num_in] = num_out
 
-            if inplace:
-                result = self
-            else:
-                result = self.copy(deep=True)
+            result = self if inplace else self.copy(deep=True)
 
             # Add output to mesh
             if field == FieldAssociation.POINT:

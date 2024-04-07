@@ -522,10 +522,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                if left_clicking:
-                    show_message = "Left-click"
-                else:
-                    show_message = "Right-click"
+                show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick under the mouse'
             self._picking_text = self.add_text(
                 str(show_message), font_size=font_size, name='_point_picking_message'
@@ -1032,11 +1029,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 self_().render()
 
         # add on-screen message about point-selection
-        if show_message and show_message is True:
-            if left_clicking:
-                show_message = "Left-click"
-            else:
-                show_message = "Right-click"
+        if show_message:
+            show_message = 'Left-click' if left_clicking else 'Right-click'
             show_message += ' or press P to pick single dataset under the mouse pointer'
 
         self.enable_surface_point_picking(
