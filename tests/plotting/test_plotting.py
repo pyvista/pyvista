@@ -4072,10 +4072,7 @@ def _has_param(call: Callable, param: str) -> bool:
             return True
         except BaseException as ex:
             # Param is not valid only if a kwarg TypeError is raised
-            if 'TypeError' in repr(ex) and 'unexpected keyword argument' in repr(ex):
-                return False
-            else:
-                return True
+            return not ("TypeError" in repr(ex) and "unexpected keyword argument" in repr(ex))
 
 
 def _get_default_param_value(call: Callable, param: str) -> Any:

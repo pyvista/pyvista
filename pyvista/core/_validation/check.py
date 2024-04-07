@@ -549,10 +549,7 @@ def check_shape(
     def _shape_is_allowed(a, b):
         # a: array's actual shape
         # b: allowed shape (may have -1)
-        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
-            return True
-        else:
-            return False
+        return bool(len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)))
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
