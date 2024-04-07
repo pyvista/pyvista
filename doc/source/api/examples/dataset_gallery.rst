@@ -4,11 +4,12 @@ Dataset Gallery
 ===============
 Browse PyVista datasets and their metadata.
 
-.. dropdown:: All Datasets
-    :name: all_datasets_gallery
-    :open:
+.. _all_datasets_gallery:
 
-    .. include:: /api/examples/dataset-gallery/all_datasets_carousel.rst
+Browse All Datasets
+-------------------
+
+.. include:: /api/examples/dataset-gallery/all_datasets_carousel.rst
 
 Browse Datasets by Module
 -------------------------
@@ -16,7 +17,6 @@ Datasets in this section are organized by the module they are imported from.
 
 .. dropdown:: Dataset Modules
     :name: modules_gallery
-    :open:
 
     .. tab-set::
 

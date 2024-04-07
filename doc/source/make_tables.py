@@ -1230,6 +1230,8 @@ class DatasetPropsGenerator:
 
 
 class DatasetCardFetcher:
+    """Class for storing and retrieving dataset card info."""
+
     # Dict of all card objects
     DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
 
@@ -1247,6 +1249,7 @@ class DatasetCardFetcher:
         """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
+        cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
     def clear_datasets(cls):
@@ -1283,13 +1286,57 @@ class DatasetCardFetcher:
                     assert dataset_loader.dataset is not None
 
     @classmethod
-    def generate(cls):
+    def generate_rst_all_cards(cls):
         """Generate formatted rst output for all cards."""
         for name in cls.DATASET_CARDS_OBJ:
             card, card_with_ref = cls.DATASET_CARDS_OBJ[name].generate()
             # indent one level from the carousel header directive
             cls.DATASET_CARDS_RST_REF[name] = _pad_lines(card_with_ref, pad_left='   ')
             cls.DATASET_CARDS_RST[name] = _pad_lines(card, pad_left='   ')
+
+    @classmethod
+    def generate_alphabet_index(cls, dataset_names):
+        """Generate single-letter index buttons which link to the datasets by their first letter."""
+
+        def _generate_button(string, ref):
+            return _indent_multi_line_string(
+                f".. button-ref:: {ref}\n\n   {string}\n", indent_level=1
+            )
+
+        def _generate_grid_item(string):
+            return _aligned_dedent(
+                """
+                    |.. grid-item::
+                    |   :columns: auto
+                    |
+                    |   {}
+                    """
+            )[1:].format(_indent_multi_line_string(string, indent_level=1))
+
+        def _generate_grid(string):
+            return _aligned_dedent(
+                """
+                |.. grid::
+                |   :margin: 1
+                |   :padding: 0
+                |   :gutter: 1
+                |
+                |   {}
+                """
+            )[1:].format(_indent_multi_line_string(string, indent_level=1))
+
+        # Get mapping of alphabet letters to first dataset name which begins with each letter
+        alphabet_dict = {}
+        for dataset_name in sorted(dataset_names):
+            alphabet_dict.setdefault(dataset_name[0].upper(), dataset_name)
+
+        buttons = []
+        for letter, dataset_name in alphabet_dict.items():
+            # Get reference target for this dataset
+            target_name = DatasetCard._generate_dataset_name(dataset_name)[0]
+            button_rst = _generate_grid_item(_generate_button(letter, target_name))
+            buttons.append(button_rst)
+        return _generate_grid('\n'.join(buttons))
 
     @classmethod
     def add_badge_to_cards(cls, dataset_names: List[str], badge: _BaseDatasetBadge):
@@ -1305,13 +1352,13 @@ class DatasetCardFetcher:
                 card.add_badge(CellTypeBadge(cell_type.name))
 
     @classmethod
-    def fetch_dataset_names_by_datatype(cls, datatype) -> List[str]:
+    def fetch_dataset_names_by_datatype(cls, datatype) -> Generator[str]:
         for name, dataset_iterable in cls.fetch_all_dataset_objects():
             if datatype in [type(data) for data in dataset_iterable]:
                 yield name
 
     @classmethod
-    def fetch_dataset_names_by_module(cls, module) -> List[str]:
+    def fetch_dataset_names_by_module(cls, module) -> Generator[str]:
         for name, loader in cls.fetch_all_dataset_loaders():
             if loader.module is module:
                 yield name
@@ -1550,8 +1597,10 @@ class DatasetGalleryCarousel(DocTable):
     @final
     def get_header(cls, data):
         """Generate the rst for the carousel's header."""
-        assert cls.name is not None, f"Carousel {cls} must have a name."
-        assert cls.doc is not None, f"Carousel {cls} must have a doc string."
+        assert isinstance(cls.name, str), f"Carousel {cls} must have a name."
+        # Get doc value
+        doc = cls.doc.fget(cls) if isinstance(cls.doc, property) else cls.doc
+        assert isinstance(doc, str), f"Carousel {cls} must have a doc string."
 
         badge_info = f":Section Badge: {cls.badge.generate()}" if cls.badge else ''
         num_datasets = len(data)
@@ -1579,11 +1628,15 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
     """
 
     name = 'all_datasets_carousel'
-    doc = 'Browse all loadable PyVista datasets. Datasets are sorted alphabetically.'
+
+    @classmethod
+    @property
+    def doc(cls):
+        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod
     def fetch_dataset_names(cls):
-        return sorted(DatasetCardFetcher.DATASET_CARDS_OBJ.keys())
+        return DatasetCardFetcher.DATASET_CARDS_OBJ.keys()
 
     @classmethod
     def get_row(cls, _, dataset_name):
@@ -1905,7 +1958,7 @@ def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
     DatasetCardFetcher.add_cell_badges_to_all_cards()
 
     # Generate rst for all card objects
-    DatasetCardFetcher.generate()
+    DatasetCardFetcher.generate_rst_all_cards()
 
     # Generate rst for all carousels
     [carousel.generate() for carousel in carousels]
