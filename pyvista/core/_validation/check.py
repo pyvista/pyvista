@@ -218,11 +218,8 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
     else:  # not ascending and strict
         is_sorted = np.all(arr[first] > arr[second])
     if not is_sorted:
-        if arr.size <= 4:
-            # Show the array's elements in error msg if array is small
-            msg_body = f"{arr}"
-        else:
-            msg_body = f"with {arr.size} elements"
+        # Show the array's elements in error msg if array is small
+        msg_body = f"{arr}" if arr.size <= 4 else f"with {arr.size} elements"
         order = "ascending" if ascending else "descending"
         strict = "strict " if strict else ""
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
@@ -779,10 +776,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         classinfo = get_args(classinfo)
 
     # Count num classes
-    if isinstance(classinfo, tuple):
-        num_classes = len(classinfo)
-    else:
-        num_classes = 1
+    num_classes = len(classinfo) if isinstance(classinfo, tuple) else 1
 
     # Check if is instance
     is_instance = isinstance(obj, classinfo)
@@ -951,10 +945,7 @@ def check_contains(*, item, container, name='Input'):
 
     """
     if item not in container:
-        if isinstance(container, (list, tuple)):
-            qualifier = "one of"
-        else:
-            qualifier = "in"
+        qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
         msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
         raise ValueError(msg)
 
