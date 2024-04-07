@@ -34,7 +34,12 @@ import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import _dataset_loader
-from pyvista.examples._dataset_loader import DatasetObject, _DatasetLoader, _Downloadable
+from pyvista.examples._dataset_loader import (
+    DatasetObject,
+    _BaseFilePropsProtocol,
+    _DatasetLoader,
+    _Downloadable,
+)
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -558,7 +563,6 @@ class DatasetCard:
         |            ^^^
         |            {}
         |
-        |   +++
         |   {}
         |
         |
@@ -620,6 +624,7 @@ class DatasetCard:
 
     footer_template = _aligned_dedent(
         """
+        |+++
         |.. dropdown:: Data Source
         |   :icon: mark-github
         |
@@ -748,7 +753,9 @@ class DatasetCard:
         dataset_props_block = self._create_dataset_props_block(
             dataset_type, celltype_badges, n_cells, n_points, length, dimensions, spacing, n_arrays
         )
-        file_info_block = self._create_file_props_block(file_size, num_files, file_ext, reader_type)
+        file_info_block = self._create_file_props_block(
+            self.loader, file_size, num_files, file_ext, reader_type
+        )
         footer_block = self._create_footer_block(datasource_links)
 
         # Create two versions of the card
@@ -1044,17 +1051,22 @@ class DatasetCard:
         return dataset_fields_block
 
     @classmethod
-    def _create_file_props_block(cls, file_size, num_files, file_ext, reader_type):
-        file_info_fields = [
-            ('File Size', file_size),
-            ('Num Files', num_files),
-            ('File Ext', file_ext),
-            ('Reader', reader_type),
-        ]
-        file_info_fields_block = DatasetCard._generate_field_block(
+    def _create_file_props_block(cls, loader, file_size, num_files, file_ext, reader_type):
+        if isinstance(loader, _BaseFilePropsProtocol):
+            file_info_fields = [
+                ('File Size', file_size),
+                ('Num Files', num_files),
+                ('File Ext', file_ext),
+                ('Reader', reader_type),
+            ]
+            file_info_fields_block = DatasetCard._generate_field_block(
+                file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+            )
+            return file_info_fields_block
+        file_info_fields = "``Not Applicable.``\n\n``Dataset is not loaded from file.``"
+        return _indent_multi_line_string(
             file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
         )
-        return file_info_fields_block
 
     @classmethod
     def _create_footer_block(cls, datasource_links):
