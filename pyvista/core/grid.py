@@ -152,10 +152,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
             arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
-            else:
-                arg2_is_arr = False
+            arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence)) if len(args) == 3 else False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(

@@ -367,10 +367,7 @@ class ScalarBars:
 
         # Automatically choose size if not specified
         if width is None:
-            if vertical:
-                width = theme.colorbar_vertical.width
-            else:
-                width = theme.colorbar_horizontal.width
+            width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
         if height is None:
             if vertical:
                 height = theme.colorbar_vertical.height
