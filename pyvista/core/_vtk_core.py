@@ -441,7 +441,6 @@ try:
 except ImportError:  # pragma: no cover
     pass
 
-# 9.1+ imports
 try:
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 except ImportError:  # pragma: no cover
