@@ -498,13 +498,14 @@ class RenderWindowInteractor:
 
         """
         # Set scene to interact with or reset it to stop interaction (otherwise crash)
-        if vtk_version_info < (9, 3, 0):  # pragma: no cover
-            if scene is not None and len(self._plotter.renderers) > 1:
-                warnings.warn(
-                    "Interaction with charts is not possible when using multiple subplots."
-                    "Upgrade to VTK 9.3 or newer to enable this feature."
-                )
-                scene = None
+        if (
+            vtk_version_info < (9, 3, 0) and scene is not None and len(self._plotter.renderers) > 1
+        ):  # pragma: no cover
+            warnings.warn(
+                "Interaction with charts is not possible when using multiple subplots."
+                "Upgrade to VTK 9.3 or newer to enable this feature."
+            )
+            scene = None
         self._context_style.SetScene(scene)
         if scene is None and self._style == "Context":
             # Switch back to previous interactor style

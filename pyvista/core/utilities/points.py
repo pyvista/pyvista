@@ -48,15 +48,14 @@ def vtk_points(points, deep=True, force_float=False):
     if not np.issubdtype(points.dtype, np.number):
         raise TypeError('Points must be a numeric type')
 
-    if force_float:
-        if not np.issubdtype(points.dtype, np.floating):
-            warnings.warn(
-                'Points is not a float type. This can cause issues when '
-                'transforming or applying filters. Casting to '
-                '``np.float32``. Disable this by passing '
-                '``force_float=False``.'
-            )
-            points = points.astype(np.float32)
+    if force_float and not np.issubdtype(points.dtype, np.floating):
+        warnings.warn(
+            'Points is not a float type. This can cause issues when '
+            'transforming or applying filters. Casting to '
+            '``np.float32``. Disable this by passing '
+            '``force_float=False``.'
+        )
+        points = points.astype(np.float32)
 
     # check dimensionality
     if points.ndim == 1:
@@ -72,18 +71,17 @@ def vtk_points(points, deep=True, force_float=False):
         )
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points, pyvista.pyvista_ndarray):
-        if points.VTKObject is not None:
-            vtk_object = points.VTKObject
+    if not deep and isinstance(points, pyvista.pyvista_ndarray) and points.VTKObject is not None:
+        vtk_object = points.VTKObject
 
-            # we can only use the underlying data if `points` is not a slice of
-            # the VTK data object
-            if vtk_object.GetSize() == points.size:
-                vtkpts = _vtk.vtkPoints()
-                vtkpts.SetData(points.VTKObject)
-                return vtkpts
-            else:
-                deep = True
+        # we can only use the underlying data if `points` is not a slice of
+        # the VTK data object
+        if vtk_object.GetSize() == points.size:
+            vtkpts = _vtk.vtkPoints()
+            vtkpts.SetData(points.VTKObject)
+            return vtkpts
+        else:
+            deep = True
 
     # points must be contiguous
     points = np.require(points, requirements=['C'])

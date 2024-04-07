@@ -156,9 +156,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     arr_type = ''
 
                 # special treatment for vector data
-                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
-                    if name == self.active_vectors_name:
-                        arr_type = 'VECTORS'
+                if (
+                    self.association in [FieldAssociation.POINT, FieldAssociation.CELL]
+                    and name == self.active_vectors_name
+                ):
+                    arr_type = 'VECTORS'
                 # special treatment for string field data
                 if self.association == FieldAssociation.NONE and isinstance(array, str):
                     dtype = 'str'
@@ -763,11 +765,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 )
 
         # attempt to reuse the existing pointer to underlying VTK data
-        if isinstance(data, pyvista_ndarray):
+        if isinstance(data, pyvista_ndarray):  # noqa: SIM102
             # pyvista_ndarray already contains the reference to the vtk object
             # pyvista needs to use the copy of this object rather than wrapping
             # the array (which leaves a C++ pointer uncollected.
-            if data.VTKObject is not None:
+            if data.VTKObject is not None:  # noqa: SIM102
                 # VTK doesn't support strides, therefore we can't directly
                 # point to the underlying object
                 if data.flags.c_contiguous:
@@ -797,9 +799,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     'setting dataset attributes'
                 )
 
-            if data.ndim != 1:
-                if data.shape[1] != 1:
-                    raise ValueError('Complex data must be single dimensional.')
+            if data.ndim != 1 and data.shape[1] != 1:
+                raise ValueError('Complex data must be single dimensional.')
             self.dataset._association_complex_names[self.association.name].add(name)
 
             # complex data is stored internally as a contiguous 2 component

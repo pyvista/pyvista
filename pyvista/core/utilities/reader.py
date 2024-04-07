@@ -1490,9 +1490,8 @@ class MultiBlockPlot3DReader(BaseReader):
 
         """
         # files may be a list or a single filename
-        if files:
-            if isinstance(files, (str, pathlib.Path)):
-                files = [files]
+        if files and isinstance(files, (str, pathlib.Path)):
+            files = [files]
         files = [_process_filename(f) for f in files]
 
         # AddFileName supports reading multiple q files

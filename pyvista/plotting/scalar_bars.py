@@ -362,9 +362,8 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
-                vertical = True
+        if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
+            vertical = True
 
         # Automatically choose size if not specified
         if width is None:

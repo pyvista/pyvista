@@ -456,12 +456,11 @@ def plot_datasets(dataset_type=None):
         'RectilinearGrid',
         'StructuredGrid',
     ]
-    if dataset_type is not None:
-        if dataset_type not in allowable_types:
-            raise ValueError(
-                f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}'
-            )
+    if dataset_type is not None and dataset_type not in allowable_types:
+        raise ValueError(
+            f'Invalid dataset_type {dataset_type}.  Must be one '
+            f'of the following: {allowable_types}'
+        )
 
     ###########################################################################
     # uniform grid

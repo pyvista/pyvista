@@ -672,9 +672,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if np.any(clim) and not rgb:
             self.scalar_range = clim[0], clim[1]

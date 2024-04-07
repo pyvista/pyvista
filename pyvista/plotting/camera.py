@@ -85,9 +85,8 @@ class Camera(_vtk.vtkCamera):
         if trans_count == 1:
             # either but not both are None
             return False
-        if trans_count == 2:
-            if not np.array_equal(this_trans, that_trans):
-                return False
+        if trans_count == 2 and not np.array_equal(this_trans, that_trans):
+            return False
 
         return True
 

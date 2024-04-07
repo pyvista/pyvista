@@ -192,9 +192,8 @@ class DataSet(DataSetFilters, DataObject):
             if field is FieldAssociation.CELL:
                 if self.cell_data.active_scalars_name != name:
                     name = None
-            elif field is FieldAssociation.POINT:
-                if self.point_data.active_scalars_name != name:
-                    name = None
+            elif field is FieldAssociation.POINT and self.point_data.active_scalars_name != name:
+                name = None
 
         if name is None:
             # check for the active scalars in point or cell arrays
@@ -244,13 +243,12 @@ class DataSet(DataSetFilters, DataObject):
         field, name = self._active_vectors_info
 
         # verify this field is still valid
-        if name is not None:
-            if field is FieldAssociation.POINT:
-                if self.point_data.active_vectors_name != name:
-                    name = None
-            if field is FieldAssociation.CELL:
-                if self.cell_data.active_vectors_name != name:
-                    name = None
+        if (
+            name is not None
+            and (field is FieldAssociation.POINT or field is FieldAssociation.CELL)
+            and self.point_data.active_vectors_name != name
+        ):
+            name = None
 
         if name is None:
             # check for the active vectors in point or cell arrays
@@ -506,13 +504,15 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pdata = self.GetPoints()
-        if isinstance(points, pyvista_ndarray):
-            # simply set the underlying data
-            if points.VTKObject is not None and pdata is not None:
-                pdata.SetData(points.VTKObject)
-                pdata.Modified()
-                self.Modified()
-                return
+        if (
+            isinstance(points, pyvista_ndarray)
+            and points.VTKObject is not None
+            and pdata is not None
+        ):
+            pdata.SetData(points.VTKObject)
+            pdata.Modified()
+            self.Modified()
+            return
         # directly set the data if vtk object
         if isinstance(points, _vtk.vtkPoints):
             self.SetPoints(points)

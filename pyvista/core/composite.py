@@ -1219,12 +1219,11 @@ class MultiBlock(
             # multi-component
             if not isinstance(component, (int, type(None))):
                 raise TypeError('`component` must be either None or an integer')
-            if component is not None:
-                if component >= scalars.shape[1] or component < 0:
-                    raise ValueError(
-                        'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
-                    )
+            if component is not None and (component >= scalars.shape[1] or component < 0):
+                raise ValueError(
+                    'Component must be nonnegative and less than the '
+                    f'dimensionality of the scalars array: {scalars.shape[1]}'
+                )
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
         return field, scalars_name, dtype

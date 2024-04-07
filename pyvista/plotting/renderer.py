@@ -392,9 +392,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.view_vector(camera_location)
         else:
             # check if a valid camera position
-            if not isinstance(camera_location, CameraPosition):
-                if not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location):
-                    raise InvalidCameraError
+            if not isinstance(camera_location, CameraPosition) and (
+                not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location)
+            ):
+                raise InvalidCameraError
 
             # everything is set explicitly
             self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
@@ -2257,9 +2258,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
@@ -2292,9 +2292,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera(render=render)
@@ -2328,9 +2327,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(vector, np.ndarray):
-            if vector.ndim != 1:
-                vector = vector.ravel()
+        if isinstance(vector, np.ndarray) and vector.ndim != 1:
+            vector = vector.ravel()
 
         self.camera.up = vector
         if reset:
@@ -2613,15 +2611,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             hasattr(self, '_box_object')
             and self._box_object is not None
             and self.bounding_box_actor is not None
-        ):
-            if not np.allclose(self._box_object.bounds, self.bounds):
-                color = self.bounding_box_actor.GetProperty().GetColor()
-                self.remove_bounding_box()
-                self.add_bounding_box(color=color)
-                self.remove_floors(clear_kwargs=False)
-                for floor_kwargs in self._floor_kwargs:
-                    floor_kwargs['store_floor_kwargs'] = False
-                    self.add_floor(**floor_kwargs)
+        ) and not np.allclose(self._box_object.bounds, self.bounds):
+            color = self.bounding_box_actor.GetProperty().GetColor()
+            self.remove_bounding_box()
+            self.add_bounding_box(color=color)
+            self.remove_floors(clear_kwargs=False)
+            for floor_kwargs in self._floor_kwargs:
+                floor_kwargs['store_floor_kwargs'] = False
+                self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
             self.cube_axes_actor.update_bounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):

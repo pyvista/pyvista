@@ -128,11 +128,8 @@ class _PointSet(DataSet):
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
-                )
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool_ and ind.size != self.n_cells:
+            raise ValueError(f'Boolean array size must match the number of cells ({self.n_cells})')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
@@ -2556,11 +2553,8 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         """
         if not inplace:
             return self.copy().hide_cells(ind, inplace=True)
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
-                )
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool_ and ind.size != self.n_cells:
+            raise ValueError(f'Boolean array size must match the number of cells ({self.n_cells})')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
 
@@ -2599,11 +2593,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> grid.hide_points(range(80 * 30, 80 * 50))
         >>> grid.plot(color=True, show_edges=True)
         """
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_points:
-                raise ValueError(
-                    f'Boolean array size must match the number of points ({self.n_points})'
-                )
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool_ and ind.size != self.n_points:
+            raise ValueError(
+                f'Boolean array size must match the number of points ({self.n_points})'
+            )
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
 
