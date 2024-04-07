@@ -1781,7 +1781,7 @@ class MiscCarousel(DatasetGalleryCarousel):
 
 
 class MedicalCarousel(DatasetGalleryCarousel):
-    """Class to generate a table of medical dataset cards."""
+    """Class to generate a carousel of medical dataset cards."""
 
     name = 'medical_carousel'
     doc = 'Medical datasets.'
@@ -1831,6 +1831,32 @@ def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
     [carousel.generate() for carousel in carousels]
 
 
+CAROUSEL_LIST = [
+    DownloadsCarousel,
+    PointSetCarousel,
+    PolyDataCarousel,
+    UnstructuredGridCarousel,
+    StructuredGridCarousel,
+    # TODO: There is no dataset of this type yet.
+    #  Add new dataset and uncomment this line
+    # ExplicitStructuredGridCarousel,
+    PointCloudCarousel,
+    SurfaceMeshCarousel,
+    RectilinearGridCarousel,
+    ImageDataCarousel,
+    ImageData3DCarousel,
+    ImageData2DCarousel,
+    TextureCarousel,
+    CubemapCarousel,
+    MultiBlockCarousel,
+    MultiBlockHomoCarousel,
+    MultiBlockHeteroCarousel,
+    MultiBlockSingleCarousel,
+    MiscCarousel,
+    MedicalCarousel,
+]
+
+
 def make_all_tables():
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
@@ -1841,29 +1867,4 @@ def make_all_tables():
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    make_all_carousels(
-        [
-            DownloadsCarousel,
-            PointSetCarousel,
-            PolyDataCarousel,
-            UnstructuredGridCarousel,
-            StructuredGridCarousel,
-            # TODO: There is no dataset of this type yet.
-            #  Add new dataset and uncomment this line
-            # ExplicitStructuredGridCarousel,
-            PointCloudCarousel,
-            SurfaceMeshCarousel,
-            RectilinearGridCarousel,
-            ImageDataCarousel,
-            ImageData3DCarousel,
-            ImageData2DCarousel,
-            TextureCarousel,
-            CubemapCarousel,
-            MultiBlockCarousel,
-            MultiBlockHomoCarousel,
-            MultiBlockHeteroCarousel,
-            MultiBlockSingleCarousel,
-            MiscCarousel,
-            MedicalCarousel,
-        ]
-    )
+    make_all_carousels(CAROUSEL_LIST)
