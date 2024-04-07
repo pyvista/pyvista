@@ -205,7 +205,6 @@ from .reader import (
     XdmfReader,
     XMLImageDataReader,
     XMLMultiBlockDataReader,
-    XMLPartitionedDataSetReader,
     XMLPImageDataReader,
     XMLPolyDataReader,
     XMLPRectilinearGridReader,
