@@ -47,7 +47,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
                 if deep:
                     self.deep_copy(args[0])
                 else:
-                    self.shallow_copy(args[0])
+                    raise PartitionedDataSetsNotSupported
             elif isinstance(args[0], (list, tuple)):
                 for partition in args[0]:
                     self.append(partition)
@@ -191,6 +191,46 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     def __len__(self) -> int:
         """Return the number of partitions."""
         return self.n_partitions
+
+    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+        """Copy pyvista meta data onto this object from another object."""
+
+    def copy(self, deep=True):
+        """Return a copy of the multiblock.
+
+        Parameters
+        ----------
+        deep : bool, default: True
+            When ``True``, make a full copy of the object.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+           Deep or shallow copy of the ``MultiBlock``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> data = [
+        ...     pv.Sphere(center=(2, 0, 0)),
+        ...     pv.Cube(center=(0, 2, 0)),
+        ...     pv.Cone(),
+        ... ]
+        >>> blocks = pv.MultiBlock(data)
+        >>> new_blocks = blocks.copy()
+        >>> len(new_blocks)
+        3
+
+        """
+        thistype = type(self)
+        newobject = thistype()
+        if deep:
+            newobject.deep_copy(self)
+        else:
+            raise PartitionedDataSetsNotSupported
+        newobject.copy_meta_from(self, deep)
+        newobject.wrap_nested()
+        return newobject
 
     @property
     def n_partitions(self) -> int:
