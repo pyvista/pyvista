@@ -793,7 +793,7 @@ same convention as existing files in that directory.
 Extending the Dataset Gallery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If you have multiple related datasets to contribute, or would like to
-group any existing datasets together which share similar properties,
+group any existing datasets together that share similar properties,
 the :ref:`dataset_gallery` can easily be extended to feature these
 datasets in a new `card carousel<https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
 
@@ -837,11 +837,11 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
       to be included in the carousel. The dataset names should not include
       any ``load_``, ``download_``, or ``dataset_`` prefix.
 
-2. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
+1. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
    in ``pyvista/doc/source/make_tables.py``. This will enable the rst to be
    auto-generated for the carousel.
 
-3. Update the ``pyvista/doc/source/api/examples/dataset_gallery.rst`` file to
+1. Update the ``pyvista/doc/source/api/examples/dataset_gallery.rst`` file to
    include the new generated ``<name>_carousel.rst`` file. E.g. to add the
    carousel as a new drop-down item, add the following:
 
