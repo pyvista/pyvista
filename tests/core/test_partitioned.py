@@ -61,6 +61,26 @@ def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
     assert partitions[:] == partitions[0 : len(partitions)]
 
 
+def test_partitioned_dataset_deep_copy(ant, sphere, uniform, airplane, tetbeam):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    partitions_copy = partitions.copy()
+    assert partitions.n_partitions == 5 == partitions_copy.n_partitions
+    assert id(partitions[0]) != id(partitions_copy[0])
+    assert id(partitions[-1]) != id(partitions_copy[-1])
+    for i in range(partitions_copy.n_partitions):
+        assert pv.is_pyvista_dataset(partitions_copy.GetPartition(i))
+
+
+def test_partitioned_dataset_shallow_copy(ant, sphere, uniform, airplane, tetbeam):
+    partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    partitions_copy = partitions.copy(deep=False)
+    assert partitions.n_partitions == 5 == partitions_copy.n_partitions
+    assert id(partitions[0]) == id(partitions_copy[0])
+    assert id(partitions[-1]) == id(partitions_copy[-1])
+    for i in range(partitions_copy.n_partitions):
+        assert pv.is_pyvista_dataset(partitions_copy.GetPartition(i))
+
+
 def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetbeam):
     partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     assert id(partitions[-1]) == id(partitions[4])
