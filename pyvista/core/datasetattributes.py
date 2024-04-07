@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
@@ -878,10 +879,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if key not in self:
             raise KeyError(f'{key} not present.')
 
-        try:
+        with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)
-        except KeyError:
-            pass
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 

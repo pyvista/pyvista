@@ -1,6 +1,7 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 
 import collections.abc
+import contextlib
 from typing import Literal, Optional, Sequence, Union
 import warnings
 
@@ -2797,10 +2798,8 @@ class DataSetFilters:
             output = output.connectivity('all', label_regions=True, inplace=inplace)
 
         # Remove temp point array
-        try:
+        with contextlib.suppress(KeyError):
             output.point_data.remove('__point_data')
-        except KeyError:
-            pass
 
         if not label_regions and output.n_cells > 0:
             output.point_data.remove('RegionId')
