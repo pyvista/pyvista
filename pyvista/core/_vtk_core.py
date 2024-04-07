@@ -428,10 +428,8 @@ with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.3
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
 
-try:
+with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
-except ImportError:  # pragma: no cover
-    pass
 
 
 def VTKVersionInfo():
