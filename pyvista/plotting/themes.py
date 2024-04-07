@@ -61,7 +61,7 @@ def _set_plot_theme_from_env() -> None:
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
-    return None
+    return
 
 
 def load_theme(filename):
@@ -3033,7 +3033,7 @@ class Theme(_ThemeConfig):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
-        return None
+        return
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
@@ -3062,7 +3062,7 @@ class Theme(_ThemeConfig):
         with Path(filename).open('w') as f:
             json.dump(data, f)
 
-        return None
+        return
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
