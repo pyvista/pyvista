@@ -637,8 +637,8 @@ class DatasetCard:
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-align-major-justify sd-px-0
-        |   :class-row: sd-align-major-justify sd-px-0
+        |   :class-container: sd-px-0
+        |   :class-row: sd-px-0
         |   :margin: 1
         |   :padding: 0
         |   :gutter: 1
@@ -646,13 +646,16 @@ class DatasetCard:
         |   .. grid-item::
         |      :columns: auto
         |      :class: sd-text-nowrap
+        |      :child-direction: row
+        |      :child-align: start
         |
         |      **{}**
         |
         |   .. grid-item::
         |      :columns: auto
         |      :class: sd-text-right sd-text-nowrap
-        |      :child-align: justify
+        |      :child-direction: row
+        |      :child-align: end
         |
         |      {}
         |
