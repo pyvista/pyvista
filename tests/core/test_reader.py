@@ -997,7 +997,6 @@ def test_try_imageio_imread():
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join("temp.vtpd")
-
     partitions = pv.PartitionedDataSet(
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))]
     )
