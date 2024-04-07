@@ -13,26 +13,6 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
-
-    Examples
-    --------
-    >>> import pyvista as pv
-
-    >>> partitions = pv.PartitionedDataSet(
-    ...     [
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)),
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 5, 10)),
-    ...     ]
-    ... )
-
-    >>> partitions.save("my_partitions.vtpd")
-    >>> new_partitions = pv.read("my_partitions.vtpd")
-
-    >>> isinstance(new_partitions, pv.PartitionedDataSet)
-    True
-    >>> len(new_partitions) == len(partitions)
-    True
-
     """
 
     if _vtk.vtk_version_info >= (9, 1):
