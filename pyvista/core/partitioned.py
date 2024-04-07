@@ -176,7 +176,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Copy pyvista meta data onto this object from another object."""
 
     def copy(self, deep=True):
-        """Return a copy of the multiblock.
+        """Return a copy of the PartitionedDataSet.
 
         Parameters
         ----------
@@ -185,8 +185,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 
         Returns
         -------
-        pyvista.MultiBlock
-           Deep or shallow copy of the ``MultiBlock``.
+        pyvista.PartitionedDataSet
+           Deep or shallow copy of the ``PartitionedDataSet``.
 
         Examples
         --------
@@ -196,9 +196,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         ...     pv.Cube(center=(0, 2, 0)),
         ...     pv.Cone(),
         ... ]
-        >>> blocks = pv.MultiBlock(data)
-        >>> new_blocks = blocks.copy()
-        >>> len(new_blocks)
+        >>> partitions = pv.PartitionedDataSet(data)
+        >>> new_partitions = partitions.copy()
+        >>> len(new_partitions)
         3
 
         """
