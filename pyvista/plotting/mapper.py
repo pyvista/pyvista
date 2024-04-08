@@ -672,7 +672,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
-        if log_scale:
+        if log_scale:  # noqa: SIM102
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
@@ -1080,7 +1080,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        if value == 0:
+        if value == 0:  # noqa: SIM116
             return 'composite'
         elif value == 1:
             return 'maximum'

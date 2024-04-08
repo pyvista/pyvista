@@ -129,7 +129,7 @@ class _PointSet(DataSet):
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
-        if isinstance(ind, np.ndarray):
+        if isinstance(ind, np.ndarray):  # noqa: SIM102
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
                     f'Boolean array size must match the number of cells ({self.n_cells})'
@@ -2552,7 +2552,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         """
         if not inplace:
             return self.copy().hide_cells(ind, inplace=True)
-        if isinstance(ind, np.ndarray):
+        if isinstance(ind, np.ndarray):  # noqa: SIM102
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
                     f'Boolean array size must match the number of cells ({self.n_cells})'
@@ -2595,7 +2595,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> grid.hide_points(range(80 * 30, 80 * 50))
         >>> grid.plot(color=True, show_edges=True)
         """
-        if isinstance(ind, np.ndarray):
+        if isinstance(ind, np.ndarray):  # noqa: SIM102
             if ind.dtype == np.bool_ and ind.size != self.n_points:
                 raise ValueError(
                     f'Boolean array size must match the number of points ({self.n_points})'

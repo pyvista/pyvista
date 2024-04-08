@@ -1490,7 +1490,7 @@ class MultiBlockPlot3DReader(BaseReader):
 
         """
         # files may be a list or a single filename
-        if files:
+        if files:  # noqa: SIM102
             if isinstance(files, (str, pathlib.Path)):
                 files = [files]
         files = [_process_filename(f) for f in files]

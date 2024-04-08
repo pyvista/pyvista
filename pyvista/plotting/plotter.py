@@ -2104,7 +2104,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
-        if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
+        if hasattr(self.render_window, 'GetOffScreenFramebuffer'):  # noqa: SIM102
             if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
                 # must raise a runtime error as this causes a segfault on VTK9
                 raise ValueError('Invoking helper with no framebuffer')
@@ -3491,7 +3491,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
-            if rgb is None:
+            if rgb is None:  # noqa: SIM102
                 if scalars.endswith(('_rgb', '_rgba')):
                     rgb = True
 
@@ -3643,7 +3643,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if style == 'points_gaussian':
             self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not self.mapper.emissive:
+            if not render_points_as_spheres and not self.mapper.emissive:  # noqa: SIM102
                 if prop.opacity >= 1.0:
                     prop.opacity = 0.9999  # otherwise, weird triangles
 
@@ -4163,7 +4163,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure structured grids are not less than 3D
         # ImageData and RectilinearGrid should be olay as <3D
-        if isinstance(volume, pyvista.StructuredGrid):
+        if isinstance(volume, pyvista.StructuredGrid):  # noqa: SIM102
             if any(d < 2 for d in volume.dimensions):
                 raise ValueError('StructuredGrids must be 3D dimensional.')
 
@@ -4259,7 +4259,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
-        if log_scale:
+        if log_scale:  # noqa: SIM102
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
@@ -4817,7 +4817,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
-        if not pyvista.BUILDING_GALLERY:
+        if not pyvista.BUILDING_GALLERY:  # noqa: SIM102
             if _ALL_PLOTTERS is not None:
                 _ALL_PLOTTERS.pop(self._id_name, None)
 
@@ -6186,7 +6186,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __del__(self):
         """Delete the plotter."""
         # We have to check here if the plotter was only partially initialized
-        if self._initialized:
+        if self._initialized:  # noqa: SIM102
             if not self._closed:
                 self.close()
         self.deep_clean()
@@ -6565,7 +6565,7 @@ class Plotter(BasePlotter):
         else:
             self.window_size = window_size
 
-        if self._theme.depth_peeling.enabled:
+        if self._theme.depth_peeling.enabled:  # noqa: SIM102
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()

@@ -1029,7 +1029,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 self_().render()
 
         # add on-screen message about point-selection
-        if show_message:
+        if show_message:  # noqa: SIM102
             if show_message is True:
                 show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick single dataset under the mouse pointer'

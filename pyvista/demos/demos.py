@@ -456,7 +456,7 @@ def plot_datasets(dataset_type=None):
         'RectilinearGrid',
         'StructuredGrid',
     ]
-    if dataset_type is not None:
+    if dataset_type is not None:  # noqa: SIM102
         if dataset_type not in allowable_types:
             raise ValueError(
                 f'Invalid dataset_type {dataset_type}.  Must be one '

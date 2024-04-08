@@ -48,7 +48,7 @@ def vtk_points(points, deep=True, force_float=False):
     if not np.issubdtype(points.dtype, np.number):
         raise TypeError('Points must be a numeric type')
 
-    if force_float:
+    if force_float:  # noqa: SIM102
         if not np.issubdtype(points.dtype, np.floating):
             warnings.warn(
                 'Points is not a float type. This can cause issues when '
@@ -72,7 +72,7 @@ def vtk_points(points, deep=True, force_float=False):
         )
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points, pyvista.pyvista_ndarray):
+    if not deep and isinstance(points, pyvista.pyvista_ndarray):  # noqa: SIM102
         if points.VTKObject is not None:
             vtk_object = points.VTKObject
 

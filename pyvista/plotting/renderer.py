@@ -393,7 +393,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.view_vector(camera_location)
         else:
             # check if a valid camera position
-            if not isinstance(camera_location, CameraPosition):
+            if not isinstance(camera_location, CameraPosition):  # noqa: SIM102
                 if not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
@@ -2249,7 +2249,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
+        if isinstance(point, np.ndarray):  # noqa: SIM102
             if point.ndim != 1:
                 point = point.ravel()
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
@@ -2284,7 +2284,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
+        if isinstance(point, np.ndarray):  # noqa: SIM102
             if point.ndim != 1:
                 point = point.ravel()
         self.camera.position = scale_point(self.camera, point, invert=False)
@@ -2320,7 +2320,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(vector, np.ndarray):
+        if isinstance(vector, np.ndarray):  # noqa: SIM102
             if vector.ndim != 1:
                 vector = vector.ravel()
 
@@ -2599,7 +2599,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
-        if (
+        if (  # noqa: SIM102
             hasattr(self, '_box_object')
             and self._box_object is not None
             and self.bounding_box_actor is not None
