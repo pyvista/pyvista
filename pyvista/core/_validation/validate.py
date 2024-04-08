@@ -550,9 +550,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
-            raise TypeError(
-                'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
-            )
+            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
     return arr
 
 

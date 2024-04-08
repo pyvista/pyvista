@@ -2270,7 +2270,7 @@ class DataSetFilters:
                     'also be a sequence of the same length.'
                 )
             if len(indices) != len(geom) and len(geom) != 1:
-                raise ValueError('The sequence "indices" must be the same length ' 'as "geom".')
+                raise ValueError('The sequence "indices" must be the same length as "geom".')
         else:
             geom = [geom]
         if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):

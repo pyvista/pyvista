@@ -1053,7 +1053,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
+                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
             )
 
     @property
