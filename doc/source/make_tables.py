@@ -403,7 +403,7 @@ def _pad_lines(
     Optionally, padding may be applied to left-justify the text such that the lines
     all have the same width.
 
-    Optionally, the lines may be padded on the left or right using a specified string.
+    Optionally, the lines may be padded using a specified string on the left or right.
 
     Parameters
     ----------
