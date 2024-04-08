@@ -160,7 +160,7 @@ class CoverageBuilder(Builder):
                 op.write('\n')
 
     def ignore_pyobj(self, full_name: str) -> bool:
-        for exp in self.py_ignorexps:  # noqa: SIM110
+        for exp in self.py_ignorexps:
             if exp.search(full_name):
                 return True
         return False
