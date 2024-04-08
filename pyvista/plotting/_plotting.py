@@ -90,7 +90,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
                 split_vertices=True,
                 feature_angle=feature_angle,
             )
-            if is_polydata:  # noqa: SIM102
+            if is_polydata:
                 if has_scalars and use_points:
                     # we must track the original IDs with our own array from compute_normals
                     indices_array = 'pyvistaOriginalPointIds'
