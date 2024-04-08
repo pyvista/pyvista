@@ -180,6 +180,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
+    vtkPartitionedDataSet,
     vtkPerlinNoise,
     vtkPiecewiseFunction,
     vtkPlane,
@@ -426,6 +427,10 @@ with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.3
 # 9.3+ imports
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
+
+# 9.1+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
 
 def VTKVersionInfo():
