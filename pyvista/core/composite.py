@@ -1219,7 +1219,7 @@ class MultiBlock(
             # multi-component
             if not isinstance(component, (int, type(None))):
                 raise TypeError('`component` must be either None or an integer')
-            if component is not None:  # noqa: SIM102
+            if component is not None:
                 if component >= scalars.shape[1] or component < 0:
                     raise ValueError(
                         'Component must be nonnegative and less than the '
