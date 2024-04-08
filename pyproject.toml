@@ -209,6 +209,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.ExplicitStructuredGrid$',
     '\.Grid$',
     '\.MultiBlock$',
+    '\.PartitionedDataSet$',
     '\.PointGrid$',
     '\.PointSet$',
     '\.PolyDataFilters$',
