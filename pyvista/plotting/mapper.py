@@ -1024,7 +1024,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
-        return None
+        return
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, *args):  # numpydoc ignore=GL08
