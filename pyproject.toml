@@ -351,6 +351,7 @@ extend-select = [
     "RUF002",
     "RUF005",
     "RUF010",
+    "RUF015",
     "RUF100",
     "SIM101",
     "SIM102",
