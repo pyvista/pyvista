@@ -346,14 +346,14 @@ class DataObject:
             'celltypes',
         ]  # UnstructuredGrid
         for attr in equal_attrs:
-            if hasattr(self, attr):  # noqa: SIM102
+            if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
                     return False
 
         # these attrs can be directly compared
         attrs = ['field_data', 'point_data', 'cell_data']
         for attr in attrs:
-            if hasattr(self, attr):  # noqa: SIM102
+            if hasattr(self, attr):
                 if getattr(self, attr) != getattr(other, attr):
                     return False
 
