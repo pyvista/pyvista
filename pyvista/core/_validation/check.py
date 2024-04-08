@@ -946,7 +946,7 @@ def check_contains(*, item, container, name='Input'):
     """
     if item not in container:
         qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
-        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 

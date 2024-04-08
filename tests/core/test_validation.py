@@ -235,7 +235,7 @@ def test_validate_shape_value():
     with pytest.raises(ValueError, match=msg):
         _validate_shape_value(-2)
 
-    msg = "All items of Shape must be an instance of <class 'int'>. " "Got <class 'tuple'> instead."
+    msg = "All items of Shape must be an instance of <class 'int'>. Got <class 'tuple'> instead."
     with pytest.raises(TypeError, match=msg):
         _validate_shape_value(((1, 2), (3, 4)))
 
