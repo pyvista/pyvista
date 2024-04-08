@@ -61,7 +61,7 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
-        return None
+        return
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
@@ -73,7 +73,7 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
-        return None
+        return
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
@@ -162,7 +162,7 @@ class DataObject:
             if self[array_name].shape[-1] == 4:  # type: ignore[index]
                 writer.SetEnableAlpha(True)
         writer.Write()
-        return None
+        return
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""
@@ -174,7 +174,7 @@ class DataObject:
                 if array_names:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
-        return None
+        return
 
     def _restore_metadata(self) -> None:
         """Restore PyVista metadata from field data.
@@ -192,7 +192,7 @@ class DataObject:
                     assoc_data = getattr(self, f'_association_{assoc_name}_names')
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
-        return None
+        return
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
@@ -463,7 +463,7 @@ class DataObject:
             raise NotImplementedError(f'`{type(self)}` does not support field data')
 
         self.field_data.clear()
-        return None
+        return
 
     @property
     def memory_address(self) -> str:  # numpydoc ignore=RT01
@@ -522,7 +522,7 @@ class DataObject:
 
         """
         self.CopyStructure(dataset)
-        return None
+        return
 
     def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
@@ -543,7 +543,7 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
-        return None
+        return
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.

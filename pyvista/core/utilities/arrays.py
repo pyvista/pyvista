@@ -709,10 +709,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        if len(possible_vectors_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError("No vector-like data available.")
@@ -761,10 +758,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        if len(possible_scalars_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
         raise MissingDataError("No data available.")

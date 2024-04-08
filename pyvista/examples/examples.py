@@ -656,10 +656,7 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
 
     psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
 
-    if n == 1:
-        org = 1.5 * n**2 + 1.0
-    else:
-        org = 1.5 * n**2 + 10.0
+    org = 1.5 * n**2 + 1.0 if n == 1 else 1.5 * n**2 + 10.0
 
     org /= zoom_fac
 

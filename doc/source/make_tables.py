@@ -416,7 +416,7 @@ def _pad_lines(
     Optionally, padding may be applied to left-justify the text such that the lines
     all have the same width.
 
-    Optionally, the lines may be padded on the left or right using a specified string.
+    Optionally, the lines may be padded using a specified string on the left or right.
 
     Parameters
     ----------
@@ -880,7 +880,7 @@ class DatasetCard:
     def _generate_celltype_badges(badges: List[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
-        rst = ' '.join([badge.generate() for badge in celltype_badges])
+        rst = '\n'.join([badge.generate() for badge in celltype_badges])
         if rst == '':
             rst = '``None``'
         return rst
@@ -1104,18 +1104,21 @@ class DatasetPropsGenerator:
     def generate_file_ext(loader: _dataset_loader._BaseFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
-        ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
-        if ext:
-            ext = ext if isinstance(ext, str) else ' '.join(ext for ext in ext)
-            ext = '``\'' + ext.replace(' ', '\'``\n ``\'') + '\'``'
-            return ext
+        file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
+        if file_ext:
+            file_ext = loader.unique_extension
+            file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
+            file_ext = '\n'.join(['``\'' + ext + '\'``' for ext in file_ext])
+            return file_ext
         return None
 
     @staticmethod
     def generate_reader_type(loader: _DatasetLoader):
         """Format reader type(s) with doc references to reader class(es)."""
-        typ = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
-        if typ:
+        reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
+        if reader_type is None:
+            return "``None``"
+        else:
             reader_type = (
                 repr(loader.unique_reader_type)
                 .replace('<class \'', ':class:`~')
@@ -1123,8 +1126,7 @@ class DatasetPropsGenerator:
                 .replace('(', '')
                 .replace(')', '')
             ).replace(', ', '\n')
-            return reader_type
-        return None
+        return reader_type
 
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
@@ -1397,16 +1399,18 @@ class DatasetCardFetcher:
             if pv.MultiBlock in types_list:
                 types_list.remove(pv.MultiBlock)
                 num_datasets = len(types_list)
-                if num_datasets == 1 and kind == 'single':
-                    dataset_names.append(name)
-                elif num_datasets >= 2:
-                    if (
-                        len(set(types_list)) == 1
+                if (
+                    num_datasets == 1
+                    and kind == 'single'
+                    or (
+                        num_datasets >= 2
+                        and len(set(types_list)) == 1
                         and kind == 'homo'
                         or len(set(types_list)) > 1
                         and kind == 'hetero'
-                    ):
-                        dataset_names.append(name)
+                    )
+                ):
+                    dataset_names.append(name)
         return dataset_names
 
 
@@ -1963,8 +1967,34 @@ def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
     # Generate rst for all carousels
     [carousel.generate() for carousel in carousels]
 
-    # Clear loaded datasets from memo
+    # Clear loaded datasets from memory
     DatasetCardFetcher.clear_datasets()
+
+
+CAROUSEL_LIST = [
+    AllDatasetsCarousel,
+    BuiltinCarousel,
+    DownloadsCarousel,
+    PointSetCarousel,
+    PolyDataCarousel,
+    UnstructuredGridCarousel,
+    StructuredGridCarousel,
+    ExplicitStructuredGridCarousel,
+    PointCloudCarousel,
+    SurfaceMeshCarousel,
+    RectilinearGridCarousel,
+    ImageDataCarousel,
+    ImageData3DCarousel,
+    ImageData2DCarousel,
+    TextureCarousel,
+    CubemapCarousel,
+    MultiBlockCarousel,
+    MultiBlockHomoCarousel,
+    MultiBlockHeteroCarousel,
+    MultiBlockSingleCarousel,
+    MiscCarousel,
+    MedicalCarousel,
+]
 
 
 def make_all_tables():
@@ -1977,29 +2007,4 @@ def make_all_tables():
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    make_all_carousels(
-        [
-            AllDatasetsCarousel,
-            BuiltinCarousel,
-            DownloadsCarousel,
-            PointSetCarousel,
-            PolyDataCarousel,
-            UnstructuredGridCarousel,
-            StructuredGridCarousel,
-            ExplicitStructuredGridCarousel,
-            PointCloudCarousel,
-            SurfaceMeshCarousel,
-            RectilinearGridCarousel,
-            ImageDataCarousel,
-            ImageData3DCarousel,
-            ImageData2DCarousel,
-            TextureCarousel,
-            CubemapCarousel,
-            MultiBlockCarousel,
-            MultiBlockHomoCarousel,
-            MultiBlockHeteroCarousel,
-            MultiBlockSingleCarousel,
-            MiscCarousel,
-            MedicalCarousel,
-        ]
-    )
+    make_all_carousels(CAROUSEL_LIST)

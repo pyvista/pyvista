@@ -748,10 +748,10 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """
     assert os.path.isfile(filepath) or os.path.isdir(filepath)
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
-    return [
+    return next(
         [os.path.join(path, name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
-    ][0]
+    )
 
 
 def _get_unique_extension(path: Union[str, Sequence[str]]):

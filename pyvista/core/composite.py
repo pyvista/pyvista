@@ -135,7 +135,7 @@ class MultiBlock(
 
         elif len(args) > 1:
             raise ValueError(
-                'Invalid number of arguments:\n``pyvista.MultiBlock``' 'supports 0 or 1 arguments.'
+                'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
             )
 
         # Upon creation make sure all nested structures are wrapped
@@ -327,11 +327,11 @@ class MultiBlock(
             # get the scalars if available - recursive
             try:
                 tmi, tma = data.get_data_range(name)
-            except KeyError as err:
+            except KeyError:
                 if allow_missing:
                     continue
                 else:
-                    raise err
+                    raise
             if not np.isnan(tmi) and tmi < mini:
                 mini = tmi
             if not np.isnan(tma) and tma > maxi:
@@ -1081,9 +1081,9 @@ class MultiBlock(
                             field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
                         else:
                             scalars = scalars_out
-                    except KeyError as err:
+                    except KeyError:
                         if not allow_missing:
-                            raise err
+                            raise
                         block.set_active_scalars(None, preference)
                         field, scalars = FieldAssociation.NONE, pyvista_ndarray([])
 
