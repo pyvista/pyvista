@@ -360,6 +360,7 @@ extend-select = [
     "SIM108",
     "SIM114",
     "SIM201",
+    "SIM210",
     "SIM211",
     "SIM212",
     "SIM220",
