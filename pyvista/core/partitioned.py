@@ -17,21 +17,14 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
     Examples
     --------
     >>> import pyvista as pv
-
-    >>> partitions = pv.PartitionedDataSet(
-    ...     [
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)),
-    ...         pv.Wavelet(extent=(0, 10, 0, 10, 5, 10)),
-    ...     ]
-    ... )
-
-    >>> partitions.save("my_partitions.vtpd")
-    >>> new_partitions = pv.read("my_partitions.vtpd")
-
-    >>> isinstance(new_partitions, pv.PartitionedDataSet)
-    True
-    >>> len(new_partitions) == len(partitions)
-    True
+    >>> data = [
+    ...     pv.Sphere(center=(2, 0, 0)),
+    ...     pv.Cube(center=(0, 2, 0)),
+    ...     pv.Cone(),
+    ... ]
+    >>> partitions = pv.PartitionedDataSet(data)
+    >>> len(partitions)
+    3
 
     """
 
@@ -196,7 +189,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Copy pyvista meta data onto this object from another object."""
 
     def copy(self, deep=True):
-        """Return a copy of the multiblock.
+        """Return a copy of the PartitionedDataSet.
 
         Parameters
         ----------
@@ -205,8 +198,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 
         Returns
         -------
-        pyvista.MultiBlock
-           Deep or shallow copy of the ``MultiBlock``.
+        pyvista.PartitionedDataSet
+           Deep or shallow copy of the ``PartitionedDataSet``.
 
         Examples
         --------
@@ -216,9 +209,9 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         ...     pv.Cube(center=(0, 2, 0)),
         ...     pv.Cone(),
         ... ]
-        >>> blocks = pv.MultiBlock(data)
-        >>> new_blocks = blocks.copy()
-        >>> len(new_blocks)
+        >>> partitions = pv.PartitionedDataSet(data)
+        >>> new_partitions = partitions.copy()
+        >>> len(new_partitions)
         3
 
         """

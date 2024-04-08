@@ -839,7 +839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             First scalar bar actor.
 
         """
-        return list(self.scalar_bars.values())[0]
+        return next(iter(self.scalar_bars.values()))
 
     @property
     def scalar_bars(self):  # numpydoc ignore=RT01
@@ -4256,7 +4256,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
                 clim = [min_, max_]
-        elif isinstance(clim, float) or isinstance(clim, int):
+        elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale:
