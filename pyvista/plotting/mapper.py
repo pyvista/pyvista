@@ -686,10 +686,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.lookup_table.scalar_range = self.scalar_range
             # Set default map
             if cmap is None:
-                if self._theme is None:
-                    cmap = pyvista.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
+                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -748,16 +745,16 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     @property
     def resolve(self) -> str:
-        """Set or return global flag to avoid z-buffer resolution.
+        """Set or return the global flag to avoid z-buffer resolution.
 
-        A global flag that controls whether coincident topology
+        A global flag that controls whether the coincident topology
         (e.g., a line on top of a polygon) is shifted to avoid
         z-buffer resolution (and hence rendering problems).
 
         If not off, there are two methods to choose from.
         `polygon_offset` uses graphics systems calls to shift polygons,
-        lines and points from each other.
-        `shift_zbuffer` is a legacy method that used to remap the z-buffer
+        lines, and points from each other.
+        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
         to distinguish vertices, lines, and polygons,
         but does not always produce acceptable results.
         You should only use the polygon_offset method (or none) at this point.
@@ -839,10 +836,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 f"number of cells ({self.dataset.n_cells})."
             )
 
-        if self._theme is not None:
-            default_color = self._theme.color
-        else:
-            default_color = pyvista.global_theme.color
+        default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
@@ -1031,7 +1025,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
-        return None
+        return
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, *args):  # numpydoc ignore=GL08

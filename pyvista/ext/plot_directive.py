@@ -487,10 +487,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             caption = options["caption"]
 
         # If the optional function name is provided, use it
-        if len(arguments) == 2:
-            function_name = arguments[1]
-        else:
-            function_name = None
+        function_name = arguments[1] if len(arguments) == 2 else None
 
         code = Path(source_file_name).read_text(encoding='utf-8')
         output_base = Path(source_file_name).name
@@ -516,10 +513,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     # is it in doctest format?
     is_doctest = _contains_doctest(code)
     if 'format' in options:
-        if options['format'] == 'python':
-            is_doctest = False
-        else:
-            is_doctest = True
+        is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)

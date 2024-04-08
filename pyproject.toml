@@ -209,6 +209,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.ExplicitStructuredGrid$',
     '\.Grid$',
     '\.MultiBlock$',
+    '\.PartitionedDataSet$',
     '\.PointGrid$',
     '\.PointSet$',
     '\.PolyDataFilters$',
@@ -328,6 +329,8 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/5837
+    "SIM118",
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -337,15 +340,37 @@ extend-select = [
     "C4",
     "F",
     "FLY",
+    "ISC",
     "NPY",
+    "PERF401",
     "PGH004",
     "PIE",
     "PT",
     "PTH",
+    "RET501",
     "RSE",
+    "RUF002",
     "RUF005",
     "RUF010",
+    "RUF015",
     "RUF100",
+    "SIM101",
+    "SIM103",
+    "SIM105",
+    "SIM108",
+    "SIM114",
+    "SIM201",
+    "SIM211",
+    "SIM212",
+    "SIM220",
+    "SIM221",
+    "SIM222",
+    "SIM223",
+    "SIM300",
+    "SIM401",
+    "SIM910",
+    "SIM911",
+    "TRY201",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]

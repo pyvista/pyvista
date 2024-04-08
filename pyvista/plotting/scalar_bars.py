@@ -1,5 +1,6 @@
 """PyVista Scalar bar module."""
 
+import contextlib
 import weakref
 
 import numpy as np
@@ -63,10 +64,8 @@ class ScalarBars:
 
         # NOTE: keys to list to prevent iterator changing during loop
         for name in list(self._scalar_bar_mappers):
-            try:
+            with contextlib.suppress(ValueError):
                 self._scalar_bar_mappers[name].remove(mapper)
-            except ValueError:
-                pass
 
             if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
@@ -114,7 +113,7 @@ class ScalarBars:
                     f'scalar bar from one of the following:\n{titles}'
                 )
             else:
-                title = list(self._scalar_bar_actors.keys())[0]
+                title = next(iter(self._scalar_bar_actors.keys()))
 
         actor = self._scalar_bar_actors.pop(title)
         self._plotter.remove_actor(actor, render=render)
@@ -368,10 +367,7 @@ class ScalarBars:
 
         # Automatically choose size if not specified
         if width is None:
-            if vertical:
-                width = theme.colorbar_vertical.width
-            else:
-                width = theme.colorbar_horizontal.width
+            width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
         if height is None:
             if vertical:
                 height = theme.colorbar_vertical.height

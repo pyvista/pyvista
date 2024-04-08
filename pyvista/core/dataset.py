@@ -695,7 +695,7 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
-        return None
+        return
 
     def set_active_tensors(self, name: Optional[str], preference: str = 'point') -> None:
         """Find the tensors by name and appropriately sets it as active.
@@ -733,7 +733,7 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
-        return None
+        return
 
     def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
         """Change array name by searching for the array then renaming it.
@@ -789,7 +789,7 @@ class DataSet(DataSetFilters, DataObject):
 
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
-        return None
+        return
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
@@ -1484,7 +1484,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
-        return None
+        return
 
     @property
     def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -1551,12 +1551,12 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.clear()
-        return None
+        return
 
     def clear_cell_data(self) -> None:
         """Remove all cell arrays."""
         self.cell_data.clear()
-        return None
+        return
 
     def clear_data(self) -> None:
         """Remove all arrays from point/cell/field data.
@@ -1578,7 +1578,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
-        return None
+        return
 
     @property
     def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -2095,10 +2095,7 @@ class DataSet(DataSetFilters, DataObject):
                 dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
-                if arr.ndim > 1:
-                    ncomp = arr.shape[1]
-                else:
-                    ncomp = 1
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
             for key, arr in self.point_data.items():
@@ -2157,7 +2154,7 @@ class DataSet(DataSetFilters, DataObject):
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
-        return None
+        return
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
