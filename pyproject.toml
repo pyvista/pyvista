@@ -340,6 +340,7 @@ extend-select = [
     "C4",
     "F",
     "FLY",
+    "ISC",
     "NPY",
     "PERF401",
     "PGH004",
