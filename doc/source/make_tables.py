@@ -1291,7 +1291,7 @@ class DatasetCardFetcher:
                 if num_datasets == 1 and kind == 'single':
                     dataset_names.append(name)
                 elif (
-                    num_datasets >= 2:
+                    num_datasets >= 2
                     and len(set(types_list)) == 1
                     and kind == 'homo'
                     or len(set(types_list)) > 1
