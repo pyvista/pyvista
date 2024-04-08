@@ -708,7 +708,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     return [
         [os.path.join(path, name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
-    )
+    ]
 
 
 def _get_unique_extension(path: Union[str, Sequence[str]]):
