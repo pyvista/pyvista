@@ -329,6 +329,7 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/5888
     "SIM117",
     # https://github.com/pyvista/pyvista/pull/5837
     "SIM118",
