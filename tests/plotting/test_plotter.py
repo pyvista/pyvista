@@ -494,7 +494,7 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     entries_after = os.listdir(pv.FIGURE_PATH)
     assert len(entries) + 1 == len(entries_after)
 
-    res_file = list(set(entries_after) - set(entries))[0]
+    res_file = next(iter(set(entries_after) - set(entries)))
     pv.ON_SCREENSHOT = False
     sphere_screenshot = "sphere_screenshot.png"
     pl = pv.Plotter()
