@@ -314,5 +314,5 @@ class Prop3D(_vtk.vtkProp3D):
             self.SetUserMatrix(value)
         else:
             raise TypeError(
-                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
+                'Input user matrix must be either:\n\tvtk.vtkMatrix4x4\n\t4x4 np.ndarray\n'
             )
