@@ -192,7 +192,7 @@ class DataSet(DataSetFilters, DataObject):
             if field is FieldAssociation.CELL:
                 if self.cell_data.active_scalars_name != name:
                     name = None
-            elif field is FieldAssociation.POINT:  # noqa: SIM102
+            elif field is FieldAssociation.POINT:
                 if self.point_data.active_scalars_name != name:
                     name = None
 
@@ -245,10 +245,10 @@ class DataSet(DataSetFilters, DataObject):
 
         # verify this field is still valid
         if name is not None:
-            if field is FieldAssociation.POINT:  # noqa: SIM102
+            if field is FieldAssociation.POINT:
                 if self.point_data.active_vectors_name != name:
                     name = None
-            if field is FieldAssociation.CELL:  # noqa: SIM102
+            if field is FieldAssociation.CELL:
                 if self.cell_data.active_vectors_name != name:
                     name = None
 
@@ -506,7 +506,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pdata = self.GetPoints()
-        if isinstance(points, pyvista_ndarray):  # noqa: SIM102
+        if isinstance(points, pyvista_ndarray):
             # simply set the underlying data
             if points.VTKObject is not None and pdata is not None:
                 pdata.SetData(points.VTKObject)
