@@ -346,10 +346,15 @@ extend-select = [
     "PIE",
     "PT",
     "PTH",
+    "RET501",
     "RSE",
+    "RUF002",
     "RUF005",
     "RUF010",
     "RUF100",
+    "SIM103",
+    "SIM105",
+    "SIM108",
     "SIM114",
     "SIM201",
     "SIM211",
@@ -362,6 +367,7 @@ extend-select = [
     "SIM401",
     "SIM910",
     "SIM911",
+    "TRY201",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]
