@@ -361,7 +361,7 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:  # noqa: SIM102
+        if vertical is None:
             if theme.colorbar_orientation.lower() == 'vertical':
                 vertical = True
 
