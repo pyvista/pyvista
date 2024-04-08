@@ -87,8 +87,8 @@ def _generate_test_cases():
     # flatten dict
     test_cases_list = []
     for filename, content in sorted(test_cases_dict.items()):
-        doc = content['docs'] if 'docs' in content else None
-        cache = content['cached'] if 'cached' in content else None
+        doc = content.get('docs', None)
+        cache = content.get('cached', None)
         test_case = _TestCaseTuple(filename=filename, docs_image_path=doc, cached_image_path=cache)
         test_cases_list.append(test_case)
 
