@@ -1288,16 +1288,14 @@ class DatasetCardFetcher:
             if pv.MultiBlock in types_list:
                 types_list.remove(pv.MultiBlock)
                 num_datasets = len(types_list)
-                if num_datasets == 1 and kind == 'single':
-                    dataset_names.append(name)
-                elif (
+                if num_datasets == 1 and kind == 'single' or (
                     num_datasets >= 2
                     and len(set(types_list)) == 1
                     and kind == 'homo'
                     or len(set(types_list)) > 1
                     and kind == 'hetero'
                 ):
-                        dataset_names.append(name)
+                    dataset_names.append(name)
         return dataset_names
 
 
