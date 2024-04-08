@@ -1160,37 +1160,39 @@ class DatasetPropsGenerator:
 
     @staticmethod
     def generate_n_cells(loader):
-        return DatasetPropsGenerator._generate_num(
+        return DatasetPropsGenerator._generate_number(
             DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'), fmt='spaced'
         )
 
     @staticmethod
     def generate_n_points(loader):
-        return DatasetPropsGenerator._generate_num(
+        return DatasetPropsGenerator._generate_number(
             DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'), fmt='spaced'
         )
 
     @staticmethod
     def generate_length(loader):
-        return DatasetPropsGenerator._generate_num(
+        return DatasetPropsGenerator._generate_number(
             DatasetPropsGenerator._try_getattr(loader.dataset, 'length'), fmt='exp'
         )
 
     @staticmethod
     def generate_dimensions(loader):
-        return DatasetPropsGenerator._generate_num(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'dimensions')
-        )
+        dimensions = DatasetPropsGenerator._try_getattr(loader.dataset, 'dimensions')
+        if dimensions:
+            return ', '.join([DatasetPropsGenerator._generate_number(dim) for dim in dimensions])
 
     @staticmethod
     def generate_spacing(loader):
-        return DatasetPropsGenerator._generate_num(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'spacing')
-        )
+        spacing = DatasetPropsGenerator._try_getattr(loader.dataset, 'spacing')
+        if spacing:
+            return ', '.join(
+                [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing]
+            )
 
     @staticmethod
     def generate_n_arrays(loader):
-        return DatasetPropsGenerator._generate_num(
+        return DatasetPropsGenerator._generate_number(
             DatasetPropsGenerator._try_getattr(loader.dataset, 'n_arrays')
         )
 
@@ -1202,11 +1204,12 @@ class DatasetPropsGenerator:
             return None
 
     @staticmethod
-    def _generate_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
+    def _generate_number(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
+        """Format a number and add rst backticks."""
         if num is None:
             return None
         if fmt == 'exp':
-            num_fmt = f"{num:.3e}"
+            num_fmt = f"{num:.2e}"
         elif fmt == 'spaced':
             num_fmt = f"{num:,}".replace(',', ' ')
         else:
