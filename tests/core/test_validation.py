@@ -483,7 +483,7 @@ def test_validate_array(
     # Check output
     if np.array(array_in).ndim == 0 and (to_tuple or to_list):
         # test scalar input results in scalar output
-        assert isinstance(array_out, float) or isinstance(array_out, int)
+        assert isinstance(array_out, (float, int))
     elif to_tuple:
         assert type(array_out) is tuple
     elif to_list:
