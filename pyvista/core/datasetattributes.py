@@ -157,15 +157,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     arr_type = ''
 
                 # special treatment for vector data
-                if (
-                    self.association
-                    in [
-                        FieldAssociation.POINT,
-                        FieldAssociation.CELL,
-                    ]
-                    and name == self.active_vectors_name
-                ):
-                    arr_type = 'VECTORS'
+                if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
+                    if name == self.active_vectors_name:
+                        arr_type = 'VECTORS'
                 # special treatment for string field data
                 if self.association == FieldAssociation.NONE and isinstance(array, str):
                     dtype = 'str'
