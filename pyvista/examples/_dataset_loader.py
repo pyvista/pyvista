@@ -519,10 +519,10 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     Optionally exclude any readme files (if any).
     """
     condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
-    return [
+    return next(
         [str(Path(path) / name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)
-    ][0]
+    )
 
 
 def _get_extension_from_filename(filename: Union[str, Sequence[str]]):

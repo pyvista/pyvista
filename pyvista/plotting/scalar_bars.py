@@ -113,7 +113,7 @@ class ScalarBars:
                     f'scalar bar from one of the following:\n{titles}'
                 )
             else:
-                title = list(self._scalar_bar_actors.keys())[0]
+                title = next(iter(self._scalar_bar_actors.keys()))
 
         actor = self._scalar_bar_actors.pop(title)
         self._plotter.remove_actor(actor, render=render)
