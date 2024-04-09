@@ -1080,20 +1080,10 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        if value == 0:
-            return 'composite'
-        elif value == 1:
-            return 'maximum'
-        elif value == 2:
-            return 'minimum'
-        elif value == 3:
-            return 'average'
-        elif value == 4:
-            return 'additive'
-
-        raise NotImplementedError(
-            f'Unsupported blend mode return value {value}'
-        )  # pragma: no cover
+        mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
+        if mode is None:  # pragma: no cover
+            raise NotImplementedError(f'Unsupported blend mode return value {value}')
+        return mode
 
     @blend_mode.setter
     def blend_mode(self, value: Union[str, int]):  # numpydoc ignore=GL08
