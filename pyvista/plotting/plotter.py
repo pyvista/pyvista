@@ -3515,10 +3515,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            elif field == FieldAssociation.POINT:
-                mesh.point_data.active_scalars_name = original_scalar_name
-            elif field == FieldAssociation.CELL:
-                mesh.cell_data.active_scalars_name = original_scalar_name
+            else:
+                # Otherwise, make sure the mesh object's scalars are set
+                if field == FieldAssociation.POINT:
+                    mesh.point_data.active_scalars_name = original_scalar_name
+                elif field == FieldAssociation.CELL:
+                    mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
