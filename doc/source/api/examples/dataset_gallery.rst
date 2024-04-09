@@ -164,6 +164,7 @@ Miscellaneous Datasets
 
             .. include:: /api/examples/dataset-gallery/misc_carousel.rst
 
+.. _dataset_gallery_category:
 
 Browse Datasets by Category
 ---------------------------
