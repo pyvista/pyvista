@@ -536,7 +536,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @nan_opacity.setter
     def nan_opacity(self, value):  # numpydoc ignore=GL08
         # Hacky check to prevent auto activation
-        if not self._nan_color_set and (value == 1.0 or value == 255):
+        if not self._nan_color_set and (value in (1.0, 255)):
             return
         color = self.nan_color
         if color is None:
