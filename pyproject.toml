@@ -329,6 +329,10 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/5877
+    "SIM102",
+    # https://github.com/pyvista/pyvista/pull/5888
+    "SIM117",
     # https://github.com/pyvista/pyvista/pull/5837
     "SIM118",
 ]
@@ -355,25 +359,7 @@ extend-select = [
     "RUF010",
     "RUF015",
     "RUF100",
-    "SIM101",
-    "SIM103",
-    "SIM105",
-    "SIM108",
-    "SIM110",
-    "SIM114",
-    "SIM116",
-    "SIM201",
-    "SIM210",
-    "SIM211",
-    "SIM212",
-    "SIM220",
-    "SIM221",
-    "SIM222",
-    "SIM223",
-    "SIM300",
-    "SIM401",
-    "SIM910",
-    "SIM911",
+    "SIM",
     "TRY201",
 ]
 
