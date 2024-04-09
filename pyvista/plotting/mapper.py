@@ -672,7 +672,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         elif isinstance(clim, (int, float)):
             clim = [-clim, clim]
 
-        if log_scale:  # noqa: SIM102
+        if log_scale:
             if clim[0] <= 0:
                 clim = [sys.float_info.min, clim[1]]
 
