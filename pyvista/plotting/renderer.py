@@ -446,7 +446,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             for ax in range(3):
                 update_axis(ax)
-            return
 
         for actor in self._actors.values():
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):

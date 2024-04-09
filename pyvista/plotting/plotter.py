@@ -2061,7 +2061,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(prop, "SetLineWidth"):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
         self.render()
-        return
 
     def zoom_camera(self, value):
         """Zoom of the camera and render.
@@ -2076,7 +2075,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.camera.zoom(value)
         self.render()
-        return
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""

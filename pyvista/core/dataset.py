@@ -701,7 +701,6 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
-        return
 
     def set_active_tensors(self, name: Optional[str], preference: str = 'point') -> None:
         """Find the tensors by name and appropriately sets it as active.
@@ -739,7 +738,6 @@ class DataSet(DataSetFilters, DataObject):
                 )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
-        return
 
     def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
         """Change array name by searching for the array then renaming it.
@@ -795,7 +793,6 @@ class DataSet(DataSetFilters, DataObject):
 
         if was_active and field != FieldAssociation.NONE:
             self.set_active_scalars(new_name, preference=field)
-        return
 
     @property
     def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
@@ -1490,7 +1487,6 @@ class DataSet(DataSetFilters, DataObject):
             self._active_scalars_info = ido.active_scalars_info
             self._active_vectors_info = ido.active_vectors_info
             self._active_tensors_info = ido.active_tensors_info
-        return
 
     @property
     def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -1557,12 +1553,10 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         self.point_data.clear()
-        return
 
     def clear_cell_data(self) -> None:
         """Remove all cell arrays."""
         self.cell_data.clear()
-        return
 
     def clear_data(self) -> None:
         """Remove all arrays from point/cell/field data.
@@ -1584,7 +1578,6 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_point_data()
         self.clear_cell_data()
         self.clear_field_data()
-        return
 
     @property
     def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
@@ -2160,7 +2153,6 @@ class DataSet(DataSetFilters, DataObject):
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
-        return
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
