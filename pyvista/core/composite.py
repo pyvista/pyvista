@@ -1187,9 +1187,8 @@ class MultiBlock(
             if isinstance(block, MultiBlock):
                 if not block.is_all_polydata:
                     return False
-            else:
-                if not isinstance(block, pyvista.PolyData):
-                    return False
+            elif not isinstance(block, pyvista.PolyData):
+                return False
 
         return True
 

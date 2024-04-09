@@ -530,31 +530,29 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
             with pytest.raises(TypeError, match=f'{name} must be an instance of'):
                 check_instance(obj, classinfo, name=name)
 
-    else:
-        if type(classinfo) is tuple:
-            if type(obj) in classinfo:
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
-        elif get_origin(classinfo) is Union:
-            if type(obj) in get_args(classinfo):
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
+    elif type(classinfo) is tuple:
+        if type(obj) in classinfo:
+            check_type(obj, classinfo)
         else:
-            if type(obj) is classinfo:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
                 check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have type'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have type'):
-                    check_type(obj, classinfo)
+    elif get_origin(classinfo) is Union:
+        if type(obj) in get_args(classinfo):
+            check_type(obj, classinfo)
+        else:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
+                check_type(obj, classinfo)
+    elif type(obj) is classinfo:
+        check_type(obj, classinfo)
+    else:
+        with pytest.raises(TypeError, match=f'{name} must have type'):
+            check_type(obj, classinfo, name=name)
+        with pytest.raises(TypeError, match='Object must have type'):
+            check_type(obj, classinfo)
 
     msg = "Name must be a string, got <class 'int'> instead."
     with pytest.raises(TypeError, match=msg):

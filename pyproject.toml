@@ -350,6 +350,7 @@ extend-select = [
     "PGH004",
     "PIE",
     "PLR1714",
+    "PLR5501",
     "PT",
     "PTH",
     "RET501",
