@@ -240,7 +240,7 @@ def test_validate_shape_value():
     with pytest.raises(ValueError, match=msg):
         _validate_shape_value(-2)
 
-    msg = "All items of Shape must be an instance of <class 'int'>. " "Got <class 'tuple'> instead."
+    msg = "All items of Shape must be an instance of <class 'int'>. Got <class 'tuple'> instead."
     with pytest.raises(TypeError, match=msg):
         _validate_shape_value(((1, 2), (3, 4)))
 
@@ -605,7 +605,7 @@ def test_validate_array_overflow_raises():
     # no overflow raised
     overflowed = validate_array(np.array(np.inf), must_be_finite=False, dtype_out=np.int64)
     info = np.iinfo(overflowed.dtype)
-    assert overflowed == info.min or overflowed == info.max
+    assert overflowed in (info.min, info.max)
 
 
 @pytest.mark.parametrize('obj', [0, 0.0, "0"])
@@ -1291,10 +1291,7 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
         depth = initial_array.ndim
         array_before_wrap = initial_array.tolist()
         if depth in (1, 2):
-            if depth == 1:
-                wrapper = _SequenceWrapper
-            else:
-                wrapper = _NestedSequenceWrapper
+            wrapper = _SequenceWrapper if depth == 1 else _NestedSequenceWrapper
 
             # sequence is expected as-is
             expected = ArrayLikePropsTuple(

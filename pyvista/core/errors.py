@@ -99,6 +99,23 @@ class PointSetDimensionReductionError(PointSetNotSupported):
         PointSetNotSupported.__init__(self, message)
 
 
+class PartitionedDataSetsNotSupported(TypeError):
+    """Requested filter or property is not supported by the PartitionedDataSets class.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self, message='The requested operation is not supported for PartitionedDataSetss.'
+    ):  # numpydoc ignore=PR01,RT01
+        """Empty init."""
+        TypeError.__init__(self, message)
+
+
 class MissingDataError(ValueError):
     """Exception when data is missing, e.g. no active scalars can be set.
 

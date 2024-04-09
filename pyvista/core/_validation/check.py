@@ -107,7 +107,7 @@ def check_subdtype(
         base_dtype = [base_dtype]
 
     if any(np.issubdtype(input_dtype, base) for base in base_dtype):
-        return None
+        return
     else:
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of {input_dtype!r}. "
@@ -367,7 +367,7 @@ def check_integer(
     if strict:
         try:
             check_subdtype(wrapped.dtype, np.integer)
-            return None
+            return
         except TypeError:
             raise
 
@@ -1214,13 +1214,8 @@ def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input')
 
     """
     if must_contain not in container:
-        if isinstance(container, (list, tuple)):
-            qualifier = "one of"
-        else:
-            qualifier = "in"
-        msg = (
-            f"{name} '{must_contain}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
-        )
+        qualifier = "one of" if isinstance(container, (list, tuple)) else "in"
+        msg = f"{name} '{must_contain}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 

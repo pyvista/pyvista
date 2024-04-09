@@ -47,10 +47,7 @@ def assert_empty_kwargs(**kwargs):
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
-    if n == 1:
-        grammar = "is an invalid keyword argument"
-    else:
-        grammar = "are invalid keyword arguments"
+    grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
     message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
@@ -80,7 +77,6 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
         if name == '':
             name = 'Vector'
         raise ValueError(f'{name} must be a length three iterable of floats.')
-    return None
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01

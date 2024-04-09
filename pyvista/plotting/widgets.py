@@ -201,14 +201,10 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                if use_planes:
-                    args = [planes]
-                else:
-                    args = [the_box]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
-            return
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
@@ -535,7 +531,6 @@ class WidgetHelper:
                     try_callback(callback, normal, origin, widget)
                 else:
                     try_callback(callback, normal, origin)
-            return
 
         if implicit:
             plane_widget = _vtk.vtkImplicitPlaneWidget()
@@ -1378,7 +1373,6 @@ class WidgetHelper:
                     idx = n_states - 1
                 if callable(callback):
                     try_callback(callback, data[idx])
-            return
 
         slider_widget = self.add_slider_widget(
             callback=_the_callback,
@@ -1591,7 +1585,6 @@ class WidgetHelper:
                     try_callback(callback, value, widget)
                 else:
                     try_callback(callback, value)
-            return
 
         slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(self.iren.interactor)
@@ -2029,7 +2022,6 @@ class WidgetHelper:
                     try_callback(callback, polyline, widget)
                 else:
                     try_callback(callback, polyline)
-            return
 
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(color.float_rgb)
@@ -2257,7 +2249,6 @@ class WidgetHelper:
             b = representation.GetPoint2Representation().GetWorldPosition()
             if callable(callback):
                 try_callback(callback, a, b, compute(a, b))
-            return
 
         widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, place_point)
 
@@ -2373,23 +2364,16 @@ class WidgetHelper:
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
-                if num > 1:
-                    args = [point, index]
-                else:
-                    args = [point]
+                args = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
-            return
 
         if indices is None:
             indices = list(range(num))
 
         for i in range(num):
-            if center.ndim > 1:
-                loc = center[i]
-            else:
-                loc = center
+            loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":

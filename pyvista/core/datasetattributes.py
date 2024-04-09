@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
@@ -163,10 +164,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if self.association == FieldAssociation.NONE and isinstance(array, str):
                     dtype = 'str'
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
-                    if len(array) > 18:
-                        val = f'{array[:15]}...'
-                    else:
-                        val = array
+                    val = f'{array[:15]}...' if len(array) > 18 else array
                     line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
                 else:
                     line = (
@@ -877,10 +875,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if key not in self:
             raise KeyError(f'{key} not present.')
 
-        try:
+        with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)
-        except KeyError:
-            pass
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 

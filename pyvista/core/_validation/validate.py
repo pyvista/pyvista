@@ -1302,9 +1302,7 @@ def validate_transform3x3(
                 transform, must_have_shape=(3, 3), name=name, return_type="numpy"
             )
         except ValueError:
-            raise TypeError(
-                'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
-            )
+            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
     return array
 
 
@@ -1430,10 +1428,7 @@ def validate_number(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
 
     """
     must_have_shape: Union[_ShapeLike, List[_ShapeLike]]
-    if reshape:
-        must_have_shape = [(), (1,)]
-    else:
-        must_have_shape = ()
+    must_have_shape = [(), (1,)] if reshape else ()
 
     return validate_array(  # type: ignore[type-var, misc]
         num,
