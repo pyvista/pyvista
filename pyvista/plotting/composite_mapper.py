@@ -862,10 +862,9 @@ class CompositePolyDataMapper(
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)
-            else:  # pragma: no cover
-                if flip_scalars:
-                    self.lookup_table.SetHueRange(0.0, 0.66667)
-                else:
-                    self.lookup_table.SetHueRange(0.66667, 0.0)
+            elif flip_scalars:
+                self.lookup_table.SetHueRange(0.0, 0.66667)
+            else:
+                self.lookup_table.SetHueRange(0.66667, 0.0)
 
         return scalar_bar_args

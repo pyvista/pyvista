@@ -5218,7 +5218,7 @@ def download_osmnx_graph():  # pragma: no cover
 def _osmnx_graph_read_func(filename):  # pragma: no cover
     import pickle
 
-    return pickle.load(Path(filename).open('rb'))
+    return pickle.load(Path(filename).open('rb'))  # noqa: SIM115
 
 
 _dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
