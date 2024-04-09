@@ -3110,12 +3110,11 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAngle(angle)
         if pyvista.vtk_version_info >= (9, 1, 0):
             alg.SetRotationAxis(rotation_axis)
-        else:  # pragma: no cover
-            if rotation_axis != (0, 0, 1):
-                raise VTKVersionError(
-                    'The installed version of VTK does not support '
-                    'setting the direction vector of the axis around which the rotation is done.'
-                )
+        elif rotation_axis != (0, 0, 1):
+            raise VTKVersionError(
+                'The installed version of VTK does not support '
+                'setting the direction vector of the axis around which the rotation is done.'
+            )
 
         _update_alg(alg, progress_bar, 'Extruding')
         output = wrap(alg.GetOutput())
