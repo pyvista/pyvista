@@ -917,18 +917,13 @@ class Text3DSource(vtkVectorText):
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
                 object.__setattr__(self, '_modified', True)
+        elif name in Text3DSource._new_attr_exceptions:
+            object.__setattr__(self, name, value)
         else:
-            # Do not allow setting attributes.
-            # This is similar to using @no_new_attr decorator but without
-            # the __setattr__ override since this class defines its own override
-            # for setting the modified flag
-            if name in Text3DSource._new_attr_exceptions:
-                object.__setattr__(self, name, value)
-            else:
-                raise AttributeError(
-                    f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}'
-                )
+            raise AttributeError(
+                f'Attribute "{name}" does not exist and cannot be added to type '
+                f'{self.__class__.__name__}'
+            )
 
     def __del__(self):
         """Delete filters."""
