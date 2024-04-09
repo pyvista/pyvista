@@ -65,7 +65,7 @@ class Renderers:
 
         # by default add border for multiple plots
         if border is None:
-            border = True if shape != (1, 1) else False
+            border = shape != (1, 1)
 
         self.groups = np.empty((0, 4), dtype=int)
 
