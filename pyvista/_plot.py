@@ -261,13 +261,12 @@ def plot(
                     pl.add_volume(item, **kwargs)
                 else:
                     pl.add_mesh(item, **kwargs)
+    elif volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
+        pl.add_volume(var_item, **kwargs)
+    elif isinstance(var_item, pyvista.MultiBlock):
+        pl.add_composite(var_item, **kwargs)
     else:
-        if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
-            pl.add_volume(var_item, **kwargs)
-        elif isinstance(var_item, pyvista.MultiBlock):
-            pl.add_composite(var_item, **kwargs)
-        else:
-            pl.add_mesh(var_item, **kwargs)
+        pl.add_mesh(var_item, **kwargs)
 
     if text:
         pl.add_text(text)
