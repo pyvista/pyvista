@@ -177,7 +177,6 @@ class Observer:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
         self.__observing = True
-        return
 
 
 def send_errors_to_logging():
