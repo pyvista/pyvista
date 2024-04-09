@@ -1080,7 +1080,7 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        if value == 0:  # noqa: SIM116
+        if value == 0:
             return 'composite'
         elif value == 1:
             return 'maximum'
