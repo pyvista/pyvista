@@ -2778,11 +2778,16 @@ class DataSetFilters:
             # PolyData with 'largest' mode generates bad output with unreferenced points
             output_needs_fixing = True
 
-        elif label_regions:
-            invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
-            invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
-            if invalid_cell_scalars or invalid_point_scalars:
-                output_needs_fixing = True
+        else:
+            # All other extraction modes / cases may generate incorrect scalar arrays
+            # e.g. 'largest' may output scalars with shape that does not match output mesh
+            # e.g. 'seed' method scalars may have one RegionId, yet may contain many
+            # disconnected regions. Therefore, check for correct scalars size
+            if label_regions:
+                invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
+                invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
+                if invalid_cell_scalars or invalid_point_scalars:
+                    output_needs_fixing = True
 
         if output_needs_fixing and output.n_cells > 0:
             # Fix bad output recursively using 'all' mode which has known good output
@@ -6603,19 +6608,25 @@ def _set_threshold_limit(alg, value, method, invert):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
             alg.SetUpperThreshold(value[1])
-        elif method.lower() == 'lower':
-            alg.SetLowerThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-        elif method.lower() == 'upper':
-            alg.SetUpperThreshold(value)
-            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
         else:
-            raise ValueError('Invalid method choice. Either `lower` or `upper`')
-    elif isinstance(value, (np.ndarray, collections.abc.Sequence)):
-        alg.ThresholdBetween(value[0], value[1])
-    elif method.lower() == 'lower':
-        alg.ThresholdByLower(value)
-    elif method.lower() == 'upper':
-        alg.ThresholdByUpper(value)
-    else:
-        raise ValueError('Invalid method choice. Either `lower` or `upper`')
+            # Single value
+            if method.lower() == 'lower':
+                alg.SetLowerThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
+            elif method.lower() == 'upper':
+                alg.SetUpperThreshold(value)
+                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+    else:  # pragma: no cover
+        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+            alg.ThresholdBetween(value[0], value[1])
+        else:
+            # Single value
+            if method.lower() == 'lower':
+                alg.ThresholdByLower(value)
+            elif method.lower() == 'upper':
+                alg.ThresholdByUpper(value)
+            else:
+                raise ValueError('Invalid method choice. Either `lower` or `upper`')

@@ -195,8 +195,9 @@ class _ThemeConfig(metaclass=_ForceSlots):
             if isinstance(attr, (tuple, list)):
                 if tuple(attr) != tuple(other_attr):
                     return False
-            elif not attr == other_attr:
-                return False
+            else:
+                if not attr == other_attr:
+                    return False
 
         return True
 
