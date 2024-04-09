@@ -1184,14 +1184,15 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_spacing(loader):
         spacing = DatasetPropsGenerator._try_getattr(loader.dataset, 'spacing')
-        # Format as regular decimals if possible
-        spacing_maybe = [DatasetPropsGenerator._generate_number(num) for num in spacing]
-        if any(len(space) > 8 for space in spacing_maybe):
-            # Too long, use scientific notation
-            return ', '.join(
-                [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing]
-            )
-        return ', '.join(spacing_maybe)
+        if spacing:
+            # Format as regular decimals if possible
+            spacing_maybe = [DatasetPropsGenerator._generate_number(num) for num in spacing]
+            if any(len(space) > 8 for space in spacing_maybe):
+                # Too long, use scientific notation
+                return ', '.join(
+                    [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing]
+                )
+            return ', '.join(spacing_maybe)
 
     @staticmethod
     def generate_n_arrays(loader):
