@@ -655,23 +655,22 @@ class DatasetCard:
     # The grid boxes are justified to push them toward opposite sides.
     #
     #   Smaller entries should fit on one line:
-    #       | Field      Value |
+    #       | Name        Value |
     #
     #   Longer entries should fit on two lines:
-    #       | LongField        |
-    #       |        LongValue |
+    #       | LongerName        |
+    #       |       LongerValue |
     #
     #   Fields with many values should align to the right
     #   and can stack together on one line if they fit.
-    #       | LongField        |
-    #       |        LongValue |
-    #       |   ExtraLongValue |
-    #       |    Value3 Value4 |
+    #       | LongerName        |
+    #       |       LongerValue |
+    #       |    ExtraLongValue |
+    #       |     Value3 Value4 |
     field_grid_template = _aligned_dedent(
         """
         |.. grid:: auto
-        |   :class-container: sd-align-major-justify sd-px-0
-        |   :class-row: sd-align-major-justify sd-px-0
+        |   :class-row: sd-col sd-align-major-justify sd-px-0
         |   :margin: 1
         |   :padding: 0
         |   :gutter: 1
