@@ -713,7 +713,6 @@ class CellArray(_vtk.vtkCellArray):
         # garbage collected. Keep a reference to them for safety
         self.__offsets = vtk_offsets
         self.__connectivity = vtk_connectivity
-        return
 
     @staticmethod
     def from_arrays(
