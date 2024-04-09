@@ -913,7 +913,7 @@ class DatasetCard:
         """Process the thumbnail image to ensure it's the right size."""
         from PIL import Image
 
-        img_path = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
+        img_path = Path(DATASET_GALLERY_DIR, 'not_available.png').as_posix()
         if os.path.isfile(img_path):
             return img_path
         IMG_WIDTH, IMG_HEIGHT = 400, 300
