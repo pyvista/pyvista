@@ -7222,3 +7222,47 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
 _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableLoadable(
     'Victorian_Goblet_face_illusion/Vase.stl'
 )
+
+
+def download_reservoir(load=True):  # pragma: no cover
+    """Download the UNISIM-II-D reservoir model.
+
+    UNISIM-II is a synthetic carbonate reservoir model created by
+    UNISIM-CEPETRO-Unicamp. The dataset can be used to compare methodologies
+    and performance of different techniques, simulators, algorithms, among others.
+    See more at <https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview>.
+
+    This dataset is licenced under the Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ExplicitStructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_reservoir()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`Reservoir Dataset <reservoir_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_resevoir, load=load)
+
+
+_dataset_resevoir = _SingleFileDownloadableLoadable(
+    'reservoir/UNISIM-II-D.zip',
+    target_file='UNISIM-II-D.vtu',
+    read_func=pyvista.ExplicitStructuredGrid,
+)
