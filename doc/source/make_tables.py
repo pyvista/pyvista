@@ -1182,7 +1182,7 @@ class DatasetPropsGenerator:
             return None
 
     @staticmethod
-    def _generate_num(num: Optional[float], fmt: Literal['exp', 'spaced'] = None):
+    def _generate_num(num: Optional[float], fmt: Optional[Literal["exp", "spaced"]] = None):
         if num is None:
             return None
         if fmt == 'exp':
