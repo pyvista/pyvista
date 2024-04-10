@@ -595,8 +595,9 @@ class Light(vtkLight):
             if actor_state:
                 if actor_name not in renderer.actors:
                     renderer.add_actor(self.actor, render=False)
-            elif actor_name in renderer.actors:
-                renderer.remove_actor(self.actor, render=False)
+            else:
+                if actor_name in renderer.actors:
+                    renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):  # numpydoc ignore=RT01
