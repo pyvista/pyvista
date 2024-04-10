@@ -1,4 +1,5 @@
 """Supporting functions for documentation build."""
+
 import inspect
 import os
 import os.path as op
@@ -73,18 +74,15 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
             return None
         return None
 
-    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
-    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows
+    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
+    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)
     except Exception:  # pragma: no cover
         lineno = None
 
-    if lineno and not edit:
-        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
-    else:
-        linespec = ""
+    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
 
     if 'dev' in pyvista.__version__:
         kind = 'main'

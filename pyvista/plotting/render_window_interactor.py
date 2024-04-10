@@ -1,4 +1,5 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
+
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
@@ -8,9 +9,9 @@ import time
 import warnings
 import weakref
 
+from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .opts import PickerType
@@ -44,9 +45,11 @@ class Timer:
 
     def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
+        # https://github.com/pyvista/pyvista/pull/5618
+        iren = obj
+
         while self.step < self.max_steps:
             self.callback(self.step)
-            iren = obj
             iren.GetRenderWindow().Render()
             self.step += 1
         if self.id:

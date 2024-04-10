@@ -47,8 +47,8 @@ def test_dict(scalar_bars):
     assert KEY in scalar_bars
     assert 'Data' in scalar_bars.keys()
     assert len(scalar_bars) == 1
-    assert list(scalar_bars.keys())[0] == KEY
-    assert isinstance(list(scalar_bars.values())[0], _vtk.vtkScalarBarActor)
+    assert next(iter(scalar_bars.keys())) == KEY
+    assert isinstance(next(iter(scalar_bars.values())), _vtk.vtkScalarBarActor)
 
     for key, value in scalar_bars.items():
         assert isinstance(value, _vtk.vtkScalarBarActor)
@@ -65,7 +65,7 @@ def test_clear(scalar_bars):
 
 def test_too_many_scalar_bars(sphere):
     pl = pv.Plotter()
-    with pytest.raises(RuntimeError, match='Maximum number of color'):
+    with pytest.raises(RuntimeError, match='Maximum number of color'):  # noqa: PT012
         for i in range(100):
             mesh = pv.Sphere()
             mesh[str(i)] = range(mesh.n_points)

@@ -1,4 +1,5 @@
 """PyVista volume module."""
+
 from . import _vtk
 from ._property import Property
 from .mapper import _BaseMapper
@@ -38,7 +39,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
-        return self.SetMapper(obj)
+        self.SetMapper(obj)
 
     @property
     def prop(self):  # numpydoc ignore=RT01

@@ -32,5 +32,3 @@ class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01
 
 class PyVistaPickingError(RuntimeError):
     """General picking error class."""
-
-    pass

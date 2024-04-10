@@ -1,5 +1,8 @@
 """Utilities routines."""
+
 # flake8: noqa: F401
+
+import contextlib
 
 from .arrays import (
     FieldAssociation,
@@ -51,6 +54,7 @@ from .geometric_objects import (
     NORMALS,
     Arrow,
     Box,
+    Capsule,
     Circle,
     CircularArc,
     CircularArcFromNormal,
@@ -84,6 +88,8 @@ from .geometric_objects import (
     translate,
 )
 from .geometric_sources import (
+    ArrowSource,
+    BoxSource,
     ConeSource,
     CubeSource,
     CylinderSource,
@@ -94,8 +100,13 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
 )
+
+with contextlib.suppress(ImportError):
+    from .geometric_sources import CapsuleSource
+
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,
@@ -194,6 +205,7 @@ from .reader import (
     XdmfReader,
     XMLImageDataReader,
     XMLMultiBlockDataReader,
+    XMLPartitionedDataSetReader,
     XMLPImageDataReader,
     XMLPolyDataReader,
     XMLPRectilinearGridReader,

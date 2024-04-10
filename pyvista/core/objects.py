@@ -3,6 +3,7 @@
 The data objects does not have any sort of spatial reference.
 
 """
+
 from typing import Optional, Tuple
 
 import numpy as np
@@ -294,10 +295,7 @@ class Table(_vtk.vtkTable, DataObject):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if arr.ndim > 1:
-                    ncomp = arr.shape[1]
-                else:
-                    ncomp = 1
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(key, arr.dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):

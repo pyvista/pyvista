@@ -1,4 +1,5 @@
 """Organize Renderers for ``pyvista.Plotter``."""
+
 import collections
 from itertools import product
 from weakref import proxy
@@ -64,10 +65,7 @@ class Renderers:
 
         # by default add border for multiple plots
         if border is None:
-            if shape != (1, 1):
-                border = True
-            else:
-                border = False
+            border = shape != (1, 1)
 
         self.groups = np.empty((0, 4), dtype=int)
 
@@ -87,26 +85,23 @@ class Renderers:
                 splitting_position = pyvista.global_theme.multi_rendering_splitting_position
 
             if splitting_position is None:
-                if n >= m:
-                    xsplit = m / (n + m)
-                else:
-                    xsplit = 1 - n / (n + m)
+                xsplit = m / (n + m) if n >= m else 1 - n / (n + m)
             else:
                 xsplit = splitting_position
 
             for i in rangen:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(0, i / n, xsplit, (i + 1) / n)
+                    arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
-                    arenderer.SetViewport(i / n, 0, (i + 1) / n, xsplit)
+                    arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(xsplit, i / m, 1, (i + 1) / m)
+                    arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:
-                    arenderer.SetViewport(i / m, xsplit, (i + 1) / m, 1)
+                    arenderer.viewport = (i / m, xsplit, (i + 1) / m, 1)
                 self._renderers.append(arenderer)
 
             self._shape = (n + m,)
@@ -210,7 +205,7 @@ class Renderers:
                     y0 = row_off[row + nb_rows]
                     x1 = col_off[col + nb_cols]
                     y1 = row_off[row]
-                    renderer.SetViewport(x0, y0, x1, y1)
+                    renderer.viewport = (x0, y0, x1, y1)
                     self._render_idxs[row, col] = len(self)
                     self._renderers.append(renderer)
                 else:
@@ -223,7 +218,7 @@ class Renderers:
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer.viewport = (0, 0, 1, 1)
         self._shadow_renderer.SetDraw(False)
 
     def loc_to_group(self, loc):

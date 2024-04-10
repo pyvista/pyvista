@@ -1,6 +1,7 @@
 """Viewer directive module."""
+
 import os
-import pathlib
+from pathlib import Path
 import shutil
 import sys
 
@@ -34,24 +35,22 @@ class OfflineViewerDirective(Directive):
     has_content = True
 
     def run(self):  # pragma: no cover
-        source_dir = pathlib.Path(self.state.document.settings.env.app.srcdir)
-        output_dir = pathlib.Path(self.state.document.settings.env.app.outdir)
+        source_dir = Path(self.state.document.settings.env.app.srcdir)
+        output_dir = Path(self.state.document.settings.env.app.outdir)
         # _build directory
-        build_dir = pathlib.Path(self.state.document.settings.env.app.outdir).parent
+        build_dir = Path(self.state.document.settings.env.app.outdir).parent
 
         # this is the path passed to 'offlineviewer:: <path>` directive
-        source_file = os.path.join(
-            os.path.dirname(self.state.document.current_source), self.arguments[0]
-        )
-        source_file = pathlib.Path(source_file).absolute().resolve()
-        if not os.path.isfile(source_file):
+        source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
+        source_file = Path(source_file).absolute().resolve()
+        if not Path(source_file).is_file():
             logger.warn(f'Source file {source_file} does not exist.')
             return []
 
         # copy viewer HTML to _static
-        static_path = pathlib.Path(output_dir) / '_static'
+        static_path = Path(output_dir) / '_static'
         static_path.mkdir(exist_ok=True)
-        if not pathlib.Path(static_path, os.path.basename(HTML_VIEWER_PATH)).exists():
+        if not Path(static_path, Path(HTML_VIEWER_PATH).name).exists():
             shutil.copy(HTML_VIEWER_PATH, static_path)
 
         # calculate the scene asset path relative to the build directory and
@@ -64,16 +63,16 @@ class OfflineViewerDirective(Directive):
         # dest_path: ${HOME}/pyvista/pyvista/doc/_build/html/_images/plot_directive/getting-started/index-2_00_00.vtksz
 
         if is_path_relative_to(source_file, build_dir):
-            dest_partial_path = pathlib.Path(source_file.parent).relative_to(build_dir)
+            dest_partial_path = Path(source_file.parent).relative_to(build_dir)
         elif is_path_relative_to(source_file, source_dir):
-            dest_partial_path = pathlib.Path(source_file.parent).relative_to(source_dir)
+            dest_partial_path = Path(source_file.parent).relative_to(source_dir)
         else:
             logger.warn(
                 f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path'
             )
             return []
 
-        dest_path = pathlib.Path(output_dir).joinpath('_images').joinpath(dest_partial_path)
+        dest_path = Path(output_dir).joinpath('_images').joinpath(dest_partial_path)
         dest_path.mkdir(parents=True, exist_ok=True)
         dest_file = dest_path.joinpath(source_file.name).resolve()
         if source_file != dest_file:
@@ -87,12 +86,9 @@ class OfflineViewerDirective(Directive):
         # generated HTML file.
         relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
         rel_viewer_path = (
-            pathlib.Path(".")
-            / relpath_to_source_root
-            / '_static'
-            / os.path.basename(HTML_VIEWER_PATH)
+            Path() / relpath_to_source_root / '_static' / Path(HTML_VIEWER_PATH).name
         ).as_posix()
-        rel_asset_path = pathlib.Path(os.path.relpath(dest_file, static_path)).as_posix()
+        rel_asset_path = Path(os.path.relpath(dest_file, static_path)).as_posix()
         html = f"""
     <iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """

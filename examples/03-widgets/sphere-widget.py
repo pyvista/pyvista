@@ -14,6 +14,7 @@ easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
 """
+
 # sphinx_gallery_thumbnail_number = 3
 
 # sphinx_gallery_start_ignore
@@ -149,7 +150,6 @@ def update_surface(point, i):
     tp = np.vstack((points, boundaries))
     zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic')
     surf.points[:, -1] = zz.ravel(order='F')
-    return
 
 
 # Get a list of unique colors for each widget

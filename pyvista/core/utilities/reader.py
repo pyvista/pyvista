@@ -1,4 +1,7 @@
 """Fine-grained control of reading data files."""
+
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import enum
@@ -6,6 +9,7 @@ from functools import wraps
 import importlib
 import os
 import pathlib
+from pathlib import Path
 from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 
@@ -152,6 +156,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
+    | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -187,7 +193,19 @@ def get_reader(filename, force_ext=None):
     try:
         Reader = CLASS_READERS[ext]
     except KeyError:
-        raise ValueError(f"`pyvista.get_reader` does not support a file with the {ext} extension")
+        if Path(filename).is_dir():
+            if len(files := os.listdir(filename)) > 0 and all(
+                pathlib.Path(f).suffix == '.dcm' for f in files
+            ):
+                Reader = DICOMReader
+            else:
+                raise ValueError(
+                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}"
+                )
+        else:
+            raise ValueError(
+                f"`pyvista.get_reader` does not support a file with the {ext} extension"
+            )
 
     return Reader(filename)
 
@@ -195,9 +213,9 @@ def get_reader(filename, force_ext=None):
 class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
-    def __init__(self):
+    def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable]] = []
+        self._observers: List[Union[int, Callable[[Any], Any]]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -205,7 +223,6 @@ class BaseVTKReader(ABC):
 
     def UpdateInformation(self):
         """Update Information from file."""
-        pass
 
     def AddObserver(self, event_type, callback):
         """Add Observer that can be triggered during Update."""
@@ -294,7 +311,7 @@ class BaseReader:
         """
         self._progress_bar = True
         if msg is None:
-            msg = f"Reading {os.path.basename(self.path)}"
+            msg = f"Reading {Path(self.path).name}"
         self._progress_msg = msg
 
     def hide_progress(self):
@@ -345,9 +362,9 @@ class BaseReader:
 
     @path.setter
     def path(self, path: str):  # numpydoc ignore=GL08
-        if os.path.isdir(path):
+        if Path(path).is_dir():
             self._set_directory(path)
-        elif os.path.isfile(path):
+        elif Path(path).is_file():
             self._set_filename(path)
         else:
             raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
@@ -393,11 +410,9 @@ class BaseReader:
 
     def _set_defaults(self):
         """Set defaults on reader, if needed."""
-        pass
 
     def _set_defaults_post(self):
         """Set defaults on reader post setting file, if needed."""
-        pass
 
 
 class PointCellDataSelection:
@@ -882,7 +897,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(0, number_time_sets)}")
+            raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
 
 
 # skip pydocstyle D102 check since docstring is taken from TimeReader
@@ -1918,7 +1933,7 @@ class _PVDReader(BaseVTKReader):
     def SetFileName(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = os.path.join(os.path.dirname(filename))
+        self._directory = str(Path(filename).parent)
 
     def UpdateInformation(self):
         """Parse PVD file."""
@@ -1953,7 +1968,7 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(os.path.join(self._directory, dataset.path))
+            get_reader(str(Path(self._directory) / dataset.path))
             for dataset in self._active_datasets
         ]
 
@@ -2347,7 +2362,7 @@ class HDFReader(BaseReader):
                     f'see {HDF_HELP} for more details.'
                 )
             else:
-                raise err
+                raise
 
 
 class GLTFReader(BaseReader):
@@ -2435,10 +2450,6 @@ class GIFReader(BaseReader):
 class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     """XdmfReader for .xdmf files.
 
-    Notes
-    -----
-    We currently can't inspect the time values for this reader.
-
     Parameters
     ----------
     path : str
@@ -2504,6 +2515,26 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         self.set_active_time_value(self._active_time_value)
 
 
+class XMLPartitionedDataSetReader(BaseReader):
+    """XML PartitionedDataSet Reader for reading .vtpd files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> partitions = pv.PartitionedDataSet(
+    ...     [
+    ...         pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)),
+    ...         pv.Wavelet(extent=(0, 10, 0, 10, 5, 10)),
+    ...     ]
+    ... )
+    >>> partitions.save("my_partitions.vtpd")
+    >>> _ = pv.read("my_partitions.vtpd")
+    """
+
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPartitionedDataSetReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2559,4 +2590,5 @@ CLASS_READERS = {
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
+    '.vtpd': XMLPartitionedDataSetReader,
 }

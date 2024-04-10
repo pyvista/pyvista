@@ -7,6 +7,7 @@ This is necessary for future versions of PyVista that will fully
 decouple the ``core`` and ``plotting`` APIs.
 
 """
+
 import numpy as np
 
 import pyvista
@@ -227,7 +228,10 @@ def plot(
     if show_axes is None:
         show_axes = pl.theme.axes.show
     if show_axes:
-        pl.add_axes()
+        if pl.theme.axes.box:
+            pl.add_box_axes()
+        else:
+            pl.add_axes()
 
     if anti_aliasing:
         if anti_aliasing is True:

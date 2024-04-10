@@ -12,6 +12,7 @@ Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.
 
 """
+
 import numpy as np
 
 import pyvista as pv

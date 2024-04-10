@@ -1,4 +1,5 @@
 """Contains the pyvista.Cell class."""
+
 from __future__ import annotations
 
 from typing import List, Optional, Sequence, Tuple, cast
@@ -9,7 +10,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import CellsLike, Matrix, NumpyArray, Vector
+from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError, PyVistaDeprecationWarning
@@ -192,7 +193,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
           N Arrays:   0
 
         """
-        cells = [len(self.point_ids)] + list(range(len(self.point_ids)))
+        cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
         if self.dimension == 0:
             return pyvista.PolyData(self.points.copy(), verts=cells)
         if self.dimension == 1:
@@ -237,7 +238,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                 cell_ids.extend(self.point_ids.index(i) for i in face.point_ids)
             cell_ids.insert(0, len(cell_ids))
         else:
-            cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
+            cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
         return pyvista.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
@@ -339,7 +340,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def points(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Get the point coordinates of the cell.
 
         Returns
@@ -626,7 +627,7 @@ class CellArray(_vtk.vtkCellArray):
         self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
         self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
         if cells is not None:
-            self.cells = cells  # type: ignore
+            self.cells = cells  # type: ignore[assignment]
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
@@ -701,7 +702,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_offset_array(self)
 
     def _set_data(
-        self, offsets: Matrix[int], connectivity: Matrix[int], deep: bool = False
+        self, offsets: MatrixLike[int], connectivity: MatrixLike[int], deep: bool = False
     ) -> None:
         """Set the offsets and connectivity arrays."""
         vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
@@ -712,12 +713,11 @@ class CellArray(_vtk.vtkCellArray):
         # garbage collected. Keep a reference to them for safety
         self.__offsets = vtk_offsets
         self.__connectivity = vtk_connectivity
-        return None
 
     @staticmethod
     def from_arrays(
-        offsets: Matrix[int],
-        connectivity: Matrix[int],
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
         deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
@@ -761,7 +761,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells: Matrix[int], deep: bool = False) -> pyvista.CellArray:
+    def from_regular_cells(cls, cells: MatrixLike[int], deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -785,7 +785,7 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls, cells: Sequence[Vector[int]]) -> pyvista.CellArray:
+    def from_irregular_cells(cls, cells: Sequence[VectorLike[int]]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -815,7 +815,7 @@ def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
+def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 

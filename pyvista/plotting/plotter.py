@@ -1,6 +1,8 @@
 """PyVista plotting module."""
+
 import collections.abc
-from contextlib import contextmanager
+import contextlib
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -8,6 +10,7 @@ import io
 import logging
 import os
 import pathlib
+from pathlib import Path
 import platform
 import sys
 import textwrap
@@ -445,8 +448,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -490,8 +493,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkVRMLImporter
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -550,7 +553,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename += '.html'
 
         # Move to final destination
-        with open(filename, 'w', encoding='utf-8') as f:
+        with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
@@ -597,7 +600,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return content
 
-        with open(filename, 'wb') as f:
+        with Path(filename).open('wb') as f:
             f.write(content)
 
         return filename
@@ -836,7 +839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             First scalar bar actor.
 
         """
-        return list(self.scalar_bars.values())[0]
+        return next(iter(self.scalar_bars.values()))
 
     @property
     def scalar_bars(self):  # numpydoc ignore=RT01
@@ -1234,6 +1237,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
+
+    @wraps(Renderer.add_box_axes)
+    def add_box_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.add_box_axes``."""
+        return self.renderer.add_box_axes(*args, **kwargs)
 
     @wraps(Renderer.hide_axes)
     def hide_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
@@ -1998,11 +2006,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         0
 
         """
-        pickable = []
-        for renderer in self.renderers:
-            for actor in renderer.actors.values():
-                if actor.GetPickable():
-                    pickable.append(actor)
+        pickable = [
+            actor
+            for renderer in self.renderers
+            for actor in renderer.actors.values()
+            if actor.GetPickable()
+        ]
         return pickable
 
     @pickable_actors.setter
@@ -2052,7 +2061,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(prop, "SetLineWidth"):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
         self.render()
-        return
 
     def zoom_camera(self, value):
         """Zoom of the camera and render.
@@ -2067,7 +2075,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.camera.zoom(value)
         self.render()
-        return
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
@@ -2710,7 +2717,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             interpolate_before_map=interpolate_before_map,
         )
 
-        actor, _ = self.add_actor(self.mapper)
+        actor, _ = self.add_actor(self.mapper, render=False)
 
         prop = Property(
             self._theme,
@@ -2748,10 +2755,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()
                 if point_name and cell_name:
-                    if preference == 'point':
-                        scalars = point_name
-                    else:
-                        scalars = cell_name
+                    scalars = point_name if preference == "point" else cell_name
                 else:
                     scalars = point_name if point_name is not None else cell_name
 
@@ -3486,7 +3490,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             # enable rgb if the scalars name ends with rgb or rgba
             if rgb is None:
-                if scalars.endswith('_rgb') or scalars.endswith('_rgba'):
+                if scalars.endswith(('_rgb', '_rgba')):
                     rgb = True
 
             original_scalar_name = scalars
@@ -3712,11 +3716,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
-        geom = pyvista.Triangle()
-        if scalars is not None:
-            geom = pyvista.Box()
-            color = Color('black')
+
+        if (
+            hasattr(self.mesh, '_glyph_geom')
+            and self.mesh._glyph_geom is not None
+            and self.mesh._glyph_geom[0] is not None
+        ):
+            # Using only the first geometry
+            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
+        else:
+            geom = pyvista.Triangle()
+            if scalars is not None:
+                geom = pyvista.Box()
+
         geom.points -= geom.center
+
         addr = actor.GetAddressAsString("")
         self.renderer._labels[addr] = [geom, label, color]
 
@@ -4054,10 +4068,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             show_scalar_bar = self._theme.show_scalar_bar or scalar_bar_args
 
         # Avoid mutating input
-        if scalar_bar_args is None:
-            scalar_bar_args = {}
-        else:
-            scalar_bar_args = scalar_bar_args.copy()
+        scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
         # account for legacy behavior
         if 'stitle' in kwargs:  # pragma: no cover
             # Deprecated on ..., estimated removal on v0.40.0
@@ -4119,10 +4130,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         block_resolution = resolution
                 else:
                     block_resolution = resolution
-                if multi_colors:
-                    color = next(cycler)
-                else:
-                    color = cmap
+                color = next(cycler) if multi_colors else cmap
 
                 a = self.add_volume(
                     block,
@@ -4246,7 +4254,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
                 clim = [min_, max_]
-        elif isinstance(clim, float) or isinstance(clim, int):
+        elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale:
@@ -4617,10 +4625,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        if len(args):
-            title = args[0]
-        else:
-            title = kwargs.get('title', '')
+        title = args[0] if len(args) else kwargs.get("title", "")
         if title is None:
             title = ''
         kwargs['title'] = title
@@ -4704,12 +4709,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         s[:] = scalars
         vtk_scalars.Modified()
         data.Modified()
-        try:
+        with contextlib.suppress(Exception):
             # Why are the points updated here? Not all datasets have points
             # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
-        except:
-            pass
 
         if render:
             self.render()
@@ -4807,10 +4810,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # end movie
         if hasattr(self, 'mwriter'):
-            try:
+            with suppress(BaseException):
                 self.mwriter.close()
-            except BaseException:
-                pass
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
@@ -5008,8 +5009,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio'
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5082,9 +5083,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if filename[-3:] != 'gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        self._gif_filename = os.path.abspath(filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        self._gif_filename = str(Path(filename).resolve())
 
         kwargs['mode'] = 'I'
         kwargs['loop'] = loop
@@ -5767,7 +5768,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(filename, (str, pathlib.Path)):
                 filename = pathlib.Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                    filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+                    filename = Path(pyvista.FIGURE_PATH) / filename
                 if not filename.suffix:
                     filename = filename.with_suffix('.png')
                 elif filename.suffix not in SUPPORTED_FORMATS:
@@ -5775,7 +5776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Unsupported extension {filename.suffix}\n'
                         f'Must be one of the following: {SUPPORTED_FORMATS}'
                     )
-                filename = os.path.abspath(os.path.expanduser(str(filename)))
+                filename = str(Path(str(filename)).expanduser().resolve())
                 Image.fromarray(image).save(filename)
             else:
                 Image.fromarray(image).save(filename, format="PNG")
@@ -5829,9 +5830,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
-        filename = os.path.abspath(os.path.expanduser(filename))
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        filename = str(Path(filename).expanduser().resolve())
         extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
@@ -5993,7 +5994,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         center = np.array(self.center)
         bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
@@ -6062,13 +6063,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         Plot an orbit around the earth.  Save the gif as a temporary file.
 
-        >>> import os
+        >>> from pathlib import Path
         >>> from tempfile import mkdtemp
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
-        >>> filename = os.path.join(mkdtemp(), 'orbit.gif')
+        >>> filename = str(Path(mkdtemp()) / 'orbit.gif')
         >>> plotter = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
         ...     mesh, texture=texture, smooth_shading=True
@@ -6088,7 +6089,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if focus is None:
             focus = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
         if not is_pyvista_dataset(path):
@@ -6106,10 +6107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         def orbit():
             """Define the internal thread for running the orbit."""
-            if progress_bar:
-                points_seq = tqdm(points)
-            else:
-                points_seq = points
+            points_seq = tqdm(points) if progress_bar else points
 
             for point in points_seq:
                 tstart = time.time()  # include the render time in the step time
@@ -6155,10 +6153,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+            filename = str(Path(pyvista.FIGURE_PATH) / filename)
         else:
-            filename = os.path.abspath(os.path.expanduser(filename))
+            filename = str(Path(filename).expanduser().resolve())
 
         if not filename.endswith('.obj'):
             raise ValueError('`filename` must end with ".obj"')
@@ -6362,10 +6360,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> plotter.show()
         """
-        places = []
-        for index in range(len(self.renderers)):
-            if name in self.renderers[index]._actors:
-                places.append(tuple(self.renderers.index_to_loc(index)))
+        places = [
+            tuple(self.renderers.index_to_loc(index))
+            for index in range(len(self.renderers))
+            if name in self.renderers[index]._actors
+        ]
         return places
 
 
@@ -6572,6 +6571,11 @@ class Plotter(BasePlotter):
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
             self.enable_anti_aliasing(self.theme.anti_aliasing)
+
+        if self.theme.camera.parallel_projection:
+            self.enable_parallel_projection()
+
+        self.parallel_scale = self.theme.camera.parallel_scale
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
@@ -6812,10 +6816,8 @@ class Plotter(BasePlotter):
             # always save screenshots for sphinx_gallery
             self.last_image = self.screenshot(screenshot, return_img=True)
             self.last_image_depth = self.get_image_depth()
-            try:
+            with suppress(ImportError):
                 self.last_vtksz = self.export_vtksz(filename=None)
-            except ImportError:
-                pass
 
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and not self.off_screen:
@@ -7019,10 +7021,9 @@ class Plotter(BasePlotter):
         List[Union[pyvista.DataSet, PyVista.MultiBlock]]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
-        meshes = []
-        for actor in self.actors.values():
-            if hasattr(actor, 'mapper'):
-                meshes.append(actor.mapper.dataset)
+        meshes = [
+            actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')
+        ]
 
         return meshes
 

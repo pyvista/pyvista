@@ -1,6 +1,8 @@
 """Test pyvista core utilities."""
+
 import os
 import pathlib
+from pathlib import Path
 import pickle
 import shutil
 import unittest.mock as mock
@@ -11,14 +13,11 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import examples as ex, pyvista_ndarray
+from pyvista import examples as ex
 from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     _coerce_transformlike_arg,
-    cast_to_list_array,
-    cast_to_ndarray,
-    cast_to_tuple_array,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -29,7 +28,12 @@ from pyvista.core.utilities.arrays import (
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
-from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
+from pyvista.core.utilities.misc import (
+    assert_empty_kwargs,
+    check_valid_vector,
+    has_module,
+    no_new_attr,
+)
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 
@@ -52,7 +56,7 @@ def test_version():
 def test_createvectorpolydata_error():
     orig = np.random.default_rng().random((3, 1))
     vec = np.random.default_rng().random((3, 1))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         vector_poly_data(orig, vec)
 
 
@@ -73,7 +77,7 @@ def test_createvectorpolydata():
 
 
 @pytest.mark.parametrize(
-    'path, target_ext',
+    ('path', 'target_ext'),
     [
         ("/data/mesh.stl", ".stl"),
         ("/data/image.nii.gz", '.nii.gz'),
@@ -105,10 +109,10 @@ def test_read(tmpdir, use_pathlib):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
     arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = pv.read(filename)
     # read non existing file
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = pv.read('this_file_totally_does_not_exist.vtk')
     # Now test reading lists of files as multi blocks
     multi = pv.read(fnames)
@@ -136,7 +140,9 @@ def test_read_force_ext(tmpdir):
 
     dummy_extension = '.dummy'
     for fname, type in zip(fnames, types):
-        root, original_ext = os.path.splitext(fname)
+        path = Path(fname)
+        root = str(path.parent / path.stem)
+        original_ext = path.suffix
         _, name = os.path.split(root)
         new_fname = tmpdir / name + '.' + dummy_extension
         shutil.copy(fname, new_fname)
@@ -174,7 +180,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     assert len(data) == 0
 
     fname = ex.planefile
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         fileio.read(fname, force_ext='.not_supported')
 
 
@@ -232,7 +238,7 @@ def test_get_array_error(hexbeam):
     # invalid inputs
     with pytest.raises(TypeError):
         get_array(hexbeam, 'test_data', preference={'invalid'})
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         get_array(hexbeam, 'test_data', preference='invalid')
     with pytest.raises(ValueError, match='`preference` must be'):
         get_array(hexbeam, 'test_data', preference='row')
@@ -283,8 +289,8 @@ def test_voxelize_invalid_density(rectilinear):
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
+    mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='must have faces'):
-        mesh = pv.PolyData(hexbeam.points)
         pv.voxelize(mesh)
 
 
@@ -403,21 +409,21 @@ def test_vtkmatrix_to_from_array():
             assert array[i, j] == matrix.GetElement(i, j)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         matrix = pv.vtkmatrix_from_array(np.arange(3 * 4).reshape(3, 4))
+    invalid = vtk.vtkTransform()
     with pytest.raises(TypeError):
-        invalid = vtk.vtkTransform()
         array = pv.array_from_vtkmatrix(invalid)
 
 
 def test_assert_empty_kwargs():
     kwargs = {}
     assert assert_empty_kwargs(**kwargs)
+    kwargs = {"foo": 6}
     with pytest.raises(TypeError):
-        kwargs = {"foo": 6}
         assert_empty_kwargs(**kwargs)
+    kwargs = {"foo": 6, "goo": "bad"}
     with pytest.raises(TypeError):
-        kwargs = {"foo": 6, "goo": "bad"}
         assert_empty_kwargs(**kwargs)
 
 
@@ -467,10 +473,10 @@ def test_check_valid_vector():
 
 def test_cells_dict_utils():
     # No pyvista object
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
@@ -565,16 +571,16 @@ def test_axis_angle_rotation():
     assert np.allclose(actual, expected)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation([1, 0, 0, 0], angle)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.axis_angle_rotation([0, 0, 0], angle)
 
 
 @pytest.mark.parametrize(
-    "axis,angle,times",
+    ("axis", "angle", "times"),
     [
         ([1, 0, 0], 90, 4),
         ([1, 0, 0], 180, 2),
@@ -623,11 +629,11 @@ def test_reflection():
     assert np.allclose(actual, expected)
 
     # invalid cases
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection([1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection(normal, point=[1, 0, 0, 0])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         transformations.reflection([0, 0, 0])
 
 
@@ -693,13 +699,20 @@ def test_convert_array():
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
 
+    # test string scalar is converted to string array with length on
+    my_str = 'abc'
+    arr5 = pv.core.utilities.arrays.convert_array(my_str)
+    assert arr5.GetNumberOfValues() == 1
+    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
+    assert arr6.GetNumberOfValues() == 1
+
 
 def test_has_duplicates():
     assert not has_duplicates(np.arange(100))
     assert has_duplicates(np.array([0, 1, 2, 2]))
     assert has_duplicates(np.array([[0, 1, 2], [0, 1, 2]]))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         raise_has_duplicates(np.array([0, 1, 2, 2]))
 
 
@@ -750,7 +763,7 @@ def test_set_pickle_format():
     pv.set_pickle_format('xml')
     assert pv.PICKLE_FORMAT == 'xml'
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.set_pickle_format('invalid_format')
 
 
@@ -846,7 +859,7 @@ def test_coerce_point_like_arg_copy():
 
 def test_coerce_point_like_arg_errors():
     # wrong length sequence
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg([1, 2])
 
     # wrong type
@@ -855,13 +868,13 @@ def test_coerce_point_like_arg_errors():
         _coerce_pointslike_arg({1, 2, 3})
 
     # wrong length ndarray
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty(4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty([2, 4]))
 
     # wrong ndim ndarray
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         _coerce_pointslike_arg(np.empty([1, 3, 3]))
 
 
@@ -921,46 +934,23 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg("abc")
 
 
-@pytest.mark.parametrize('as_any', [True, False])
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize('dtype', [None, float])
-def test_cast_to_ndarray(as_any, copy, dtype):
-    array_in = pyvista_ndarray([1, 2])
-    array_out = cast_to_ndarray(array_in, copy=copy, as_any=as_any, dtype=dtype)
-    assert np.array_equal(array_out, array_in)
-    if as_any:
-        assert type(array_out) is pyvista_ndarray
-    else:
-        assert type(array_out) is np.ndarray
+@pytest.fixture()
+def no_new_attr_subclass():
+    @no_new_attr
+    class A: ...
 
-    if copy:
-        assert array_out is not array_in
+    class B(A):
+        _new_attr_exceptions = 'eggs'
 
-    if dtype is None:
-        assert array_out.dtype.type is array_in.dtype.type
-    else:
-        assert array_out.dtype.type is np.dtype(dtype).type
+        def __init__(self):
+            self.eggs = 'ham'
+
+    return B
 
 
-def test_cast_to_ndarray_raises():
-    msg = "Input cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(ValueError, match=msg):
-        cast_to_ndarray([[1], [2, 3]])
-
-
-def test_cast_to_tuple_array():
-    array_in = np.zeros(shape=(2, 2, 3))
-    array_tuple = cast_to_tuple_array(array_in)
-    assert array_tuple == (((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)), ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0)))
-    array_list = array_in.tolist()
-    assert np.array_equal(array_tuple, array_list)
-    with pytest.raises(ValueError):
-        cast_to_tuple_array([[1, [2, 3]]])
-
-
-def test_cast_to_list_array():
-    array_in = np.zeros(shape=(3, 4, 5))
-    array_list = cast_to_list_array(array_in)
-    assert np.array_equal(array_in, array_list)
-    with pytest.raises(ValueError):
-        cast_to_tuple_array([[1, [2, 3]]])
+def test_no_new_attr_subclass(no_new_attr_subclass):
+    obj = no_new_attr_subclass()
+    assert obj
+    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
+    with pytest.raises(AttributeError, match=msg):
+        obj._eggs = 'ham'

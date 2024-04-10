@@ -1,12 +1,13 @@
 """Type aliases for type hints."""
+
 from ._aliases import (  # noqa: F401
-    Array,
+    ArrayLike,
     BoundsLike,
     CellArrayLike,
     CellsLike,
-    Matrix,
+    MatrixLike,
     Number,
     TransformLike,
-    Vector,
+    VectorLike,
 )
-from ._array_like import NumpyArray  # noqa: F401
+from ._array_like import NumberType, NumpyArray  # noqa: F401

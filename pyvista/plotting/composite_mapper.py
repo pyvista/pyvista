@@ -1,4 +1,5 @@
 """Module containing composite data mapper."""
+
 from itertools import cycle
 import sys
 from typing import Optional
@@ -7,9 +8,9 @@ import weakref
 import numpy as np
 
 import pyvista
+from pyvista import vtk_version_info
 from pyvista.core.utilities.arrays import convert_array, convert_string_array
 from pyvista.core.utilities.misc import _check_range
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .colors import Color, get_cycler
@@ -516,9 +517,11 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
-    _vtk.vtkCompositePolyDataMapper  # type: ignore
-    if vtk_version_info >= (9, 3)
-    else _vtk.vtkCompositePolyDataMapper2,  # type: ignore
+    (
+        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
+        if vtk_version_info >= (9, 3)
+        else _vtk.vtkCompositePolyDataMapper2
+    ),
     _BaseMapper,
 ):
     """Composite PolyData mapper.
@@ -855,10 +858,7 @@ class CompositePolyDataMapper(
                 scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:
-                if self._theme is None:
-                    cmap = pyvista.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
+                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)

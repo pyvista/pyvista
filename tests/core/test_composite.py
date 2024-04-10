@@ -393,7 +393,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
 def test_invalid_arg():
     with pytest.raises(TypeError):
         pv.MultiBlock(np.empty(10))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.MultiBlock(np.empty(10), np.empty(10))
 
 
@@ -402,7 +402,7 @@ def test_multi_io_erros(tmpdir):
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.npy'))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         multi.save(bad_ext_name)
     arr = np.random.default_rng().random((10, 10))
     np.save(bad_ext_name, arr)
@@ -410,7 +410,7 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
+    with pytest.raises(IOError):  # noqa: PT011
         _ = MultiBlock(bad_ext_name)
 
 

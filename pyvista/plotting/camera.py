@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkCamera."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -230,7 +231,7 @@ class Camera(_vtk.vtkCamera):
 
         xmlstr = ElementTree.tostring(root).decode()
         newxml = md.parseString(xmlstr)
-        with open(filename, 'w') as outfile:
+        with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property

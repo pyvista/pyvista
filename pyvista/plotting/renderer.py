@@ -1,6 +1,7 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+import contextlib
 from functools import partial, wraps
 from typing import Sequence, cast
 import warnings
@@ -393,9 +394,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             # check if a valid camera position
             if not isinstance(camera_location, CameraPosition):
-                if not len(camera_location) == 3:
-                    raise InvalidCameraError
-                elif any(len(item) != 3 for item in camera_location):
+                if not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location):
                     raise InvalidCameraError
 
             # everything is set explicitly
@@ -446,7 +445,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             for ax in range(3):
                 update_axis(ax)
-            return
 
         for actor in self._actors.values():
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
@@ -695,6 +693,25 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return whether this renderer has charts."""
         return self._charts is not None and len(self._charts) > 0
 
+    def get_charts(self):  # numpydoc ignore=RT01
+        """Return a list of all charts in this renderer.
+
+        Examples
+        --------
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([1, 2, 3], [0, 1, 0])
+           >>> pl = pv.Plotter()
+           >>> pl.add_chart(chart)
+           >>> chart is pl.renderer.get_charts()[0]
+           True
+
+        """
+        return [*self._charts] if self.has_charts else []
+
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
@@ -817,12 +834,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor.name = name
 
         if name is None:
-            if isinstance(actor, Actor):
-                name = actor.name
-            else:
-                # Fallback for non-wrapped actors
-                # e.g., vtkScalarBarActor
-                name = actor.GetAddressAsString("")
+            # Fallback for non-wrapped actors
+            # e.g., vtkScalarBarActor
+            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString("")
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
@@ -831,9 +845,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
-        if reset_camera:
-            self.reset_camera(render)
-        elif not self.camera_set and reset_camera is None and not rv:
+        if reset_camera or not self.camera_set and reset_camera is None and not rv:
             self.reset_camera(render)
         elif render:
             self.parent.render()
@@ -845,15 +857,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if culling:
             if culling in [True, 'back', 'backface', 'b']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             elif culling in ['front', 'frontface', 'f']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
@@ -1063,6 +1071,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :func:`pyvista.create_axes_orientation_box` for details.
 
+            .. deprecated:: 0.43.0
+                The is deprecated. Use `add_box_axes` method instead.
+
         box_args : dict, optional
             Parameters for the orientation box widget when
             ``box=True``. See the parameters of
@@ -1090,13 +1101,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
-        Use the axes orientation widget instead of the default arrows.
-
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
-        >>> _ = pl.add_axes(box=True)
-        >>> pl.show()
-
         Specify more parameters for the axes marker.
 
         >>> import pyvista as pv
@@ -1122,6 +1126,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if box is None:
             box = self._theme.axes.box
         if box:
+            warnings.warn(
+                "`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.",
+                PyVistaDeprecationWarning,
+            )
             if box_args is None:
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
@@ -1149,6 +1157,136 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 labels_off=labels_off,
                 **kwargs,
             )
+        axes_widget = self.add_orientation_widget(
+            self.axes_actor, interactive=interactive, color=None
+        )
+        axes_widget.SetViewport(viewport)
+        return self.axes_actor
+
+    def add_box_axes(
+        self,
+        *,
+        interactive=None,
+        line_width=2,
+        text_scale=0.366667,
+        edge_color='black',
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        xlabel='X',
+        ylabel='Y',
+        zlabel='Z',
+        x_face_color='white',
+        y_face_color='white',
+        z_face_color='white',
+        label_color=None,
+        labels_off=False,
+        opacity=0.5,
+        show_text_edges=False,
+        viewport=(0, 0, 0.2, 0.2),
+    ):
+        """Add an interactive color box axes widget in the bottom left corner.
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Enable this orientation widget to be moved by the user.
+
+        line_width : float, optional
+            The width of the marker lines.
+
+        text_scale : float, optional
+            Size of the text relative to the faces.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        x_color : ColorLike, optional
+            Color of the x axis text.
+
+        y_color : ColorLike, optional
+            Color of the y axis text.
+
+        z_color : ColorLike, optional
+            Color of the z axis text.
+
+        xlabel : str, optional
+            Text used for the x axis.
+
+        ylabel : str, optional
+            Text used for the y axis.
+
+        zlabel : str, optional
+            Text used for the z axis.
+
+        x_face_color : ColorLike, optional
+            Color used for the x axis arrow.  Defaults to theme axes
+            parameters.
+
+        y_face_color : ColorLike, optional
+            Color used for the y axis arrow.  Defaults to theme axes
+            parameters.
+
+        z_face_color : ColorLike, optional
+            Color used for the z axis arrow.  Defaults to theme axes
+            parameters.
+
+        label_color : ColorLike, optional
+            Color of the labels.
+
+        labels_off : bool, optional
+            Enable or disable the text labels for the axes.
+
+        opacity : float, optional
+            Opacity in the range of ``[0, 1]`` of the orientation box.
+
+        show_text_edges : bool, optional
+            Enable or disable drawing the vector text edges.
+
+        viewport : sequence[float], default: (0, 0, 0.2, 0.2)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkAxesActor
+            Axes actor.
+
+        Examples
+        --------
+        Use the axes orientation widget instead of the default arrows.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(pv.Sphere())
+        >>> _ = pl.add_box_axes()
+        >>> pl.show()
+
+        """
+        if interactive is None:
+            interactive = self._theme.interactive
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+        self.axes_actor = create_axes_orientation_box(
+            line_width=line_width,
+            text_scale=text_scale,
+            edge_color=edge_color,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            x_face_color=x_face_color,
+            y_face_color=y_face_color,
+            z_face_color=z_face_color,
+            color_box=True,
+            label_color=label_color,
+            labels_off=labels_off,
+            opacity=opacity,
+            show_text_edges=show_text_edges,
+        )
         axes_widget = self.add_orientation_widget(
             self.axes_actor, interactive=interactive, color=None
         )
@@ -1616,11 +1754,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # here since it's the default "screen size".
         cube_axes_actor.SetScreenSize(font_size / 12 * 10.0)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
-        self.cube_axes_actor = cube_axes_actor
-
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
+
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, render=render)
+        self.cube_axes_actor = cube_axes_actor
 
         self.Modified()
         return cube_axes_actor
@@ -2074,10 +2212,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
-                try:
+                with contextlib.suppress(KeyError):
                     self.remove_actor(actor, reset_camera=False, render=False)
-                except KeyError:
-                    pass
             self.Modified()
 
     def clear(self):
@@ -2326,10 +2462,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
-            names = []
-            for k in keys:
-                if k.startswith(f'{name}-'):
-                    names.append(k)
+            names = [k for k in keys if k.startswith(f'{name}-')]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
@@ -2351,10 +2484,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        try:
+        with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        except (AttributeError, ReferenceError):
-            pass
         self.RemoveActor(actor)
 
         if name is None:
@@ -2363,9 +2494,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     name = k
         self._actors.pop(name, None)
         self.update_bounds_axes()
-        if reset_camera:
-            self.reset_camera(render=render)
-        elif not self.camera_set and reset_camera is None:
+        if reset_camera or not self.camera_set and reset_camera is None:
             self.reset_camera(render=render)
         elif render:
             self.parent.render()
@@ -2460,11 +2589,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(self._theme.camera['position']).astype(float)
+        position = np.array(self._theme.camera.position).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
         return cpos
 
     def update_bounds_axes(self):
@@ -2537,7 +2666,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_isometric()
 
-    def view_isometric(self, negative=False, render=True):
+    def view_isometric(self, negative=False, render=True, bounds=None):
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -2550,6 +2679,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2571,9 +2704,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         position = self.get_default_cam_pos(negative=negative)
         self.camera_position = CameraPosition(*position)
         self.camera_set = negative
-        self.reset_camera(render=render)
+        self.reset_camera(render=render, bounds=bounds)
 
-    def view_vector(self, vector, viewup=None, render=True):
+    def view_vector(self, vector, viewup=None, render=True, bounds=None):
         """Point the camera in the direction of the given vector.
 
         Parameters
@@ -2588,15 +2721,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             If the render window is being shown, trigger a render
             after setting the camera position.
 
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+
         """
         focal_pt = self.center
         if viewup is None:
-            viewup = self._theme.camera['viewup']
+            viewup = self._theme.camera.viewup
         cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
-        self.reset_camera(render=render)
+        self.reset_camera(render=render, bounds=bounds)
 
-    def view_xy(self, negative=False, render=True):
+    def view_xy(self, negative=False, render=True, bounds=None):
         """View the XY plane.
 
         Parameters
@@ -2607,6 +2744,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2621,9 +2762,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy', negative=negative), render=render)
+        self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
 
-    def view_yx(self, negative=False, render=True):
+    def view_yx(self, negative=False, render=True, bounds=None):
         """View the YX plane.
 
         Parameters
@@ -2634,6 +2775,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2648,9 +2793,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yx', negative=negative), render=render)
+        self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
 
-    def view_xz(self, negative=False, render=True):
+    def view_xz(self, negative=False, render=True, bounds=None):
         """View the XZ plane.
 
         Parameters
@@ -2661,6 +2806,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2675,9 +2824,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xz', negative=negative), render=render)
+        self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
 
-    def view_zx(self, negative=False, render=True):
+    def view_zx(self, negative=False, render=True, bounds=None):
         """View the ZX plane.
 
         Parameters
@@ -2688,6 +2837,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2702,9 +2855,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zx', negative=negative), render=render)
+        self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
 
-    def view_yz(self, negative=False, render=True):
+    def view_yz(self, negative=False, render=True, bounds=None):
         """View the YZ plane.
 
         Parameters
@@ -2715,6 +2868,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2729,9 +2886,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yz', negative=negative), render=render)
+        self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
 
-    def view_zy(self, negative=False, render=True):
+    def view_zy(self, negative=False, render=True, bounds=None):
         """View the ZY plane.
 
         Parameters
@@ -2742,6 +2899,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         render : bool, default: True
             If the render window is being shown, trigger a render
             after setting the camera position.
+
+        bounds : iterable(int), optional
+            Automatically set up the camera based on a specified bounding box
+            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
 
         Examples
         --------
@@ -2756,7 +2917,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zy', negative=negative), render=render)
+        self.view_vector(*view_vectors('zy', negative=negative), render=render, bounds=bounds)
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
@@ -3257,11 +3418,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(pv.Sphere())
         >>> pl.renderers[0].viewport
         (0.0, 0.0, 0.5, 1.0)
 
+        Change viewport to half size.
+
+        >>> pl.renderers[0].viewport = (0.125, 0.25, 0.375, 0.75)
+        >>> pl.show()
+
         """
         return self.GetViewport()
+
+    @viewport.setter
+    def viewport(self, viewport):  # numpydoc ignore=GL08
+        self.SetViewport(viewport)
 
     @property
     def width(self):  # numpydoc ignore=RT01
@@ -3278,12 +3449,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_legend(
         self,
         labels=None,
-        bcolor=(0.5, 0.5, 0.5),
+        bcolor=None,
         border=False,
         size=(0.2, 0.2),
         name=None,
         loc='upper right',
-        face='triangle',
+        face=None,
         font_family=None,
         background_opacity=1.0,
     ):
@@ -3302,9 +3473,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
+            legend. Each entry can contain one of the following:
+
+            * Two strings ([label, color]), where ``label`` is the name of the
+              item to add, and ``color`` is the color of the label to add.
+            * Three strings ([label, color, face]) where ``label`` is the name
+              of the item to add, ``color`` is the color of the label to add,
+              and ``face`` is a string which defines the face (i.e. ``circle``,
+              ``triangle``, ``box``, etc.).
+              ``face`` could be also ``None`` (there is no face then), or a
+              :class:`pyvista.PolyData`.
+            * A dict with the key ``label``. Optionally you can add the
+              keys ``color`` and ``face``. The values of these keys can be
+              strings. For the ``face`` key, it can be also a
+              :class:`pyvista.PolyData`.
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
@@ -3410,17 +3592,50 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             self._legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
-                if face is None:
-                    # dummy vtk object
-                    vtk_object = pyvista.PolyData([0.0, 0.0, 0.0])
-
+                if face is not None:
+                    vtk_object = make_legend_face(face)
                 self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
 
-            legend_face = make_legend_face(face)
-            for i, (text, color) in enumerate(labels):
+            for i, args in enumerate(labels):
+                face_ = None
+                if isinstance(args, (list, tuple)):
+                    if len(args) == 2:
+                        # format labels =  [[ text1, color1], [ text2, color2], etc]
+                        text, color = args
+                    else:
+                        # format labels =  [[ text1, color1, face1], [ text2, color2, face2], etc]
+                        # Pikcing only the first 3 elements
+                        text, color, face_ = args[:3]
+                elif isinstance(args, dict):
+                    # it is using a dict
+                    text = args.pop('label')
+                    color = args.pop('color', None)
+                    face_ = args.pop('face', None)
+
+                    if args:
+                        warnings.warn(
+                            f"Some of the arguments given to legend are not used.\n{args}"
+                        )
+                elif isinstance(args, str):
+                    # Only passing label
+                    text = args
+                    # taking the currents (if any)
+                    try:
+                        face_, _, color = list(self._labels.values())[i]
+                    except (AttributeError, IndexError):
+                        # There are no values
+                        face_ = None
+                        color = None
+
+                else:
+                    raise ValueError(
+                        f"The object passed to the legend ({type(args)}) is not valid."
+                    )
+
+                legend_face = make_legend_face(face_ or face)
                 self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
 
         if loc is not None:
