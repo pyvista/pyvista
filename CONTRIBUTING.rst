@@ -1010,17 +1010,17 @@ created the following will occur:
     a new feature.
 
 1. Place your release notes from previous step in the description for `the new
-    release on
-    GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
+   release on
+   GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
 1. Go grab a beer/coffee/water and wait for
-    `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
-    to open a pull request on the conda-forge `PyVista
-    feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
-    Merge that pull request.
+   `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
+   to open a pull request on the conda-forge `PyVista
+   feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
+   Merge that pull request.
 
 1. Announce the new release in the Discussions page and
-    celebrate.
+   celebrate.
 
 Patch Release Steps
 ^^^^^^^^^^^^^^^^^^^
