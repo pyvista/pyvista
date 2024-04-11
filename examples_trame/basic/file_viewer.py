@@ -36,10 +36,10 @@ def handle(file_exchange, **kwargs):
 
         if file.content:
             print(file.info)
-            bytes = file.content
+            bytes_ = file.content
             with tempfile.NamedTemporaryFile(suffix=file.name) as path:
                 with Path(path.name).open('wb') as f:
-                    f.write(bytes)
+                    f.write(bytes_)
                 ds = pv.read(path.name)
             pl.add_mesh(ds, name=file.name)
             pl.reset_camera()
