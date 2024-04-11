@@ -539,7 +539,7 @@ def test_arrows():
 
     # make cool swirly pattern
     vectors = np.vstack(
-        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2]))
+        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2])),
     ).T
 
     # add and scales
@@ -567,7 +567,8 @@ def active_component_consistency_check(grid, component_type, field_association="
 
     pv_arr = getattr(grid, "active_" + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}"
+        getattr(grid, f"Get{vtk_field_association}Data")(),
+        f"Get{vtk_component_type}",
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -1441,7 +1442,8 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1461,7 +1463,8 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
@@ -1732,7 +1735,9 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
 @pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
 @pytest.mark.parametrize(
-    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+    "connections",
+    ["points", "edges", "faces"],
+    ids=lambda x: f"connections={x}",
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)

@@ -72,7 +72,9 @@ def _generate_dataset_loader_test_cases() -> List[ExampleTestCaseData]:
         download_func = content.setdefault('download_func', None)
         load_func = content.setdefault('load_func', None)
         test_case = ExampleTestCaseData(
-            dataset_name=name, download_func=download_func, load_func=load_func
+            dataset_name=name,
+            download_func=download_func,
+            load_func=load_func,
         )
         test_cases_list.append(test_case)
 

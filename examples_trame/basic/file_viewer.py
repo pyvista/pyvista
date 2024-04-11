@@ -68,12 +68,17 @@ with SinglePageLayout(server) as layout:
             style="max-width: 300px;",
         )
         vuetify3.VProgressLinear(
-            indeterminate=True, absolute=True, bottom=True, active=("trame__busy",)
+            indeterminate=True,
+            absolute=True,
+            bottom=True,
+            active=("trame__busy",),
         )
 
     with layout.content:
         with vuetify3.VContainer(
-            fluid=True, classes="pa-0 fill-height", style="position: relative;"
+            fluid=True,
+            classes="pa-0 fill-height",
+            style="position: relative;",
         ):
             # Use PyVista UI template for Plotters
             view = plotter_ui(pl)

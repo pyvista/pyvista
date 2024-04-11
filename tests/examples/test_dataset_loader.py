@@ -77,7 +77,8 @@ def examples_local_repository_tmp_dir(tmp_path):
 
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
-    'FileLoader', [_SingleFileLoadable, _SingleFileDownloadable, _SingleFileDownloadableLoadable]
+    'FileLoader',
+    [_SingleFileLoadable, _SingleFileDownloadable, _SingleFileDownloadableLoadable],
 )
 def test_single_file_loader(FileLoader, use_archive, examples_local_repository_tmp_dir):
     basename = 'pyvista_logo.png'
@@ -373,7 +374,9 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
 
 
 def test_dataset_loader_from_nested_files_and_directory(
-    dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
+    dataset_loader_one_file,
+    dataset_loader_two_files_one_loadable,
+    dataset_loader_dicom,
 ):
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones

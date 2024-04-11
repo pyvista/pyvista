@@ -56,7 +56,10 @@ from pyvista.core.utilities.fileio import get_ext
 
 DatasetType = Union[pv.DataSet, pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetTypeType = Union[
-    Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]
+    Type[pv.DataSet],
+    Type[pv.Texture],
+    Type[NumpyArray[Any]],
+    Type[pv.MultiBlock],
 ]
 
 # Define TypeVars for two main class definitions used by this module:
@@ -382,7 +385,8 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
         if target_file is not None:
             # download from archive
             self._download_func = functools.partial(
-                _download_archive_file_or_folder, target_file=target_file
+                _download_archive_file_or_folder,
+                target_file=target_file,
             )
             # The file path currently points to the archive, not the target file itself
             # Try to resolve the full path to the target file (without downloading) if
@@ -494,13 +498,13 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     def path_loadable(self) -> Tuple[str, ...]:
 
         return tuple(
-            [file.path for file in self._file_objects if isinstance(file, _SingleFileLoadable)]
+            [file.path for file in self._file_objects if isinstance(file, _SingleFileLoadable)],
         )
 
     @property
     def _filesize_bytes(self) -> Tuple[int, ...]:
         return tuple(
-            _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects])
+            _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects]),
         )
 
     @property
@@ -727,7 +731,7 @@ def _get_unique_extension(path: Union[str, Sequence[str]]):
 
 
 def _get_unique_reader_type(
-    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]
+    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]],
 ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
     """Return a reader type or tuple of unique reader types."""
     if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):

@@ -932,7 +932,7 @@ def SolidSphereGeneric(
                         npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
-                    ]
+                    ],
                 )
                 celltypes.append(pyvista.CellType.TETRA)
 
@@ -946,7 +946,7 @@ def SolidSphereGeneric(
                     _index(0, iphi + 1, itheta + 1),
                     _index(0, iphi + 1, itheta),
                     0,
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.PYRAMID)
 
@@ -966,7 +966,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, 0, itheta + 1),
                     _index(ir + 1, 0, itheta),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -984,7 +984,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, nphi - 1, itheta),
                     _index(ir + 1, nphi - 1, itheta + 1),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -1003,7 +1003,7 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi + 1, itheta),
                 _index(ir + 1, iphi + 1, itheta + 1),
                 _index(ir + 1, iphi, itheta + 1),
-            ]
+            ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
 

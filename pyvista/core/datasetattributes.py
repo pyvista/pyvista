@@ -304,7 +304,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
             array = pyvista_ndarray(
-                self.GetScalars(), dataset=self.dataset, association=self.association
+                self.GetScalars(),
+                dataset=self.dataset,
+                association=self.association,
             )
             return self._patch_type(array)
         return None
@@ -723,7 +725,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def _prepare_array(
-        self, data: ArrayLike[float], name: str, deep_copy: bool
+        self,
+        data: ArrayLike[float],
+        name: str,
+        deep_copy: bool,
     ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
@@ -757,7 +762,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 data = tmparray
             if data.shape[0] != array_len:
                 raise ValueError(
-                    f'data length of ({data.shape[0]}) != required length ({array_len})'
+                    f'data length of ({data.shape[0]}) != required length ({array_len})',
                 )
 
         # attempt to reuse the existing pointer to underlying VTK data
@@ -792,7 +797,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.dtype not in (np.complex64, np.complex128):
                 raise ValueError(
                     'Only numpy.complex64 or numpy.complex128 is supported when '
-                    'setting dataset attributes'
+                    'setting dataset attributes',
                 )
 
             if data.ndim != 1:
@@ -1279,7 +1284,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         valid_length = self.valid_array_len
         if normals.shape[0] != valid_length:
             raise ValueError(
-                f'Number of normals ({normals.shape[0]}) must match number of points ({valid_length})'
+                f'Number of normals ({normals.shape[0]}) must match number of points ({valid_length})',
             )
         if normals.shape[1] != 3:
             raise ValueError(f'Normals must have exactly 3 components, not ({normals.shape[1]})')
@@ -1368,13 +1373,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         texture_coordinates = self.GetTCoords()
         if texture_coordinates is not None:
             return pyvista_ndarray(
-                texture_coordinates, dataset=self.dataset, association=self.association
+                texture_coordinates,
+                dataset=self.dataset,
+                association=self.association,
             )
         return None
 
     @active_texture_coordinates.setter
     def active_texture_coordinates(
-        self, texture_coordinates: NumpyArray[float]
+        self,
+        texture_coordinates: NumpyArray[float],
     ):  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
 
@@ -1392,11 +1400,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         valid_length = self.valid_array_len
         if texture_coordinates.shape[0] != valid_length:
             raise ValueError(
-                f'Number of texture coordinates ({texture_coordinates.shape[0]}) must match number of points ({valid_length})'
+                f'Number of texture coordinates ({texture_coordinates.shape[0]}) must match number of points ({valid_length})',
             )
         if texture_coordinates.shape[1] != 2:
             raise ValueError(
-                f'Texture coordinates must only have 2 components, not ({texture_coordinates.shape[1]})'
+                f'Texture coordinates must only have 2 components, not ({texture_coordinates.shape[1]})',
             )
         vtkarr = _vtk.numpyTovtkDataArray(texture_coordinates, name='Texture Coordinates')
         self.SetTCoords(vtkarr)

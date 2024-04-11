@@ -62,7 +62,7 @@ def __getattr__(name):
             break
     else:
         raise AttributeError(
-            f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
+            f'Module `pyvista.utilities` has been deprecated and we could not automatically find `{name}`. This feature has moved.',
         ) from None
 
     message = f'The `pyvista.utilities` module has been deprecated. `{name}` is now imported as: `{import_path}`.'

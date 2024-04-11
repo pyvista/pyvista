@@ -31,7 +31,7 @@ def set_pickle_format(format: str):
     format = format.lower()
     if format not in supported:
         raise ValueError(
-            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.',
         )
     pyvista.PICKLE_FORMAT = format
 
@@ -203,7 +203,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
             warnings.warn(
                 f"The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error"
                 "while reading the file.\n"
-                f'\t"{observer.get_message()}"'
+                f'\t"{observer.get_message()}"',
             )
         return mesh
 
@@ -649,7 +649,7 @@ def _try_imageio_imread(filename):
         raise ModuleNotFoundError(
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
-            '   pip install imageio'
+            '   pip install imageio',
         ) from None
 
     return imread(filename)

@@ -770,7 +770,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -784,7 +784,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -809,7 +809,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: Union[int, np.integer[Any], float, np.floating[Any], str]
+        val: Union[int, np.integer[Any], float, np.floating[Any], str],
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
