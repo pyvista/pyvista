@@ -776,8 +776,10 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
     _new_attr_exceptions = ['points']
 
-    def __init__(self, points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+    def __init__(self, points=None):
         """Initialize the multiple lines source class."""
+        if points is None:
+            points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         super().__init__()
         self.points = points
 
