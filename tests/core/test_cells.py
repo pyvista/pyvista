@@ -173,9 +173,9 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(("cell", "type"), zip(cells, types), ids=cell_ids)
-def test_cell_type(cell, type):
-    assert cell.type == type
+@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
+def test_cell_type(cell, type_):
+    assert cell.type == type_
 
 
 @pytest.mark.parametrize("cell", cells, ids=cell_ids)

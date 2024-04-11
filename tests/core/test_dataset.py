@@ -1611,8 +1611,8 @@ def test_point_cell_ids(grid: DataSet, i0):
     cell_ids = grid.point_cell_ids(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that the output cells contain the i0-th point but also that the
@@ -1632,8 +1632,8 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one point with the
@@ -1657,8 +1657,8 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one edge with the
@@ -1698,8 +1698,8 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one face with the
@@ -1758,8 +1758,8 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert len(list(cell_ids)) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_cells for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_cells for id_ in ids)
             assert len(ids) > 0
 
 
@@ -1782,8 +1782,8 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert len(list(point_ids)) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_points for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_points for id_ in ids)
             assert len(ids) > 0
 
 

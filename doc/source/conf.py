@@ -283,7 +283,7 @@ root_doc = "index"
 # General information about the project.
 project = "PyVista"
 year = datetime.date.today().year
-copyright = f"2017-{year}, The PyVista Developers"
+copyright = f"2017-{year}, The PyVista Developers"  # noqa: A001
 author = "Alex Kaszynski and Bane Sullivan"
 
 # The version info for the project you're documenting, acts as replacement for

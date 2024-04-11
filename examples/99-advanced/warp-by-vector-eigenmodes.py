@@ -197,9 +197,9 @@ grid = pv.StructuredGrid(x, y, z)
 
 slices = []
 for zz in np.linspace(-l3 / 2.0, l3 / 2.0, nz)[::-1]:
-    slice = grid.points.copy()
-    slice[:, -1] = zz
-    slices.append(slice)
+    slice_ = grid.points.copy()
+    slice_[:, -1] = zz
+    slices.append(slice_)
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack(slices)

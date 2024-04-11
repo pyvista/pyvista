@@ -13,7 +13,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .observers import Observer
 
 
-def set_pickle_format(format: str):
+def set_pickle_format(format: str):  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
     Parameters
@@ -28,12 +28,12 @@ def set_pickle_format(format: str):
 
     """
     supported = {'xml', 'legacy'}
-    format = format.lower()
-    if format not in supported:
+    format_ = format.lower()
+    if format_ not in supported:
         raise ValueError(
-            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.',
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
         )
-    pyvista.PICKLE_FORMAT = format
+    pyvista.PICKLE_FORMAT = format_
 
 
 def _get_ext_force(filename, force_ext=None):
