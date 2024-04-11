@@ -84,7 +84,7 @@ p.show()
 ###############################################################################
 # Crinkled Clipping
 # +++++++++++++++++
-# Crinkled clipping is useful if you don’t want the clip filter to truly clip
+# Crinkled clipping is useful if you don't want the clip filter to truly clip
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.
 #
