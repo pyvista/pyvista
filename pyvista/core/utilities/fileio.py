@@ -13,7 +13,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .observers import Observer
 
 
-def set_pickle_format(format: str):
+def set_pickle_format(format: str):  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
     Parameters
