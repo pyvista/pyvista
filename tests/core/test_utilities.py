@@ -5,7 +5,7 @@ import pathlib
 from pathlib import Path
 import pickle
 import shutil
-import unittest.mock as mock
+from unittest import mock
 import warnings
 
 import numpy as np
