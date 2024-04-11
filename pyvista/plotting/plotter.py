@@ -21,7 +21,7 @@ import uuid
 import warnings
 import weakref
 
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import scooby
 
@@ -4269,7 +4269,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             clim = np.asarray(clim, dtype=scalars.dtype)
             scalars.clip(clim[0], clim[1], out=scalars)
             if log_scale:
-                out = matplotlib.colors.LogNorm(clim[0], clim[1])(scalars)
+                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
                 scalars = out.data * 255
             else:
                 if min_ is None:
