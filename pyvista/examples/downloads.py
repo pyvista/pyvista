@@ -7258,10 +7258,10 @@ def download_reservoir(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_resevoir, load=load)
+    return _download_dataset(_dataset_reservoir, load=load)
 
 
-_dataset_resevoir = _SingleFileDownloadableLoadable(
+_dataset_reservoir = _SingleFileDownloadableLoadable(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
     read_func=pyvista.ExplicitStructuredGrid,
