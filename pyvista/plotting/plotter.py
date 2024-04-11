@@ -556,7 +556,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
 
-    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
+    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):  # noqa: A002
         """Export this plotter as a VTK.js OfflineLocalView file.
 
         The exported file can be viewed with the OfflineLocalView viewer
