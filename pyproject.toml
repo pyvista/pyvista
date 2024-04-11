@@ -339,7 +339,7 @@ ignore = [
 fixable = ["ALL"]
 unfixable = []
 extend-select = [
-    "A001",
+    "A",
     "B007",
     "B010",
     "C4",
