@@ -13,7 +13,20 @@ from pathlib import Path
 import re
 import textwrap
 from types import FunctionType
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Type, Union, final
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    final,
+)
 
 import numpy as np
 
@@ -1196,11 +1209,11 @@ class DatasetPropsGenerator:
 
 class DatasetCardFetcher:
     # Dict of all card objects
-    DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
+    DATASET_CARDS_OBJ: ClassVar[Dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: Dict[str, str] = {}
-    DATASET_CARDS_RST: Dict[str, str] = {}
+    DATASET_CARDS_RST_REF: ClassVar[Dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[Dict[str, str]] = {}
 
     @classmethod
     def init_cards(cls):
