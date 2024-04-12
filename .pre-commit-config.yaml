@@ -74,7 +74,7 @@ repos:
             --enable-error-code,
             ignore-without-code,
           ]
-        exclude: ^(doc/conf.py|doc/make_external_gallery.py|tests/|examples/|pyvista/ext/|examples_trame/)
+        exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
             "mypy-extensions==1.0.0",
