@@ -748,7 +748,7 @@ download the dataset in ``pyvista/examples/downloads.py``. This might be as easy
        """Download my new mesh."""
        return _download_dataset(_dataset_my_new_mesh, load=load)
 
-    _dataset_my_new_mesh = _SingleFileDownloadableLoadable('mydata/my_new_mesh.vtk')
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
 
 Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
 first be defined outside of the function (with module scope), and the new
@@ -767,7 +767,7 @@ For loading complex datasets with multiple files or special processing
 requirements, see the private ``pyvista/examples/_dataset_loader.py``
 module for more details on how to create a suitable dataset loader.
 
-Using the dataset loaders this way will enable metadata to be collected
+Using a dataset loader in this way will enable metadata to be collected
 for the new dataset. A new dataset card titled ``My New Mesh Dataset``
 will automatically be generated and included in the :ref:`dataset_gallery`.
 
@@ -799,14 +799,11 @@ For example:
 
       """
 
-Note that the rst ``seealso`` directive must be used instead of the
-``See Also`` heading due to limitations with how `numpydoc` parses
-explicit references.
+.. note::
 
-In addition, the output plot image must be manually added to
-``pyvista/doc/source/images/dataset-gallery`` for it to be used as a
-thumbnail in the :ref:`dataset_gallery`. The file name for the image
-should follow the same convention as existing files in that directory.
+   The rst ``seealso`` directive must be used instead of the
+   ``See Also`` heading due to limitations with how `numpydoc` parses
+   explicit references.
 
 Extending the Dataset Gallery
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -816,10 +813,14 @@ the :ref:`dataset_gallery` can easily be extended to feature these
 datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
 
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
-featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
-:func:`pyvista.examples.download_trumpet`, complete the following steps:
+featuring two datasets of musical instruments, e.g.
 
-#. Define a new carousel in ``pyvista/doc/source/make_tables.py``, e.g.:
+#.  :func:`pyvista.examples.download_guitar`
+#.  :func:`pyvista.examples.download_trumpet`
+
+complete the following steps:
+
+#. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
 
     .. code:: python
 
@@ -842,10 +843,10 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
    where
 
    -  ``name`` is used internally to define the name of the generated
-      ``.rst`` file for the carousel
+      ``.rst`` file for the carousel.
 
    -  ``doc`` is a short text description of the carousel which will
-      appear in the documentation in the header above the carousel
+      appear in the documentation in the header above the carousel.
 
    -  ``badge`` is used to give all datasets in the carousel a reference
       tag. The ``ref`` argument for the badge should be a new reference
@@ -856,10 +857,10 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
       any ``load_``, ``download_``, or ``dataset_`` prefix.
 
 #. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
-   in ``pyvista/doc/source/make_tables.py``. This will enable the rst to be
+   in ``doc/source/make_tables.py``. This will enable the rst to be
    auto-generated for the carousel.
 
-#. Update the ``pyvista/doc/source/api/examples/dataset_gallery.rst`` file to
+#. Update the ``doc/source/api/examples/dataset_gallery.rst`` file to
    include the new generated ``<name>_carousel.rst`` file. E.g. to add the
    carousel as a new drop-down item, add the following:
 
@@ -870,13 +871,13 @@ featuring two datasets (1) :func:`pyvista.examples.download_guitar` and (2)
 
          .. include:: /api/examples/dataset-gallery/instrument_carousel.rst
 
-   where
+   where:
 
-   -  the dropdown name ``:name: <reference>`` should be the badge's ``ref``
+   -  The dropdown name ``:name: <reference>`` should be the badge's ``ref``
       variable defined earlier. This will make it so that clicking on the new
       badge will link to the new dropdown menu.
 
-   -  the name of the included ``.rst`` file should match the ``name``
+   -  The name of the included ``.rst`` file should match the ``name``
       variable defined in the new ``Carousel`` class.
 
 After building the documentation, the carousel should now be part
