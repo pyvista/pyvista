@@ -633,8 +633,7 @@ class Camera(_vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        frustum = pyvista.wrap(frustum_source.GetOutput())
-        return frustum
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01

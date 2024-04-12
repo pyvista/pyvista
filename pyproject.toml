@@ -335,6 +335,9 @@ ignore = [
     "SIM117",
     # https://github.com/pyvista/pyvista/pull/5837
     "SIM118",
+    "RET505",
+    "RET506",
+    "RET507",
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -359,7 +362,7 @@ extend-select = [
     "PLR1714",
     "PT",
     "PTH",
-    "RET501",
+    "RET",
     "RSE",
     "RUF002",
     "RUF003",

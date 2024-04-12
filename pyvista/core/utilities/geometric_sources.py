@@ -1305,11 +1305,10 @@ class CubeSource(_vtk.vtkCubeSource):
             It must be either 'float32' or 'float64'.
         """
         precision = self.GetOutputPointsPrecision()
-        point_dtype = {
+        return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
         }[precision]
-        return point_dtype
 
     @point_dtype.setter
     def point_dtype(self, point_dtype: str):

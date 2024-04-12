@@ -2593,8 +2593,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
-        return cpos
+        return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""

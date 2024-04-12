@@ -199,8 +199,7 @@ def load_globe():
     >>> dataset.plot(texture=texture)
 
     """
-    globe = pyvista.PolyData(globefile)
-    return globe
+    return pyvista.PolyData(globefile)
 
 
 def load_globe_texture():
@@ -392,8 +391,7 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
-    return grid
+    return pyvista.ExplicitStructuredGrid(dimensions, corners)
 
 
 def load_nut():

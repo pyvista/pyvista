@@ -13,8 +13,7 @@ def format_icon(title, link, image):
 
       .. image:: ../images/external-examples/{}
 """
-    content = body.format(title, link, image)
-    return content
+    return body.format(title, link, image)
 
 
 class Example:

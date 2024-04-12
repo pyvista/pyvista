@@ -379,7 +379,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
         """
         if not hasattr(self, 'ren_win'):
-            return
+            return None
         return self.ren_win
 
     @property
@@ -555,6 +555,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Move to final destination
         with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
+            return None
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):  # noqa: A002
         """Export this plotter as a VTK.js OfflineLocalView file.
@@ -874,6 +875,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
+        return None
 
     @_before_close_callback.setter
     def _before_close_callback(self, func):
@@ -1460,6 +1462,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if result:
                 self.render_window.AlphaBitPlanesOn()
             return result
+        return None
 
     @wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self):  # numpydoc ignore=PR01,RT01
@@ -1467,6 +1470,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.render_window is not None:
             self.render_window.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
+        return None
 
     @wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
@@ -2006,13 +2010,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         0
 
         """
-        pickable = [
+        return [
             actor
             for renderer in self.renderers
             for actor in renderer.actors.values()
             if actor.GetPickable()
         ]
-        return pickable
 
     @pickable_actors.setter
     def pickable_actors(self, actors=None):  # numpydoc ignore=GL08
@@ -5783,6 +5786,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # return image array if requested
         if return_img:
             return image
+        return None
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
@@ -6360,12 +6364,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> plotter.show()
         """
-        places = [
+        return [
             tuple(self.renderers.index_to_loc(index))
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors
         ]
-        return places
 
 
 class Plotter(BasePlotter):
@@ -7021,11 +7024,7 @@ class Plotter(BasePlotter):
         List[Union[pyvista.DataSet, PyVista.MultiBlock]]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
-        meshes = [
-            actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')
-        ]
-
-        return meshes
+        return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
 
 
 # Tracks created plotters.  This is the end of the module as we need to

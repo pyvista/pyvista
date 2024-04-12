@@ -343,8 +343,7 @@ class PolyDataFilters(DataSetFilters):
         so the in-place merge attempt will raise.
 
         """
-        merged = self.merge(dataset, inplace=True)
-        return merged
+        return self.merge(dataset, inplace=True)
 
     def append_polydata(
         self,
@@ -3726,5 +3725,4 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar, 'Reconstructing surface')
-        surf = wrap(mc.GetOutput())
-        return surf
+        return wrap(mc.GetOutput())

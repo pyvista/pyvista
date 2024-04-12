@@ -242,7 +242,7 @@ class DataObject:
                 from IPython.display import HTML, display as _display
 
                 _display(HTML(fmt))
-                return
+                return None
             return fmt
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
