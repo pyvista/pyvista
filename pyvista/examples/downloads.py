@@ -52,7 +52,7 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
 CACHE_VERSION = 3
-
+os.environ['PYVISTA_VTK_DATA'] = '/Users/erik/dev/vtk-data'
 # If available, a local vtk-data instance will be used for examples
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
@@ -7270,6 +7270,25 @@ def download_reservoir(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> dataset = examples.download_reservoir()
+    >>> dataset
+    ExplicitStructuredGrid (...)
+      N Cells:    47610
+      N Points:   58433
+      X Bounds:   3.104e+05, 3.177e+05
+      Y Bounds:   7.477e+06, 7.486e+06
+      Z Bounds:   -2.472e+03, -1.577e+03
+      N Arrays:   10
+
+
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(dataset, show_edges=True)
+    >>> camera = plot.camera
+    >>> camera.position = (312452, 7474760, 3507)
+    >>> camera.focal_point = (314388, 7481520, -2287)
+    >>> camera.up = (0.09, 0.63, 0.77)
+    >>> camera.distance = 9112
+    >>> camera.clipping_range = (595, 19595)
+    >>> plot.show()
 
     .. seealso::
 
@@ -7280,8 +7299,17 @@ def download_reservoir(load=True):  # pragma: no cover
     return _download_dataset(_dataset_reservoir, load=load)
 
 
+def _reservoir_load_func(grid):
+    # Loading steps are from this example:
+    # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
+    grid.ComputeFacesConnectivityFlagsArray()
+    grid.set_active_scalars('ConnectivityFlags')
+    return grid
+
+
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
     read_func=pyvista.ExplicitStructuredGrid,
+    load_func=_reservoir_load_func,
 )
