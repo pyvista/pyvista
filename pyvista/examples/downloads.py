@@ -7299,7 +7299,7 @@ def download_reservoir(load=True):  # pragma: no cover
     return _download_dataset(_dataset_reservoir, load=load)
 
 
-def _reservoir_load_func(grid):
+def _reservoir_load_func(grid):  # pragma: no cover
     # Loading steps are from this example:
     # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
     grid.ComputeFacesConnectivityFlagsArray()
