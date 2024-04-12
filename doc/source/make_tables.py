@@ -42,12 +42,9 @@ from pyvista.examples._dataset_loader import (
 )
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    from types import FunctionType, ModuleType
 
     from pyvista.examples import _dataset_loader
-
-if TYPE_CHECKING:
-    from types import FunctionType
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
