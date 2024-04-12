@@ -12,8 +12,8 @@ import os
 from pathlib import Path
 import re
 import textwrap
-from types import FunctionType, ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -33,13 +33,17 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples import _dataset_loader
 from pyvista.examples._dataset_loader import (
     DatasetObject,
     _BaseFilePropsProtocol,
     _DatasetLoader,
     _Downloadable,
 )
+
+if TYPE_CHECKING:
+    from types import ModuleType
+
+    from pyvista.examples import _dataset_loader
 
 if TYPE_CHECKING:
     from types import FunctionType
