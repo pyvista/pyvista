@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
 
 from . import _vtk
-from ._typing import ColorLike
 from .colors import Color
 from .themes import Theme
 from .tools import FONTS
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 
 @no_new_attr

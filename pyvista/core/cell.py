@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple, cast
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 import warnings
 
 import numpy as np
@@ -10,11 +10,13 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError, PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+
+if TYPE_CHECKING:
+    from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
 
 
 def _get_vtk_id_type():

@@ -12,8 +12,20 @@ import os
 from pathlib import Path
 import re
 import textwrap
-from types import FunctionType
-from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Type, Union, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    final,
+)
 
 import numpy as np
 
@@ -25,6 +37,9 @@ from pyvista.examples._dataset_loader import (
     _MultiFileDownloadableLoadable,
     _SingleFileDownloadableLoadable,
 )
+
+if TYPE_CHECKING:
+    from types import FunctionType
 
 DatasetLoaderObj = Union[_MultiFileDownloadableLoadable, _SingleFileDownloadableLoadable]
 

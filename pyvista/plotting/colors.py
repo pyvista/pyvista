@@ -180,7 +180,7 @@ except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -190,7 +190,9 @@ import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
-from ._typing import ColorLike
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
