@@ -7277,7 +7277,7 @@ def download_reservoir(load=True):  # pragma: no cover
       X Bounds:   3.104e+05, 3.177e+05
       Y Bounds:   7.477e+06, 7.486e+06
       Z Bounds:   -2.472e+03, -1.577e+03
-      N Arrays:   10
+      N Arrays:   6
 
 
     >>> plot = pv.Plotter()
