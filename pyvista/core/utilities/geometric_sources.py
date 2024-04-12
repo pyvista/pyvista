@@ -6,18 +6,20 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -103,7 +105,7 @@ if _vtk.vtk_version_info < (9, 3):
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        _new_attr_exceptions = ['_direction']
+        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
 
         def __init__(
             self,
@@ -571,7 +573,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
 
     def __init__(
         self,
@@ -774,7 +776,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         List of points defining a broken line.
     """
 
-    _new_attr_exceptions = ['points']
+    _new_attr_exceptions: ClassVar[List[str]] = ['points']
 
     def __init__(self, points=None):
         """Initialize the multiple lines source class."""
@@ -862,7 +864,7 @@ class Text3DSource(vtkVectorText):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         '_center',
         '_height',
         '_width',
@@ -1155,7 +1157,7 @@ class CubeSource(_vtk.vtkCubeSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
@@ -1367,7 +1369,7 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = ["center"]
+    _new_attr_exceptions: ClassVar[List[str]] = ["center"]
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -2106,7 +2108,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions = ['_kinds']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
@@ -2436,7 +2438,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
