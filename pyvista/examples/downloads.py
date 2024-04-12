@@ -7248,9 +7248,9 @@ _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
 def download_whole_body_ct_male(load=True):  # pragma: no cover
     """Download a CT image of a male subject with 117 segmented anatomic structures.
 
-    The images are sources from subject s1397 of the TotalSegmentor dataset, version
-    2.0.1, available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See
-    the original paper for details:
+    This dataset is subject s1397 from the TotalSegmentator dataset, version 2.0.1,
+    available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
 
     Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
     Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
@@ -7261,11 +7261,15 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
        -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
           blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure.
+          their anatomic structure (e.g. ``'heart'`` and are sorted alphabetically.
 
        -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
-          label map is an alternative representation of the segmentations where
+          label map is an alternative representation of the segmentation where
           the masks are combined into a single scalar array.
+
+          .. note::
+
+             The label map is not part of the original data source.
 
     Licensed under Creative Commons Attribution 4.0 International.
 
@@ -7282,16 +7286,11 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Examples
     --------
-    Load the dataset
+    Load the dataset and get some of its properties.
 
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> dataset = examples.download_whole_body_ct_male()
-
-    Get the names of the dataset's blocks
-
-    >>> dataset.keys()
-    ['ct', 'segmentations', 'label_map']
 
     Get the CT image
 
@@ -7314,28 +7313,30 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    Get the binary segmentation of the heart
-
-    >>> heart_seg = segmentations['heart']
-    >>> heart_seg.get_data_range()
-    (0, 1)
-
     Get the label map and show its data range
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
     (0, 117)
 
-    Compute the contours of the label map to get surface mesh representations
-    of the segmentation.
+    Create a surface mesh of the segmentation labels
 
-    >>> contours = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
 
-    Plot the contours.
+    Plot the CT image and segmentation labels together.
 
-    >>> plot = pv.Plotter()
-    >>> _ = plot.add_mesh(contours, cmap='glasbey')
-    >>> plot.show()
+    >>> pl = pv.Plotter()
+    >>> pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_9",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
 
     .. seealso::
 
@@ -7352,7 +7353,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-def _whole_body_ct_load_func(dataset):
+def _whole_body_ct_load_func(dataset):  # pragma: no cover
     # Process the dataset to create a label map from the segmentation masks
 
     segmentations = dataset['segmentations']
@@ -7383,9 +7384,9 @@ _dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
 def download_whole_body_ct_female(load=True):  # pragma: no cover
     """Download a CT image of a female subject with 117 segmented anatomic structures.
 
-    The images are sources from subject s1380 of the TotalSegmentor dataset, version
-    2.0.1, available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See
-    the original paper for details:
+    This dataset is subject s1380 from the TotalSegmentator dataset, version 2.0.1,
+    available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
 
     Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
     Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
@@ -7396,11 +7397,15 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
        -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
           blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure.
+          their anatomic structure (e.g. ``'heart'`` and are sorted alphabetically.
 
        -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
-          label map is an alternative representation of the segmentations where
+          label map is an alternative representation of the segmentation where
           the masks are combined into a single scalar array.
+
+          .. note::
+
+             The label map is not part of the original data source.
 
     Licensed under Creative Commons Attribution 4.0 International.
 
@@ -7449,28 +7454,30 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    Get the binary segmentation of the heart
-
-    >>> heart_seg = segmentations['heart']
-    >>> heart_seg.get_data_range()
-    (0, 1)
-
     Get the label map and show its data range
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
     (0, 117)
 
-    Compute the contours of the label map to get surface mesh representations
-    of the segmentation.
+    Create a surface mesh of the segmentation labels
 
-    >>> contours = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
 
-    Plot the contours.
+    Plot the CT image and segmentation labels together.
 
-    >>> plot = pv.Plotter()
-    >>> _ = plot.add_mesh(contours, cmap='glasbey')
-    >>> plot.show()
+    >>> pl = pv.Plotter()
+    >>> pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_7",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
 
     .. seealso::
 
@@ -7478,7 +7485,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
-            Similar dataset.
+            Similar dataset of a male subject.
 
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
