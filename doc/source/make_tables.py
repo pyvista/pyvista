@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 import re
 import textwrap
-from types import FunctionType
+from types import FunctionType, ModuleType
 from typing import (
     Any,
     Callable,
