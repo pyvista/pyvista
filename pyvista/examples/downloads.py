@@ -7249,7 +7249,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     """Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject s1397 from the TotalSegmentator dataset, version 2.0.1,
-    available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
@@ -7385,7 +7385,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     """Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject s1380 from the TotalSegmentator dataset, version 2.0.1,
-    available from :ref:`zenodo <https://zenodo.org/records/10047292>`_. See the
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
     Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
