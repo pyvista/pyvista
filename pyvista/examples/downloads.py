@@ -52,7 +52,7 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 
 CACHE_VERSION = 3
-os.environ['PYVISTA_VTK_DATA'] = '/Users/erik/dev/vtk-data'
+
 # If available, a local vtk-data instance will be used for examples
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
