@@ -7314,10 +7314,6 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    .. dropdown:: See all label names
-
-        >>> print("\n".join(label_names))  # doctest:+SKIP
-
     Get the label map and show its data range
 
     >>> label_map = dataset['label_map']
@@ -7459,10 +7455,6 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> label_names = segmentations.keys()
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
-
-    .. dropdown:: See all label names
-
-        >>> print("\n".join(label_names))  # doctest:+SKIP
 
     Get the label map and show its data range
 
