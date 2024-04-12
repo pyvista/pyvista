@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 import warnings
 
-import pyvista
+import pyvista  # noqa: TCH001
 from pyvista.core._typing_core import Number, VectorLike
 from pyvista.core.utilities.misc import _check_range
 
