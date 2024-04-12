@@ -7282,7 +7282,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.ImageData or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -7419,7 +7419,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.ImageData or str
+    pyvista.MultiBlock or str
         DataSet or filename depending on ``load``.
 
     Examples
