@@ -12,10 +12,11 @@ import os
 from pathlib import Path
 import re
 import textwrap
-from types import FunctionType, ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Dict,
     Generator,
     Iterable,
@@ -28,12 +29,14 @@ from typing import (
     final,
 )
 
+if TYPE_CHECKING:
+    from types import FunctionType, ModuleType
+
 import numpy as np
 
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples import _dataset_loader
 from pyvista.examples._dataset_loader import (
     DatasetObject,
     _BaseFilePropsProtocol,
@@ -1074,17 +1077,17 @@ class DatasetPropsGenerator:
     """
 
     @staticmethod
-    def generate_file_size(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_file_size(loader: _BaseFilePropsProtocol):
         sz = DatasetPropsGenerator._try_getattr(loader, 'total_size')
         return '``' + sz + '``' if sz else None
 
     @staticmethod
-    def generate_num_files(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_num_files(loader: _DatasetLoader):
         num = DatasetPropsGenerator._try_getattr(loader, 'num_files')
         return '``' + str(num) + '``' if num else None
 
     @staticmethod
-    def generate_file_ext(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_file_ext(loader: _BaseFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
@@ -1226,11 +1229,11 @@ class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
 
     # Dict of all card objects
-    DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
+    DATASET_CARDS_OBJ: ClassVar[Dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: Dict[str, str] = {}
-    DATASET_CARDS_RST: Dict[str, str] = {}
+    DATASET_CARDS_RST_REF: ClassVar[Dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[Dict[str, str]] = {}
 
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
