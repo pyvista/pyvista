@@ -666,9 +666,9 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib
+    import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False

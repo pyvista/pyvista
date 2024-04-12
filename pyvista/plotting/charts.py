@@ -454,7 +454,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label="", range=None, grid=True):
+    def __init__(self, label="", range=None, grid=True):  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -1547,7 +1547,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        dev_kwargs={},
+        dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1611,6 +1611,8 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
+        if dev_kwargs is None:
+            dev_kwargs = {}
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
