@@ -54,7 +54,7 @@ class _PointSet(DataSet):
     """
 
     _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
-        ".xyz": _vtk.vtkSimplePointsWriter
+        ".xyz": _vtk.vtkSimplePointsWriter,
     }
 
     def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
