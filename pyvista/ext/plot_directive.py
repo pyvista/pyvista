@@ -108,6 +108,7 @@ import re
 import shutil
 import textwrap
 import traceback
+from typing import Callable, ClassVar, Dict
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
@@ -153,7 +154,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[Dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,

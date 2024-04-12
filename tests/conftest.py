@@ -24,12 +24,12 @@ def global_variables_reset():  # noqa: PT004
 def set_mpl():  # noqa: PT004
     """Avoid matplotlib windows popping up."""
     try:
-        import matplotlib
+        import matplotlib as mpl
     except ImportError:
         pass
     else:
-        matplotlib.rcdefaults()
-        matplotlib.use('agg', force=True)
+        mpl.rcdefaults()
+        mpl.use('agg', force=True)
 
 
 @pytest.fixture()

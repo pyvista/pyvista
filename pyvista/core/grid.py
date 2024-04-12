@@ -2,7 +2,7 @@
 
 from functools import wraps
 import pathlib
-from typing import List, Sequence, Tuple, Union
+from typing import ClassVar, Dict, List, Sequence, Tuple, Type, Union
 import warnings
 
 import numpy as np
@@ -128,7 +128,14 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
+    _WRITERS: ClassVar[
+        Dict[
+            str, Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]]
+        ]
+    ] = {
+        '.vtk': _vtk.vtkRectilinearGridWriter,
+        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+    }
 
     def __init__(
         self,
@@ -527,7 +534,12 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
+    _WRITERS: ClassVar[
+        Dict[str, Union[Type[_vtk.vtkDataSetWriter], Type[_vtk.vtkXMLImageDataWriter]]]
+    ] = {
+        '.vtk': _vtk.vtkDataSetWriter,
+        '.vti': _vtk.vtkXMLImageDataWriter,
+    }
 
     def __init__(
         self,

@@ -1,7 +1,10 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+from dataclasses import dataclass
+import inspect
 import os
 import shutil
-from typing import Tuple
+from types import FunctionType, ModuleType
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pytest
@@ -9,17 +12,106 @@ import pytest
 import pyvista as pv
 from pyvista.examples import downloads, examples
 from pyvista.examples._dataset_loader import (
+    _DatasetLoader,
     _Downloadable,
+    _DownloadableFile,
     _format_file_size,
     _load_and_merge,
     _load_as_cubemap,
     _load_as_multiblock,
-    _Loadable,
-    _MultiFileDownloadableLoadable,
-    _SingleFileDownloadable,
-    _SingleFileDownloadableLoadable,
-    _SingleFileLoadable,
+    _MultiFileDownloadableDatasetLoader,
+    _SingleFileDatasetLoader,
+    _SingleFileDownloadableDatasetLoader,
 )
+
+
+@dataclass
+class DatasetLoaderTestCase:
+    dataset_name: str
+    dataset_function: Tuple[str, FunctionType]
+    dataset_loader: Tuple[str, _DatasetLoader]
+
+
+def _generate_dataset_loader_test_cases_from_module(
+    module: ModuleType,
+) -> List[DatasetLoaderTestCase]:
+    """Generate test cases by module with all dataset functions and their respective file loaders."""
+
+    test_cases_dict: Dict = {}
+
+    def add_to_dict(func: str, dataset_function: Callable[[], Any]):
+        # Function for stuffing example functions into a dict.
+        # We use a dict to allow for any entry to be made based on example name alone.
+        # This way, we can defer checking for any mismatch between the download functions
+        # and file loaders to test time.
+        nonlocal test_cases_dict
+        if func.startswith('_dataset_'):
+            dataset_name = func.split('_dataset_')[1]
+            key = 'dataset_loader'
+        elif func.startswith('download_'):
+            dataset_name = func.split('download_')[1]
+            key = 'dataset_function'
+        elif func.startswith('load_'):
+            dataset_name = func.split('load_')[1]
+            key = 'dataset_function'
+        else:
+            raise RuntimeError(f'Invalid case specified: {(func, dataset_function)}')
+        test_cases_dict.setdefault(dataset_name, {})
+        test_cases_dict[dataset_name][key] = (func, dataset_function)
+
+    module_members = dict(inspect.getmembers(module))
+
+    # Collect all `download_<name> or `load_<name>` functions
+    def _is_dataset_function(name, item):
+        return (
+            isinstance(item, FunctionType)
+            and name.startswith('download_')
+            or name.startswith('load_')
+        )
+
+    dataset_functions = {
+        name: item for name, item in module_members.items() if _is_dataset_function(name, item)
+    }
+    # Remove special case which is not a dataset function
+    dataset_functions.pop('download_file', None)
+    [add_to_dict(name, func) for name, func in dataset_functions.items()]
+
+    # Collect all `_dataset_<name>` file loaders
+    dataset_file_loaders = {
+        name: item
+        for name, item in module_members.items()
+        if name.startswith('_dataset_') and isinstance(item, _DatasetLoader)
+    }
+    [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
+
+    # Flatten dict
+    test_cases_list: List[DatasetLoaderTestCase] = []
+    for name, content in sorted(test_cases_dict.items()):
+        dataset_function = content.setdefault('dataset_function', None)
+        dataset_loader = content.setdefault('dataset_loader', None)
+        test_case = DatasetLoaderTestCase(
+            dataset_name=name, dataset_function=dataset_function, dataset_loader=dataset_loader
+        )
+        test_cases_list.append(test_case)
+
+    return test_cases_list
+
+
+def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
+    if test_case.dataset_function is None:
+        return (
+            f"A file loader:\n\t\'{test_case.dataset_loader[0]}\'\n\t{test_case.dataset_loader[1]}\n"
+            f"was found but is missing a corresponding download function.\n\n"
+            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.dataset_function}"
+        )
+    elif test_case.dataset_loader is None:
+        return (
+            f"A download function:\n\t\'{test_case.dataset_function[0]}\'\n\t{test_case.dataset_function[1]}\n"
+            f"was found but is missing a corresponding file loader.\n\n"
+            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.dataset_loader}"
+        )
+    else:
+        return None
 
 
 @pytest.fixture()
@@ -78,7 +170,7 @@ def examples_local_repository_tmp_dir(tmp_path):
 @pytest.mark.parametrize('use_archive', [True, False])
 @pytest.mark.parametrize(
     'FileLoader',
-    [_SingleFileLoadable, _SingleFileDownloadable, _SingleFileDownloadableLoadable],
+    [_SingleFileDatasetLoader, _DownloadableFile, _SingleFileDownloadableDatasetLoader],
 )
 def test_single_file_loader(FileLoader, use_archive, examples_local_repository_tmp_dir):
     basename = 'pyvista_logo.png'
@@ -100,7 +192,7 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         assert not os.path.isabs(path)
 
     # test download
-    if isinstance(file_loader, (_SingleFileDownloadable, _SingleFileDownloadableLoadable)):
+    if isinstance(file_loader, (_DownloadableFile, _SingleFileDownloadableDatasetLoader)):
 
         assert isinstance(file_loader, _Downloadable)
         path_download = file_loader.download()
@@ -118,10 +210,11 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
         downloads.download_file(basename)
 
     # test load
-    if isinstance(file_loader, (_SingleFileLoadable, _SingleFileDownloadableLoadable)):
-        assert isinstance(file_loader, _Loadable)
+    if isinstance(file_loader, (_SingleFileDatasetLoader, _SingleFileDownloadableDatasetLoader)):
+        assert isinstance(file_loader, _DatasetLoader)
         dataset = file_loader.load()
-        assert dataset is file_loader.dataset
+        assert file_loader.dataset is None
+        file_loader.load_and_store_dataset()
         assert isinstance(dataset, pv.DataSet)
     else:
         with pytest.raises(AttributeError):
@@ -136,9 +229,9 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     basename_loaded2 = 'hexbeam.vtk'
     basename_not_loaded = 'pyvista_logo.png'
 
-    file_loaded1 = _SingleFileDownloadableLoadable(basename_loaded1)
-    file_loaded2 = _SingleFileDownloadableLoadable(basename_loaded2)
-    file_not_loaded = _SingleFileDownloadable(basename_not_loaded)
+    file_loaded1 = _SingleFileDownloadableDatasetLoader(basename_loaded1)
+    file_loaded2 = _SingleFileDownloadableDatasetLoader(basename_loaded2)
+    file_not_loaded = _DownloadableFile(basename_not_loaded)
 
     expected_airplane = examples.load_airplane()
     expected_hexbeam = examples.load_hexbeam()
@@ -146,7 +239,7 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     def files_func():
         return file_loaded1, file_loaded2, file_not_loaded
 
-    multi_file_loader = _MultiFileDownloadableLoadable(files_func, load_func=load_func)
+    multi_file_loader = _MultiFileDownloadableDatasetLoader(files_func, load_func=load_func)
     # test files func is not called when initialized
     assert multi_file_loader._file_loaders_ is None
 
@@ -176,31 +269,74 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     ]
 
     # test load
+    # test calling load does not store the dataset internally
     assert multi_file_loader.dataset is None
-    dataset = multi_file_loader.load()
-    assert multi_file_loader.dataset is dataset
-    if load_func is None:
-        assert isinstance(dataset, tuple)
-        assert np.array_equal(dataset[0].points, expected_airplane.points)
-        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
-        assert len(dataset) == 2
-    elif load_func is _load_as_multiblock:
-        assert isinstance(dataset, pv.MultiBlock)
-        assert dataset.keys() == ['airplane', 'hexbeam']
-        assert np.array_equal(dataset[0].points, expected_airplane.points)
-        assert np.array_equal(dataset[1].points, expected_hexbeam.points)
-        assert len(dataset) == 2
+    dataset_loaded = multi_file_loader.load()
+    assert multi_file_loader.dataset is None
+
+    # test load and store the dataset
+    dataset_stored = multi_file_loader.load_and_store_dataset()
+    # same dataset is stored, but different instance from previously loaded
+    assert dataset_loaded is not dataset_stored
+    if isinstance(dataset_loaded, pv.MultiBlock):
+        assert np.array_equal(dataset_loaded[0].points, dataset_stored[0].points)
+    else:
+        assert np.array_equal(dataset_loaded.points, dataset_stored.points)
+    # test calling load() again still returns yet another instance
+    dataset_loaded2 = multi_file_loader.load()
+    assert dataset_loaded2 is not dataset_stored
+    assert dataset_loaded2 is not dataset_loaded
+
+    if load_func is _load_as_multiblock or None:
+        assert isinstance(dataset_loaded, pv.MultiBlock)
+        assert dataset_loaded.keys() == ['airplane', 'hexbeam']
+        assert np.array_equal(dataset_loaded[0].points, expected_airplane.points)
+        assert np.array_equal(dataset_loaded[1].points, expected_hexbeam.points)
+        assert len(dataset_loaded) == 2
     elif load_func is _load_and_merge:
-        assert isinstance(dataset, pv.UnstructuredGrid)
+        assert isinstance(dataset_loaded, pv.UnstructuredGrid)
         expected = pv.merge((expected_airplane, expected_hexbeam))
-        assert np.array_equal(dataset.points, expected.points)
+        assert np.array_equal(dataset_loaded.points, expected.points)
+
+
+@pytest.fixture()
+def dataset_loader_one_file_local():
+    # Test 'download' for a local built-in dataset
+    loader = _SingleFileDownloadableDatasetLoader(examples.antfile)
+    loader.download()
+    loader.load_and_store_dataset()
+    return loader
+
+
+def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
+    loader = dataset_loader_one_file_local
+    assert isinstance(loader.path, str)
+    assert loader.num_files == 1
+    assert loader._total_size_bytes == 17941
+    assert loader.total_size == '17.9 KB'
+    assert loader.unique_extension == '.ply'
+    assert isinstance(loader._reader, pv.PLYReader)
+    assert loader.unique_reader_type is pv.PLYReader
+    assert isinstance(loader.dataset, pv.PolyData)
+    assert isinstance(loader.dataset_iterable[0], pv.PolyData)
+    assert loader.unique_dataset_type is pv.PolyData
+    assert loader.source_name == 'ant.ply'
+    assert (
+        loader.source_url_raw
+        == 'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/ant.ply'
+    )
+    assert (
+        loader.source_url_blob
+        == 'https://github.com/pyvista/pyvista/blob/main/pyvista/examples/ant.ply'
+    )
+    assert loader.unique_cell_types == (pv.CellType.TRIANGLE,)
 
 
 @pytest.fixture()
 def dataset_loader_one_file():
-    loader = _SingleFileDownloadableLoadable('cow.vtp')
+    loader = _SingleFileDownloadableDatasetLoader('cow.vtp')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -225,13 +361,13 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
 @pytest.fixture()
 def dataset_loader_two_files_one_loadable():
     def _files_func():
-        loadable = _SingleFileDownloadableLoadable('HeadMRVolume.mhd')
-        not_loadable = _SingleFileDownloadable('HeadMRVolume.raw')
+        loadable = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
+        not_loadable = _DownloadableFile('HeadMRVolume.raw')
         return loadable, not_loadable
 
-    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -266,13 +402,13 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
 @pytest.fixture()
 def dataset_loader_two_files_both_loadable():
     def _files_func():
-        loadable1 = _SingleFileDownloadableLoadable('bolt.slc')
-        loadable2 = _SingleFileDownloadableLoadable('nut.slc')
+        loadable1 = _SingleFileDownloadableDatasetLoader('bolt.slc')
+        loadable2 = _SingleFileDownloadableDatasetLoader('nut.slc')
         return loadable1, loadable2
 
-    loader = _MultiFileDownloadableLoadable(_files_func)
+    loader = _MultiFileDownloadableDatasetLoader(_files_func)
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -289,13 +425,14 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert isinstance(loader._reader[0], pv.SLCReader)
     assert isinstance(loader._reader[1], pv.SLCReader)
     assert loader.unique_reader_type is pv.SLCReader
-    assert isinstance(loader.dataset, Tuple)
+    assert isinstance(loader.dataset, pv.MultiBlock)
     dataset1, dataset2 = loader.dataset
     assert isinstance(dataset1, pv.ImageData)
     assert isinstance(dataset2, pv.ImageData)
-    assert isinstance(loader.dataset_iterable[0], pv.ImageData)
+    assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert isinstance(loader.dataset_iterable[1], pv.ImageData)
-    assert loader.unique_dataset_type is pv.ImageData
+    assert isinstance(loader.dataset_iterable[2], pv.ImageData)
+    assert loader.unique_dataset_type == (pv.MultiBlock, pv.ImageData)
     assert loader.source_name == ('bolt.slc', 'nut.slc')
     assert loader.source_url_raw == (
         'https://github.com/pyvista/vtk-data/raw/master/Data/bolt.slc',
@@ -310,12 +447,12 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
 
 @pytest.fixture()
 def dataset_loader_cubemap():
-    loader = _SingleFileDownloadableLoadable(
+    loader = _SingleFileDownloadableDatasetLoader(
         'cubemap_park/cubemap_park.zip',
         read_func=_load_as_cubemap,
     )
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -344,9 +481,9 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
 
 @pytest.fixture()
 def dataset_loader_dicom():
-    loader = _SingleFileDownloadableLoadable('DICOM_Stack/data.zip', target_file='data')
+    loader = _SingleFileDownloadableDatasetLoader('DICOM_Stack/data.zip', target_file='data')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -383,7 +520,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     def files_func():
         return dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
 
-    loader = _MultiFileDownloadableLoadable(files_func, load_func=_load_as_multiblock)
+    loader = _MultiFileDownloadableDatasetLoader(files_func, load_func=_load_as_multiblock)
     loader.download()
     assert len(loader.path) == 4
     assert loader.num_files == 6
@@ -408,7 +545,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     }
     assert loader.dataset is None
     assert loader.unique_dataset_type is type(None)
-    loader.load()
+    loader.load_and_store_dataset()
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert isinstance(loader.dataset_iterable[1], pv.PolyData)
@@ -444,9 +581,9 @@ def test_dataset_loader_from_nested_files_and_directory(
 
 @pytest.fixture()
 def dataset_loader_nested_multiblock():
-    loader = _SingleFileDownloadableLoadable('mesh_fs8.exo')
+    loader = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
     loader.download()
-    loader.load()
+    loader.load_and_store_dataset()
     return loader
 
 
@@ -493,10 +630,16 @@ def test_load_dataset_no_reader(dataset_loader_one_file):
     assert dataset.unique_reader_type is None
 
     # try loading .npy file directly
-    loader = _SingleFileLoadable(dataset.path)
+    loader = _SingleFileDatasetLoader(dataset.path)
     match = 'Error loading dataset from path'
     with pytest.raises(RuntimeError, match=match):
         loader.load()
+
+
+def test_unique_cell_types_explicit_structured_grid():
+    loader = examples._dataset_explicit_structured
+    loader.load_and_store_dataset()
+    assert loader.unique_cell_types == (pv.CellType.HEXAHEDRON,)
 
 
 def test_format_file_size():

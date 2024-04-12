@@ -4,7 +4,7 @@ from functools import wraps
 import inspect
 import itertools
 import re
-from typing import Dict, Optional, Sequence
+from typing import ClassVar, Dict, Optional, Sequence, Type, Union
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -69,7 +69,7 @@ class DocSubs:
     # The substitutions to use for this (sub)class
     _DOC_SUBS: Optional[Dict[str, str]] = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
-    _DOC_STORE = {}  # type: ignore[var-annotated]
+    _DOC_STORE = {}  # type: ignore[var-annotated] # noqa: RUF012
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
@@ -170,14 +170,16 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
-        "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
-        "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
-        ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
-        "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
-        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
-    }
+    LINE_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
+            "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
+            "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
+            ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
+            "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
+            "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
+        }
+    )
 
     def __init__(self, color="k", width=1, style="-"):
         """Initialize a new Pen instance."""
@@ -452,7 +454,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     """
 
-    BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
+    BEHAVIORS: ClassVar[Dict[str, int]] = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
     def __init__(self, label="", range=None, grid=True):  # noqa: A002
         """Initialize a new Axis instance."""
@@ -1547,7 +1549,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        dev_kwargs={},
+        dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1611,6 +1613,8 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
+        if dev_kwargs is None:
+            dev_kwargs = {}
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
@@ -2120,7 +2124,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D line plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
@@ -2280,15 +2284,17 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     """
 
-    MARKER_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
-        "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
-        "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
-        "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
-        "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
-        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
-    }
-    _DOC_SUBS = {
+    MARKER_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
+            "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
+            "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
+            "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
+            "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
+            "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
+        }
+    )
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D scatter plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
@@ -2505,7 +2511,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "area plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
@@ -2695,8 +2701,11 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     """
 
-    ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
-    _DOC_SUBS = {
+    ORIENTATIONS: ClassVar[Dict[str, int]] = {
+        "H": _vtk.vtkPlotBar.HORIZONTAL,
+        "V": _vtk.vtkPlotBar.VERTICAL,
+    }
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "bar plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
@@ -2904,7 +2913,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "stack plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
@@ -3075,15 +3084,37 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     """
 
-    PLOT_TYPES = {
+    PLOT_TYPES: ClassVar[
+        Dict[
+            str,
+            Union[
+                Type[ScatterPlot2D],
+                Type[LinePlot2D],
+                Type[AreaPlot],
+                Type[BarPlot],
+                Type[StackPlot],
+            ],
+        ]
+    ] = {
         "scatter": ScatterPlot2D,
         "line": LinePlot2D,
         "area": AreaPlot,
         "bar": BarPlot,
         "stack": StackPlot,
     }
-    _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
-    _DOC_SUBS = {
+    _PLOT_CLASSES: ClassVar[
+        Dict[
+            Union[
+                Type[ScatterPlot2D],
+                Type[LinePlot2D],
+                Type[AreaPlot],
+                Type[BarPlot],
+                Type[StackPlot],
+            ],
+            str,
+        ]
+    ] = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "2D chart",
         "chart_args": "",
         "chart_init": """
@@ -3858,7 +3889,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "box plot",
         "chart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
@@ -3996,7 +4027,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "boxplot chart",
         "chart_args": "[[0, 1, 1, 2, 3, 3, 4]]",
         "chart_init": "",
@@ -4194,7 +4225,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "pie plot",
         "chart_init": "pv.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
@@ -4305,7 +4336,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "pie chart",
         "chart_args": "[5, 4, 3, 2, 1]",
         "chart_init": "",
@@ -4530,7 +4561,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "matplotlib chart",
         "chart_args": "",
         "chart_init": """
