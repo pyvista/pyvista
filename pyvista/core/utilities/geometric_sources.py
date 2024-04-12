@@ -6,18 +6,20 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import ClassVar, Dict, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION

@@ -364,6 +364,7 @@ extend-select = [
     "RSE",
     "RUF",
     "SIM",
+    "TCH",
     "TRY201",
 ]
 
