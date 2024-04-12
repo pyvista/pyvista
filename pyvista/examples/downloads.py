@@ -7261,7 +7261,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
        -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
           blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure (e.g. ``'heart'`` and are sorted alphabetically.
+          their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically.
 
        -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
           label map is an alternative representation of the segmentation where
@@ -7326,7 +7326,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     Plot the CT image and segmentation labels together.
 
     >>> pl = pv.Plotter()
-    >>> pl.add_volume(
+    >>> _ = pl.add_volume(
     ...     ct_image,
     ...     cmap="bone",
     ...     opacity="sigmoid_9",
@@ -7344,7 +7344,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
-            Similar dataset.
+            Similar dataset of a female subject.
 
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
@@ -7397,7 +7397,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
        -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
           blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure (e.g. ``'heart'`` and are sorted alphabetically.
+          their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically.
 
        -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
           label map is an alternative representation of the segmentation where
@@ -7467,7 +7467,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     Plot the CT image and segmentation labels together.
 
     >>> pl = pv.Plotter()
-    >>> pl.add_volume(
+    >>> _ = pl.add_volume(
     ...     ct_image,
     ...     cmap="bone",
     ...     opacity="sigmoid_7",
