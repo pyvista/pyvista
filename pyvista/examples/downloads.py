@@ -7248,7 +7248,7 @@ def download_reservoir(load=True):  # pragma: no cover
     UNISIM-II is a synthetic carbonate reservoir model created by
     UNISIM-CEPETRO-Unicamp. The dataset can be used to compare methodologies
     and performance of different techniques, simulators, algorithms, among others.
-    See more at <https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview>.
+    See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
 
     This dataset is licenced under the Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/
 
@@ -7300,10 +7300,17 @@ def download_reservoir(load=True):  # pragma: no cover
 
 
 def _reservoir_load_func(grid):  # pragma: no cover
-    # Loading steps are from this example:
+    # See loading steps from this example:
     # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
     grid.ComputeFacesConnectivityFlagsArray()
     grid.set_active_scalars('ConnectivityFlags')
+
+    # Remove misc data fields stored with the dataset
+    grid.field_data.remove('dimensions')
+    grid.field_data.remove('name')
+    grid.field_data.remove('properties')
+    grid.field_data.remove('filename')
+
     return grid
 
 
