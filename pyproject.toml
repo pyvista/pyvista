@@ -335,6 +335,7 @@ ignore = [
     "SIM117",
     # https://github.com/pyvista/pyvista/pull/5837
     "SIM118",
+    # https://github.com/pyvista/pyvista/pull/5911
     "RET505",
     "RET506",
     "RET507",
