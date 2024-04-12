@@ -12,10 +12,11 @@ import os
 from pathlib import Path
 import re
 import textwrap
-from types import FunctionType, ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Dict,
     Generator,
     Iterable,
@@ -33,13 +34,17 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples import _dataset_loader
 from pyvista.examples._dataset_loader import (
     DatasetObject,
     _BaseFilePropsProtocol,
     _DatasetLoader,
     _Downloadable,
 )
+
+if TYPE_CHECKING:
+    from types import FunctionType, ModuleType
+
+    from pyvista.examples import _dataset_loader
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -1226,11 +1231,11 @@ class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
 
     # Dict of all card objects
-    DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
+    DATASET_CARDS_OBJ: ClassVar[Dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: Dict[str, str] = {}
-    DATASET_CARDS_RST: Dict[str, str] = {}
+    DATASET_CARDS_RST_REF: ClassVar[Dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[Dict[str, str]] = {}
 
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
