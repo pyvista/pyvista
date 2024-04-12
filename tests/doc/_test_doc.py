@@ -17,6 +17,6 @@ def _docs_dir():
     os.chdir(cwd)
 
 
-@pytest.mark.usefixtures(_docs_dir)
+@pytest.mark.usefixtures("_docs_dir")
 def test_make_all_tables():
     make_all_tables()
