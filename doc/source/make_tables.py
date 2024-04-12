@@ -16,6 +16,7 @@ from types import FunctionType, ModuleType
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Dict,
     Generator,
     Iterable,
@@ -1226,11 +1227,11 @@ class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
 
     # Dict of all card objects
-    DATASET_CARDS_OBJ: Dict[str, DatasetCard] = {}
+    DATASET_CARDS_OBJ: ClassVar[Dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: Dict[str, str] = {}
-    DATASET_CARDS_RST: Dict[str, str] = {}
+    DATASET_CARDS_RST_REF: ClassVar[Dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[Dict[str, str]] = {}
 
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
