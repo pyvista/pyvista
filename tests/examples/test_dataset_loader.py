@@ -90,7 +90,9 @@ def _generate_dataset_loader_test_cases_from_module(
         dataset_function = content.setdefault('dataset_function', None)
         dataset_loader = content.setdefault('dataset_loader', None)
         test_case = DatasetLoaderTestCase(
-            dataset_name=name, dataset_function=dataset_function, dataset_loader=dataset_loader,
+            dataset_name=name,
+            dataset_function=dataset_function,
+            dataset_loader=dataset_loader,
         )
         test_cases_list.append(test_case)
 

@@ -159,7 +159,8 @@ def load_rectilinear():
 
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
-    rectfile, read_func=pyvista.RectilinearGrid,
+    rectfile,
+    read_func=pyvista.RectilinearGrid,
 )
 
 
@@ -187,7 +188,8 @@ def load_hexbeam():
 
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
-    hexbeamfile, read_func=pyvista.UnstructuredGrid,
+    hexbeamfile,
+    read_func=pyvista.UnstructuredGrid,
 )
 
 
@@ -312,7 +314,8 @@ def load_globe_texture():
 
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
-    mapfile, read_func=pyvista.read_texture,
+    mapfile,
+    read_func=pyvista.read_texture,
 )
 
 

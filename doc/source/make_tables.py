@@ -794,7 +794,11 @@ class DatasetCard:
             n_arrays,
         )
         file_info_block = self._create_file_props_block(
-            self.loader, file_size, num_files, file_ext, reader_type,
+            self.loader,
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
         )
         footer_block = self._create_footer_block(datasource_links)
 
@@ -1068,12 +1072,14 @@ class DatasetCard:
                 ('Reader', reader_type),
             ]
             file_info_fields_block = DatasetCard._generate_field_block(
-                file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
+                file_info_fields,
+                indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
             )
             return file_info_fields_block
         file_info_fields = "``Not Applicable.``\n\n``Dataset is not loaded from file.``"
         return _indent_multi_line_string(
-            file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
+            file_info_fields,
+            indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
 
     @classmethod
@@ -1186,19 +1192,22 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_n_cells(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'), fmt='spaced',
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'),
+            fmt='spaced',
         )
 
     @staticmethod
     def generate_n_points(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'), fmt='spaced',
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'),
+            fmt='spaced',
         )
 
     @staticmethod
     def generate_length(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'), fmt='exp',
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'),
+            fmt='exp',
         )
 
     @staticmethod
@@ -1318,7 +1327,8 @@ class DatasetCardFetcher:
 
         def _generate_button(string, ref):
             return _indent_multi_line_string(
-                f".. button-ref:: {ref}\n\n   {string}\n", indent_level=1,
+                f".. button-ref:: {ref}\n\n   {string}\n",
+                indent_level=1,
             )
 
         def _generate_grid_item(string):

@@ -531,7 +531,11 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     def path_loadable(self) -> Tuple[str, ...]:
 
         return tuple(
-            [file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)],
+            [
+                file.path
+                for file in self._file_objects
+                if isinstance(file, _SingleFileDatasetLoader)
+            ],
         )
 
     @property
@@ -606,7 +610,8 @@ def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_Scala
 
 def _download_dataset(
     dataset_loader: Union[
-        _SingleFileDownloadableDatasetLoader, _MultiFileDownloadableDatasetLoader,
+        _SingleFileDownloadableDatasetLoader,
+        _MultiFileDownloadableDatasetLoader,
     ],
     load: bool = True,
     metafiles: bool = False,
@@ -677,7 +682,8 @@ def _load_as_multiblock(
             continue
         loaded = file.load()
         assert isinstance(
-            loaded, (pv.MultiBlock, pv.DataSet),
+            loaded,
+            (pv.MultiBlock, pv.DataSet),
         ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
         multi.append(loaded, name)
     return multi

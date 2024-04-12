@@ -130,7 +130,8 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     _WRITERS: ClassVar[
         Dict[
-            str, Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]],
+            str,
+            Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]],
         ]
     ] = {
         '.vtk': _vtk.vtkRectilinearGridWriter,
