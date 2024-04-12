@@ -7246,9 +7246,9 @@ _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
 
 
 def download_whole_body_ct_male(load=True):  # pragma: no cover
-    """Download a CT image of a male subject with 117 segmented anatomic structures.
+    r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
-    This dataset is subject s1397 from the TotalSegmentator dataset, version 2.0.1,
+    This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
     available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
@@ -7257,19 +7257,20 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
 
-       -  ``'ct'``: :class:`~pyvista.ImageData` with CT data
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
 
-       -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
-          blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically.
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
 
-       -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
-          label map is an alternative representation of the segmentation where
-          the masks are combined into a single scalar array.
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
 
-          .. note::
+        .. note::
 
-             The label map is not part of the original data source.
+            The label map is not part of the original data source.
 
     Licensed under Creative Commons Attribution 4.0 International.
 
@@ -7312,6 +7313,10 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> label_names = segmentations.keys()
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    .. dropdown:: See all label names
+
+        >>> print("\n".join(label_names))  # doctest:+SKIP
 
     Get the label map and show its data range
 
@@ -7382,9 +7387,9 @@ _dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
 
 
 def download_whole_body_ct_female(load=True):  # pragma: no cover
-    """Download a CT image of a female subject with 117 segmented anatomic structures.
+    r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
-    This dataset is subject s1380 from the TotalSegmentator dataset, version 2.0.1,
+    This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
     available from `zenodo <https://zenodo.org/records/10047292>`_. See the
     original paper for details:
 
@@ -7393,19 +7398,20 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
 
-       -  ``'ct'``: :class:`~pyvista.ImageData` with CT data
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
 
-       -  ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
-          blocks, each containing a binary segmentation label. The blocks are named by
-          their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically.
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
 
-       -  ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
-          label map is an alternative representation of the segmentation where
-          the masks are combined into a single scalar array.
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
 
-          .. note::
+        .. note::
 
-             The label map is not part of the original data source.
+            The label map is not part of the original data source.
 
     Licensed under Creative Commons Attribution 4.0 International.
 
@@ -7453,6 +7459,10 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> label_names = segmentations.keys()
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    .. dropdown:: See all label names
+
+        >>> print("\n".join(label_names))  # doctest:+SKIP
 
     Get the label map and show its data range
 
