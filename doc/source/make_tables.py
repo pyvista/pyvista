@@ -44,8 +44,6 @@ from pyvista.examples._dataset_loader import (
 if TYPE_CHECKING:
     from types import FunctionType
 
-DatasetLoaderObj = Union[_MultiFileDownloadableLoadable, _SingleFileDownloadableLoadable]
-
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
