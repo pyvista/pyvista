@@ -340,6 +340,7 @@ fixable = ["ALL"]
 unfixable = []
 extend-select = [
     "A",
+    "B006",
     "B007",
     "B009",
     "B010",
