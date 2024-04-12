@@ -78,6 +78,14 @@ jobs:
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
+  
+      - name: Test Documentation
+        run: pytest --cov=pyvista -v tests/doc/_test_doc.py
+
+      - uses: codecov/codecov-action@v4
+        name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build Documentation
         run: make -C doc html
@@ -92,14 +100,6 @@ jobs:
       - name: Dump VTK Warnings and Errors
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
-        
-      - name: Test Documentation
-        run: pytest --cov=pyvista -v tests/doc/_test_doc.py
-
-      - uses: codecov/codecov-action@v4
-        name: "Upload coverage to CodeCov"
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           
       - name: Upload HTML documentation
         if: always()
