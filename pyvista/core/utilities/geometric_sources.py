@@ -18,7 +18,7 @@ from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION

@@ -15,7 +15,7 @@ from .dataset import DataObject
 from .errors import CellSizeError, PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
 
 

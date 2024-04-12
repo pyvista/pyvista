@@ -14,7 +14,7 @@ from .colors import Color
 from .themes import Theme
 from .tools import FONTS
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 
