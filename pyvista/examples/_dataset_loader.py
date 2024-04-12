@@ -650,7 +650,7 @@ def _load_as_multiblock(
     try:
         if names is None:
             # set names, use filename without ext by default or dirname
-            paths = _flatten_nested_sequence([list(file.path) for file in files])
+            paths = _flatten_nested_sequence([file.path for file in files])
             paths = [Path(path) for path in paths]
             names = [
                 path.stem[: -len(get_ext(path.stem))] if path.is_file() else path.stem

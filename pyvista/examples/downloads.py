@@ -7358,7 +7358,7 @@ def _whole_body_ct_load_func(dataset):
 
 
 _dataset_whole_body_ct_male = _SingleFileDownloadableLoadable(
-    'body_ct/s1397.zip', target_file='s1397', load_func=_whole_body_ct_load_func
+    'whole_body_ct/s1397.zip', target_file='s1397', load_func=_whole_body_ct_load_func
 )
 
 
@@ -7470,5 +7470,5 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
 
 _dataset_whole_body_ct_female = _SingleFileDownloadableLoadable(
-    'body_ct/s1380.zip', target_file='s1380', load_func=_whole_body_ct_load_func
+    'whole_body_ct/s1380.zip', target_file='s1380', load_func=_whole_body_ct_load_func
 )
