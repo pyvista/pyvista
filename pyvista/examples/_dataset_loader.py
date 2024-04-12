@@ -537,18 +537,8 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def _file_objects(self):
-        if self._file_loaders_ is None:
-            if isinstance(self._files_func, str):
-                assert Path(
-                    self._files_func
-                ).is_dir(), (
-                    f"Files func for {self} must be a directory when it is provided as a string."
-                )
-                self._file_loaders_ = [
-                    _SingleFileDatasetLoader(file) for file in os.listdir(self._files_func)
-                ]
-            else:
-                self._file_loaders_ = self._files_func()
+        if self._file_loaders_ is None and not isinstance(self._files_func, str):
+            self._file_loaders_ = self._files_func()
         return self._file_loaders_
 
     @property
@@ -690,20 +680,15 @@ def _load_as_multiblock(
     to partially specify the names parameter before passing it as loading function.
     """
     multi = pv.MultiBlock()
-    try:
-        if names is None:
-            # set names, use filename without ext by default or dirname
-            paths = _flatten_nested_sequence(
-                [file.path_loadable for file in files if isinstance(file, _DatasetLoader)]
-            )
-            paths = [Path(path) for path in paths]
-            names = [
-                path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
-                for path in paths
-            ]
-
-    except TypeError:
-        names = [f'dataset{num}' for num in range(len(files))]
+    if names is None:
+        # set names, use filename without ext by default or dirname
+        paths = _flatten_nested_sequence(
+            [file.path_loadable for file in files if isinstance(file, _DatasetLoader)]
+        )
+        paths = [Path(path) for path in paths]
+        names = [
+            path.name[: -len(get_ext(path.name))] if path.is_file() else path.name for path in paths
+        ]
 
     for file, name in zip(files, names):
         if not isinstance(file, _DatasetLoader):
