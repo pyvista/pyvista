@@ -100,7 +100,7 @@ jobs:
       - name: Dump VTK Warnings and Errors
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
-          
+
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v4
