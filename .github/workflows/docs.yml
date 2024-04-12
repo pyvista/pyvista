@@ -92,7 +92,15 @@ jobs:
       - name: Dump VTK Warnings and Errors
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
+        
+      - name: Test Documentation
+        run: pytest --cov=pyvista -v tests/doc/_test_doc.py
 
+      - uses: codecov/codecov-action@v4
+        name: "Upload coverage to CodeCov"
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          
       - name: Upload HTML documentation
         if: always()
         uses: actions/upload-artifact@v4
