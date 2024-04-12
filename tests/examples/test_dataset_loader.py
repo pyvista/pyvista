@@ -550,7 +550,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert isinstance(loader.dataset_iterable[2], pv.ImageData)
     assert isinstance(loader.dataset_iterable[3], pv.ImageData)
     assert set(loader.unique_dataset_type) == {pv.MultiBlock, pv.ImageData, pv.PolyData}
-    assert loader.dataset.keys() == ['dataset0', 'dataset1', 'dataset2']
+    assert loader.dataset.keys() == ['cow', 'HeadMRVolume', 'data']
     assert loader.source_name == (
         'cow.vtp',
         'HeadMRVolume.mhd',

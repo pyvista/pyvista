@@ -361,6 +361,10 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
             # Cannot be read directly (requires custom reader)
             return None
 
+    @property
+    def path_loadable(self) -> str:
+        return self.path
+
     def load(self):
         path = self.path
         read_func = self._read_func
@@ -381,18 +385,6 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 return read_func(path) if load_func is None else load_func(read_func(path))
             else:
                 raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
-
-
-# =======
-#             return (
-#                 self._read_func(self.path)
-#                 if self._load_func is None
-#                 else self._load_func(self._read_func(self.path))
-#             )
-#         except Exception:
-#             raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
-#
-# >>>>>>>
 
 
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
@@ -701,16 +693,17 @@ def _load_as_multiblock(
     try:
         if names is None:
             # set names, use filename without ext by default or dirname
-            paths = _flatten_nested_sequence([file.path for file in files])
+            paths = _flatten_nested_sequence(
+                [file.path_loadable for file in files if isinstance(file, _DatasetLoader)]
+            )
             paths = [Path(path) for path in paths]
             names = [
-                path.stem[: -len(get_ext(path.stem))] if path.is_file() else path.stem
+                path.name[: -len(get_ext(path.name))] if path.is_file() else path.name
                 for path in paths
             ]
 
     except TypeError:
         names = [f'dataset{num}' for num in range(len(files))]
-    assert len(names) == len(files)
 
     for file, name in zip(files, names):
         if not isinstance(file, _DatasetLoader):
