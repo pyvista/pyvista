@@ -1104,7 +1104,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=None):
     """Create multiple lines.
 
     Parameters
@@ -1129,6 +1129,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
+    if points is None:
+        points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
     return MultipleLinesSource(points=points).output
 
 

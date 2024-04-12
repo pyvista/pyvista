@@ -5,7 +5,7 @@ import pathlib
 from pathlib import Path
 import pickle
 import shutil
-import unittest.mock as mock
+from unittest import mock
 import warnings
 
 import numpy as np
@@ -139,7 +139,7 @@ def test_read_force_ext(tmpdir):
     )
 
     dummy_extension = '.dummy'
-    for fname, type in zip(fnames, types):
+    for fname, type_ in zip(fnames, types):
         path = Path(fname)
         root = str(path.parent / path.stem)
         original_ext = path.suffix
@@ -147,7 +147,7 @@ def test_read_force_ext(tmpdir):
         new_fname = tmpdir / name + '.' + dummy_extension
         shutil.copy(fname, new_fname)
         data = fileio.read(new_fname, force_ext=original_ext)
-        assert isinstance(data, type)
+        assert isinstance(data, type_)
 
 
 @mock.patch('pyvista.BaseReader.read')

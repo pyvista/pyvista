@@ -38,12 +38,12 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
 from pyvista.examples._dataset_loader import (
     _download_dataset,
+    _DownloadableFile,
     _load_and_merge,
     _load_as_cubemap,
     _load_as_multiblock,
-    _MultiFileDownloadableLoadable,
-    _SingleFileDownloadable,
-    _SingleFileDownloadableLoadable,
+    _MultiFileDownloadableDatasetLoader,
+    _SingleFileDownloadableDatasetLoader,
 )
 
 # disable pooch verbose logging
@@ -334,7 +334,9 @@ def download_masonry_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_masonry_texture, load=load)
 
 
-_dataset_masonry_texture = _SingleFileDownloadableLoadable('masonry.bmp', read_func=read_texture)
+_dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
+    'masonry.bmp', read_func=read_texture
+)
 
 
 def download_usa_texture(load=True):  # pragma: no cover
@@ -369,7 +371,7 @@ def download_usa_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_usa_texture, load=load)
 
 
-_dataset_usa_texture = _SingleFileDownloadableLoadable('usa_image.jpg', read_func=read_texture)
+_dataset_usa_texture = _SingleFileDownloadableDatasetLoader('usa_image.jpg', read_func=read_texture)
 
 
 def download_puppy_texture(load=True):  # pragma: no cover
@@ -406,7 +408,7 @@ def download_puppy_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_puppy_texture, load=load)
 
 
-_dataset_puppy_texture = _SingleFileDownloadableLoadable('puppy.jpg', read_func=read_texture)
+_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)
 
 
 def download_puppy(load=True):  # pragma: no cover
@@ -440,7 +442,7 @@ def download_puppy(load=True):  # pragma: no cover
     return _download_dataset(_dataset_puppy, load=load)
 
 
-_dataset_puppy = _SingleFileDownloadableLoadable('puppy.jpg')
+_dataset_puppy = _SingleFileDownloadableDatasetLoader('puppy.jpg')
 
 
 def download_usa(load=True):  # pragma: no cover
@@ -474,7 +476,7 @@ def download_usa(load=True):  # pragma: no cover
     return _download_dataset(_dataset_usa, load=load)
 
 
-_dataset_usa = _SingleFileDownloadableLoadable('usa.vtk')
+_dataset_usa = _SingleFileDownloadableDatasetLoader('usa.vtk')
 
 
 def download_st_helens(load=True):  # pragma: no cover
@@ -516,7 +518,7 @@ def download_st_helens(load=True):  # pragma: no cover
     return _download_dataset(_dataset_st_helens, load=load)
 
 
-_dataset_st_helens = _SingleFileDownloadableLoadable('SainteHelens.dem')
+_dataset_st_helens = _SingleFileDownloadableDatasetLoader('SainteHelens.dem')
 
 
 def download_bunny(load=True):  # pragma: no cover
@@ -559,7 +561,7 @@ def download_bunny(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bunny, load=load)
 
 
-_dataset_bunny = _SingleFileDownloadableLoadable('bunny.ply')
+_dataset_bunny = _SingleFileDownloadableDatasetLoader('bunny.ply')
 
 
 def download_bunny_coarse(load=True):  # pragma: no cover
@@ -604,7 +606,7 @@ def _bunny_coarse_load_func(mesh):
     return mesh
 
 
-_dataset_bunny_coarse = _SingleFileDownloadableLoadable(
+_dataset_bunny_coarse = _SingleFileDownloadableDatasetLoader(
     'Bunny.vtp', load_func=_bunny_coarse_load_func
 )
 
@@ -648,7 +650,7 @@ def download_cow(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cow, load=load)
 
 
-_dataset_cow = _SingleFileDownloadableLoadable('cow.vtp')
+_dataset_cow = _SingleFileDownloadableDatasetLoader('cow.vtp')
 
 
 def download_cow_head(load=True):  # pragma: no cover
@@ -682,7 +684,7 @@ def download_cow_head(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cow_head, load=load)
 
 
-_dataset_cow_head = _SingleFileDownloadableLoadable('cowHead.vtp')
+_dataset_cow_head = _SingleFileDownloadableDatasetLoader('cowHead.vtp')
 
 
 def download_faults(load=True):  # pragma: no cover
@@ -714,7 +716,7 @@ def download_faults(load=True):  # pragma: no cover
     return _download_dataset(_dataset_faults, load=load)
 
 
-_dataset_faults = _SingleFileDownloadableLoadable('faults.vtk')
+_dataset_faults = _SingleFileDownloadableDatasetLoader('faults.vtk')
 
 
 def download_tensors(load=True):  # pragma: no cover
@@ -746,7 +748,7 @@ def download_tensors(load=True):  # pragma: no cover
     return _download_dataset(_dataset_tensors, load=load)
 
 
-_dataset_tensors = _SingleFileDownloadableLoadable('tensors.vtk')
+_dataset_tensors = _SingleFileDownloadableDatasetLoader('tensors.vtk')
 
 
 def download_head(load=True):  # pragma: no cover
@@ -796,12 +798,12 @@ def download_head(load=True):  # pragma: no cover
 
 def _head_files_func():
     # Multiple files needed for read, but only one gets loaded
-    head_raw = _SingleFileDownloadable('HeadMRVolume.raw')
-    head_mhd = _SingleFileDownloadableLoadable('HeadMRVolume.mhd')
+    head_raw = _DownloadableFile('HeadMRVolume.raw')
+    head_mhd = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
     return head_mhd, head_raw
 
 
-_dataset_head = _MultiFileDownloadableLoadable(_head_files_func)
+_dataset_head = _MultiFileDownloadableDatasetLoader(_head_files_func)
 
 
 def download_head_2(load=True):  # pragma: no cover
@@ -841,7 +843,7 @@ def download_head_2(load=True):  # pragma: no cover
     return _download_dataset(_dataset_head_2, load=load)
 
 
-_dataset_head_2 = _SingleFileDownloadableLoadable('head.vti')
+_dataset_head_2 = _SingleFileDownloadableDatasetLoader('head.vti')
 
 
 def download_bolt_nut(load=True):  # pragma: no cover
@@ -891,12 +893,12 @@ def download_bolt_nut(load=True):  # pragma: no cover
 
 def _bolt_nut_files_func():  # pragma: no cover
     # Multiple mesh files are loaded for this example
-    bolt = _SingleFileDownloadableLoadable('bolt.slc')
-    nut = _SingleFileDownloadableLoadable('nut.slc')
+    bolt = _SingleFileDownloadableDatasetLoader('bolt.slc')
+    nut = _SingleFileDownloadableDatasetLoader('nut.slc')
     return bolt, nut
 
 
-_dataset_bolt_nut = _MultiFileDownloadableLoadable(
+_dataset_bolt_nut = _MultiFileDownloadableDatasetLoader(
     _bolt_nut_files_func, load_func=_load_as_multiblock
 )
 
@@ -930,7 +932,7 @@ def download_clown(load=True):  # pragma: no cover
     return _download_dataset(_dataset_clown, load=load)
 
 
-_dataset_clown = _SingleFileDownloadableLoadable('clown.facet')
+_dataset_clown = _SingleFileDownloadableDatasetLoader('clown.facet')
 
 
 def download_topo_global(load=True):  # pragma: no cover
@@ -967,7 +969,7 @@ def download_topo_global(load=True):  # pragma: no cover
     return _download_dataset(_dataset_topo_global, load=load)
 
 
-_dataset_topo_global = _SingleFileDownloadableLoadable('EarthModels/ETOPO_10min_Ice.vtp')
+_dataset_topo_global = _SingleFileDownloadableDatasetLoader('EarthModels/ETOPO_10min_Ice.vtp')
 
 
 def download_topo_land(load=True):  # pragma: no cover
@@ -1006,7 +1008,9 @@ def download_topo_land(load=True):  # pragma: no cover
     return _download_dataset(_dataset_topo_land, load=load)
 
 
-_dataset_topo_land = _SingleFileDownloadableLoadable('EarthModels/ETOPO_10min_Ice_only-land.vtp')
+_dataset_topo_land = _SingleFileDownloadableDatasetLoader(
+    'EarthModels/ETOPO_10min_Ice_only-land.vtp'
+)
 
 
 def download_coastlines(load=True):  # pragma: no cover
@@ -1038,7 +1042,7 @@ def download_coastlines(load=True):  # pragma: no cover
     return _download_dataset(_dataset_coastlines, load=load)
 
 
-_dataset_coastlines = _SingleFileDownloadableLoadable('EarthModels/Coastlines_Los_Alamos.vtp')
+_dataset_coastlines = _SingleFileDownloadableDatasetLoader('EarthModels/Coastlines_Los_Alamos.vtp')
 
 
 def download_knee(load=True):  # pragma: no cover
@@ -1081,7 +1085,7 @@ def download_knee(load=True):  # pragma: no cover
     return _download_dataset(_dataset_knee, load=load)
 
 
-_dataset_knee = _SingleFileDownloadableLoadable('DICOM_KNEE.dcm')
+_dataset_knee = _SingleFileDownloadableDatasetLoader('DICOM_KNEE.dcm')
 
 
 def download_knee_full(load=True):  # pragma: no cover
@@ -1130,7 +1134,7 @@ def download_knee_full(load=True):  # pragma: no cover
     return _download_dataset(_dataset_knee_full, load=load)
 
 
-_dataset_knee_full = _SingleFileDownloadableLoadable('vw_knee.slc')
+_dataset_knee_full = _SingleFileDownloadableDatasetLoader('vw_knee.slc')
 
 
 def download_lidar(load=True):  # pragma: no cover
@@ -1167,7 +1171,7 @@ def download_lidar(load=True):  # pragma: no cover
     return _download_dataset(_dataset_lidar, load=load)
 
 
-_dataset_lidar = _SingleFileDownloadableLoadable('kafadar-lidar-interp.vtp')
+_dataset_lidar = _SingleFileDownloadableDatasetLoader('kafadar-lidar-interp.vtp')
 
 
 def download_exodus(load=True):  # pragma: no cover
@@ -1199,7 +1203,7 @@ def download_exodus(load=True):  # pragma: no cover
     return _download_dataset(_dataset_exodus, load=load)
 
 
-_dataset_exodus = _SingleFileDownloadableLoadable('mesh_fs8.exo')
+_dataset_exodus = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
 
 
 def download_nefertiti(load=True):  # pragma: no cover
@@ -1240,7 +1244,7 @@ def download_nefertiti(load=True):  # pragma: no cover
     return _download_dataset(_dataset_nefertiti, load=load)
 
 
-_dataset_nefertiti = _SingleFileDownloadableLoadable(
+_dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
     'nefertiti.ply.zip', target_file='nefertiti.ply'
 )
 
@@ -1285,7 +1289,7 @@ def _blood_vessels_load_func(obj):  # pragma: no cover
     return obj
 
 
-_dataset_blood_vessels = _SingleFileDownloadableLoadable(
+_dataset_blood_vessels = _SingleFileDownloadableDatasetLoader(
     'pvtu_blood_vessels/blood_vessels.zip',
     target_file='T0000000500.pvtu',
     load_func=_blood_vessels_load_func,
@@ -1321,7 +1325,7 @@ def download_iron_protein(load=True):  # pragma: no cover
     return _download_dataset(_dataset_iron_protein, load=load)
 
 
-_dataset_iron_protein = _SingleFileDownloadableLoadable('ironProt.vtk')
+_dataset_iron_protein = _SingleFileDownloadableDatasetLoader('ironProt.vtk')
 
 
 def download_tetrahedron(load=True):  # pragma: no cover
@@ -1356,7 +1360,7 @@ def download_tetrahedron(load=True):  # pragma: no cover
     return _download_dataset(_dataset_tetrahedron, load=load)
 
 
-_dataset_tetrahedron = _SingleFileDownloadableLoadable('Tetrahedron.vtu')
+_dataset_tetrahedron = _SingleFileDownloadableDatasetLoader('Tetrahedron.vtu')
 
 
 def download_saddle_surface(load=True):  # pragma: no cover
@@ -1391,7 +1395,7 @@ def download_saddle_surface(load=True):  # pragma: no cover
     return _download_dataset(_dataset_saddle_surface, load=load)
 
 
-_dataset_saddle_surface = _SingleFileDownloadableLoadable('InterpolatingOnSTL_final.stl')
+_dataset_saddle_surface = _SingleFileDownloadableDatasetLoader('InterpolatingOnSTL_final.stl')
 
 
 def download_sparse_points(load=True):  # pragma: no cover
@@ -1445,7 +1449,7 @@ def _sparse_points_reader(saved_file):  # pragma: no cover
     return pyvista.wrap(table_points.GetOutput())
 
 
-_dataset_sparse_points = _SingleFileDownloadableLoadable(
+_dataset_sparse_points = _SingleFileDownloadableDatasetLoader(
     'sparsePoints.txt', read_func=_sparse_points_reader
 )
 
@@ -1482,7 +1486,7 @@ def download_foot_bones(load=True):  # pragma: no cover
     return _download_dataset(_dataset_foot_bones, load=load)
 
 
-_dataset_foot_bones = _SingleFileDownloadableLoadable('fsu/footbones.ply')
+_dataset_foot_bones = _SingleFileDownloadableDatasetLoader('fsu/footbones.ply')
 
 
 def download_guitar(load=True):  # pragma: no cover
@@ -1516,7 +1520,7 @@ def download_guitar(load=True):  # pragma: no cover
     return _download_dataset(_dataset_guitar, load=load)
 
 
-_dataset_guitar = _SingleFileDownloadableLoadable('fsu/stratocaster.ply')
+_dataset_guitar = _SingleFileDownloadableDatasetLoader('fsu/stratocaster.ply')
 
 
 def download_quadratic_pyramid(load=True):  # pragma: no cover
@@ -1551,7 +1555,7 @@ def download_quadratic_pyramid(load=True):  # pragma: no cover
     return _download_dataset(_dataset_quadratic_pyramid, load=load)
 
 
-_dataset_quadratic_pyramid = _SingleFileDownloadableLoadable('QuadraticPyramid.vtu')
+_dataset_quadratic_pyramid = _SingleFileDownloadableDatasetLoader('QuadraticPyramid.vtu')
 
 
 def download_bird(load=True):  # pragma: no cover
@@ -1585,7 +1589,7 @@ def download_bird(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bird, load=load)
 
 
-_dataset_bird = _SingleFileDownloadableLoadable('Pileated.jpg')
+_dataset_bird = _SingleFileDownloadableDatasetLoader('Pileated.jpg')
 
 
 def download_bird_texture(load=True):  # pragma: no cover
@@ -1619,7 +1623,7 @@ def download_bird_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bird_texture, load=load)
 
 
-_dataset_bird_texture = _SingleFileDownloadableLoadable('Pileated.jpg', read_func=read_texture)
+_dataset_bird_texture = _SingleFileDownloadableDatasetLoader('Pileated.jpg', read_func=read_texture)
 
 
 def download_office(load=True):  # pragma: no cover
@@ -1654,7 +1658,7 @@ def download_office(load=True):  # pragma: no cover
     return _download_dataset(_dataset_office, load=load)
 
 
-_dataset_office = _SingleFileDownloadableLoadable('office.binary.vtk')
+_dataset_office = _SingleFileDownloadableDatasetLoader('office.binary.vtk')
 
 
 def download_horse_points(load=True):  # pragma: no cover
@@ -1688,7 +1692,7 @@ def download_horse_points(load=True):  # pragma: no cover
     return _download_dataset(_dataset_horse_points, load=load)
 
 
-_dataset_horse_points = _SingleFileDownloadableLoadable('horsePoints.vtp')
+_dataset_horse_points = _SingleFileDownloadableDatasetLoader('horsePoints.vtp')
 
 
 def download_horse(load=True):  # pragma: no cover
@@ -1725,7 +1729,7 @@ def download_horse(load=True):  # pragma: no cover
     return _download_dataset(_dataset_horse, load=load)
 
 
-_dataset_horse = _SingleFileDownloadableLoadable('horse.vtp')
+_dataset_horse = _SingleFileDownloadableDatasetLoader('horse.vtp')
 
 
 def download_cake_easy(load=True):  # pragma: no cover
@@ -1759,7 +1763,7 @@ def download_cake_easy(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cake_easy, load=load)
 
 
-_dataset_cake_easy = _SingleFileDownloadableLoadable('cake_easy.jpg')
+_dataset_cake_easy = _SingleFileDownloadableDatasetLoader('cake_easy.jpg')
 
 
 def download_cake_easy_texture(load=True):  # pragma: no cover
@@ -1793,7 +1797,7 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cake_easy_texture, load=load)
 
 
-_dataset_cake_easy_texture = _SingleFileDownloadableLoadable(
+_dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
     'cake_easy.jpg', read_func=read_texture
 )
 
@@ -1829,7 +1833,7 @@ def download_rectilinear_grid(load=True):  # pragma: no cover
     return _download_dataset(_dataset_rectilinear_grid, load=load)
 
 
-_dataset_rectilinear_grid = _SingleFileDownloadableLoadable('RectilinearGrid.vtr')
+_dataset_rectilinear_grid = _SingleFileDownloadableDatasetLoader('RectilinearGrid.vtr')
 
 
 def download_gourds(zoom=False, load=True):  # pragma: no cover
@@ -1875,8 +1879,8 @@ def download_gourds(zoom=False, load=True):  # pragma: no cover
 # Two loadable files, but only one example
 # Name variables such that non-zoomed version is the 'representative' example
 # Use '__' on the zoomed version to label it as private
-_dataset_gourds = _SingleFileDownloadableLoadable('Gourds.png')
-__gourds2 = _SingleFileDownloadableLoadable('Gourds2.jpg')
+_dataset_gourds = _SingleFileDownloadableDatasetLoader('Gourds.png')
+__gourds2 = _SingleFileDownloadableDatasetLoader('Gourds2.jpg')
 
 
 def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
@@ -1919,8 +1923,8 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 # Two loadable files, but only one example
 # Name variables such that non-zoomed version is the 'representative' example
 # Use '__' on the zoomed version to label it as private
-_dataset_gourds_texture = _SingleFileDownloadableLoadable('Gourds.png', read_func=read_texture)
-__gourds2_texture = _SingleFileDownloadableLoadable('Gourds2.jpg', read_func=read_texture)
+_dataset_gourds_texture = _SingleFileDownloadableDatasetLoader('Gourds.png', read_func=read_texture)
+__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)
 
 
 def download_gourds_pnm(load=True):  # pragma: no cover
@@ -1956,7 +1960,7 @@ def download_gourds_pnm(load=True):  # pragma: no cover
     return _download_dataset(_dataset_gourds_pnm, load=load)
 
 
-_dataset_gourds_pnm = _SingleFileDownloadableLoadable('Gourds.pnm')
+_dataset_gourds_pnm = _SingleFileDownloadableDatasetLoader('Gourds.pnm')
 
 
 def download_unstructured_grid(load=True):  # pragma: no cover
@@ -1988,7 +1992,7 @@ def download_unstructured_grid(load=True):  # pragma: no cover
     return _download_dataset(_dataset_unstructured_grid, load=load)
 
 
-_dataset_unstructured_grid = _SingleFileDownloadableLoadable('uGridEx.vtk')
+_dataset_unstructured_grid = _SingleFileDownloadableDatasetLoader('uGridEx.vtk')
 
 
 def download_letter_k(load=True):  # pragma: no cover
@@ -2022,7 +2026,7 @@ def download_letter_k(load=True):  # pragma: no cover
     return _download_dataset(_dataset_letter_k, load=load)
 
 
-_dataset_letter_k = _SingleFileDownloadableLoadable('k.vtk')
+_dataset_letter_k = _SingleFileDownloadableDatasetLoader('k.vtk')
 
 
 def download_letter_a(load=True):  # pragma: no cover
@@ -2059,7 +2063,7 @@ def download_letter_a(load=True):  # pragma: no cover
     return _download_dataset(_dataset_letter_a, load=load)
 
 
-_dataset_letter_a = _SingleFileDownloadableLoadable('a_grid.vtk')
+_dataset_letter_a = _SingleFileDownloadableDatasetLoader('a_grid.vtk')
 
 
 def download_poly_line(load=True):  # pragma: no cover
@@ -2091,7 +2095,7 @@ def download_poly_line(load=True):  # pragma: no cover
     return _download_dataset(_dataset_poly_line, load=load)
 
 
-_dataset_poly_line = _SingleFileDownloadableLoadable('polyline.vtk')
+_dataset_poly_line = _SingleFileDownloadableDatasetLoader('polyline.vtk')
 
 
 def download_cad_model(load=True):  # pragma: no cover
@@ -2126,7 +2130,7 @@ def download_cad_model(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cad_model, load=load)
 
 
-_dataset_cad_model = _SingleFileDownloadableLoadable('42400-IDGH.stl')
+_dataset_cad_model = _SingleFileDownloadableDatasetLoader('42400-IDGH.stl')
 
 
 def download_frog(load=True):  # pragma: no cover
@@ -2174,12 +2178,12 @@ def download_frog(load=True):  # pragma: no cover
 
 def _frog_files_func():  # pragma: no cover
     # Multiple files needed for read, but only one gets loaded
-    frog_zraw = _SingleFileDownloadable('froggy/frog.zraw')
-    frog_mhd = _SingleFileDownloadableLoadable('froggy/frog.mhd')
+    frog_zraw = _DownloadableFile('froggy/frog.zraw')
+    frog_mhd = _SingleFileDownloadableDatasetLoader('froggy/frog.mhd')
     return frog_mhd, frog_zraw
 
 
-_dataset_frog = _MultiFileDownloadableLoadable(_frog_files_func)
+_dataset_frog = _MultiFileDownloadableDatasetLoader(_frog_files_func)
 
 
 def download_frog_tissue(load=True):  # pragma: no cover
@@ -2270,12 +2274,12 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
 def _frog_tissue_files_func():
     # Multiple files needed for read, but only one gets loaded
-    frog_tissue_zraw = _SingleFileDownloadable('froggy/frogtissue.zraw')
-    frog_tissue_mhd = _SingleFileDownloadableLoadable('froggy/frogtissue.mhd')
+    frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
+    frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
     return frog_tissue_mhd, frog_tissue_zraw
 
 
-_dataset_frog_tissue = _MultiFileDownloadableLoadable(_frog_tissue_files_func)
+_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
 
 
 def download_chest(load=True):  # pragma: no cover
@@ -2313,7 +2317,7 @@ def download_chest(load=True):  # pragma: no cover
     return _download_dataset(_dataset_chest, load=load)
 
 
-_dataset_chest = _SingleFileDownloadableLoadable('MetaIO/ChestCT-SHORT.mha')
+_dataset_chest = _SingleFileDownloadableDatasetLoader('MetaIO/ChestCT-SHORT.mha')
 
 
 def download_brain_atlas_with_sides(load=True):  # pragma: no cover
@@ -2350,7 +2354,7 @@ def download_brain_atlas_with_sides(load=True):  # pragma: no cover
     return _download_dataset(_dataset_brain_atlas_with_sides, load=load)
 
 
-_dataset_brain_atlas_with_sides = _SingleFileDownloadableLoadable('avg152T1_RL_nifti.nii.gz')
+_dataset_brain_atlas_with_sides = _SingleFileDownloadableDatasetLoader('avg152T1_RL_nifti.nii.gz')
 
 
 def download_prostate(load=True):  # pragma: no cover
@@ -2385,7 +2389,7 @@ def download_prostate(load=True):  # pragma: no cover
     return _download_dataset(_dataset_prostate, load=load)
 
 
-_dataset_prostate = _SingleFileDownloadableLoadable('prostate.img')
+_dataset_prostate = _SingleFileDownloadableDatasetLoader('prostate.img')
 
 
 def download_filled_contours(load=True):  # pragma: no cover
@@ -2417,7 +2421,7 @@ def download_filled_contours(load=True):  # pragma: no cover
     return _download_dataset(_dataset_filled_contours, load=load)
 
 
-_dataset_filled_contours = _SingleFileDownloadableLoadable('filledContours.vtp')
+_dataset_filled_contours = _SingleFileDownloadableDatasetLoader('filledContours.vtp')
 
 
 def download_doorman(load=True):  # pragma: no cover
@@ -2453,7 +2457,7 @@ def download_doorman(load=True):  # pragma: no cover
     return _download_dataset(_dataset_doorman, load=load)
 
 
-_dataset_doorman = _SingleFileDownloadableLoadable('doorman/doorman.obj')
+_dataset_doorman = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
 
 
 def download_mug(load=True):  # pragma: no cover
@@ -2485,7 +2489,7 @@ def download_mug(load=True):  # pragma: no cover
     return _download_dataset(_dataset_mug, load=load)
 
 
-_dataset_mug = _SingleFileDownloadableLoadable('mug.e')
+_dataset_mug = _SingleFileDownloadableDatasetLoader('mug.e')
 
 
 def download_oblique_cone(load=True):  # pragma: no cover
@@ -2517,7 +2521,7 @@ def download_oblique_cone(load=True):  # pragma: no cover
     return _download_dataset(_dataset_oblique_cone, load=load)
 
 
-_dataset_oblique_cone = _SingleFileDownloadableLoadable('ObliqueCone.vtp')
+_dataset_oblique_cone = _SingleFileDownloadableDatasetLoader('ObliqueCone.vtp')
 
 
 def download_emoji(load=True):  # pragma: no cover
@@ -2551,7 +2555,7 @@ def download_emoji(load=True):  # pragma: no cover
     return _download_dataset(_dataset_emoji, load=load)
 
 
-_dataset_emoji = _SingleFileDownloadableLoadable('emote.jpg')
+_dataset_emoji = _SingleFileDownloadableDatasetLoader('emote.jpg')
 
 
 def download_emoji_texture(load=True):  # pragma: no cover
@@ -2585,7 +2589,7 @@ def download_emoji_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_emoji_texture, load=load)
 
 
-_dataset_emoji_texture = _SingleFileDownloadableLoadable('emote.jpg', read_func=read_texture)
+_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)
 
 
 def download_teapot(load=True):  # pragma: no cover
@@ -2622,7 +2626,7 @@ def download_teapot(load=True):  # pragma: no cover
     return _download_dataset(_dataset_teapot, load=load)
 
 
-_dataset_teapot = _SingleFileDownloadableLoadable('teapot.g')
+_dataset_teapot = _SingleFileDownloadableDatasetLoader('teapot.g')
 
 
 def download_brain(load=True):  # pragma: no cover
@@ -2667,7 +2671,7 @@ def download_brain(load=True):  # pragma: no cover
     return _download_dataset(_dataset_brain, load=load)
 
 
-_dataset_brain = _SingleFileDownloadableLoadable('brain.vtk')
+_dataset_brain = _SingleFileDownloadableDatasetLoader('brain.vtk')
 
 
 def download_structured_grid(load=True):  # pragma: no cover
@@ -2701,7 +2705,7 @@ def download_structured_grid(load=True):  # pragma: no cover
     return _download_dataset(_dataset_structured_grid, load=load)
 
 
-_dataset_structured_grid = _SingleFileDownloadableLoadable('StructuredGrid.vts')
+_dataset_structured_grid = _SingleFileDownloadableDatasetLoader('StructuredGrid.vts')
 
 
 def download_structured_grid_two(load=True):  # pragma: no cover
@@ -2735,7 +2739,7 @@ def download_structured_grid_two(load=True):  # pragma: no cover
     return _download_dataset(_dataset_structured_grid_two, load=load)
 
 
-_dataset_structured_grid_two = _SingleFileDownloadableLoadable('SampleStructGrid.vtk')
+_dataset_structured_grid_two = _SingleFileDownloadableDatasetLoader('SampleStructGrid.vtk')
 
 
 def download_trumpet(load=True):  # pragma: no cover
@@ -2769,7 +2773,7 @@ def download_trumpet(load=True):  # pragma: no cover
     return _download_dataset(_dataset_trumpet, load=load)
 
 
-_dataset_trumpet = _SingleFileDownloadableLoadable('trumpet.obj')
+_dataset_trumpet = _SingleFileDownloadableDatasetLoader('trumpet.obj')
 
 
 def download_face(load=True):  # pragma: no cover
@@ -2807,7 +2811,7 @@ def download_face(load=True):  # pragma: no cover
     return _download_dataset(_dataset_face, load=load)
 
 
-_dataset_face = _SingleFileDownloadableLoadable('fran_cut.vtk')
+_dataset_face = _SingleFileDownloadableDatasetLoader('fran_cut.vtk')
 
 
 def download_sky_box_nz(load=True):  # pragma: no cover
@@ -2843,7 +2847,7 @@ def download_sky_box_nz(load=True):  # pragma: no cover
     return _download_dataset(_dataset_sky_box_nz, load=load)
 
 
-_dataset_sky_box_nz = _SingleFileDownloadableLoadable('skybox-nz.jpg')
+_dataset_sky_box_nz = _SingleFileDownloadableDatasetLoader('skybox-nz.jpg')
 
 
 def download_sky_box_nz_texture(load=True):  # pragma: no cover
@@ -2879,7 +2883,7 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_sky_box_nz_texture, load=load)
 
 
-_dataset_sky_box_nz_texture = _SingleFileDownloadableLoadable(
+_dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
     'skybox-nz.jpg', read_func=read_texture
 )
 
@@ -2913,7 +2917,7 @@ def download_disc_quads(load=True):  # pragma: no cover
     return _download_dataset(_dataset_disc_quads, load=load)
 
 
-_dataset_disc_quads = _SingleFileDownloadableLoadable('Disc_BiQuadraticQuads_0_0.vtu')
+_dataset_disc_quads = _SingleFileDownloadableDatasetLoader('Disc_BiQuadraticQuads_0_0.vtu')
 
 
 def download_honolulu(load=True):  # pragma: no cover
@@ -2950,7 +2954,7 @@ def download_honolulu(load=True):  # pragma: no cover
     return _download_dataset(_dataset_honolulu, load=load)
 
 
-_dataset_honolulu = _SingleFileDownloadableLoadable('honolulu.vtk')
+_dataset_honolulu = _SingleFileDownloadableDatasetLoader('honolulu.vtk')
 
 
 def download_motor(load=True):  # pragma: no cover
@@ -2982,7 +2986,7 @@ def download_motor(load=True):  # pragma: no cover
     return _download_dataset(_dataset_motor, load=load)
 
 
-_dataset_motor = _SingleFileDownloadableLoadable('motor.g')
+_dataset_motor = _SingleFileDownloadableDatasetLoader('motor.g')
 
 
 def download_tri_quadratic_hexahedron(load=True):  # pragma: no cover
@@ -3024,7 +3028,7 @@ def _tri_quadratic_hexahedron_load_func(dataset):  # pragma: no cover
     return dataset
 
 
-_dataset_tri_quadratic_hexahedron = _SingleFileDownloadableLoadable(
+_dataset_tri_quadratic_hexahedron = _SingleFileDownloadableDatasetLoader(
     'TriQuadraticHexahedron.vtu', load_func=_tri_quadratic_hexahedron_load_func
 )
 
@@ -3058,7 +3062,7 @@ def download_human(load=True):  # pragma: no cover
     return _download_dataset(_dataset_human, load=load)
 
 
-_dataset_human = _SingleFileDownloadableLoadable('Human.vtp')
+_dataset_human = _SingleFileDownloadableDatasetLoader('Human.vtp')
 
 
 def download_vtk(load=True):  # pragma: no cover
@@ -3092,7 +3096,7 @@ def download_vtk(load=True):  # pragma: no cover
     return _download_dataset(_dataset_vtk, load=load)
 
 
-_dataset_vtk = _SingleFileDownloadableLoadable('vtk.vtp')
+_dataset_vtk = _SingleFileDownloadableDatasetLoader('vtk.vtp')
 
 
 def download_spider(load=True):  # pragma: no cover
@@ -3124,7 +3128,7 @@ def download_spider(load=True):  # pragma: no cover
     return _download_dataset(_dataset_spider, load=load)
 
 
-_dataset_spider = _SingleFileDownloadableLoadable('spider.ply')
+_dataset_spider = _SingleFileDownloadableDatasetLoader('spider.ply')
 
 
 def download_carotid(load=True):  # pragma: no cover
@@ -3177,7 +3181,7 @@ def _carotid_load_func(mesh):  # pragma: no cover
     return mesh
 
 
-_dataset_carotid = _SingleFileDownloadableLoadable('carotid.vtk', load_func=_carotid_load_func)
+_dataset_carotid = _SingleFileDownloadableDatasetLoader('carotid.vtk', load_func=_carotid_load_func)
 
 
 def download_blow(load=True):  # pragma: no cover
@@ -3220,7 +3224,7 @@ def download_blow(load=True):  # pragma: no cover
     return _download_dataset(_dataset_blow, load=load)
 
 
-_dataset_blow = _SingleFileDownloadableLoadable('blow.vtk')
+_dataset_blow = _SingleFileDownloadableDatasetLoader('blow.vtk')
 
 
 def download_shark(load=True):  # pragma: no cover
@@ -3257,7 +3261,7 @@ def download_shark(load=True):  # pragma: no cover
     return _download_dataset(_dataset_shark, load=load)
 
 
-_dataset_shark = _SingleFileDownloadableLoadable('shark.ply')
+_dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
 
 
 def download_dragon(load=True):  # pragma: no cover
@@ -3296,7 +3300,7 @@ def download_dragon(load=True):  # pragma: no cover
     return _download_dataset(_dataset_dragon, load=load)
 
 
-_dataset_dragon = _SingleFileDownloadableLoadable('dragon.ply')
+_dataset_dragon = _SingleFileDownloadableDatasetLoader('dragon.ply')
 
 
 def download_armadillo(load=True):  # pragma: no cover
@@ -3335,7 +3339,7 @@ def download_armadillo(load=True):  # pragma: no cover
     return _download_dataset(_dataset_armadillo, load=load)
 
 
-_dataset_armadillo = _SingleFileDownloadableLoadable('Armadillo.ply')
+_dataset_armadillo = _SingleFileDownloadableDatasetLoader('Armadillo.ply')
 
 
 def download_gears(load=True):  # pragma: no cover
@@ -3376,7 +3380,7 @@ def download_gears(load=True):  # pragma: no cover
     return _download_dataset(_dataset_gears, load=load)
 
 
-_dataset_gears = _SingleFileDownloadableLoadable('gears.stl')
+_dataset_gears = _SingleFileDownloadableDatasetLoader('gears.stl')
 
 
 def download_torso(load=True):  # pragma: no cover
@@ -3408,7 +3412,7 @@ def download_torso(load=True):  # pragma: no cover
     return _download_dataset(_dataset_torso, load=load)
 
 
-_dataset_torso = _SingleFileDownloadableLoadable('Torso.vtp')
+_dataset_torso = _SingleFileDownloadableDatasetLoader('Torso.vtp')
 
 
 def download_kitchen(split=False, load=True):  # pragma: no cover
@@ -3486,8 +3490,10 @@ def _kitchen_split_load_func(mesh):  # pragma: no cover
     return kitchen
 
 
-_dataset_kitchen = _SingleFileDownloadableLoadable('kitchen.vtk')
-__kitchen_split = _SingleFileDownloadableLoadable('kitchen.vtk', load_func=_kitchen_split_load_func)
+_dataset_kitchen = _SingleFileDownloadableDatasetLoader('kitchen.vtk')
+__kitchen_split = _SingleFileDownloadableDatasetLoader(
+    'kitchen.vtk', load_func=_kitchen_split_load_func
+)
 
 
 def download_tetra_dc_mesh():  # pragma: no cover
@@ -3527,16 +3533,16 @@ def _tetra_dc_mesh_files_func():  # pragma: no cover
         mesh.set_active_scalars('Resistivity(log10)')
         return mesh
 
-    fwd = _SingleFileDownloadableLoadable(
+    fwd = _SingleFileDownloadableDatasetLoader(
         'dc-inversion.zip', target_file='mesh-forward.vtu', load_func=_fwd_load_func
     )
-    inv = _SingleFileDownloadableLoadable(
+    inv = _SingleFileDownloadableDatasetLoader(
         'dc-inversion.zip', target_file='mesh-inverse.vtu', load_func=_inv_load_func
     )
     return fwd, inv
 
 
-_dataset_tetra_dc_mesh = _MultiFileDownloadableLoadable(
+_dataset_tetra_dc_mesh = _MultiFileDownloadableDatasetLoader(
     _tetra_dc_mesh_files_func,
     load_func=functools.partial(_load_as_multiblock, names=['forward', 'inverse']),
 )
@@ -3574,7 +3580,7 @@ def download_model_with_variance(load=True):  # pragma: no cover
     return _download_dataset(_dataset_model_with_variance, load=load)
 
 
-_dataset_model_with_variance = _SingleFileDownloadableLoadable('model_with_variance.vtu')
+_dataset_model_with_variance = _SingleFileDownloadableDatasetLoader('model_with_variance.vtu')
 
 
 def download_thermal_probes(load=True):  # pragma: no cover
@@ -3611,7 +3617,7 @@ def download_thermal_probes(load=True):  # pragma: no cover
     return _download_dataset(_dataset_thermal_probes, load=load)
 
 
-_dataset_thermal_probes = _SingleFileDownloadableLoadable('probes.vtp')
+_dataset_thermal_probes = _SingleFileDownloadableDatasetLoader('probes.vtp')
 
 
 def download_carburetor(load=True):  # pragma: no cover
@@ -3643,7 +3649,7 @@ def download_carburetor(load=True):  # pragma: no cover
     return _download_dataset(_dataset_carburetor, load=load)
 
 
-_dataset_carburetor = _SingleFileDownloadableLoadable('carburetor.ply')
+_dataset_carburetor = _SingleFileDownloadableDatasetLoader('carburetor.ply')
 
 
 def download_turbine_blade(load=True):  # pragma: no cover
@@ -3675,7 +3681,7 @@ def download_turbine_blade(load=True):  # pragma: no cover
     return _download_dataset(_dataset_turbine_blade, load=load)
 
 
-_dataset_turbine_blade = _SingleFileDownloadableLoadable('turbineblade.ply')
+_dataset_turbine_blade = _SingleFileDownloadableDatasetLoader('turbineblade.ply')
 
 
 def download_pine_roots(load=True):  # pragma: no cover
@@ -3710,7 +3716,7 @@ def download_pine_roots(load=True):  # pragma: no cover
     return _download_dataset(_dataset_pine_roots, load=load)
 
 
-_dataset_pine_roots = _SingleFileDownloadableLoadable('pine_root.tri')
+_dataset_pine_roots = _SingleFileDownloadableDatasetLoader('pine_root.tri')
 
 
 def download_crater_topo(load=True):  # pragma: no cover
@@ -3747,7 +3753,7 @@ def download_crater_topo(load=True):  # pragma: no cover
     return _download_dataset(_dataset_crater_topo, load=load)
 
 
-_dataset_crater_topo = _SingleFileDownloadableLoadable('Ruapehu_mag_dem_15m_NZTM.vtk')
+_dataset_crater_topo = _SingleFileDownloadableDatasetLoader('Ruapehu_mag_dem_15m_NZTM.vtk')
 
 
 def download_crater_imagery(load=True):  # pragma: no cover
@@ -3787,7 +3793,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
     return _download_dataset(_dataset_crater_imagery, load=load)
 
 
-_dataset_crater_imagery = _SingleFileDownloadableLoadable(
+_dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
     'BJ34_GeoTifv1-04_crater_clip.tif', read_func=read_texture
 )
 
@@ -3821,7 +3827,7 @@ def download_dolfin(load=True):  # pragma: no cover
     return _download_dataset(_dataset_dolfin, load=load)
 
 
-_dataset_dolfin = _SingleFileDownloadableLoadable(
+_dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml', read_func=functools.partial(read, file_format='dolfin-xml')
 )
 
@@ -3870,7 +3876,7 @@ def _damavand_volcano_load_func(volume):  # pragma: no cover
     return volume
 
 
-_dataset_damavand_volcano = _SingleFileDownloadableLoadable(
+_dataset_damavand_volcano = _SingleFileDownloadableDatasetLoader(
     'damavand-volcano.vtk', load_func=_damavand_volcano_load_func
 )
 
@@ -3904,7 +3910,7 @@ def download_delaunay_example(load=True):  # pragma: no cover
     return _download_dataset(_dataset_delaunay_example, load=load)
 
 
-_dataset_delaunay_example = _SingleFileDownloadableLoadable('250.vtk')
+_dataset_delaunay_example = _SingleFileDownloadableDatasetLoader('250.vtk')
 
 
 def download_embryo(load=True):  # pragma: no cover
@@ -3952,7 +3958,7 @@ def _embryo_load_func(dataset):  # pragma: no cover
     return dataset
 
 
-_dataset_embryo = _SingleFileDownloadableLoadable('embryo.slc', load_func=_embryo_load_func)
+_dataset_embryo = _SingleFileDownloadableDatasetLoader('embryo.slc', load_func=_embryo_load_func)
 
 
 def download_antarctica_velocity(load=True):  # pragma: no cover
@@ -3989,7 +3995,7 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     return _download_dataset(_dataset_antarctica_velocity, load=load)
 
 
-_dataset_antarctica_velocity = _SingleFileDownloadableLoadable('antarctica_velocity.vtp')
+_dataset_antarctica_velocity = _SingleFileDownloadableDatasetLoader('antarctica_velocity.vtp')
 
 
 def download_room_surface_mesh(load=True):  # pragma: no cover
@@ -4029,7 +4035,7 @@ def download_room_surface_mesh(load=True):  # pragma: no cover
     return _download_dataset(_dataset_room_surface_mesh, load=load)
 
 
-_dataset_room_surface_mesh = _SingleFileDownloadableLoadable('room_surface_mesh.obj')
+_dataset_room_surface_mesh = _SingleFileDownloadableDatasetLoader('room_surface_mesh.obj')
 
 
 def download_beach(load=True):  # pragma: no cover
@@ -4061,7 +4067,7 @@ def download_beach(load=True):  # pragma: no cover
     return _download_dataset(_dataset_beach, load=load)
 
 
-_dataset_beach = _SingleFileDownloadableLoadable('beach.nrrd')
+_dataset_beach = _SingleFileDownloadableDatasetLoader('beach.nrrd')
 
 
 def download_rgba_texture(load=True):  # pragma: no cover
@@ -4096,7 +4102,9 @@ def download_rgba_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_rgba_texture, load=load)
 
 
-_dataset_rgba_texture = _SingleFileDownloadableLoadable('alphachannel.png', read_func=read_texture)
+_dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
+    'alphachannel.png', read_func=read_texture
+)
 
 
 def download_vtk_logo(load=True):  # pragma: no cover
@@ -4130,7 +4138,7 @@ def download_vtk_logo(load=True):  # pragma: no cover
     return _download_dataset(_dataset_vtk_logo, load=load)
 
 
-_dataset_vtk_logo = _SingleFileDownloadableLoadable('vtk.png', read_func=read_texture)
+_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)
 
 
 def download_sky_box_cube_map():  # pragma: no cover
@@ -4171,18 +4179,18 @@ def download_sky_box_cube_map():  # pragma: no cover
 
 
 def _sky_box_cube_map_files_func():
-    posx = _SingleFileDownloadable(
+    posx = _DownloadableFile(
         'skybox2-posx.jpg',
     )
-    negx = _SingleFileDownloadable('skybox2-negx.jpg')
-    posy = _SingleFileDownloadable('skybox2-posy.jpg')
-    negy = _SingleFileDownloadable('skybox2-negy.jpg')
-    posz = _SingleFileDownloadable('skybox2-posz.jpg')
-    negz = _SingleFileDownloadable('skybox2-negz.jpg')
+    negx = _DownloadableFile('skybox2-negx.jpg')
+    posy = _DownloadableFile('skybox2-posy.jpg')
+    negy = _DownloadableFile('skybox2-negy.jpg')
+    posz = _DownloadableFile('skybox2-posz.jpg')
+    negz = _DownloadableFile('skybox2-negz.jpg')
     return posx, negx, posy, negy, posz, negz
 
 
-_dataset_sky_box_cube_map = _MultiFileDownloadableLoadable(
+_dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
     files_func=_sky_box_cube_map_files_func, load_func=_load_as_cubemap
 )
 
@@ -4232,7 +4240,7 @@ def download_cubemap_park():  # pragma: no cover
     return _download_dataset(_dataset_cubemap_park)
 
 
-_dataset_cubemap_park = _SingleFileDownloadableLoadable(
+_dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip', target_file='', read_func=_load_as_cubemap
 )
 
@@ -4285,7 +4293,7 @@ def download_cubemap_space_4k():  # pragma: no cover
     return _download_dataset(_dataset_cubemap_space_4k)
 
 
-_dataset_cubemap_space_4k = _SingleFileDownloadableLoadable(
+_dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip', target_file='', read_func=_load_as_cubemap
 )
 
@@ -4344,7 +4352,7 @@ def download_cubemap_space_16k():  # pragma: no cover
     return _download_dataset(_dataset_cubemap_space_16k)
 
 
-_dataset_cubemap_space_16k = _SingleFileDownloadableLoadable(
+_dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip', target_file='', read_func=_load_as_cubemap
 )
 
@@ -4378,7 +4386,7 @@ def download_backward_facing_step(load=True):  # pragma: no cover
     return _download_dataset(_dataset_backward_facing_step, load=load)
 
 
-_dataset_backward_facing_step = _SingleFileDownloadableLoadable(
+_dataset_backward_facing_step = _SingleFileDownloadableDatasetLoader(
     'EnSight.zip', target_file='foam_case_0_0_0_0.case'
 )
 
@@ -4424,7 +4432,9 @@ def download_gpr_data_array(load=True):  # pragma: no cover
     return _download_dataset(_dataset_gpr_data_array, load=load)
 
 
-_dataset_gpr_data_array = _SingleFileDownloadableLoadable('gpr-example/data.npy', read_func=np.load)
+_dataset_gpr_data_array = _SingleFileDownloadableDatasetLoader(
+    'gpr-example/data.npy', read_func=np.load
+)
 
 
 def download_gpr_path(load=True):  # pragma: no cover
@@ -4461,9 +4471,9 @@ def download_gpr_path(load=True):  # pragma: no cover
     return _download_dataset(_dataset_gpr_path, load=load)
 
 
-_dataset_gpr_path = _SingleFileDownloadableLoadable(
+_dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=functools.partial(np.loadtxt, skiprows=1),
+    read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
     load_func=pyvista.PolyData,
 )
 
@@ -4504,7 +4514,7 @@ def download_woman(load=True):  # pragma: no cover
     return _download_dataset(_dataset_woman, load=load)
 
 
-_dataset_woman = _SingleFileDownloadableLoadable('woman.stl')
+_dataset_woman = _SingleFileDownloadableDatasetLoader('woman.stl')
 
 
 def download_lobster(load=True):  # pragma: no cover
@@ -4538,7 +4548,7 @@ def download_lobster(load=True):  # pragma: no cover
     return _download_dataset(_dataset_lobster, load=load)
 
 
-_dataset_lobster = _SingleFileDownloadableLoadable('lobster.ply')
+_dataset_lobster = _SingleFileDownloadableDatasetLoader('lobster.ply')
 
 
 def download_face2(load=True):  # pragma: no cover
@@ -4574,7 +4584,7 @@ def download_face2(load=True):  # pragma: no cover
     return _download_dataset(_dataset_face2, load=load)
 
 
-_dataset_face2 = _SingleFileDownloadableLoadable('man_face.stl')
+_dataset_face2 = _SingleFileDownloadableDatasetLoader('man_face.stl')
 
 
 def download_urn(load=True):  # pragma: no cover
@@ -4613,7 +4623,7 @@ def download_urn(load=True):  # pragma: no cover
     return _download_dataset(_dataset_urn, load=load)
 
 
-_dataset_urn = _SingleFileDownloadableLoadable('urn.stl')
+_dataset_urn = _SingleFileDownloadableDatasetLoader('urn.stl')
 
 
 def download_pepper(load=True):  # pragma: no cover
@@ -4647,7 +4657,7 @@ def download_pepper(load=True):  # pragma: no cover
     return _download_dataset(_dataset_pepper, load=load)
 
 
-_dataset_pepper = _SingleFileDownloadableLoadable('pepper.ply')
+_dataset_pepper = _SingleFileDownloadableDatasetLoader('pepper.ply')
 
 
 def download_drill(load=True):  # pragma: no cover
@@ -4681,7 +4691,7 @@ def download_drill(load=True):  # pragma: no cover
     return _download_dataset(_dataset_drill, load=load)
 
 
-_dataset_drill = _SingleFileDownloadableLoadable('drill.obj')
+_dataset_drill = _SingleFileDownloadableDatasetLoader('drill.obj')
 
 
 def download_action_figure(load=True):  # pragma: no cover
@@ -4736,7 +4746,7 @@ def download_action_figure(load=True):  # pragma: no cover
     return _download_dataset(_dataset_action_figure, load=load)
 
 
-_dataset_action_figure = _SingleFileDownloadableLoadable('tigerfighter.obj')
+_dataset_action_figure = _SingleFileDownloadableDatasetLoader('tigerfighter.obj')
 
 
 def download_notch_stress(load=True):  # pragma: no cover
@@ -4776,7 +4786,7 @@ def download_notch_stress(load=True):  # pragma: no cover
     return _download_dataset(_dataset_notch_stress, load=load)
 
 
-_dataset_notch_stress = _SingleFileDownloadableLoadable('notch_stress.vtk')
+_dataset_notch_stress = _SingleFileDownloadableDatasetLoader('notch_stress.vtk')
 
 
 def download_notch_displacement(load=True):  # pragma: no cover
@@ -4816,7 +4826,7 @@ def download_notch_displacement(load=True):  # pragma: no cover
     return _download_dataset(_dataset_notch_displacement, load=load)
 
 
-_dataset_notch_displacement = _SingleFileDownloadableLoadable('notch_disp.vtu')
+_dataset_notch_displacement = _SingleFileDownloadableDatasetLoader('notch_disp.vtu')
 
 
 def download_louis_louvre(load=True):  # pragma: no cover
@@ -4868,7 +4878,7 @@ def download_louis_louvre(load=True):  # pragma: no cover
     return _download_dataset(_dataset_louis_louvre, load=load)
 
 
-_dataset_louis_louvre = _SingleFileDownloadableLoadable('louis.ply')
+_dataset_louis_louvre = _SingleFileDownloadableDatasetLoader('louis.ply')
 
 
 def download_cylinder_crossflow(load=True):  # pragma: no cover
@@ -4904,15 +4914,15 @@ def download_cylinder_crossflow(load=True):  # pragma: no cover
 
 
 def _cylinder_crossflow_files_func():  # pragma: no cover
-    case = _SingleFileDownloadableLoadable('EnSight/CylinderCrossflow/cylinder_Re35.case')
-    geo = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.geo')
-    scl1 = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
-    scl2 = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
-    vel = _SingleFileDownloadable('EnSight/CylinderCrossflow/cylinder_Re35.vel')
+    case = _SingleFileDownloadableDatasetLoader('EnSight/CylinderCrossflow/cylinder_Re35.case')
+    geo = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.geo')
+    scl1 = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.scl1')
+    scl2 = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.scl2')
+    vel = _DownloadableFile('EnSight/CylinderCrossflow/cylinder_Re35.vel')
     return case, geo, scl1, scl2, vel
 
 
-_dataset_cylinder_crossflow = _MultiFileDownloadableLoadable(
+_dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
     files_func=_cylinder_crossflow_files_func
 )
 
@@ -4954,14 +4964,14 @@ def download_naca(load=True):  # pragma: no cover
 
 
 def _naca_files_func():
-    case = _SingleFileDownloadableLoadable('EnSight/naca.bin.case')
-    dens1 = _SingleFileDownloadable('EnSight/naca.gold.bin.DENS_1')
-    dens3 = _SingleFileDownloadable('EnSight/naca.gold.bin.DENS_3')
-    geo = _SingleFileDownloadable('EnSight/naca.gold.bin.geo')
+    case = _SingleFileDownloadableDatasetLoader('EnSight/naca.bin.case')
+    dens1 = _DownloadableFile('EnSight/naca.gold.bin.DENS_1')
+    dens3 = _DownloadableFile('EnSight/naca.gold.bin.DENS_3')
+    geo = _DownloadableFile('EnSight/naca.gold.bin.geo')
     return case, dens1, dens3, geo
 
 
-_dataset_naca = _MultiFileDownloadableLoadable(files_func=_naca_files_func)
+_dataset_naca = _MultiFileDownloadableDatasetLoader(files_func=_naca_files_func)
 
 
 def download_lshape(load=True):  # pragma: no cover
@@ -5003,13 +5013,13 @@ def _lshape_files_func():  # pragma: no cover
         reader.set_active_time_value(1.0)
         return reader.read()
 
-    case = _SingleFileDownloadableLoadable('EnSight/LShape.case', read_func=read_func)
-    geo = _SingleFileDownloadable('EnSight/LShape_geometry.geo')
-    var = _SingleFileDownloadable('EnSight/LShape_displacement.var')
+    case = _SingleFileDownloadableDatasetLoader('EnSight/LShape.case', read_func=read_func)
+    geo = _DownloadableFile('EnSight/LShape_geometry.geo')
+    var = _DownloadableFile('EnSight/LShape_displacement.var')
     return case, geo, var
 
 
-_dataset_lshape = _MultiFileDownloadableLoadable(files_func=_lshape_files_func)
+_dataset_lshape = _MultiFileDownloadableDatasetLoader(files_func=_lshape_files_func)
 
 
 def download_wavy(load=True):  # pragma: no cover
@@ -5044,7 +5054,7 @@ def download_wavy(load=True):  # pragma: no cover
     return _download_dataset(_dataset_wavy, load=load)
 
 
-_dataset_wavy = _SingleFileDownloadableLoadable('PVD/wavy.zip', target_file='unzip/wavy.pvd')
+_dataset_wavy = _SingleFileDownloadableDatasetLoader('PVD/wavy.zip', target_file='unzip/wavy.pvd')
 
 
 def download_single_sphere_animation(load=True):  # pragma: no cover
@@ -5101,7 +5111,7 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     return _download_dataset(_dataset_single_sphere_animation, load=load)
 
 
-_dataset_single_sphere_animation = _SingleFileDownloadableLoadable(
+_dataset_single_sphere_animation = _SingleFileDownloadableDatasetLoader(
     'PVD/paraview/singleSphereAnimation.zip', target_file='singleSphereAnimation.pvd'
 )
 
@@ -5160,7 +5170,7 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     return _download_dataset(_dataset_dual_sphere_animation, load=load)
 
 
-_dataset_dual_sphere_animation = _SingleFileDownloadableLoadable(
+_dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
     'PVD/paraview/dualSphereAnimation.zip', target_file='dualSphereAnimation.pvd'
 )
 
@@ -5214,7 +5224,7 @@ def _osmnx_graph_read_func(filename):  # pragma: no cover
     return pickle.load(Path(filename).open('rb'))  # noqa: SIM115
 
 
-_dataset_osmnx_graph = _SingleFileDownloadableLoadable(
+_dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
     'osmnx_graph.p', read_func=_osmnx_graph_read_func
 )
 
@@ -5253,7 +5263,9 @@ def download_cavity(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cavity, load=load)
 
 
-_dataset_cavity = _SingleFileDownloadableLoadable('OpenFOAM.zip', target_file='cavity/case.foam')
+_dataset_cavity = _SingleFileDownloadableDatasetLoader(
+    'OpenFOAM.zip', target_file='cavity/case.foam'
+)
 
 
 def download_openfoam_tubes(load=True):  # pragma: no cover
@@ -5315,7 +5327,7 @@ def _openfoam_tubes_read_func(filename):  # pragma: no cover
     return reader.read()
 
 
-_dataset_openfoam_tubes = _SingleFileDownloadableLoadable(
+_dataset_openfoam_tubes = _SingleFileDownloadableDatasetLoader(
     'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
     target_file='case.foam',
 )
@@ -5381,7 +5393,7 @@ def download_lucy(load=True):  # pragma: no cover
     return _download_dataset(_dataset_lucy, load=load)
 
 
-_dataset_lucy = _SingleFileDownloadableLoadable('lucy.ply')
+_dataset_lucy = _SingleFileDownloadableDatasetLoader('lucy.ply')
 
 
 def download_pump_bracket(load=True):  # pragma: no cover
@@ -5448,7 +5460,7 @@ def download_pump_bracket(load=True):  # pragma: no cover
     return _download_dataset(_dataset_pump_bracket, load=load)
 
 
-_dataset_pump_bracket = _SingleFileDownloadableLoadable(
+_dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
     'fea/pump_bracket/pump_bracket.zip', target_file='pump_bracket.vtk'
 )
 
@@ -5533,16 +5545,16 @@ def download_electronics_cooling(load=True):  # pragma: no cover
 
 
 def _electronics_cooling_files_func():  # pragma: no cover
-    _structure = _SingleFileDownloadableLoadable(
+    _structure = _SingleFileDownloadableDatasetLoader(
         'fvm/cooling_electronics/datasets.zip', target_file='structure.vtp'
     )
-    _air = _SingleFileDownloadableLoadable(
+    _air = _SingleFileDownloadableDatasetLoader(
         'fvm/cooling_electronics/datasets.zip', target_file='air.vtu'
     )
     return _structure, _air
 
 
-_dataset_electronics_cooling = _MultiFileDownloadableLoadable(
+_dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
     _electronics_cooling_files_func, load_func=_load_as_multiblock
 )
 
@@ -5598,16 +5610,16 @@ def _dataset_can_files_func():  # pragma: no cover
             'This example file is deprecated for VTK v9.2.0 and newer. '
             'Use `download_can_crushed_hdf` instead.'
         )
-    can_0 = _SingleFileDownloadableLoadable('hdf/can_0.hdf')
-    can_1 = _SingleFileDownloadableLoadable('hdf/can_1.hdf')
-    can_2 = _SingleFileDownloadableLoadable('hdf/can_2.hdf')
+    can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
+    can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
+    can_2 = _SingleFileDownloadableDatasetLoader('hdf/can_2.hdf')
     return can_0, can_1, can_2
 
 
-_dataset_can = _MultiFileDownloadableLoadable(
+_dataset_can = _MultiFileDownloadableDatasetLoader(
     files_func=_dataset_can_files_func, load_func=_load_and_merge
 )
-__can_partial = _SingleFileDownloadableLoadable('hdf/can_0.hdf')
+__can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
 
 
 def download_can_crushed_hdf(load=True):  # pragma: no cover
@@ -5653,7 +5665,7 @@ def download_can_crushed_hdf(load=True):  # pragma: no cover
     return _download_dataset(_dataset_can_crushed_hdf, load=load)
 
 
-_dataset_can_crushed_hdf = _SingleFileDownloadableLoadable('hdf/can-vtu.hdf')
+_dataset_can_crushed_hdf = _SingleFileDownloadableDatasetLoader('hdf/can-vtu.hdf')
 
 
 def download_can_crushed_vtu(load=True):  # pragma: no cover
@@ -5697,7 +5709,7 @@ def download_can_crushed_vtu(load=True):  # pragma: no cover
     return _download_dataset(_dataset_can_crushed_vtu, load=load)
 
 
-_dataset_can_crushed_vtu = _SingleFileDownloadableLoadable('can.vtu')
+_dataset_can_crushed_vtu = _SingleFileDownloadableDatasetLoader('can.vtu')
 
 
 def download_cgns_structured(load=True):  # pragma: no cover
@@ -5739,7 +5751,7 @@ def download_cgns_structured(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cgns_structured, load=load)
 
 
-_dataset_cgns_structured = _SingleFileDownloadableLoadable('cgns/sqnz_s.adf.cgns')
+_dataset_cgns_structured = _SingleFileDownloadableDatasetLoader('cgns/sqnz_s.adf.cgns')
 
 
 def download_tecplot_ascii(load=True):  # pragma: no cover
@@ -5779,7 +5791,7 @@ def download_tecplot_ascii(load=True):  # pragma: no cover
     return _download_dataset(_dataset_tecplot_ascii, load=load)
 
 
-_dataset_tecplot_ascii = _SingleFileDownloadableLoadable('tecplot_ascii.dat')
+_dataset_tecplot_ascii = _SingleFileDownloadableDatasetLoader('tecplot_ascii.dat')
 
 
 def download_cgns_multi(load=True):  # pragma: no cover
@@ -5840,7 +5852,7 @@ def _cgns_multi_read_func(filename):  # pragma: no cover
     return reader.read()
 
 
-_dataset_cgns_multi = _SingleFileDownloadableLoadable(
+_dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
     'cgns/multi.cgns', read_func=_cgns_multi_read_func
 )
 
@@ -5903,7 +5915,9 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
     return _download_dataset(_dataset_dicom_stack, load=load)
 
 
-_dataset_dicom_stack = _SingleFileDownloadableLoadable('DICOM_Stack/data.zip', target_file='data')
+_dataset_dicom_stack = _SingleFileDownloadableDatasetLoader(
+    'DICOM_Stack/data.zip', target_file='data'
+)
 
 
 def download_parched_canal_4k(load=True):  # pragma: no cover
@@ -5935,7 +5949,7 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
     return _download_dataset(_dataset_parched_canal_4k, load=load)
 
 
-_dataset_parched_canal_4k = _SingleFileDownloadableLoadable(
+_dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
     'parched_canal_4k.hdr', read_func=read_texture
 )
 
@@ -5969,7 +5983,7 @@ def download_cells_nd(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cells_nd, load=load)
 
 
-_dataset_cells_nd = _SingleFileDownloadableLoadable('cellsnd.ascii.inp')
+_dataset_cells_nd = _SingleFileDownloadableDatasetLoader('cellsnd.ascii.inp')
 
 
 def download_moonlanding_image(load=True):  # pragma: no cover
@@ -6017,7 +6031,7 @@ def download_moonlanding_image(load=True):  # pragma: no cover
     return _download_dataset(_dataset_moonlanding_image, load=load)
 
 
-_dataset_moonlanding_image = _SingleFileDownloadableLoadable('moonlanding.png')
+_dataset_moonlanding_image = _SingleFileDownloadableDatasetLoader('moonlanding.png')
 
 
 def download_angular_sector(load=True):  # pragma: no cover
@@ -6049,7 +6063,7 @@ def download_angular_sector(load=True):  # pragma: no cover
     return _download_dataset(_dataset_angular_sector, load=load)
 
 
-_dataset_angular_sector = _SingleFileDownloadableLoadable('AngularSector.vtk')
+_dataset_angular_sector = _SingleFileDownloadableDatasetLoader('AngularSector.vtk')
 
 
 def download_mount_damavand(load=True):  # pragma: no cover
@@ -6092,7 +6106,7 @@ def download_mount_damavand(load=True):  # pragma: no cover
     return _download_dataset(_dataset_mount_damavand, load=load)
 
 
-_dataset_mount_damavand = _SingleFileDownloadableLoadable('AOI.Damavand.32639.vtp')
+_dataset_mount_damavand = _SingleFileDownloadableDatasetLoader('AOI.Damavand.32639.vtp')
 
 
 def download_particles_lethe(load=True):  # pragma: no cover
@@ -6136,7 +6150,9 @@ def download_particles_lethe(load=True):  # pragma: no cover
     return _download_dataset(_dataset_particles_lethe, load=load)
 
 
-_dataset_particles_lethe = _SingleFileDownloadableLoadable('lethe/result_particles.20000.0000.vtu')
+_dataset_particles_lethe = _SingleFileDownloadableDatasetLoader(
+    'lethe/result_particles.20000.0000.vtu'
+)
 
 
 def download_gif_simple(load=True):  # pragma: no cover
@@ -6186,7 +6202,7 @@ def download_gif_simple(load=True):  # pragma: no cover
     return _download_dataset(_dataset_gif_simple, load=load)
 
 
-_dataset_gif_simple = _SingleFileDownloadableLoadable('gifs/sample.gif')
+_dataset_gif_simple = _SingleFileDownloadableDatasetLoader('gifs/sample.gif')
 
 
 def download_cloud_dark_matter(load=True):  # pragma: no cover
@@ -6247,7 +6263,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cloud_dark_matter, load=load)
 
 
-_dataset_cloud_dark_matter = _SingleFileDownloadableLoadable(
+_dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy', read_func=np.load, load_func=pyvista.PointSet
 )
 
@@ -6310,7 +6326,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cloud_dark_matter_dense, load=load)
 
 
-_dataset_cloud_dark_matter_dense = _SingleFileDownloadableLoadable(
+_dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy', read_func=np.load, load_func=pyvista.PointSet
 )
 
@@ -6381,7 +6397,9 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
     return _download_dataset(_dataset_stars_cloud_hyg, load=load)
 
 
-_dataset_stars_cloud_hyg = _SingleFileDownloadableLoadable('point-clouds/hyg-database/stars.vtp')
+_dataset_stars_cloud_hyg = _SingleFileDownloadableDatasetLoader(
+    'point-clouds/hyg-database/stars.vtp'
+)
 
 
 def download_fea_bracket(load=True):  # pragma: no cover
@@ -6433,7 +6451,7 @@ def download_fea_bracket(load=True):  # pragma: no cover
     return _download_dataset(_dataset_fea_bracket, load=load)
 
 
-_dataset_fea_bracket = _SingleFileDownloadableLoadable('fea/kiefer/dataset.vtu')
+_dataset_fea_bracket = _SingleFileDownloadableDatasetLoader('fea/kiefer/dataset.vtu')
 
 
 def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
@@ -6502,7 +6520,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     return _download_dataset(_dataset_fea_hertzian_contact_cylinder, load=load)
 
 
-_dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableLoadable(
+_dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
     'fea/hertzian_contact_cylinder/Hertzian_cylinder_on_plate.zip',
     target_file='bfac9fd1-e982-4825-9a95-9e5d8c5b4d3e_result_1.pvtu',
 )
@@ -6560,7 +6578,7 @@ def download_black_vase(load=True):  # pragma: no cover
     return _download_dataset(_dataset_black_vase, load=load)
 
 
-_dataset_black_vase = _SingleFileDownloadableLoadable(
+_dataset_black_vase = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/blackVase.zip', target_file='blackVase.vtp'
 )
 
@@ -6622,7 +6640,7 @@ def download_ivan_angel(load=True):  # pragma: no cover
     return _download_dataset(_dataset_ivan_angel, load=load)
 
 
-_dataset_ivan_angel = _SingleFileDownloadableLoadable(
+_dataset_ivan_angel = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/Angel.zip', target_file='Angel.vtp'
 )
 
@@ -6679,7 +6697,7 @@ def download_bird_bath(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bird_bath, load=load)
 
 
-_dataset_bird_bath = _SingleFileDownloadableLoadable(
+_dataset_bird_bath = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/birdBath.zip', target_file='birdBath.vtp'
 )
 
@@ -6741,7 +6759,7 @@ def download_owl(load=True):  # pragma: no cover
     return _download_dataset(_dataset_owl, load=load)
 
 
-_dataset_owl = _SingleFileDownloadableLoadable('ivan-nikolov/owl.zip', target_file='owl.vtp')
+_dataset_owl = _SingleFileDownloadableDatasetLoader('ivan-nikolov/owl.zip', target_file='owl.vtp')
 
 
 def download_plastic_vase(load=True):  # pragma: no cover
@@ -6796,7 +6814,7 @@ def download_plastic_vase(load=True):  # pragma: no cover
     return _download_dataset(_dataset_plastic_vase, load=load)
 
 
-_dataset_plastic_vase = _SingleFileDownloadableLoadable(
+_dataset_plastic_vase = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/plasticVase.zip', target_file='plasticVase.vtp'
 )
 
@@ -6853,7 +6871,7 @@ def download_sea_vase(load=True):  # pragma: no cover
     return _download_dataset(_dataset_sea_vase, load=load)
 
 
-_dataset_sea_vase = _SingleFileDownloadableLoadable(
+_dataset_sea_vase = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/seaVase.zip', target_file='seaVase.vtp'
 )
 
@@ -6896,7 +6914,7 @@ def _dikhololo_night_load_func(texture):  # pragma: no cover
     return texture
 
 
-_dataset_dikhololo_night = _SingleFileDownloadableLoadable(
+_dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
     'dikhololo_night_4k.hdr', read_func=read_texture
 )
 
@@ -6950,7 +6968,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
     return _download_dataset(_dataset_cad_model_case, load=load)
 
 
-_dataset_cad_model_case = _SingleFileDownloadableLoadable(
+_dataset_cad_model_case = _SingleFileDownloadableDatasetLoader(
     'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp'
 )
 
@@ -7045,7 +7063,7 @@ def download_aero_bracket(load=True):  # pragma: no cover
     return _download_dataset(_dataset_aero_bracket, load=load)
 
 
-_dataset_aero_bracket = _SingleFileDownloadableLoadable('fea/aero_bracket/aero_bracket.vtu')
+_dataset_aero_bracket = _SingleFileDownloadableDatasetLoader('fea/aero_bracket/aero_bracket.vtu')
 
 
 def download_coil_magnetic_field(load=True):  # pragma: no cover
@@ -7140,7 +7158,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     return _download_dataset(_dataset_coil_magnetic_field, load=load)
 
 
-_dataset_coil_magnetic_field = _SingleFileDownloadableLoadable('magpylib/coil_field.vti')
+_dataset_coil_magnetic_field = _SingleFileDownloadableDatasetLoader('magpylib/coil_field.vti')
 
 
 def download_meshio_xdmf(load=True):  # pragma: no cover
@@ -7175,12 +7193,12 @@ def download_meshio_xdmf(load=True):  # pragma: no cover
 
 
 def _meshio_xdmf_files_func():
-    h5 = _SingleFileDownloadable('meshio/out.h5')
-    xdmf = _SingleFileDownloadableLoadable('meshio/out.xdmf')
+    h5 = _DownloadableFile('meshio/out.h5')
+    xdmf = _SingleFileDownloadableDatasetLoader('meshio/out.xdmf')
     return xdmf, h5
 
 
-_dataset_meshio_xdmf = _MultiFileDownloadableLoadable(files_func=_meshio_xdmf_files_func)
+_dataset_meshio_xdmf = _MultiFileDownloadableDatasetLoader(files_func=_meshio_xdmf_files_func)
 
 
 def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
@@ -7222,7 +7240,7 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
     return _download_dataset(_dataset_victorian_goblet_face_illusion, load=load)
 
 
-_dataset_victorian_goblet_face_illusion = _SingleFileDownloadableLoadable(
+_dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
     'Victorian_Goblet_face_illusion/Vase.stl'
 )
 
@@ -7357,7 +7375,7 @@ def _whole_body_ct_load_func(dataset):
     return dataset
 
 
-_dataset_whole_body_ct_male = _SingleFileDownloadableLoadable(
+_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
     'whole_body_ct/s1397.zip', target_file='s1397', load_func=_whole_body_ct_load_func
 )
 
@@ -7469,6 +7487,6 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
-_dataset_whole_body_ct_female = _SingleFileDownloadableLoadable(
+_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
     'whole_body_ct/s1380.zip', target_file='s1380', load_func=_whole_body_ct_load_func
 )

@@ -39,6 +39,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generic,
     List,
     Optional,
     Protocol,
@@ -48,17 +49,14 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
+    final,
     runtime_checkable,
 )
 
 import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
-
-DatasetType = Union[pv.DataSet, pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetTypeType = Union[
-    Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]
-]
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -67,8 +65,11 @@ DatasetTypeType = Union[
 _FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
 _FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
 
+DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
+DatasetType = Union[Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]]
 
-class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
+
+class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
     @property
     @abstractmethod
     def path(self) -> _FilePropStrType_co:
@@ -116,15 +117,104 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         """Return the base file reader(s) used to read the files."""
 
     @property
-    def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
-        """Return the dataset."""
-        return None
+    def unique_reader_type(
+        self,
+    ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
+        """Return unique reader type(s) from all file readers."""
+        return _get_unique_reader_type(self._reader)
+
+
+class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
+    """Define file properties of a single file."""
+
+
+class _MultiFilePropsProtocol(_BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]]):
+    """Define file properties of multiple files."""
+
+
+@runtime_checkable
+class _Downloadable(Protocol[_FilePropStrType_co]):
+    """Class which downloads file(s) from a source."""
 
     @property
-    def dataset_iterable(self) -> Tuple[Any, ...]:
+    @abstractmethod
+    def source_name(self) -> _FilePropStrType_co:
+        """Return the name of the download relative to the base url."""
+
+    @property
+    @abstractmethod
+    def base_url(self) -> _FilePropStrType_co:
+        """Return the base url of the download."""
+
+    @property
+    def source_url_raw(self) -> _FilePropStrType_co:
+        """Return the raw source of the download.
+
+        This is the full URL used to download the data directly.
+        """
+        name_iter = [name] if isinstance(name := self.source_name, str) else name
+        base_url_iter = [url] if isinstance(url := self.base_url, str) else url
+        url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
+        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
+
+    @property
+    def source_url_blob(self) -> _FilePropStrType_co:
+        """Return the blob source of the download.
+
+        This URL is useful for linking to the source webpage for
+        a human to open on a browser.
+        """
+        # Make single urls iterable and replace 'raw' with 'blob'
+        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
+        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
+        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
+
+    @property
+    @abstractmethod
+    def path(self) -> _FilePropStrType_co:
+        """Return the file path of downloaded file."""
+
+    @abstractmethod
+    def download(self) -> _FilePropStrType_co:
+        """Download and return the file path(s)."""
+
+
+class _DatasetLoader:
+    """Load a dataset."""
+
+    def __init__(self, load_func: Callable[..., DatasetObject]):
+        self._load_func = load_func
+        self._dataset: Optional[DatasetObject] = None
+
+    @property
+    @final
+    def dataset(self) -> Optional[DatasetObject]:
+        """Return the loaded dataset object(s)."""
+        return self._dataset
+
+    def load(self, *args, **kwargs) -> DatasetObject:
+        """Load and return the dataset."""
+        # Subclasses should override this as needed
+        return self._load_func(*args, **kwargs)
+
+    @final
+    def load_and_store_dataset(self) -> DatasetObject:
+        """Load the dataset and store it."""
+        dataset = self.load()
+        self._dataset = dataset
+        return dataset
+
+    @final
+    def clear_dataset(self):
+        """Clear the stored dataset object from memory."""
+        del self._dataset
+
+    @property
+    @final
+    def dataset_iterable(self) -> Tuple[DatasetObject, ...]:
         """Return a tuple of all dataset object(s), including any nested objects.
 
-        If the dataset is a MultiBlock, the block itself is also returned as the first
+        If the dataset is a MultiBlock, the MultiBlock itself is also returned as the first
         item. Any nested MultiBlocks are not included, only their datasets.
 
         E.g. for a composite dataset:
@@ -153,20 +243,15 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         return tuple(flat)
 
     @property
+    @final
     def unique_dataset_type(
         self,
-    ) -> Optional[Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]]:
+    ) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
         """Return unique dataset type(s) from all datasets."""
         return _get_unique_dataset_type(self.dataset_iterable)
 
     @property
-    def unique_reader_type(
-        self,
-    ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
-        """Return unique reader type(s) from all file readers."""
-        return _get_unique_reader_type(self._reader)
-
-    @property
+    @final
     def unique_cell_types(
         self,
     ) -> Tuple[pv.CellType, ...]:
@@ -175,90 +260,32 @@ class _FileProps(Protocol[_FilePropStrType_co, _FilePropIntType_co]):
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
-                data = pv.wrap(data.GetInput())
+                data = cast(pv.ImageData, pv.wrap(data.GetInput()))
             try:
-                for cell_type in pv.CellType:
-                    extracted = data.extract_cells_by_type(cell_type)
-                    if extracted.n_cells > 0:
-                        cell_types[cell_type] = None
+                if isinstance(data, pv.ExplicitStructuredGrid):
+                    # extract_cells_by_type does not support this datatype
+                    # so get cells manually
+                    cells = (c.type for c in data.cell)
+                    [cell_types.update({cell_type: None}) for cell_type in cells]
+                else:
+                    for cell_type in pv.CellType:
+                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        if extracted.n_cells > 0:
+                            cell_types[cell_type] = None
             except AttributeError:
                 continue
         return tuple(sorted(cell_types.keys()))
 
 
-@runtime_checkable
-class _Downloadable(Protocol[_FilePropStrType_co]):
-    """Class which downloads a file  a 'download' method."""
-
-    @property
-    @abstractmethod
-    def source_name(self) -> _FilePropStrType_co:
-        """Return the name of the download file relative to the source repository."""
-
-    @property
-    def source_url_raw(self) -> _FilePropStrType_co:
-        """Return the raw source of the download.
-
-        This is the full URL used to download the data directly.
-        """
-        from pyvista.examples.downloads import SOURCE
-
-        # Make single urls iterable and replace 'raw' with 'blob'
-        name_iter = [name] if isinstance(name := self.source_name, str) else name
-        url_raw = [os.path.join(SOURCE, name) for name in name_iter]
-        return url_raw[0] if isinstance(name, str) else tuple(url_raw)
-
-    @property
-    def source_url_blob(self) -> _FilePropStrType_co:
-        """Return the blob source of the download.
-
-        This URL is useful for linking to the source webpage for
-        a human to open on a browser.
-        """
-        # Make single urls iterable and replace 'raw' with 'blob'
-        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
-        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
-        return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
-
-    @property
-    @abstractmethod
-    def path(self) -> _FilePropStrType_co:
-        """Return the file path of downloaded file."""
-
-    @abstractmethod
-    def download(self) -> _FilePropStrType_co:
-        """Download and return the file path(s)."""
-
-
-@runtime_checkable
-class _Loadable(Protocol[_FilePropStrType_co]):
-    """Class which loads a dataset from file."""
-
-    @property
-    @abstractmethod
-    def dataset(self) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
-        """Return the loaded dataset object(s)."""
-
-    @abstractmethod
-    def load(self) -> DatasetType:
-        """Load the dataset."""
-
-    def unload(self) -> None:
-        """Clear the loaded dataset object from memory."""
-        if isinstance(dataset := self.dataset, Sequence):
-            for data in dataset:
-                del data
-        else:
-            del dataset
-
-
-class _SingleFile(_FileProps[str, int]):
+class _SingleFile(_SingleFilePropsProtocol):
     """Wrap a single file."""
 
     def __init__(self, path):
         from pyvista.examples.downloads import USER_DATA_PATH
 
-        self._path = path if os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
+        self._path = (
+            path if path is None or os.path.isabs(path) else os.path.join(USER_DATA_PATH, path)
+        )
 
     @property
     def path(self) -> str:
@@ -285,7 +312,7 @@ class _SingleFile(_FileProps[str, int]):
         return None
 
 
-class _SingleFileLoadable(_SingleFile, _Loadable[str]):
+class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
     """Wrap a single file for loading.
 
     Specify the read function and/or load functions for reading and processing the
@@ -321,13 +348,8 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
         load_func: Optional[Callable[[DatasetType], Any]] = None,
     ):
         _SingleFile.__init__(self, path)
-        self._read_func = pv.read if read_func is None else read_func
-        self._load_func = load_func
-        self._dataset = None
-
-    @property
-    def dataset(self) -> Optional[DatasetType]:
-        return self._dataset
+        _DatasetLoader.__init__(self, load_func)  # type: ignore[arg-type]
+        self._read_func = pv.read if path and read_func is None else read_func
 
     @property
     def _reader(self) -> Optional[pv.BaseReader]:
@@ -352,7 +374,7 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
                 # Re-define read function to read all files in a directory as a multiblock
                 read_func = lambda path: _load_as_multiblock(
                     [
-                        _SingleFileLoadable(str(Path(path, fname)))
+                        _SingleFileDatasetLoader(str(Path(path, fname)))
                         for fname in sorted(os.listdir(path))
                     ]
                 )
@@ -361,7 +383,19 @@ class _SingleFileLoadable(_SingleFile, _Loadable[str]):
                 raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
 
 
-class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
+# =======
+#             return (
+#                 self._read_func(self.path)
+#                 if self._load_func is None
+#                 else self._load_func(self._read_func(self.path))
+#             )
+#         except Exception:
+#             raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
+#
+# >>>>>>>
+
+
+class _DownloadableFile(_SingleFile, _Downloadable[str]):
     """Wrap a single file which must be downloaded.
 
     If downloading a file from an archive, set the filepath of the zip as
@@ -379,14 +413,29 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
         _SingleFile.__init__(self, path)
 
         from pyvista.examples.downloads import (
+            SOURCE,
             USER_DATA_PATH,
             _download_archive_file_or_folder,
             download_file,
             file_from_files,
         )
+        from pyvista.examples.examples import dir_path
 
-        self._download_source = path
-        self._download_func = download_file
+        if Path(path).is_absolute():
+            # Absolute path must point to a built-in dataset
+            assert Path(path).parent == Path(
+                dir_path
+            ), "Absolute path must point to a built-in dataset."
+            self._base_url = "https://github.com/pyvista/pyvista/raw/main/pyvista/examples/"
+            self._source_name = Path(path).name
+            # the dataset is already downloaded (it's built-in)
+            # so make download() simply return the local filepath
+            self._download_func = lambda source: path
+        else:
+            # Relative path, use vars from downloads.py
+            self._base_url = SOURCE
+            self._download_func = download_file
+            self._source_name = Path(path).name if Path(path).is_absolute() else path
 
         target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
         if target_file is not None:
@@ -412,10 +461,14 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
 
     @property
     def source_name(self) -> str:
-        return self._download_source
+        return self._source_name
+
+    @property
+    def base_url(self) -> str:
+        return self._base_url
 
     def download(self) -> str:
-        path = self._download_func(self._download_source)
+        path = self._download_func(self._source_name)
         assert os.path.isfile(path) or os.path.isdir(path)
         # Reset the path since the full path for archive files
         # isn't known until after downloading
@@ -423,7 +476,7 @@ class _SingleFileDownloadable(_SingleFile, _Downloadable[str]):
         return path
 
 
-class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadable):
+class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _DownloadableFile):
     """Wrap a single file which must first be downloaded and which can also be loaded.
 
     .. warning::
@@ -440,15 +493,11 @@ class _SingleFileDownloadableLoadable(_SingleFileDownloadable, _SingleFileLoadab
         load_func: Optional[Callable[[DatasetType], DatasetType]] = None,
         target_file: Optional[str] = None,
     ):
-        _SingleFileLoadable.__init__(self, path, read_func=read_func, load_func=load_func)
-        _SingleFileDownloadable.__init__(self, path, target_file=target_file)
+        _SingleFileDatasetLoader.__init__(self, path, read_func=read_func, load_func=load_func)
+        _DownloadableFile.__init__(self, path, target_file=target_file)
 
 
-class _MultiFile(_FileProps[Tuple[str, ...], Tuple[int, ...]]):
-    """Wrap multiple files."""
-
-
-class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
+class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     """Wrap multiple files for loading.
 
     Some use cases for loading multi-file examples include:
@@ -483,16 +532,16 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     def __init__(
         self,
         files_func: Union[
-            str, Callable[[], Sequence[Union[_SingleFileLoadable, _SingleFileDownloadable]]]
+            str, Callable[[], Sequence[Union[_SingleFileDatasetLoader, _DownloadableFile]]]
         ],
-        load_func: Optional[Callable[[Sequence[_SingleFileLoadable]], Any]] = None,
+        load_func: Optional[Callable[[Sequence[_SingleFileDatasetLoader]], Any]] = None,
     ):
         self._files_func = files_func
         self._file_loaders_ = None
         if load_func is None:
-            load_func = _load_all
-        self._load_func = load_func
-        self._dataset = None
+            load_func = _load_as_dataset_or_multiblock
+
+        _DatasetLoader.__init__(self, load_func)
 
     @property
     def _file_objects(self):
@@ -504,7 +553,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
                     f"Files func for {self} must be a directory when it is provided as a string."
                 )
                 self._file_loaders_ = [
-                    _SingleFileLoadable(file) for file in os.listdir(self._files_func)
+                    _SingleFileDatasetLoader(file) for file in os.listdir(self._files_func)
                 ]
             else:
                 self._file_loaders_ = self._files_func()
@@ -518,7 +567,7 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
     def path_loadable(self) -> Tuple[str, ...]:
 
         return tuple(
-            [file.path for file in self._file_objects if isinstance(file, _SingleFileLoadable)]
+            [file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)]
         )
 
     @property
@@ -552,22 +601,22 @@ class _MultiFileLoadable(_MultiFile, _Loadable[Tuple[str, ...]]):
             reader_out.extend(r) if isinstance(r, Sequence) else reader_out.append(r)
         return tuple(reader_out)
 
-    @property
-    def dataset(self) -> Optional[DatasetType]:
-        return self._dataset
-
     def load(self):
-        self._dataset = self._load_func(self._file_objects)
-        return self.dataset
+        return self._load_func(self._file_objects)
 
 
-class _MultiFileDownloadableLoadable(_MultiFileLoadable, _Downloadable[Tuple[str, ...]]):
+class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable[Tuple[str, ...]]):
     """Wrap multiple files for downloading and loading."""
 
     @property
     def source_name(self) -> Tuple[str, ...]:
         name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(name))
+
+    @property
+    def base_url(self) -> Tuple[str, ...]:
+        url = [file.base_url for file in self._file_objects if isinstance(file, _Downloadable)]
+        return tuple(_flatten_nested_sequence(url))
 
     def download(self) -> Tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
@@ -592,7 +641,9 @@ def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_Scala
 
 
 def _download_dataset(
-    dataset: Union[_SingleFileDownloadableLoadable, _MultiFileDownloadableLoadable],
+    dataset_loader: Union[
+        _SingleFileDownloadableDatasetLoader, _MultiFileDownloadableDatasetLoader
+    ],
     load: bool = True,
     metafiles: bool = False,
 ):
@@ -600,7 +651,7 @@ def _download_dataset(
 
     Parameters
     ----------
-    dataset
+    dataset_loader
         SingleFile or MultiFile object(s) of the dataset(s) to download or load.
 
     load
@@ -625,19 +676,19 @@ def _download_dataset(
 
     """
     # Download all files for the dataset, include any metafiles
-    path = dataset.download()
+    path = dataset_loader.download()
 
     # Exclude non-loadable metafiles from result (if any)
-    if not metafiles and isinstance(dataset, _MultiFileDownloadableLoadable):
-        path = dataset.path_loadable
+    if not metafiles and isinstance(dataset_loader, _MultiFileDownloadableDatasetLoader):
+        path = dataset_loader.path_loadable
         # Return scalar if only one loadable file
         path = path[0] if len(path) == 1 else path
 
-    return dataset.load() if load else path
+    return dataset_loader.load() if load else path
 
 
 def _load_as_multiblock(
-    files: Sequence[Union[_SingleFileLoadable, _MultiFileLoadable]],
+    files: Sequence[Union[_SingleFileDatasetLoader, _MultiFileDatasetLoader]],
     names: Optional[Sequence[str]] = None,
 ) -> pv.MultiBlock:
     """Load multiple files as a MultiBlock.
@@ -646,7 +697,7 @@ def _load_as_multiblock(
     If the use of the ``names`` parameter is needed, use :class:`functools.partial`
     to partially specify the names parameter before passing it as loading function.
     """
-    block = pv.MultiBlock()
+    multi = pv.MultiBlock()
     try:
         if names is None:
             # set names, use filename without ext by default or dirname
@@ -660,12 +711,16 @@ def _load_as_multiblock(
     except TypeError:
         names = [f'dataset{num}' for num in range(len(files))]
     assert len(names) == len(files)
-    [
-        block.append(file.load(), name)
-        for file, name in zip(files, names)
-        if isinstance(file, _Loadable)
-    ]
-    return block
+
+    for file, name in zip(files, names):
+        if not isinstance(file, _DatasetLoader):
+            continue
+        loaded = file.load()
+        assert isinstance(
+            loaded, (pv.MultiBlock, pv.DataSet)
+        ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
+        multi.append(loaded, name)
+    return multi
 
 
 def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pv.Texture:
@@ -687,15 +742,16 @@ def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> p
     )
 
 
-def _load_all(files: Sequence[_SingleFile]):
-    """Load all loadable files."""
-    loaded = [file.load() for file in files if isinstance(file, _Loadable)]
-    assert len(loaded) > 0
-    return loaded[0] if len(loaded) == 1 else tuple(loaded)
+def _load_as_dataset_or_multiblock(files):
+    multiblock = _load_as_multiblock(files)
+    return multiblock[0] if len(multiblock) == 1 else multiblock
 
 
 def _load_and_merge(files: Sequence[_SingleFile]):
-    return pv.merge(_load_all(files))
+    """Load all loadable files as separate datasets and merge them."""
+    loaded = [file.load() for file in files if isinstance(file, _DatasetLoader)]
+    assert len(loaded) > 0
+    return pv.merge(loaded)
 
 
 def _get_file_or_folder_size(filepath) -> int:
@@ -776,10 +832,10 @@ def _get_unique_reader_type(
 
 
 def _get_unique_dataset_type(
-    dataset_iterable: Tuple[DatasetType, ...],
-) -> Union[DatasetTypeType, Tuple[DatasetTypeType, ...]]:
+    dataset_iterable: Tuple[DatasetObject, ...],
+) -> Union[DatasetType, Tuple[DatasetType, ...]]:
     """Return a dataset type or tuple of unique dataset types."""
-    dataset_types: Dict[DatasetTypeType, None] = {}  # use dict as an ordered set
+    dataset_types: Dict[DatasetType, None] = {}  # use dict as an ordered set
     for dataset in dataset_iterable:
         dataset_types[type(dataset)] = None
     output = tuple(dataset_types.keys())
