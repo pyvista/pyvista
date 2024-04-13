@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic, vtkIOLegacy as il
 
 import pyvista as pv
@@ -56,4 +54,3 @@ def test_partitions_collection(tmpdir):
     import gc
 
     gc.collect()
-    Path.unlink(fname)
