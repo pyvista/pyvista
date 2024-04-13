@@ -159,7 +159,8 @@ def load_rectilinear():
 
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
-    rectfile, read_func=pyvista.RectilinearGrid
+    rectfile,
+    read_func=pyvista.RectilinearGrid,
 )
 
 
@@ -187,7 +188,8 @@ def load_hexbeam():
 
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
-    hexbeamfile, read_func=pyvista.UnstructuredGrid
+    hexbeamfile,
+    read_func=pyvista.UnstructuredGrid,
 )
 
 
@@ -312,7 +314,8 @@ def load_globe_texture():
 
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
-    mapfile, read_func=pyvista.read_texture
+    mapfile,
+    read_func=pyvista.read_texture,
 )
 
 
@@ -474,7 +477,7 @@ def _sphere_vectors_load_func() -> pyvista.PolyData:
             np.sin(sphere.points[:, 0]),
             np.cos(sphere.points[:, 1]),
             np.cos(sphere.points[:, 2]),
-        )
+        ),
     ).T
 
     # add and scale
@@ -644,7 +647,7 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
         raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n'
+            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
         ) from None
 
     if n < 1:

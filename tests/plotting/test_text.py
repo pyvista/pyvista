@@ -133,7 +133,8 @@ def test_property_set_font_file(prop):
 
 
 @pytest.mark.parametrize(
-    'justification', [('left', 'left'), ('center', 'centered'), ('right', 'right')]
+    'justification',
+    [('left', 'left'), ('center', 'centered'), ('right', 'right')],
 )
 def test_property_justification_horizontal(prop, justification):
     prop.justification_horizontal = justification[0]
@@ -145,7 +146,8 @@ def test_property_justification_horizontal(prop, justification):
 
 
 @pytest.mark.parametrize(
-    'justification', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')]
+    'justification',
+    [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')],
 )
 def test_property_justification_vertical(prop, justification):
     prop.justification_vertical = justification[0]

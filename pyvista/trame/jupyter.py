@@ -228,7 +228,12 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+    server,
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
@@ -446,7 +451,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-"""
+""",
         )
 
     async def launch_it():  # numpydoc ignore=GL08

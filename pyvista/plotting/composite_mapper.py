@@ -254,7 +254,7 @@ class BlockAttributes:
                 f'Opacity:   {self.opacity}',
                 f'Color:     {self.color}',
                 f'Pickable   {self.pickable}',
-            ]
+            ],
         )
 
 
@@ -488,7 +488,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         if block is None:
             if index > len(self) - 1:
                 raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.'
+                    f'index {index} is out of bounds. There are only {len(self)} blocks.',
                 ) from None
         return block
 
@@ -548,7 +548,11 @@ class CompositePolyDataMapper(
     """
 
     def __init__(
-        self, dataset=None, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+        self,
+        dataset=None,
+        theme=None,
+        color_missing_with_nan=None,
+        interpolate_before_map=None,
     ):
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
@@ -811,7 +815,10 @@ class CompositePolyDataMapper(
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name, preference, component, rgb
+            scalars_name,
+            preference,
+            component,
+            rgb,
         )
 
         self.scalar_visibility = True

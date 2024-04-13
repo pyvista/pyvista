@@ -110,7 +110,10 @@ class RenderWindowInteractor:
         # enable interaction with visible charts)
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.track_click_position(
-            self._toggle_chart_interaction, side="left", double=True, viewport=True
+            self._toggle_chart_interaction,
+            side="left",
+            double=True,
+            viewport=True,
         )
 
         self.reset_picker()
@@ -389,7 +392,7 @@ class RenderWindowInteractor:
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
             raise ValueError(
-                "Invalid callback provided, it should be either ``None`` or a callable."
+                "Invalid callback provided, it should be either ``None`` or a callable.",
             )
 
         if add_observer:
@@ -465,7 +468,7 @@ class RenderWindowInteractor:
                 # when there are overlapping charts).
                 origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
                 charts = renderer._get_charts_by_pos(
-                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1]),
                 )
                 if charts:
                     # Toggle interaction for indicated charts and determine whether
@@ -502,7 +505,7 @@ class RenderWindowInteractor:
             if scene is not None and len(self._plotter.renderers) > 1:
                 warnings.warn(
                     "Interaction with charts is not possible when using multiple subplots."
-                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                    "Upgrade to VTK 9.3 or newer to enable this feature.",
                 )
                 scene = None
         self._context_style.SetScene(scene)
@@ -712,19 +715,28 @@ class RenderWindowInteractor:
             return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
 
         _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
-            "left", left, control_left, shift_left
+            "left",
+            left,
+            control_left,
+            shift_left,
         )
         self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)
         self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
 
         _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
-            "middle", middle, control_middle, shift_middle
+            "middle",
+            middle,
+            control_middle,
+            shift_middle,
         )
         self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
         self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
 
         _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
-            "right", right, control_right, shift_right
+            "right",
+            right,
+            control_right,
+            shift_right,
         )
         self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)
         self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
@@ -1135,7 +1147,9 @@ class RenderWindowInteractor:
         self.interactor.SetShiftKey(0)
 
     def _mouse_left_button_press(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button press.
 
@@ -1148,7 +1162,9 @@ class RenderWindowInteractor:
         self.interactor.LeftButtonPressEvent()
 
     def _mouse_left_button_release(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
@@ -1161,7 +1177,9 @@ class RenderWindowInteractor:
             self._mouse_left_button_release()
 
     def _mouse_middle_button_press(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a middle mouse button press.
 
@@ -1174,7 +1192,9 @@ class RenderWindowInteractor:
         self.interactor.MiddleButtonPressEvent()
 
     def _mouse_middle_button_release(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a middle mouse button release."""
         if x is not None and y is not None:
@@ -1187,7 +1207,9 @@ class RenderWindowInteractor:
             self._mouse_middle_button_release()
 
     def _mouse_right_button_press(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button press.
 
@@ -1200,7 +1222,9 @@ class RenderWindowInteractor:
         self.interactor.RightButtonPressEvent()
 
     def _mouse_right_button_release(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
@@ -1359,7 +1383,7 @@ class RenderWindowInteractor:
         """Process events."""
         if not self.initialized:
             raise RuntimeError(
-                'Render window interactor must be initialized before processing events.'
+                'Render window interactor must be initialized before processing events.',
             )
         self.interactor.ProcessEvents()
 
@@ -1448,7 +1472,8 @@ class RenderWindowInteractor:
             The observer function to call when a pick event ends.
         """
         warnings.warn(
-            "`add_pick_obeserver` is deprecated, use `add_pick_observer`", PyVistaDeprecationWarning
+            "`add_pick_obeserver` is deprecated, use `add_pick_observer`",
+            PyVistaDeprecationWarning,
         )
         self.add_pick_observer(observer)
 
@@ -1532,10 +1557,13 @@ def _style_factory(klass):
 
                 self._observers = []
                 self._observers.append(
-                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press)),
                 )
                 self._observers.append(
-                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                    self.AddObserver(
+                        "LeftButtonReleaseEvent",
+                        partial(try_callback, self._release),
+                    ),
                 )
 
             def _press(self, *args):

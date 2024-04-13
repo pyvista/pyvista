@@ -64,7 +64,12 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
 
 def plotter_ui(
-    plotter, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    add_menu=True,
+    **kwargs,
 ):
     """Create a UI view for the given Plotter.
 
