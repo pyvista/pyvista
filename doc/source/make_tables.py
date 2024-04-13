@@ -157,14 +157,14 @@ class LineStyleTable(DocTable):
         |   * - Style
         |     - Description
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
         |   * - ``"{}"``
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -221,14 +221,14 @@ class MarkerStyleTable(DocTable):
         |   * - Style
         |     - Description
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
         |   * - ``"{}"``
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -288,7 +288,7 @@ class ColorSchemeTable(DocTable):
         |     - Description
         |     - # colors
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
@@ -296,7 +296,7 @@ class ColorSchemeTable(DocTable):
         |     - {}
         |     - {}
         |     - .. image:: /{}
-        """
+        """,
     )
 
     @classmethod
@@ -317,7 +317,10 @@ class ColorSchemeTable(DocTable):
             img_path = f"{CHARTS_IMAGE_DIR}/cs_{i}.png"
             n_colors = cls.generate_img(row_data["scheme"], img_path)
             return cls.row_template.format(
-                row_data["scheme"], row_data["descr"], n_colors, img_path
+                row_data["scheme"],
+                row_data["descr"],
+                n_colors,
+                img_path,
             )
 
     @staticmethod
@@ -363,7 +366,7 @@ class ColorTable(DocTable):
         |   * - Name
         |     - Hex value
         |     - Example
-        """
+        """,
     )
     row_template = _aligned_dedent(
         """
@@ -372,7 +375,7 @@ class ColorTable(DocTable):
         |     - .. raw:: html
         |
         |          <span style='width:100%; height:100%; display:block; background-color: {};'>&nbsp;</span>
-        """
+        """,
     )
 
     @classmethod
@@ -473,7 +476,10 @@ def _pad_lines(
 
 
 def _indent_multi_line_string(
-    string: str, indent_size=3, indent_level: int = 1, omit_first_line=True
+    string: str,
+    indent_size=3,
+    indent_level: int = 1,
+    omit_first_line=True,
 ) -> str:
     """Indent each line of a multi-line string by a specified indentation level.
 
@@ -587,7 +593,7 @@ class DatasetCard:
         |   {}
         |
         |
-        """
+        """,
     )
 
     HEADER_FOOTER_INDENT_LEVEL = 1
@@ -611,7 +617,7 @@ class DatasetCard:
         |
         |      {}
         |
-        """
+        """,
     )[1:-1]
 
     # Template title with a reference anchor
@@ -620,7 +626,7 @@ class DatasetCard:
         |.. _{}:
         |
         |{}
-        """
+        """,
     )[1:-1]
 
     # Template for dataset func and doc
@@ -629,7 +635,7 @@ class DatasetCard:
         |{}
         |
         |{}
-        """
+        """,
     )[1:-1]
 
     # Template for dataset image
@@ -640,7 +646,7 @@ class DatasetCard:
         |   :class-body: sd-px-0 sd-py-0 sd-rounded-3
         |
         |   .. image:: /{}
-        """
+        """,
     )[1:-1]
 
     footer_template = _aligned_dedent(
@@ -650,7 +656,7 @@ class DatasetCard:
         |   :icon: mark-github
         |
         |   {}
-        """
+        """,
     )[1:-1]
 
     # Format fields in a grid where the first item is a left-justified
@@ -692,7 +698,7 @@ class DatasetCard:
         |
         |      {}
         |
-        """
+        """,
     )[1:-1]
 
     # If the field has more than one value, all additional values are
@@ -707,7 +713,7 @@ class DatasetCard:
         |   :padding: 0
         |   :gutter: 1
         |
-        """
+        """,
     )[1:-1]
     field_grid_extra_values_item_template = _aligned_dedent(
         """
@@ -717,7 +723,7 @@ class DatasetCard:
         |
         |      {}
         |
-        """
+        """,
     )[1:-1]
 
     _NOT_AVAILABLE_IMG_PATH = os.path.join(DATASET_GALLERY_DIR, 'not_available.png')
@@ -739,7 +745,7 @@ class DatasetCard:
     def generate(self):
         # Get rst dataset name-related info
         index_name, header_name, func_ref, func_doc, func_name = self._generate_dataset_name(
-            self.dataset_name
+            self.dataset_name,
         )
         # Get thumbnail image path
         module_name = self.loader.module.__name__.replace('.', '-')
@@ -773,15 +779,28 @@ class DatasetCard:
 
         # Assemble rst parts into main blocks used by the card
         header_block, header_ref_block = self._create_header_block(
-            index_name, header_name, carousel_badges
+            index_name,
+            header_name,
+            carousel_badges,
         )
         info_block = self._create_info_block(func_ref, func_doc)
         img_block = self._create_image_block(img_path)
         dataset_props_block = self._create_dataset_props_block(
-            dataset_type, celltype_badges, n_cells, n_points, length, dimensions, spacing, n_arrays
+            dataset_type,
+            celltype_badges,
+            n_cells,
+            n_points,
+            length,
+            dimensions,
+            spacing,
+            n_arrays,
         )
         file_info_block = self._create_file_props_block(
-            self.loader, file_size, num_files, file_ext, reader_type
+            self.loader,
+            file_size,
+            num_files,
+            file_ext,
+            reader_type,
         )
         footer_block = self._create_footer_block(datasource_links)
 
@@ -1019,7 +1038,15 @@ class DatasetCard:
 
     @classmethod
     def _create_dataset_props_block(
-        cls, dataset_type, celltype_badges, n_cells, n_points, length, dimensions, spacing, n_arrays
+        cls,
+        dataset_type,
+        celltype_badges,
+        n_cells,
+        n_points,
+        length,
+        dimensions,
+        spacing,
+        n_arrays,
     ):
         dataset_fields = [
             ('Data Type', dataset_type),
@@ -1032,7 +1059,8 @@ class DatasetCard:
             ('N Arrays', n_arrays),
         ]
         dataset_fields_block = cls._generate_field_block(
-            dataset_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+            dataset_fields,
+            indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
         return dataset_fields_block
 
@@ -1046,12 +1074,14 @@ class DatasetCard:
                 ('Reader', reader_type),
             ]
             file_info_fields_block = DatasetCard._generate_field_block(
-                file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+                file_info_fields,
+                indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
             )
             return file_info_fields_block
         file_info_fields = "``Not Applicable.``\n\n``Dataset is not loaded from file.``"
         return _indent_multi_line_string(
-            file_info_fields, indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL
+            file_info_fields,
+            indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
 
     @classmethod
@@ -1164,19 +1194,22 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_n_cells(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'), fmt='spaced'
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_cells'),
+            fmt='spaced',
         )
 
     @staticmethod
     def generate_n_points(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'), fmt='spaced'
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_points'),
+            fmt='spaced',
         )
 
     @staticmethod
     def generate_length(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'), fmt='exp'
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'length'),
+            fmt='exp',
         )
 
     @staticmethod
@@ -1194,14 +1227,14 @@ class DatasetPropsGenerator:
             if any(len(space) > 8 for space in spacing_maybe):
                 # Too long, use scientific notation
                 return ', '.join(
-                    [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing]
+                    [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing],
                 )
             return ', '.join(spacing_maybe)
 
     @staticmethod
     def generate_n_arrays(loader):
         return DatasetPropsGenerator._generate_number(
-            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_arrays')
+            DatasetPropsGenerator._try_getattr(loader.dataset, 'n_arrays'),
         )
 
     @staticmethod
@@ -1296,7 +1329,8 @@ class DatasetCardFetcher:
 
         def _generate_button(string, ref):
             return _indent_multi_line_string(
-                f".. button-ref:: {ref}\n\n   {string}\n", indent_level=1
+                f".. button-ref:: {ref}\n\n   {string}\n",
+                indent_level=1,
             )
 
         def _generate_grid_item(string):
@@ -1306,7 +1340,7 @@ class DatasetCardFetcher:
                     |   :columns: auto
                     |
                     |   {}
-                    """
+                    """,
             )[1:].format(_indent_multi_line_string(string, indent_level=1))
 
         def _generate_grid(string):
@@ -1318,7 +1352,7 @@ class DatasetCardFetcher:
                 |   :gutter: 1
                 |
                 |   {}
-                """
+                """,
             )[1:].format(_indent_multi_line_string(string, indent_level=1))
 
         # Get mapping of alphabet letters to first dataset name which begins with each letter
@@ -1545,7 +1579,7 @@ class DatasetGalleryCarousel(DocTable):
         |
         |.. card-carousel:: 1
         |
-        """
+        """,
     )[1:-1]
 
     # Subclasses should give the carousel a name
@@ -1610,7 +1644,8 @@ class DatasetGalleryCarousel(DocTable):
         should override this method to customize the card.
         """
         assert isinstance(
-            dataset_name, str
+            dataset_name,
+            str,
         ), f"Dataset name {dataset_name} for {cls} must be a string."
         return DatasetCardFetcher.DATASET_CARDS_RST[dataset_name]
 
@@ -1800,7 +1835,7 @@ class ImageData3DCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         image_3d_filter = lambda img: isinstance(img, pv.ImageData) and not np.any(
-            np.array(img.dimensions) == 1
+            np.array(img.dimensions) == 1,
         )
         return DatasetCardFetcher.fetch_and_filter(image_3d_filter)
 
@@ -1815,7 +1850,7 @@ class ImageData2DCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         image_2d_filter = lambda img: isinstance(img, pv.ImageData) and np.any(
-            np.array(img.dimensions) == 1
+            np.array(img.dimensions) == 1,
         )
         return DatasetCardFetcher.fetch_and_filter(image_2d_filter)
 
@@ -1903,7 +1938,8 @@ class MiscCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         misc_dataset_filter = lambda obj: not isinstance(
-            obj, (pv.MultiBlock, pv.Texture, pv.DataSet)
+            obj,
+            (pv.MultiBlock, pv.Texture, pv.DataSet),
         )
         return DatasetCardFetcher.fetch_and_filter(misc_dataset_filter)
 
@@ -1918,7 +1954,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return sorted(
-            (
+            [
                 'brain',
                 'brain_atlas_with_sides',
                 'chest',
@@ -1935,7 +1971,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
                 'prostate',
                 'whole_body_ct_female',
                 'whole_body_ct_male',
-            )
+            ],
         )
 
 

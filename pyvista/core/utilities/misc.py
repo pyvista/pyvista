@@ -199,7 +199,7 @@ def try_callback(func, *args):
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
-            traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
+            traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
         warnings.warn(formatted_exception)
 
@@ -257,7 +257,7 @@ def _check_range(value, rng, parm_name):
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
         raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
         )
 
 
@@ -277,7 +277,7 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
         else:
             raise AttributeError(
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
+                f'{self.__class__.__name__}',
             )
 
     cls.__setattr__ = __setattr__

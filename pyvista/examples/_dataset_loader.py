@@ -380,7 +380,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                     [
                         _SingleFileDatasetLoader(str(Path(path, fname)))
                         for fname in sorted(os.listdir(path))
-                    ]
+                    ],
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))
             else:
@@ -416,7 +416,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         if Path(path).is_absolute():
             # Absolute path must point to a built-in dataset
             assert Path(path).parent == Path(
-                dir_path
+                dir_path,
             ), "Absolute path must point to a built-in dataset."
             self._base_url = "https://github.com/pyvista/pyvista/raw/main/pyvista/examples/"
             self._source_name = Path(path).name
@@ -433,7 +433,8 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
         if target_file is not None:
             # download from archive
             self._download_func = functools.partial(
-                _download_archive_file_or_folder, target_file=target_file
+                _download_archive_file_or_folder,
+                target_file=target_file,
             )
             # The file path currently points to the archive, not the target file itself
             # Try to resolve the full path to the target file (without downloading) if
@@ -524,7 +525,8 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     def __init__(
         self,
         files_func: Union[
-            str, Callable[[], Sequence[Union[_SingleFileDatasetLoader, _DownloadableFile]]]
+            str,
+            Callable[[], Sequence[Union[_SingleFileDatasetLoader, _DownloadableFile]]],
         ],
         load_func: Optional[Callable[[Sequence[_SingleFileDatasetLoader]], Any]] = None,
     ):
@@ -549,13 +551,17 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     def path_loadable(self) -> Tuple[str, ...]:
 
         return tuple(
-            [file.path for file in self._file_objects if isinstance(file, _SingleFileDatasetLoader)]
+            [
+                file.path
+                for file in self._file_objects
+                if isinstance(file, _SingleFileDatasetLoader)
+            ],
         )
 
     @property
     def _filesize_bytes(self) -> Tuple[int, ...]:
         return tuple(
-            _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects])
+            _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects]),
         )
 
     @property
@@ -624,7 +630,8 @@ def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_Scala
 
 def _download_dataset(
     dataset_loader: Union[
-        _SingleFileDownloadableDatasetLoader, _MultiFileDownloadableDatasetLoader
+        _SingleFileDownloadableDatasetLoader,
+        _MultiFileDownloadableDatasetLoader,
     ],
     load: bool = True,
     metafiles: bool = False,
@@ -683,7 +690,7 @@ def _load_as_multiblock(
     if names is None:
         # set names, use filename without ext by default or dirname
         paths = _flatten_nested_sequence(
-            [file.path_loadable for file in files if isinstance(file, _DatasetLoader)]
+            [file.path_loadable for file in files if isinstance(file, _DatasetLoader)],
         )
         paths = [Path(path) for path in paths]
         names = [
@@ -695,7 +702,8 @@ def _load_as_multiblock(
             continue
         loaded = file.load()
         assert isinstance(
-            loaded, (pv.MultiBlock, pv.DataSet)
+            loaded,
+            (pv.MultiBlock, pv.DataSet),
         ), f"Only MultiBlock or DataSet objects can be loaded as a MultiBlock. Got {type(loaded)}.'"
         multi.append(loaded, name)
     return multi
@@ -789,7 +797,7 @@ def _get_unique_extension(path: Union[str, Sequence[str]]):
 
 
 def _get_unique_reader_type(
-    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]
+    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]],
 ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
     """Return a reader type or tuple of unique reader types."""
     if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):

@@ -611,7 +611,7 @@ def test_reflection():
             [-1, 1, 0],
             [-1, -1, 0],
             [1, -1, 0],
-        ]
+        ],
     )
     normal = [1, 1, 0]
 
@@ -690,7 +690,8 @@ def test_convert_array():
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pv.core.utilities.arrays.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
+        array_type=np.dtype('O'),
     )
     assert arr3.GetNumberOfValues() == 4
 
@@ -740,7 +741,7 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
+            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi)),
         ).T
 
     points = np.random.default_rng().random((1000, 3))

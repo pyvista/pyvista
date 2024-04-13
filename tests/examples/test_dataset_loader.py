@@ -91,7 +91,9 @@ def _generate_dataset_loader_test_cases_from_module(
         dataset_function = content.setdefault('dataset_function', None)
         dataset_loader = content.setdefault('dataset_loader', None)
         test_case = DatasetLoaderTestCase(
-            dataset_name=name, dataset_function=dataset_function, dataset_loader=dataset_loader
+            dataset_name=name,
+            dataset_function=dataset_function,
+            dataset_loader=dataset_loader,
         )
         test_cases_list.append(test_case)
 
@@ -230,7 +232,7 @@ def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
 
     # Test all datasets loaded as multiblock
     filenames = sorted(
-        [Path(fname).stem for fname in os.listdir(examples_local_repository_tmp_dir)]
+        [Path(fname).stem for fname in os.listdir(examples_local_repository_tmp_dir)],
     )
     loader = _SingleFileDatasetLoader(examples_local_repository_tmp_dir)
     dataset = loader.load()
@@ -527,7 +529,9 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
 
 
 def test_dataset_loader_from_nested_files_and_directory(
-    dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
+    dataset_loader_one_file,
+    dataset_loader_two_files_one_loadable,
+    dataset_loader_dicom,
 ):
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
