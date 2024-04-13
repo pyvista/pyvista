@@ -215,7 +215,7 @@ jobs:
           version: 3.0
 
       - name: Plotting Testing (uses GL)
-        continue-on-error: ${{ matrix.numpy-version != 'latest' }}
+        continue-on-error: ${{ matrix.numpy-version == 'latest' }}
         run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
 
       - name: Software Report
