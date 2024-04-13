@@ -1,0 +1,2 @@
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: numpy in /home/vscode/.local/lib/python3.11/site-packages (2.0.0b1)
