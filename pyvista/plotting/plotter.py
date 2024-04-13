@@ -21,7 +21,7 @@ import uuid
 import warnings
 import weakref
 
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import scooby
 
@@ -556,7 +556,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
 
-    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):
+    def export_vtksz(self, filename='scene-export.vtksz', format='zip'):  # noqa: A002
         """Export this plotter as a VTK.js OfflineLocalView file.
 
         The exported file can be viewed with the OfflineLocalView viewer
@@ -839,7 +839,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             First scalar bar actor.
 
         """
-        return list(self.scalar_bars.values())[0]
+        return next(iter(self.scalar_bars.values()))
 
     @property
     def scalar_bars(self):  # numpydoc ignore=RT01
@@ -2061,7 +2061,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if hasattr(prop, "SetLineWidth"):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
         self.render()
-        return
 
     def zoom_camera(self, value):
         """Zoom of the camera and render.
@@ -2076,7 +2075,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         self.camera.zoom(value)
         self.render()
-        return
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
@@ -4256,7 +4254,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 min_, max_ = np.nanmin(scalars), np.nanmax(scalars)
                 clim = [min_, max_]
-        elif isinstance(clim, float) or isinstance(clim, int):
+        elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
         if log_scale:
@@ -4271,7 +4269,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             clim = np.asarray(clim, dtype=scalars.dtype)
             scalars.clip(clim[0], clim[1], out=scalars)
             if log_scale:
-                out = matplotlib.colors.LogNorm(clim[0], clim[1])(scalars)
+                out = mpl.colors.LogNorm(clim[0], clim[1])(scalars)
                 scalars = out.data * 255
             else:
                 if min_ is None:

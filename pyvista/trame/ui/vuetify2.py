@@ -6,7 +6,7 @@ is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
 from trame.ui.vuetify2 import VAppLayout
-from trame.widgets import html, vuetify as vuetify
+from trame.widgets import html, vuetify
 from trame_client.ui.core import AbstractLayout
 
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView

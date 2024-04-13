@@ -546,10 +546,7 @@ def check_shape(
     def _shape_is_allowed(a, b):
         # a: array's actual shape
         # b: allowed shape (may have -1)
-        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
-            return True
-        else:
-            return False
+        return bool(len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)))
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
@@ -949,7 +946,7 @@ def check_contains(*, item, container, name='Input'):
     """
     if item not in container:
         qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
-        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 

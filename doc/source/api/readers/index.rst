@@ -68,6 +68,7 @@ Reader Classes
     XMLStructuredGridReader
     XMLUnstructuredGridReader
     XdmfReader
+    XMLPartitionedDataSetReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~

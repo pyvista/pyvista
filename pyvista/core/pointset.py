@@ -7,7 +7,7 @@ import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 import warnings
 
 import numpy as np
@@ -53,7 +53,9 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS = {".xyz": _vtk.vtkSimplePointsWriter}
+    _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
+        ".xyz": _vtk.vtkSimplePointsWriter
+    }
 
     def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
@@ -97,7 +99,6 @@ class _PointSet(DataSet):
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
-        return
 
     def remove_cells(
         self, ind: Union[VectorLike[bool], VectorLike[int]], inplace=False
@@ -679,7 +680,17 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     _USE_STRICT_N_FACES = False
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
-    _WRITERS = {
+    _WRITERS: ClassVar[
+        Dict[
+            str,
+            Union[
+                Type[_vtk.vtkPLYWriter],
+                Type[_vtk.vtkXMLPolyDataWriter],
+                Type[_vtk.vtkSTLWriter],
+                Type[_vtk.vtkPolyDataWriter],
+            ],
+        ]
+    ] = {
         '.ply': _vtk.vtkPLYWriter,
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
@@ -792,7 +803,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
             self.verts = self._make_vertex_cells(self.n_points)
-        return
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -1724,7 +1734,15 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     """
 
-    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
+    _WRITERS: ClassVar[
+        Dict[
+            str,
+            Union[Type[_vtk.vtkXMLUnstructuredGridWriter], Type[_vtk.vtkUnstructuredGridWriter]],
+        ]
+    ] = {
+        '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+        '.vtk': _vtk.vtkUnstructuredGridWriter,
+    }
 
     def __init__(self, *args, deep=False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -2331,7 +2349,9 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
+    _WRITERS: ClassVar[
+        Dict[str, Union[Type[_vtk.vtkStructuredGridWriter], Type[_vtk.vtkXMLStructuredGridWriter]]]
+    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2605,7 +2625,6 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
-        return
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -2669,7 +2688,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     """
 
-    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
+    _WRITERS: ClassVar[
+        Dict[
+            str,
+            Union[Type[_vtk.vtkXMLUnstructuredGridWriter], Type[_vtk.vtkUnstructuredGridWriter]],
+        ]
+    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""

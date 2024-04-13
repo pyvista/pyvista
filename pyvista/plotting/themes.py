@@ -39,7 +39,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 import warnings
 
-import pyvista
+import pyvista  # noqa: TCH001
 from pyvista.core._typing_core import Number, VectorLike
 from pyvista.core.utilities.misc import _check_range
 
@@ -61,7 +61,6 @@ def _set_plot_theme_from_env() -> None:
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}'
             )
-    return
 
 
 def load_theme(filename):
@@ -3033,7 +3032,6 @@ class Theme(_ThemeConfig):
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
-        return
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
@@ -3061,8 +3059,6 @@ class Theme(_ThemeConfig):
         del data["before_close_callback"]
         with Path(filename).open('w') as f:
             json.dump(data, f)
-
-        return
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01

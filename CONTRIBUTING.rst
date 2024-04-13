@@ -735,27 +735,153 @@ extension, follow coding guidelines as established by `Sphinx-Gallery
 For more details see :ref:`add_example_example`.
 
 
-Add a New Example File
-^^^^^^^^^^^^^^^^^^^^^^
-If you have a dataset that you need for your gallery example, add it to
-`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
-directions there. You will then need to add a new function to download the
-dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+Adding a New Dataset
+^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you want to feature or want to include as part
+of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_
+and follow the directions there. You will then need to add a new function to
+download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
 .. code:: python
 
-   def download_my_dataset(load=True):
-       """Download my new dataset."""
-       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+   def download_my_new_mesh(load=True):
+       """Download my new mesh."""
+       return _download_dataset(_dataset_my_new_mesh, load=load)
 
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
 
-Which enables:
+Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
+first be defined outside of the function (with module scope), and the new
+``download_my_new_mesh`` function should then use this object to facilitate
+downloading and loading the dataset. The dataset loader variable should start
+with ``_dataset_``.
+
+This will enable:
 
 .. code::
 
    >>> from pyvista import examples
-   >>> dataset = examples.download_my_dataset()
+   >>> dataset = examples.download_my_new_mesh()
 
+For loading complex datasets with multiple files or special processing
+requirements, see the private ``pyvista/examples/_dataset_loader.py``
+module for more details on how to create a suitable dataset loader.
+
+Using a dataset loader in this way will enable metadata to be collected
+for the new dataset. A new dataset card titled ``My New Mesh Dataset``
+will automatically be generated and included in the :ref:`dataset_gallery`.
+
+In the docstring of the new ``download_my_new_mesh`` function, be sure
+to also include:
+
+#. A sample plot of the dataset in the examples section
+
+#. A reference link to the dataset's new (auto-generated) gallery card
+   in the see also section
+
+For example:
+
+.. code:: python
+
+   def download_my_new_mesh(load=True):
+      """Download my new mesh.
+
+      Examples
+      --------
+      >>> from pyvista import examples
+      >>> dataset = examples.download_my_new_mesh()
+      >>> dataset.plot()
+
+      .. seealso::
+
+         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+             See this dataset in the Dataset Gallery for more info.
+
+      """
+
+.. note::
+
+   The rst ``seealso`` directive must be used instead of the
+   ``See Also`` heading due to limitations with how `numpydoc` parses
+   explicit references.
+
+Extending the Dataset Gallery
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you have multiple related datasets to contribute, or would like to
+group any existing datasets together that share similar properties,
+the :ref:`dataset_gallery` can easily be extended to feature these
+datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
+
+For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
+featuring two datasets of musical instruments, e.g.
+
+#.  :func:`pyvista.examples.download_guitar`
+#.  :func:`pyvista.examples.download_trumpet`
+
+complete the following steps:
+
+#. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
+
+    .. code:: python
+
+        class InstrumentCarousel(DatasetGalleryCarousel):
+            """Class to generate a carousel of instrument dataset cards."""
+
+            name = 'instrument_carousel'
+            doc = 'Instrument datasets.'
+            badge = CategoryBadge('Instrument', ref='instrument_gallery')
+
+            @classmethod
+            def fetch_dataset_names(cls):
+                return sorted(
+                    (
+                        'guitar',
+                        'trumpet',
+                    )
+                )
+
+   where
+
+   -  ``name`` is used internally to define the name of the generated
+      ``.rst`` file for the carousel.
+
+   -  ``doc`` is a short text description of the carousel which will
+      appear in the documentation in the header above the carousel.
+
+   -  ``badge`` is used to give all datasets in the carousel a reference
+      tag. The ``ref`` argument for the badge should be a new reference
+      target (details below).
+
+   -  ``fetch_dataset_names`` should return a list of any/all dataset names
+      to be included in the carousel. The dataset names should not include
+      any ``load_``, ``download_``, or ``dataset_`` prefix.
+
+#. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
+   in ``doc/source/make_tables.py``. This will enable the rst to be
+   auto-generated for the carousel.
+
+#. Update the ``doc/source/api/examples/dataset_gallery.rst`` file to
+   include the new generated ``<name>_carousel.rst`` file. E.g. to add the
+   carousel as a new drop-down item, add the following:
+
+   .. code:: rst
+
+      .. dropdown:: Instrument Datasets
+         :name: instrument_gallery
+
+         .. include:: /api/examples/dataset-gallery/instrument_carousel.rst
+
+   where:
+
+   -  The dropdown name ``:name: <reference>`` should be the badge's ``ref``
+      variable defined earlier. This will make it so that clicking on the new
+      badge will link to the new dropdown menu.
+
+   -  The name of the included ``.rst`` file should match the ``name``
+      variable defined in the new ``Carousel`` class.
+
+After building the documentation, the carousel should now be part
+of the gallery.
 
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

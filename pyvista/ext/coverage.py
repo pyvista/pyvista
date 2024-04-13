@@ -160,10 +160,7 @@ class CoverageBuilder(Builder):
                 op.write('\n')
 
     def ignore_pyobj(self, full_name: str) -> bool:
-        for exp in self.py_ignorexps:
-            if exp.search(full_name):
-                return True
-        return False
+        return any(exp.search(full_name) for exp in self.py_ignorexps)
 
     def build_py_coverage(self) -> None:
         objects = self.env.domaindata['py']['objects']
@@ -333,10 +330,7 @@ class CoverageBuilder(Builder):
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
                                             logger.warning(
-                                                __(
-                                                    'undocumented python method:'
-                                                    + ' %s :: %s :: %s'
-                                                ),
+                                                __('undocumented python method: %s :: %s :: %s'),
                                                 name,
                                                 class_name,
                                                 meth,
