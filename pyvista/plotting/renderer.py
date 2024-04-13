@@ -124,7 +124,7 @@ def make_legend_face(face):
             '\t"circle"\n'
             '\t"rectangle"\n'
             '\tNone'
-            '\tpyvista.PolyData'
+            '\tpyvista.PolyData',
         )
     return legendface
 
@@ -259,7 +259,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     }
 
     def __init__(
-        self, parent, border=True, border_color='w', border_width=2.0
+        self,
+        parent,
+        border=True,
+        border_color='w',
+        border_width=2.0,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
@@ -382,7 +386,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise InvalidCameraError(
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
-                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
+                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}',
                 )
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
@@ -565,7 +569,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
                         "VTK compiled with OSMesa/EGL does not properly support "
-                        "FXAA anti-aliasing and SSAA will be used instead."
+                        "FXAA anti-aliasing and SSAA will be used instead.",
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -680,7 +684,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
+                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.",
             )
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
@@ -945,7 +949,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._marker_actor
 
     def add_orientation_widget(
-        self, actor, interactive=None, color=None, opacity=1.0, viewport=None
+        self,
+        actor,
+        interactive=None,
+        color=None,
+        opacity=1.0,
+        viewport=None,
     ):
         """Use the given actor in an orientation marker widget.
 
@@ -1158,7 +1167,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **kwargs,
             )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None
+            self.axes_actor,
+            interactive=interactive,
+            color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1288,7 +1299,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             show_text_edges=show_text_edges,
         )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None
+            self.axes_actor,
+            interactive=interactive,
+            color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1673,7 +1686,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(
                     f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".',
                 )
         elif location is not None:
             raise TypeError('location must be a string')
@@ -1686,7 +1699,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                             np.abs(bounds[1] - bounds[0]),
                             np.abs(bounds[3] - bounds[2]),
                             np.abs(bounds[5] - bounds[4]),
-                        ]
+                        ],
                     )
                     * padding
                 )
@@ -1709,7 +1722,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.',
                 )
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -1909,7 +1922,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
+            mapper,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=False,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
@@ -2080,7 +2097,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = DataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
+            mapper,
+            reset_camera=reset_camera,
+            name=f'Floor({face})',
+            pickable=pickable,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
@@ -3212,7 +3232,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
             )
         if not (
             (top is right is side is corner is None)
@@ -3232,13 +3252,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif side is not None:  # pragma: no cover
             self.SetGradientBackground(True)
             self.SetGradientMode(
-                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE,
             )
             self.SetBackground2(Color(side).float_rgb)
         elif corner is not None:  # pragma: no cover
             self.SetGradientBackground(True)
             self.SetGradientMode(
-                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER,
             )
             self.SetBackground2(Color(corner).float_rgb)
         else:
@@ -3587,7 +3607,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     'No labels input.\n\n'
                     'Add labels to individual items when adding them to'
                     'the plotting object with the "label=" parameter.  '
-                    'or enter them as the "labels" parameter.'
+                    'or enter them as the "labels" parameter.',
                 )
 
             self._legend.SetNumberOfEntries(len(self._labels))
@@ -3617,7 +3637,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                     if args:
                         warnings.warn(
-                            f"Some of the arguments given to legend are not used.\n{args}"
+                            f"Some of the arguments given to legend are not used.\n{args}",
                         )
                 elif isinstance(args, str):
                     # Only passing label
@@ -3632,7 +3652,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                 else:
                     raise ValueError(
-                        f"The object passed to the legend ({type(args)}) is not valid."
+                        f"The object passed to the legend ({type(args)}) is not valid.",
                     )
 
                 legend_face = make_legend_face(face_ or face)
@@ -4006,7 +4026,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # This property turns black if set
                 prop.SetColor(*color.int_rgb)
             prop.SetFontSize(
-                int(font_size_factor * 20)
+                int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:

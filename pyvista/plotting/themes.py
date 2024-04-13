@@ -59,7 +59,7 @@ def _set_plot_theme_from_env() -> None:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}'
+                f'Should be one of the following: {allowed}',
             )
 
 
@@ -132,7 +132,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
         )
 
 
@@ -287,7 +287,8 @@ class _LightingConfig(_ThemeConfig):
 
     @interpolation.setter
     def interpolation(
-        self, interpolation: Union[str, int, InterpolationType]
+        self,
+        interpolation: Union[str, int, InterpolationType],
     ):  # numpydoc ignore=GL08
         self._interpolation = InterpolationType.from_any(interpolation).value
 
@@ -1497,7 +1498,7 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
         warnings.warn(
-            "The jupyter_extension_available flag is read only and is automatically detected."
+            "The jupyter_extension_available flag is read only and is automatically detected.",
         )
 
     @property
@@ -2140,7 +2141,7 @@ class Theme(_ThemeConfig):
             self._camera = camera
         else:
             raise TypeError(
-                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}"
+                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}",
             )
 
     @property
@@ -2743,7 +2744,8 @@ class Theme(_ThemeConfig):
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
-        self, multi_rendering_splitting_position: float
+        self,
+        multi_rendering_splitting_position: float,
     ):  # numpydoc ignore=GL08
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
@@ -2775,7 +2777,7 @@ class Theme(_ThemeConfig):
         if mapper not in mappers:
             raise ValueError(
                 f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}"
+                f"include:\n {', '.join(mappers)}",
             )
 
         self._volume_mapper = mapper
@@ -2889,7 +2891,8 @@ class Theme(_ThemeConfig):
 
     @before_close_callback.setter
     def before_close_callback(
-        self, value: Callable[['pyvista.Plotter'], None]
+        self,
+        value: Callable[['pyvista.Plotter'], None],
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
@@ -3027,7 +3030,7 @@ class Theme(_ThemeConfig):
 
         if not isinstance(theme, Theme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
             )
 
         for attr_name in Theme.__slots__:

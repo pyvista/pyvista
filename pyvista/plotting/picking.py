@@ -362,7 +362,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
             raise PyVistaPickingError(
-                'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
             )
 
     def enable_point_picking(
@@ -466,7 +466,8 @@ class PickingInterface:  # numpydoc ignore=PR01
         self._validate_picker_not_in_use()
         if 'use_mesh' in kwargs:
             warnings.warn(
-                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
+                '`use_mesh` is deprecated. See `use_picker` instead.',
+                PyVistaDeprecationWarning,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -506,7 +507,10 @@ class PickingInterface:  # numpydoc ignore=PR01
                         _poked_context_callback(self_(), callback, self.picked_point, picker)
                     elif use_mesh:  # Lower priority
                         _poked_context_callback(
-                            self_(), callback, picker.GetDataSet(), picker.GetPointId()
+                            self_(),
+                            callback,
+                            picker.GetDataSet(),
+                            picker.GetPointId(),
                         )
                     else:
                         _poked_context_callback(self_(), callback, self.picked_point)
@@ -525,7 +529,9 @@ class PickingInterface:  # numpydoc ignore=PR01
                 show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick under the mouse'
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_point_picking_message'
+                str(show_message),
+                font_size=font_size,
+                name='_point_picking_message',
             )
 
     def enable_rectangle_picking(
@@ -637,7 +643,9 @@ class PickingInterface:  # numpydoc ignore=PR01
             if show_message is True:
                 show_message = "Press R to toggle selection tool"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_rectangle_picking_message'
+                str(show_message),
+                font_size=font_size,
+                name='_rectangle_picking_message',
             )
 
         if start:
@@ -845,7 +853,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
             raise ValueError(
-                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
             )
 
         self_ = weakref.ref(self)
@@ -1261,14 +1269,15 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
-                        actor.GetProperty(), 'GetRepresentation'
+                        actor.GetProperty(),
+                        'GetRepresentation',
                     ):
                         continue
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results."
+                            "Display representations other than `surface` will result in incorrect results.",
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()

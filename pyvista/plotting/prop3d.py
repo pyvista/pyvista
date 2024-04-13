@@ -303,7 +303,8 @@ class Prop3D(_vtk.vtkProp3D):
 
     @user_matrix.setter
     def user_matrix(
-        self, value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]]
+        self,
+        value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]],
     ):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             if value.shape != (4, 4):
@@ -314,5 +315,5 @@ class Prop3D(_vtk.vtkProp3D):
             self.SetUserMatrix(value)
         else:
             raise TypeError(
-                'Input user matrix must be either:\n\tvtk.vtkMatrix4x4\n\t4x4 np.ndarray\n'
+                'Input user matrix must be either:\n\tvtk.vtkMatrix4x4\n\t4x4 np.ndarray\n',
             )
