@@ -18,7 +18,7 @@ from .fileio import from_meshio, is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
+    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']],
 ) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -153,7 +153,8 @@ def wrap(
         # trimesh doesn't pad faces
         dataset = cast('Trimesh', dataset)
         polydata = pyvista.PolyData.from_regular_faces(
-            np.asarray(dataset.vertices), faces=dataset.faces
+            np.asarray(dataset.vertices),
+            faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
@@ -279,7 +280,8 @@ def is_inside_bounds(point, bounds):
     if isinstance(point, (int, float)):
         point = [point]
     if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
-        point, collections.deque
+        point,
+        collections.deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')

@@ -6,7 +6,8 @@ import pytest
 import pyvista as pv
 
 skip_lesser_9_2_2 = pytest.mark.skipif(
-    pv.vtk_version_info <= (9, 2, 2), reason='Requires VTK>=9.2.2'
+    pv.vtk_version_info <= (9, 2, 2),
+    reason='Requires VTK>=9.2.2',
 )
 
 

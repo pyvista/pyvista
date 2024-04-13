@@ -51,13 +51,13 @@ def _parse_interaction_event(interaction_event):
     elif isinstance(interaction_event, str):
         raise ValueError(
             "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given."
+            f"'end', or 'always'. {interaction_event} was given.",
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
             "Expected type for `interaction_event` is either a str "
             "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given."
+            f" ({type(interaction_event)}) was given.",
         )
     return interaction_event
 
@@ -208,7 +208,7 @@ class WidgetHelper:
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -317,7 +317,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -750,7 +750,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -909,7 +909,7 @@ class WidgetHelper:
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.'
+                'from `Plotter.add_volume`.',
             )
         else:
             assert_empty_kwargs(**kwargs)
@@ -1356,7 +1356,7 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
             )
         n_states = len(data)
         if n_states == 0:
@@ -1561,7 +1561,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1734,7 +1734,11 @@ class WidgetHelper:
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
@@ -1879,7 +1883,7 @@ class WidgetHelper:
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
             )
 
         rng = mesh.get_data_range(scalars)

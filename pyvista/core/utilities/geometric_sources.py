@@ -332,7 +332,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive."
+                "Both radius and angle cannot be specified. They are mutually exclusive.",
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -931,7 +931,7 @@ class Text3DSource(vtkVectorText):
             else:
                 raise AttributeError(
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}'
+                    f'{self.__class__.__name__}',
                 )
 
     def __del__(self):
@@ -1191,7 +1191,7 @@ class CubeSource(_vtk.vtkCubeSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)
@@ -1410,7 +1410,7 @@ class DiscSource(_vtk.vtkDiskSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1741,7 +1741,7 @@ class SphereSource(_vtk.vtkSphereSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1945,7 +1945,12 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
     """
 
     def __init__(
-        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+        self,
+        center=(0.0, 0.0, 0.0),
+        radius=1.0,
+        normal=(0.0, 0.0, 1.0),
+        n_sides=6,
+        fill=True,
     ):
         """Initialize the polygon source class."""
         super().__init__()
@@ -2459,7 +2464,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)

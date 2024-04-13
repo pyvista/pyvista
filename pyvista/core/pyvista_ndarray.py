@@ -59,7 +59,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         else:
             raise TypeError(
                 f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray'
+                'Expected an Iterable or vtk.vtkAbstractArray',
             )
 
         obj.association = association

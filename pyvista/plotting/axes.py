@@ -32,7 +32,11 @@ class Axes(_vtk.vtkAxes):
     """
 
     def __init__(
-        self, show_actor=False, actor_scale=1, line_width=1.0, symmetric=False
+        self,
+        show_actor=False,
+        actor_scale=1,
+        line_width=1.0,
+        symmetric=False,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()

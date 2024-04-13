@@ -53,7 +53,7 @@ quad_pts = np.array(
         (lin_pts[1] + lin_pts[5]) / 2,
         (lin_pts[2] + lin_pts[6]) / 2,
         (lin_pts[3] + lin_pts[7]) / 2,
-    ]
+    ],
 )
 
 # introduce a minor variation to the location of the mid-side points
