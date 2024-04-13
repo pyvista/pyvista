@@ -247,7 +247,9 @@ class ProgressMonitor:
         if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
-            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]'
+            total=1,
+            leave=True,
+            bar_format='{l_bar}{bar}[{elapsed}<{remaining}]',
         )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)

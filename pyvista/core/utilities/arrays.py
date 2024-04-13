@@ -57,7 +57,8 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[MatrixLike[float], VectorLike[float]], copy: bool = False
+    points: Union[MatrixLike[float], VectorLike[float]],
+    copy: bool = False,
 ) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
@@ -273,7 +274,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.nda
     if preference not in ['cell', 'point', 'field']:
         raise ValueError(
             f'`preference` must be either "cell", "point", "field" for a '
-            f'{type(mesh)}, not "{preference}".'
+            f'{type(mesh)}, not "{preference}".',
         )
 
     parr = point_array(mesh, name)
@@ -373,12 +374,12 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
-        f'or the number of cells ({dataset.n_cells}).'
+        f'or the number of cells ({dataset.n_cells}).',
     )
 
 
@@ -578,7 +579,7 @@ def convert_string_array(arr, name=None):
             np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
         ):  # avoids segfault
             raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.'
+                'String array contains non-ASCII characters that are not supported by VTK.',
             )
         vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
@@ -632,7 +633,7 @@ def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     else:
         raise TypeError(
             'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
-            f' got {type(matrix).__name__} instead.'
+            f' got {type(matrix).__name__} instead.',
         )
     array = np.zeros(shape)
     for i, j in product(range(shape[0]), range(shape[1])):
@@ -718,7 +719,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
             "Multiple vector-like data available\n"
             f"cell data: {possible_vectors_cell}.\n"
             f"point data: {possible_vectors_point}.\n"
-            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)",
         )
 
 
@@ -767,7 +768,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             "Multiple data available\n"
             f"cell data: {possible_scalars_cell}.\n"
             f"point data: {possible_scalars_point}.\n"
-            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)",
         )
 
 
@@ -807,6 +808,6 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
             '\tvtk.vtkMatrix3x3\n'
             '\tvtk.vtkTransform\n'
             '\t4x4 np.ndarray\n'
-            '\t3x3 np.ndarray\n'
+            '\t3x3 np.ndarray\n',
         )
     return transform_array

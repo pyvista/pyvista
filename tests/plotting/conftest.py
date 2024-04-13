@@ -19,7 +19,8 @@ SKIP_PLOTTING = not system_supports_plotting()
 # Configure skip_plotting marker
 def pytest_configure(config):
     config.addinivalue_line(
-        'markers', 'skip_plotting: skip the test if system does not support plotting'
+        'markers',
+        'skip_plotting: skip the test if system does not support plotting',
     )
 
 
@@ -125,5 +126,5 @@ def cubemap(texture):
             make_two_char_img('Y-'),
             make_two_char_img('Z+'),
             make_two_char_img('Z-'),
-        ]
+        ],
     )

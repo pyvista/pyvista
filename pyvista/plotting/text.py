@@ -552,7 +552,7 @@ class TextProperty(_vtk.vtkTextProperty):
         else:
             raise ValueError(
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".'
+                'Should be either "left", "center" or "right".',
             )
 
     @property
@@ -581,7 +581,7 @@ class TextProperty(_vtk.vtkTextProperty):
         else:
             raise ValueError(
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".'
+                'Should be either "bottom", "center" or "top".',
             )
 
     @property

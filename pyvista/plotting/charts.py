@@ -116,7 +116,7 @@ class DocSubs:
             mem_sub = property(member.fget, member.fset, member.fdel)
         else:
             raise NotImplementedError(
-                "Members other than methods and properties are currently not supported."
+                "Members other than methods and properties are currently not supported.",
             )
         return mem_sub
 
@@ -1081,7 +1081,7 @@ class _ChartBackground(_CustomContextItem):
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
-                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush
+                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush,
             )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
@@ -1963,13 +1963,14 @@ class _MultiCompPlot(_Plot):
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(
-                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                    self._lookup_table,
+                    _vtk.vtkColorSeries.CATEGORICAL,
                 )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
                 raise ValueError(
-                    "Invalid colors specified, falling back to default color scheme."
+                    "Invalid colors specified, falling back to default color scheme.",
                 ) from e
 
     @property
@@ -2130,7 +2131,14 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     }
 
     def __init__(
-        self, chart, x, y, color="b", width=1.0, style="-", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        width=1.0,
+        style="-",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
@@ -2293,7 +2301,14 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     }
 
     def __init__(
-        self, chart, x, y, color="b", size=10, style="o", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        size=10,
+        style="o",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
@@ -2510,7 +2525,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 "x": np.empty(0, np.float32),
                 "y1": np.empty(0, np.float32),
                 "y2": np.empty(0, np.float32),
-            }
+            },
         )
         self.SetInputData(self._table)
         self.SetInputArray(0, "x")
@@ -2624,7 +2639,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                     "x": np.array(x, copy=False),
                     "y1": np.array(y1, copy=False),
                     "y2": np.array(y2, copy=False),
-                }
+                },
             )
             self.visible = True
         else:
@@ -2699,7 +2714,13 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     }
 
     def __init__(
-        self, chart, x, y, color=None, orientation="V", label=None
+        self,
+        chart,
+        x,
+        y,
+        color=None,
+        orientation="V",
+        label=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
@@ -2834,7 +2855,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\""
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
             )
 
 
@@ -3102,7 +3123,12 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     }
 
     def __init__(
-        self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True
+        self,
+        size=(1, 1),
+        loc=(0, 0),
+        x_label="x",
+        y_label="y",
+        grid=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -3203,7 +3229,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             if style in fmt:
                 marker_style = style
                 fmt = fmt.replace(
-                    marker_style, "", 1
+                    marker_style,
+                    "",
+                    1,
                 )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
@@ -3873,7 +3901,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
-            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
@@ -4007,7 +4035,12 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
@@ -4106,7 +4139,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4148,7 +4181,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4311,7 +4344,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
@@ -4413,7 +4451,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4455,7 +4493,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4532,7 +4570,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     }
 
     def __init__(
-        self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
+        self,
+        figure=None,
+        size=(1, 1),
+        loc=(0, 0),
+        redraw_on_render=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4540,7 +4582,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             figure, _ = plt.subplots()
         self._fig = figure
         self._canvas = FigureCanvasAgg(
-            self._fig
+            self._fig,
         )  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
         self._fig.patch.set_alpha(0)
@@ -4625,7 +4667,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         else:
             # Called from draw_event callback
             img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8
+                self._canvas.buffer_rgba(),
+                dtype=np.uint8,
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
