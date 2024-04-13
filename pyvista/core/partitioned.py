@@ -252,3 +252,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         index = self.n_partitions
         self.n_partitions += 1
         self[index] = dataset
+
+
+class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection):
+    """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""

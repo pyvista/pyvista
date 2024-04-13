@@ -1,4 +1,4 @@
-from vtkmodules import vtkCommonDataModel as dm, vtkIOLegacy as il
+from vtkmodules import vtkIOLegacy as il
 
 import pyvista as pv
 
@@ -22,7 +22,7 @@ def test_partitions_collection(tmpdir):
     p2 = pv.PartitionedDataSet()
     p2.ShallowCopy(p)
 
-    c = dm.vtkPartitionedDataSetCollection()
+    c = pv.PartitionedDataSetCollection()
     c.SetPartitionedDataSet(0, p)
     c.SetPartitionedDataSet(1, p2)
 

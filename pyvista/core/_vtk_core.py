@@ -181,6 +181,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPartitionedDataSet,
+    vtkPartitionedDataSetCollection,
     vtkPerlinNoise,
     vtkPiecewiseFunction,
     vtkPlane,
