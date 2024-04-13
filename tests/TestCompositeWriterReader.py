@@ -16,13 +16,13 @@ class TestCompositeWriterReader(Testing.vtkTest):
         s.SetWholeExtent(0, 10, 0, 10, 0, 5)
         s.Update()
 
-        p1 = dm.vtkImageData()
+        p1 = pv.ImageData()
         p1.ShallowCopy(s.GetOutput())
 
         s.SetWholeExtent(0, 10, 0, 10, 5, 10)
         s.Update()
 
-        p2 = dm.vtkImageData()
+        p2 = pv.ImageData()
         p2.ShallowCopy(s.GetOutput())
 
         p.SetPartition(0, p1)
