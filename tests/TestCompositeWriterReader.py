@@ -1,12 +1,11 @@
 from pathlib import Path
 
 from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic, vtkIOLegacy as il
-from vtkmodules.util.misc import vtkGetTempDir
 
 import pyvista as pv
 
 
-def test_partitions_collection():
+def test_partitions_collection(tmpdir):
     p = pv.PartitionedDataSet()
 
     s = ic.vtkRTAnalyticSource()
@@ -32,7 +31,6 @@ def test_partitions_collection():
     c.SetPartitionedDataSet(0, p)
     c.SetPartitionedDataSet(1, p2)
 
-    tmpdir = vtkGetTempDir()
     fname = tmpdir + "/testcompowriread.vtk"
     w = il.vtkCompositeDataWriter()
     w.SetInputData(c)
