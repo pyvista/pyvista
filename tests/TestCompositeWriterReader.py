@@ -1,4 +1,4 @@
-from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic, vtkIOLegacy as il
+from vtkmodules import vtkCommonDataModel as dm, vtkIOLegacy as il
 
 import pyvista as pv
 
@@ -6,18 +6,15 @@ import pyvista as pv
 def test_partitions_collection(tmpdir):
     p = pv.PartitionedDataSet()
 
-    s = ic.vtkRTAnalyticSource()
-    s.SetWholeExtent(0, 10, 0, 10, 0, 5)
-    s.Update()
+    s = pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])
 
     p1 = pv.ImageData()
-    p1.ShallowCopy(s.GetOutput())
+    p1.ShallowCopy(s)
 
-    s.SetWholeExtent(0, 10, 0, 10, 5, 10)
-    s.Update()
+    s = pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])
 
     p2 = pv.ImageData()
-    p2.ShallowCopy(s.GetOutput())
+    p2.ShallowCopy(s)
 
     p.SetPartition(0, p1)
     p.SetPartition(1, p2)
