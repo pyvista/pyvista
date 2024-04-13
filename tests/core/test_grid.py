@@ -23,7 +23,8 @@ STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -178,7 +179,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
-        grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
+        grid.cell_connectivity,
+        (np.arange(20) if multiple_cell_types else np.arange(16)),
     )
 
     # Now fetch the arrays
@@ -186,13 +188,13 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     assert np.all(
         output_cells_dict[CellType.HEXAHEDRON].reshape([-1])
-        == input_cells_dict[CellType.HEXAHEDRON].reshape([-1])
+        == input_cells_dict[CellType.HEXAHEDRON].reshape([-1]),
     )
 
     if multiple_cell_types:
         assert np.all(
             output_cells_dict[CellType.QUAD].reshape([-1])
-            == input_cells_dict[CellType.QUAD].reshape([-1])
+            == input_cells_dict[CellType.QUAD].reshape([-1]),
         )
 
     # Test for some errors
@@ -228,7 +230,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     # Non-integer arrays
     with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid(
-            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points
+            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)},
+            points,
         )
 
     # Invalid point dimensions
@@ -853,7 +856,8 @@ def test_create_image_data_from_specs():
 
     # all args (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         grid = pv.ImageData(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -862,7 +866,8 @@ def test_create_image_data_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         grid = pv.ImageData(dims)
         assert grid.dimensions == dims
@@ -887,7 +892,8 @@ def test_create_image_data_from_specs():
 
 def test_image_data_invald_args():
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         pv.ImageData((1, 1, 1))
 
@@ -1080,7 +1086,7 @@ def test_grid_points():
     assert np.allclose(grid.points, points)
 
     points = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
     )
     grid = pv.ImageData()
     grid.dimensions = [2, 2, 2]
@@ -1102,7 +1108,8 @@ def test_grid_points():
     assert grid.dimensions == (3, 3, 2)
     assert np.allclose(grid.meshgrid, (xx, yy, zz))
     assert np.allclose(
-        grid.points, np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        grid.points,
+        np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')],
     )
 
 
@@ -1186,7 +1193,9 @@ def test_set_extent():
 
 def test_set_extent_width_spacing():
     grid = pv.ImageData(
-        dimensions=(10, 10, 10), origin=(-0.5, -0.3, -0.1), spacing=(0.1, 0.05, 0.01)
+        dimensions=(10, 10, 10),
+        origin=(-0.5, -0.3, -0.1),
+        spacing=(0.1, 0.05, 0.01),
     )
     grid.extent = (5, 9, 0, 9, 0, 9)
     assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])

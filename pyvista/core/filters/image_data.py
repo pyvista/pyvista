@@ -82,7 +82,11 @@ class ImageDataFilters(DataSetFilters):
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
@@ -96,7 +100,11 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def median_smooth(
-        self, kernel_size=(3, 3, 3), scalars=None, preference='point', progress_bar=False
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        preference='point',
+        progress_bar=False,
     ):
         """Smooth data using a median filter.
 
@@ -167,7 +175,11 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
@@ -310,7 +322,11 @@ class ImageDataFilters(DataSetFilters):
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
@@ -394,13 +410,17 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
         if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
                 raise ValueError(
-                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).'
+                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).',
                 )
             alg.ThresholdBetween(threshold[0], threshold[1])
         elif isinstance(threshold, collections.abc.Iterable):
@@ -497,7 +517,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -567,7 +589,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -645,7 +669,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -723,7 +749,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing High Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -751,7 +779,7 @@ class ImageDataFilters(DataSetFilters):
             elif len(possible_scalars) > 1:
                 raise AmbiguousDataError(
                     'There are multiple point scalars available. Set one to be '
-                    'active with `point_data.active_scalars_name = `'
+                    'active with `point_data.active_scalars_name = `',
                 )
             else:
                 raise MissingDataError('FFT filters require point scalars.')
@@ -760,7 +788,7 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
-                '`numpy.complex128`.'
+                '`numpy.complex128`.',
             )
 
     def _flip_uniform(self, axis) -> 'pyvista.ImageData':
@@ -874,10 +902,14 @@ class ImageDataFilters(DataSetFilters):
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
                 )
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetInputData(self)
         if n_labels is not None:
@@ -888,7 +920,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputMeshTypeToTriangles()
         else:
             raise ValueError(
-                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
             )
         if output_style == 'default':
             alg.SetOutputStyleToDefault()

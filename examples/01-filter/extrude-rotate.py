@@ -70,7 +70,7 @@ vertices = np.array(
         [1.4268, 0.0, 0.1768],
         [1.25, 0.0, 0.25],
         [1.0732, 0.0, 0.1768],
-    ]
+    ],
 )
 faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
 profile = pyvista.PolyData(vertices, faces)

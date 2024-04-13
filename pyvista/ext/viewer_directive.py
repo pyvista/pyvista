@@ -68,7 +68,7 @@ class OfflineViewerDirective(Directive):
             dest_partial_path = Path(source_file.parent).relative_to(source_dir)
         else:
             logger.warn(
-                f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path'
+                f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path',
             )
             return []
 
