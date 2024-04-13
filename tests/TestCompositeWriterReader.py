@@ -4,11 +4,13 @@ from vtkmodules import vtkCommonDataModel as dm, vtkImagingCore as ic, vtkIOLega
 from vtkmodules.test import Testing
 from vtkmodules.util.misc import vtkGetTempDir
 
+import pyvista as pv
+
 
 class TestCompositeWriterReader(Testing.vtkTest):
 
     def test(self):
-        p = dm.vtkPartitionedDataSet()
+        p = pv.PartitionedDataSet()
 
         s = ic.vtkRTAnalyticSource()
         s.SetWholeExtent(0, 10, 0, 10, 0, 5)
@@ -26,7 +28,7 @@ class TestCompositeWriterReader(Testing.vtkTest):
         p.SetPartition(0, p1)
         p.SetPartition(1, p2)
 
-        p2 = dm.vtkPartitionedDataSet()
+        p2 = pv.PartitionedDataSet()
         p2.ShallowCopy(p)
 
         c = dm.vtkPartitionedDataSetCollection()
