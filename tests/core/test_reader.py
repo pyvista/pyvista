@@ -1013,7 +1013,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
 
 
 def test_compositedatareader():
-    p = pv.PartitionedDataSet()
+    partitions = pv.PartitionedDataSet()
 
     s = pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])
 
@@ -1025,14 +1025,14 @@ def test_compositedatareader():
     p2 = pv.ImageData()
     p2.ShallowCopy(s)
 
-    p.SetPartition(0, p1)
-    p.SetPartition(1, p2)
+    partitions.SetPartition(0, p1)
+    partitions.SetPartition(1, p2)
 
     p2 = pv.PartitionedDataSet()
-    p2.ShallowCopy(p)
+    p2.ShallowCopy(partitions)
 
     c = pv.PartitionedDataSetCollection()
-    c.SetPartitionedDataSet(0, p)
+    c.SetPartitionedDataSet(0, partitions)
     c.SetPartitionedDataSet(1, p2)
 
     fname = "testcompowriread.vtcd"
@@ -1045,8 +1045,10 @@ def test_compositedatareader():
     assert number_of_datasets == 2
 
     for i in range(number_of_datasets):
-        p = o.GetPartitionedDataSet(i)
+        partitions = o.GetPartitionedDataSet(i)
         p2 = c.GetPartitionedDataSet(i)
-        assert p.IsA("vtkPartitionedDataSet")
-        assert p.GetNumberOfPartitions() == 2
-        assert p.GetPartition(0).GetNumberOfCells() == p.GetPartition(0).GetNumberOfCells()
+        assert partitions.IsA("vtkPartitionedDataSet")
+        assert partitions.GetNumberOfPartitions() == 2
+        assert (
+            partitions.GetPartition(0).GetNumberOfCells() == p2.GetPartition(0).GetNumberOfCells()
+        )
