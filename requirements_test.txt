@@ -1,7 +1,7 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
-cmocean<3.1.4
+cmocean<4.0.4
 colorcet<3.2.0
 hypothesis<6.100.1
 imageio<2.35.0
@@ -22,7 +22,7 @@ sphinx-gallery<0.16.0
 sphinx_design<0.6.0
 sympy<1.13.0
 tqdm<4.67.0
-trame>=2.5.2,<3.5.6
+trame>=2.5.2,<3.6.1
 trame-vtk>=2.5.8,<2.8.6
 trame-vuetify>=2.3.1,<2.4.4
-trimesh<4.3.0
+trimesh<4.4.0

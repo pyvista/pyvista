@@ -180,7 +180,7 @@ except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -190,7 +190,9 @@ import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
-from ._typing import ColorLike
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -770,7 +772,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -784,7 +786,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -809,7 +811,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: Union[int, np.integer[Any], float, np.floating[Any], str]
+        val: Union[int, np.integer[Any], float, np.floating[Any], str],
     ) -> int:
         """Convert the given color channel value to the integer representation.
 

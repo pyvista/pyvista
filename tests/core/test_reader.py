@@ -18,7 +18,8 @@ except ModuleNotFoundError:
 
 
 pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+    platform.system() == 'Darwin',
+    reason='MacOS testing on Azure fails when downloading',
 )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
@@ -576,7 +577,8 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 1.0
 
     with pytest.raises(
-        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+        ValueError,
+        match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
     ):
         reader.set_active_time_value(1000)
 
@@ -638,7 +640,8 @@ def test_openfoamreader_read_data_time_point():
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+    pv.vtk_version_info > (9, 3),
+    reason="polyhedra decomposition was removed after 9.3",
 )
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
@@ -998,7 +1001,7 @@ def test_try_imageio_imread():
 def test_xmlpartitioneddatasetreader(tmpdir):
     tmpfile = tmpdir.join("temp.vtpd")
     partitions = pv.PartitionedDataSet(
-        [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))]
+        [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
     )
     partitions.save(tmpfile.strpath)
     new_partitions = pv.read(tmpfile.strpath)
