@@ -1012,7 +1012,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         assert new_partitions[i].n_cells == partitions[i].n_cells
 
 
-def test_compositedatareader():
+def test_compositedatareader(tmpdir):
     partitions = pv.PartitionedDataSet()
 
     s = pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])
@@ -1035,7 +1035,7 @@ def test_compositedatareader():
     c.SetPartitionedDataSet(0, partitions)
     c.SetPartitionedDataSet(1, p2)
 
-    fname = "testcompowriread.vtcd"
+    fname = tmpdir.join("testcompowriread.vtcd")
     c.save(fname)
 
     o = pv.read(fname)
