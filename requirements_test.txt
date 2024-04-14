@@ -1,7 +1,7 @@
 # Note: using < here to reduce breakages
 # These should be automatically kept up to date by dependabot
 -r requirements.txt
-cmocean<3.1.4
+cmocean<4.0.4
 colorcet<3.2.0
 hypothesis<6.100.2
 imageio<2.35.0
