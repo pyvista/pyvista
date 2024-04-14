@@ -63,12 +63,12 @@ Reader Classes
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
+    XMLPartitionedDataSetReader
     XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
     XdmfReader
-    XMLPartitionedDataSetReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
