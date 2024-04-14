@@ -158,6 +158,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
     +----------------+---------------------------------------------+
+    | ``.vtcd``      | :class:`pyvista.CompositeDataReader`        |
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -2535,6 +2537,13 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
+class CompositeDataReader(BaseReader):
+    """CompositeDataReader Reader for reading .vtcd files."""
+
+    _vtk_module_name = "vtkIOLegacy"
+    _vtk_class_name = "vtkCompositeDataReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2591,4 +2600,5 @@ CLASS_READERS = {
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
     '.vtpd': XMLPartitionedDataSetReader,
+    '.vtcd': CompositeDataReader,
 }

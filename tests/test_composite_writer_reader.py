@@ -1,5 +1,3 @@
-from vtkmodules import vtkIOLegacy as il
-
 import pyvista as pv
 
 
@@ -26,13 +24,10 @@ def test_partitions_collection(tmpdir):
     c.SetPartitionedDataSet(0, p)
     c.SetPartitionedDataSet(1, p2)
 
-    fname = tmpdir + "/testcompowriread.vthb"
+    fname = "testcompowriread.vtcd"
     c.save(fname)
 
-    r = il.vtkCompositeDataReader()
-    r.SetFileName(fname)
-    r.Update()
-    o = r.GetOutputDataObject(0)
+    o = pv.read(fname)
 
     assert o.IsA("vtkPartitionedDataSetCollection")
     number_of_datasets = o.GetNumberOfPartitionedDataSets()
@@ -44,7 +39,3 @@ def test_partitions_collection(tmpdir):
         assert p.IsA("vtkPartitionedDataSet")
         assert p.GetNumberOfPartitions() == 2
         assert p.GetPartition(0).GetNumberOfCells() == p.GetPartition(0).GetNumberOfCells()
-    del r
-    import gc
-
-    gc.collect()

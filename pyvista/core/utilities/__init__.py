@@ -167,6 +167,7 @@ from .reader import (
     BMPReader,
     BYUReader,
     CGNSReader,
+    CompositeDataReader,
     DEMReader,
     DICOMReader,
     EnSightReader,

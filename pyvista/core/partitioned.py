@@ -258,5 +258,16 @@ class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObj
     """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
 
     _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
-        ".vthb": _vtk.vtkCompositeDataWriter
+        ".vtcd": _vtk.vtkCompositeDataWriter
     }
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the PartitionedDataSetCollection."""
+        super().__init__(*args, **kwargs)
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkPartitionedDataSetCollection):
+                deep = kwargs.get('deep', True)
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    raise PartitionedDataSetsNotSupported
