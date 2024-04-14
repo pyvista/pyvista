@@ -49,7 +49,7 @@ vectors = np.vstack(
         np.sin(sphere.points[:, 0]),
         np.cos(sphere.points[:, 1]),
         np.cos(sphere.points[:, 2]),
-    )
+    ),
 ).T
 
 # add and scale

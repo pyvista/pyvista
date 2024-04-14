@@ -572,7 +572,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -604,7 +604,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')

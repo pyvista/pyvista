@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import inspect
 import os
+from pathlib import Path
 import shutil
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, List, Tuple
@@ -90,7 +91,9 @@ def _generate_dataset_loader_test_cases_from_module(
         dataset_function = content.setdefault('dataset_function', None)
         dataset_loader = content.setdefault('dataset_loader', None)
         test_case = DatasetLoaderTestCase(
-            dataset_name=name, dataset_function=dataset_function, dataset_loader=dataset_loader
+            dataset_name=name,
+            dataset_function=dataset_function,
+            dataset_loader=dataset_loader,
         )
         test_cases_list.append(test_case)
 
@@ -221,6 +224,21 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
             file_loader.load()
 
     assert os.path.isfile(file_loader.path)
+
+
+def test_single_file_loader_from_directory(examples_local_repository_tmp_dir):
+    # Make sure directory only contains dataset files
+    Path(examples_local_repository_tmp_dir, 'archive.zip').unlink()
+
+    # Test all datasets loaded as multiblock
+    filenames = sorted(
+        [Path(fname).stem for fname in os.listdir(examples_local_repository_tmp_dir)],
+    )
+    loader = _SingleFileDatasetLoader(examples_local_repository_tmp_dir)
+    dataset = loader.load()
+    assert isinstance(dataset, pv.MultiBlock)
+    assert dataset.n_blocks == len(filenames)
+    assert dataset.keys() == filenames
 
 
 @pytest.mark.parametrize('load_func', [_load_as_multiblock, _load_and_merge, None])
@@ -511,7 +529,9 @@ def test_dataset_loader_dicom(dataset_loader_dicom):
 
 
 def test_dataset_loader_from_nested_files_and_directory(
-    dataset_loader_one_file, dataset_loader_two_files_one_loadable, dataset_loader_dicom
+    dataset_loader_one_file,
+    dataset_loader_two_files_one_loadable,
+    dataset_loader_dicom,
 ):
     # test complex multiple file case with separate ext and reader, which are loaded as a tuple
     # piece together new dataset from existing ones
@@ -550,7 +570,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     assert isinstance(loader.dataset_iterable[2], pv.ImageData)
     assert isinstance(loader.dataset_iterable[3], pv.ImageData)
     assert set(loader.unique_dataset_type) == {pv.MultiBlock, pv.ImageData, pv.PolyData}
-    assert loader.dataset.keys() == ['dataset0', 'dataset1', 'dataset2']
+    assert loader.dataset.keys() == ['cow', 'HeadMRVolume', 'data']
     assert loader.source_name == (
         'cow.vtp',
         'HeadMRVolume.mhd',

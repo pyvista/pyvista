@@ -42,7 +42,12 @@ structure, air
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
-    structure, scalars='T', smooth_shading=True, split_sharp_edges=True, cmap='reds', ambient=0.2
+    structure,
+    scalars='T',
+    smooth_shading=True,
+    split_sharp_edges=True,
+    cmap='reds',
+    ambient=0.2,
 )
 pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
@@ -82,7 +87,11 @@ pl.show()
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
-    z_slice, scalars='T', lighting=False, scalar_bar_args={'title': 'Temperature'}, cmap='reds'
+    z_slice,
+    scalars='T',
+    lighting=False,
+    scalar_bar_args={'title': 'Temperature'},
+    cmap='reds',
 )
 pl.add_mesh(
     structure,

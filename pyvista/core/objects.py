@@ -153,7 +153,9 @@ class Table(_vtk.vtkTable, DataObject):
 
         """
         return DataSetAttributes(
-            vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
+            vtkobject=self.GetRowData(),
+            dataset=self,
+            association=FieldAssociation.ROW,
         )
 
     def keys(self):
@@ -336,11 +338,13 @@ class Table(_vtk.vtkTable, DataObject):
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
         )
 
     def get_data_range(
-        self, arr: Optional[str] = None, preference: str = 'row'
+        self,
+        arr: Optional[str] = None,
+        preference: str = 'row',
     ) -> Tuple[float, float]:
         """Get the min and max of a named array.
 
