@@ -1010,3 +1010,43 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+def test_compositedatareader():
+    p = pv.PartitionedDataSet()
+
+    s = pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])
+
+    p1 = pv.ImageData()
+    p1.ShallowCopy(s)
+
+    s = pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])
+
+    p2 = pv.ImageData()
+    p2.ShallowCopy(s)
+
+    p.SetPartition(0, p1)
+    p.SetPartition(1, p2)
+
+    p2 = pv.PartitionedDataSet()
+    p2.ShallowCopy(p)
+
+    c = pv.PartitionedDataSetCollection()
+    c.SetPartitionedDataSet(0, p)
+    c.SetPartitionedDataSet(1, p2)
+
+    fname = "testcompowriread.vtcd"
+    c.save(fname)
+
+    o = pv.read(fname)
+
+    assert o.IsA("vtkPartitionedDataSetCollection")
+    number_of_datasets = o.GetNumberOfPartitionedDataSets()
+    assert number_of_datasets == 2
+
+    for i in range(number_of_datasets):
+        p = o.GetPartitionedDataSet(i)
+        p2 = c.GetPartitionedDataSet(i)
+        assert p.IsA("vtkPartitionedDataSet")
+        assert p.GetNumberOfPartitions() == 2
+        assert p.GetPartition(0).GetNumberOfCells() == p.GetPartition(0).GetNumberOfCells()
