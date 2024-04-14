@@ -59,7 +59,6 @@ Reader Classes
     TecplotReader
     VTKDataSetReader
     VTKPDataSetReader
-    XdmfReader
     XMLImageDataReader
     XMLMultiBlockDataReader
     XMLPartitionedDataSetReader
@@ -70,6 +69,7 @@ Reader Classes
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
+    XdmfReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
