@@ -53,6 +53,7 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 CACHE_VERSION = 3
 
+
 # If available, a local vtk-data instance will be used for examples
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
@@ -72,14 +73,16 @@ else:
     _FILE_CACHE = False
 
 # allow user to override the local path
+default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
     if not Path(os.environ['PYVISTA_USERDATA_PATH']).is_dir():
         warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
+        USER_DATA_PATH = default_user_data_path
     else:
         USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
 else:
     # use default pooch path
-    USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+    USER_DATA_PATH = default_user_data_path
 
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
@@ -4496,7 +4499,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=functools.partial(np.loadtxt, skiprows=1),
+    read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
     load_func=pyvista.PolyData,
 )
 
@@ -7287,4 +7290,264 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
 
 _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
     'Victorian_Goblet_face_illusion/Vase.stl',
+)
+
+
+def download_whole_body_ct_male(load=True):  # pragma: no cover
+    r"""Download a CT image of a male subject with 117 segmented anatomic structures.
+
+    This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
+
+    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+
+    The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
+
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
+
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
+
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
+
+        .. note::
+
+            The label map is not part of the original data source.
+
+    Licensed under Creative Commons Attribution 4.0 International.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset and get some of its properties.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_whole_body_ct_male()
+
+    Get the CT image
+
+    >>> ct_image = dataset['ct']
+    >>> ct_image
+    ImageData (...)
+      N Cells:      55561506
+      N Points:     56012800
+      X Bounds:     0.000e+00, 4.785e+02
+      Y Bounds:     0.000e+00, 4.785e+02
+      Z Bounds:     0.000e+00, 8.190e+02
+      Dimensions:   320, 320, 547
+      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Arrays:     1
+
+    Get the segmentation label names and show the first three
+
+    >>> segmentations = dataset['segmentations']
+    >>> label_names = segmentations.keys()
+    >>> label_names[:3]
+    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    Get the label map and show its data range
+
+    >>> label_map = dataset['label_map']
+    >>> label_map.get_data_range()
+    (0, 117)
+
+    Create a surface mesh of the segmentation labels
+
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+
+    Plot the CT image and segmentation labels together.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_9",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            Similar dataset of a female subject.
+
+        :ref:`medical_dataset_gallery`
+            Browse other medical datasets.
+
+    """
+    return _download_dataset(_dataset_whole_body_ct_male, load=load)
+
+
+def _whole_body_ct_load_func(dataset):  # pragma: no cover
+    # Process the dataset to create a label map from the segmentation masks
+
+    segmentations = dataset['segmentations']
+
+    # Create label map array from segmentation masks
+    # Initialize array with background values (zeros)
+    label_map_array = np.zeros((segmentations[0].n_points,), dtype=np.uint8)
+    label_names = sorted(segmentations.keys())
+    for i, name in enumerate(label_names):
+        label_map_array[segmentations[name].active_scalars == 1] = i + 1
+
+    # Add scalars to a new image
+    label_map_image = segmentations[0].copy()
+    label_map_image.clear_data()
+    label_map_image['label_map'] = label_map_array
+
+    # Add label map to dataset
+    dataset['label_map'] = label_map_image
+
+    return dataset
+
+
+_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
+    'whole_body_ct/s1397.zip',
+    target_file='s1397',
+    load_func=_whole_body_ct_load_func,
+)
+
+
+def download_whole_body_ct_female(load=True):  # pragma: no cover
+    r"""Download a CT image of a female subject with 117 segmented anatomic structures.
+
+    This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
+
+    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+
+    The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
+
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
+
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
+
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
+
+        .. note::
+
+            The label map is not part of the original data source.
+
+    Licensed under Creative Commons Attribution 4.0 International.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_whole_body_ct_female()
+
+    Get the names of the dataset's blocks
+
+    >>> dataset.keys()
+    ['ct', 'segmentations', 'label_map']
+
+    Get the CT image
+
+    >>> ct_image = dataset['ct']
+    >>> ct_image
+    ImageData (...)
+      N Cells:      55154462
+      N Points:     55603200
+      X Bounds:     0.000e+00, 4.785e+02
+      Y Bounds:     0.000e+00, 4.785e+02
+      Z Bounds:     0.000e+00, 8.130e+02
+      Dimensions:   320, 320, 543
+      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Arrays:     1
+
+    Get the segmentation label names and show the first three
+
+    >>> segmentations = dataset['segmentations']
+    >>> label_names = segmentations.keys()
+    >>> label_names[:3]
+    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    Get the label map and show its data range
+
+    >>> label_map = dataset['label_map']
+    >>> label_map.get_data_range()
+    (0, 117)
+
+    Create a surface mesh of the segmentation labels
+
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+
+    Plot the CT image and segmentation labels together.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_7",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            Similar dataset of a male subject.
+
+        :ref:`medical_dataset_gallery`
+            Browse other medical datasets.
+
+    """
+    return _download_dataset(_dataset_whole_body_ct_female, load=load)
+
+
+_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
+    'whole_body_ct/s1380.zip',
+    target_file='s1380',
+    load_func=_whole_body_ct_load_func,
 )
