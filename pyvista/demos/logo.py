@@ -110,10 +110,7 @@ def logo_letters(merge=False, depth=0.3):
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
     """
-    if merge:
-        mesh_letters = pyvista.PolyData()
-    else:
-        mesh_letters = {}
+    mesh_letters = pyvista.PolyData() if merge else {}
 
     # spacing between letters
     space_factor = 0.9
@@ -244,7 +241,11 @@ def plot_logo(
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(
-        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False
+        v_grid_atom_surf,
+        scalars='scalars',
+        show_edges=True,
+        cmap='winter',
+        show_scalar_bar=False,
     )
 
     # letter 'i'

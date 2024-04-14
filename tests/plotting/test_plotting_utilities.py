@@ -37,7 +37,11 @@ def test_gpuinfo():
 def test_ray_trace_plot():
     sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
+        [0, 0, 0],
+        [1, 1, 1],
+        plot=True,
+        first_point=True,
+        off_screen=True,
     )
     assert np.any(points)
     assert np.any(ind)

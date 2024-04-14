@@ -235,7 +235,7 @@ def test_validate_shape_value():
     with pytest.raises(ValueError, match=msg):
         _validate_shape_value(-2)
 
-    msg = "All items of Shape must be an instance of <class 'int'>. " "Got <class 'tuple'> instead."
+    msg = "All items of Shape must be an instance of <class 'int'>. Got <class 'tuple'> instead."
     with pytest.raises(TypeError, match=msg):
         _validate_shape_value(((1, 2), (3, 4)))
 
@@ -391,7 +391,8 @@ def numeric_array_test_cases():
     return (
         Case(
             dict(
-                must_be_finite=True, must_be_real=False
+                must_be_finite=True,
+                must_be_real=False,
             ),  # must be real is only added for extra coverage
             0,
             np.inf,
@@ -421,7 +422,15 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('stack_input', [True, False])
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
 def test_validate_array(
-    name, copy, as_any, to_list, to_tuple, dtype_out, case, stack_input, input_type
+    name,
+    copy,
+    as_any,
+    to_list,
+    to_tuple,
+    dtype_out,
+    case,
+    stack_input,
+    input_type,
 ):
     # Set up
     valid_array = np.array(case.valid_array)
@@ -483,7 +492,7 @@ def test_validate_array(
     # Check output
     if np.array(array_in).ndim == 0 and (to_tuple or to_list):
         # test scalar input results in scalar output
-        assert isinstance(array_out, float) or isinstance(array_out, int)
+        assert isinstance(array_out, (float, int))
     elif to_tuple:
         assert type(array_out) is tuple
     elif to_list:
@@ -572,7 +581,8 @@ def test_check_type():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason="Union type input requires python3.10 or higher"
+    sys.version_info < (3, 10),
+    reason="Union type input requires python3.10 or higher",
 )
 def test_check_type_union():
     check_type(0, Union[int, float])
@@ -673,7 +683,7 @@ def test_check_length():
     check_length(
         [
             1,
-        ]
+        ],
     )
     check_length(np.ndarray((1,)))
     check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
@@ -756,7 +766,8 @@ def test_check_sorted(shape, axis, ascending, strict):
     except AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
-            ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
+            ValueError,
+            match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}',
         ):
             _check_sorted_params(arr_strict_ascending)
         return
@@ -836,7 +847,10 @@ def test_validate_axes(name):
     axes = validate_axes(axes_right)
     assert np.array_equal(axes, axes_right)
     axes = validate_axes(
-        [[1], [0], [0]], [[0, 1, 0]], must_have_orientation='right', must_be_orthogonal=True
+        [[1], [0], [0]],
+        [[0, 1, 0]],
+        must_have_orientation='right',
+        must_be_orthogonal=True,
     )
     assert np.array_equal(axes, axes_right)
     axes = validate_axes([1, 0, 0], [[0, 1, 0]], (0, 0, 1))
@@ -875,7 +889,8 @@ def test_validate_axes(name):
 
     # test specifying two vectors without orientation raises error (3rd cannot be computed)
     with pytest.raises(
-        ValueError, match=f"{name} orientation must be specified when only two vectors are given."
+        ValueError,
+        match=f"{name} orientation must be specified when only two vectors are given.",
     ):
         validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
 
@@ -889,14 +904,20 @@ def test_validate_axes_orthogonal(bias_index):
 
     msg = "Axes are not orthogonal."
     axes = validate_axes(
-        axes_right, must_be_orthogonal=False, normalize=False, must_have_orientation='right'
+        axes_right,
+        must_be_orthogonal=False,
+        normalize=False,
+        must_have_orientation='right',
     )
     assert np.array_equal(axes, axes_right)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_right, must_be_orthogonal=True)
 
     axes = validate_axes(
-        axes_left, must_be_orthogonal=False, normalize=False, must_have_orientation='left'
+        axes_left,
+        must_be_orthogonal=False,
+        normalize=False,
+        must_have_orientation='left',
     )
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):

@@ -10,7 +10,7 @@ jobs:
       - name: Label based on changed files
         uses: actions/labeler@v5
         with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-token: "${{ secrets.PYVISTA_BOT_TOKEN }}"
 
       # Label based on branch name
       - uses: actions-ecosystem/action-add-labels@v1
@@ -26,7 +26,7 @@ jobs:
         with:
           labels: maintenance
       - uses: actions-ecosystem/action-add-labels@v1
-        if: startsWith(github.event.pull_request.head.ref, 'junk') || github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' ||  github.actor == 'pre-commit-ci[bot]'
+        if: startsWith(github.event.pull_request.head.ref, 'junk') || github.actor == 'dependabot[bot]' || github.actor == 'github-actions[bot]' ||  github.actor == 'pre-commit-ci[bot]' || github.actor == 'pyvista-bot'
         with:
           labels: ignore-for-release
       - uses: actions-ecosystem/action-add-labels@v1

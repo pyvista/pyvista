@@ -42,7 +42,7 @@ mesh_g["gradient"]
 def gradients_to_dict(arr):
     """A helper method to label the gradients into a dictionary."""
     keys = np.array(
-        ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"]
+        ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"],
     )
     keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
     return dict(zip(keys, mesh_g["gradient"].T))

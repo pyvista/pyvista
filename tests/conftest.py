@@ -24,12 +24,12 @@ def global_variables_reset():  # noqa: PT004
 def set_mpl():  # noqa: PT004
     """Avoid matplotlib windows popping up."""
     try:
-        import matplotlib
+        import matplotlib as mpl
     except ImportError:
         pass
     else:
-        matplotlib.rcdefaults()
-        matplotlib.use('agg', force=True)
+        mpl.rcdefaults()
+        mpl.use('agg', force=True)
 
 
 @pytest.fixture()
@@ -217,10 +217,7 @@ def pytest_runtest_setup(item):
         # this test needs the given VTK version
         # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
         args = item_mark.args
-        if len(args) == 1 and isinstance(args[0], tuple):
-            version_needed = args[0]
-        else:
-            version_needed = args
+        version_needed = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
         if pyvista.vtk_version_info < version_needed:
             version_str = '.'.join(map(str, version_needed))
             pytest.skip(f'Test needs VTK {version_str} or newer.')
