@@ -18,8 +18,8 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
-    Generator,
     Iterable,
+    Iterator,
     List,
     Literal,
     Optional,
@@ -36,15 +36,14 @@ import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples._dataset_loader import (
     DatasetObject,
-    _BaseFilePropsProtocol,
     _DatasetLoader,
     _Downloadable,
+    _MultiFilePropsProtocol,
+    _SingleFilePropsProtocol,
 )
 
 if TYPE_CHECKING:
     from types import FunctionType, ModuleType
-
-    from pyvista.examples import _dataset_loader
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -92,7 +91,9 @@ class DocTable:
     for the table's header and table's rows respectively.
     """
 
-    path = None  # Path to the rst file to which the table will be written
+    # Path to the rst file to which the table will be written
+    # Param should not be None for subclasses
+    path: str = None  # type: ignore[assignment]
 
     @classmethod
     def generate(cls):
@@ -403,12 +404,12 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-def _get_doc(func: Callable[[], Any]) -> str:
+def _get_doc(func: Callable[[], Any]) -> Optional[str]:
     """Return the first line of the callable's docstring."""
-    return func.__doc__.splitlines()[0]
+    return doc.splitlines()[0] if (doc := func.__doc__) else None
 
 
-def _get_fullname(typ: Type) -> str:
+def _get_fullname(typ: Type[Any]) -> str:
     """Return the fully qualified name of the given type object."""
     return f"{typ.__module__}.{typ.__qualname__}"
 
@@ -750,7 +751,7 @@ class DatasetCard:
             self.dataset_name,
         )
         # Get thumbnail image path
-        module_name = self.loader.module.__name__.replace('.', '-')
+        module_name = self.loader._module.__name__.replace('.', '-')
         ext = DATASET_GALLERY_IMAGE_EXT_DICT.get(self.dataset_name, '.png')
         if ext is None:
             img_path = self._create_default_image()
@@ -1068,7 +1069,7 @@ class DatasetCard:
 
     @classmethod
     def _create_file_props_block(cls, loader, file_size, num_files, file_ext, reader_type):
-        if isinstance(loader, _BaseFilePropsProtocol):
+        if isinstance(loader, _DatasetLoader):
             file_info_fields = [
                 ('File Size', file_size),
                 ('Num Files', num_files),
@@ -1109,17 +1110,17 @@ class DatasetPropsGenerator:
     """
 
     @staticmethod
-    def generate_file_size(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_file_size(loader: _DatasetLoader):
         sz = DatasetPropsGenerator._try_getattr(loader, 'total_size')
         return '``' + sz + '``' if sz else None
 
     @staticmethod
-    def generate_num_files(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_num_files(loader: _DatasetLoader):
         num = DatasetPropsGenerator._try_getattr(loader, 'num_files')
         return '``' + str(num) + '``' if num else None
 
     @staticmethod
-    def generate_file_ext(loader: _dataset_loader._BaseFilePropsProtocol):
+    def generate_file_ext(loader: Union[_SingleFilePropsProtocol, _MultiFilePropsProtocol]):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         file_ext = DatasetPropsGenerator._try_getattr(loader, 'unique_extension')
@@ -1131,7 +1132,7 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_reader_type(loader: _DatasetLoader):
+    def generate_reader_type(loader: Union[_SingleFilePropsProtocol, _MultiFilePropsProtocol]):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, 'unique_reader_type')
         if reader_type is None:
@@ -1174,7 +1175,7 @@ class DatasetPropsGenerator:
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
-    def generate_datasource_links(loader: _Downloadable) -> Optional[str]:
+    def generate_datasource_links(loader: _DatasetLoader) -> Optional[str]:
         def _rst_link(name, url):
             return f'`{name} <{url}>`_'
 
@@ -1190,8 +1191,7 @@ class DatasetPropsGenerator:
             url_dict[url] = name
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
-        rst_links = '\n'.join(rst_links)
-        return rst_links
+        return '\n'.join(rst_links)
 
     @staticmethod
     def generate_n_cells(loader):
@@ -1301,7 +1301,7 @@ class DatasetCardFetcher:
                 dataset_name = name.replace('_dataset_', '')
                 dataset_loader = item
                 # Store module as a dynamic property for access later
-                dataset_loader.module = module
+                dataset_loader._module = module
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
@@ -1371,10 +1371,11 @@ class DatasetCardFetcher:
         return _generate_grid('\n'.join(buttons))
 
     @classmethod
-    def add_badge_to_cards(cls, dataset_names: List[str], badge: _BaseDatasetBadge):
+    def add_badge_to_cards(cls, dataset_names: List[str], badge: Optional[_BaseDatasetBadge]):
         """Add a single badge to all specified datasets."""
-        for dataset_name in dataset_names:
-            cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
+        if badge:
+            for dataset_name in dataset_names:
+                cls.DATASET_CARDS_OBJ[dataset_name].add_badge(badge)
 
     @classmethod
     def add_cell_badges_to_all_cards(cls):
@@ -1384,31 +1385,31 @@ class DatasetCardFetcher:
                 card.add_badge(CellTypeBadge(cell_type.name))
 
     @classmethod
-    def fetch_dataset_names_by_datatype(cls, datatype) -> Generator[str]:
+    def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
         for name, dataset_iterable in cls.fetch_all_dataset_objects():
             if datatype in [type(data) for data in dataset_iterable]:
                 yield name
 
     @classmethod
-    def fetch_dataset_names_by_module(cls, module) -> Generator[str]:
+    def fetch_dataset_names_by_module(cls, module) -> Iterator[str]:
         for name, loader in cls.fetch_all_dataset_loaders():
-            if loader.module is module:
+            if loader._module is module:  # type: ignore[attr-defined]
                 yield name
 
     @classmethod
-    def fetch_all_dataset_objects(cls) -> Generator[str, Iterable[DatasetObject]]:
+    def fetch_all_dataset_objects(cls) -> Iterator[Tuple[str, Iterable[DatasetObject]]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader.dataset_iterable
 
     @classmethod
-    def fetch_all_dataset_loaders(cls) -> Generator[str, _DatasetLoader]:
+    def fetch_all_dataset_loaders(cls) -> Iterator[Tuple[str, _DatasetLoader]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader
 
     @classmethod
-    def fetch_and_filter(cls, filter_func: Callable[[], bool]) -> List[str]:
+    def fetch_and_filter(cls, filter_func: Callable[..., bool]) -> List[str]:
         """Return dataset names where any dataset object returns 'True' for a given function."""
-        dataset_names_out = {}  # Use dict as an ordered set
+        names_dict: Dict[str, None] = {}  # Use dict as an ordered set
         for name, dataset_iterable in cls.fetch_all_dataset_objects():
             for obj in dataset_iterable:
                 try:
@@ -1416,10 +1417,10 @@ class DatasetCardFetcher:
                 except AttributeError:
                     keep = False
                 if keep:
-                    dataset_names_out[name] = None
-        dataset_names_out = list(dataset_names_out.keys())
-        assert len(dataset_names_out) > 0, f"No datasets were matched by the filter {filter_func}."
-        return dataset_names_out
+                    names_dict[name] = None
+        names_list = list(names_dict.keys())
+        assert len(names_list) > 0, f"No datasets were matched by the filter {filter_func}."
+        return names_list
 
     @classmethod
     def fetch_multiblock(cls, kind: Literal['hetero', 'homo', 'single']):
@@ -1459,20 +1460,19 @@ class _BaseDatasetBadge:
     name: str
 
     # Internal reference label for the badge to link to
-    ref: str = None
+    ref: str = None  # type: ignore[assignment]
 
-    @classmethod
-    def __post_init__(cls):
+    def __post_init__(self: _BaseDatasetBadge):
         """Use post-init to set private variables.
 
         Sub classes should configure these options as required.
         """
         # Configure whether the badge should appear filled or not.
         # If False, a badge outline is shown.
-        cls.filled: bool = True
+        self.filled: bool = True
 
         # Set the badge's color
-        cls.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None
+        self.semantic_color: _BaseDatasetBadge.SemanticColorEnum = None  # type: ignore[assignment]
 
     def generate(self):
         # Generate rst
@@ -1589,17 +1589,17 @@ class DatasetGalleryCarousel(DocTable):
 
     # Subclasses should give the carousel a name
     # The name should end with '_carousel'
-    name: str = None
+    name: str = None  # type: ignore[assignment]
 
     # Subclasses should give the carousel a short description
     # describing the carousel's contents
-    doc: str = None
+    doc: str = None  # type: ignore[assignment]
 
     # Subclasses may optionally define a badge for the carousel
     # All datasets in the carousel will be given this badge.
-    badge: _BaseDatasetBadge = None
+    badge: Optional[_BaseDatasetBadge] = None
 
-    dataset_names: Optional[List[str]] = None
+    dataset_names: List[str] = None  # type: ignore[assignment]
 
     @property
     @final
@@ -1664,10 +1664,9 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = 'all_datasets_carousel'
 
-    @classmethod
     @property
-    def doc(cls):
-        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
+    def doc(self):
+        return DatasetCardFetcher.generate_alphabet_index(self.dataset_names)
 
     @classmethod
     def fetch_dataset_names(cls):
