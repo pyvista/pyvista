@@ -7293,6 +7293,86 @@ _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
 )
 
 
+def download_reservoir(load=True):  # pragma: no cover
+    """Download the UNISIM-II-D reservoir model.
+
+    UNISIM-II is a synthetic carbonate reservoir model created by
+    UNISIM-CEPETRO-Unicamp. The dataset can be used to compare methodologies
+    and performance of different techniques, simulators, algorithms, among others.
+    See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
+
+    This dataset is licenced under the Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ExplicitStructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load and plot dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_reservoir()
+    >>> dataset
+    ExplicitStructuredGrid (...)
+      N Cells:    47610
+      N Points:   58433
+      X Bounds:   3.104e+05, 3.177e+05
+      Y Bounds:   7.477e+06, 7.486e+06
+      Z Bounds:   -2.472e+03, -1.577e+03
+      N Arrays:   6
+
+
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(dataset, show_edges=True)
+    >>> camera = plot.camera
+    >>> camera.position = (312452, 7474760, 3507)
+    >>> camera.focal_point = (314388, 7481520, -2287)
+    >>> camera.up = (0.09, 0.63, 0.77)
+    >>> camera.distance = 9112
+    >>> camera.clipping_range = (595, 19595)
+    >>> plot.show()
+
+    .. seealso::
+
+        :ref:`Reservoir Dataset <reservoir_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_reservoir, load=load)
+
+
+def _reservoir_load_func(grid):  # pragma: no cover
+    # See loading steps from this example:
+    # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
+    grid.ComputeFacesConnectivityFlagsArray()
+    grid.set_active_scalars('ConnectivityFlags')
+
+    # Remove misc data fields stored with the dataset
+    grid.field_data.remove('dimensions')
+    grid.field_data.remove('name')
+    grid.field_data.remove('properties')
+    grid.field_data.remove('filename')
+
+    return grid
+
+
+_dataset_reservoir = _SingleFileDownloadableDatasetLoader(
+    'reservoir/UNISIM-II-D.zip',
+    target_file='UNISIM-II-D.vtu',
+    read_func=pyvista.ExplicitStructuredGrid,
+    load_func=_reservoir_load_func,
+)
+
+
 def download_whole_body_ct_male(load=True):  # pragma: no cover
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
