@@ -27,6 +27,7 @@ Reader Classes
     BYUReader
     BinaryMarchingCubesReader
     CGNSReader
+    CompositeDataReader
     DEMReader
     DICOMReader
     EnSightReader
@@ -58,8 +59,10 @@ Reader Classes
     TecplotReader
     VTKDataSetReader
     VTKPDataSetReader
+    XdmfReader
     XMLImageDataReader
     XMLMultiBlockDataReader
+    XMLPartitionedDataSetReader
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
@@ -67,8 +70,6 @@ Reader Classes
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
-    XdmfReader
-    XMLPartitionedDataSetReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~
