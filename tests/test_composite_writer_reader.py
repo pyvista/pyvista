@@ -26,7 +26,7 @@ def test_partitions_collection(tmpdir):
     c.SetPartitionedDataSet(0, p)
     c.SetPartitionedDataSet(1, p2)
 
-    fname = tmpdir + "/testcompowriread.vtk"
+    fname = tmpdir + "/testcompowriread.vthb"
     c.save(fname)
 
     r = il.vtkCompositeDataReader()

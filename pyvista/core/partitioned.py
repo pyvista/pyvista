@@ -258,5 +258,5 @@ class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObj
     """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
 
     _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
-        ".vtk": _vtk.vtkCompositeDataWriter
+        ".vthb": _vtk.vtkCompositeDataWriter
     }
