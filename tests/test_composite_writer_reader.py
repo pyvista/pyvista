@@ -27,10 +27,7 @@ def test_partitions_collection(tmpdir):
     c.SetPartitionedDataSet(1, p2)
 
     fname = tmpdir + "/testcompowriread.vtk"
-    w = il.vtkCompositeDataWriter()
-    w.SetInputData(c)
-    w.SetFileName(fname)
-    w.Write()
+    c.save(fname)
 
     r = il.vtkCompositeDataReader()
     r.SetFileName(fname)
