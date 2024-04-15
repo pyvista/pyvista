@@ -1024,17 +1024,17 @@ def test_compositedatareader(tmpdir):
             pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])),
         ],
     )
-    c = pv.PartitionedDataSetCollection()
-    c.SetPartitionedDataSet(0, partitions)
-    c.SetPartitionedDataSet(1, partitions.copy())
-    c.save(tmpfile.strpath)
+    collection = pv.PartitionedDataSetCollection()
+    collection.SetPartitionedDataSet(0, partitions)
+    collection.SetPartitionedDataSet(1, partitions.copy())
+    collection.save(tmpfile.strpath)
     o = pv.read(tmpfile.strpath)
     assert o.IsA("vtkPartitionedDataSetCollection")
     number_of_datasets = o.GetNumberOfPartitionedDataSets()
     assert number_of_datasets == 2
     for i in range(number_of_datasets):
         partitions = o.GetPartitionedDataSet(i)
-        p2 = c.GetPartitionedDataSet(i)
+        p2 = collection.GetPartitionedDataSet(i)
         assert partitions.IsA("vtkPartitionedDataSet")
         assert partitions.GetNumberOfPartitions() == 2
         assert (
