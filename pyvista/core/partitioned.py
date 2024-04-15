@@ -1,7 +1,7 @@
 """Contains the PartitionedDataSet class."""
 
 import collections.abc
-from typing import ClassVar, Dict, Iterable, Optional, Type, Union, overload
+from typing import Iterable, Optional, Union, overload
 
 from . import _vtk_core as _vtk
 from .dataset import DataObject, DataSet
@@ -257,9 +257,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObject):
     """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
 
-    _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkXMLPartitionedDataSetCollectionWriter]]] = {
-        ".vtpc": _vtk.vtkXMLPartitionedDataSetCollectionWriter,
-    }
+    if _vtk.vtk_version_info >= (9, 1):
+        _WRITERS = {".vtpc": _vtk.vtkXMLPartitionedDataSetCollectionWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSetCollection."""
