@@ -257,8 +257,8 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
 class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObject):
     """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
 
-    _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
-        ".vtpc": _vtk.vtkCompositeDataWriter,
+    _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkXMLPartitionedDataSetCollectionWriter]]] = {
+        ".vtpc": _vtk.vtkXMLPartitionedDataSetCollectionWriter,
     }
 
     def __init__(self, *args, **kwargs):

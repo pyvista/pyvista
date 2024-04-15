@@ -27,7 +27,6 @@ Reader Classes
     BYUReader
     BinaryMarchingCubesReader
     CGNSReader
-    CompositeDataReader
     DEMReader
     DICOMReader
     EnSightReader
@@ -64,6 +63,7 @@ Reader Classes
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
+    XMLPartitionedDataSetCollectionReader
     XMLPartitionedDataSetReader
     XMLPolyDataReader
     XMLRectilinearGridReader

@@ -346,8 +346,6 @@ with contextlib.suppress(ImportError):
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
-    vtkCompositeDataReader,
-    vtkCompositeDataWriter,
     vtkDataReader,
     vtkDataSetReader,
     vtkDataSetWriter,
@@ -363,11 +361,13 @@ from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridWriter,
 )
 from vtkmodules.vtkIOPLY import vtkPLYReader, vtkPLYWriter
+from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 from vtkmodules.vtkIOXML import (
     vtkXMLImageDataReader,
     vtkXMLImageDataWriter,
     vtkXMLMultiBlockDataReader,
     vtkXMLMultiBlockDataWriter,
+    vtkXMLPartitionedDataSetCollectionReader,
     vtkXMLPartitionedDataSetReader,
     vtkXMLPImageDataReader,
     vtkXMLPolyDataReader,
