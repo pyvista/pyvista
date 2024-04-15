@@ -278,13 +278,13 @@ class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObj
         This is performed in place.
 
         """
-        for i in range(self.n_partitioned_datasets):
+        for i in range(self.n_pdatasets):
             partition = self.GetPartitionedDataSet(i)
             if not is_pyvista_dataset(partition):
                 self.SetPartitionedDataSet(i, wrap(partition))
 
     @property
-    def n_partitioned_datasets(self) -> int:
+    def n_pdatasets(self) -> int:
         """Return the number of partitioned datasets.
 
         Returns
