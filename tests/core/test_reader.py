@@ -1028,14 +1028,15 @@ def test_compositedatareader(tmpdir):
     collection.SetPartitionedDataSet(0, partitions)
     collection.SetPartitionedDataSet(1, partitions.copy())
     collection.save(tmpfile.strpath)
-    o = pv.read(tmpfile.strpath)
-    assert isinstance(o, pv.PartitionedDataSetCollection)
-    assert o.GetNumberOfPartitionedDataSets() == 2
-    for i in range(o.GetNumberOfPartitionedDataSets()):
-        partitions = o.GetPartitionedDataSet(i)
+    new_collection = pv.read(tmpfile.strpath)
+    assert isinstance(new_collection, pv.PartitionedDataSetCollection)
+    assert new_collection.GetNumberOfPartitionedDataSets() == 2
+    for i in range(new_collection.GetNumberOfPartitionedDataSets()):
+        new_partitions = new_collection.GetPartitionedDataSet(i)
         p2 = collection.GetPartitionedDataSet(i)
-        assert partitions.IsA("vtkPartitionedDataSet")
-        assert partitions.GetNumberOfPartitions() == 2
+        assert new_partitions.IsA("vtkPartitionedDataSet")
+        assert new_partitions.GetNumberOfPartitions() == 2
         assert (
-            partitions.GetPartition(0).GetNumberOfCells() == p2.GetPartition(0).GetNumberOfCells()
+            new_partitions.GetPartition(0).GetNumberOfCells()
+            == p2.GetPartition(0).GetNumberOfCells()
         )
