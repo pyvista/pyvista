@@ -1035,7 +1035,7 @@ def test_compositedatareader(tmpdir):
     c.SetPartitionedDataSet(0, partitions)
     c.SetPartitionedDataSet(1, p2)
 
-    fname = tmpdir.join("testcompowriread.vtcd")
+    fname = tmpdir.join("testcompowriread.vtpc")
     c.save(fname)
 
     o = pv.read(fname)
