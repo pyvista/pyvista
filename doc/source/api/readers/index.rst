@@ -61,7 +61,6 @@ Reader Classes
     VTKPDataSetReader
     XMLImageDataReader
     XMLMultiBlockDataReader
-    XMLPartitionedDataSetReader
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
