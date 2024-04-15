@@ -270,3 +270,26 @@ class PartitionedDataSetCollection(_vtk.vtkPartitionedDataSetCollection, DataObj
                     self.deep_copy(args[0])
                 else:
                     raise PartitionedDataSetsNotSupported
+        self.wrap_nested()
+
+    def wrap_nested(self):
+        """Ensure that all nested data structures are wrapped as PyVista datasets.
+
+        This is performed in place.
+
+        """
+        for i in range(self.n_partitioned_datasets):
+            partition = self.GetPartitionedDataSet(i)
+            if not is_pyvista_dataset(partition):
+                self.SetPartitionedDataSet(i, wrap(partition))
+
+    @property
+    def n_partitioned_datasets(self) -> int:
+        """Return the number of partitioned datasets.
+
+        Returns
+        -------
+        int
+            The number of partitioned datasets.
+        """
+        return self.GetNumberOfPartitionedDataSets()
