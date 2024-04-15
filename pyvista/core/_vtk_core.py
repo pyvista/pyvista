@@ -361,7 +361,6 @@ from vtkmodules.vtkIOLegacy import (
     vtkUnstructuredGridWriter,
 )
 from vtkmodules.vtkIOPLY import vtkPLYReader, vtkPLYWriter
-from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 from vtkmodules.vtkIOXML import (
     vtkXMLImageDataReader,
     vtkXMLImageDataWriter,
@@ -435,6 +434,10 @@ with contextlib.suppress(ImportError):
 # 9.1+ imports
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
+
+# 9.1+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 
 
 def VTKVersionInfo():
