@@ -1032,8 +1032,8 @@ def test_compositedatareader(tmpdir):
     assert isinstance(new_collection, pv.PartitionedDataSetCollection)
     assert new_collection.n_partitioned_datasets == collection.n_partitioned_datasets
     for i in range(new_collection.n_partitioned_datasets):
-        new_partitions = pv.wrap(new_collection.GetPartitionedDataSet(i))
-        partitions = pv.wrap(collection.GetPartitionedDataSet(i))
+        new_partitions = new_collection.GetPartitionedDataSet(i)
+        partitions = collection.GetPartitionedDataSet(i)
         assert isinstance(new_partitions, pv.PartitionedDataSet)
         assert new_partitions.n_partitions == 2
         assert new_partitions[0].n_cells == partitions[0].n_cells
