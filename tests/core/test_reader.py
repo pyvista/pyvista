@@ -1012,6 +1012,10 @@ def test_xmlpartitioneddatasetreader(tmpdir):
         assert new_partitions[i].n_cells == partitions[i].n_cells
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete XMLPartitionedDataSetCollectionReader class.",
+)
 def test_compositedatareader(tmpdir):
     partitions = pv.PartitionedDataSet()
 
