@@ -1017,16 +1017,8 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     reason="Requires VTK>=9.1.0 for a concrete XMLPartitionedDataSetCollectionReader class.",
 )
 def test_compositedatareader(tmpdir):
-    s = pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])
-
-    p1 = pv.ImageData()
-    p1.ShallowCopy(s)
-
-    s = pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])
-
-    p2 = pv.ImageData()
-    p2.ShallowCopy(s)
-
+    p1 = pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 0, 5]))
+    p2 = pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 5, 10]))
     partitions = pv.PartitionedDataSet([p1, p2])
 
     p2 = pv.PartitionedDataSet()
