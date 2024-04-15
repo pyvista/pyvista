@@ -231,7 +231,7 @@ class BaseViewer:
                         ren.axes_widget
                         for ren in self.plotter.renderers
                         if hasattr(ren, 'axes_widget')
-                    ]
+                    ],
                 )
         self.update()
 

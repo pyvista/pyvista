@@ -666,7 +666,7 @@ class CellArray(_vtk.vtkCellArray):
                     f"Cell array size is invalid. Size ({cells.size}) does not"
                     f" match expected size ({imported_size}). This is likely"
                     " due to invalid connectivity array."
-                )
+                ),
             )
         self.__offsets = self.__connectivity = None
 
@@ -704,7 +704,10 @@ class CellArray(_vtk.vtkCellArray):
         return _get_offset_array(self)
 
     def _set_data(
-        self, offsets: MatrixLike[int], connectivity: MatrixLike[int], deep: bool = False
+        self,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
+        deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
         vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))

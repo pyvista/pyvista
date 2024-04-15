@@ -53,6 +53,7 @@ POOCH_LOGGER.setLevel(logging.CRITICAL)
 
 CACHE_VERSION = 3
 
+
 # If available, a local vtk-data instance will be used for examples
 if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _path = os.environ['PYVISTA_VTK_DATA']
@@ -72,14 +73,16 @@ else:
     _FILE_CACHE = False
 
 # allow user to override the local path
+default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
     if not Path(os.environ['PYVISTA_USERDATA_PATH']).is_dir():
         warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
+        USER_DATA_PATH = default_user_data_path
     else:
         USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
 else:
     # use default pooch path
-    USER_DATA_PATH = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
+    USER_DATA_PATH = default_user_data_path
 
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
@@ -91,7 +94,7 @@ else:
             # Warn, don't raise just in case there's an environment issue.
             warnings.warn(
                 f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                'examples cache with the PYVISTA_USERDATA_PATH environment variable.'
+                'examples cache with the PYVISTA_USERDATA_PATH environment variable.',
             )
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
@@ -332,7 +335,8 @@ def download_masonry_texture(load=True):  # pragma: no cover
 
 
 _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
-    'masonry.bmp', read_func=read_texture
+    'masonry.bmp',
+    read_func=read_texture,
 )
 
 
@@ -604,7 +608,8 @@ def _bunny_coarse_load_func(mesh):
 
 
 _dataset_bunny_coarse = _SingleFileDownloadableDatasetLoader(
-    'Bunny.vtp', load_func=_bunny_coarse_load_func
+    'Bunny.vtp',
+    load_func=_bunny_coarse_load_func,
 )
 
 
@@ -896,7 +901,8 @@ def _bolt_nut_files_func():  # pragma: no cover
 
 
 _dataset_bolt_nut = _MultiFileDownloadableDatasetLoader(
-    _bolt_nut_files_func, load_func=_load_as_multiblock
+    _bolt_nut_files_func,
+    load_func=_load_as_multiblock,
 )
 
 
@@ -1006,7 +1012,7 @@ def download_topo_land(load=True):  # pragma: no cover
 
 
 _dataset_topo_land = _SingleFileDownloadableDatasetLoader(
-    'EarthModels/ETOPO_10min_Ice_only-land.vtp'
+    'EarthModels/ETOPO_10min_Ice_only-land.vtp',
 )
 
 
@@ -1242,7 +1248,8 @@ def download_nefertiti(load=True):  # pragma: no cover
 
 
 _dataset_nefertiti = _SingleFileDownloadableDatasetLoader(
-    'nefertiti.ply.zip', target_file='nefertiti.ply'
+    'nefertiti.ply.zip',
+    target_file='nefertiti.ply',
 )
 
 
@@ -1447,7 +1454,8 @@ def _sparse_points_reader(saved_file):  # pragma: no cover
 
 
 _dataset_sparse_points = _SingleFileDownloadableDatasetLoader(
-    'sparsePoints.txt', read_func=_sparse_points_reader
+    'sparsePoints.txt',
+    read_func=_sparse_points_reader,
 )
 
 
@@ -1795,7 +1803,8 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
 
 
 _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
-    'cake_easy.jpg', read_func=read_texture
+    'cake_easy.jpg',
+    read_func=read_texture,
 )
 
 
@@ -2881,7 +2890,8 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
 
 
 _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
-    'skybox-nz.jpg', read_func=read_texture
+    'skybox-nz.jpg',
+    read_func=read_texture,
 )
 
 
@@ -3026,7 +3036,8 @@ def _tri_quadratic_hexahedron_load_func(dataset):  # pragma: no cover
 
 
 _dataset_tri_quadratic_hexahedron = _SingleFileDownloadableDatasetLoader(
-    'TriQuadraticHexahedron.vtu', load_func=_tri_quadratic_hexahedron_load_func
+    'TriQuadraticHexahedron.vtu',
+    load_func=_tri_quadratic_hexahedron_load_func,
 )
 
 
@@ -3489,7 +3500,8 @@ def _kitchen_split_load_func(mesh):  # pragma: no cover
 
 _dataset_kitchen = _SingleFileDownloadableDatasetLoader('kitchen.vtk')
 __kitchen_split = _SingleFileDownloadableDatasetLoader(
-    'kitchen.vtk', load_func=_kitchen_split_load_func
+    'kitchen.vtk',
+    load_func=_kitchen_split_load_func,
 )
 
 
@@ -3531,10 +3543,14 @@ def _tetra_dc_mesh_files_func():  # pragma: no cover
         return mesh
 
     fwd = _SingleFileDownloadableDatasetLoader(
-        'dc-inversion.zip', target_file='mesh-forward.vtu', load_func=_fwd_load_func
+        'dc-inversion.zip',
+        target_file='mesh-forward.vtu',
+        load_func=_fwd_load_func,
     )
     inv = _SingleFileDownloadableDatasetLoader(
-        'dc-inversion.zip', target_file='mesh-inverse.vtu', load_func=_inv_load_func
+        'dc-inversion.zip',
+        target_file='mesh-inverse.vtu',
+        load_func=_inv_load_func,
     )
     return fwd, inv
 
@@ -3791,7 +3807,8 @@ def download_crater_imagery(load=True):  # pragma: no cover
 
 
 _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
-    'BJ34_GeoTifv1-04_crater_clip.tif', read_func=read_texture
+    'BJ34_GeoTifv1-04_crater_clip.tif',
+    read_func=read_texture,
 )
 
 
@@ -3825,7 +3842,8 @@ def download_dolfin(load=True):  # pragma: no cover
 
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
-    'dolfin_fine.xml', read_func=functools.partial(read, file_format='dolfin-xml')
+    'dolfin_fine.xml',
+    read_func=functools.partial(read, file_format='dolfin-xml'),
 )
 
 
@@ -3874,7 +3892,8 @@ def _damavand_volcano_load_func(volume):  # pragma: no cover
 
 
 _dataset_damavand_volcano = _SingleFileDownloadableDatasetLoader(
-    'damavand-volcano.vtk', load_func=_damavand_volcano_load_func
+    'damavand-volcano.vtk',
+    load_func=_damavand_volcano_load_func,
 )
 
 
@@ -4100,7 +4119,8 @@ def download_rgba_texture(load=True):  # pragma: no cover
 
 
 _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
-    'alphachannel.png', read_func=read_texture
+    'alphachannel.png',
+    read_func=read_texture,
 )
 
 
@@ -4188,7 +4208,8 @@ def _sky_box_cube_map_files_func():
 
 
 _dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
-    files_func=_sky_box_cube_map_files_func, load_func=_load_as_cubemap
+    files_func=_sky_box_cube_map_files_func,
+    load_func=_load_as_cubemap,
 )
 
 
@@ -4238,7 +4259,9 @@ def download_cubemap_park():  # pragma: no cover
 
 
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
-    'cubemap_park/cubemap_park.zip', target_file='', read_func=_load_as_cubemap
+    'cubemap_park/cubemap_park.zip',
+    target_file='',
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4291,7 +4314,9 @@ def download_cubemap_space_4k():  # pragma: no cover
 
 
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
-    'cubemap_space/4k.zip', target_file='', read_func=_load_as_cubemap
+    'cubemap_space/4k.zip',
+    target_file='',
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4350,7 +4375,9 @@ def download_cubemap_space_16k():  # pragma: no cover
 
 
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
-    'cubemap_space/16k.zip', target_file='', read_func=_load_as_cubemap
+    'cubemap_space/16k.zip',
+    target_file='',
+    read_func=_load_as_cubemap,
 )
 
 
@@ -4384,7 +4411,8 @@ def download_backward_facing_step(load=True):  # pragma: no cover
 
 
 _dataset_backward_facing_step = _SingleFileDownloadableDatasetLoader(
-    'EnSight.zip', target_file='foam_case_0_0_0_0.case'
+    'EnSight.zip',
+    target_file='foam_case_0_0_0_0.case',
 )
 
 
@@ -4430,7 +4458,8 @@ def download_gpr_data_array(load=True):  # pragma: no cover
 
 
 _dataset_gpr_data_array = _SingleFileDownloadableDatasetLoader(
-    'gpr-example/data.npy', read_func=np.load
+    'gpr-example/data.npy',
+    read_func=np.load,
 )
 
 
@@ -4470,7 +4499,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
-    read_func=functools.partial(np.loadtxt, skiprows=1),
+    read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
     load_func=pyvista.PolyData,
 )
 
@@ -4920,7 +4949,7 @@ def _cylinder_crossflow_files_func():  # pragma: no cover
 
 
 _dataset_cylinder_crossflow = _MultiFileDownloadableDatasetLoader(
-    files_func=_cylinder_crossflow_files_func
+    files_func=_cylinder_crossflow_files_func,
 )
 
 
@@ -5109,7 +5138,8 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
 
 
 _dataset_single_sphere_animation = _SingleFileDownloadableDatasetLoader(
-    'PVD/paraview/singleSphereAnimation.zip', target_file='singleSphereAnimation.pvd'
+    'PVD/paraview/singleSphereAnimation.zip',
+    target_file='singleSphereAnimation.pvd',
 )
 
 
@@ -5168,7 +5198,8 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
 
 
 _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
-    'PVD/paraview/dualSphereAnimation.zip', target_file='dualSphereAnimation.pvd'
+    'PVD/paraview/dualSphereAnimation.zip',
+    target_file='dualSphereAnimation.pvd',
 )
 
 
@@ -5222,7 +5253,8 @@ def _osmnx_graph_read_func(filename):  # pragma: no cover
 
 
 _dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
-    'osmnx_graph.p', read_func=_osmnx_graph_read_func
+    'osmnx_graph.p',
+    read_func=_osmnx_graph_read_func,
 )
 
 
@@ -5261,7 +5293,8 @@ def download_cavity(load=True):  # pragma: no cover
 
 
 _dataset_cavity = _SingleFileDownloadableDatasetLoader(
-    'OpenFOAM.zip', target_file='cavity/case.foam'
+    'OpenFOAM.zip',
+    target_file='cavity/case.foam',
 )
 
 
@@ -5458,7 +5491,8 @@ def download_pump_bracket(load=True):  # pragma: no cover
 
 
 _dataset_pump_bracket = _SingleFileDownloadableDatasetLoader(
-    'fea/pump_bracket/pump_bracket.zip', target_file='pump_bracket.vtk'
+    'fea/pump_bracket/pump_bracket.zip',
+    target_file='pump_bracket.vtk',
 )
 
 
@@ -5543,16 +5577,19 @@ def download_electronics_cooling(load=True):  # pragma: no cover
 
 def _electronics_cooling_files_func():  # pragma: no cover
     _structure = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip', target_file='structure.vtp'
+        'fvm/cooling_electronics/datasets.zip',
+        target_file='structure.vtp',
     )
     _air = _SingleFileDownloadableDatasetLoader(
-        'fvm/cooling_electronics/datasets.zip', target_file='air.vtu'
+        'fvm/cooling_electronics/datasets.zip',
+        target_file='air.vtu',
     )
     return _structure, _air
 
 
 _dataset_electronics_cooling = _MultiFileDownloadableDatasetLoader(
-    _electronics_cooling_files_func, load_func=_load_as_multiblock
+    _electronics_cooling_files_func,
+    load_func=_load_as_multiblock,
 )
 
 
@@ -5605,7 +5642,7 @@ def _dataset_can_files_func():  # pragma: no cover
     if pyvista.vtk_version_info > (9, 1):
         raise VTKVersionError(
             'This example file is deprecated for VTK v9.2.0 and newer. '
-            'Use `download_can_crushed_hdf` instead.'
+            'Use `download_can_crushed_hdf` instead.',
         )
     can_0 = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
     can_1 = _SingleFileDownloadableDatasetLoader('hdf/can_1.hdf')
@@ -5614,7 +5651,8 @@ def _dataset_can_files_func():  # pragma: no cover
 
 
 _dataset_can = _MultiFileDownloadableDatasetLoader(
-    files_func=_dataset_can_files_func, load_func=_load_and_merge
+    files_func=_dataset_can_files_func,
+    load_func=_load_and_merge,
 )
 __can_partial = _SingleFileDownloadableDatasetLoader('hdf/can_0.hdf')
 
@@ -5850,7 +5888,8 @@ def _cgns_multi_read_func(filename):  # pragma: no cover
 
 
 _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
-    'cgns/multi.cgns', read_func=_cgns_multi_read_func
+    'cgns/multi.cgns',
+    read_func=_cgns_multi_read_func,
 )
 
 
@@ -5913,7 +5952,8 @@ def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  #
 
 
 _dataset_dicom_stack = _SingleFileDownloadableDatasetLoader(
-    'DICOM_Stack/data.zip', target_file='data'
+    'DICOM_Stack/data.zip',
+    target_file='data',
 )
 
 
@@ -5947,7 +5987,8 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
 
 _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
-    'parched_canal_4k.hdr', read_func=read_texture
+    'parched_canal_4k.hdr',
+    read_func=read_texture,
 )
 
 
@@ -6148,7 +6189,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
 
 
 _dataset_particles_lethe = _SingleFileDownloadableDatasetLoader(
-    'lethe/result_particles.20000.0000.vtu'
+    'lethe/result_particles.20000.0000.vtu',
 )
 
 
@@ -6261,7 +6302,9 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 
 
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
-    'point-clouds/findus23/halo_low_res.npy', read_func=np.load, load_func=pyvista.PointSet
+    'point-clouds/findus23/halo_low_res.npy',
+    read_func=np.load,
+    load_func=pyvista.PointSet,
 )
 
 
@@ -6324,7 +6367,9 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 
 
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
-    'point-clouds/findus23/halo_high_res.npy', read_func=np.load, load_func=pyvista.PointSet
+    'point-clouds/findus23/halo_high_res.npy',
+    read_func=np.load,
+    load_func=pyvista.PointSet,
 )
 
 
@@ -6395,7 +6440,7 @@ def download_stars_cloud_hyg(load=True):  # pragma: no cover
 
 
 _dataset_stars_cloud_hyg = _SingleFileDownloadableDatasetLoader(
-    'point-clouds/hyg-database/stars.vtp'
+    'point-clouds/hyg-database/stars.vtp',
 )
 
 
@@ -6576,7 +6621,8 @@ def download_black_vase(load=True):  # pragma: no cover
 
 
 _dataset_black_vase = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/blackVase.zip', target_file='blackVase.vtp'
+    'ivan-nikolov/blackVase.zip',
+    target_file='blackVase.vtp',
 )
 
 
@@ -6638,7 +6684,8 @@ def download_ivan_angel(load=True):  # pragma: no cover
 
 
 _dataset_ivan_angel = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/Angel.zip', target_file='Angel.vtp'
+    'ivan-nikolov/Angel.zip',
+    target_file='Angel.vtp',
 )
 
 
@@ -6695,7 +6742,8 @@ def download_bird_bath(load=True):  # pragma: no cover
 
 
 _dataset_bird_bath = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/birdBath.zip', target_file='birdBath.vtp'
+    'ivan-nikolov/birdBath.zip',
+    target_file='birdBath.vtp',
 )
 
 
@@ -6812,7 +6860,8 @@ def download_plastic_vase(load=True):  # pragma: no cover
 
 
 _dataset_plastic_vase = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/plasticVase.zip', target_file='plasticVase.vtp'
+    'ivan-nikolov/plasticVase.zip',
+    target_file='plasticVase.vtp',
 )
 
 
@@ -6869,7 +6918,8 @@ def download_sea_vase(load=True):  # pragma: no cover
 
 
 _dataset_sea_vase = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/seaVase.zip', target_file='seaVase.vtp'
+    'ivan-nikolov/seaVase.zip',
+    target_file='seaVase.vtp',
 )
 
 
@@ -6912,7 +6962,8 @@ def _dikhololo_night_load_func(texture):  # pragma: no cover
 
 
 _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
-    'dikhololo_night_4k.hdr', read_func=read_texture
+    'dikhololo_night_4k.hdr',
+    read_func=read_texture,
 )
 
 
@@ -6966,7 +7017,7 @@ def download_cad_model_case(load=True):  # pragma: no cover
 
 
 _dataset_cad_model_case = _SingleFileDownloadableDatasetLoader(
-    'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp'
+    'cad/4947746/Vented_Rear_Case_With_Pi_Supports.vtp',
 )
 
 
@@ -7238,5 +7289,345 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
 
 
 _dataset_victorian_goblet_face_illusion = _SingleFileDownloadableDatasetLoader(
-    'Victorian_Goblet_face_illusion/Vase.stl'
+    'Victorian_Goblet_face_illusion/Vase.stl',
+)
+
+
+def download_reservoir(load=True):  # pragma: no cover
+    """Download the UNISIM-II-D reservoir model.
+
+    UNISIM-II is a synthetic carbonate reservoir model created by
+    UNISIM-CEPETRO-Unicamp. The dataset can be used to compare methodologies
+    and performance of different techniques, simulators, algorithms, among others.
+    See more at https://www.unisim.cepetro.unicamp.br/benchmarks/br/unisim-ii/overview
+
+    This dataset is licenced under the Database Contents License: http://opendatacommons.org/licenses/dbcl/1.0/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ExplicitStructuredGrid or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load and plot dataset.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_reservoir()
+    >>> dataset
+    ExplicitStructuredGrid (...)
+      N Cells:    47610
+      N Points:   58433
+      X Bounds:   3.104e+05, 3.177e+05
+      Y Bounds:   7.477e+06, 7.486e+06
+      Z Bounds:   -2.472e+03, -1.577e+03
+      N Arrays:   6
+
+
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(dataset, show_edges=True)
+    >>> camera = plot.camera
+    >>> camera.position = (312452, 7474760, 3507)
+    >>> camera.focal_point = (314388, 7481520, -2287)
+    >>> camera.up = (0.09, 0.63, 0.77)
+    >>> camera.distance = 9112
+    >>> camera.clipping_range = (595, 19595)
+    >>> plot.show()
+
+    .. seealso::
+
+        :ref:`Reservoir Dataset <reservoir_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_reservoir, load=load)
+
+
+def _reservoir_load_func(grid):  # pragma: no cover
+    # See loading steps from this example:
+    # https://examples.vtk.org/site/Python/ExplicitStructuredGrid/LoadESGrid/
+    grid.ComputeFacesConnectivityFlagsArray()
+    grid.set_active_scalars('ConnectivityFlags')
+
+    # Remove misc data fields stored with the dataset
+    grid.field_data.remove('dimensions')
+    grid.field_data.remove('name')
+    grid.field_data.remove('properties')
+    grid.field_data.remove('filename')
+
+    return grid
+
+
+_dataset_reservoir = _SingleFileDownloadableDatasetLoader(
+    'reservoir/UNISIM-II-D.zip',
+    target_file='UNISIM-II-D.vtu',
+    read_func=pyvista.ExplicitStructuredGrid,
+    load_func=_reservoir_load_func,
+)
+
+
+def download_whole_body_ct_male(load=True):  # pragma: no cover
+    r"""Download a CT image of a male subject with 117 segmented anatomic structures.
+
+    This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
+
+    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+
+    The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
+
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
+
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
+
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
+
+        .. note::
+
+            The label map is not part of the original data source.
+
+    Licensed under Creative Commons Attribution 4.0 International.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset and get some of its properties.
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_whole_body_ct_male()
+
+    Get the CT image
+
+    >>> ct_image = dataset['ct']
+    >>> ct_image
+    ImageData (...)
+      N Cells:      55561506
+      N Points:     56012800
+      X Bounds:     0.000e+00, 4.785e+02
+      Y Bounds:     0.000e+00, 4.785e+02
+      Z Bounds:     0.000e+00, 8.190e+02
+      Dimensions:   320, 320, 547
+      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Arrays:     1
+
+    Get the segmentation label names and show the first three
+
+    >>> segmentations = dataset['segmentations']
+    >>> label_names = segmentations.keys()
+    >>> label_names[:3]
+    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    Get the label map and show its data range
+
+    >>> label_map = dataset['label_map']
+    >>> label_map.get_data_range()
+    (0, 117)
+
+    Create a surface mesh of the segmentation labels
+
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+
+    Plot the CT image and segmentation labels together.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_9",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            Similar dataset of a female subject.
+
+        :ref:`medical_dataset_gallery`
+            Browse other medical datasets.
+
+    """
+    return _download_dataset(_dataset_whole_body_ct_male, load=load)
+
+
+def _whole_body_ct_load_func(dataset):  # pragma: no cover
+    # Process the dataset to create a label map from the segmentation masks
+
+    segmentations = dataset['segmentations']
+
+    # Create label map array from segmentation masks
+    # Initialize array with background values (zeros)
+    label_map_array = np.zeros((segmentations[0].n_points,), dtype=np.uint8)
+    label_names = sorted(segmentations.keys())
+    for i, name in enumerate(label_names):
+        label_map_array[segmentations[name].active_scalars == 1] = i + 1
+
+    # Add scalars to a new image
+    label_map_image = segmentations[0].copy()
+    label_map_image.clear_data()
+    label_map_image['label_map'] = label_map_array
+
+    # Add label map to dataset
+    dataset['label_map'] = label_map_image
+
+    return dataset
+
+
+_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
+    'whole_body_ct/s1397.zip',
+    target_file='s1397',
+    load_func=_whole_body_ct_load_func,
+)
+
+
+def download_whole_body_ct_female(load=True):  # pragma: no cover
+    r"""Download a CT image of a female subject with 117 segmented anatomic structures.
+
+    This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
+    available from `zenodo <https://zenodo.org/records/10047292>`_. See the
+    original paper for details:
+
+    Jakob Wasserthal et al., “TotalSegmentator: Robust Segmentation of 104 Anatomic
+    Structures in CT Images,” Radiology, Jul. 2023, doi: https://doi.org/10.1148/ryai.230024.
+
+    The dataset is loaded as a :class:`~pyvista.MultiBlock` with three blocks:
+
+    -   ``'ct'``: :class:`~pyvista.ImageData` with CT data.
+
+    -   ``'segmentations'``: :class:`~pyvista.MultiBlock` with 117 :class:`~pyvista.ImageData`
+        blocks, each containing a binary segmentation label. The blocks are named by
+        their anatomic structure (e.g. ``'heart'``) and are sorted alphabetically. See the
+        examples below for a complete list label names.
+
+    -   ``'label_map'``: :class:`~pyvista.ImageData` with a label map array. The
+        label map is an alternative representation of the segmentation where
+        the masks are combined into a single scalar array.
+
+        .. note::
+
+            The label map is not part of the original data source.
+
+    Licensed under Creative Commons Attribution 4.0 International.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    Load the dataset
+
+    >>> from pyvista import examples
+    >>> import pyvista as pv
+    >>> dataset = examples.download_whole_body_ct_female()
+
+    Get the names of the dataset's blocks
+
+    >>> dataset.keys()
+    ['ct', 'segmentations', 'label_map']
+
+    Get the CT image
+
+    >>> ct_image = dataset['ct']
+    >>> ct_image
+    ImageData (...)
+      N Cells:      55154462
+      N Points:     55603200
+      X Bounds:     0.000e+00, 4.785e+02
+      Y Bounds:     0.000e+00, 4.785e+02
+      Z Bounds:     0.000e+00, 8.130e+02
+      Dimensions:   320, 320, 543
+      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Arrays:     1
+
+    Get the segmentation label names and show the first three
+
+    >>> segmentations = dataset['segmentations']
+    >>> label_names = segmentations.keys()
+    >>> label_names[:3]
+    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+    Get the label map and show its data range
+
+    >>> label_map = dataset['label_map']
+    >>> label_map.get_data_range()
+    (0, 117)
+
+    Create a surface mesh of the segmentation labels
+
+    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+
+    Plot the CT image and segmentation labels together.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_volume(
+    ...     ct_image,
+    ...     cmap="bone",
+    ...     opacity="sigmoid_7",
+    ...     show_scalar_bar=False,
+    ... )
+    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> pl.view_zx()
+    >>> pl.camera.up = (0, 0, 1)
+    >>> pl.camera.zoom(1.3)
+    >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
+            Similar dataset of a male subject.
+
+        :ref:`medical_dataset_gallery`
+            Browse other medical datasets.
+
+    """
+    return _download_dataset(_dataset_whole_body_ct_female, load=load)
+
+
+_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
+    'whole_body_ct/s1380.zip',
+    target_file='s1380',
+    load_func=_whole_body_ct_load_func,
 )

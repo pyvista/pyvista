@@ -16,7 +16,8 @@ def default_theme():
 
 
 @pytest.mark.parametrize(
-    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
+    'parm',
+    [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm

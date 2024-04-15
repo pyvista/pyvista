@@ -309,7 +309,7 @@ class Property(_vtk.vtkProperty):
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n'
+                '\t"points"\n',
             )
 
     @property
@@ -1053,7 +1053,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"'
+                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"',
             )
 
     @property
