@@ -1030,9 +1030,8 @@ def test_compositedatareader(tmpdir):
     collection.save(tmpfile.strpath)
     o = pv.read(tmpfile.strpath)
     assert o.IsA("vtkPartitionedDataSetCollection")
-    number_of_datasets = o.GetNumberOfPartitionedDataSets()
-    assert number_of_datasets == 2
-    for i in range(number_of_datasets):
+    assert o.GetNumberOfPartitionedDataSets() == 2
+    for i in range(o.GetNumberOfPartitionedDataSets()):
         partitions = o.GetPartitionedDataSet(i)
         p2 = collection.GetPartitionedDataSet(i)
         assert partitions.IsA("vtkPartitionedDataSet")
