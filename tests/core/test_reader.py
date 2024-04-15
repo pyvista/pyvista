@@ -1033,10 +1033,10 @@ def test_compositedatareader(tmpdir):
     assert new_collection.GetNumberOfPartitionedDataSets() == 2
     for i in range(new_collection.GetNumberOfPartitionedDataSets()):
         new_partitions = new_collection.GetPartitionedDataSet(i)
-        p2 = collection.GetPartitionedDataSet(i)
+        partitions = collection.GetPartitionedDataSet(i)
         assert new_partitions.IsA("vtkPartitionedDataSet")
         assert new_partitions.GetNumberOfPartitions() == 2
         assert (
             new_partitions.GetPartition(0).GetNumberOfCells()
-            == p2.GetPartition(0).GetNumberOfCells()
+            == partitions.GetPartition(0).GetNumberOfCells()
         )
