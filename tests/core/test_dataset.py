@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+from collections import UserDict
 import json
 import multiprocessing
 import pickle
@@ -206,6 +207,11 @@ def test_user_dict():
     assert dataset.user_dict == new_dict
     assert dataset.field_data[field_name] == json.dumps(new_dict)
 
+    new_dict = UserDict(test='string')
+    dataset.user_dict = new_dict
+    assert dataset.user_dict == new_dict
+    assert dataset.field_data[field_name] == json.dumps(new_dict.data)
+
     dataset.user_dict = None
     assert field_name not in dataset.field_data.keys()
 
@@ -215,6 +221,19 @@ def test_user_dict():
     )
     with pytest.raises(TypeError, match=match):
         dataset.user_dict = 42
+
+
+@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+def test_user_dict_values(ant, value):
+    ant.user_dict['key'] = value
+    with pytest.raises(TypeError, match='not JSON serializable'):
+        ant.user_dict['key'] = np.array(value)
+
+    retrieved_value = json.loads(repr(ant.user_dict))['key']
+
+    # Round brackets '()' are saved as square brackets '[]' in JSON
+    expected_value = list(value) if isinstance(value, tuple) else value
+    assert retrieved_value == expected_value
 
 
 def test_user_dict_write_read(ant, tmp_path):

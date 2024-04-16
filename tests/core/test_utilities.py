@@ -990,7 +990,7 @@ def test_serial_dict_init():
 
     # init from JSON string
     json_dict = json.dumps(new_dict)
-    serial_dict = _SerializedDictArray(json.loads(json_dict))
+    serial_dict = _SerializedDictArray(json_dict)
     assert serial_dict['ham'] == 'eggs'
     assert repr(serial_dict) == '{"ham": "eggs"}'
 
