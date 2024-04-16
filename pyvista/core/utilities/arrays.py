@@ -5,7 +5,7 @@ import collections.abc
 import enum
 from itertools import product
 import json
-from typing import Optional, Tuple, Type, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
@@ -822,14 +822,14 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
 
 
 _JSONValueType = Union[
-    Type[dict],  # type: ignore[type-arg]
-    Type[list],  # type: ignore[type-arg]
-    Type[tuple],  # type: ignore[type-arg]
-    Type[str],
-    Type[int],
-    Type[float],
-    Type[bool],
-    Type[None],
+    dict,  # type: ignore[type-arg]
+    list,  # type: ignore[type-arg]
+    tuple,  # type: ignore[type-arg]
+    str,
+    int,
+    float,
+    bool,
+    None,
 ]
 
 
