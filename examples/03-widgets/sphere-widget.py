@@ -39,7 +39,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -79,7 +79,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -119,9 +119,9 @@ def get_colors(n):
     """A helper function to get n colors"""
     from itertools import cycle
 
-    import matplotlib
+    import matplotlib as mpl
 
-    cycler = matplotlib.rcParams['axes.prop_cycle']
+    cycler = mpl.rcParams['axes.prop_cycle']
     colors = cycle(cycler)
     colors = [next(colors)['color'] for i in range(n)]
     return colors

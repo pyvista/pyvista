@@ -903,7 +903,10 @@ def check_iterable_items(
     try:
         any(
             check_instance(
-                item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
+                item,
+                item_type,
+                allow_subclass=allow_subclass,
+                name=f"All items of {name}",
             )
             for item in iterable_obj
         )
@@ -1040,7 +1043,7 @@ def check_length(
         if len(arr) not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
     # Validate min/max length
@@ -1059,13 +1062,13 @@ def check_length(
         if len(arr) < min_length:
             raise ValueError(
                 f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
     if max_length is not None:
         if len(arr) > max_length:
             raise ValueError(
                 f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
 

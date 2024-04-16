@@ -96,7 +96,7 @@ def test_init_from_arrays_with_vert(faces_is_cell_array):
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]],  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
     if faces_is_cell_array:
         faces = pv.CellArray(faces)
@@ -246,7 +246,10 @@ def test_verts(verts_is_cell_array):
     verts = [2, 0, 1, 1, 2]
     mesh = pv.PolyData(vertices, verts=pv.CellArray(verts) if verts_is_cell_array else verts)
     _assert_verts_equal(
-        mesh, verts, n_verts=2, cell_types={0: pv.CellType.POLY_VERTEX, 1: pv.CellType.VERTEX}
+        mesh,
+        verts,
+        n_verts=2,
+        cell_types={0: pv.CellType.POLY_VERTEX, 1: pv.CellType.VERTEX},
     )
 
 
@@ -309,7 +312,9 @@ def test_geodesic_distance(sphere):
 
     # Use scalar weights
     distance_use_scalar_weights = sphere.geodesic_distance(
-        0, sphere.n_points - 1, use_scalar_weights=True
+        0,
+        sphere.n_points - 1,
+        use_scalar_weights=True,
     )
     assert isinstance(distance_use_scalar_weights, float)
 
@@ -463,9 +468,9 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.active_scalars_name == 'Distance'
 
 
-@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_active_scalars(input):
-    mesh1 = input.copy()
+@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_active_scalars(input_):
+    mesh1 = input_.copy()
     mesh1['foo'] = np.arange(mesh1.n_points)
     mesh2 = mesh1.copy()
 
@@ -506,9 +511,9 @@ def test_merge_active_scalars(input):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_main_has_priority(input):
-    mesh = input.copy()
+@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_main_has_priority(input_):
+    mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
@@ -545,7 +550,10 @@ def test_add(sphere, sphere_shifted):
 
 def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=True, split_second=True, progress_bar=True
+        sphere_shifted,
+        split_first=True,
+        split_second=True,
+        progress_bar=True,
     )
 
     assert intersection.n_points
@@ -553,7 +561,10 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points > sphere_shifted.n_points
 
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=False, split_second=False, progress_bar=True
+        sphere_shifted,
+        split_first=False,
+        split_second=False,
+        progress_bar=True,
     )
     assert intersection.n_points
     assert first.n_points == sphere.n_points
@@ -784,7 +795,10 @@ def test_face_normals(sphere):
 
 def test_clip_plane(sphere):
     clipped_sphere = sphere.clip(
-        origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True
+        origin=[0, 0, 0],
+        normal=[0, 0, -1],
+        invert=False,
+        progress_bar=True,
     )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)

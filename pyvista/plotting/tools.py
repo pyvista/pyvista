@@ -572,7 +572,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -604,7 +604,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
@@ -666,9 +666,9 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib
+    import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False

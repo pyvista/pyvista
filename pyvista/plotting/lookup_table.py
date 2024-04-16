@@ -830,7 +830,10 @@ class LookupTable(_vtk.vtkLookupTable):
             self.values[:, -1] = np.array(opacity)
         else:
             self.values[:, -1] = opacity_transfer_function(
-                opacity, self.n_values, interpolate=interpolate, kind=kind
+                opacity,
+                self.n_values,
+                interpolate=interpolate,
+                kind=kind,
             )
         self._opacity_parm = (opacity, interpolate, kind)
 
@@ -900,7 +903,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.'
+                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
             )
         else:
             self.SetNumberOfColors(value)
@@ -1063,7 +1066,9 @@ class LookupTable(_vtk.vtkLookupTable):
         return opacity_tf
 
     def map_value(
-        self, value: float, opacity: bool = True
+        self,
+        value: float,
+        opacity: bool = True,
     ) -> Union[Tuple[float, float, float], Tuple[float, float, float, float]]:
         """Map a single value through the lookup table, returning an RBG(A) color.
 
@@ -1094,7 +1099,8 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[Tuple[float, float, float], Tuple[float, float, float, float]], tuple(color)
+            Union[Tuple[float, float, float], Tuple[float, float, float, float]],
+            tuple(color),
         )
 
     def __call__(self, value):

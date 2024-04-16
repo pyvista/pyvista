@@ -97,7 +97,7 @@ def slice_z_center(mesh):
 
 slice_internal_mesh = slice_z_center(internal_mesh)
 slice_boundaries = pyvista.MultiBlock(
-    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()}
+    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()},
 )
 
 ###############################################################################

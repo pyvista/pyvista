@@ -6,7 +6,7 @@ is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
 from trame.ui.vuetify2 import VAppLayout
-from trame.widgets import html, vuetify as vuetify
+from trame.widgets import html, vuetify
 from trame_client.ui.core import AbstractLayout
 
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
@@ -258,7 +258,7 @@ class Viewer(BaseViewer):
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
             raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
             )
         if mode != 'trame':
             default_server_rendering = mode == 'server'

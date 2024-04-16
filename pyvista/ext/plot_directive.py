@@ -108,6 +108,7 @@ import re
 import shutil
 import textwrap
 import traceback
+from typing import Callable, ClassVar, Dict
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
@@ -153,7 +154,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[Dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -471,7 +472,7 @@ def run(arguments, content, options, state_machine, state, lineno):
             source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
             source_file_name = str(
-                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0])
+                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -481,7 +482,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.'
+                    'Caption specified in both content and options. Please remove ambiguity.',
                 )
             # Use caption option
             caption = options["caption"]
@@ -533,7 +534,8 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # how to link to files from the RST file
     dest_dir_link = os.path.join(  # noqa: PTH118
-        relpath(setup.confdir, rst_dir), source_rel_dir
+        relpath(setup.confdir, rst_dir),
+        source_rel_dir,
     ).replace(os.path.sep, '/')
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
@@ -561,7 +563,9 @@ def run(arguments, content, options, state_machine, state, lineno):
         sm = reporter.system_message(
             2,
             "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base, source_file_name, err
+                output_base,
+                source_file_name,
+                err,
             ),
             line=lineno,
         )

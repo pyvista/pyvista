@@ -4,6 +4,7 @@ import locale
 import os
 from pathlib import Path
 import sys
+from typing import Dict
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -270,7 +271,7 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    "skipmethods": ["__init__", "override"]
+    "skipmethods": ["__init__", "override"],
 }
 
 # The suffix(es) of source filenames.
@@ -283,7 +284,7 @@ root_doc = "index"
 # General information about the project.
 project = "PyVista"
 year = datetime.date.today().year
-copyright = f"2017-{year}, The PyVista Developers"
+copyright = f"2017-{year}, The PyVista Developers"  # noqa: A001
 author = "Alex Kaszynski and Bane Sullivan"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -519,7 +520,7 @@ htmlhelp_basename = "pyvistadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
+latex_elements: Dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',

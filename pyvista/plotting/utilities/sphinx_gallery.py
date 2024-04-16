@@ -28,7 +28,9 @@ def _get_sg_image_scraper():
 
 
 def html_rst(
-    figure_list, sources_dir, srcsetpaths=None
+    figure_list,
+    sources_dir,
+    srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
@@ -199,7 +201,8 @@ class DynamicScraper:  # pragma: no cover
 
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT", False
+            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT",
+            False,
         )
         # override with block specific value if it exists
         if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):

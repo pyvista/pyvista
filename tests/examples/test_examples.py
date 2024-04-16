@@ -5,6 +5,25 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from tests.examples.test_dataset_loader import (
+    DatasetLoaderTestCase,
+    _generate_dataset_loader_test_cases_from_module,
+    _get_mismatch_fail_msg,
+)
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'test_case' in metafunc.fixturenames:
+        # Generate a separate test case for each loadable dataset
+        test_cases = _generate_dataset_loader_test_cases_from_module(pv.examples.examples)
+        ids = [case.dataset_name for case in test_cases]
+        metafunc.parametrize('test_case', test_cases, ids=ids)
+
+
+def test_dataset_loader_name_matches_function_name(test_case: DatasetLoaderTestCase):
+    if (msg := _get_mismatch_fail_msg(test_case)) is not None:
+        pytest.fail(msg)
 
 
 def test_load_nut():
