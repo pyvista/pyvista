@@ -256,6 +256,31 @@ def test_user_dict_write_read(ant, tmp_path):
     assert dict_field_repr in field_data_repr
 
 
+def test_user_dict_persists_with_merge_filter(uniform):
+    sphere1 = pv.Sphere()
+    sphere1.user_dict['name'] = 'sphere1'
+
+    sphere2 = pv.Sphere()
+    sphere2.user_dict['name'] = 'sphere2'
+
+    merged = sphere1 + sphere2
+    assert merged.user_dict['name'] == 'sphere2'
+
+
+def test_user_dict_persists_with_threshold_filter(uniform):
+    uniform.user_dict['name'] = 'uniform'
+    uniform = uniform.threshold(0.5)
+    assert uniform.user_dict['name'] == 'uniform'
+
+
+def test_user_dict_persists_with_pack_labels_filter(uniform):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
+    image.user_dict['name'] = 'image'
+    image = image.pack_labels()
+    assert image.user_dict['name'] == 'image'
+
+
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(grid, field):
     grid.add_field_data(field, 'foo')

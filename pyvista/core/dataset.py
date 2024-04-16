@@ -1869,12 +1869,11 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def user_dict(self) -> _SerializedDictArray:
-        """Set or get the user dict.
+        """Set or return a user-specified data dictionary.
 
-        The user dict is a user-specified data dictionary. The dictionary
-        is stored as a JSON-serialized string as part of the mesh's field data.
-        Unlike regular field data, which requires values to be stored as an
-        array, the user dict provides a mapping for scalar values.
+        The dictionary is stored as a JSON-serialized string as part of the mesh's
+        field data. Unlike regular field data, which requires values to be stored
+        as an array, the user dict provides a mapping for scalar values.
 
         Since the user dict is stored as field data, it is automatically saved
         with the mesh when it is saved in a compatible file format (e.g. ``'.vtk'``).
@@ -1884,7 +1883,12 @@ class DataSet(DataSetFilters, DataObject):
 
         Any JSON-serializable values are permitted by the user dict, i.e. values
         can have type ``dict``, ``list``, ``tuple``, ``str``, ``int``, ``float``,
-        ``bool``, or ``None``.
+        ``bool``, or ``None``. Storing NumPy arrays is not directly supported, but
+        these may be cast beforehand to a supported type, e.g. by calling ``tolist()``
+        on the array.
+
+        To completely remove the user dict string from the dataset's field data,
+        set its value to ``None``.
 
         .. note::
 
@@ -1896,30 +1900,39 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        _SerializedDictArray
-            Serialized dict-like object which is subclassed from collections.UserDict.
+        UserDict
+            JSON-serialized dict-like object which is subclassed from :py:class:`collections.UserDict`.
 
         Examples
         --------
-        Create a mesh
+        Load a mesh.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_ant()
 
-        Store data in the user dict. The contents are serialized as JSON.
+        Add data to the user dict. The contents are serialized as JSON.
 
-        >>> mesh.user_dict = dict(name='ant', num_legs=6)
+        >>> mesh.user_dict['name'] = 'ant'
         >>> mesh.user_dict
-        {"name": "ant", "num_legs": 6}
+        {"name": "ant"}
+
+        Alternatively, set the user dict from an existing dict.
+
+        >>> mesh.user_dict = dict(name='ant')
 
         The user dict can be updated like a regular dict.
 
-        >>> mesh.user_dict['parts'] = ['head', 'thorax', 'abdomen']
+        >>> mesh.user_dict.update(
+        ...     {
+        ...         'num_legs': 6,
+        ...         'body_parts': ['head', 'thorax', 'abdomen'],
+        ...     }
+        ... )
         >>> mesh.user_dict
-        {"name": "ant", "num_legs": 6, "parts": ["head", "thorax", "abdomen"]}
+        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
 
-        Data in the user dict is stored as field data
+        Data in the user dict is stored as field data.
 
         >>> mesh.field_data
         pyvista DataSetAttributes
@@ -1927,13 +1940,13 @@ class DataSet(DataSetFilters, DataObject):
         Contains arrays :
             _PYVISTA_USER_DICT      str        "{"name": "ant",..."
 
-        Since it's field data, the user dict can be saved to file and
-        retrieved later.
+        Since it's field data, the user dict can be saved to file along with the
+        mesh and retrieved later.
 
         >>> mesh.save('ant.vtk')
-        >>> mesh_read = pv.read('ant.vtk')
-        >>> mesh_read.user_dict
-        {"name": "ant", "num_legs": 6, "parts": ["head", "thorax", "abdomen"]}
+        >>> mesh_from_file = pv.read('ant.vtk')
+        >>> mesh_from_file.user_dict
+        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
 
         """
         self._config_user_dict()
@@ -1974,8 +1987,13 @@ class DataSet(DataSetFilters, DataObject):
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
+            elif isinstance(array, str) and repr(self._user_dict) != array:
+                # Filters may update the field data block separately, e.g.
+                # when copying field data, so we need to capture the new
+                # string and re-init
+                self._user_dict = _SerializedDictArray(array)
             else:
-                # Do nothing,
+                # User dict is correctly configured, do nothing
                 return
 
         # Set field data array directly instead of calling 'set_array'
