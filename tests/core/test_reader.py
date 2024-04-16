@@ -1024,9 +1024,7 @@ def test_compositedatareader(tmpdir):
             pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])),
         ],
     )
-    collection = pv.PartitionedDataSetCollection()
-    collection.SetPartitionedDataSet(0, partitions)
-    collection.SetPartitionedDataSet(1, partitions.copy())
+    collection = pv.PartitionedDataSetCollection([partitions, partitions.copy()])
     collection.save(tmpfile.strpath)
     new_collection = pv.read(tmpfile.strpath)
     assert isinstance(new_collection, pv.PartitionedDataSetCollection)
