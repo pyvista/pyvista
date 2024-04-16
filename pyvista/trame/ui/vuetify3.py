@@ -135,6 +135,7 @@ class Viewer(BaseViewer):
             server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
             server.state.change(self.AXIS)(self.on_axis_visiblity_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
+            server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
             button(
                 click=self.reset_camera,
@@ -196,6 +197,11 @@ class Viewer(BaseViewer):
                 classes='pa-0 ma-0 align-center fill-height',
                 style="flex-wrap: nowrap; flex: unset",
             ):
+                checkbox(
+                    model=(self.PARALLEL, False),
+                    icons=('mdi-camera-off', 'mdi-camera-switch'),
+                    tooltip=f"Toggle parallel projection ({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
+                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
