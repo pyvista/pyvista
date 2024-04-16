@@ -1,9 +1,11 @@
 """Internal array utilities."""
 
+from collections import UserDict
 import collections.abc
 import enum
 from itertools import product
-from typing import Optional, Tuple, Union
+import json
+from typing import Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -548,6 +550,15 @@ def vtk_id_list_to_array(vtk_id_list):
     return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
+def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
+    """Set object name for scalar string arrays."""
+    # This is used as a flag so that scalar arrays can be reshaped later.
+    try:
+        vtkarr.SetObjectName('scalar')
+    except AttributeError:
+        vtkarr.GetObjectName = lambda: 'scalar'
+
+
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
@@ -583,13 +594,10 @@ def convert_string_array(arr, name=None):
             )
         vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
+            arr = arr.reshape((1,))
             # distinguish scalar inputs from array inputs by
             # setting the object name
-            arr = arr.reshape((1,))
-            try:
-                vtkarr.SetObjectName('scalar')
-            except AttributeError:
-                vtkarr.GetObjectName = lambda: 'scalar'
+            _set_string_scalar_object_name(vtkarr)
 
         ########### OPTIMIZE ###########
         for val in arr:
@@ -811,3 +819,107 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
             '\t3x3 np.ndarray\n',
         )
     return transform_array
+
+
+_JSONValueType = Union[
+    Type[dict],  # type: ignore[type-arg]
+    Type[list],  # type: ignore[type-arg]
+    Type[tuple],  # type: ignore[type-arg]
+    Type[str],
+    Type[int],
+    Type[float],
+    Type[bool],
+    Type[None],
+]
+
+
+class _SerializedDictArray(UserDict[str, _JSONValueType], _vtk.vtkStringArray):
+    """Dict-like object with a JSON-serialized string array representation.
+
+    This class behaves just like a regular dict, except its contents
+    are represented internally as a JSON-formatted vtkStringArray.
+    The string array is updated dynamically any time the dict is
+    modified, such that modifying the dict will also implicitly modify
+    its JSON string representation.
+
+    Notes
+    -----
+    This class is intended for use as a dict with a small number of keys and
+    relatively small values, e.g. for storing metadata. It should not be
+    used to store frequently accessed array data with hundreds of entries.
+
+    """
+
+    @property
+    def _string(self) -> str:
+        """Get the vtkStringArray string."""
+        return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
+
+    @_string.setter
+    def _string(self, str_: str):
+        """Set the vtkStringArray to a specified string."""
+        self.SetNumberOfValues(0)  # Clear string
+        for char in str_:  # Populate string
+            self.InsertNextValue(char)
+
+    def _update_string(self):
+        """Format dict data as JSON and update the vtkStringArray."""
+        data_str = json.dumps(self.data)
+        if data_str != self._string:
+            self._string = data_str
+
+    def __repr__(self):
+        """Return JSON-formatted dict representation."""
+        return self._string
+
+    def __init__(self, dict_=None, /, **kwargs):
+        # Init from JSON string
+        if isinstance(dict_, str):
+            dict_ = json.loads(dict_)
+
+        # Init UserDict
+        super().__init__(dict_, **kwargs)
+        self._update_string()
+
+        # Flag self as a scalar string
+        # This is only needed so that the Field DatasetAttributes repr
+        # shows this array as `str`
+        _set_string_scalar_object_name(self)
+
+    # Override any/all `UserDict` or `MutableMapping` methods which mutate
+    # the dictionary. This ensures the serialized string is also updated
+    # and synced with the dict
+
+    def __setitem__(self, key, item):
+        super().__setitem__(key, item)
+        self._update_string()
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self._update_string()
+
+    def __setattr__(self, key, value):
+        object.__setattr__(self, key, value)
+        self._update_string() if key != '_string' else None
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
+        self._update_string()
+
+    def popitem(self):
+        item = super().popitem()
+        self._update_string()
+        return item
+
+    def pop(self, __key):
+        item = super().pop(__key)
+        self._update_string()
+        return item
+
+    def clear(self):
+        super().clear()
+        self._update_string()
+
+    def setdefault(self, *args, **kwargs):
+        super().setdefault(*args, **kwargs)
+        self._update_string()

@@ -1,5 +1,6 @@
 """Tests for pyvista.core.dataset."""
 
+import json
 import multiprocessing
 import pickle
 
@@ -190,6 +191,50 @@ def test_field_data_string(grid):
     returned = grid.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
+
+
+def test_user_dict():
+    field_name = '_PYVISTA_USER_DICT'
+    dataset = pv.PolyData()
+    assert field_name not in dataset.field_data.keys()
+
+    dataset.user_dict['abc'] = 123
+    assert field_name in dataset.field_data.keys()
+
+    new_dict = dict(ham='eggs')
+    dataset.user_dict = new_dict
+    assert dataset.user_dict == new_dict
+    assert dataset.field_data[field_name] == json.dumps(new_dict)
+
+    dataset.user_dict = None
+    assert field_name not in dataset.field_data.keys()
+
+    match = (
+        "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
+        "\nGot <class 'int'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        dataset.user_dict = 42
+
+
+def test_user_dict_write_read(ant, tmp_path):
+    # test dict is restored after writing to file
+    dict_data = dict(foo='bar')
+    ant.user_dict = dict_data
+
+    dict_field_repr = repr(ant.user_dict)
+    field_data_repr = repr(ant.field_data)
+    assert dict_field_repr in field_data_repr
+
+    filepath = tmp_path / 'ant.vtp'
+    ant.save(filepath)
+
+    ant_read = pv.PolyData(filepath)
+    assert ant_read.user_dict == dict_data
+
+    dict_field_repr = repr(ant.user_dict)
+    field_data_repr = repr(ant.field_data)
+    assert dict_field_repr in field_data_repr
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
