@@ -1898,6 +1898,14 @@ class DataSet(DataSetFilters, DataObject):
             values. It should not be used to store frequently accessed array data
             with many entries (a regular field data array should be used instead).
 
+        .. warning::
+
+            Field data is typically passed-through by dataset filters, and therefore
+            the user dict's items can generally be expected to persist and remain
+            unchanged in the output of filtering methods. However, this behavior is
+            not guaranteed, as it's possible that some filters may modify or clear
+            field data. Use with caution.
+
         Returns
         -------
         UserDict
