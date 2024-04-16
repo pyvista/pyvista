@@ -1888,7 +1888,7 @@ class DataSet(DataSetFilters, DataObject):
 
         .. note::
 
-            The user dict is convenience property and is intended for metadata storage.
+            The user dict is a convenience property and is intended for metadata storage.
             It has an inefficient dictionary implementation and should only be used to
             store a small number of infrequently-accessed keys with relatively small
             values. It should not be used to store frequently accessed array data
@@ -1897,7 +1897,42 @@ class DataSet(DataSetFilters, DataObject):
         Returns
         -------
         _SerializedDictArray
-            Serialized dict-like subclass of collections.UserDict.
+            Serialized dict-like object which is subclassed from collections.UserDict.
+
+        Examples
+        --------
+        Create a mesh
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_ant()
+
+        Store data in the user dict. The contents are serialized as JSON.
+
+        >>> mesh.user_dict = dict(name='ant', num_legs=6)
+        >>> mesh.user_dict
+        {"name": "ant", "num_legs": 6}
+
+        The user dict can be updated like a regular dict.
+
+        >>> mesh.user_dict['parts'] = ['head', 'thorax', 'abdomen']
+        {"name": "ant", "num_legs": 6, "parts": ["head", "thorax", "abdomen"]}
+
+        Data in the user dict is stored as field data
+
+        >>> mesh.field_data
+        pyvista DataSetAttributes
+        Association     : NONE
+        Contains arrays :
+            _PYVISTA_USER_DICT      str        "{"name": "ant",..."
+
+        Since it's field data, the user dict can be saved to file and
+        retrieved later.
+
+        >>> mesh.save('ant.vtk')
+        >>> mesh_read = pv.read('ant.vtk')
+        >>> mesh_read.user_dict
+        {"name": "ant", "num_legs": 6, "parts": ["head", "thorax", "abdomen"]}
 
         """
         self._config_user_dict()
