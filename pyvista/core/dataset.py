@@ -1916,6 +1916,7 @@ class DataSet(DataSetFilters, DataObject):
         The user dict can be updated like a regular dict.
 
         >>> mesh.user_dict['parts'] = ['head', 'thorax', 'abdomen']
+        >>> mesh.user_dict
         {"name": "ant", "num_legs": 6, "parts": ["head", "thorax", "abdomen"]}
 
         Data in the user dict is stored as field data
