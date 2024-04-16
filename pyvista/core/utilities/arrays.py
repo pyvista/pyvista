@@ -833,7 +833,9 @@ _JSONValueType = Union[
 ]
 
 
-class _SerializedDictArray(UserDict[str, _JSONValueType], _vtk.vtkStringArray):
+# TODO: add generic type annotations 'UserDict[str, _JSONValueType]'
+#  once support for Python 3.8 is dropped
+class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
     This class behaves just like a regular dict, except its contents
