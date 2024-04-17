@@ -256,7 +256,7 @@ def test_user_dict_write_read(ant, tmp_path):
     assert dict_field_repr in field_data_repr
 
 
-def test_user_dict_persists_with_merge_filter(uniform):
+def test_user_dict_persists_with_merge_filter():
     sphere1 = pv.Sphere()
     sphere1.user_dict['name'] = 'sphere1'
 
@@ -273,7 +273,7 @@ def test_user_dict_persists_with_threshold_filter(uniform):
     assert uniform.user_dict['name'] == 'uniform'
 
 
-def test_user_dict_persists_with_pack_labels_filter(uniform):
+def test_user_dict_persists_with_pack_labels_filter():
     image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
     image.user_dict['name'] = 'image'
