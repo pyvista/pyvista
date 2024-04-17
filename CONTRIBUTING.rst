@@ -154,26 +154,26 @@ efforts are welcome.
 
 There are three general coding paradigms that we believe in:
 
-1. **Make it intuitive**. PyVista’s goal is to create an intuitive and
+#. **Make it intuitive**. PyVista’s goal is to create an intuitive and
    easy to use interface back to the VTK library. Any new features
    should have intuitive naming conventions and explicit keyword
    arguments for users to make the bulk of the library accessible to
    novice users.
 
-2. **Document everything**. At the least, include a docstring for any
+#. **Document everything**. At the least, include a docstring for any
    method or class added. Do not describe what you are doing but why you
    are doing it and provide a simple example for the new features.
 
-3. **Keep it tested**. We aim for a high test coverage. See testing for
+#. **Keep it tested**. We aim for a high test coverage. See testing for
    more details.
 
 There are two important copyright guidelines:
 
-4. Please do not include any data sets for which a license is not
+#. Please do not include any data sets for which a license is not
    available or commercial use is prohibited. Those can undermine the
    license of the whole projects.
 
-5. Do not use code snippets for which a license is not available
+#. Do not use code snippets for which a license is not available
    (for example from Stack Overflow) or commercial use is prohibited. Those can
    undermine the license of the whole projects.
 
@@ -954,19 +954,19 @@ Minor releases are feature and bug releases that improve the
 functionality and stability of ``pyvista``. Before a minor release is
 created the following will occur:
 
-1.  Create a new branch from the ``main`` branch with name
+#.  Create a new branch from the ``main`` branch with name
     ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Update the development version numbers in ``pyvista/_version.py``
+#.  Update the development version numbers in ``pyvista/_version.py``
     and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
     and create a new PR for this release that merges it to main.
     Development to main should be limited at this point while effort
     is focused on the release.
 
-3.  Locally run all tests as outlined in the `Testing
+#.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-4.  Locally test and build the documentation with link checking to make
+#.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -977,15 +977,15 @@ created the following will occur:
        make doctest-modules
        make html -b linkcheck
 
-5.  After building the documentation, open the local build and examine
+#.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
 
-6.  It is now the responsibility of the ``pyvista`` community to
+#.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
     this branch and use it in production. Any bugs identified should
     have their hotfixes pushed to this release branch.
 
-7.  When the branch is deemed as stable for public release, the PR will
+#.  When the branch is deemed as stable for public release, the PR will
     be merged to main. After update the version number in
     ``release/MAJOR.MINOR`` branch, the ``release/MAJOR.MINOR`` branch
     will be tagged with a ``vMAJOR.MINOR.0`` release. The release branch
@@ -995,14 +995,14 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the branch and tag.
+#.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
        git push origin HEAD
        git push origin --tags
 
-9.  Create a list of all changes for the release. It is often helpful to
+#.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -1010,17 +1010,17 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-10. Place your release notes from previous step in the description for `the new
+#.  Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-11. Go grab a beer/coffee/water and wait for
+#.  Go grab a beer/coffee/water and wait for
     `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-12. Announce the new release in the Discussions page and
+#.  Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps
@@ -1029,21 +1029,21 @@ Patch Release Steps
 Patch releases are for critical and important bugfixes that can not or
 should not wait until a minor release. The steps for a patch release
 
-1. Push the necessary bugfix(es) to the applicable release branch. This
+#. Push the necessary bugfix(es) to the applicable release branch. This
    will generally be the latest release branch (for example ``release/0.25``).
 
-2. Update ``pyvista/_version.py`` with the next patch increment (for example
+#. Update ``pyvista/_version.py`` with the next patch increment (for example
    ``v0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside
    of this PR.
 
-3. When approved, merge with the release branch, but not ``main`` as
+#. When approved, merge with the release branch, but not ``main`` as
    there is no reason to increment the version of the ``main`` branch.
    Then create a tag from the release branch with the applicable version
    number (see above for the correct steps).
 
-4. If deemed necessary, create a release notes page. Also, open the PR
+#. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release
    section.
 
