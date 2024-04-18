@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import copy
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
 import warnings
 
@@ -1067,7 +1068,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         for name, array in array_dict.items():
-            self[name] = array.copy()
+            self[name] = array.copy() if hasattr(array, 'copy') else copy.copy(array)
 
     def _raise_index_out_of_bounds(self, index: Any):
         """Raise a KeyError if array index is out of bounds."""
