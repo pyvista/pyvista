@@ -8,7 +8,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyArray
+from pyvista.core._typing_core import MatrixLike, NumpyArray
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:
@@ -31,12 +31,14 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))  # type: ignore
+        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 
 def numpy_to_idarr(
-    ind: Matrix[int], deep: bool = False, return_ind: bool = False
+    ind: MatrixLike[int],
+    deep: bool = False,
+    return_ind: bool = False,
 ) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
@@ -145,7 +147,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
 
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
         raise ValueError(
-            "You requested a cell type with variable length, which can't be used in this method"
+            "You requested a cell type with variable length, which can't be used in this method",
         )
 
     final_cell_types = []
@@ -160,7 +162,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
             raise ValueError(
-                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type"
+                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type",
             )
 
         if np.any(cells_arr < 0):
@@ -176,8 +178,9 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1
-            ).reshape([-1])
+                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                axis=-1,
+            ).reshape([-1]),
         )
 
     final_cell_types = np.concatenate(final_cell_types)
@@ -234,7 +237,7 @@ def get_mixed_cells(vtkobj):
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
         raise ValueError(
             "You requested a cell-dictionary with a variable length cell, which is not supported "
-            "currently"
+            "currently",
         )
 
     cell_sizes = np.zeros_like(cell_types)
@@ -251,7 +254,7 @@ def get_mixed_cells(vtkobj):
         current_cell_starts = cell_starts[mask]
 
         cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
-            cell_starts.dtype
+            cell_starts.dtype,
         )
 
         return_dict[cell_type] = cells[cells_inds]

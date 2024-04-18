@@ -4,7 +4,9 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -145,6 +147,22 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
 
 
+@pytest.mark.parametrize('split_sharp_edges', [True, False])
+def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
+    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
+    assert point_cloud.n_verts == point_cloud.n_cells
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        point_cloud,
+        None,
+        True,
+        split_sharp_edges,
+        False,
+        None,
+    )
+    assert scalars is None
+    assert "Normals" not in mesh.point_data
+
+
 def test_smooth_shading_shallow_copy(sphere):
     """See also ``test_compute_normals_inplace``."""
     sphere.point_data['numbers'] = np.arange(sphere.n_points)
@@ -170,7 +188,8 @@ def test_get_datasets(sphere, hexbeam):
     pl.add_mesh(hexbeam)
     datasets = pl._datasets
     assert len(datasets) == 2
-    assert sphere in datasets and hexbeam in datasets
+    assert sphere in datasets
+    assert hexbeam in datasets
 
 
 def test_remove_scalars_single(sphere, hexbeam):
@@ -287,7 +306,7 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-@pytest.mark.parametrize("connected, n_lines", [(False, 2), (True, 3)])
+@pytest.mark.parametrize(("connected", "n_lines"), [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
     pl = pv.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
@@ -418,7 +437,7 @@ def test_multi_block_color_cycler():
     assert mapper.block_attr[3].color.name == 'red'
 
     # test wrong args
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         mapper.set_unique_colors('foo')
 
     with pytest.raises(TypeError):
@@ -426,7 +445,7 @@ def test_multi_block_color_cycler():
 
 
 @pytest.mark.parametrize(
-    'face, normal',
+    ('face', 'normal'),
     [
         ('-Z', (0, 0, 1)),
         ('-Y', (0, 1, 0)),
@@ -480,14 +499,14 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     entries_after = os.listdir(pv.FIGURE_PATH)
     assert len(entries) + 1 == len(entries_after)
 
-    res_file = list(set(entries_after) - set(entries))[0]
+    res_file = next(iter(set(entries_after) - set(entries)))
     pv.ON_SCREENSHOT = False
     sphere_screenshot = "sphere_screenshot.png"
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(screenshot=sphere_screenshot)
-    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
-    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    sphere_path = str(Path(pv.FIGURE_PATH) / sphere_screenshot)
+    res_path = str(Path(pv.FIGURE_PATH) / res_file)
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
 
@@ -497,7 +516,11 @@ def test_legend_font(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     legend = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        font_family='times',
     )
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 

@@ -16,6 +16,7 @@ For more details, please see `What is InterpolateScalarsBeforeMapping in VTK?
 <https://www.kitware.com/what-is-interpolatescalarsbeforemapping-in-vtk/>`_
 
 """
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 
@@ -50,7 +51,10 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs
+    cyl,
+    interpolate_before_map=True,
+    scalar_bar_args={'title': 'Elevation - interpolated'},
+    **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
@@ -76,7 +80,10 @@ p.add_mesh(
 )
 p.subplot(0, 1)
 p.add_mesh(
-    cyl, interpolate_before_map=True, scalar_bar_args={'title': 'Elevation - interpolated'}, **dargs
+    cyl,
+    interpolate_before_map=True,
+    scalar_bar_args={'title': 'Elevation - interpolated'},
+    **dargs,
 )
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]

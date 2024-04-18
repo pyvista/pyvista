@@ -159,7 +159,15 @@ image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
+disallow_any_generics = true
+pretty = true
+show_error_context = true
+warn_unused_ignores = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
+enable_error_code = [
+    "ignore-without-code",
+]
+
 
 [tool.numpydoc_validation]
 checks = [
@@ -201,6 +209,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.ExplicitStructuredGrid$',
     '\.Grid$',
     '\.MultiBlock$',
+    '\.PartitionedDataSet$',
     '\.PointGrid$',
     '\.PointSet$',
     '\.PolyDataFilters$',
@@ -255,6 +264,13 @@ exclude = [  # don't report on objects that match any of these regex
     # Type alias
     '\.ColorLike$',
     '\.Chart$',
+    '\.ArrayLike$',
+    '\.MatrixLike$',
+    '\.VectorLike$',
+    '\.TransformLike$',
+    '\.BoundsLike$',
+    '\.CellsLike$',
+    '\.CellsArrayLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -283,12 +299,12 @@ exclude = [
     'doc/examples',
     'doc/_build',
 ]
-external = ["E131", "D102", "D105"]
 line-length = 100
 indent-width = 4
 target-version = 'py39'
 
 [tool.ruff.lint]
+external = ["E131", "D102", "D105"]
 ignore = [
     # whitespace before ':'
     "E203",
@@ -313,18 +329,43 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/5877
+    "SIM102",
+    # https://github.com/pyvista/pyvista/pull/5888
+    "SIM117",
+    # https://github.com/pyvista/pyvista/pull/5837
+    "SIM118",
 ]
 fixable = ["ALL"]
 unfixable = []
 extend-select = [
+    "A",
+    "B006",
     "B007",
+    "B009",
     "B010",
     "C4",
+    "COM",
     "F",
+    "FLY",
+    "ICN",
+    "ISC",
     "NPY",
+    "PERF401",
     "PGH004",
+    "PIE",
+    "PLC",
+    "PLR0402",
+    "PLR1711",
+    "PLR1714",
+    "PT",
+    "PTH",
+    "RET501",
     "RSE",
-    "RUF100",
+    "RUF",
+    "SIM",
+    "TCH",
+    "TRY201",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]

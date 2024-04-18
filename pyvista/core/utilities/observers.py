@@ -1,7 +1,8 @@
 """Core error utilities."""
+
 import collections
 import logging
-import os
+from pathlib import Path
 import re
 import signal
 import sys
@@ -27,7 +28,7 @@ def set_error_output_file(filename):
         VTK output window.
 
     """
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = str(Path(filename).expanduser().resolve())
     fileOutputWindow = _vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
@@ -135,7 +136,7 @@ class Observer:
         except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
-                    message = f'{repr(message[:100])} ... ({len(message)} characters)'
+                    message = f'{message[:100]!r} ... ({len(message)} characters)'
                 else:
                     message = repr(message)
                 print(
@@ -176,7 +177,6 @@ class Observer:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
         self.__observing = True
-        return
 
 
 def send_errors_to_logging():
@@ -247,7 +247,9 @@ class ProgressMonitor:
         if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
-            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]'
+            total=1,
+            leave=True,
+            bar_format='{l_bar}{bar}[{elapsed}<{remaining}]',
         )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)

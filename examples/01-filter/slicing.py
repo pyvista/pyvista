@@ -6,6 +6,7 @@ Slicing
 
 Extract thin planar slices from a volume.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -153,7 +154,7 @@ p.show()
 # around a user-chosen location.
 #
 # Create a point to orient slices around
-ranges = np.array(model.bounds).reshape(-1, 2).ptp(axis=1)
+ranges = np.ptp(np.array(model.bounds).reshape(-1, 2), axis=1)
 point = np.array(model.center) - ranges * 0.25
 
 ###############################################################################

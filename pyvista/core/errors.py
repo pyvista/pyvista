@@ -42,7 +42,8 @@ class VTKVersionError(RuntimeError):
     """
 
     def __init__(
-        self, message='The requested feature is not supported by the installed VTK version.'
+        self,
+        message='The requested feature is not supported by the installed VTK version.',
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         RuntimeError.__init__(self, message)
@@ -59,7 +60,8 @@ class PointSetNotSupported(TypeError):
     """
 
     def __init__(
-        self, message='The requested operation is not supported for PointSets.'
+        self,
+        message='The requested operation is not supported for PointSets.',
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
@@ -76,7 +78,8 @@ class PointSetCellOperationError(PointSetNotSupported):
     """
 
     def __init__(
-        self, message='Cell operations are not supported. PointSets contain no cells.'
+        self,
+        message='Cell operations are not supported. PointSets contain no cells.',
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
@@ -93,10 +96,29 @@ class PointSetDimensionReductionError(PointSetNotSupported):
     """
 
     def __init__(
-        self, message='Slice and other dimension reducing filters are not supported on PointSets.'
+        self,
+        message='Slice and other dimension reducing filters are not supported on PointSets.',
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
+
+
+class PartitionedDataSetsNotSupported(TypeError):
+    """Requested filter or property is not supported by the PartitionedDataSets class.
+
+    Parameters
+    ----------
+    message : str
+        Error message.
+
+    """
+
+    def __init__(
+        self,
+        message='The requested operation is not supported for PartitionedDataSetss.',
+    ):  # numpydoc ignore=PR01,RT01
+        """Empty init."""
+        TypeError.__init__(self, message)
 
 
 class MissingDataError(ValueError):
@@ -155,7 +177,8 @@ class PyVistaPipelineError(RuntimeError):
     """
 
     def __init__(
-        self, message="VTK pipeline issue detected by PyVista."
+        self,
+        message="VTK pipeline issue detected by PyVista.",
     ):  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(message)
@@ -164,16 +187,10 @@ class PyVistaPipelineError(RuntimeError):
 class PyVistaDeprecationWarning(Warning):
     """Non-supressed Deprecation Warning."""
 
-    pass
-
 
 class PyVistaFutureWarning(Warning):
     """Non-supressed Future Warning."""
 
-    pass
-
 
 class PyVistaEfficiencyWarning(Warning):
     """Efficiency warning."""
-
-    pass

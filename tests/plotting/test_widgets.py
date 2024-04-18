@@ -208,7 +208,10 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     title_opacity = np.random.default_rng().random()
     s = p.add_slider_widget(
-        callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity
+        callback=func,
+        rng=[0, 10],
+        style="classic",
+        title_opacity=title_opacity,
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
@@ -228,7 +231,11 @@ def test_widget_slider(uniform):
     # custom width
     p = pv.Plotter()
     slider = p.add_slider_widget(
-        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
+        callback=func,
+        rng=[0, 10],
+        fmt=fmt,
+        tube_width=0.1,
+        slider_width=0.2,
     )
     assert slider.GetRepresentation().GetSliderWidth() == 0.2
     assert slider.GetRepresentation().GetTubeWidth() == 0.1
@@ -261,7 +268,7 @@ def test_widget_spline(uniform):
     p.close()
 
 
-def test_measurement_widget():
+def test_measurement_widget(random_hills):
     class DistanceCallback:
         def __init__(self):
             self.called = False
@@ -275,7 +282,7 @@ def test_measurement_widget():
             self.count += 1
 
     p = pv.Plotter(window_size=[1000, 1000])
-    p.add_mesh(examples.load_random_hills())
+    p.add_mesh(random_hills)
     distance_callback = DistanceCallback()
     p.add_measurement_widget(callback=distance_callback)
     p.view_xy()
@@ -467,12 +474,14 @@ def test_affine_widget(sphere):
     with pytest.raises(ValueError, match='(3, 3)'):
         pl.add_affine_transform_widget(actor, axes=np.eye(5))
 
+    axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
     with pytest.raises(ValueError, match='right hand'):
-        axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
         pl.add_affine_transform_widget(actor, axes=axes)
 
     widget = pl.add_affine_transform_widget(
-        actor, interact_callback=interact_callback, release_callback=release_callback
+        actor,
+        interact_callback=interact_callback,
+        release_callback=release_callback,
     )
     pl.show(auto_close=False)
 
@@ -498,8 +507,10 @@ def test_affine_widget(sphere):
     assert actor.user_matrix[0, 3] < 0
 
     # test callback called
-    assert len(interact_calls) == 2 and interact_calls[0].shape == (4, 4)
-    assert len(release_calls) == 1 and release_calls[0].shape == (4, 4)
+    assert len(interact_calls) == 2
+    assert interact_calls[0].shape == (4, 4)
+    assert len(release_calls) == 1
+    assert release_calls[0].shape == (4, 4)
 
     # test Y axis translation
     pl.iren._mouse_left_button_press(width // 2 + 1, height // 2 - 1)
@@ -525,7 +536,8 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 + 30, height // 2 + 1)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert x_r > 0 and np.allclose([y_r, z_r], 0)
+    assert x_r > 0
+    assert np.allclose([y_r, z_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
@@ -537,7 +549,8 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 - 30, height // 2 - 1)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert y_r > 0 and np.allclose([x_r, z_r], 0)
+    assert y_r > 0
+    assert np.allclose([x_r, z_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
@@ -548,14 +561,15 @@ def test_affine_widget(sphere):
     assert widget._pressing_down
     pl.iren._mouse_move(width // 2 - 1, height // 2 + 30)
     x_r, y_r, z_r = r_mat_to_euler_angles(actor.user_matrix)
-    assert z_r > 0 and np.allclose([x_r, y_r], 0)
+    assert z_r > 0
+    assert np.allclose([x_r, y_r], 0)
     pl.iren._mouse_left_button_release()
     assert not widget._pressing_down
     widget._reset()
 
     # test change axes
     axes = np.array(
-        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]]
+        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]],
     )
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
@@ -602,7 +616,9 @@ def test_logo_widget(verify_image_cache):
 
     pl = pv.Plotter()
     pl.add_logo_widget(
-        examples.download_vtk_logo().to_image(), position=(0.0, 0.0), size=(0.8, 0.8)
+        examples.download_vtk_logo().to_image(),
+        position=(0.0, 0.0),
+        size=(0.8, 0.8),
     )
     pl.show()
 
@@ -611,7 +627,18 @@ def test_logo_widget(verify_image_cache):
         pl.add_logo_widget(logo=0)
 
 
-@pytest.mark.parametrize("outline_opacity", (True, False, np.random.default_rng(0).random()))
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_camera3d_widget(verify_image_cache):
+    sphere = pv.Sphere()
+    plotter = pv.Plotter(window_size=[600, 300], shape=(1, 2))
+    plotter.add_mesh(sphere)
+    plotter.subplot(0, 1)
+    plotter.add_mesh(sphere)
+    plotter.add_camera3d_widget()
+    plotter.show(cpos=plotter.camera_position)
+
+
+@pytest.mark.parametrize("outline_opacity", [True, False, np.random.default_rng(0).random()])
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
@@ -709,4 +736,14 @@ def test_clear_logo_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_logo_widget(None)
     pl.clear_logo_widgets()
+    pl.show(cpos='xy')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_clear_camera3d_widget(verify_image_cache):
+    mesh = pv.Cube()
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.add_camera3d_widget()
+    pl.clear_camera3d_widgets()
     pl.show(cpos='xy')

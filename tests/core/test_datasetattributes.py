@@ -8,30 +8,29 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
 import numpy as np
 import pytest
-from pytest import fixture, mark, raises
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation, convert_array
 
-skip_windows = mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-skip_apple_silicon = mark.skipif(
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_apple_silicon = pytest.mark.skipif(
     platform.system() == 'Darwin' and platform.processor() == 'arm',
     reason='Test fails on Apple Silicon',
 )
 
 
-@fixture()
+@pytest.fixture()
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
 
-@fixture()
+@pytest.fixture()
 def hexbeam_field_attributes(hexbeam):
     return hexbeam.field_data
 
 
-@fixture()
+@pytest.fixture()
 def insert_arange_narray(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
@@ -39,7 +38,7 @@ def insert_arange_narray(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@fixture()
+@pytest.fixture()
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.ones(n_points, np.bool_)
@@ -47,7 +46,7 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@fixture()
+@pytest.fixture()
 def insert_string_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.repeat("A", n_points)
@@ -57,7 +56,9 @@ def insert_string_array(hexbeam_point_attributes):
 
 def test_init(hexbeam):
     attributes = pv.DataSetAttributes(
-        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
+        hexbeam.GetPointData(),
+        dataset=hexbeam,
+        association=FieldAssociation.POINT,
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam
@@ -71,12 +72,12 @@ def test_bool(hexbeam_point_attributes):
 
 
 def test_getitem(hexbeam_point_attributes):
-    with raises(TypeError, match='Only strings'):
+    with pytest.raises(TypeError, match='Only strings'):
         hexbeam_point_attributes[0]
 
 
 def test_setitem(hexbeam_point_attributes):
-    with raises(TypeError, match='Only strings'):
+    with pytest.raises(TypeError, match='Only strings'):
         hexbeam_point_attributes[0]
 
 
@@ -100,6 +101,25 @@ def test_repr(hexbeam_point_attributes):
     vectors0 = np.random.default_rng().random((sz, 3))
     hexbeam_point_attributes.set_vectors(vectors0, 'vectors0')
     assert 'VECTOR' in str(hexbeam_point_attributes)
+
+
+def test_repr_field_attributes_with_string(hexbeam_field_attributes):
+    repr_str = str(hexbeam_field_attributes)
+    assert 'DataSetAttributes' in repr_str
+    assert 'Contains arrays : None' in repr_str
+
+    # Add string data
+    str_len_18 = 'stringlength18char'
+    assert len(str_len_18) == 18
+    str_len_19 = 'stringlength19chars'
+    assert len(str_len_19) == 19
+
+    hexbeam_field_attributes['string_data_18'] = str_len_18
+    hexbeam_field_attributes['string_data_19'] = str_len_19
+
+    repr_str = str(hexbeam_field_attributes)
+    assert 'string_data_18          str        "stringlength18char"' in repr_str
+    assert 'string_data_19          str        "stringlength19c..."' in repr_str
 
 
 def test_empty_active_vectors(hexbeam):
@@ -183,25 +203,25 @@ def test_add_matrix(hexbeam):
 
 
 def test_set_fails_with_wrong_shape(hexbeam):
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam['foo'] = [1, 2, 3]
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.point_data['foo'] = [1, 2, 3]
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.cell_data['foo'] = [1, 2, 3]
 
     # Use vtk methods directly to add bad data. This can simulate
     # cases where buggy vtk methods may set arrays with incorrect shape
     bad_data = convert_array([1, 2, 3], 'foo')
     hexbeam.cell_data.VTKObject.AddArray(bad_data)
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.cell_data['foo'] = hexbeam.cell_data['foo']
 
 
 def test_set_active_scalars_fail(hexbeam):
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.set_active_scalars('foo', preference='field')
-    with raises(KeyError):
+    with pytest.raises(KeyError):
         hexbeam.set_active_scalars('foo')
 
 
@@ -226,7 +246,7 @@ def test_set_vectors(hexbeam):
 def test_set_invalid_vectors(hexbeam):
     # verify non-vector data does not become active vectors
     not_vectors = np.random.default_rng().random(hexbeam.n_points)
-    with raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         hexbeam.point_data.set_vectors(not_vectors, 'my-vectors')
 
 
@@ -259,9 +279,9 @@ def test_set_bitarray(hexbeam):
     assert hexbeam.point_data['bitarray'].dtype == np.int32
 
 
-@mark.parametrize('array_key', ['invalid_array_name', -1])
+@pytest.mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
-    with raises(KeyError):
+    with pytest.raises(KeyError):
         hexbeam_point_attributes.get_array(array_key)
 
 
@@ -278,7 +298,7 @@ def test_get_array_bool_array_should_be_identical(insert_bool_array):
 
 
 def test_add_should_not_add_none_array(hexbeam_point_attributes):
-    with raises(TypeError):
+    with pytest.raises(TypeError):
         hexbeam_point_attributes.set_array(None, 'sample_array')
 
 
@@ -306,7 +326,7 @@ def test_contains_should_contain_when_added(insert_arange_narray):
 
 def test_set_array_catch(hexbeam):
     data = np.zeros(hexbeam.n_points)
-    with raises(TypeError, match='`name` must be a string'):
+    with pytest.raises(TypeError, match='`name` must be a string'):
         hexbeam.point_data.set_array(data, name=['foo'])
 
 
@@ -335,7 +355,7 @@ def test_set_array_string_lists_should_equal(arr, hexbeam_field_attributes):
 @given(arr=arrays(dtype='U', shape=10))
 def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
     if not ''.join(arr).isascii():
-        with raises(ValueError, match='non-ASCII'):
+        with pytest.raises(ValueError, match='non-ASCII'):
             hexbeam_field_attributes['string_arr'] = arr
         return
 
@@ -344,7 +364,7 @@ def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
 
 
 def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
-    with raises(TypeError):
+    with pytest.raises(TypeError):
         hexbeam_field_attributes.active_scalars
 
 
@@ -392,33 +412,33 @@ def test_should_pop_array_invalid(insert_arange_narray):
     assert dsa.pop(key, default) is default
 
 
-@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
+@pytest.mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
-        with raises(TypeError):
+        with pytest.raises(TypeError):
             hexbeam_point_attributes.remove(removed_key)
     else:
-        with raises(KeyError):
+        with pytest.raises(KeyError):
             hexbeam_point_attributes.remove(removed_key)
 
 
-@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
+@pytest.mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_del_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
-        with raises(TypeError):
+        with pytest.raises(TypeError):
             del hexbeam_point_attributes[removed_key]
     else:
-        with raises(KeyError):
+        with pytest.raises(KeyError):
             del hexbeam_point_attributes[removed_key]
 
 
-@mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
+@pytest.mark.parametrize('removed_key', [None, 'nonexistent_array_name', '', -1])
 def test_pop_should_fail_bad_argument(removed_key, hexbeam_point_attributes):
     if removed_key in [None, -1]:
-        with raises(TypeError):
+        with pytest.raises(TypeError):
             hexbeam_point_attributes.pop(removed_key)
     else:
-        with raises(KeyError):
+        with pytest.raises(KeyError):
             hexbeam_point_attributes.pop(removed_key)
 
 
@@ -496,7 +516,7 @@ def test_active_scalars_setter_no_override(hexbeam):
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     if not ''.join(arr).isascii():
-        with raises(ValueError, match='non-ASCII'):
+        with pytest.raises(ValueError, match='non-ASCII'):
             hexbeam.field_data["foo"] = arr
         return
 
@@ -529,11 +549,11 @@ def test_normals_set():
     plane.point_data.normals = plane.point_normals
     assert np.array_equal(plane.point_data.active_normals, plane.point_normals)
 
-    with raises(ValueError, match='must be a 2-dim'):
+    with pytest.raises(ValueError, match='must be a 2-dim'):
         plane.point_data.active_normals = [1]
-    with raises(ValueError, match='must match number of points'):
+    with pytest.raises(ValueError, match='must match number of points'):
         plane.point_data.active_normals = [[1, 1, 1], [0, 0, 0]]
-    with raises(ValueError, match='Normals must have exactly 3 components'):
+    with pytest.raises(ValueError, match='Normals must have exactly 3 components'):
         plane.point_data.active_normals = [[1, 1], [0, 0], [0, 0], [0, 0]]
 
 
@@ -548,7 +568,7 @@ def test_normals_name(plane):
 
 
 def test_normals_raise_field(plane):
-    with raises(AttributeError):
+    with pytest.raises(AttributeError):
         plane.field_data.active_normals
 
 
@@ -578,10 +598,10 @@ def test_active_vectors_name_setter():
     mesh.point_data.active_vectors_name = 'vectors0'
     assert mesh.point_data.active_vectors_name == 'vectors0'
 
-    with raises(KeyError, match='does not contain'):
+    with pytest.raises(KeyError, match='does not contain'):
         mesh.point_data.active_vectors_name = 'not a valid key'
 
-    with raises(ValueError, match='needs 3 components'):
+    with pytest.raises(ValueError, match='needs 3 components'):
         mesh.point_data.active_vectors_name = 'my-scalars'
 
 
@@ -603,24 +623,24 @@ def test_active_texture_coordinates_name(plane):
     plane.point_data['arr'] = plane.point_data.active_texture_coordinates
     plane.point_data.active_texture_coordinates_name = 'arr'
 
-    with raises(AttributeError):
+    with pytest.raises(AttributeError):
         plane.field_data.active_texture_coordinates_name = 'arr'
 
 
 @skip_windows  # windows doesn't support np.complex256
 @skip_apple_silicon  # same with Apple silicon (M1/M2)
 def test_complex_raises(plane):
-    with raises(ValueError, match='Only numpy.complex64'):
+    with pytest.raises(ValueError, match='Only numpy.complex64'):
         plane.point_data['data'] = np.empty(plane.n_points, dtype=np.complex256)
 
 
-@mark.parametrize('dtype_str', ['complex64', 'complex128'])
+@pytest.mark.parametrize('dtype_str', ['complex64', 'complex128'])
 def test_complex(plane, dtype_str):
     """Test if complex data can be properly represented in datasetattributes."""
     dtype = np.dtype(dtype_str)
     name = 'my_data'
 
-    with raises(ValueError, match='Complex data must be single dimensional'):
+    with pytest.raises(ValueError, match='Complex data must be single dimensional'):
         plane.point_data[name] = np.empty((plane.n_points, 2), dtype=dtype)
 
     real_type = np.float32 if dtype == np.complex64 else np.float64

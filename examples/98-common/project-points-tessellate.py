@@ -10,6 +10,7 @@ This demonstrates how to use
 function that projects points to a plane.
 
 """
+
 import numpy as np
 
 import pyvista as pv
@@ -50,7 +51,12 @@ mesh = polydata.delaunay_2d()
 
 # Create a plane for visualization
 plane_vis = pv.Plane(
-    center=origin, direction=normal, i_size=2, j_size=2, i_resolution=10, j_resolution=10
+    center=origin,
+    direction=normal,
+    i_size=2,
+    j_size=2,
+    i_resolution=10,
+    j_resolution=10,
 )
 
 # plot it

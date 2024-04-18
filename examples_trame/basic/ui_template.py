@@ -6,8 +6,8 @@ This example demonstrates how to use ``plotter_ui`` to add a PyVista
 
 import matplotlib.pyplot as plt
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista import examples
@@ -15,7 +15,7 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "PyVista UI Template"
@@ -43,13 +43,13 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text("PyVista Colormaps")
 
     with layout.toolbar:
-        vuetify.VSpacer()
-        vuetify.VSelect(
+        vuetify3.VSpacer()
+        vuetify3.VSelect(
             label="Color map",
             v_model=("cmap", "viridis"),
             items=("array_list", plt.colormaps()),
             hide_details=True,
-            dense=True,
+            density="compact",
             outlined=True,
             classes="pt-1 ml-2",
             style="max-width: 250px",

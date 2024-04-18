@@ -20,14 +20,16 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
+
 from typing import Sequence, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
-_NumType = TypeVar('_NumType', bool, int, float, np.bool_, np.int_, np.float_, np.uint8)
-NumpyArray = npt.NDArray[_NumType]
+NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
+NumberType.__doc__ = """Type variable for numeric data types."""
+NumpyArray = npt.NDArray[NumberType]
 
 # Define generic nested sequence
 _T = TypeVar('_T')
@@ -39,28 +41,28 @@ _FiniteNestedSequence = Union[  # Note: scalar types are excluded
 ]
 
 _ArrayLike = Union[
-    NumpyArray[_NumType],
-    _FiniteNestedSequence[_NumType],
-    _FiniteNestedSequence[NumpyArray[_NumType]],
+    NumpyArray[NumberType],
+    _FiniteNestedSequence[NumberType],
+    _FiniteNestedSequence[NumpyArray[NumberType]],
 ]
 
 _ArrayLike1D = Union[
-    NumpyArray[_NumType],
-    Sequence[_NumType],
-    Sequence[NumpyArray[_NumType]],
+    NumpyArray[NumberType],
+    Sequence[NumberType],
+    Sequence[NumpyArray[NumberType]],
 ]
 _ArrayLike2D = Union[
-    NumpyArray[_NumType],
-    Sequence[Sequence[_NumType]],
-    Sequence[Sequence[NumpyArray[_NumType]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[NumberType]],
+    Sequence[Sequence[NumpyArray[NumberType]]],
 ]
 _ArrayLike3D = Union[
-    NumpyArray[_NumType],
-    Sequence[Sequence[Sequence[_NumType]]],
-    Sequence[Sequence[Sequence[NumpyArray[_NumType]]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[Sequence[NumberType]]],
+    Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
 ]
 _ArrayLike4D = Union[
-    NumpyArray[_NumType],
-    Sequence[Sequence[Sequence[Sequence[_NumType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[_NumType]]]]],
+    NumpyArray[NumberType],
+    Sequence[Sequence[Sequence[Sequence[NumberType]]]],
+    Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
 ]

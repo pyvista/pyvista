@@ -154,26 +154,26 @@ efforts are welcome.
 
 There are three general coding paradigms that we believe in:
 
-1. **Make it intuitive**. PyVista’s goal is to create an intuitive and
+#. **Make it intuitive**. PyVista’s goal is to create an intuitive and
    easy to use interface back to the VTK library. Any new features
    should have intuitive naming conventions and explicit keyword
    arguments for users to make the bulk of the library accessible to
    novice users.
 
-2. **Document everything**. At the least, include a docstring for any
+#. **Document everything**. At the least, include a docstring for any
    method or class added. Do not describe what you are doing but why you
    are doing it and provide a simple example for the new features.
 
-3. **Keep it tested**. We aim for a high test coverage. See testing for
+#. **Keep it tested**. We aim for a high test coverage. See testing for
    more details.
 
 There are two important copyright guidelines:
 
-4. Please do not include any data sets for which a license is not
+#. Please do not include any data sets for which a license is not
    available or commercial use is prohibited. Those can undermine the
    license of the whole projects.
 
-5. Do not use code snippets for which a license is not available
+#. Do not use code snippets for which a license is not available
    (for example from Stack Overflow) or commercial use is prohibited. Those can
    undermine the license of the whole projects.
 
@@ -463,7 +463,7 @@ changes any given branch is introducing before looking at the code.
    addition
 -  ``junk/``: for any experimental changes that can be deleted if gone
    stale
--  ``maint/``: for general maintenance of the repository or CI routines
+-  ``maint/`` and ``ci/``: for general maintenance of the repository or CI routines
 -  ``doc/``: for any changes only pertaining to documentation
 -  ``no-ci/``: for low impact activity that should NOT trigger the CI
    routines
@@ -735,27 +735,153 @@ extension, follow coding guidelines as established by `Sphinx-Gallery
 For more details see :ref:`add_example_example`.
 
 
-Add a New Example File
-^^^^^^^^^^^^^^^^^^^^^^
-If you have a dataset that you need for your gallery example, add it to
-`pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_ and follow the
-directions there. You will then need to add a new function to download the
-dataset ``pyvista/examples/downloads.py``. This might be as easy as:
+Adding a New Dataset
+^^^^^^^^^^^^^^^^^^^^
+If you have a dataset that you want to feature or want to include as part
+of a full gallery example, add it to `pyvista/vtk-data <https://github.com/pyvista/vtk-data/>`_
+and follow the directions there. You will then need to add a new function to
+download the dataset in ``pyvista/examples/downloads.py``. This might be as easy as:
 
 .. code:: python
 
-   def download_my_dataset(load=True):
-       """Download my new dataset."""
-       return _download_and_read('mydata/my_new_dataset.vtk', load=load)
+   def download_my_new_mesh(load=True):
+       """Download my new mesh."""
+       return _download_dataset(_dataset_my_new_mesh, load=load)
 
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
 
-Which enables:
+Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
+first be defined outside of the function (with module scope), and the new
+``download_my_new_mesh`` function should then use this object to facilitate
+downloading and loading the dataset. The dataset loader variable should start
+with ``_dataset_``.
+
+This will enable:
 
 .. code::
 
    >>> from pyvista import examples
-   >>> dataset = examples.download_my_dataset()
+   >>> dataset = examples.download_my_new_mesh()
 
+For loading complex datasets with multiple files or special processing
+requirements, see the private ``pyvista/examples/_dataset_loader.py``
+module for more details on how to create a suitable dataset loader.
+
+Using a dataset loader in this way will enable metadata to be collected
+for the new dataset. A new dataset card titled ``My New Mesh Dataset``
+will automatically be generated and included in the :ref:`dataset_gallery`.
+
+In the docstring of the new ``download_my_new_mesh`` function, be sure
+to also include:
+
+#. A sample plot of the dataset in the examples section
+
+#. A reference link to the dataset's new (auto-generated) gallery card
+   in the see also section
+
+For example:
+
+.. code:: python
+
+   def download_my_new_mesh(load=True):
+      """Download my new mesh.
+
+      Examples
+      --------
+      >>> from pyvista import examples
+      >>> dataset = examples.download_my_new_mesh()
+      >>> dataset.plot()
+
+      .. seealso::
+
+         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+             See this dataset in the Dataset Gallery for more info.
+
+      """
+
+.. note::
+
+   The rst ``seealso`` directive must be used instead of the
+   ``See Also`` heading due to limitations with how `numpydoc` parses
+   explicit references.
+
+Extending the Dataset Gallery
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you have multiple related datasets to contribute, or would like to
+group any existing datasets together that share similar properties,
+the :ref:`dataset_gallery` can easily be extended to feature these
+datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest/cards.html#card-carousels>`_.
+
+For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
+featuring two datasets of musical instruments, e.g.
+
+#.  :func:`pyvista.examples.download_guitar`
+#.  :func:`pyvista.examples.download_trumpet`
+
+complete the following steps:
+
+#. Define a new carousel in ``doc/source/make_tables.py``, e.g.:
+
+    .. code:: python
+
+        class InstrumentCarousel(DatasetGalleryCarousel):
+            """Class to generate a carousel of instrument dataset cards."""
+
+            name = 'instrument_carousel'
+            doc = 'Instrument datasets.'
+            badge = CategoryBadge('Instrument', ref='instrument_gallery')
+
+            @classmethod
+            def fetch_dataset_names(cls):
+                return sorted(
+                    (
+                        'guitar',
+                        'trumpet',
+                    )
+                )
+
+   where
+
+   -  ``name`` is used internally to define the name of the generated
+      ``.rst`` file for the carousel.
+
+   -  ``doc`` is a short text description of the carousel which will
+      appear in the documentation in the header above the carousel.
+
+   -  ``badge`` is used to give all datasets in the carousel a reference
+      tag. The ``ref`` argument for the badge should be a new reference
+      target (details below).
+
+   -  ``fetch_dataset_names`` should return a list of any/all dataset names
+      to be included in the carousel. The dataset names should not include
+      any ``load_``, ``download_``, or ``dataset_`` prefix.
+
+#. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
+   in ``doc/source/make_tables.py``. This will enable the rst to be
+   auto-generated for the carousel.
+
+#. Update the ``doc/source/api/examples/dataset_gallery.rst`` file to
+   include the new generated ``<name>_carousel.rst`` file. E.g. to add the
+   carousel as a new drop-down item, add the following:
+
+   .. code:: rst
+
+      .. dropdown:: Instrument Datasets
+         :name: instrument_gallery
+
+         .. include:: /api/examples/dataset-gallery/instrument_carousel.rst
+
+   where:
+
+   -  The dropdown name ``:name: <reference>`` should be the badge's ``ref``
+      variable defined earlier. This will make it so that clicking on the new
+      badge will link to the new dropdown menu.
+
+   -  The name of the included ``.rst`` file should match the ``name``
+      variable defined in the new ``Carousel`` class.
+
+After building the documentation, the carousel should now be part
+of the gallery.
 
 Creating a New Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -780,7 +906,7 @@ Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have make a Pull Request. You can comment
-`github-actions preview` on a pull request to preview documentation.
+`@pyvista-bot preview` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
 new contributors kindly request them to comment command.
@@ -828,19 +954,19 @@ Minor releases are feature and bug releases that improve the
 functionality and stability of ``pyvista``. Before a minor release is
 created the following will occur:
 
-1.  Create a new branch from the ``main`` branch with name
+#.  Create a new branch from the ``main`` branch with name
     ``release/MAJOR.MINOR`` (for example ``release/0.25``).
 
-2.  Update the development version numbers in ``pyvista/_version.py``
+#.  Update the development version numbers in ``pyvista/_version.py``
     and commit it (for example ``0, 26, 'dev0'``). Push the branch to GitHub
     and create a new PR for this release that merges it to main.
     Development to main should be limited at this point while effort
     is focused on the release.
 
-3.  Locally run all tests as outlined in the `Testing
+#.  Locally run all tests as outlined in the `Testing
     Section <#testing>`_ and ensure all are passing.
 
-4.  Locally test and build the documentation with link checking to make
+#.  Locally test and build the documentation with link checking to make
     sure no links are outdated. Be sure to run ``make clean`` to ensure
     no results are cached.
 
@@ -851,15 +977,15 @@ created the following will occur:
        make doctest-modules
        make html -b linkcheck
 
-5.  After building the documentation, open the local build and examine
+#.  After building the documentation, open the local build and examine
     the examples gallery for any obvious issues.
 
-6.  It is now the responsibility of the ``pyvista`` community to
+#.  It is now the responsibility of the ``pyvista`` community to
     functionally test the new release. It is best to locally install
     this branch and use it in production. Any bugs identified should
     have their hotfixes pushed to this release branch.
 
-7.  When the branch is deemed as stable for public release, the PR will
+#.  When the branch is deemed as stable for public release, the PR will
     be merged to main. After update the version number in
     ``release/MAJOR.MINOR`` branch, the ``release/MAJOR.MINOR`` branch
     will be tagged with a ``vMAJOR.MINOR.0`` release. The release branch
@@ -869,14 +995,14 @@ created the following will occur:
 
        git tag v$(python -c "import pyvista as pv; print(pv.__version__)")
 
-8.  Please check again that the tag has been created correctly and push the branch and tag.
+#.  Please check again that the tag has been created correctly and push the branch and tag.
 
     .. code:: bash
 
        git push origin HEAD
        git push origin --tags
 
-9.  Create a list of all changes for the release. It is often helpful to
+#.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
     feature <https://github.com/pyvista/pyvista/compare>`_ to see the
     differences from the last tag and the ``main`` branch. Be sure to
@@ -884,17 +1010,17 @@ created the following will occur:
     mentions where appropriate if a specific contributor is to thank for
     a new feature.
 
-10. Place your release notes from previous step in the description for `the new
+#.  Place your release notes from previous step in the description for `the new
     release on
     GitHub <https://github.com/pyvista/pyvista/releases/new>`_.
 
-11. Go grab a beer/coffee/water and wait for
+#.  Go grab a beer/coffee/water and wait for
     `@regro-cf-autotick-bot <https://github.com/regro/cf-scripts>`_
     to open a pull request on the conda-forge `PyVista
     feedstock <https://github.com/conda-forge/pyvista-feedstock>`_.
     Merge that pull request.
 
-12. Announce the new release in the Discussions page and
+#.  Announce the new release in the Discussions page and
     celebrate.
 
 Patch Release Steps
@@ -903,24 +1029,36 @@ Patch Release Steps
 Patch releases are for critical and important bugfixes that can not or
 should not wait until a minor release. The steps for a patch release
 
-1. Push the necessary bugfix(es) to the applicable release branch. This
+#. Push the necessary bugfix(es) to the applicable release branch. This
    will generally be the latest release branch (for example ``release/0.25``).
 
-2. Update ``pyvista/_version.py`` with the next patch increment (for example
+#. Update ``pyvista/_version.py`` with the next patch increment (for example
    ``v0.25.1``), commit it, and open a PR that merge with the release
    branch. This gives the ``pyvista`` community a chance to validate and
    approve the bugfix release. Any additional hotfixes should be outside
    of this PR.
 
-3. When approved, merge with the release branch, but not ``main`` as
+#. When approved, merge with the release branch, but not ``main`` as
    there is no reason to increment the version of the ``main`` branch.
    Then create a tag from the release branch with the applicable version
    number (see above for the correct steps).
 
-4. If deemed necessary, create a release notes page. Also, open the PR
+#. If deemed necessary, create a release notes page. Also, open the PR
    from conda and follow the directions in step 10 in the minor release
    section.
 
+Dependency version policy
+-------------------------
+
+Python and VTK dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support all supported `Python versions`_ and `VTK versions`_ that
+support those Python versions. As much as we would prefer to follow
+`SPEC 0`_, we follow VTK versions as an interface library of VTK.
 
 .. _pre-commit: https://pre-commit.com/
 .. _numpydoc Style Guide: https://numpydoc.readthedocs.io/en/latest/format.html
+.. _Python versions: https://endoflife.date/python
+.. _VTK versions: https://pypi.org/project/vtk/
+.. _SPEC 0: https://scientific-python.org/specs/spec-0000/

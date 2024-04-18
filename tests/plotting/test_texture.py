@@ -183,11 +183,12 @@ def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, 3), np.float32)
-    with pytest.raises(ValueError, match='Invalid datatype'):
-        if as_str:
-            sphere.point_data['texture'] = texture
+    if as_str:
+        sphere.point_data['texture'] = texture
+        with pytest.raises(ValueError, match='Invalid datatype'):
             sphere.save(filename, texture='texture')
-        else:
+    else:
+        with pytest.raises(ValueError, match='Invalid datatype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):
@@ -203,7 +204,7 @@ def test_texture_coordinates():
             [1, 0, 0],
             [1, 0.5, 0],
             [0, 0.5, 0],
-        ]
+        ],
     )
 
     # mesh faces

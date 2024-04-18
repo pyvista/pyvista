@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkCamera."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -49,7 +50,7 @@ class Camera(_vtk.vtkCamera):
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument',
                 )
             self._renderer = proxy(renderer)
         else:
@@ -196,7 +197,9 @@ class Camera(_vtk.vtkCamera):
         }
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+                proxy,
+                "Property",
+                dict(name=name, id=f"0.{name}", number_of_elements="3"),
             )
 
             for i in range(3):
@@ -214,7 +217,9 @@ class Camera(_vtk.vtkCamera):
 
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+                proxy,
+                "Property",
+                dict(name=name, id=f"0.{name}", number_of_elements="1"),
             )
             tmp = ElementTree.Element("Element")
             tmp.attrib["index"] = "0"
@@ -230,7 +235,7 @@ class Camera(_vtk.vtkCamera):
 
         xmlstr = ElementTree.tostring(root).decode()
         newxml = md.parseString(xmlstr)
-        with open(filename, 'w') as outfile:
+        with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
@@ -274,7 +279,7 @@ class Camera(_vtk.vtkCamera):
         """
         if self._renderer is None:
             raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.'
+                'Camera is must be associated with a renderer to reset its clipping range.',
             )
         self._renderer.reset_camera_clipping_range()
 

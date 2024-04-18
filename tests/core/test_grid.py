@@ -1,5 +1,5 @@
-import os
 import pathlib
+from pathlib import Path
 import weakref
 
 import numpy as np
@@ -15,7 +15,7 @@ from pyvista.core.errors import (
     PyVistaDeprecationWarning,
 )
 
-test_path = os.path.dirname(os.path.abspath(__file__))
+test_path = str(Path(__file__).resolve().parent)
 
 # must be manually set until pytest adds parametrize with fixture feature
 HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
@@ -23,7 +23,8 @@ STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
 pointsetmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -100,11 +101,11 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match="must be a numeric type"):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
+    rnd_generator = np.random.default_rng()
+    points = rnd_generator.random((4, 3))
+    celltypes = [pv.CellType.TETRA]
+    cells = np.array([5, 0, 1, 2, 3])
     with pytest.raises(CellSizeError, match="Cell array size is invalid"):
-        rnd_generator = np.random.default_rng()
-        points = rnd_generator.random((4, 3))
-        celltypes = [pv.CellType.TETRA]
-        cells = np.array([5, 0, 1, 2, 3])
         pv.UnstructuredGrid(cells, celltypes, points)
 
     with pytest.raises(TypeError, match="requires the following arrays"):
@@ -178,7 +179,8 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     assert grid.n_cells == (3 if multiple_cell_types else 2)
     assert np.all(grid.cells == vtk_cell_format)
     assert np.allclose(
-        grid.cell_connectivity, (np.arange(20) if multiple_cell_types else np.arange(16))
+        grid.cell_connectivity,
+        (np.arange(20) if multiple_cell_types else np.arange(16)),
     )
 
     # Now fetch the arrays
@@ -186,20 +188,20 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
 
     assert np.all(
         output_cells_dict[CellType.HEXAHEDRON].reshape([-1])
-        == input_cells_dict[CellType.HEXAHEDRON].reshape([-1])
+        == input_cells_dict[CellType.HEXAHEDRON].reshape([-1]),
     )
 
     if multiple_cell_types:
         assert np.all(
             output_cells_dict[CellType.QUAD].reshape([-1])
-            == input_cells_dict[CellType.QUAD].reshape([-1])
+            == input_cells_dict[CellType.QUAD].reshape([-1]),
         )
 
     # Test for some errors
     # Invalid index (<0)
     input_cells_dict[CellType.HEXAHEDRON] -= 1
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     # Restore
@@ -208,31 +210,32 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     # Invalid index (>= nr_points)
     input_cells_dict[CellType.HEXAHEDRON].flat[0] = points.shape[0]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid(input_cells_dict, points, deep=False)
 
     input_cells_dict[CellType.HEXAHEDRON] -= 1
 
     # Incorrect size
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1]}, points, deep=False)
 
     # Unknown cell type
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid({255: cells_hex}, points, deep=False)
 
     # Dynamic sizes cell type
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid({CellType.POLYGON: cells_hex.reshape([-1])}, points, deep=False)
 
     # Non-integer arrays
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid(
-            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)}, points
+            {CellType.HEXAHEDRON: cells_hex.reshape([-1])[:-1].astype(np.float32)},
+            points,
         )
 
     # Invalid point dimensions
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.UnstructuredGrid(input_cells_dict, points[..., :-1])
 
 
@@ -252,7 +255,7 @@ def test_init_polyhedron():
     nodes = np.array(polyhedron_nodes)
 
     polyhedron_connectivity = [3, 5, 17, 18, 19, 20, 21, 4, 17, 18, 23, 22, 4, 17, 21, 26, 22]
-    cells = np.array([len(polyhedron_connectivity)] + polyhedron_connectivity)
+    cells = np.array([len(polyhedron_connectivity), *polyhedron_connectivity])
     cell_type = np.array([pv.CellType.POLYHEDRON])
     grid = pv.UnstructuredGrid(cells, cell_type, nodes)
 
@@ -274,12 +277,12 @@ def test_cells_dict_variable_length():
     grid = pv.UnstructuredGrid(cells_poly, cells_types, points)
 
     # Dynamic sizes cell types are currently unsupported
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.cells_dict
 
     grid.celltypes[:] = 255
     # Unknown cell types
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.cells_dict
 
 
@@ -360,8 +363,8 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 
 
 def test_init_bad_filename():
-    filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(IOError):
+    filename = str(Path(test_path) / 'test_grid.py')
+    with pytest.raises(IOError):  # noqa: PT011
         pv.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
@@ -497,7 +500,7 @@ def test_init_structured(struct_grid):
     assert np.array_equal(grid_a.points, grid.points)
 
 
-@pytest.fixture
+@pytest.fixture()
 def structured_points():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
@@ -655,7 +658,7 @@ def test_invalid_init_structured():
     zrng = np.arange(-10, 10, 2)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     z = z[:, :, :2]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.StructuredGrid(x, y, z)
 
 
@@ -681,8 +684,8 @@ def test_load_structured_bad_filename():
     with pytest.raises(FileNotFoundError):
         pv.StructuredGrid('not a file')
 
-    filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(IOError):
+    filename = str(Path(test_path) / 'test_grid.py')
+    with pytest.raises(IOError):  # noqa: PT011
         pv.StructuredGrid(filename)
 
 
@@ -713,7 +716,7 @@ def test_instantiate_by_filename():
 
     # load the files into the wrong types
     for fname, wrong_type in fname_to_wrong_type.items():
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             data = wrong_type(fname)
 
 
@@ -853,7 +856,8 @@ def test_create_image_data_from_specs():
 
     # all args (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         grid = pv.ImageData(dims, origin, spacing)
         assert grid.dimensions == dims
@@ -862,7 +866,8 @@ def test_create_image_data_from_specs():
 
     # just dims (deprecated)
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         grid = pv.ImageData(dims)
         assert grid.dimensions == dims
@@ -887,7 +892,8 @@ def test_create_image_data_from_specs():
 
 def test_image_data_invald_args():
     with pytest.warns(
-        PyVistaDeprecationWarning, match=r"Behavior of pyvista\.ImageData has changed"
+        PyVistaDeprecationWarning,
+        match=r"Behavior of pyvista\.ImageData has changed",
     ):
         pv.ImageData((1, 1, 1))
 
@@ -1080,7 +1086,7 @@ def test_grid_points():
     assert np.allclose(grid.points, points)
 
     points = np.array(
-        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]]
+        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]],
     )
     grid = pv.ImageData()
     grid.dimensions = [2, 2, 2]
@@ -1102,7 +1108,8 @@ def test_grid_points():
     assert grid.dimensions == (3, 3, 2)
     assert np.allclose(grid.meshgrid, (xx, yy, zz))
     assert np.allclose(
-        grid.points, np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        grid.points,
+        np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')],
     )
 
 
@@ -1148,7 +1155,7 @@ def test_remove_cells_not_inplace(ind, hexbeam):
 
 def test_remove_cells_invalid(hexbeam):
     grid_copy = hexbeam.copy()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
 
 
@@ -1176,12 +1183,22 @@ def test_hide_points(ind, struct_grid):
 
 def test_set_extent():
     uni_grid = pv.ImageData(dimensions=[10, 10, 10])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         uni_grid.extent = [0, 1]
 
     extent = [0, 1, 0, 1, 0, 1]
     uni_grid.extent = extent
     assert np.array_equal(uni_grid.extent, extent)
+
+
+def test_set_extent_width_spacing():
+    grid = pv.ImageData(
+        dimensions=(10, 10, 10),
+        origin=(-0.5, -0.3, -0.1),
+        spacing=(0.1, 0.05, 0.01),
+    )
+    grid.extent = (5, 9, 0, 9, 0, 9)
+    assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])
 
 
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
@@ -1265,7 +1282,7 @@ def test_ExplicitStructuredGrid_save():
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
-    os.remove('grid.vtu')
+    Path('grid.vtu').unlink()
 
 
 def test_ExplicitStructuredGrid_hide_cells():

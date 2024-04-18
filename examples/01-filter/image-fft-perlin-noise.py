@@ -132,7 +132,8 @@ grid = pv.ImageData(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(
-    'Low and High Pass identical to the original:', np.allclose(grid['scalars'], sampled['scalars'])
+    'Low and High Pass identical to the original:',
+    np.allclose(grid['scalars'], sampled['scalars']),
 )
 
 pl = pv.Plotter(shape=(1, 2))
@@ -150,7 +151,7 @@ pl.show()
 # Animate the variation of the cutoff frequency.
 
 
-def warp_low_pass_noise(cfreq, scalar_ptp=sampled['scalars'].ptp()):
+def warp_low_pass_noise(cfreq, scalar_ptp=np.ptp(sampled['scalars'])):
     """Process the sampled FFT and warp by scalars."""
     output = sampled_fft.low_pass(cfreq, cfreq, cfreq).rfft()
 
@@ -160,7 +161,7 @@ def warp_low_pass_noise(cfreq, scalar_ptp=sampled['scalars'].ptp()):
 
     # on the right: scale to fixed warped height
     output_scaled = output.translate((-11, 11, 0), inplace=False)
-    output_scaled['scalars_warp'] = output['scalars'] / output['scalars'].ptp() * scalar_ptp
+    output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency
