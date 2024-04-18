@@ -2718,8 +2718,8 @@ def test_dimension_line():
     pointa = [1.0, 0.0, 0.0]
     pointb = [1.0, 1.0, 0.0]
     pointc = [0.0, 1.0, 0.0]
-    rectangle = pyvista.Rectangle([pointa, pointb, pointc])
-    plotter = pyvista.Plotter()
+    rectangle = pv.Rectangle([pointa, pointb, pointc])
+    plotter = pv.Plotter()
     plotter.set_background("white")
     plotter.add_mesh(rectangle, show_edges=True, line_width=5, color="tan")
     plotter.add_dimension_line(
