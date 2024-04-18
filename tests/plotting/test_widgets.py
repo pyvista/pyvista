@@ -748,7 +748,7 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.clear_camera3d_widgets()
     pl.show(cpos='xy')
 
- @pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_widget_rotate_orientation():
     p = pv.Plotter()
     p.add_rotate_orientation_widget()
