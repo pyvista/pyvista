@@ -25,9 +25,9 @@ def test_kochanek_spline():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
 
-    tension = np.random.random(3)
-    bias = np.random.random(3)
-    continuity = np.random.random(3)
+    tension = np.random.default_rng().random(3)
+    bias = np.random.default_rng().random(3)
+    continuity = np.random.default_rng().random(3)
 
     n_points = 1000
     points = np.column_stack((x, y, z))

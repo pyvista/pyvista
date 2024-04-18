@@ -3,14 +3,14 @@
 from abc import abstractmethod
 import collections.abc
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Optional, Type, Union
+from typing import Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import NumpyUINT8Array
+from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
 from .utilities.fileio import read, set_vtkwriter_mode
@@ -35,17 +35,17 @@ class DataObject:
 
     """
 
-    _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
+    _WRITERS: ClassVar[Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict = collections.defaultdict(set)
+        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict = collections.defaultdict(set)
+        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -61,7 +61,6 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
-        return None
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
@@ -73,7 +72,6 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
-        return None
 
     def _from_file(self, filename: Union[str, Path], **kwargs):
         """Read data objects from file."""
@@ -81,20 +79,19 @@ class DataObject:
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
-                f'but `{type(self).__name__}` was expected.'
+                f'but `{type(self).__name__}` was expected.',
             )
         self.shallow_copy(data)
         self._post_file_load_processing()
 
     def _post_file_load_processing(self):
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
-        pass
 
     def save(
         self,
         filename: Union[Path, str],
         binary: bool = True,
-        texture: Optional[Union[NumpyUINT8Array, str]] = None,
+        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
     ) -> None:
         """Save this vtk object to file.
 
@@ -130,7 +127,7 @@ class DataObject:
         if self._WRITERS is None:
             raise NotImplementedError(
                 f'{self.__class__.__name__} writers are not specified,'
-                ' this should be a dict of (file extension: vtkWriter type)'
+                ' this should be a dict of (file extension: vtkWriter type)',
             )
 
         file_path = Path(filename)
@@ -140,7 +137,7 @@ class DataObject:
         if file_ext not in self._WRITERS:
             raise ValueError(
                 'Invalid file extension for this data type.'
-                f' Must be one of: {self._WRITERS.keys()}'
+                f' Must be one of: {self._WRITERS.keys()}',
             )
 
         # store complex and bitarray types as field data
@@ -160,10 +157,9 @@ class DataObject:
                 writer.SetArrayName(array_name)
 
             # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore
+            if self[array_name].shape[-1] == 4:  # type: ignore[index]
                 writer.SetEnableAlpha(True)
         writer.Write()
-        return None
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""
@@ -175,7 +171,6 @@ class DataObject:
                 if array_names:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
-        return None
 
     def _restore_metadata(self) -> None:
         """Restore PyVista metadata from field data.
@@ -193,13 +188,12 @@ class DataObject:
                     assoc_data = getattr(self, f'_association_{assoc_name}_names')
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
-        return None
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
-            f'{type(self)} mesh type does not have a `get_data_range` method.'
+            f'{type(self)} mesh type does not have a `get_data_range` method.',
         )
 
     def _get_attrs(self):  # pragma: no cover
@@ -290,7 +284,7 @@ class DataObject:
             Keyword arguments.
 
         """
-        pass  # called only by the inherited class
+        # called only by the inherited class
 
     def copy(self, deep=True):
         """Return a copy of the object.
@@ -360,7 +354,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: np.ndarray, name: str, deep: bool = True):
+    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True):
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -440,7 +434,9 @@ class DataObject:
 
         """
         return DataSetAttributes(
-            self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
+            self.GetFieldData(),
+            dataset=self,
+            association=FieldAssociation.NONE,
         )
 
     def clear_field_data(self) -> None:
@@ -464,7 +460,6 @@ class DataObject:
             raise NotImplementedError(f'`{type(self)}` does not support field data')
 
         self.field_data.clear()
-        return None
 
     @property
     def memory_address(self) -> str:  # numpydoc ignore=RT01
@@ -523,7 +518,6 @@ class DataObject:
 
         """
         self.CopyStructure(dataset)
-        return None
 
     def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
@@ -544,7 +538,6 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
-        return None
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
@@ -601,7 +594,8 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
-            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
+            'PICKLE_FORMAT',
+            'legacy',  # backwards compatibility - assume 'legacy'
         )
         self.__dict__.update(state)
 

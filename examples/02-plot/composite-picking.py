@@ -8,6 +8,7 @@ Demonstrate how to pick individual blocks of a :class:`pyvista.MultiBlock`
 using :func:`pyvista.Plotter.enable_block_picking`.
 
 """
+
 import numpy as np
 
 import pyvista as pv
@@ -21,12 +22,12 @@ import pyvista as pv
 def make_poly():
     """Create a superellipsoid in a random location."""
     poly = pv.ParametricSuperEllipsoid(
-        n1=np.random.random(),
-        n2=np.random.random() * 2,
+        n1=np.random.default_rng().random(),
+        n2=np.random.default_rng().random() * 2,
         u_res=50,
         v_res=50,
     )
-    poly.points += np.random.random(3) * 20
+    poly.points += np.random.default_rng().random(3) * 20
     return poly
 
 

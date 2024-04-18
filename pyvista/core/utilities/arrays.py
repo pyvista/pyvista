@@ -1,14 +1,17 @@
 """Internal array utilities."""
+
+from collections import UserDict
 import collections.abc
 import enum
 from itertools import product
+import json
 from typing import Optional, Tuple, Union
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import Matrix, NumpyFltArray, TransformLike, Vector
+from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
 
@@ -56,13 +59,14 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[Matrix, Vector], copy: bool = False
-) -> Tuple[np.ndarray, bool]:
+    points: Union[MatrixLike[float], VectorLike[float]],
+    copy: bool = False,
+) -> Tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
     ----------
-    points : Matrix, Vector
+    points : MatrixLike[float] | VectorLike[float]
         Argument to coerce into (n, 3) :class:`numpy.ndarray`.
 
     copy : bool, default: False
@@ -191,7 +195,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     deep : bool, default: False
         If input is numpy array then deep copy values.
     array_type : int, optional
-        VTK array type ID as specified in specified in ``vtkType.h``.
+        VTK array type ID as specified in ``vtkType.h``.
 
     Returns
     -------
@@ -203,14 +207,17 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     """
     if arr is None:
         return
-    if isinstance(arr, (list, tuple)):
+    if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
         if arr.dtype == np.dtype('O'):
             arr = arr.astype('|S')
-        arr = np.ascontiguousarray(arr)
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
+            if arr.ndim > 0:
+                # Do not call ascontiguousarray for scalar strings since this will reshape to 1D
+                # and scalars are already contiguous anyway
+                arr = np.ascontiguousarray(arr)
             vtk_data = convert_string_array(arr)
         else:
             # This will handle numerical data
@@ -269,7 +276,7 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.nda
     if preference not in ['cell', 'point', 'field']:
         raise ValueError(
             f'`preference` must be either "cell", "point", "field" for a '
-            f'{type(mesh)}, not "{preference}".'
+            f'{type(mesh)}, not "{preference}".',
         )
 
     parr = point_array(mesh, name)
@@ -369,12 +376,12 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).'
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
         f'must match either the number of points ({dataset.n_points}) '
-        f'or the number of cells ({dataset.n_cells}).'
+        f'or the number of cells ({dataset.n_cells}).',
     )
 
 
@@ -543,12 +550,23 @@ def vtk_id_list_to_array(vtk_id_list):
     return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
+def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
+    """Set object name for scalar string arrays."""
+    # This is used as a flag so that scalar arrays can be reshaped later.
+    try:
+        vtkarr.SetObjectName('scalar')
+    except AttributeError:
+        vtkarr.GetObjectName = lambda: 'scalar'
+
+
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
+    If a scalar string is provided, it is converted to a vtkCharArray
+
     Parameters
     ----------
-    arr : numpy.ndarray
+    arr : numpy.ndarray | str
         Numpy string array to convert.
 
     name : str, optional
@@ -565,13 +583,22 @@ def convert_string_array(arr, name=None):
     to make this faster, please consider opening a pull request.
 
     """
+    arr = np.array(arr) if isinstance(arr, str) else arr
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
-        if np.issubdtype(arr.dtype, np.str_) and not ''.join(arr).isascii():  # avoids segfault
+        if (
+            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+        ):  # avoids segfault
             raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.'
+                'String array contains non-ASCII characters that are not supported by VTK.',
             )
         vtkarr = _vtk.vtkStringArray()
+        if arr.ndim == 0:
+            arr = arr.reshape((1,))
+            # distinguish scalar inputs from array inputs by
+            # setting the object name
+            _set_string_scalar_object_name(vtkarr)
+
         ########### OPTIMIZE ###########
         for val in arr:
             vtkarr.InsertNextValue(val)
@@ -582,11 +609,17 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    try:
+        if arr.GetObjectName() == 'scalar':
+            return np.array("".join(arr_out))
+    except AttributeError:
+        pass
+    return arr_out
     ########################################
 
 
-def array_from_vtkmatrix(matrix) -> NumpyFltArray:
+def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -608,7 +641,7 @@ def array_from_vtkmatrix(matrix) -> NumpyFltArray:
     else:
         raise TypeError(
             'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
-            f' got {type(matrix).__name__} instead.'
+            f' got {type(matrix).__name__} instead.',
         )
     array = np.zeros(shape)
     for i, j in product(range(shape[0]), range(shape[1])):
@@ -685,10 +718,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        if len(possible_vectors_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError("No vector-like data available.")
@@ -697,7 +727,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
             "Multiple vector-like data available\n"
             f"cell data: {possible_vectors_cell}.\n"
             f"point data: {possible_vectors_point}.\n"
-            "Set one as active using DataSet.set_active_vectors(name, preference=type)"
+            "Set one as active using DataSet.set_active_vectors(name, preference=type)",
         )
 
 
@@ -737,10 +767,7 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        if len(possible_scalars_point) == 1:
-            preference = 'point'
-        else:
-            preference = 'cell'
+        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
         raise MissingDataError("No data available.")
@@ -749,11 +776,11 @@ def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
             "Multiple data available\n"
             f"cell data: {possible_scalars_cell}.\n"
             f"point data: {possible_scalars_point}.\n"
-            "Set one as active using DataSet.set_active_scalars(name, preference=type)"
+            "Set one as active using DataSet.set_active_scalars(name, preference=type)",
         )
 
 
-def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
+def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
     """Check and coerce transform-like arg to a 4x4 numpy array.
 
     Parameters
@@ -768,7 +795,7 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
         4x4 transformation matrix.
 
     """
-    transform_array: NumpyFltArray = np.eye(4)
+    transform_array: NumpyArray[float] = np.eye(4)
     if isinstance(transform_like, _vtk.vtkMatrix4x4):
         transform_array = array_from_vtkmatrix(transform_like)
     elif isinstance(transform_like, _vtk.vtkMatrix3x3):
@@ -789,95 +816,112 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyFltArray:
             '\tvtk.vtkMatrix3x3\n'
             '\tvtk.vtkTransform\n'
             '\t4x4 np.ndarray\n'
-            '\t3x3 np.ndarray\n'
+            '\t3x3 np.ndarray\n',
         )
     return transform_array
 
 
-def cast_to_list_array(arr):
-    """Cast an array to a nested list.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    Returns
-    -------
-    list
-        List or nested list array.
-    """
-    return cast_to_ndarray(arr).tolist()
+_JSONValueType = Union[
+    dict,  # type: ignore[type-arg]
+    list,  # type: ignore[type-arg]
+    tuple,  # type: ignore[type-arg]
+    str,
+    int,
+    float,
+    bool,
+    None,
+]
 
 
-def cast_to_tuple_array(arr):
-    """Cast an array to a nested tuple.
+# TODO: add generic type annotations 'UserDict[str, _JSONValueType]'
+#  once support for Python 3.8 is dropped
+class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
+    """Dict-like object with a JSON-serialized string array representation.
 
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
+    This class behaves just like a regular dict, except its contents
+    are represented internally as a JSON-formatted vtkStringArray.
+    The string array is updated dynamically any time the dict is
+    modified, such that modifying the dict will also implicitly modify
+    its JSON string representation.
 
-    Returns
-    -------
-    tuple
-        Tuple or nested tuple array.
-    """
-    arr = cast_to_ndarray(arr).tolist()
-
-    def _to_tuple(s):
-        return tuple(_to_tuple(i) for i in s) if isinstance(s, list) else s
-
-    return _to_tuple(arr)
-
-
-def cast_to_ndarray(arr, /, *, as_any=True, dtype=None, copy=False):
-    """Cast array to a NumPy ndarray.
-
-    Parameters
-    ----------
-    arr : array_like
-        Array to cast.
-
-    as_any : bool, default: True
-        Allow subclasses of ``np.ndarray`` to pass through without
-        making a copy.
-
-    dtype : dtype_like
-        The data-type of the returned array.
-
-    copy : bool, default: False
-        If ``True``, a copy of the array is returned. A copy is always
-        returned if the array:
-
-            * is a nested sequence
-            * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
-
-    Raises
-    ------
-    ValueError
-        If input cannot be cast as a NumPy ndarray.
-
-    Returns
-    -------
-    np.ndarray
-        NumPy ndarray.
+    Notes
+    -----
+    This class is intended for use as a dict with a small number of keys and
+    relatively small values, e.g. for storing metadata. It should not be
+    used to store frequently accessed array data with hundreds of entries.
 
     """
-    if as_any and not copy and dtype is None and isinstance(arr, np.ndarray):
-        return arr
-    try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
-        if out.dtype.name == 'object':
-            # NumPy will normally raise ValueError automatically for
-            # object arrays, but on some systems it will not, so raise
-            # error manually
-            raise ValueError
-    except (ValueError, np.VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    return out
+
+    @property
+    def _string(self) -> str:
+        """Get the vtkStringArray string."""
+        return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
+
+    @_string.setter
+    def _string(self, str_: str):
+        """Set the vtkStringArray to a specified string."""
+        self.SetNumberOfValues(0)  # Clear string
+        for char in str_:  # Populate string
+            self.InsertNextValue(char)
+
+    def _update_string(self):
+        """Format dict data as JSON and update the vtkStringArray."""
+        data_str = json.dumps(self.data)
+        if data_str != self._string:
+            self._string = data_str
+
+    def __repr__(self):
+        """Return JSON-formatted dict representation."""
+        return self._string
+
+    def __init__(self, dict_=None, /, **kwargs):
+        # Init from JSON string
+        if isinstance(dict_, str):
+            dict_ = json.loads(dict_)
+
+        # Init UserDict
+        super().__init__(dict_, **kwargs)
+        self._update_string()
+
+        # Flag self as a scalar string
+        # This is only needed so that the Field DatasetAttributes repr
+        # shows this array as `str`
+        _set_string_scalar_object_name(self)
+
+    # Override any/all `UserDict` or `MutableMapping` methods which mutate
+    # the dictionary. This ensures the serialized string is also updated
+    # and synced with the dict
+
+    def __setitem__(self, key, item):
+        super().__setitem__(key, item)
+        self._update_string()
+
+    def __delitem__(self, key):
+        super().__delitem__(key)
+        self._update_string()
+
+    def __setattr__(self, key, value):
+        object.__setattr__(self, key, value)
+        self._update_string() if key != '_string' else None
+
+    def update(self, *args, **kwargs):
+        super().update(*args, **kwargs)
+        self._update_string()
+
+    def popitem(self):
+        item = super().popitem()
+        self._update_string()
+        return item
+
+    def pop(self, __key):
+        item = super().pop(__key)
+        self._update_string()
+        return item
+
+    def clear(self):
+        super().clear()
+        self._update_string()
+
+    def setdefault(self, *args, **kwargs):
+        super().setdefault(*args, **kwargs)
+        self._update_string()

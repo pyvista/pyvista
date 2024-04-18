@@ -7,6 +7,7 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+
 # flake8: noqa: F401
 
 from vtkmodules.vtkChartsCore import (
@@ -74,6 +75,9 @@ except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
     vtkHardwarePicker = None
 from vtkmodules.vtkRenderingCore import (
+    VTK_RESOLVE_OFF,
+    VTK_RESOLVE_POLYGON_OFFSET,
+    VTK_RESOLVE_SHIFT_ZBUFFER,
     vtkAbstractMapper,
     vtkActor,
     vtkActor2D,

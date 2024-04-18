@@ -100,32 +100,32 @@ def test_camera_to_paraview_pvcc(camera, tmp_path):
 
 
 def test_camera_position(camera):
-    position = np.random.random(3)
+    position = np.random.default_rng().random(3)
     camera.position = position
     assert np.all(camera.GetPosition() == position)
     assert np.all(camera.position == position)
 
 
 def test_focal_point(camera):
-    focal_point = np.random.random(3)
+    focal_point = np.random.default_rng().random(3)
     camera.focal_point = focal_point
     assert np.all(camera.GetFocalPoint() == focal_point)
     assert np.all(camera.focal_point == focal_point)
 
 
 def test_model_transform_matrix(camera):
-    model_transform_matrix = np.random.random((4, 4))
+    model_transform_matrix = np.random.default_rng().random((4, 4))
     camera.model_transform_matrix = model_transform_matrix
     assert np.all(camera.model_transform_matrix == model_transform_matrix)
 
 
 def test_distance(camera):
-    focal_point = np.random.random(3)
-    position = np.random.random(3)
+    focal_point = np.random.default_rng().random(3)
+    position = np.random.default_rng().random(3)
     camera.position = position
     camera.focal_point = focal_point
     assert np.isclose(camera.distance, np.linalg.norm(focal_point - position, ord=2), rtol=1e-8)
-    distance = np.random.random()
+    distance = np.random.default_rng().random()
     camera.distance = distance
     assert np.isclose(camera.distance, distance, atol=0.0002)
     # large absolute tolerance because of
@@ -133,13 +133,13 @@ def test_distance(camera):
 
 
 def test_thickness(camera):
-    thickness = np.random.random(1)
+    thickness = np.random.default_rng().random(1)
     camera.thickness = thickness
     assert camera.thickness == thickness
 
 
 def test_parallel_scale(camera):
-    parallel_scale = np.random.random(1)
+    parallel_scale = np.random.default_rng().random(1)
     camera.parallel_scale = parallel_scale
     assert camera.parallel_scale == parallel_scale
 
@@ -147,7 +147,7 @@ def test_parallel_scale(camera):
 def test_zoom(camera):
     camera.enable_parallel_projection()
     orig_scale = camera.parallel_scale
-    zoom = np.random.random(1)
+    zoom = np.random.default_rng().random(1)
     camera.zoom(zoom)
     assert camera.parallel_scale == orig_scale / zoom
 
@@ -171,16 +171,16 @@ def test_disable_parallel_projection(camera):
 
 
 def test_clipping_range(camera):
-    near_point = np.random.random(1)
-    far_point = near_point + np.random.random(1)
+    near_point = np.random.default_rng().random(1)
+    far_point = near_point + np.random.default_rng().random(1)
     points = (near_point, far_point)
     camera.clipping_range = points
     assert camera.GetClippingRange() == points
     assert camera.clipping_range == points
 
-    with pytest.raises(ValueError):
-        far_point = near_point - np.random.random(1)
-        points = (near_point, far_point)
+    far_point = near_point - np.random.default_rng().random(1)
+    points = (near_point, far_point)
+    with pytest.raises(ValueError):  # noqa: PT011
         camera.clipping_range = points
 
 
@@ -216,7 +216,7 @@ def test_view_frustum(camera):
 
 
 def test_roll(camera):
-    angle = 360.0 * (np.random.rand() - 0.5)
+    angle = 360.0 * (np.random.default_rng().random() - 0.5)
     camera.roll = angle
     assert np.allclose(camera.GetRoll(), angle)
     assert np.allclose(camera.roll, angle)

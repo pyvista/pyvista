@@ -5,6 +5,7 @@ Creating an Unstructured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an irregular, unstructured grid from NumPy arrays.
+This example uses :class:`pyvista.UnstructuredGrid`.
 """
 
 import numpy as np
@@ -37,7 +38,7 @@ cell1 = np.array(
         [1, 0, 1],
         [1, 1, 1],
         [0, 1, 1],
-    ]
+    ],
 )
 
 cell2 = np.array(
@@ -50,7 +51,7 @@ cell2 = np.array(
         [1, 0, 3],
         [1, 1, 3],
         [0, 1, 3],
-    ]
+    ],
 )
 
 # points of the cell array
@@ -107,7 +108,7 @@ points = np.array(
         [0.0, 0.5, 1.0],
         [0.5, 0.5, 0.5],
         [0.5, 0.5, 1.0],
-    ]
+    ],
 )
 
 
@@ -124,7 +125,7 @@ cells = np.array(
         [8, 13, 9, 17, 25, 14, 10, 18, 26],
         [8, 23, 25, 21, 19, 24, 26, 22, 20],
         [8, 25, 17, 15, 21, 26, 18, 16, 22],
-    ]
+    ],
 ).ravel()
 
 # each cell is a HEXAHEDRON
@@ -138,7 +139,8 @@ grid = pv.UnstructuredGrid(cells, celltypes, points)
 # Alternate versions:
 grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
+    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
+    points,
 )
 
 # plot the grid (and suppress the camera position output)
@@ -167,7 +169,7 @@ cells = np.array(
         [4, 5, 2, 8, 3],
         [4, 5, 3, 8, 7],
         [4, 2, 6, 4, 5],
-    ]
+    ],
 )
 
 celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
@@ -186,7 +188,7 @@ points = np.array(
         [0.43, 0.0, 0.25],
         [0.0, -0.43, -0.25],
         [0.0, -0.43, 0.25],
-    ]
+    ],
 )
 
 # Create and plot the unstructured grid

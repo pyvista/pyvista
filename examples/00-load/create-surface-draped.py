@@ -22,13 +22,14 @@ where you collected the data on the surface of topography). Attached below are
 some example data for this: 1) XYZ coordinates of a GPR path and 2) a 2D array
 of data values produced from the GPR.
 
-the data here are wacky (it's difficult to get shareable data of decent
+The data here are wacky (it's difficult to get shareable data of decent
 quality), so ignore them but pay attention to the structure. The coordinates we
 have are technically shifted up and we have some NaN filler above the surface
 - its weird and just ignore it. You'll typically have a more uniform looking
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 

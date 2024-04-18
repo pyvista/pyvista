@@ -11,6 +11,7 @@ swept surface. For example, sweeping a line results in a
 cylindrical shell, and sweeping a circle creates a torus.
 
 """
+
 import numpy as np
 
 import pyvista
@@ -69,7 +70,7 @@ vertices = np.array(
         [1.4268, 0.0, 0.1768],
         [1.25, 0.0, 0.25],
         [1.0732, 0.0, 0.1768],
-    ]
+    ],
 )
 faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
 profile = pyvista.PolyData(vertices, faces)

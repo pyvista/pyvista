@@ -276,6 +276,7 @@ def create_axes_orientation_box(
     label_color=None,
     labels_off=False,
     opacity=0.5,
+    show_text_edges=False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -332,6 +333,9 @@ def create_axes_orientation_box(
     opacity : float, optional
         Opacity in the range of ``[0, 1]`` of the orientation box.
 
+    show_text_edges : bool, optional
+        Enable or disable drawing the vector text edges.
+
     Returns
     -------
     vtk.vtkAnnotatedCubeActor
@@ -380,9 +384,10 @@ def create_axes_orientation_box(
         axes_actor.SetZPlusFaceText(f"+{zlabel}")
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
-    axes_actor.SetTextEdgesVisibility(False)
+    axes_actor.SetTextEdgesVisibility(show_text_edges)
+    # https://github.com/pyvista/pyvista/pull/5382
     # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -391,7 +396,7 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
+    axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -567,7 +572,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -599,7 +604,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
@@ -661,9 +666,9 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib
+    import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False

@@ -34,6 +34,20 @@ demonstrate features.
    >>> plotter = demos.orientation_plotter()
    >>> plotter.show()
 
+Dataset Gallery
+---------------
+Many of PyVista's datasets are showcased in the dataset gallery.
+You can browse the gallery to find a particular kind of dataset and
+view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/examples/dataset_gallery
+
+API Reference
+-------------
+
 .. currentmodule:: pyvista
 
 .. autosummary::
@@ -44,6 +58,8 @@ demonstrate features.
    examples.planets
    demos.demos
 
+Usage Considerations
+--------------------
 .. warning::
    As you browse this repository and think about how you might use our 3D
    models and range datasets, please remember that several of these artifacts
@@ -73,11 +89,10 @@ PyVista uses `pooch <https://github.com/fatiando/pooch>`_ to download and store
 the example files in a local cache. You can determine the location of this cache
 at runtime with:
 
-.. code::
-
-   Get the local examples path on Linux
+.. code-block:: python
 
    >>> from pyvista import examples
+   >>> # Get the local examples path on Linux
    >>> examples.PATH
    '/home/user/.cache/pyvista_3'
 
@@ -101,7 +116,7 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
 ``'Data'`` since we need to specify the exact directory of the Data for
 ``pooch``.
 
-.. code::
+.. code-block:: bash
 
    git clone https://github.com/pyvista/vtk-data.git
    export VTK_DATA_PATH=/home/alex/python/vtk-data/Data

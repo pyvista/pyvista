@@ -13,7 +13,8 @@ from pyvista.core.errors import (
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -76,7 +77,7 @@ def test_pointset(pointset):
     assert pointset.n_cells == 0
 
     arr_name = 'arr'
-    pointset.point_data[arr_name] = np.random.random(10)
+    pointset.point_data[arr_name] = np.random.default_rng().random(10)
     assert arr_name in pointset.point_data
 
     # test that points can be modified
@@ -115,7 +116,10 @@ def test_filters_return_pointset(sphere):
     assert isinstance(clipped, pv.PointSet)
 
 
-@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+@pytest.mark.parametrize(
+    ("force_float", "expected_data_type"),
+    [(False, np.int64), (True, np.float32)],
+)
 def test_pointset_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], np.int64)
     if force_float:

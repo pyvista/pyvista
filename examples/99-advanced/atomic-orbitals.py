@@ -206,12 +206,12 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0, zoom_fac=0.5)
 prob = np.abs(hydro_orbital['real_wf']) ** 2
 prob /= prob.sum()
-indices = np.random.choice(hydro_orbital.n_points, 10000, p=prob)
+indices = np.random.default_rng().choice(hydro_orbital.n_points, 10000, p=prob)
 
 # add a small amount of noise to these coordinates to remove the "grid like"
 # structure present in the underlying ImageData
 points = hydro_orbital.points[indices]
-points += np.random.random(points.shape) - 0.5
+points += np.random.default_rng().random(points.shape) - 0.5
 
 # Create a point cloud and add the phase as the active scalars
 point_cloud = pv.PolyData(points)
@@ -220,7 +220,9 @@ point_cloud['phase'] = hydro_orbital['real_wf'][indices] < 0
 # Turn the point cloud into individual spheres. We do this so we can improve
 # the plot by enabling surface space ambient occlusion (SSAO)
 dplot = point_cloud.glyph(
-    geom=pv.Sphere(theta_resolution=8, phi_resolution=8), scale=False, orient=False
+    geom=pv.Sphere(theta_resolution=8, phi_resolution=8),
+    scale=False,
+    orient=False,
 )
 
 # be sure to enable SSAO here. This makes the "points" that are deeper within

@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: "0 3 1 * *"
 
-
 jobs:
   intersphinx_update:
     # This job can create issues/PRs/comments, so
@@ -13,18 +12,20 @@ jobs:
     if: github.repository_owner == 'pyvista'
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Update intersphinx objects
-      run: make -C doc update-intersphinx
+      - name: Update intersphinx objects
+        run: make -C doc update-intersphinx
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        commit-message: "[create-pull-request] update local intersphinx"
-        labels: |
-          maintenance
-        body: |
-          Automated changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
-          These changes update all the intersphinx mappings. To run CI close and reopen PR.
-        title: "Automated PR: Update Local Intersphinx"
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          author: pyvista-bot <53544751+pyvista-bot@users.noreply.github.com>
+          commit-message: "[create-pull-request] update local intersphinx"
+          labels: |
+            maintenance
+          body: |
+            Automated changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action
+            These changes update all the intersphinx mappings.
+          title: "Automated PR: Update Local Intersphinx"

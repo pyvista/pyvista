@@ -22,6 +22,7 @@ The default ``lighting='light kit'`` option recreates a lighting setup that
 corresponds to a ``vtk.vtkLightKit``. We can check what type of lights this
 lighting comprises:
 """
+
 # sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples

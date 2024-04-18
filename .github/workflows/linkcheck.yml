@@ -8,7 +8,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
   doc:
     name: Check Links
@@ -22,8 +21,8 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           cache-dependency-path: |
             requirements.txt
             requirements_docs.txt
@@ -33,18 +32,15 @@ jobs:
           packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
           version: 3.0
 
+      - name: Install PyVista and dependencies
+        run: |
+          pip install -e . --no-deps
+          pip install -r requirements_docs.txt
+
       - name: Install custom OSMesa VTK variant
         run: |
-          aria2c -x5 "https://github.com/pyvista/pyvista-wheels/raw/main/${VTK_OSMESA_WHEEL_NAME}"
-          pip install "$VTK_OSMESA_WHEEL_NAME"
-          rm "$VTK_OSMESA_WHEEL_NAME"
-        env:
-          VTK_OSMESA_WHEEL_NAME: 'vtk_osmesa-9.2.5-cp39-cp39-linux_x86_64.whl'
-      - name: Install PyVista
-        run: pip install -e . --no-deps
-
-      - name: Install Dependencies
-        run: pip install -r requirements_docs.txt
+          pip uninstall vtk -y
+          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
       - name: LinkCheck
         run: make -C doc linkcheck SPHINXOPTS="--color"

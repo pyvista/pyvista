@@ -42,6 +42,7 @@ class BaseViewer:
         self.OUTLINE = f'{plotter._id_name}_outline_visibility'
         self.EDGES = f'{plotter._id_name}_edge_visibility'
         self.AXIS = f'{plotter._id_name}_axis_visiblity'
+        self.PARALLEL = f'{plotter._id_name}_parallel_projection'
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
         self.VALID_UI_MODES = [
             'trame',
@@ -53,6 +54,7 @@ class BaseViewer:
         server.state[self.OUTLINE] = False
         server.state[self.EDGES] = False
         server.state[self.AXIS] = False
+        server.state[self.PARALLEL] = False
 
     @property
     def views(self):  # numpydoc ignore=RT01
@@ -139,6 +141,23 @@ class BaseViewer:
         self.plotter.view_xy(render=False)
         self.update_camera()
 
+    def on_parallel_projection_change(self, **kwargs):
+        """Toggle parallel projection for all renderers.
+
+        Parameters
+        ----------
+        **kwargs : dict, optional
+            Unused keyword arguments.
+
+        """
+        value = kwargs[self.PARALLEL]
+        for renderer in self.plotter.renderers:
+            if value:
+                renderer.enable_parallel_projection()
+            else:
+                renderer.disable_parallel_projection()
+        self.update()
+
     def on_edge_visiblity_change(self, **kwargs):
         """Toggle edge visibility for all actors.
 
@@ -212,7 +231,7 @@ class BaseViewer:
                         ren.axes_widget
                         for ren in self.plotter.renderers
                         if hasattr(ren, 'axes_widget')
-                    ]
+                    ],
                 )
         self.update()
 
@@ -257,7 +276,7 @@ class BaseViewer:
 
     def ui(self):
         """Implement in derived classes."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def make_layout(self, *args, **kwargs) -> AbstractLayout:  # pragma: no cover
         """Create an instance of an AbstractLayout which is appropriate for a concrete viewer.
@@ -275,4 +294,4 @@ class BaseViewer:
         AbstractLayout
             A layout this viewer can be embedded in.
         """
-        raise NotImplementedError()
+        raise NotImplementedError

@@ -1,23 +1,25 @@
 """Provides an easy way of generating several geometric objects.
 
 **CONTAINS**
-vtkArrowSource
+ArrowSource
 CylinderSource
-vtkSphereSource
-vtkPlaneSource
-vtkLineSource
-vtkCubeSource
+SphereSource
+PlaneSource
+LineSource
+CubeSource
 ConeSource
-vtkDiskSource
-vtkRegularPolygonSource
+DiscSource
+PolygonSource
 vtkPyramid
-vtkPlatonicSolidSource
-vtkSuperquadricSource
+PlatonicSolidSource
+SuperquadricSource
 Text3DSource
 
 as well as some pure-python helpers.
 
 """
+
+import contextlib
 from itertools import product
 
 import numpy as np
@@ -27,12 +29,26 @@ from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
 from .geometric_sources import (
+    ArrowSource,
+    BoxSource,
     ConeSource,
+    CubeSource,
     CylinderSource,
+    DiscSource,
+    LineSource,
     MultipleLinesSource,
+    PlaneSource,
+    PlatonicSolidSource,
+    PolygonSource,
+    SphereSource,
+    SuperquadricSource,
     Text3DSource,
     translate,
 )
+
+with contextlib.suppress(ImportError):
+    from .geometric_sources import CapsuleSource
+
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -44,6 +60,87 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def Capsule(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    cylinder_length=1.0,
+    resolution=30,
+):
+    """Create the surface of a capsule.
+
+    .. warning::
+       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
+    .. note::
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
+       not identical.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Location of the centroid in ``[x, y, z]``.
+
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction the capsule points to in ``[x, y, z]``.
+
+    radius : float, default: 0.5
+        Radius of the capsule.
+
+    cylinder_length : float, default: 1.0
+        Cylinder length of the capsule.
+
+    resolution : int, default: 30
+        Number of points on the circular face of the cylinder.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Capsule surface.
+
+    See Also
+    --------
+    pyvista.Cylinder
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    """
+    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        algo = CylinderSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            height=cylinder_length,
+            capping=True,
+            resolution=resolution,
+        )
+        algo.capsule_cap = True
+    else:
+        algo = CapsuleSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            cylinder_length=cylinder_length,
+            theta_resolution=resolution,
+            phi_resolution=resolution,
+        )
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def Cylinder(
@@ -211,19 +308,17 @@ def CylinderStructured(
     grid.points = np.c_[xx, yy, zz]
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
-    # Orient properly in user direction
-    vx = np.array([0.0, 0.0, 1.0])
-    if not np.allclose(vx, direction):
-        direction /= np.linalg.norm(direction)
-        vx -= vx.dot(direction) * direction
-        vx /= np.linalg.norm(vx)
-        vy = np.cross(direction, vx)
-        rmtx = np.array([vx, vy, direction])
-        grid.points = grid.points.dot(rmtx)
-
-    # Translate to given center
+    # Center at origin
     grid.points -= np.array(grid.center)
-    grid.points += np.array(center)
+
+    # rotate initially to face +X direction
+    grid.rotate_y(90, inplace=True)
+
+    # rotate points 180 for compatibility with previous versions
+    grid.rotate_x(180, inplace=True)
+
+    # move to final position
+    translate(grid, center=center, direction=direction)
     return grid
 
 
@@ -280,15 +375,14 @@ def Arrow(
     >>> mesh.plot(show_edges=True)
 
     """
-    # Create arrow object
-    arrow = _vtk.vtkArrowSource()
-    arrow.SetTipLength(tip_length)
-    arrow.SetTipRadius(tip_radius)
-    arrow.SetTipResolution(tip_resolution)
-    arrow.SetShaftRadius(shaft_radius)
-    arrow.SetShaftResolution(shaft_resolution)
-    arrow.Update()
-    surf = wrap(arrow.GetOutput())
+    arrow = ArrowSource(
+        tip_length=tip_length,
+        tip_radius=tip_radius,
+        tip_resolution=tip_resolution,
+        shaft_radius=shaft_radius,
+        shaft_resolution=shaft_resolution,
+    )
+    surf = arrow.output
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
@@ -386,16 +480,16 @@ def Sphere(
     >>> out = sphere.plot(show_edges=True)
 
     """
-    sphere = _vtk.vtkSphereSource()
-    sphere.SetRadius(radius)
-    sphere.SetThetaResolution(theta_resolution)
-    sphere.SetPhiResolution(phi_resolution)
-    sphere.SetStartTheta(start_theta)
-    sphere.SetEndTheta(end_theta)
-    sphere.SetStartPhi(start_phi)
-    sphere.SetEndPhi(end_phi)
-    sphere.Update()
-    surf = wrap(sphere.GetOutput())
+    sphere = SphereSource(
+        radius=radius,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        start_theta=start_theta,
+        end_theta=end_theta,
+        start_phi=start_phi,
+        end_phi=end_phi,
+    )
+    surf = sphere.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, direction)
     return surf
@@ -838,7 +932,7 @@ def SolidSphereGeneric(
                         npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
-                    ]
+                    ],
                 )
                 celltypes.append(pyvista.CellType.TETRA)
 
@@ -852,7 +946,7 @@ def SolidSphereGeneric(
                     _index(0, iphi + 1, itheta + 1),
                     _index(0, iphi + 1, itheta),
                     0,
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.PYRAMID)
 
@@ -872,7 +966,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, 0, itheta + 1),
                     _index(ir + 1, 0, itheta),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -890,7 +984,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, nphi - 1, itheta),
                     _index(ir + 1, nphi - 1, itheta + 1),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -909,7 +1003,7 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi + 1, itheta),
                 _index(ir + 1, iphi + 1, itheta + 1),
                 _index(ir + 1, iphi, itheta + 1),
-            ]
+            ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
 
@@ -963,12 +1057,8 @@ def Plane(
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
-    planeSource = _vtk.vtkPlaneSource()
-    planeSource.SetXResolution(i_resolution)
-    planeSource.SetYResolution(j_resolution)
-    planeSource.Update()
-
-    surf = wrap(planeSource.GetOutput())
+    planeSource = PlaneSource(i_resolution=i_resolution, j_resolution=j_resolution)
+    surf = planeSource.output
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
@@ -1005,18 +1095,8 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     >>> mesh.plot(color='k', line_width=10)
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    src = _vtk.vtkLineSource()
-    src.SetPoint1(*pointa)
-    src.SetPoint2(*pointb)
-    src.SetResolution(resolution)
-    src.Update()
-    line = wrap(src.GetOutput())
+    src = LineSource(pointa, pointb, resolution)
+    line = src.output
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
@@ -1024,7 +1104,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=None):
     """Create multiple lines.
 
     Parameters
@@ -1049,6 +1129,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
+    if points is None:
+        points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
     return MultipleLinesSource(points=points).output
 
 
@@ -1086,30 +1168,19 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     >>> mesh.plot()
 
     """
-    if resolution <= 0:
-        raise ValueError('Resolution must be positive.')
-    if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
-    if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
-    line_src = _vtk.vtkLineSource()
-    line_src.SetPoint1(*pointa)
-    line_src.SetPoint2(*pointb)
-    line_src.SetResolution(resolution)
-    line_src.Update()
-
-    if n_sides < 3:
-        raise ValueError('Number of sides `n_sides` must be >= 3')
-    tube_filter = _vtk.vtkTubeFilter()
-    tube_filter.SetInputConnection(line_src.GetOutputPort())
-    tube_filter.SetRadius(radius)
-    tube_filter.SetNumberOfSides(n_sides)
-    tube_filter.Update()
-
-    return wrap(tube_filter.GetOutput())
+    line_src = LineSource(pointa, pointb, resolution)
+    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
 
 
-def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None, clean=True):
+def Cube(
+    center=(0.0, 0.0, 0.0),
+    x_length=1.0,
+    y_length=1.0,
+    z_length=1.0,
+    bounds=None,
+    clean=True,
+    point_dtype='float32',
+):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or
@@ -1151,6 +1222,11 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
 
         .. versionadded:: 0.33.0
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1165,20 +1241,15 @@ def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bound
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkCubeSource()
-    if bounds is not None:
-        if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-            )
-        src.SetBounds(bounds)
-    else:
-        src.SetCenter(center)
-        src.SetXLength(x_length)
-        src.SetYLength(y_length)
-        src.SetZLength(z_length)
-    src.Update()
-    cube = wrap(src.GetOutput())
+    algo = CubeSource(
+        center=center,
+        x_length=x_length,
+        y_length=y_length,
+        z_length=z_length,
+        bounds=bounds,
+        point_dtype=point_dtype,
+    )
+    cube = algo.output
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
@@ -1221,16 +1292,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     >>> mesh.plot(show_edges=True)
 
     """
-    if np.array(bounds).size != 6:
-        raise TypeError(
-            'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
-        )
-    src = _vtk.vtkTessellatedBoxSource()
-    src.SetLevel(level)
-    src.SetQuads(quads)
-    src.SetBounds(bounds)
-    src.Update()
-    return wrap(src.GetOutput())
+    return BoxSource(level=level, quads=quads, bounds=bounds).output
 
 
 def Cone(
@@ -1331,14 +1393,8 @@ def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkRegularPolygonSource()
-    src.SetGeneratePolygon(fill)
-    src.SetCenter(center)
-    src.SetNumberOfSides(n_sides)
-    src.SetRadius(radius)
-    src.SetNormal(normal)
-    src.Update()
-    return wrap(src.GetOutput())
+    src = PolygonSource(fill=fill, center=center, n_sides=n_sides, radius=radius, normal=normal)
+    return src.output
 
 
 def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
@@ -1382,15 +1438,10 @@ def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), 
     >>> mesh.plot(show_edges=True, line_width=5)
 
     """
-    src = _vtk.vtkDiskSource()
-    src.SetInnerRadius(inner)
-    src.SetOuterRadius(outer)
-    src.SetRadialResolution(r_res)
-    src.SetCircumferentialResolution(c_res)
-    src.Update()
+    algo = DiscSource(inner=inner, outer=outer, r_res=r_res, c_res=c_res)
     normal = np.array(normal)
     center = np.array(center)
-    surf = wrap(src.GetOutput())
+    surf = algo.output
     surf.rotate_y(90, inplace=True)
     translate(surf, center, normal)
     return surf
@@ -1858,9 +1909,16 @@ def Rectangle(points=None):
     vec_02 = point_2 - point_0
     vec_12 = point_2 - point_1
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02)
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12)
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12)
+    mag_01 = np.linalg.norm(vec_01)
+    mag_02 = np.linalg.norm(vec_02)
+    mag_12 = np.linalg.norm(vec_12)
+
+    if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
+        raise ValueError("Unable to build a rectangle with less than three different points")
+
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val
@@ -1869,8 +1927,6 @@ def Rectangle(points=None):
     ]
     if len(null_scalar_products) == 0:
         raise ValueError("The three points should defined orthogonal vectors")
-    if len(null_scalar_products) > 1:
-        raise ValueError("Unable to build a rectangle with less than three different points")
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
@@ -2069,18 +2125,18 @@ def Superquadric(
     >>> superquadric.plot(show_edges=True)
 
     """
-    superquadricSource = _vtk.vtkSuperquadricSource()
-    superquadricSource.SetCenter(center)
-    superquadricSource.SetScale(scale)
-    superquadricSource.SetSize(size)
-    superquadricSource.SetThetaRoundness(theta_roundness)
-    superquadricSource.SetPhiRoundness(phi_roundness)
-    superquadricSource.SetThetaResolution(round(theta_resolution / 4) * 4)
-    superquadricSource.SetPhiResolution(round(phi_resolution / 8) * 8)
-    superquadricSource.SetToroidal(toroidal)
-    superquadricSource.SetThickness(thickness)
-    superquadricSource.Update()
-    return wrap(superquadricSource.GetOutput())
+    source = SuperquadricSource(
+        center=center,
+        scale=scale,
+        size=size,
+        theta_roundness=theta_roundness,
+        phi_roundness=phi_roundness,
+        theta_resolution=theta_resolution,
+        phi_resolution=phi_resolution,
+        toroidal=toroidal,
+        thickness=thickness,
+    )
+    return source.output
 
 
 def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
@@ -2122,27 +2178,11 @@ def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    kinds = {
-        'tetrahedron': 0,
-        'cube': 1,
-        'octahedron': 2,
-        'icosahedron': 3,
-        'dodecahedron': 4,
-    }
-    if isinstance(kind, str):
-        if kind not in kinds:
-            raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-        kind = kinds[kind]
-    elif isinstance(kind, int) and kind not in range(5):
-        raise ValueError(f'Invalid Platonic solid index "{kind}".')
-    elif not isinstance(kind, int):
-        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
     check_valid_vector(center, 'center')
 
-    solid = _vtk.vtkPlatonicSolidSource()
-    solid.SetSolidType(kind)
-    solid.Update()
-    solid = wrap(solid.GetOutput())
+    source = PlatonicSolidSource()
+    source.kind = kind
+    solid = source.output
     # rename and activate cell scalars
     cell_data = solid.cell_data.get_array(0)
     solid.clear_data()

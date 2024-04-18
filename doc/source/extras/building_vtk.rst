@@ -33,7 +33,7 @@ wheel size.
 
 .. note::
    We have also published some convenient CMake configurations files that you
-   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`. These configurations cover the build variants described here
+   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`_. These configurations cover the build variants described here
    and make the process of reproducibly building VTK wheel variants more
    straightforward.
 
@@ -93,7 +93,7 @@ framebuffer. The default VTK wheels are not built with this feature,
 but you can build VTK for off-screen plotting using GPU support by
 modifying the above ``cmake`` command with:
 
-.. code::
+.. code-block:: bash
 
    #!/bin/bash
 
@@ -145,7 +145,7 @@ Building OSMesa
 OSMesa provides higher visualization performance on CPU based hosts. Use this
 instead of ``xvfb``:
 
-.. code::
+.. code-block:: bash
 
    sudo apt-get install libosmesa6-dev cmake ninja-build
 
@@ -190,7 +190,7 @@ built on. You can work around this by building your wheels using a
 `manylinux <https://github.com/pypa/manylinux>`_ docker image.
 
 To do this, create a ``build_wheels.sh`` with the following contents in the
-``git clone``d ``vtk`` directory, and give it executable permissions
+``git clone`` d ``vtk`` directory, and give it executable permissions
 (``chmod +x build_wheels.sh``):
 
 .. code-block:: bash

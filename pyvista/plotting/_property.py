@@ -1,4 +1,5 @@
 """This module contains the Property class."""
+
 from typing import Union
 
 import pyvista
@@ -298,7 +299,7 @@ class Property(_vtk.vtkProperty):
         if new_style == 'wireframe':
             self.SetRepresentationToWireframe()
             if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore
+                self.color = self._theme.outline_color  # type: ignore[attr-defined]
         elif new_style == 'points':
             self.SetRepresentationToPoints()
         elif new_style == 'surface':
@@ -308,7 +309,7 @@ class Property(_vtk.vtkProperty):
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n'
+                '\t"points"\n',
             )
 
     @property
@@ -1052,7 +1053,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
+                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"',
             )
 
     @property

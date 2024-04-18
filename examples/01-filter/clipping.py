@@ -6,6 +6,7 @@ Clipping with Planes & Boxes
 
 Clip/cut any dataset using planes or boxes.
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
@@ -83,7 +84,7 @@ p.show()
 ###############################################################################
 # Crinkled Clipping
 # +++++++++++++++++
-# Crinkled clipping is useful if you don’t want the clip filter to truly clip
+# Crinkled clipping is useful if you don't want the clip filter to truly clip
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.
 #

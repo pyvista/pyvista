@@ -1,18 +1,18 @@
 name: Build Documentation
 on:
-  pull_request:  # Uses cache
-  workflow_dispatch:  # Able to not use cache by user demand
+  pull_request: # Uses cache
+  workflow_dispatch: # Able to not use cache by user demand
     inputs:
       cache:
-        description: 'Use build cache'
+        description: "Use build cache"
         required: false
         default: "true"
   # No cache enabled for `schedule` and `push`
   schedule:
-    - cron: '0 0 1 * *'  # once a month on main
+    - cron: "0 0 1 * *" # once a month on main
   push:
     tags:
-      - '*'
+      - "*"
     branches:
       - main
 
@@ -22,24 +22,24 @@ concurrency:
 
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
-  DOCUMENTATION_CNAME: 'docs.pyvista.org'
-  PYDEVD_DISABLE_FILE_VALIDATION: '1'
+  DOCUMENTATION_CNAME: "docs.pyvista.org"
+  PYDEVD_DISABLE_FILE_VALIDATION: "1"
 
 jobs:
   doc:
     name: Build Documentation
     runs-on: ubuntu-20.04
     env:
-      PYVISTA_OFF_SCREEN: 'True'
+      PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
-      SHELLOPTS: 'errexit:pipefail'
+      SHELLOPTS: "errexit:pipefail"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
           cache-dependency-path: |
             requirements.txt
             requirements_docs.txt
@@ -66,14 +66,14 @@ jobs:
           pip list
 
       - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install Dependencies
         run: |
           pip install cookiecutter
@@ -174,10 +174,10 @@ jobs:
 
       - name: Publish notebooks on release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           external_repository: pyvista/pyvista-examples
           personal_token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           publish_dir: pyvista-examples
           publish_branch: master
-          exclude_assets: ''
+          exclude_assets: ""

@@ -21,6 +21,7 @@ order to unfold the sphere. It's not obvious that the transformation is truly
 smooth; this was proved in the paper by Bednorz and Bednorz.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import numpy as np
 
@@ -130,7 +131,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa
+            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
     )
     # fmt: on
 

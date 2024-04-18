@@ -1,4 +1,5 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
+
 import collections.abc
 from contextlib import contextmanager
 from functools import partial
@@ -8,9 +9,9 @@ import time
 import warnings
 import weakref
 
+from pyvista import vtk_version_info
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import try_callback
-from pyvista.report import vtk_version_info
 
 from . import _vtk
 from .opts import PickerType
@@ -44,9 +45,11 @@ class Timer:
 
     def execute(self, obj, _event):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Execute Timer."""
+        # https://github.com/pyvista/pyvista/pull/5618
+        iren = obj
+
         while self.step < self.max_steps:
             self.callback(self.step)
-            iren = obj
             iren.GetRenderWindow().Render()
             self.step += 1
         if self.id:
@@ -107,7 +110,10 @@ class RenderWindowInteractor:
         # enable interaction with visible charts)
         self._context_style = _vtk.vtkContextInteractorStyle()
         self.track_click_position(
-            self._toggle_chart_interaction, side="left", double=True, viewport=True
+            self._toggle_chart_interaction,
+            side="left",
+            double=True,
+            viewport=True,
         )
 
         self.reset_picker()
@@ -386,7 +392,7 @@ class RenderWindowInteractor:
             self._click_event_callbacks[event][double, viewport].append(callback)
         else:
             raise ValueError(
-                "Invalid callback provided, it should be either ``None`` or a callable."
+                "Invalid callback provided, it should be either ``None`` or a callable.",
             )
 
         if add_observer:
@@ -462,7 +468,7 @@ class RenderWindowInteractor:
                 # when there are overlapping charts).
                 origin = renderer.GetOrigin()  # Correct for viewport origin (see #3278)
                 charts = renderer._get_charts_by_pos(
-                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1])
+                    (mouse_pos[0] - origin[0], mouse_pos[1] - origin[1]),
                 )
                 if charts:
                     # Toggle interaction for indicated charts and determine whether
@@ -499,7 +505,7 @@ class RenderWindowInteractor:
             if scene is not None and len(self._plotter.renderers) > 1:
                 warnings.warn(
                     "Interaction with charts is not possible when using multiple subplots."
-                    "Upgrade to VTK 9.3 or newer to enable this feature."
+                    "Upgrade to VTK 9.3 or newer to enable this feature.",
                 )
                 scene = None
         self._context_style.SetScene(scene)
@@ -529,6 +535,11 @@ class RenderWindowInteractor:
         axis of the camera.  Alternatively, ctrl + shift + left button
         or mouse wheel zooms, and shift + left button pans.
 
+        See Also
+        --------
+        pyvista.Plotter.enable_custom_trackball_style
+            A style that can be customized for mouse actions.
+
         Examples
         --------
         Create a simple scene with a plotter that has the Trackball
@@ -546,6 +557,238 @@ class RenderWindowInteractor:
         self._style = 'TrackballCamera'
         self._style_class = None
         self.update_style()
+
+    def enable_custom_trackball_style(
+        self,
+        left="rotate",
+        shift_left="pan",
+        control_left="spin",
+        middle="pan",
+        shift_middle="pan",
+        control_middle="pan",
+        right="dolly",
+        shift_right="environment_rotate",
+        control_right="dolly",
+    ):
+        """Set the interactive style to a custom style based on Trackball Camera.
+
+        For each choice of button, control-button, and shift-button,
+        the behavior when the mouse is moved can be chosen by passing the
+        following strings:
+
+        * ``"dolly"``
+        * ``"environment_rotate"``
+        * ``"pan"``
+        * ``"rotate"``
+        * ``"spin"``
+
+        ``None`` can also be passed, which also results in the default behavior.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        left : str, default: "rotate"
+            Action when the left button is clicked and the mouse is moved.
+
+        shift_left : str, default: "pan"
+            Action when the left button is clicked with the shift key and the mouse is moved.
+
+        control_left : str, default: "spin"
+            Action when the left button is clicked with the control key and mouse moved.
+
+        middle : str, default: "pan"
+            Action when the middle button is clicked and the mouse is moved.
+
+        shift_middle : str, default: "pan"
+            Action when the middle button is clicked with the shift key and the mouse is moved.
+
+        control_middle : str, default: "pan"
+            Action when the middle button is clicked with the control key and mouse moved.
+
+        right : str, default: "dolly"
+            Action when the right button is clicked and the mouse is moved.
+
+        shift_right : str, default: "environment_rotate"
+            Action when the right button is clicked with the shift key and the mouse is moved.
+
+        control_right : str, default: "dolly"
+            Action when the right button is clicked with the control key and the mouse is moved.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_trackball_style
+            Base style.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has the left button
+        dolly.
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        self._style = 'TrackballCamera'
+        self._style_class = None
+        self.update_style()
+
+        start_action_map = {
+            "environment_rotate": self._style_class.StartEnvRotate,
+            "rotate": self._style_class.StartRotate,
+            "pan": self._style_class.StartPan,
+            "spin": self._style_class.StartSpin,
+            "dolly": self._style_class.StartDolly,
+        }
+
+        end_action_map = {
+            "environment_rotate": self._style_class.EndEnvRotate,
+            "rotate": self._style_class.EndRotate,
+            "pan": self._style_class.EndPan,
+            "spin": self._style_class.EndSpin,
+            "dolly": self._style_class.EndDolly,
+        }
+
+        for p in [
+            left,
+            shift_left,
+            control_left,
+            middle,
+            shift_middle,
+            control_middle,
+            right,
+            shift_right,
+            control_right,
+        ]:
+            if p not in start_action_map:
+                raise ValueError(f"Action '{p}' not in the allowed {list(start_action_map.keys())}")
+
+        button_press_map = {
+            "left": self._style_class.OnLeftButtonDown,
+            "middle": self._style_class.OnMiddleButtonDown,
+            "right": self._style_class.OnRightButtonDown,
+        }
+        button_release_map = {
+            "left": self._style_class.OnLeftButtonUp,
+            "middle": self._style_class.OnMiddleButtonUp,
+            "right": self._style_class.OnRightButtonUp,
+        }
+
+        def _setup_callbacks(button, click, control, shift):
+            """Return callbacks for press and release events.
+
+            Callbacks are formed for a button and action for a click,
+            control-click, and shift-click.
+
+            """
+            button_press = button_press_map[button]
+            button_release = button_release_map[button]
+
+            click_action = start_action_map[click]
+            control_action = start_action_map[control]
+            shift_action = start_action_map[shift]
+
+            click_release_action = end_action_map[click]
+            control_release_action = end_action_map[control]
+            shift_release_action = end_action_map[shift]
+
+            def _press_callback(_obj, event):
+                if self.interactor.GetControlKey():
+                    control_action()
+                elif self.interactor.GetShiftKey():
+                    shift_action()
+                else:
+                    click_action()
+                button_press()
+
+            def _release_callback(_obj, event):
+                click_release_action()
+                control_release_action()
+                shift_release_action()
+                button_release()
+
+            return partial(try_callback, _press_callback), partial(try_callback, _release_callback)
+
+        _left_button_press_callback, _left_button_release_callback = _setup_callbacks(
+            "left",
+            left,
+            control_left,
+            shift_left,
+        )
+        self._style_class.add_observer('LeftButtonPressEvent', _left_button_press_callback)
+        self._style_class.add_observer('LeftButtonReleaseEvent', _left_button_release_callback)
+
+        _middle_button_press_callback, _middle_button_release_callback = _setup_callbacks(
+            "middle",
+            middle,
+            control_middle,
+            shift_middle,
+        )
+        self._style_class.add_observer('MiddleButtonPressEvent', _middle_button_press_callback)
+        self._style_class.add_observer('MiddleButtonReleaseEvent', _middle_button_release_callback)
+
+        _right_button_press_callback, _right_button_release_callback = _setup_callbacks(
+            "right",
+            right,
+            control_right,
+            shift_right,
+        )
+        self._style_class.add_observer('RightButtonPressEvent', _right_button_press_callback)
+        self._style_class.add_observer('RightButtonReleaseEvent', _right_button_release_callback)
+
+    def enable_2d_style(self):
+        """Set the interactive style to 2D.
+
+        For a 3-button mouse, the left button pans, the
+        right button dollys, the middle button spins, and the wheel
+        dollys.
+        ctrl + left button spins, shift + left button dollys,
+        ctrl + middle button pans, shift + middle button dollys,
+        ctrl + right button rotates in 3D, and shift + right button
+        dollys.
+
+        Recommended to use with
+        :func:`pyvista.Plotter.enable_parallel_projection`.
+
+        See Also
+        --------
+        pyvista.Plotter.enable_parallel_projection
+            Set parallel projection, which is useful for 2D views.
+
+        pyvista.Plotter.enable_custom_trackball_style
+            A style that can be customized for mouse actions.
+
+        Examples
+        --------
+        Create a simple scene with a plotter that has a
+        ParaView-like 2D style:
+
+        >>> import pyvista as pv
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
+        >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
+        >>> plotter.show_axes()
+        >>> plotter.enable_parallel_projection()
+        >>> plotter.enable_2d_style()
+        >>> plotter.show()  # doctest:+SKIP
+
+        """
+        self.enable_custom_trackball_style(
+            left="pan",
+            shift_left="dolly",
+            control_left="spin",
+            middle="spin",
+            shift_middle="dolly",
+            control_middle="pan",
+            right="dolly",
+            shift_right="dolly",
+            control_right="rotate",
+        )
 
     def enable_trackball_actor_style(self):
         """Set the interactive style to Trackball Actor.
@@ -884,10 +1127,29 @@ class RenderWindowInteractor:
         if len(key) > 1:
             raise ValueError('Only accepts a single key')
         self.interactor.SetKeyCode(key)
+        self.interactor.SetKeySym(key)
         self.interactor.CharEvent()
 
+    def _control_key_press(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(1)
+
+    def _control_key_release(self):
+        """Simulate a control keypress."""
+        self.interactor.SetControlKey(0)
+
+    def _shift_key_press(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(1)
+
+    def _shift_key_release(self):
+        """Simulate a shift keypress."""
+        self.interactor.SetShiftKey(0)
+
     def _mouse_left_button_press(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button press.
 
@@ -900,7 +1162,9 @@ class RenderWindowInteractor:
         self.interactor.LeftButtonPressEvent()
 
     def _mouse_left_button_release(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a left mouse button release."""
         if x is not None and y is not None:
@@ -912,8 +1176,40 @@ class RenderWindowInteractor:
             self._mouse_left_button_press(x, y)
             self._mouse_left_button_release()
 
+    def _mouse_middle_button_press(
+        self,
+        x=None,
+        y=None,
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button press.
+
+        If ``x`` and ``y`` are entered then simulates a movement to
+        that position.
+
+        """
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonPressEvent()
+
+    def _mouse_middle_button_release(
+        self,
+        x=None,
+        y=None,
+    ):  # pragma: no cover # numpydoc ignore=PR01,RT01
+        """Simulate a middle mouse button release."""
+        if x is not None and y is not None:
+            self._mouse_move(x, y)
+        self.interactor.MiddleButtonReleaseEvent()
+
+    def _mouse_middle_button_click(self, x=None, y=None, count=1):
+        for _ in range(count):
+            self._mouse_middle_button_press(x, y)
+            self._mouse_middle_button_release()
+
     def _mouse_right_button_press(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button press.
 
@@ -926,7 +1222,9 @@ class RenderWindowInteractor:
         self.interactor.RightButtonPressEvent()
 
     def _mouse_right_button_release(
-        self, x=None, y=None
+        self,
+        x=None,
+        y=None,
     ):  # pragma: no cover # numpydoc ignore=PR01,RT01
         """Simulate a right mouse button release."""
         if x is not None and y is not None:
@@ -940,7 +1238,7 @@ class RenderWindowInteractor:
 
     def _mouse_move(self, x, y):  # pragma:
         """Simulate moving the mouse to ``(x, y)`` screen coordinates."""
-        self.interactor.SetEventInformation(x, y)
+        self.interactor.SetEventPosition(x, y)
         self.interactor.MouseMoveEvent()
 
     def get_event_position(self):
@@ -1085,7 +1383,7 @@ class RenderWindowInteractor:
         """Process events."""
         if not self.initialized:
             raise RuntimeError(
-                'Render window interactor must be initialized before processing events.'
+                'Render window interactor must be initialized before processing events.',
             )
         self.interactor.ProcessEvents()
 
@@ -1174,7 +1472,8 @@ class RenderWindowInteractor:
             The observer function to call when a pick event ends.
         """
         warnings.warn(
-            "`add_pick_obeserver` is deprecated, use `add_pick_observer`", PyVistaDeprecationWarning
+            "`add_pick_obeserver` is deprecated, use `add_pick_observer`",
+            PyVistaDeprecationWarning,
         )
         self.add_pick_observer(observer)
 
@@ -1242,7 +1541,7 @@ def _style_factory(klass):
     """Create a subclass with capturing ability, return it."""
     # We have to use a custom subclass for this because the default ones
     # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
+    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html
 
     def _make_class(klass):
         """Make the class."""
@@ -1258,10 +1557,13 @@ def _style_factory(klass):
 
                 self._observers = []
                 self._observers.append(
-                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press))
+                    self.AddObserver("LeftButtonPressEvent", partial(try_callback, self._press)),
                 )
                 self._observers.append(
-                    self.AddObserver("LeftButtonReleaseEvent", partial(try_callback, self._release))
+                    self.AddObserver(
+                        "LeftButtonReleaseEvent",
+                        partial(try_callback, self._release),
+                    ),
                 )
 
             def _press(self, *args):
