@@ -360,6 +360,7 @@ extend-select = [
     "PLR1714",
     "PT",
     "PTH",
+    "PYI",
     "RET501",
     "RSE",
     "RUF",
