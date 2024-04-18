@@ -152,7 +152,12 @@ def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
     point_cloud = pv.PolyData([0.0, 0.0, 0.0])
     assert point_cloud.n_verts == point_cloud.n_cells
     mesh, scalars = _plotting.prepare_smooth_shading(
-        point_cloud, None, True, split_sharp_edges, False, None
+        point_cloud,
+        None,
+        True,
+        split_sharp_edges,
+        False,
+        None,
     )
     assert scalars is None
     assert "Normals" not in mesh.point_data
@@ -494,7 +499,7 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     entries_after = os.listdir(pv.FIGURE_PATH)
     assert len(entries) + 1 == len(entries_after)
 
-    res_file = list(set(entries_after) - set(entries))[0]
+    res_file = next(iter(set(entries_after) - set(entries)))
     pv.ON_SCREENSHOT = False
     sphere_screenshot = "sphere_screenshot.png"
     pl = pv.Plotter()
@@ -511,7 +516,11 @@ def test_legend_font(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     legend = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        font_family='times',
     )
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 

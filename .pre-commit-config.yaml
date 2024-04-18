@@ -74,7 +74,7 @@ repos:
             --enable-error-code,
             ignore-without-code,
           ]
-        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
+        exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
             "mypy-extensions==1.0.0",
@@ -105,7 +105,7 @@ repos:
       - id: mixed-line-ending
       - id: file-contents-sorter
         verbose: true
-        files: ^(\.dockerignore)$
+        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema

@@ -243,7 +243,7 @@ glad to add it.
 .. grid:: 3
    :gutter: 1
 
-"""
+""",
         )
         # Reverse to put the latest items at the top
         for example in list(articles.values())[::-1]:
@@ -257,7 +257,7 @@ glad to add it.
     <div class="sphx-glr-clear"></div>
 
 
-"""
+""",
         )
         new_fid.seek(0)
         new_text = new_fid.read()
@@ -272,5 +272,3 @@ glad to add it.
     if new_text != existing:
         with Path(path).open("w", encoding="utf-8") as fid:
             fid.write(new_text)
-
-    return

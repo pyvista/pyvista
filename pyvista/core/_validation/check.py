@@ -218,11 +218,8 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
     else:  # not ascending and strict
         is_sorted = np.all(arr[first] > arr[second])
     if not is_sorted:
-        if arr.size <= 4:
-            # Show the array's elements in error msg if array is small
-            msg_body = f"{arr}"
-        else:
-            msg_body = f"with {arr.size} elements"
+        # Show the array's elements in error msg if array is small
+        msg_body = f"{arr}" if arr.size <= 4 else f"with {arr.size} elements"
         order = "ascending" if ascending else "descending"
         strict = "strict " if strict else ""
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
@@ -549,10 +546,7 @@ def check_shape(
     def _shape_is_allowed(a, b):
         # a: array's actual shape
         # b: allowed shape (may have -1)
-        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
-            return True
-        else:
-            return False
+        return bool(len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)))
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
@@ -782,10 +776,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         classinfo = get_args(classinfo)
 
     # Count num classes
-    if isinstance(classinfo, tuple):
-        num_classes = len(classinfo)
-    else:
-        num_classes = 1
+    num_classes = len(classinfo) if isinstance(classinfo, tuple) else 1
 
     # Check if is instance
     is_instance = isinstance(obj, classinfo)
@@ -912,7 +903,10 @@ def check_iterable_items(
     try:
         any(
             check_instance(
-                item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
+                item,
+                item_type,
+                allow_subclass=allow_subclass,
+                name=f"All items of {name}",
             )
             for item in iterable_obj
         )
@@ -954,11 +948,8 @@ def check_contains(*, item, container, name='Input'):
 
     """
     if item not in container:
-        if isinstance(container, (list, tuple)):
-            qualifier = "one of"
-        else:
-            qualifier = "in"
-        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
+        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
@@ -1052,7 +1043,7 @@ def check_length(
         if len(arr) not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
     # Validate min/max length
@@ -1071,13 +1062,13 @@ def check_length(
         if len(arr) < min_length:
             raise ValueError(
                 f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
     if max_length is not None:
         if len(arr) > max_length:
             raise ValueError(
                 f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
 

@@ -1,5 +1,7 @@
 """Tests for pyvista.core.dataset."""
 
+from collections import UserDict
+import json
 import multiprocessing
 import pickle
 
@@ -190,6 +192,93 @@ def test_field_data_string(grid):
     returned = grid.field_data[field_name]
     assert returned == field_value
     assert isinstance(returned, str)
+
+
+def test_user_dict():
+    field_name = '_PYVISTA_USER_DICT'
+    dataset = pv.PolyData()
+    assert field_name not in dataset.field_data.keys()
+
+    dataset.user_dict['abc'] = 123
+    assert field_name in dataset.field_data.keys()
+
+    new_dict = dict(ham='eggs')
+    dataset.user_dict = new_dict
+    assert dataset.user_dict == new_dict
+    assert dataset.field_data[field_name] == json.dumps(new_dict)
+
+    new_dict = UserDict(test='string')
+    dataset.user_dict = new_dict
+    assert dataset.user_dict == new_dict
+    assert dataset.field_data[field_name] == json.dumps(new_dict.data)
+
+    dataset.user_dict = None
+    assert field_name not in dataset.field_data.keys()
+
+    match = (
+        "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
+        "\nGot <class 'int'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        dataset.user_dict = 42
+
+
+@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+def test_user_dict_values(ant, value):
+    ant.user_dict['key'] = value
+    with pytest.raises(TypeError, match='not JSON serializable'):
+        ant.user_dict['key'] = np.array(value)
+
+    retrieved_value = json.loads(repr(ant.user_dict))['key']
+
+    # Round brackets '()' are saved as square brackets '[]' in JSON
+    expected_value = list(value) if isinstance(value, tuple) else value
+    assert retrieved_value == expected_value
+
+
+def test_user_dict_write_read(ant, tmp_path):
+    # test dict is restored after writing to file
+    dict_data = dict(foo='bar')
+    ant.user_dict = dict_data
+
+    dict_field_repr = repr(ant.user_dict)
+    field_data_repr = repr(ant.field_data)
+    assert dict_field_repr in field_data_repr
+
+    filepath = tmp_path / 'ant.vtp'
+    ant.save(filepath)
+
+    ant_read = pv.PolyData(filepath)
+    assert ant_read.user_dict == dict_data
+
+    dict_field_repr = repr(ant.user_dict)
+    field_data_repr = repr(ant.field_data)
+    assert dict_field_repr in field_data_repr
+
+
+def test_user_dict_persists_with_merge_filter():
+    sphere1 = pv.Sphere()
+    sphere1.user_dict['name'] = 'sphere1'
+
+    sphere2 = pv.Sphere()
+    sphere2.user_dict['name'] = 'sphere2'
+
+    merged = sphere1 + sphere2
+    assert merged.user_dict['name'] == 'sphere2'
+
+
+def test_user_dict_persists_with_threshold_filter(uniform):
+    uniform.user_dict['name'] = 'uniform'
+    uniform = uniform.threshold(0.5)
+    assert uniform.user_dict['name'] == 'uniform'
+
+
+def test_user_dict_persists_with_pack_labels_filter():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
+    image.user_dict['name'] = 'image'
+    image = image.pack_labels()
+    assert image.user_dict['name'] == 'image'
 
 
 @pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
@@ -539,7 +628,7 @@ def test_arrows():
 
     # make cool swirly pattern
     vectors = np.vstack(
-        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2]))
+        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2])),
     ).T
 
     # add and scales
@@ -567,7 +656,8 @@ def active_component_consistency_check(grid, component_type, field_association="
 
     pv_arr = getattr(grid, "active_" + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}"
+        getattr(grid, f"Get{vtk_field_association}Data")(),
+        f"Get{vtk_component_type}",
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -1441,7 +1531,8 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1461,7 +1552,8 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
@@ -1608,8 +1700,8 @@ def test_point_cell_ids(grid: DataSet, i0):
     cell_ids = grid.point_cell_ids(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that the output cells contain the i0-th point but also that the
@@ -1629,8 +1721,8 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one point with the
@@ -1654,8 +1746,8 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one edge with the
@@ -1695,8 +1787,8 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one face with the
@@ -1732,7 +1824,9 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
 @pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
 @pytest.mark.parametrize(
-    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+    "connections",
+    ["points", "edges", "faces"],
+    ids=lambda x: f"connections={x}",
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
@@ -1753,8 +1847,8 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert len(list(cell_ids)) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_cells for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_cells for id_ in ids)
             assert len(ids) > 0
 
 
@@ -1777,8 +1871,8 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert len(list(point_ids)) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_points for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_points for id_ in ids)
             assert len(ids) > 0
 
 

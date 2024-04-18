@@ -1,8 +1,9 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
 import collections.abc
+import contextlib
 from functools import partial, wraps
-from typing import Sequence, cast
+from typing import ClassVar, Dict, Sequence, cast
 import warnings
 
 import numpy as np
@@ -123,7 +124,7 @@ def make_legend_face(face):
             '\t"circle"\n'
             '\t"rectangle"\n'
             '\tNone'
-            '\tpyvista.PolyData'
+            '\tpyvista.PolyData',
         )
     return legendface
 
@@ -247,7 +248,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
-    CAMERA_STR_ATTR_MAP = {
+    CAMERA_STR_ATTR_MAP: ClassVar[Dict[str, str]] = {
         'xy': 'view_xy',
         'xz': 'view_xz',
         'yz': 'view_yz',
@@ -258,7 +259,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     }
 
     def __init__(
-        self, parent, border=True, border_color='w', border_width=2.0
+        self,
+        parent,
+        border=True,
+        border_color='w',
+        border_width=2.0,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
@@ -381,7 +386,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 raise InvalidCameraError(
                     'Invalid view direction.  '
                     'Use one of the following:\n   '
-                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}'
+                    f'{", ".join(self.CAMERA_STR_ATTR_MAP)}',
                 )
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
@@ -444,7 +449,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
             for ax in range(3):
                 update_axis(ax)
-            return
 
         for actor in self._actors.values():
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
@@ -565,7 +569,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
                         "VTK compiled with OSMesa/EGL does not properly support "
-                        "FXAA anti-aliasing and SSAA will be used instead."
+                        "FXAA anti-aliasing and SSAA will be used instead.",
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -680,7 +684,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer."
+                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.",
             )
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
@@ -834,12 +838,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor.name = name
 
         if name is None:
-            if isinstance(actor, Actor):
-                name = actor.name
-            else:
-                # Fallback for non-wrapped actors
-                # e.g., vtkScalarBarActor
-                name = actor.GetAddressAsString("")
+            # Fallback for non-wrapped actors
+            # e.g., vtkScalarBarActor
+            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString("")
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
@@ -860,15 +861,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if culling:
             if culling in [True, 'back', 'backface', 'b']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             elif culling in ['front', 'frontface', 'f']:
-                try:
+                with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
-                except AttributeError:  # pragma: no cover
-                    pass
             else:
                 raise ValueError(f'Culling option ({culling}) not understood.')
 
@@ -952,7 +949,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._marker_actor
 
     def add_orientation_widget(
-        self, actor, interactive=None, color=None, opacity=1.0, viewport=None
+        self,
+        actor,
+        interactive=None,
+        color=None,
+        opacity=1.0,
+        viewport=None,
     ):
         """Use the given actor in an orientation marker widget.
 
@@ -1165,7 +1167,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **kwargs,
             )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None
+            self.axes_actor,
+            interactive=interactive,
+            color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1295,7 +1299,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             show_text_edges=show_text_edges,
         )
         axes_widget = self.add_orientation_widget(
-            self.axes_actor, interactive=interactive, color=None
+            self.axes_actor,
+            interactive=interactive,
+            color=None,
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
@@ -1680,7 +1686,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             else:
                 raise ValueError(
                     f'Value of location ("{location}") should be either "all", "origin",'
-                    ' "outer", "default", "closest", "front", "furthest", or "back".'
+                    ' "outer", "default", "closest", "front", "furthest", or "back".',
                 )
         elif location is not None:
             raise TypeError('location must be a string')
@@ -1693,7 +1699,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                             np.abs(bounds[1] - bounds[0]),
                             np.abs(bounds[3] - bounds[2]),
                             np.abs(bounds[5] - bounds[4]),
-                        ]
+                        ],
                     )
                     * padding
                 )
@@ -1716,7 +1722,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.'
+                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.',
                 )
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -1916,7 +1922,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=name, culling=culling, pickable=False
+            mapper,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=False,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.outline_color).float_rgb)
@@ -2087,7 +2097,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         mapper = DataSetMapper()
         mapper.SetInputData(self._floor)
         actor, prop = self.add_actor(
-            mapper, reset_camera=reset_camera, name=f'Floor({face})', pickable=pickable
+            mapper,
+            reset_camera=reset_camera,
+            name=f'Floor({face})',
+            pickable=pickable,
         )
 
         prop.SetColor(Color(color, default_color=self._theme.floor_color).float_rgb)
@@ -2219,10 +2232,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
-                try:
+                with contextlib.suppress(KeyError):
                     self.remove_actor(actor, reset_camera=False, render=False)
-                except KeyError:
-                    pass
             self.Modified()
 
     def clear(self):
@@ -2493,10 +2504,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._labels.pop(actor.GetAddressAsString(""), None)
 
         # ensure any scalar bars associated with this actor are removed
-        try:
+        with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
-        except (AttributeError, ReferenceError):
-            pass
         self.RemoveActor(actor)
 
         if name is None:
@@ -3223,7 +3232,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
             )
         if not (
             (top is right is side is corner is None)
@@ -3243,13 +3252,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         elif side is not None:  # pragma: no cover
             self.SetGradientBackground(True)
             self.SetGradientMode(
-                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_SIDE,
             )
             self.SetBackground2(Color(side).float_rgb)
         elif corner is not None:  # pragma: no cover
             self.SetGradientBackground(True)
             self.SetGradientMode(
-                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER
+                _vtk.vtkViewport.GradientModes.VTK_GRADIENT_RADIAL_VIEWPORT_FARTHEST_CORNER,
             )
             self.SetBackground2(Color(corner).float_rgb)
         else:
@@ -3598,7 +3607,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     'No labels input.\n\n'
                     'Add labels to individual items when adding them to'
                     'the plotting object with the "label=" parameter.  '
-                    'or enter them as the "labels" parameter.'
+                    'or enter them as the "labels" parameter.',
                 )
 
             self._legend.SetNumberOfEntries(len(self._labels))
@@ -3628,7 +3637,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                     if args:
                         warnings.warn(
-                            f"Some of the arguments given to legend are not used.\n{args}"
+                            f"Some of the arguments given to legend are not used.\n{args}",
                         )
                 elif isinstance(args, str):
                     # Only passing label
@@ -3643,7 +3652,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                 else:
                     raise ValueError(
-                        f"The object passed to the legend ({type(args)}) is not valid."
+                        f"The object passed to the legend ({type(args)}) is not valid.",
                     )
 
                 legend_face = make_legend_face(face_ or face)
@@ -4017,7 +4026,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # This property turns black if set
                 prop.SetColor(*color.int_rgb)
             prop.SetFontSize(
-                int(font_size_factor * 20)
+                int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
         for ax in ['Bottom', 'Left', 'Right', 'Top']:

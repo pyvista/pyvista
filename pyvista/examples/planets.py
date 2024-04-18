@@ -75,7 +75,9 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -115,7 +117,9 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -155,7 +159,9 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -195,7 +201,9 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -235,7 +243,9 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -275,7 +285,9 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -315,7 +327,9 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -355,7 +369,9 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -439,7 +455,9 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -479,7 +497,9 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 
@@ -519,7 +539,9 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     """
     sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
     return sphere
 

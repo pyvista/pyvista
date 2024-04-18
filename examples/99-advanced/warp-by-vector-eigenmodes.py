@@ -163,7 +163,10 @@ l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
-    N, analytical_integral_rppd, geometry_parameters, cijkl
+    N,
+    analytical_integral_rppd,
+    geometry_parameters,
+    cijkl,
 )
 
 # solving the eigenvalue problem using symmetric solver
@@ -194,9 +197,9 @@ grid = pv.StructuredGrid(x, y, z)
 
 slices = []
 for zz in np.linspace(-l3 / 2.0, l3 / 2.0, nz)[::-1]:
-    slice = grid.points.copy()
-    slice[:, -1] = zz
-    slices.append(slice)
+    slice_ = grid.points.copy()
+    slice_[:, -1] = zz
+    slices.append(slice_)
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack(slices)

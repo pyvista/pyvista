@@ -2,7 +2,7 @@
 
 from functools import wraps
 import pathlib
-from typing import List, Sequence, Tuple, Union
+from typing import ClassVar, Dict, List, Sequence, Tuple, Type, Union
 import warnings
 
 import numpy as np
@@ -128,10 +128,22 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkRectilinearGridWriter, '.vtr': _vtk.vtkXMLRectilinearGridWriter}
+    _WRITERS: ClassVar[
+        Dict[
+            str,
+            Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]],
+        ]
+    ] = {
+        '.vtk': _vtk.vtkRectilinearGridWriter,
+        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+    }
 
     def __init__(
-        self, *args, check_duplicates=False, deep=False, **kwargs
+        self,
+        *args,
+        check_duplicates=False,
+        deep=False,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
         super().__init__()
@@ -152,10 +164,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
             arg1_is_arr = isinstance(args[1], (np.ndarray, Sequence))
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence))
-            else:
-                arg2_is_arr = False
+            arg2_is_arr = isinstance(args[2], (np.ndarray, Sequence)) if len(args) == 3 else False
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(
@@ -166,7 +175,10 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
-                    np.asanyarray(args[0]), np.asanyarray(args[1]), None, check_duplicates
+                    np.asanyarray(args[0]),
+                    np.asanyarray(args[1]),
+                    None,
+                    check_duplicates,
                 )
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
@@ -298,7 +310,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         raise AttributeError(
             "The points cannot be set. The points of "
             "`RectilinearGrid` are defined in each axial direction. Please "
-            "use the `x`, `y`, and `z` setters individually."
+            "use the `x`, `y`, and `z` setters individually.",
         )
 
     @property
@@ -424,7 +436,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         """
         raise AttributeError(
             "The dimensions of a `RectilinearGrid` are implicitly "
-            "defined and thus cannot be set."
+            "defined and thus cannot be set.",
         )
 
     def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
@@ -523,7 +535,12 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkDataSetWriter, '.vti': _vtk.vtkXMLImageDataWriter}
+    _WRITERS: ClassVar[
+        Dict[str, Union[Type[_vtk.vtkDataSetWriter], Type[_vtk.vtkXMLImageDataWriter]]]
+    ] = {
+        '.vtk': _vtk.vtkDataSetWriter,
+        '.vti': _vtk.vtkXMLImageDataWriter,
+    }
 
     def __init__(
         self,
@@ -553,7 +570,8 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
             dimensions = kwargs.pop('dims')
             # Deprecated on v0.37.0, estimated removal on v0.40.0
             warnings.warn(
-                '`dims` argument is deprecated. Please use `dimensions`.', PyVistaDeprecationWarning
+                '`dims` argument is deprecated. Please use `dimensions`.',
+                PyVistaDeprecationWarning,
             )
         assert_empty_kwargs(**kwargs)
 
@@ -575,7 +593,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
             if len(args) > 2:
                 raise ValueError(
                     "Too many additional arguments specified for ImageData. "
-                    f"Accepts at most 2, and {len(args)} have been input."
+                    f"Accepts at most 2, and {len(args)} have been input.",
                 )
 
         # first argument must be either vtkImageData or a path
@@ -596,7 +614,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
                     "    ...     dimensions=(10, 10, 10),\n"
                     "    ...     spacing=(2, 1, 5),\n"
                     "    ...     origin=(10, 35, 50),\n"
-                    "    ... )\n"
+                    "    ... )\n",
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
@@ -610,7 +628,10 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return DataSet.__str__(self)
 
     def _from_specs(
-        self, dims: Sequence[int], spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)
+        self,
+        dims: Sequence[int],
+        spacing=(1.0, 1.0, 1.0),
+        origin=(0.0, 0.0, 0.0),
     ):  # numpydoc ignore=PR01,RT01
         """Create VTK image data directly from numpy arrays.
 
@@ -691,7 +712,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         raise AttributeError(
             "The points cannot be set. The points of "
             "`ImageData`/`vtkImageData` are implicitly defined by the "
-            "`origin`, `spacing`, and `dimensions` of the grid."
+            "`origin`, `spacing`, and `dimensions` of the grid.",
         )
 
     @property

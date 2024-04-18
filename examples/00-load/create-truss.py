@@ -45,7 +45,7 @@ edges = np.array(
         [2, 5],
         [5, 6],
         [2, 6],
-    ]
+    ],
 )
 
 # We must "pad" the edges to indicate to vtk how many points per edge

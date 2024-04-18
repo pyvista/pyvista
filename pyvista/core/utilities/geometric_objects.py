@@ -19,6 +19,7 @@ as well as some pure-python helpers.
 
 """
 
+import contextlib
 from itertools import product
 
 import numpy as np
@@ -45,10 +46,8 @@ from .geometric_sources import (
     translate,
 )
 
-try:
+with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
-except ImportError:  # pragma: no cover
-    pass
 
 from .helpers import wrap
 from .misc import check_valid_vector
@@ -933,7 +932,7 @@ def SolidSphereGeneric(
                         npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
-                    ]
+                    ],
                 )
                 celltypes.append(pyvista.CellType.TETRA)
 
@@ -947,7 +946,7 @@ def SolidSphereGeneric(
                     _index(0, iphi + 1, itheta + 1),
                     _index(0, iphi + 1, itheta),
                     0,
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.PYRAMID)
 
@@ -967,7 +966,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, 0, itheta + 1),
                     _index(ir + 1, 0, itheta),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -985,7 +984,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, nphi - 1, itheta),
                     _index(ir + 1, nphi - 1, itheta + 1),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -1004,7 +1003,7 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi + 1, itheta),
                 _index(ir + 1, iphi + 1, itheta + 1),
                 _index(ir + 1, iphi, itheta + 1),
-            ]
+            ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
 
@@ -1105,7 +1104,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=None):
     """Create multiple lines.
 
     Parameters
@@ -1130,6 +1129,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
+    if points is None:
+        points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
     return MultipleLinesSource(points=points).output
 
 
