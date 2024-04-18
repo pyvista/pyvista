@@ -3,7 +3,6 @@
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
-from .._typing_core import Matrix
 
 if TYPE_CHECKING:  # pragma: no cover
     from trimesh import Trimesh
@@ -13,8 +12,8 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.input_validation.validate import validate_array
 from pyvista.core._typing_core import NumpyArray
+from pyvista.core.input_validation.validate import validate_array
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh

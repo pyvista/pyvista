@@ -1072,7 +1072,7 @@ def test_add_list_points():
     n = np.array(points).shape[0]
 
     plotter.add_points(
-        points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False
+        points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False,
     )
     plotter.show()
 
