@@ -5,6 +5,7 @@ Create Dimension Line
 Create a 2d dimension line along 2d structured mesh.
 
 """
+
 import numpy as np
 
 import pyvista as pv
