@@ -733,7 +733,7 @@ class Color:
         color: Optional[ColorLike] = None,
         opacity: Optional[Union[int, float, str]] = None,
         default_color: Optional[ColorLike] = None,
-        default_opacity: Union[int, float, str] = 255,
+        default_opacity: Union[float, str] = 255,
     ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
@@ -811,7 +811,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: Union[int, np.integer[Any], float, np.floating[Any], str],
+        val: Union[float, np.floating[Any], str],
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
