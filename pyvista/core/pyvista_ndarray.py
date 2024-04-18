@@ -51,11 +51,11 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         association=FieldAssociation.NONE,
     ):
         """Allocate the array."""
-        if isinstance(array, Iterable):
-            obj = np.asarray(array).view(cls)
-        elif isinstance(array, _vtk.vtkAbstractArray):
+        if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
+        elif isinstance(array, Iterable):
+            obj = np.asarray(array).view(cls)
         else:
             raise TypeError(
                 f'pyvista_ndarray got an invalid type {type(array)}. '
