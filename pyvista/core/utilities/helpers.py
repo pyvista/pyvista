@@ -3,6 +3,7 @@
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
+
 if TYPE_CHECKING:  # pragma: no cover
     from trimesh import Trimesh
     from meshio import Mesh
@@ -12,6 +13,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumpyArray
+from pyvista.core.input_validation.validate import validate_array
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
@@ -36,7 +38,7 @@ def wrap(
 
     Parameters
     ----------
-    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet
+    dataset : :class:`numpy.ndarray` | :class:`trimesh.Trimesh` | vtk.DataSet | Matrix[float]
         Dataset to wrap.
 
     Returns
@@ -111,6 +113,13 @@ def wrap(
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
         return dataset  # type: ignore[return-value]
+
+    if isinstance(dataset, collections.abc.Sequence):
+        dataset = validate_array(
+            dataset,
+            must_have_shape=(-1, 3),
+            must_have_dtype=np.number,
+        )
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
