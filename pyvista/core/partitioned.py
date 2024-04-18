@@ -252,3 +252,115 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         index = self.n_partitions
         self.n_partitions += 1
         self[index] = dataset
+
+
+class PartitionedDataSetCollection(
+    _vtk.vtkPartitionedDataSetCollection,
+    DataObject,
+    collections.abc.MutableSequence,  # type: ignore[type-arg]
+):
+    """Wrapper for the ``vtkPartitionedDataSetCollection`` class."""
+
+    if _vtk.vtk_version_info >= (9, 1):
+        _WRITERS = {".vtpc": _vtk.vtkXMLPartitionedDataSetCollectionWriter}
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the PartitionedDataSetCollection."""
+        super().__init__(*args, **kwargs)
+        if len(args) == 1:
+            if isinstance(args[0], _vtk.vtkPartitionedDataSetCollection):
+                deep = kwargs.get('deep', True)
+                if deep:
+                    self.deep_copy(args[0])
+                else:
+                    raise PartitionedDataSetsNotSupported
+            elif isinstance(args[0], (list, tuple)):
+                for partition in args[0]:
+                    self.append(partition)
+        self.wrap_nested()
+
+    def wrap_nested(self):
+        """Ensure that all nested data structures are wrapped as PyVista datasets.
+
+        This is performed in place.
+
+        """
+        for i in range(self.n_pdatasets):
+            partition = self.GetPartitionedDataSet(i)
+            if not is_pyvista_dataset(partition):
+                self.SetPartitionedDataSet(i, wrap(partition))
+
+    @overload
+    def __getitem__(self, index: int) -> Optional[PartitionedDataSet]:  # noqa: D105
+        ...  # pragma: no cover
+
+    @overload
+    def __getitem__(self, index: slice) -> 'PartitionedDataSetCollection':  # noqa: D105
+        ...  # pragma: no cover
+
+    def __getitem__(self, index):
+        """Get a partition by its index."""
+        if isinstance(index, slice):
+            return PartitionedDataSetCollection([self[i] for i in range(self.n_pdatasets)[index]])
+        else:
+            if index < -self.n_pdatasets or index >= self.n_pdatasets:
+                raise IndexError(f'index ({index}) out of range for this dataset.')
+            if index < 0:
+                index = self.n_pdatasets + index
+            return wrap(self.GetPartitionedDataSet(index))
+
+    @overload
+    def __setitem__(self, index: int, data: Optional[PartitionedDataSet]):  # noqa: D105
+        ...  # pragma: no cover
+
+    @overload
+    def __setitem__(self, index: slice, data: Iterable[Optional[PartitionedDataSet]]):  # noqa: D105
+        ...  # pragma: no cover
+
+    def __setitem__(
+        self,
+        index: Union[int, slice],
+        data,
+    ):
+        """Set a partition with a VTK data object."""
+        if isinstance(index, slice):
+            for i, d in zip(range(self.n_pdatasets)[index], data):
+                self.SetPartitionedDataSet(i, d)
+        else:
+            if index < -self.n_pdatasets or index >= self.n_pdatasets:
+                raise IndexError(f'index ({index}) out of range for this dataset.')
+            if index < 0:
+                index = self.n_pdatasets + index
+            self.SetPartitionedDataSet(index, data)
+
+    def __delitem__(self, index: Union[int, slice]) -> None:
+        """Remove a partition at the specified index are not supported."""
+        raise PartitionedDataSetsNotSupported
+
+    @property
+    def n_pdatasets(self) -> int:
+        """Return the number of partitioned datasets.
+
+        Returns
+        -------
+        int
+            The number of partitioned datasets.
+        """
+        return self.GetNumberOfPartitionedDataSets()
+
+    @n_pdatasets.setter
+    def n_pdatasets(self, n):  # numpydoc ignore=GL08
+        self.SetNumberOfPartitionedDataSets(n)
+        self.Modified()
+
+    def append(self, dataset):
+        """Add a data set to the next partition index.
+
+        Parameters
+        ----------
+        dataset : pyvista.PartitionedDataSet
+            PartitionedDataSet to append to this dataset collection.
+        """
+        index = self.n_pdatasets
+        self.n_pdatasets += 1
+        self[index] = dataset
