@@ -2800,6 +2800,7 @@ class WidgetHelper:
         for camera3d_widget in self.camera3d_widgets:
             camera3d_widget.Off()
         self.camera3d_widgets.clear()
+
     def add_rotate_orientation_widget(
         self,
         orientation_x: float = 0.0,
@@ -2880,7 +2881,7 @@ class WidgetHelper:
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "`add_rotate_orientation_widget` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer."
+                "`add_rotate_orientation_widget` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
             )
         representation = _vtk.vtkOrientationRepresentation()
         representation.SetOrientationX(orientation_x)
