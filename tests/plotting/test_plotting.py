@@ -1977,6 +1977,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
+@skip_windows_mesa
 @pytest.mark.parametrize(
     'opacity',
     [
