@@ -107,12 +107,17 @@ heart_array[mask_array == 1] = ct_array[mask_array == 1]
 ct_image['heart'] = heart_array
 
 ###############################################################################
-# Create the plot. First we add the full CT image. The opacity is set to a
-# sigmoid function to show the subject's skeleton. Since different images have
-# different intensity distributions, you may need to experiment with different
-# sigmoid functions. See :func:`~pyvista.Plotter.add_volume` for details.
+# Create the plot.
+#
+# For the CT image, the opacity is set to a sigmoid function to show the
+# subject's skeleton. Since different images have different intensity
+# distributions, you may need to experiment with different sigmoid functions.
+# See :func:`~pyvista.Plotter.add_volume` for details.
+
 pl = pv.Plotter()
-_ = pl.add_volume(
+
+# Add the CT image.
+pl.add_volume(
     ct_image,
     scalars='NIFTI',
     cmap='bone',
@@ -120,8 +125,7 @@ _ = pl.add_volume(
     show_scalar_bar=False,
 )
 
-###############################################################################
-# Next, add the masked CT image of the heart and use a contrasting color map.
+# Add masked CT image of the heart and use a contrasting color map.
 _ = pl.add_volume(
     ct_image,
     scalars='heart',
@@ -143,7 +147,10 @@ pl.show()
 # In this section, :func:`~pyvista.ImageDataFilters.contour_labeled` is used
 # to generate surfaces from segmentation masks. Surfaces can be generated
 # from each mask independently or all at once from a label map.
-#
+
+###############################################################################
+# Independent Surfaces
+# ====================
 # Generate separate surfaces for the skull and the brain.
 skull_mask = seg_multiblock['skull']
 brain_mask = seg_multiblock['brain']
@@ -152,6 +159,7 @@ brain_surf = brain_mask.contour_labeled(smoothing=True)
 
 ###############################################################################
 # Plot the surfaces. The skull is clipped for visualization.
+
 skull_surf_clipped = skull_surf.clip('z', origin=brain_surf.center)
 pl = pv.Plotter()
 _ = pl.add_mesh(skull_surf_clipped, color='cornsilk')
@@ -168,8 +176,8 @@ pl.show()
 # when smoothing is enabled and voxels from two masks share a face or edge.
 
 ###############################################################################
-# Create Label Map
-# ================
+# Surfaces From Label Map
+# =======================
 # In the previous section, a call to :func:`~pyvista.ImageDataFilters.contour_labeled`
 # was made to generate each surface separately. This is inefficient, since
 # the underlying `vtkSurfaceNets3D <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html>`_,
@@ -196,7 +204,7 @@ for i, name in zip(label_ids, label_names):
 
 ###############################################################################
 # .. note::
-#    The label ids here are ordered alphabetically, which differs from the
+#    The label ids here are ordered alphabetically. This differs from the
 #    ordering of the official label ids used by TotalSegmentator.
 
 ###############################################################################
