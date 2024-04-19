@@ -559,7 +559,7 @@ class DataObject:
     @user_dict.setter
     def user_dict(
         self,
-        dict_: Union[dict[str, _JSONValueType], UserDict],  # type: ignore[type-arg]
+        dict_: Union[Dict[str, _JSONValueType], UserDict],  # type: ignore[type-arg]
     ):  # numpydoc ignore=GL08
 
         # Setting None removes the field data array
