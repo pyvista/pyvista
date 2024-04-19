@@ -558,6 +558,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
         'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
