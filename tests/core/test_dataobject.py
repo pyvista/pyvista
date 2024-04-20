@@ -148,31 +148,28 @@ def test_user_dict_values(ant, value):
     assert retrieved_value == expected_value
 
 
-@pytest.mark.parametrize('data_object', ['polydata', 'multiblock'])
-def test_user_dict_write_read(ant, tmp_path, data_object):
-    if data_object == 'multiblock':
-        ant = pv.MultiBlock([ant])
-        ext = '.vtm'
-    else:
-        ext = '.vtp'
-
+@pytest.mark.parametrize(
+    ('data_object', 'ext'),
+    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+)
+def test_user_dict_write_read(tmp_path, data_object, ext):
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
-    ant.user_dict = dict_data
+    data_object.user_dict = dict_data
 
-    dict_field_repr = repr(ant.user_dict)
-    field_data_repr = repr(ant.field_data)
+    dict_field_repr = repr(data_object.user_dict)
+    field_data_repr = repr(data_object.field_data)
     assert dict_field_repr in field_data_repr
 
-    filepath = tmp_path / ('ant' + ext)
-    ant.save(filepath)
+    filepath = tmp_path / ('data_object' + ext)
+    data_object.save(filepath)
 
-    ant_read = pv.read(filepath)
+    data_object_read = pv.read(filepath)
 
-    assert ant_read.user_dict == dict_data
+    assert data_object_read.user_dict == dict_data
 
-    dict_field_repr = repr(ant.user_dict)
-    field_data_repr = repr(ant.field_data)
+    dict_field_repr = repr(data_object.user_dict)
+    field_data_repr = repr(data_object.field_data)
     assert dict_field_repr in field_data_repr
 
 
