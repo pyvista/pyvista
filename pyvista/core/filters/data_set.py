@@ -2899,25 +2899,52 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def split_bodies(self, label=False, progress_bar=False):
+    def split_bodies(
+        self,
+        label: bool = False,
+        progress_bar: bool = False,
+        method: Literal['threshold', 'connectivity'] = 'threshold',
+    ):
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
         :class:`pyvista.MultiBlock` dataset.
 
+        Optionally, the splitting method may be specified. By default,
+        the :meth:`~pyvista.DataSetFilters.threshold` filter is used,
+        and the split data will have type :class:`~pyvista.UnstructuredGrid`.
+        Alternatively, the :meth:`~pyvista.DataSetFilters.connectivity` may
+        be used, which will return :class:`~pyvista.PolyData` blocks when the
+        input is :class:`~pyvista.PolyData`. Both methods produce similar
+        results otherwise.
+
         Parameters
         ----------
         label : bool, default: False
             A flag on whether to keep the ID arrays given by the
-            ``connectivity`` filter.
+            :meth:`~pyvista.DataSetFilters.connectivity` filter.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        method : str, default: 'threshold'
+            Method to use internally for splitting the labels.
+
+            - 'threshold': split labels with :meth:`~pyvista.DataSetFilters.threshold`.
+            - 'connectivity': split labels with :meth:`~pyvista.DataSetFilters.connectivity`.
+
+            .. versionadded:: 0.44
+
         Returns
         -------
         pyvista.MultiBlock
-            MultiBlock with a split bodies.
+            MultiBlock with the split labels. The blocks have type
+            :class:`~pyvista.UnstructuredGrid` or :class:`~pyvista.PolyData`
+            depending on ``method`` and the input type.
+
+        See Also
+        --------
+        split_labeled, connectivity, threshold
 
         Examples
         --------
@@ -2936,24 +2963,99 @@ class DataSetFilters:
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
-        classifier = labeled.cell_data['RegionId']
-        bodies = pyvista.MultiBlock()
-        for vid in np.unique(classifier):
-            # Now extract it:
-            b = labeled.threshold(
-                [vid - 0.5, vid + 0.5],
-                scalars='RegionId',
-                progress_bar=progress_bar,
-            )
-            if not label:
+        bodies = labeled.split_labeled(scalars='RegionId', method=method, progress_bar=progress_bar)
+        if not label:
+            for block in bodies:
                 # strange behavior:
                 # must use this method rather than deleting from the point_data
                 # or else object is collected.
-                b.cell_data.remove('RegionId')
-                b.point_data.remove('RegionId')
-            bodies.append(b)
-
+                block.cell_data.remove('RegionId')
+                block.point_data.remove('RegionId')
         return bodies
+
+    def split_labeled(
+        self,
+        scalars: Optional[str] = None,
+        method: Literal['threshold', 'connectivity'] = 'threshold',
+        progress_bar: bool = False,
+    ):
+        """Split multi-labeled data into blocks of a :class:`~pyvista.MultiBlock`.
+
+        Separate labeled data into separate meshes, one for each label.
+
+        Optionally, the splitting method may be specified. By default,
+        the :meth:`~pyvista.DataSetFilters.threshold` filter is used,
+        and the split data will have type :class:`~pyvista.UnstructuredGrid`.
+        Alternatively, the :meth:`~pyvista.DataSetFilters.connectivity` may
+        be used, which will return :class:`~pyvista.PolyData` blocks when the
+        input is :class:`~pyvista.PolyData`. Both methods produce similar
+        results otherwise.
+
+        .. versionadded:: 0.44
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to split. Defaults to currently active scalars.
+
+        method : str, default: 'threshold'
+            Method to use internally for splitting the labels.
+
+            - 'threshold': split labels with :meth:`~pyvista.DataSetFilters.threshold`.
+            - 'connectivity': split labels with :meth:`~pyvista.DataSetFilters.connectivity`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            MultiBlock with the split labels. The blocks have type
+            :class:`~pyvista.UnstructuredGrid` or :class:`~pyvista.PolyData`
+            depending on ``method`` and the input type.
+
+        See Also
+        --------
+        split_bodies, connectivity, threshold, :meth:`~pyvista.ImageDataFilters.contour_labeled`
+
+        Examples
+        --------
+        Split a uniform grid thresholded to be non-connected.
+
+        >>> from pyvista import examples
+        >>> dataset = examples.load_uniform()
+        >>> split_dataset = dataset.split_labeled()
+        >>> len(split_dataset)
+        2
+
+        See :ref:`split_vol` for more examples using this filter.
+
+        """
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+
+        labels_array = get_array(self, scalars, err=True)
+        split_dataset = pyvista.MultiBlock()
+        for vid in np.unique(labels_array):  # type: ignore[arg-type]
+            if method == 'threshold':
+                block = self.threshold(
+                    [vid - 0.5, vid + 0.5],
+                    scalars=scalars,
+                    progress_bar=progress_bar,
+                )
+            elif method == 'connectivity':
+                block = self.connectivity(
+                    scalar_range=[vid - 0.5, vid + 0.5],
+                    scalars=scalars,
+                    progress_bar=progress_bar,
+                )
+            else:
+                raise ValueError(
+                    f'Method must be "threshold" or "connectivity", got {method} instead.',
+                )
+            split_dataset.append(block)
+        return split_dataset
 
     def warp_by_scalar(
         self,

@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
+import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
@@ -1398,6 +1399,41 @@ def test_split_bodies():
     assert len(volumes) == bodies.n_blocks
     for i, body in enumerate(bodies):
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
+
+
+@pytest.fixture()
+def labeled_data():
+    sphere = pv.Sphere()
+    sphere.points *= 0.5  # decrease volume
+    box = pv.Box()
+    labeled = (sphere + box).extract_geometry().connectivity()
+    assert isinstance(labeled, pyvista.PolyData)
+    return sphere, box, labeled
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pyvista.DataSetFilters.split_labeled, pyvista.DataSetFilters.split_bodies],
+)
+@pytest.mark.parametrize('method', ['threshold', 'connectivity'])
+def test_split_labeled_split_bodies(dataset_filter, labeled_data, method):
+    sphere, box, labeled = labeled_data
+
+    split = dataset_filter(labeled, method=method, progress_bar=True)
+
+    assert len(split) == 2
+    if method == 'threshold':
+        assert isinstance(split[0], pv.UnstructuredGrid)
+        assert isinstance(split[1], pv.UnstructuredGrid)
+        # Convert to PolyData for testing volume
+        split[0] = split[0].extract_geometry()
+        split[1] = split[1].extract_geometry()
+
+    assert isinstance(split[0], pv.PolyData)
+    assert isinstance(split[1], pv.PolyData)
+
+    assert np.allclose(split[0].volume, sphere.volume)
+    assert np.allclose(split[1].volume, box.volume)
 
 
 def test_warp_by_scalar():
