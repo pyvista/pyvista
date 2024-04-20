@@ -1402,12 +1402,20 @@ def test_split_bodies():
 
 
 @pytest.fixture()
-def labeled_data():
+def labeled_data_RegionId():
     sphere = pv.Sphere()
     sphere.points *= 0.5  # decrease volume
     box = pv.Box()
     labeled = (sphere + box).extract_geometry().connectivity()
     assert isinstance(labeled, pyvista.PolyData)
+    return sphere, box, labeled
+
+
+@pytest.fixture()
+def labeled_data_Labels(labeled_data_RegionId):
+    sphere, box, labeled = labeled_data_RegionId
+    labeled.rename_array('RegionId', 'Labels')
+    labeled.rename_array('RegionId', 'Labels')
     return sphere, box, labeled
 
 
@@ -1417,8 +1425,17 @@ def labeled_data():
 )
 @pytest.mark.parametrize('method', ['threshold', 'connectivity'])
 @pytest.mark.needs_vtk_version(9, 1, 0)
-def test_split_labels_split_bodies(dataset_filter, labeled_data, method):
-    sphere, box, labeled = labeled_data
+def test_split_labels_split_bodies(
+    dataset_filter,
+    method,
+    labeled_data_Labels,
+    labeled_data_RegionId,
+):
+    if True:
+        sphere, box, labeled = labeled_data_Labels
+        input_array_names = labeled.array_names
+    else:
+        sphere, box, labeled = labeled_data_RegionId
 
     split = dataset_filter(labeled, method=method, progress_bar=True)
 
@@ -1435,6 +1452,11 @@ def test_split_labels_split_bodies(dataset_filter, labeled_data, method):
 
     assert np.allclose(split[0].volume, sphere.volume)
     assert np.allclose(split[1].volume, box.volume)
+
+    assert input_array_names == split[0].array_names
+    match = 'Method must be "threshold" or "connectivity", got "invalid" instead.'
+    with pytest.raises(ValueError, match=match):
+        dataset_filter(labeled, method='invalid')
 
 
 def test_warp_by_scalar():

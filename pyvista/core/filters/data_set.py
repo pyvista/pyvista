@@ -2963,14 +2963,12 @@ class DataSetFilters:
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
-        bodies = labeled.split_labels(scalars='RegionId', method=method, progress_bar=progress_bar)
-        if not label:
-            for block in bodies:
-                # strange behavior:
-                # must use this method rather than deleting from the point_data
-                # or else object is collected.
-                block.cell_data.remove('RegionId')
-                block.point_data.remove('RegionId')
+        bodies = labeled._split_labels(
+            scalars='RegionId',
+            method=method,
+            progress_bar=progress_bar,
+            keep_RegionId=label,
+        )
         return bodies
 
     def split_labels(
@@ -3057,13 +3055,35 @@ class DataSetFilters:
         >>> pl.show()
 
         """
+        keep_RegionId = 'RegionId' in self.array_names  # type: ignore[attr-defined]
+        return self._split_labels(
+            scalars,
+            method,
+            progress_bar,
+            keep_RegionId=keep_RegionId,
+        )
+
+    def _split_labels(
+        self,
+        scalars,
+        method,
+        progress_bar,
+        keep_RegionId,
+    ):
+        """Implement split labels method.
+
+        This internal method add the 'keep_RegionId' param to selectively keep the
+        RegionId scalars produced by the connectivity filter. If the connectivity
+        method is used strictly just for splitting (and not for generating labeled
+        data), then these scalars should not be included in the output.
+        """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            _, scalars = self.active_scalars_info
 
         labels_array = get_array(self, scalars, err=True)
         split_dataset = pyvista.MultiBlock()
-        for vid in np.unique(labels_array):  # type: ignore[arg-type]
+        for vid in np.unique(labels_array):
             if method == 'threshold':
                 block = self.threshold(
                     [vid - 0.5, vid + 0.5],
@@ -3075,10 +3095,11 @@ class DataSetFilters:
                     scalar_range=[vid - 0.5, vid + 0.5],
                     scalars=scalars,
                     progress_bar=progress_bar,
+                    label_regions=keep_RegionId,
                 )
             else:
                 raise ValueError(
-                    f'Method must be "threshold" or "connectivity", got {method} instead.',
+                    f'Method must be "threshold" or "connectivity", got "{method}" instead.',
                 )
             split_dataset.append(block)
         return split_dataset
