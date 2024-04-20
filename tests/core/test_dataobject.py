@@ -106,33 +106,33 @@ def test_metadata_save(hexbeam, tmpdir):
     assert not hexbeam_in.field_data
 
 
-def test_user_dict():
+@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+def test_user_dict(data_object):
     field_name = '_PYVISTA_USER_DICT'
-    dataset = pv.PolyData()
-    assert field_name not in dataset.field_data.keys()
+    assert field_name not in data_object.field_data.keys()
 
-    dataset.user_dict['abc'] = 123
-    assert field_name in dataset.field_data.keys()
+    data_object.user_dict['abc'] = 123
+    assert field_name in data_object.field_data.keys()
 
     new_dict = dict(ham='eggs')
-    dataset.user_dict = new_dict
-    assert dataset.user_dict == new_dict
-    assert dataset.field_data[field_name] == json.dumps(new_dict)
+    data_object.user_dict = new_dict
+    assert data_object.user_dict == new_dict
+    assert data_object.field_data[field_name] == json.dumps(new_dict)
 
     new_dict = UserDict(test='string')
-    dataset.user_dict = new_dict
-    assert dataset.user_dict == new_dict
-    assert dataset.field_data[field_name] == json.dumps(new_dict.data)
+    data_object.user_dict = new_dict
+    assert data_object.user_dict == new_dict
+    assert data_object.field_data[field_name] == json.dumps(new_dict.data)
 
-    dataset.user_dict = None
-    assert field_name not in dataset.field_data.keys()
+    data_object.user_dict = None
+    assert field_name not in data_object.field_data.keys()
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
         "\nGot <class 'int'> instead."
     )
     with pytest.raises(TypeError, match=match):
-        dataset.user_dict = 42
+        data_object.user_dict = 42
 
 
 @pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
@@ -148,7 +148,14 @@ def test_user_dict_values(ant, value):
     assert retrieved_value == expected_value
 
 
-def test_user_dict_write_read(ant, tmp_path):
+@pytest.mark.parametrize('data_object', ['polydata', 'multiblock'])
+def test_user_dict_write_read(ant, tmp_path, data_object):
+    if data_object == 'multiblock':
+        ant = pv.MultiBlock([ant])
+        ext = '.vtm'
+    else:
+        ext = '.vtp'
+
     # test dict is restored after writing to file
     dict_data = dict(foo='bar')
     ant.user_dict = dict_data
@@ -157,10 +164,11 @@ def test_user_dict_write_read(ant, tmp_path):
     field_data_repr = repr(ant.field_data)
     assert dict_field_repr in field_data_repr
 
-    filepath = tmp_path / 'ant.vtp'
+    filepath = tmp_path / ('ant' + ext)
     ant.save(filepath)
 
-    ant_read = pv.PolyData(filepath)
+    ant_read = pv.read(filepath)
+
     assert ant_read.user_dict == dict_data
 
     dict_field_repr = repr(ant.user_dict)
