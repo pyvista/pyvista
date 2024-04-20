@@ -2938,7 +2938,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.MultiBlock
-            MultiBlock with the split labels. The blocks have type
+            MultiBlock with the split bodies. The blocks have type
             :class:`~pyvista.UnstructuredGrid` or :class:`~pyvista.PolyData`
             depending on ``method`` and the input type.
 
@@ -3020,15 +3020,41 @@ class DataSetFilters:
 
         Examples
         --------
-        Split a uniform grid thresholded to be non-connected.
+        Load image with 1000 points and add labels based on point ID.
 
-        >>> from pyvista import examples
-        >>> dataset = examples.load_uniform()
-        >>> split_dataset = dataset.split_labeled()
-        >>> len(split_dataset)
-        2
+        >>> import pyvista as pv
+        >>> shape = (10, 10, 10)
+        >>> dataset = pv.ImageData(dimensions=shape)
+        >>> labels_array = np.ones((1000,), dtype=np.uint8)
+        >>> labels_array[0:333] = 1
+        >>> labels_array[333:666] = 2
+        >>> labels_array[666:1000] = 3
+        >>> dataset['labels'] = labels_array
 
-        See :ref:`split_vol` for more examples using this filter.
+        Show labels before splitting. Note that the labels are colored
+        with a color map and a scalar bar is shown since the labels
+        are stored as a scalar array.
+
+        >>> dataset.plot(categories=True)
+
+        Split the labels and plot again. After splitting, the labels
+        are separate meshes which may be colored independently without
+        the need for a color map.
+
+        >>> split = dataset.split_labeled()
+        >>> split
+        MultiBlock (...)
+          N Blocks    3
+          X Bounds    0.000, 9.000
+          Y Bounds    0.000, 9.000
+          Z Bounds    0.000, 9.000
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(split[0], label='Label 1', color='tomato')
+        >>> _ = pl.add_mesh(split[1], label='Label 2', color='goldenrod')
+        >>> _ = pl.add_mesh(split[2], label='Label 3', color='skyblue')
+        >>> _ = pl.add_legend()
+        >>> pl.show()
 
         """
         if scalars is None:
