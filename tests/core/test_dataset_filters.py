@@ -1416,6 +1416,7 @@ def labeled_data():
     [pyvista.DataSetFilters.split_labeled, pyvista.DataSetFilters.split_bodies],
 )
 @pytest.mark.parametrize('method', ['threshold', 'connectivity'])
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_split_labeled_split_bodies(dataset_filter, labeled_data, method):
     sphere, box, labeled = labeled_data
 
