@@ -147,7 +147,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
 
     wslink_backend : str, optional
-        The the wslink backend that the server should use
+        The wslink backend that the server should use
         ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
 
     **kwargs : dict, optional
