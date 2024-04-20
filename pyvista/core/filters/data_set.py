@@ -3018,8 +3018,9 @@ class DataSetFilters:
 
         Examples
         --------
-        Load image with 1000 points and add labels based on point ID.
+        Create image with 1000 points and add labels based on point ID.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> shape = (10, 10, 10)
         >>> dataset = pv.ImageData(dimensions=shape)
