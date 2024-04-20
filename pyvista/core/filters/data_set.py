@@ -2944,7 +2944,7 @@ class DataSetFilters:
 
         See Also
         --------
-        split_labeled, connectivity, threshold
+        split_labels, connectivity, threshold
 
         Examples
         --------
@@ -2963,7 +2963,7 @@ class DataSetFilters:
         """
         # Get the connectivity and label different bodies
         labeled = DataSetFilters.connectivity(self)
-        bodies = labeled.split_labeled(scalars='RegionId', method=method, progress_bar=progress_bar)
+        bodies = labeled.split_labels(scalars='RegionId', method=method, progress_bar=progress_bar)
         if not label:
             for block in bodies:
                 # strange behavior:
@@ -2973,7 +2973,7 @@ class DataSetFilters:
                 block.point_data.remove('RegionId')
         return bodies
 
-    def split_labeled(
+    def split_labels(
         self,
         scalars: Optional[str] = None,
         method: Literal['threshold', 'connectivity'] = 'threshold',
@@ -3041,7 +3041,7 @@ class DataSetFilters:
         are separate meshes which may be colored independently without
         the need for a color map.
 
-        >>> split = dataset.split_labeled()
+        >>> split = dataset.split_labels()
         >>> split
         MultiBlock (...)
           N Blocks    3
