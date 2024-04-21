@@ -1017,7 +1017,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
 )
 def test_fluentcffreader():
-    filename = examples.download_room_cff(load=False)
+    filename = examples.download_room_cff(load=False)[0]
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.FLUENTCFFReader)
     assert reader.path == filename
