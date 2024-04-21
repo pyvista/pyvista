@@ -7,7 +7,15 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, StructuredGrid, examples as ex
+from pyvista import (
+    ImageData,
+    MultiBlock,
+    PartitionedCollection,
+    PolyData,
+    RectilinearGrid,
+    StructuredGrid,
+    examples as ex,
+)
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
@@ -785,3 +793,37 @@ def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
         block.point_data.set_array(data, 'data')
+
+
+def test_partitioned_collection_init_vtk():
+    collection = vtk.vtkPartitionedDataSetCollection()
+    collection.SetPartitionedDataSet(0, vtk.vtkRectilinearGrid())
+    collection.SetPartitionedDataSet(1, vtk.vtkStructuredGrid())
+    collection = PartitionedCollection(collection)
+    assert isinstance(collection, PartitionedCollection)
+    assert collection.n_partitions == 2
+    assert isinstance(collection.GetPartitionedDataSet(0), RectilinearGrid)
+    assert isinstance(collection.GetPartitionedDataSet(1), StructuredGrid)
+    # Test deep copy
+    collection = vtk.vtkPartitionedDataSetCollection()
+    collection.SetPartitionedDataSet(0, vtk.vtkRectilinearGrid())
+    collection.SetPartitionedDataSet(1, vtk.vtkStructuredGrid())
+    collection = PartitionedCollection(collection, deep=True)
+    assert isinstance(collection, PartitionedCollection)
+    assert collection.n_partitions == 2
+    assert isinstance(collection.GetPartitionedDataSet(0), RectilinearGrid)
+    assert isinstance(collection.GetPartitionedDataSet(1), StructuredGrid)
+    # Test wrap the nested structure
+    collection = vtk.vtkPartitionedDataSetCollection()
+    collection.SetPartitionedDataSet(0, vtk.vtkRectilinearGrid())
+    collection.SetPartitionedDataSet(1, vtk.vtkImageData())
+    nested = vtk.vtkPartitionedDataSetCollection()
+    nested.SetPartitionedDataSet(0, vtk.vtkUnstructuredGrid())
+    nested.SetPartitionedDataSet(1, vtk.vtkStructuredGrid())
+    collection.SetPartitionedDataSet(2, nested)
+    collection = PartitionedCollection(collection)
+    assert isinstance(collection, PartitionedCollection)
+    assert collection.n_partitions == 2
+    assert isinstance(collection.GetPartitionedDataSet(0), RectilinearGrid)
+    assert isinstance(collection.GetPartitionedDataSet(1), StructuredGrid)
+    assert isinstance(collection.GetPartitionedDataSet(2), PartitionedCollection)
