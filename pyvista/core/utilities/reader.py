@@ -2542,7 +2542,7 @@ class FLUENTCFFReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_room_cff()
+    >>> filename = examples.download_room_cff()[0]
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
