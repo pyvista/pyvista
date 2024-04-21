@@ -5220,6 +5220,13 @@ class DataSetFilters:
         pyvista.PolyData
             Surface mesh of the grid.
 
+        Warnings
+        --------
+        Both ``"vtkOriginalPointIds"`` and ``"vtkOriginalCellIds"`` may be
+        affected by other VTK operations. See `issue 1164
+        <https://github.com/pyvista/pyvista/issues/1164>`_ for
+        recommendations on tracking indices across operations.
+
         Examples
         --------
         Extract the surface of an UnstructuredGrid.
