@@ -22,6 +22,7 @@ from pyvista.core.utilities.arrays import (
     set_default_active_scalars,
     vtk_id_list_to_array,
 )
+from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
@@ -2579,6 +2580,43 @@ class PolyDataFilters(DataSetFilters):
             self.copy_from(newmesh, deep=False)
             return self, ridx
         return newmesh, ridx
+
+    def _remove_cells(self, cell_ids=None, invert=False, progress_bar=False):
+        """Remove the specified cells from the mesh.
+
+        Set ``invert==True`` to remove all cells _except_ for the specified
+        cell ids.
+
+        """
+        if invert:
+            all_ids = set(range(self.n_cells))
+            ids_to_keep = set()
+            if cell_ids is not None and len(cell_ids) > 0:
+                ids_to_keep |= set(cell_ids)
+            ids_to_remove = list(all_ids - ids_to_keep)
+        else:
+            if cell_ids is None:
+                return self
+            else:
+                ids_to_remove = cell_ids
+        if len(ids_to_remove) == 0:
+            _output = self
+        else:
+            if pyvista.vtk_version_info < (9, 1, 0):
+                raise VTKVersionError(
+                    '`connectivity` with PolyData requires vtk>=9.1.0',
+                )  # pragma: no cover
+            remove = _vtk.vtkRemovePolyData()
+            remove.SetInputData(self)
+            remove.SetCellIds(numpy_to_idarr(ids_to_remove))
+            _update_alg(remove, progress_bar, "Removing Cells.")
+            _output = _get_output(remove)
+            _output.clean(  # remove unused points
+                point_merging=False,
+                inplace=True,
+                progress_bar=progress_bar,
+            )
+        return _output
 
     def flip_normals(self):
         """Flip normals of a triangular mesh by reversing the point ordering.

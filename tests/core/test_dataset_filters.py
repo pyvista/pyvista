@@ -1424,20 +1424,32 @@ def labeled_data_Labels(labeled_data_RegionId):
     [pyvista.DataSetFilters.split_labels, pyvista.DataSetFilters.split_bodies],
 )
 @pytest.mark.parametrize('method', ['threshold', 'connectivity'])
+@pytest.mark.parametrize('test_with_RegionId', [True, False])
+@pytest.mark.parametrize('keep_RegionId_labels', [True, False])
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_split_labels_split_bodies(
     dataset_filter,
     method,
+    test_with_RegionId,
+    keep_RegionId_labels,
     labeled_data_Labels,
     labeled_data_RegionId,
 ):
-    if True:
-        sphere, box, labeled = labeled_data_Labels
-        input_array_names = labeled.array_names
-    else:
+    if test_with_RegionId:
         sphere, box, labeled = labeled_data_RegionId
+    else:
+        sphere, box, labeled = labeled_data_Labels
+    input_arrays = labeled.array_names
+    expected_output_arrays = list(input_arrays)
 
-    split = dataset_filter(labeled, method=method, progress_bar=True)
+    kwargs = dict(method=method, progress_bar=True)
+    if dataset_filter is pyvista.DataSetFilters.split_bodies:
+        kwargs['label'] = keep_RegionId_labels
+        if test_with_RegionId and keep_RegionId_labels:
+            expected_output_arrays.append('RegionId')
+            expected_output_arrays.append('RegionId')
+
+    split = dataset_filter(labeled, **kwargs)
 
     assert len(split) == 2
     if method == 'threshold':
@@ -1453,7 +1465,8 @@ def test_split_labels_split_bodies(
     assert np.allclose(split[0].volume, sphere.volume)
     assert np.allclose(split[1].volume, box.volume)
 
-    assert input_array_names == split[0].array_names
+    assert expected_output_arrays == split[0].array_names
+
     match = 'Method must be "threshold" or "connectivity", got "invalid" instead.'
     with pytest.raises(ValueError, match=match):
         dataset_filter(labeled, method='invalid')
