@@ -335,7 +335,7 @@ def test_ray_trace_origin():
 
 def test_multi_ray_trace(sphere):
     trimesh = pytest.importorskip('trimesh')
-    pytest.mark.skipif(not trimesh.ray.has_embree, reason="Requires Embree")
+    pytest.skipif(not trimesh.ray.has_embree, reason="Requires Embree")
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
