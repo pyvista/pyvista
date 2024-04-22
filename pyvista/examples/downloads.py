@@ -7659,7 +7659,7 @@ def download_room_cff(load=True):  # pragma: no cover
 
         :ref:`Room Cff Dataset <room_cff_dataset>`
             See this dataset in the Dataset Gallery for more info.
-            
+
     """
     return _download_dataset(_dataset_room_cff, load=load)
 
