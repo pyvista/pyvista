@@ -26,3 +26,4 @@ trame>=2.5.2,<3.6.1
 trame-vtk>=2.5.8,<2.8.6
 trame-vuetify>=2.3.1,<2.4.4
 trimesh<4.4.0
+embreex<2.17.8
