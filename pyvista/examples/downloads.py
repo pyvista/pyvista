@@ -7651,17 +7651,16 @@ def download_room_cff(load=True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> dataset = examples.download_room_cff()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(dataset)
-    >>> pl.show()
+    >>> blocks = examples.download_room_cff()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
     """
     return _download_dataset(_dataset_room_cff, load=load)
 
 
 def _dataset_room_cff_files_func():
     cas = _SingleFileDownloadableDatasetLoader('FLUENTCFF/room.cas.h5')
-    dat = _SingleFileDownloadableDatasetLoader('FLUENTCFF/room.dat.h5')
+    dat = _DownloadableFile('FLUENTCFF/room.dat.h5')
     return cas, dat
 
 
