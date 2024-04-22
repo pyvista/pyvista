@@ -2297,13 +2297,15 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa: F401
-            import rtree  # noqa: F401
             import trimesh
+
+            if not trimesh.ray.has_embree:
+                raise ImportError
         except ImportError:
             raise ImportError(
-                "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
-                "\tconda install trimesh rtree pyembree",
+                "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
+                "\tconda install embree=2 trimesh pyembree\nOR\n"
+                "\tpip install trimesh embreex",
             )
 
         origins = np.asarray(origins)
