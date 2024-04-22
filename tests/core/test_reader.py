@@ -1022,6 +1022,6 @@ def test_fluentcffreader():
     assert isinstance(reader, pv.FLUENTCFFReader)
     assert reader.path == filename
 
-    mesh = reader.read()
-    assert mesh.n_blocks == 1
-    assert mesh.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)

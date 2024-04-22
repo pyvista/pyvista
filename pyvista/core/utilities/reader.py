@@ -2546,7 +2546,6 @@ class FLUENTCFFReader(BaseReader):
     >>> reader = pv.get_reader(filename)
     >>> blocks = reader.read()
     >>> mesh = blocks[0]
-    >>> mesh = blocks[0]
     >>> mesh.plot(cpos="xy", scalars="SV_T")
     """
 
