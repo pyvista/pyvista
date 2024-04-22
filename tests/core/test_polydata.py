@@ -3,11 +3,11 @@ import pathlib
 from pathlib import Path
 import re
 from typing import Dict, List
+from unittest.mock import patch
 import warnings
 
 import numpy as np
 import pytest
-from unittest.mock import patch
 
 import pyvista as pv
 from pyvista import examples
@@ -347,9 +347,9 @@ def test_multi_ray_trace(sphere):
 
     # patch embree to test retry
     with patch.object(
-            trimesh.ray.ray_pyembree.RayMeshIntersector,
-            'intersects_location',
-            return_value=[np.array([])]*3
+        trimesh.ray.ray_pyembree.RayMeshIntersector,
+        'intersects_location',
+        return_value=[np.array([])] * 3,
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
         print(points, ind_r, ind_t)
