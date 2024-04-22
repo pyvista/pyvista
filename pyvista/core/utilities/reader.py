@@ -2544,7 +2544,8 @@ class FLUENTCFFReader(BaseReader):
     >>> from pyvista import examples
     >>> filename = examples.download_room_cff(load=False)[0]
     >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
     >>> mesh.plot()
 
     """
