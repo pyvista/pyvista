@@ -31,6 +31,7 @@ Reader Classes
     DICOMReader
     EnSightReader
     FacetReader
+    FLUENTCFFReader
     FluentReader
     GIFReader
     GLTFReader
