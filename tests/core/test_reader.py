@@ -1010,3 +1010,16 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a OpenVDBReader class.",
+)
+def test_openvbdreader(tmpdir):
+    filename = examples.download_sphere_points(load=False)
+    reader = pv.get_reader(filename)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

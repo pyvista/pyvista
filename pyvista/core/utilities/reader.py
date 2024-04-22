@@ -2535,6 +2535,25 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
+class OpenVDBReader(BaseReader):
+    """OpenVDB Reader for .vbd files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_sphere_points(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'sphere_points.vdb'
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+    """
+
+    _vtk_module_name = "vtkIOOpenVDB"
+    _vtk_class_name = "vtkOpenVDBReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2581,6 +2600,7 @@ CLASS_READERS = {
     '.tif': TIFFReader,
     '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
+    '.vdb': OpenVDBReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
     '.vtm': XMLMultiBlockDataReader,

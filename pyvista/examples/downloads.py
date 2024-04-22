@@ -7631,3 +7631,30 @@ _dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
     target_file='s1380',
     load_func=_whole_body_ct_load_func,
 )
+
+
+def download_sphere_points(load=True):  # pragma: no cover
+    """Download sphere points dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.download_sphere_points()
+    >>> mesh.plot()
+    """
+    return _download_dataset(_dataset_sphere_points, load=load)
+
+
+_dataset_sphere_points = _SingleFileDownloadableDatasetLoader('sphere_points.vdb')
