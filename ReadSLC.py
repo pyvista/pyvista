@@ -5,6 +5,7 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkFiltersCore import vtkContourFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkIOImage import vtkSLCReader
+import vtkmodules.vtkInteractionStyle
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
     vtkPolyDataMapper,
@@ -14,6 +15,7 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 # noinspection PyUnresolvedReferences
+import vtkmodules.vtkRenderingOpenGL2  # noqa:F401
 
 
 def main():
