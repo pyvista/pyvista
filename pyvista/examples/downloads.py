@@ -7671,6 +7671,5 @@ def _dataset_room_cff_files_func():
 
 
 _dataset_room_cff = _MultiFileDownloadableDatasetLoader(
-    _dataset_room_cff_files_func,
-    load_func=_load_as_multiblock,
+    _dataset_room_cff_files_func
 )

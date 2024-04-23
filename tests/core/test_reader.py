@@ -1024,4 +1024,5 @@ def test_fluentcffreader():
 
     blocks = reader.read()
     assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
