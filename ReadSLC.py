@@ -88,21 +88,5 @@ def main():
     renderWindowInteractor.Start()
 
 
-def get_program_parameters():
-    import argparse
-
-    description = 'Read a .slc file.'
-    epilogue = ''''''
-    parser = argparse.ArgumentParser(
-        description=description,
-        epilog=epilogue,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument('filename', help='vw_knee.slc.')
-    parser.add_argument('iso_value', nargs='?', type=float, default=72.0, help='Defaullt 72.')
-    args = parser.parse_args()
-    return args.filename, args.iso_value
-
-
 if __name__ == '__main__':
     main()
