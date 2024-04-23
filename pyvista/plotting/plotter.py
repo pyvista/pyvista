@@ -1,5 +1,7 @@
 """PyVista plotting module."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
 from contextlib import contextmanager, suppress
@@ -16,7 +18,7 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 import uuid
 import warnings
 import weakref
@@ -26,7 +28,6 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
@@ -83,6 +84,9 @@ from .utilities.regression import image_from_window, run_image_filter
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 

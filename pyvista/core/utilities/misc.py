@@ -1,5 +1,7 @@
 """Miscellaneous core utilities."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 import enum
 from functools import lru_cache
@@ -7,12 +9,13 @@ import importlib
 import sys
 import threading
 import traceback
-from typing import Type, TypeVar, Union
+from typing import TYPE_CHECKING, Type, TypeVar, Union
 import warnings
 
 import numpy as np
 
-from .._typing_core import VectorLike
+if TYPE_CHECKING:  # pragma: no cover
+    from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 

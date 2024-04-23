@@ -1,15 +1,16 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
-from typing import Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -30,6 +31,9 @@ from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
