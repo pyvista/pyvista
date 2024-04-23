@@ -7631,3 +7631,43 @@ _dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
     target_file='s1380',
     load_func=_whole_body_ct_load_func,
 )
+
+
+def download_room_cff(load=True):  # pragma: no cover
+    """Download a room model in CFF format.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock or tuple
+        DataSet or tuple of filenames depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> blocks = examples.download_room_cff()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
+
+    .. seealso::
+
+        :ref:`Room Cff Dataset <room_cff_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_room_cff, load=load)
+
+
+def _dataset_room_cff_files_func():
+    cas = _SingleFileDownloadableDatasetLoader('FLUENTCFF/room.cas.h5')
+    dat = _DownloadableFile('FLUENTCFF/room.dat.h5')
+    return cas, dat
+
+
+_dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
