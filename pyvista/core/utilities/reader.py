@@ -2535,6 +2535,24 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
+class FLUENTCFFReader(BaseReader):
+    """FLUENTCFFReader for .h5 files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_room_cff(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
+    """
+
+    _vtk_module_name = "vtkIOFLUENTCFF"
+    _vtk_class_name = "vtkFLUENTCFFReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2550,6 +2568,7 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
     '.img': DICOMReader,
