@@ -2297,13 +2297,15 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa: F401
-            import rtree  # noqa: F401
             import trimesh
+
+            if not trimesh.ray.has_embree:
+                raise ImportError
         except ImportError:
             raise ImportError(
-                "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
-                "\tconda install trimesh rtree pyembree",
+                "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
+                "\tconda install embree=2 trimesh pyembree\nOR\n"
+                "\tpip install trimesh embreex",
             )
 
         origins = np.asarray(origins)
@@ -2333,15 +2335,15 @@ class PolyDataFilters(DataSetFilters):
                 keepdims=True,
             )
 
-            origin_to_centre_vector = (
-                (self.bounds[0] + self.bounds[1]) / 2 - origins_retry[0],
-                (self.bounds[2] + self.bounds[3]) / 2 - origins_retry[1],
-                (self.bounds[4] + self.bounds[5]) / 2 - origins_retry[2],
+            origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
+            origin_to_centre_lengths = np.linalg.norm(
+                origin_to_centre_vectors,
+                axis=-1,
+                keepdims=True,
             )
-            origin_to_centre_length = np.linalg.norm(origin_to_centre_vector)
             second_points = origins_retry + unit_directions * (
-                self.length + origin_to_centre_length
-            )  # shape (n_retry, 3)
+                origin_to_centre_lengths + self.length
+            )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)

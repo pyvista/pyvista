@@ -335,9 +335,9 @@ def test_ray_trace_origin():
 
 
 def test_multi_ray_trace(sphere):
-    pytest.importorskip('rtree')
-    pytest.importorskip('pyembree')
     trimesh = pytest.importorskip('trimesh')
+    if not trimesh.ray.has_embree:
+        pytest.skip("Requires Embree")
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
@@ -352,8 +352,12 @@ def test_multi_ray_trace(sphere):
         return_value=[np.array([])] * 3,
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
-        assert len(points) == 4
-        assert len(ind_r) == 4
+        known_points = np.array(
+            [[0.25, 0, 0.42424145], [0.25, 0, -0.42424145], [0, 0, 0.5], [0, 0, -0.5]],
+        )
+        known_ind_r = np.array([2, 2, 3, 3])
+        np.testing.assert_allclose(points, known_points)
+        np.testing.assert_allclose(ind_r, known_ind_r)
         assert len(ind_t) == 4
 
     # check non-triangulated
