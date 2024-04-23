@@ -352,7 +352,6 @@ def test_multi_ray_trace(sphere):
         return_value=[np.array([])] * 3,
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
-        print(points, ind_r, ind_t)
         assert len(points) == 4
         assert len(ind_r) == 4
         assert len(ind_t) == 4
