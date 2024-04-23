@@ -353,10 +353,7 @@ def test_multi_ray_trace(sphere):
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
         known_points = np.array(
-            [[0.25, 0, 0.42424145],
-             [0.25, 0, -0.42424145],
-             [0, 0, 0.5],
-             [0, 0, -0.5]]
+            [[0.25, 0, 0.42424145], [0.25, 0, -0.42424145], [0, 0, 0.5], [0, 0, -0.5]],
         )
         known_ind_r = np.array([2, 2, 3, 3])
         known_ind_t = np.array([20, 159, 0, 19])
