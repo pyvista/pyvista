@@ -7670,6 +7670,4 @@ def _dataset_room_cff_files_func():
     return cas, dat
 
 
-_dataset_room_cff = _MultiFileDownloadableDatasetLoader(
-    _dataset_room_cff_files_func
-)
+_dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
