@@ -1,6 +1,8 @@
+import functools
 import itertools
 from pathlib import Path
 import platform
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -21,6 +23,7 @@ from pyvista.core.errors import (
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+pv.OFF_SCREEN = False
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -1387,35 +1390,36 @@ def test_connectivity_closest_point(foot_bones):
     assert counts == [598]
 
 
-def test_split_bodies():
+@pytest.mark.parametrize('label', [True, False])
+def test_split_bodies(label):
     # Load a simple example mesh
     dataset = examples.load_uniform()
     dataset.set_active_scalars('Spatial Cell Data')
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True, progress_bar=True)
+    threshed.clear_data()
 
-    bodies = threshed.split_bodies(progress_bar=True)
+    bodies = threshed.split_bodies(progress_bar=True, label=label)
 
     volumes = [518.0, 35.0]
     assert len(volumes) == bodies.n_blocks
     for i, body in enumerate(bodies):
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
+        if label:
+            assert body.array_names == ['RegionId', 'RegionId']
+        else:
+            assert body.array_names == []
 
 
 @pytest.fixture()
-def labeled_data_RegionId():
+def labeled_data():
     sphere = pv.Sphere()
     sphere.points *= 0.5  # decrease volume
     box = pv.Box()
     labeled = (sphere + box).extract_geometry().connectivity()
     assert isinstance(labeled, pyvista.PolyData)
-    return sphere, box, labeled
-
-
-@pytest.fixture()
-def labeled_data_Labels(labeled_data_RegionId):
-    sphere, box, labeled = labeled_data_RegionId
-    labeled.rename_array('RegionId', 'Labels')
-    labeled.rename_array('RegionId', 'Labels')
+    assert labeled.array_names == ['RegionId', 'RegionId']
+    assert box.volume > 0
+    assert sphere.volume > 0
     return sphere, box, labeled
 
 
@@ -1423,53 +1427,21 @@ def labeled_data_Labels(labeled_data_RegionId):
     'dataset_filter',
     [pyvista.DataSetFilters.split_labels, pyvista.DataSetFilters.split_bodies],
 )
-@pytest.mark.parametrize('method', ['threshold', 'connectivity'])
-@pytest.mark.parametrize('test_with_RegionId', [True, False])
-@pytest.mark.parametrize('keep_RegionId_labels', [True, False])
-@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_split_labels_split_bodies(
     dataset_filter,
-    method,
-    test_with_RegionId,
-    keep_RegionId_labels,
-    labeled_data_Labels,
-    labeled_data_RegionId,
+    labeled_data,
 ):
-    if test_with_RegionId:
-        sphere, box, labeled = labeled_data_RegionId
-    else:
-        sphere, box, labeled = labeled_data_Labels
-    input_arrays = labeled.array_names
-    expected_output_arrays = list(input_arrays)
+    sphere, box, labeled = labeled_data
 
-    kwargs = dict(method=method, progress_bar=True)
-    if dataset_filter is pyvista.DataSetFilters.split_bodies:
-        kwargs['label'] = keep_RegionId_labels
-        if test_with_RegionId and keep_RegionId_labels:
-            expected_output_arrays.append('RegionId')
-            expected_output_arrays.append('RegionId')
-
-    split = dataset_filter(labeled, **kwargs)
+    split = dataset_filter(labeled, progress_bar=True)
 
     assert len(split) == 2
-    if method == 'threshold':
-        assert isinstance(split[0], pv.UnstructuredGrid)
-        assert isinstance(split[1], pv.UnstructuredGrid)
-        # Convert to PolyData for testing volume
-        split[0] = split[0].extract_geometry()
-        split[1] = split[1].extract_geometry()
 
     assert isinstance(split[0], pv.PolyData)
     assert isinstance(split[1], pv.PolyData)
 
     assert np.allclose(split[0].volume, sphere.volume)
     assert np.allclose(split[1].volume, box.volume)
-
-    assert expected_output_arrays == split[0].array_names
-
-    match = 'Method must be "threshold" or "connectivity", got "invalid" instead.'
-    with pytest.raises(ValueError, match=match):
-        dataset_filter(labeled, method='invalid')
 
 
 def test_warp_by_scalar():
@@ -2150,7 +2122,8 @@ def extract_points_invalid(sphere):
         sphere.extract_points(object)
 
 
-def test_extract_points():
+@pytest.fixture()
+def grid4x4():
     # mesh points (4x4 regular grid)
     vertices = np.array(
         [
@@ -2187,24 +2160,215 @@ def test_extract_points():
             [4, 10, 11, 15, 14],  # square
         ],
     )
-    # create pv object
     surf = pv.PolyData(vertices, faces)
+    surf.point_data['labels'] = range(surf.n_points)
+    surf.cell_data['labels'] = range(surf.n_cells)
+    return surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_False(grid4x4):
+    """Return expected output for adjacent_cells=False and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 3, 2]
+    expected_surf = pv.PolyData(expected_verts, expected_faces).cast_to_unstructured_grid()
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_True(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 1, 3, 4]
+    expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
+    expected_surf = pv.PolyData(expected_verts, expected_faces).cast_to_unstructured_grid()
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_include_cells_False(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=False"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 0, 0, 0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
+    expected_surf = pv.PolyData(expected_verts, expected_faces).cast_to_unstructured_grid()
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+
     # extract sub-surface with adjacent cells
-    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=True)
+    sub_surf_adj = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
+        progress_bar=True,
+    )
+
+    assert sub_surf_adj.n_points == 9
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert sub_surf_adj.n_cells == 4
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
     # extract sub-surface without adjacent cells
-    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=True)
+    sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
+
+    assert sub_surf.n_points == 4
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert sub_surf.n_cells == 1
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_include_cells_False(
+    dataset_filter,
+    grid4x4,
+    extracted_with_include_cells_False,
+):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
     # extract sub-surface without cells
-    sub_surf_nocells = surf.extract_points(
-        np.array([0, 1, 4, 5]),
+    sub_surf_nocells = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
         include_cells=False,
         progress_bar=True,
     )
-    # check sub-surface size
-    assert sub_surf.n_points == 4
-    assert sub_surf.n_cells == 1
-    assert sub_surf_adj.n_points == 9
-    assert sub_surf_adj.n_cells == 4
-    assert sub_surf_nocells.cells[0] == 1
+    assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
+    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
+    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+
+
+def test_extract_points_default(extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+    # test adjacent_cells=True and include_cells=True by default
+    sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('adjacent_fixture', [True, False])
+def test_extract_values_preference(
+    preference,
+    adjacent_fixture,
+    extracted_with_adjacent_True,
+    extracted_with_adjacent_False,
+):
+    # test points are extracted with point data (with adjacent = False by default)
+    # test cells are extracted with cell data
+    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
+
+    func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
+    if preference == 'point':
+        sub_surf = func(input_point_ids)
+        if not adjacent_fixture:
+            pytest.xfail(
+                'Will not match expected output since adjacent is True by default for point data ',
+            )
+    else:
+        sub_surf = func(input_cell_ids)
+
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+def extract_values_values():
+    # Define values for all 16 points or all 9 cells of the 4x4 grid
+    point_values = [
+        range(16),
+        list(range(16)),
+        np.array(range(16)),
+        [[0, 15]],
+        [0, [1, 1], [2, 5], 6, [7, 15]],
+    ]
+    cell_values = [
+        range(10),
+        list(range(10)),
+        np.array(range(10)),
+        [[0, 9]],
+        [0, [1, 1], [2, 5], 6, [7, 9]],
+    ]
+
+    return list(zip(point_values, cell_values))
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('values', extract_values_values())
+def test_extract_values_input_values_and_invert(preference, values, invert, grid4x4):
+    # test extracting all points or cells
+    values = values[0] if preference == 'point' else values[1]
+    extracted = grid4x4.extract_values(values, preference=preference, invert=invert)
+    if invert:
+        extracted.n_points == 0
+        extracted.n_cells == 0
+        extracted.n_arrays == 0
+    else:
+        assert np.array_equal(extracted.points, grid4x4.points)
+        assert np.array_equal(extracted.cells, grid4x4.faces)
+
+
+def test_extract_values_keep_original_ids(grid4x4):
+    extracted = grid4x4.extract_values([grid4x4.get_data_range()])
+    assert extracted.point_data.keys() == ['labels', 'vtkOriginalPointIds']
+    assert extracted.cell_data.keys() == ['labels', 'vtkOriginalCellIds']
+
+    extracted = grid4x4.extract_values([grid4x4.get_data_range()], keep_original_ids=False)
+    assert extracted.point_data.keys() == ['labels']
+    assert extracted.cell_data.keys() == ['labels']
+
+    extracted = grid4x4.extract_values([0], keep_original_ids=True, invert=True)
+    assert extracted.point_data.keys() == []
+    assert extracted.cell_data.keys() == []
+
+
+def test_extract_values_raises(grid4x4):
+    match = "Values must be iterable, got <class 'int'>."
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values(0)
+
+    match = 'Invalid value a. Value must be number or a sequence of two numbers representing a [lower, upper] range.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values('abc')
+
+    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values([0], scalars='invalid_scalars')
+
+    match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    with pytest.raises(ValueError, match=match):
+        pv.PolyData().extract_values([0])
 
 
 def test_slice_along_line_composite(composite):

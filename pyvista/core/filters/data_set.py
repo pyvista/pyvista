@@ -2,7 +2,7 @@
 
 import collections.abc
 import contextlib
-from typing import Literal, Optional, Sequence, Union
+from typing import Iterable, Literal, Optional, Sequence, Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -2675,10 +2675,12 @@ class DataSetFilters:
                     # Use extract_points to ensure that cells with at least one
                     # point within the range are kept (this is consistent
                     # with how the filter operates for other modes)
-                    input_mesh = DataSetFilters.extract_points_by_value(
+                    input_mesh = DataSetFilters.extract_values(
                         input_mesh,
                         [scalar_range],
+                        adjacent_cells=True,
                         progress_bar=progress_bar,
+                        keep_original_ids=False,
                     )
 
         alg = _vtk.vtkConnectivityFilter()
@@ -2768,11 +2770,13 @@ class DataSetFilters:
         elif extraction_mode == 'specified':
             # All regions were initially extracted, so extract only the
             # specified regions
-            output = DataSetFilters.extract_points_by_value(
+            output = DataSetFilters.extract_values(
                 output,
                 values=region_ids,
                 scalars='RegionId',
                 preference='point',
+                adjacent_cells=True,
+                keep_original_ids=False,
                 progress_bar=progress_bar,
             )
 
@@ -2869,20 +2873,19 @@ class DataSetFilters:
         self,
         label: bool = False,
         progress_bar: bool = False,
-        method: Literal['threshold', 'connectivity'] = 'threshold',
     ):
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
         :class:`pyvista.MultiBlock` dataset.
 
-        Optionally, the splitting method may be specified. By default,
-        the :meth:`~pyvista.DataSetFilters.threshold` filter is used,
-        and the split data will have type :class:`~pyvista.UnstructuredGrid`.
-        Alternatively, the :meth:`~pyvista.DataSetFilters.connectivity` may
-        be used, which will return :class:`~pyvista.PolyData` blocks when the
-        input is :class:`~pyvista.PolyData`. Both methods produce similar
-        results otherwise.
+        .. versionchanged:: 0.44
+
+            The blocks now have type :class:`~pyvista.PolyData` if the input is
+            :class:`~pyvista.PolyData`, and :class:`~pyvista.UnstructuredGrid`
+            otherwise. Previously, all blocks had type :class:`~pyvista.UnstructuredGrid`
+            regardless of input type. Use :meth:`~pyvista.core.dataset.DataSet.cast_to_unstructured_grid`
+            on the blocks to restore the previous behavior.
 
         Parameters
         ----------
@@ -2892,14 +2895,6 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
-        method : str, default: 'threshold'
-            Method to use internally for splitting the labels.
-
-            - 'threshold': split labels with :meth:`~pyvista.DataSetFilters.threshold`.
-            - 'connectivity': split labels with :meth:`~pyvista.DataSetFilters.connectivity`.
-
-            .. versionadded:: 0.44
 
         Returns
         -------
@@ -2931,7 +2926,6 @@ class DataSetFilters:
         labeled = DataSetFilters.connectivity(self)
         bodies = labeled.split_labels(
             scalars='RegionId',
-            method=method,
             progress_bar=progress_bar,
         )
         if not label:
@@ -2943,21 +2937,15 @@ class DataSetFilters:
     def split_labels(
         self,
         scalars: Optional[str] = None,
-        preference='point',
-        method: Literal['threshold', 'connectivity'] = 'threshold',
+        preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
     ):
         """Split multi-labeled data into blocks of a :class:`~pyvista.MultiBlock`.
 
         Separate labeled data into separate meshes, one for each label.
-
-        Optionally, the splitting method may be specified. By default,
-        the :meth:`~pyvista.DataSetFilters.threshold` filter is used,
-        and the split data will have type :class:`~pyvista.UnstructuredGrid`.
-        Alternatively, the :meth:`~pyvista.DataSetFilters.connectivity` may
-        be used, which will return :class:`~pyvista.PolyData` blocks when the
-        input is :class:`~pyvista.PolyData`. Both methods produce similar
-        results otherwise.
+        The split meshes have type :class:`~pyvista.PolyData` if the input is
+        :class:`~pyvista.PolyData`, and :class:`~pyvista.UnstructuredGrid`
+        otherwise.
 
         .. versionadded:: 0.44
 
@@ -2971,25 +2959,17 @@ class DataSetFilters:
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
-        method : str, default: 'threshold'
-            Method to use internally for splitting the labels.
-
-            - 'threshold': split labels with :meth:`~pyvista.DataSetFilters.threshold`.
-            - 'connectivity': split labels with :meth:`~pyvista.DataSetFilters.connectivity`.
-
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
         -------
         pyvista.MultiBlock
-            MultiBlock with the split labels. The blocks have type
-            :class:`~pyvista.UnstructuredGrid` or :class:`~pyvista.PolyData`
-            depending on ``method`` and the input type.
+            MultiBlock with the split labels.
 
         See Also
         --------
-        split_bodies, connectivity, threshold, :meth:`~pyvista.ImageDataFilters.contour_labeled`
+        split_bodies, extract_points_by_value, threshold, :meth:`~pyvista.ImageDataFilters.contour_labeled`
 
         Examples
         --------
@@ -3040,24 +3020,14 @@ class DataSetFilters:
             raise ValueError('No arrays present to split.')
 
         split_dataset = pyvista.MultiBlock()
-        for vid in np.unique(labels_array):
-            if method == 'threshold':
-                block = self.threshold(
-                    [vid - 0.5, vid + 0.5],
-                    scalars=scalars,
-                    progress_bar=progress_bar,
-                )
-            elif method == 'connectivity':
-                block = self.connectivity(
-                    scalar_range=[vid - 0.5, vid + 0.5],
-                    scalars=scalars,
-                    progress_bar=progress_bar,
-                    label_regions=False,  # Do not add new scalars to output
-                )
-            else:
-                raise ValueError(
-                    f'Method must be "threshold" or "connectivity", got "{method}" instead.',
-                )
+        for label_id in np.unique(labels_array):
+            block = self.extract_values(
+                [label_id],
+                scalars=scalars,
+                preference=preference,
+                progress_bar=progress_bar,
+                keep_original_ids=False,
+            )
             split_dataset.append(block)
         return split_dataset
 
@@ -5283,51 +5253,105 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
-    def extract_points_by_value(
+    def extract_values(
         self,
-        values=None,
+        values: Iterable[Union[float, Sequence[float]]],
         *,
-        scalars=None,
-        invert=False,
-        preference='point',
-        adjacent_cells=True,
-        include_cells=True,
-        progress_bar=False,
+        scalars: Optional[str] = None,
+        preference: Literal['point', 'cell'] = 'point',
+        invert: bool = False,
+        adjacent_cells: bool = True,
+        include_cells: bool = True,
+        keep_original_ids: bool = True,
+        progress_bar: bool = False,
     ):
-        """Return a subset of the mesh (with cells) that contains any of the given point values.
+        """Return a subset of the mesh based on the value(s) of point or cell data.
+
+        Points and cells may be extracted using on a single value, multiple values, a
+        range of values, or any mix of values and ranges. This enables threshold-like
+        filtering of data in a discontinuous manner to extract a single label or groups
+        of labels from categorical data, or to extract multiple regions of continuous
+        data.
+
+        This filter operates on point data and cell data separately:
+
+        -   If extracting values from point data, only the points with the specified
+            value(s) are included in the output. Cells containing these points are also
+            returned, but all points of a single cell must strictly have the specified
+            value(s). Optionally, this constraint may be relaxed, allowing adjacent cells
+            with at least one point matching the desired value(s) to be included in the
+            output. Optionally, cells may also be completely removed from the output.
+
+        -   If extracting values from cell data, only the cells (and their points)
+            with the specified values(s) are included in the output.
+
+        Internally, :meth:`~pyvista.core.DataSetFilters.extract_points` is called
+        to extract points for point data, and :meth:`~pyvista.core.DataSetFilters.extract_cells`
+        is called to extract cells for cell data.
+
+        By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
+        and ``'vtkOriginalCellIds'``. These arrays can be used to link the filtered
+        points or cells directly to the input.
+
+        .. note::
+
+            This filter returns a :class:`~pyvista.UnstructuredGrid`. If the input is
+            :class:`~pyvista.PolyData`, use :meth:`~pyvista.DataSetFilters.extract_geometry`
+            to cast the output back to :class:`~pyvista.PolyData`. The
+            :meth:`~pyvista.DataSetFilters.extract_geometry` filter will implicitly use the
+            ``'vtkOriginalPointIds'`` and ``'vtkOriginalCellIds'`` arrays returned
+             by this filter to reconstruct the (filtered) surface.
 
         Parameters
         ----------
-        values : iterable[int | sequence[int, int]]
-            Sequence of point values to be extracted.
+        values : iterable[float | sequence[float, float]]
+            Iterable of point values to be extracted. Each item of the iterable may be
+            a single number or a sequence of two numbers defining a range of values
+            in the form``[lower, upper]``. Multiple single-number entries and/or
+            multiple ranges may be specified.
 
         scalars : str, optional
-            Name of scalars to extract points with. Defaults to currently active scalars.
-
-        invert : bool, default: False
-            Invert the threshold results. That is, cells that would have been
-            in the output with this option off are excluded, while cells that
-            would have been excluded from the output are included.
+            Name of scalars to extract points with. Defaults to currently
+            active scalars.
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``. Throughout PyVista, the preference
-            is typically ``'point'`` but since the threshold filter is a
-            cell-wise operation, we prefer cell data for thresholding
-            operations.
+            ``'point'`` or ``'cell'``.
+
+        invert : bool, default: False
+            Invert the extraction values. If ``True`` extract the points (with
+            cells) which do *not* have the specified values.
 
         adjacent_cells : bool, default: True
-            If ``True``, extract the cells that contain at least one of
-            the extracted points. If ``False``, extract the cells that
-            contain exclusively points from the extracted points list.
-            Has no effect if ``include_cells`` is ``False``.
+            If ``True``, include cells (and their points) that contain
+            at least one of the extracted points. If ``False``, only
+            include cells which contain exclusively points from the
+            extracted points list. Has no effect if ``include_cells``
+            is ``False``. Has no effect when extracting values from
+            cell data.
+
+            .. note::
+
+                The default value (``False``) differs from the default
+                value used by :meth:`~pyvista.core.DataSetFilters.extract_points`.
 
         include_cells : bool, default: True
-            Specifies if the cells shall be returned or not.
+            Specifies if the cells shall be returned or not. If ``False``,
+            all cells in the output will be vertex cells, one for each point.
+            Has no effect when extracting values from cell data.
+
+        keep_original_ids : bool, default: True
+            If ``True``, two arrays ``'vtkOriginalPointIds'`` and ``'vtkOriginalCellIds'``
+            are included with the output. Otherwise, these arrays are cleared
+            from the output.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_points, extract_cells, threshold, connectivity
 
         Returns
         -------
@@ -5346,23 +5370,11 @@ class DataSetFilters:
         >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
         """
-        # This method is similar to `mesh.extract_points` but the
-        # output arrays are removed and the output type is PolyData
-        # if the input type is PolyData
-
-        # set the scalars to extract with
-        if scalars is None:
-            set_default_active_scalars(self)
-            _, scalars = self.active_scalars_info
-        arr = get_array(self, scalars, preference=preference, err=False)
-        if arr is None:
-            raise ValueError('No arrays present to threshold.')
-        association, scalars = self.active_scalars_info
-
+        # Validate input values
         if not isinstance(values, collections.abc.Iterable):
             raise TypeError(f'Values must be iterable, got {type(values)}.')
-        input_values = list(values)
-        for i, val in enumerate(input_values):
+        values = list(values)
+        for i, val in enumerate(values):
             if isinstance(val, (int, np.integer, float, np.floating)):
                 continue
             if (
@@ -5370,38 +5382,64 @@ class DataSetFilters:
                 and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
                 and seq[0] <= seq[1]
             ):
-                input_values[i] = seq
+                values[i] = seq
                 continue
             raise ValueError(
-                f'Invalid value {val}. Value must be number or a sequence of two numbers reqpresenting a [lower, upper] range.',
+                f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
             )
 
-        # Create array mask with all input values set to True
-        mask = np.zeros_like(arr, dtype=np.bool_)
-        for val in input_values:
+        # Get the scalar array to use for extraction
+        try:
+            if scalars is None:
+                set_default_active_scalars(self)  # type: ignore[arg-type]
+                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            array = get_array(self, scalars, preference=preference, err=True)
+        except MissingDataError:
+            raise ValueError(
+                'No point data or cell data found. Scalar data is required to use this filter.',
+            )
+        except KeyError:
+            raise ValueError(
+                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
+            )
+
+        association = get_array_association(self, scalars, preference=preference)
+
+        # Determine which ids to keep
+        id_mask = np.zeros_like(array, dtype=np.bool_)
+        for val in values:
             if isinstance(val, Sequence):
                 lower, upper = val
-                logic = np.logical_and(arr >= lower, arr <= upper)
+                logic = np.logical_and(array >= lower, array <= upper)  # type: ignore[operator]
             else:
-                logic = arr == val
-            mask[logic] = not invert
+                logic = array == val
+            id_mask[logic] = not invert
 
-        _output = self.extract_points(
-            mask,
-            adjacent_cells=adjacent_cells,
-            include_cells=include_cells,
-            progress_bar=progress_bar,
-        )
-        has_cells = _output.n_cells != 0
-        if isinstance(self, pyvista.PolyData):
-            # Output is UnstructuredGrid, so apply vtkRemovePolyData
-            # to input to make the output as PolyData type instead
-            ids_to_keep = _output['vtkOriginalCellIds'] if has_cells else None
-            _output = self._remove_cells(ids_to_keep, invert=True)
-        if has_cells:
-            _output.point_data.remove('vtkOriginalPointIds')
-            _output.cell_data.remove('vtkOriginalCellIds')
-        return _output
+        # Extract cell or point ids
+        if association == FieldAssociation.CELL:
+            output = self.extract_cells(
+                id_mask,
+                progress_bar=progress_bar,
+            )
+        else:
+            output = self.extract_points(
+                id_mask,
+                adjacent_cells=adjacent_cells,
+                include_cells=include_cells,
+                progress_bar=progress_bar,
+            )
+        if not keep_original_ids:
+            (
+                output.cell_data.remove(orig_cell_ids)
+                if (orig_cell_ids := 'vtkOriginalCellIds') in output.cell_data.keys()
+                else None
+            )
+            (
+                output.point_data.remove(orig_cell_ids)
+                if (orig_cell_ids := 'vtkOriginalPointIds') in output.point_data.keys()
+                else None
+            )
+        return output
 
     def extract_surface(
         self,
