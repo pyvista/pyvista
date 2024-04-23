@@ -48,7 +48,7 @@ from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
 
-if TYPE_CHECKING:
+if TYPE_CHECKING: # pragma: no cover
     from pyvista.core._typing_core import Number, VectorLike
 
     from ._typing import ColorLike

@@ -18,7 +18,7 @@ from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
 from .utilities.arrays import convert_array, raise_has_duplicates
 from .utilities.misc import abstract_class, assert_empty_kwargs
 
-if TYPE_CHECKING:
+if TYPE_CHECKING: # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 

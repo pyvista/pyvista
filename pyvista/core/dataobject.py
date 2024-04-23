@@ -20,7 +20,7 @@ from .utilities.fileio import read, set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:
+if TYPE_CHECKING: # pragma: no cover
     from ._typing_core import NumpyArray
 
 # vector array names

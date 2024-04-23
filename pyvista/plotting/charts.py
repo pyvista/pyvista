@@ -19,7 +19,7 @@ from pyvista import vtk_version_info
 from . import _vtk
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
 
-if TYPE_CHECKING:
+if TYPE_CHECKING: # pragma: no cover
     from ._typing import Chart
 
 
