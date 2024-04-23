@@ -10,7 +10,7 @@ import numpy as np
 from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation, convert_array
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import ArrayLike, NumpyArray
 
 

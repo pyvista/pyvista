@@ -85,7 +85,7 @@ from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]

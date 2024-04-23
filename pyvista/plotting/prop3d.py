@@ -10,7 +10,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_a
 
 from . import _vtk
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 
 

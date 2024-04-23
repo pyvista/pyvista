@@ -14,7 +14,7 @@ from . import _vtk
 from .colors import Color, get_cmap_safe
 from .tools import opacity_transfer_function
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}

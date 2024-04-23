@@ -15,7 +15,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError, MissingDataError
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
 
 

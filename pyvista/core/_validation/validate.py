@@ -37,7 +37,7 @@ from pyvista.core._validation import (
 from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
 
-if TYPE_CHECKING: # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._array_like import NumpyArray
 
 
