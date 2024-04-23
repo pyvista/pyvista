@@ -2336,8 +2336,12 @@ class PolyDataFilters(DataSetFilters):
             )
 
             origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
-            origin_to_centre_lengths = np.linalg.norm(origin_to_centre_vectors, axis=-1, keepdims=True)
-            second_points = origins_retry + unit_directions * (origin_to_centre_lengths + self.length)
+            origin_to_centre_lengths = np.linalg.norm(
+                origin_to_centre_vectors, axis=-1, keepdims=True,
+            )
+            second_points = origins_retry + unit_directions * (
+                origin_to_centre_lengths + self.length
+            )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
