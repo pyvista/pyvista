@@ -1,12 +1,13 @@
 """Module dedicated to widgets."""
 
+from __future__ import annotations
+
 import pathlib
-from typing import Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -24,6 +25,9 @@ from .utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
 
 
 def _parse_interaction_event(interaction_event):

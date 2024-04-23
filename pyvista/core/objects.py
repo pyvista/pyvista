@@ -4,6 +4,8 @@ The data objects does not have any sort of spatial reference.
 
 """
 
+from __future__ import annotations
+
 from typing import Optional, Tuple
 
 import numpy as np

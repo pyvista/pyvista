@@ -1,5 +1,7 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
 from functools import wraps
@@ -7,7 +9,7 @@ import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 import warnings
 
 import numpy as np
@@ -15,7 +17,6 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import ArrayLike, BoundsLike, CellArrayLike, MatrixLike, NumpyArray, VectorLike
 from .cell import (
     CellArray,
     _get_connectivity_array,
@@ -38,6 +39,16 @@ from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import (
+        ArrayLike,
+        BoundsLike,
+        CellArrayLike,
+        MatrixLike,
+        NumpyArray,
+        VectorLike,
+    )
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -104,7 +115,7 @@ class _PointSet(DataSet):
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         inplace=False,
-    ) -> '_PointSet':
+    ) -> _PointSet:
         """Remove cells.
 
         Parameters
@@ -146,7 +157,7 @@ class _PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> '_PointSet':
+    def points_to_double(self) -> _PointSet:
         """Convert the points datatype to double precision.
 
         Returns
@@ -1482,7 +1493,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
         If the point data already contains an array named ``'Normals'``, this
@@ -1517,7 +1528,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         If the cell data already contains an array named ``'Normals'``, this
@@ -1551,7 +1562,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return normals
 
     @property
-    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -2775,7 +2786,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         self.SetPoints(points)
         self.SetCells(CellArray(cells))
 
-    def cast_to_unstructured_grid(self) -> 'UnstructuredGrid':
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast to an unstructured grid.
 
         Returns
@@ -2876,7 +2887,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -2919,7 +2930,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid.hide_cells(ind, inplace=True)
         return grid
 
-    def show_cells(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3255,7 +3266,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             indices.update(rel_func(i))
         return sorted(indices)
 
-    def compute_connectivity(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with
