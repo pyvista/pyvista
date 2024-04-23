@@ -352,9 +352,17 @@ def test_multi_ray_trace(sphere):
         return_value=[np.array([])] * 3,
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
-        assert len(points) == 4
-        assert len(ind_r) == 4
-        assert len(ind_t) == 4
+        known_points = np.array(
+            [[0.25, 0, 0.42424145],
+             [0.25, 0, -0.42424145],
+             [0, 0, 0.5],
+             [0, 0, -0.5]]
+        )
+        known_ind_r = np.array([2, 2, 3, 3])
+        known_ind_t = np.array([20, 159, 0, 19])
+        np.testing.assert_allclose(points, known_points)
+        np.testing.assert_allclose(ind_r, known_ind_r)
+        np.testing.assert_allclose(ind_t, known_ind_t)
 
     # check non-triangulated
     mesh = pv.Cylinder()
