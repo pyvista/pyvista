@@ -1,10 +1,12 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
+from __future__ import annotations
+
 from functools import wraps
 import inspect
 import itertools
 import re
-from typing import ClassVar, Dict, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Sequence, Type, Union
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -15,8 +17,10 @@ import pyvista
 from pyvista import vtk_version_info
 
 from . import _vtk
-from ._typing import Chart
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
+
+if TYPE_CHECKING:
+    from ._typing import Chart
 
 
 # region Some metaclass wrapping magic

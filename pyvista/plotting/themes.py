@@ -30,23 +30,28 @@ pyvista.
 
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from itertools import chain
 import json
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import warnings
 
 import pyvista  # noqa: TCH001
-from pyvista.core._typing_core import Number, VectorLike
 from pyvista.core.utilities.misc import _check_range
 
-from ._typing import ColorLike
 from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import Number, VectorLike
+
+    from ._typing import ColorLike
 
 
 def _set_plot_theme_from_env() -> None:
@@ -2048,7 +2053,7 @@ class Theme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: 'str'):  # numpydoc ignore=GL08
+    def jupyter_backend(self, backend: str):  # numpydoc ignore=GL08
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
@@ -2885,14 +2890,14 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
         self,
-        value: Callable[['pyvista.Plotter'], None],
+        value: Callable[[pyvista.Plotter], None],
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
@@ -2991,7 +2996,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme: Union[str, 'Theme']) -> None:
+    def load_theme(self, theme: Union[str, Theme]) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters

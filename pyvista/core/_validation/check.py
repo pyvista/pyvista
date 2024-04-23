@@ -10,6 +10,8 @@ A ``check`` function typically:
 
 """
 
+from __future__ import annotations
+
 from collections.abc import Iterable, Sequence
 from numbers import Number
 from typing import Tuple, Union, get_args, get_origin

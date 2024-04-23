@@ -1,12 +1,13 @@
 """An internal module for wrapping the use of mappers."""
 
+from __future__ import annotations
+
 import sys
-from typing import Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Optional, Tuple, Union, cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
     convert_array,
@@ -21,6 +22,9 @@ from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
 from .utilities.algorithms import set_algorithm_input
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import BoundsLike
 
 
 @abstract_class
@@ -58,7 +62,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         """
         return self.GetBounds()
 
-    def copy(self) -> '_BaseMapper':
+    def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
 
         Returns
@@ -118,7 +122,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetScalarRange(*clim)
 
     @property
-    def lookup_table(self) -> 'pyvista.LookupTable':  # numpydoc ignore=RT01
+    def lookup_table(self) -> pyvista.LookupTable:  # numpydoc ignore=RT01
         """Return or set the lookup table.
 
         Examples
@@ -389,8 +393,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     def __init__(
         self,
-        dataset: Optional['pyvista.DataSet'] = None,
-        theme: Optional['pyvista.themes.Theme'] = None,
+        dataset: Optional[pyvista.DataSet] = None,
+        theme: Optional[pyvista.themes.Theme] = None,
     ):
         """Initialize this class."""
         super().__init__(theme=theme)
@@ -398,14 +402,14 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pyvista.core.dataset.DataSet']:  # numpydoc ignore=RT01
+    def dataset(self) -> Optional[pyvista.core.dataset.DataSet]:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))
 
     @dataset.setter
     def dataset(
         self,
-        obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
+        obj: Union[pyvista.core.dataset.DataSet, _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
@@ -1043,7 +1047,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @dataset.setter
     def dataset(
         self,
-        obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
+        obj: Union[pyvista.core.dataset.DataSet, _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 

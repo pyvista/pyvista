@@ -4,6 +4,8 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 
+from __future__ import annotations
+
 import collections.abc
 from itertools import zip_longest
 import pathlib
@@ -379,7 +381,7 @@ class MultiBlock(
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -747,7 +749,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> 'MultiBlock':
+    def __iter__(self) -> MultiBlock:
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self

@@ -1,14 +1,15 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 
+from __future__ import annotations
+
 from functools import wraps
 import pathlib
-from typing import ClassVar, Dict, List, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Type, Union
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -16,6 +17,9 @@ from .errors import PyVistaDeprecationWarning
 from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
 from .utilities.arrays import convert_array, raise_has_duplicates
 from .utilities.misc import abstract_class, assert_empty_kwargs
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -439,7 +443,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             "defined and thus cannot be set.",
         )
 
-    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
+    def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
         """Cast this rectilinear grid to a structured grid.
 
         Returns
@@ -837,7 +841,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
 
-    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
+    def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
         """Cast this uniform grid to a structured grid.
 
         Returns
@@ -851,7 +855,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_rectilinear_grid(self) -> 'RectilinearGrid':
+    def cast_to_rectilinear_grid(self) -> RectilinearGrid:
         """Cast this uniform grid to a rectilinear grid.
 
         Returns

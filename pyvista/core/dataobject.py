@@ -1,23 +1,27 @@
 """Attributes common to PolyData and Grid Objects."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
 from collections import UserDict
 import collections.abc
 from pathlib import Path
-from typing import Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation, _JSONValueType, _SerializedDictArray
 from .utilities.fileio import read, set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from ._typing_core import NumpyArray
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
