@@ -19,7 +19,7 @@ import vtkmodules.vtkRenderingOpenGL2  # noqa:F401
 
 
 def main():
-    InputFilename, iso_value = get_program_parameters()
+    InputFilename, iso_value = "embryo.slc", 72.0
 
     colors = vtkNamedColors()
 
