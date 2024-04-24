@@ -2640,11 +2640,10 @@ class DataSetFilters:
             return np.unique(ids)
 
         def _post_process_extract_values(before_extraction, extracted):
-            # Cast input to PolyData if the input type is PolyData.
+            # Output is UnstructuredGrid, so apply vtkRemovePolyData
+            # to input to cast the output as PolyData type instead
             has_cells = extracted.n_cells != 0
             if isinstance(before_extraction, pyvista.PolyData):
-                # Output is UnstructuredGrid, so apply vtkRemovePolyData
-                # to input to make the output as PolyData type instead
                 all_ids = set(range(before_extraction.n_cells))
 
                 ids_to_keep = set()
@@ -2712,7 +2711,7 @@ class DataSetFilters:
                 # can sometimes fail for some datasets/scalar values.
                 # So, we filter scalar values beforehand
                 if scalar_range is not None:
-                    # Use extract_points to ensure that cells with at least one
+                    # Use extract_values to ensure that cells with at least one
                     # point within the range are kept (this is consistent
                     # with how the filter operates for other modes)
                     extracted = DataSetFilters.extract_values(
@@ -5232,6 +5231,8 @@ class DataSetFilters:
         By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
         and ``'vtkOriginalCellIds'``. These arrays can be used to link the filtered
         points or cells directly to the input.
+
+        .. versionadded:: 0.44
 
         Parameters
         ----------
