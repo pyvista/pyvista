@@ -2314,6 +2314,32 @@ def test_extract_values_open_intervals(grid4x4):
     assert extracted.n_cells == 9
 
 
+@pytest.fixture()
+def labeled_data():
+    sphere = pv.Sphere()
+    sphere.points *= 0.5  # decrease volume
+    box = pv.Box()
+    labeled = (sphere + box).extract_geometry().connectivity()
+    assert isinstance(labeled, pv.PolyData)
+    assert labeled.array_names == ['RegionId', 'RegionId']
+    assert box.volume > 0
+    assert sphere.volume > 0
+    return sphere, box, labeled
+
+
+def test_extract_values_split(labeled_data):
+    sphere, box, labeled = labeled_data
+    multiblock = labeled.extract_values()
+    assert len(multiblock) == 2
+    assert isinstance(multiblock[0], pv.UnstructuredGrid)
+    assert isinstance(multiblock[1], pv.UnstructuredGrid)
+
+    # Convert to polydata to test volume
+    multiblock = multiblock.as_polydata_blocks()
+    assert np.array_equal(multiblock[0].volume, sphere.volume)
+    assert np.array_equal(multiblock[1].volume, box.volume)
+
+
 def test_extract_values_keep_original_ids(grid4x4):
     extracted = grid4x4.extract_values([grid4x4.get_data_range()])
     assert extracted.point_data.keys() == ['labels', 'vtkOriginalPointIds']

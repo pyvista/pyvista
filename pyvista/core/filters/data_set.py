@@ -5192,7 +5192,7 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: Iterable[Union[float, Sequence[float]]],
+        values: Optional[Iterable[Union[float, Sequence[float]]]] = None,
         *,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -5200,6 +5200,7 @@ class DataSetFilters:
         adjacent_cells: bool = True,
         include_cells: bool = True,
         keep_original_ids: bool = True,
+        split: bool = False,
         progress_bar: bool = False,
     ):
         """Return a subset of the mesh based on the value(s) of point or cell data.
@@ -5236,17 +5237,22 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : iterable[float | sequence[float, float]]
+        values : iterable[float | sequence[float, float]], optional
             Iterable of point values to be extracted. Each item of the iterable may be
             a single number or a sequence of two numbers defining a range of values
             in the form``[lower, upper]``. Multiple single-number entries and/or
-            multiple ranges may be specified.
+            multiple ranges may be specified. If no values are specified, each unique
+            value in the data is extracted independently and returned as a
+            :class:`~pyvista.MultiBlock` dataset.
 
             .. note::
                 Use ``+/-`` infinity when specifying range values for open
-                intervals, e.g. ``[0, float('inf')]`` to extract all values
-                greater than or equal to zero, or ``[float('-inf'), 0]`` to
-                extract all values less than or equal to zero.
+                intervals, e.g.:
+
+                -   ``[0, float('inf')]`` to extract all values greater than
+                    or equal to zero
+                 -  ``[float('-inf'), 0]`` to extract all values less than
+                    or equal to zero.
 
         scalars : str, optional
             Name of scalars to extract points with. Defaults to currently
@@ -5279,17 +5285,23 @@ class DataSetFilters:
             are included with the output. Otherwise, these arrays are cleared
             from the output.
 
+        split : bool, default: False
+            If ``True``, each item in the ``values`` input is extracted
+            independently and a :class:`~pyvista.MultiBlock` is returned
+            with each extraction stored as a separate mesh.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         See Also
         --------
-        extract_points, extract_cells, threshold, connectivity
+        extract_points, extract_cells, split_bodies, threshold, connectivity
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Subselected grid.
+        pyvista.UnstructuredGrid or pyvista.MultiBlock
+            Extracted mesh or a composite of extracted meshes depending on
+            ``values`` and ``split``.
 
         Examples
         --------
@@ -5320,7 +5332,7 @@ class DataSetFilters:
         >>> lower, upper = mesh.get_data_range()
         >>> step = 3
         >>> extracted = mesh.extract_values(
-        ...     range(lower, upper, 3)  # values 0, 3, 6, ...
+        ...     range(lower, upper, step)  # values 0, 3, 6, ...
         ... )
 
         Plot result and show an outline of the input for context.
@@ -5329,8 +5341,36 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(extracted)
         >>> _ = pl.add_mesh(mesh.extract_all_edges())
         >>> pl.show()
+
+        Extract different parts of the mesh and split the result.
+
+        >>> extracted = mesh.extract_values(
+        ...     [[0, 10], 19, [25, 40]], split=True
+        ... )
+        >>> extracted.plot(multi_colors=True)
+
         """
+        # Get the scalar array to use for extraction
+        try:
+            if scalars is None:
+                set_default_active_scalars(self)  # type: ignore[arg-type]
+                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            array = get_array(self, scalars, preference=preference, err=True)
+        except MissingDataError:
+            raise ValueError(
+                'No point data or cell data found. Scalar data is required to use this filter.',
+            )
+        except KeyError:
+            raise ValueError(
+                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
+            )
+        array = cast(np.ndarray, array)  # type: ignore[type-arg]
+        association = get_array_association(self, scalars, preference=preference)
+
         # Validate input values
+        if values is None:
+            values = np.unique(array).tolist()
+            split = True
         if not isinstance(values, collections.abc.Iterable):
             raise TypeError(f'Values must be iterable, got {type(values)}.')
         values = list(values)
@@ -5348,22 +5388,23 @@ class DataSetFilters:
                 f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
             )
 
-        # Get the scalar array to use for extraction
-        try:
-            if scalars is None:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            array = get_array(self, scalars, preference=preference, err=True)
-        except MissingDataError:
-            raise ValueError(
-                'No point data or cell data found. Scalar data is required to use this filter.',
+        if split:
+            return pyvista.MultiBlock(
+                [
+                    self.extract_values(
+                        [val],
+                        scalars=scalars,
+                        preference=preference,
+                        invert=invert,
+                        adjacent_cells=adjacent_cells,
+                        include_cells=include_cells,
+                        keep_original_ids=keep_original_ids,
+                        split=False,
+                        progress_bar=progress_bar,
+                    )
+                    for val in values
+                ],
             )
-        except KeyError:
-            raise ValueError(
-                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
-            )
-        array = cast(np.ndarray, array)  # type: ignore[type-arg]
-        association = get_array_association(self, scalars, preference=preference)
 
         # Determine which ids to keep
         id_mask = np.zeros_like(array, dtype=np.bool_)
