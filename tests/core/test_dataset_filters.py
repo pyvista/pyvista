@@ -2129,14 +2129,12 @@ def extracted_with_adjacent_False(grid4x4):
     """Return expected output for adjacent_cells=False and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
     expected_cell_ids = [0]
-    # expected_point_ids = [0, 1, 4, 5]
-    # expected_verts = grid4x4.points[expected_point_ids, :]
-    # expected_faces = [4, 0, 1, 3, 2]
-    expected_surf = pv.PolyData()
-    # expected_surf = pv.PolyData(expected_verts, expected_faces)
-    # expected_surf.cast_to_unstructured_grid()
-    # expected_surf.point_data['labels'] = expected_point_ids
-    # expected_surf.cell_data['labels'] = expected_cell_ids
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 3, 2]
+    expected_surf = pv.UnstructuredGrid(expected_faces, [pv.CellType.QUAD], expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
 
 
@@ -2148,7 +2146,7 @@ def extracted_with_adjacent_True(grid4x4):
     expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
-    expected_surf = pv.PolyData(expected_verts, expected_faces).cast_to_unstructured_grid()
+    expected_surf = pv.UnstructuredGrid(expected_faces, [pv.CellType.QUAD], expected_verts)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2162,7 +2160,7 @@ def extracted_with_include_cells_False(grid4x4):
     expected_point_ids = [0, 1, 4, 5]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
-    expected_surf = pv.PolyData(expected_verts, expected_faces).cast_to_unstructured_grid()
+    expected_surf = pv.UnstructuredGrid(expected_faces, [pv.CellType.QUAD], expected_verts)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2196,17 +2194,17 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
 def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
     # extract sub-surface without adjacent cells
-    # sub_surf = dataset_filter(
-    #     input_surf,
-    #     np.array(input_point_ids),
-    #     adjacent_cells=False,
-    #     progress_bar=True,
-    # )
-    #
-    # assert sub_surf.n_points == 4
-    # assert np.array_equal(sub_surf.points, expected_surf.points)
-    # assert sub_surf.n_cells == 1
-    # assert np.array_equal(sub_surf.cells, expected_surf.cells)
+    sub_surf = dataset_filter(
+        input_surf,
+        np.array(input_point_ids),
+        adjacent_cells=False,
+        progress_bar=True,
+    )
+
+    assert sub_surf.n_points == 4
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert sub_surf.n_cells == 1
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
 
 
 @pytest.mark.parametrize(
