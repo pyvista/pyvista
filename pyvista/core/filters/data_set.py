@@ -1202,6 +1202,10 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        See Also
+        --------
+        threshold_percent, :meth:`~pyvista.ImageDataFilters.image_threshold`, extract_values
+
         Returns
         -------
         pyvista.UnstructuredGrid
