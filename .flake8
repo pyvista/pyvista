@@ -23,3 +23,7 @@ ignore =
     BLK100,
     # let black auto-format statements on one line
     E701, E702, E704
+
+per-file-ignores =
+    # Allow whitespace for the color dict in this example
+     examples/99-advanced/anatomical-groups.py: E201, E241
