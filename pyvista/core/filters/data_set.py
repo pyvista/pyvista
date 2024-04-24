@@ -2565,7 +2565,7 @@ class DataSetFilters:
 
         See Also
         --------
-            extract_largest, split_bodies, threshold, extract_values
+        extract_largest, split_bodies, threshold, extract_values
 
         Examples
         --------
@@ -2918,6 +2918,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_values, partition, connectivity
 
         Returns
         -------
@@ -5295,7 +5299,7 @@ class DataSetFilters:
 
         See Also
         --------
-        extract_points, extract_cells, split_bodies, threshold, connectivity
+        extract_points, extract_cells, split_bodies, threshold, partition
 
         Returns
         -------
@@ -6516,6 +6520,10 @@ class DataSetFilters:
 
         as_composite : bool, default: False
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
+
+        See Also
+        --------
+        split_bodies, extract_values
 
         Returns
         -------
