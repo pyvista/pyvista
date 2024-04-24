@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import collections.abc
 import contextlib
-from typing import TYPE_CHECKING, Iterable, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union, cast
 import warnings
 
 import matplotlib.pyplot as plt
@@ -5205,7 +5205,7 @@ class DataSetFilters:
     ):
         """Return a subset of the mesh based on the value(s) of point or cell data.
 
-        Points and cells may be extracted using on a single value, multiple values, a
+        Points and cells may be extracted with a single value, multiple values, a
         range of values, or any mix of values and ranges. This enables threshold-like
         filtering of data in a discontinuous manner to extract a single label or groups
         of labels from categorical data, or to extract multiple regions of continuous
@@ -5240,6 +5240,12 @@ class DataSetFilters:
             a single number or a sequence of two numbers defining a range of values
             in the form``[lower, upper]``. Multiple single-number entries and/or
             multiple ranges may be specified.
+
+            .. note::
+                Use ``+/-`` infinity when specifying range values for open
+                intervals, e.g. ``[0, float('inf')]`` to extract all values
+                greater than or equal to zero, or ``[float('-inf'), 0]`` to
+                extract all values less than or equal to zero.
 
         scalars : str, optional
             Name of scalars to extract points with. Defaults to currently
@@ -5291,24 +5297,37 @@ class DataSetFilters:
         the specified value of ``0`` are included.
 
         >>> import pyvista as pv
+        >>> import numpy as np
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
         >>> extracted = mesh.extract_values([0])
         >>> extracted.plot()
 
         Extract two discontinuous ranges of values from a grid's point data.
+        Use ``+/-`` infinity to extract all values of ``100`` or less, and all values
+        of ``600`` or more.
 
         >>> mesh = examples.load_uniform()
-        >>> extracted = mesh.extract_values([[0, 100], [600, 700]])
+        >>> extracted = mesh.extract_values(
+        ...     [[-np.inf, 100], [600, np.inf]]
+        ... )
         >>> extracted.plot()
 
         Extract every third cell value from cell data.
 
         >>> mesh = examples.load_hexbeam()
+        >>> lower, upper = mesh.get_data_range()
+        >>> step = 3
         >>> extracted = mesh.extract_values(
-        ...     range(0, 40, 3)  # values 0, 3, 6, ...
+        ...     range(lower, upper, 3)  # values 0, 3, 6, ...
         ... )
-        >>> extracted.plot()
+
+        Plot result and show an outline of the input for context.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(extracted)
+        >>> _ = pl.add_mesh(mesh.extract_all_edges())
+        >>> pl.show()
         """
         # Validate input values
         if not isinstance(values, collections.abc.Iterable):
@@ -5342,7 +5361,7 @@ class DataSetFilters:
             raise ValueError(
                 f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
             )
-
+        array = cast(np.ndarray[Any, Any], array)
         association = get_array_association(self, scalars, preference=preference)
 
         # Determine which ids to keep
@@ -5350,7 +5369,16 @@ class DataSetFilters:
         for val in values:
             if isinstance(val, Sequence):
                 lower, upper = val
-                logic = np.logical_and(array >= lower, array <= upper)  # type: ignore[operator]
+                finite_lower, finite_upper = np.isfinite(lower), np.isfinite(upper)
+                if finite_lower and finite_upper:
+                    logic = np.logical_and(array >= lower, array <= upper)
+                elif not finite_lower and finite_upper:
+                    logic = array <= upper
+                elif finite_lower and not finite_upper:
+                    logic = array >= lower
+                else:
+                    # Extract all
+                    logic = np.ones_like(array, dtype=np.bool_)
             else:
                 logic = array == val
             id_mask[logic] = not invert

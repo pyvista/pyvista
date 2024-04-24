@@ -2300,6 +2300,20 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
         assert np.array_equal(extracted.cells, grid4x4.faces)
 
 
+def test_extract_values_open_intervals(grid4x4):
+    extracted = grid4x4.extract_values([[float('-inf'), float('inf')]])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values([[0, np.inf]])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values([[-np.inf, 16]])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+
 def test_extract_values_keep_original_ids(grid4x4):
     extracted = grid4x4.extract_values([grid4x4.get_data_range()])
     assert extracted.point_data.keys() == ['labels', 'vtkOriginalPointIds']
