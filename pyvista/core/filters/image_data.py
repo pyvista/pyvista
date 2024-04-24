@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import collections.abc
-from typing import Literal, Optional, cast
+from typing import Literal, Optional, Union, cast
 
 import numpy as np
 
@@ -811,9 +811,12 @@ class ImageDataFilters(DataSetFilters):
         smoothing: bool = False,
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
-        smoothing_constraint_distance: float = 1,
-        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
-        output_style: Literal['default', 'boundary'] = 'default',
+        smoothing_constraint_distance: Optional[float] = None,
+        smoothing_constraint_scale: float = 1.0,
+        output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
+        output_style: Optional[Literal['default', 'boundary', 'selected']] = None,
+        select_inputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
+        select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
         scalars: Optional[str] = None,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
@@ -823,6 +826,13 @@ class ImageDataFilters(DataSetFilters):
         boundaries for the selected labels from the label maps.
         Optionally, the boundaries can be smoothened to reduce the staircase
         appearance in case of low resolution input label maps.
+
+        When smoothing is enabled, a local constraint sphere which is placed
+        around each point to restrict its motion. By default, the distance
+        (radius of the sphere) is automatically computed using the image
+        spacing. This distance can optionally be scaled with
+        ``smoothing_constraint_scale``, or alternatively the distance can
+        be manually specified with ``smoothing_constraint_distance``.
 
         This filter requires that the :class:`ImageData` has integer point
         scalars, such as multi-label maps generated from image segmentation.
@@ -838,24 +848,60 @@ class ImageDataFilters(DataSetFilters):
         smoothing : bool, default: False
             Apply smoothing to the meshes.
 
-        smoothing_num_iterations : int, default: 50
+        smoothing_num_iterations : int, default: 16
             Number of smoothing iterations.
 
         smoothing_relaxation_factor : float, default: 0.5
             Relaxation factor of the smoothing.
 
-        smoothing_constraint_distance : float, default: 1
-            Constraint distance of the smoothing.
+        smoothing_constraint_distance : float, default: None
+            Constraint distance of the smoothing. Specify the maximum distance
+            each point is allowed to move (in any direction) during smoothing.
+            Set either this parameter or ``smoothing_constraint_scale`` to
+            control the constraint distance, but not both. By default, the
+            constraint distance is computed dynamically from the image spacing.
 
-        output_mesh_type : str, default: 'quads'
-            Type of the output mesh. Must be either ``'quads'``, or ``'triangles'``.
+        smoothing_constraint_scale : float, default: 1.0
+            Apply a scale factor when the constraint distance is coe. By default, each
+            point is constrained to move by some maximum value during smoothing.
+            constraint distance is computed as
+            sphere which is placed around each point to restrict its motion. By
+            default, it is calculated as ``(norm(spacing) / 2) * scale``, where
+            norm is the ``L2`` norm, ``spacing`` is the image spacing, and scale
+            is the ``smoothing_constraint_scale`` parameter.
 
-        output_style : str, default: 'default'
-            Style of the output mesh. Must be either ``'default'`` or ``'boundary'``.
-            When ``'default'`` is specified, the filter produces a mesh with both
-            interior and exterior polygons. When ``'boundary'`` is selected, only
-            polygons on the border with the background are produced (without interior
-            polygons). Note that style ``'selected'`` is currently not implemented.
+        output_mesh_type : str, default: None
+            Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``.
+            By default, if smoothing is off, the output mesh has quadrilateral cells
+            (quads). However, if smoothing is enabled, then the output mesh type has
+            triangle cells. The mesh type can be forced to be triangles or quads
+            whether smoothing is enabled or not.
+
+            .. note::
+                If smoothing is enabled and the type is ``'quads'``, the resulting
+                quads may not be planar.
+
+        output_style : str, default: None
+            Style of the output mesh. Must be one of:
+
+            - ``'default'``: the filter produces a mesh with both interior and
+              exterior polygons. A surface is generated for all input labels.
+            - ``'boundary'``: only polygons on the border with the background are
+              produced (without interior polygons).
+            - ``'selected'``: the filter produces a surface for the specified labels
+              only.
+
+            By default, the ``'default'`` style is used.
+
+        select_inputs : int | list[int], default: None
+            Specify a list of label numbers to include as inputs when generating
+            surfaces. Labels that are not selected are treated as though they
+            are background. By default, all inputs are selected.  not included will be
+            parameter will implicitly set ``output_style`` to ``'selected'``.
+
+        select_outputs : int | list[int], default: None
+            Specify a list of label numbers to generate surfaces for. Setting this
+            parameter will implicitly set ``output_style`` to ``'selected'``.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -895,6 +941,7 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         alg = _vtk.vtkSurfaceNets3D()
+        # Validate scalars
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
@@ -906,6 +953,26 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f'Can only process point data, given `scalars` are {field.name.lower()} data.',
                 )
+        temp_scalars_name = '_PYVISTA_TEMP'
+        if select_inputs:
+            # Remove non-selected label ids from the input
+            # We do this by copying the scalars and setting non-selected ids
+            # to the background value to remove them from the input
+            temp_scalars = self.active_scalars.copy()  # type: ignore[attr-defined]
+            unique_labels = np.unique(temp_scalars)
+            background = alg.GetBackgroundLabel()
+            for label in unique_labels:
+                select_inputs = (
+                    [select_inputs]
+                    if isinstance(select_inputs, (int, np.integer))
+                    else select_inputs
+                )
+                if label not in select_inputs:
+                    temp_scalars[temp_scalars == label] = background
+
+            self.point_data.set_array(temp_scalars, name=temp_scalars_name)  # type: ignore[attr-defined]
+            scalars = temp_scalars_name
+
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -916,7 +983,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         if n_labels is not None:
             alg.GenerateLabels(n_labels, 1, n_labels)
-        if output_mesh_type == 'quads':
+
+        if output_mesh_type is None:
+            alg.SetOutputStyleToDefault()
+        elif output_mesh_type == 'quads':
             alg.SetOutputMeshTypeToQuads()
         elif output_mesh_type == 'triangles':
             alg.SetOutputMeshTypeToTriangles()
@@ -924,19 +994,46 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(
                 f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
             )
-        if output_style == 'default':
+
+        if select_outputs:
+            if output_style not in (None, 'selected'):
+                raise ValueError(
+                    f'output_style must be "selected" when select_outputs is set.\nGot {output_style} instead.',
+                )
+            output_style = 'selected'
+
+        if output_style in (None, 'default'):
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
         elif output_style == 'selected':
-            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+            if select_outputs is None:
+                raise ValueError(
+                    'Param select_outputs must be specified when output_style is "selected"',
+                )
+            alg.SetOutputStyleToSelected()
+            alg.InitializeSelectedLabelsList()
+            label_nums = [select_outputs] if isinstance(select_outputs, int) else select_outputs
+            [alg.AddSelectedLabel(float(num)) for num in label_nums]
         else:
-            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
+            raise ValueError(
+                f'Invalid output style "{output_style}", use "default" or "boundary" or a sequence of label numbers.',
+            )
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
             alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
-            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
+            # Auto-constraints are On by default which only allows you to scale
+            # distance (with SetConstraintScale) but not set its value directly.
+            # Here, we turn this off so that we can both set its value and/or scale it
+            alg.AutomaticSmoothingConstraintsOff()
+            # If distance not specified, emulate the auto-constraint calc from vtkSurfaceNets3D
+            distance = (
+                smoothing_constraint_distance
+                if smoothing_constraint_distance
+                else np.linalg.norm(self.spacing)  # type: ignore[attr-defined]
+            )
+            alg.GetSmoother().SetConstraintDistance(distance * smoothing_constraint_scale)
         else:
             alg.SmoothingOff()
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
@@ -945,4 +1042,10 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        output = cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        (
+            output.point_data.remove(temp_scalars_name)
+            if temp_scalars_name in output.point_data.keys()
+            else None
+        )
+        return output
