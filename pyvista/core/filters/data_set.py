@@ -5255,7 +5255,7 @@ class DataSetFilters:
 
                 -   ``[0, float('inf')]`` to extract all values greater than
                     or equal to zero
-                 -  ``[float('-inf'), 0]`` to extract all values less than
+                -   ``[float('-inf'), 0]`` to extract all values less than
                     or equal to zero.
 
         scalars : str, optional
