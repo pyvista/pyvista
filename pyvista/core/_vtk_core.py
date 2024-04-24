@@ -12,6 +12,7 @@ from collections import namedtuple
 
 # flake8: noqa: F401
 import contextlib
+from typing import NamedTuple
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
@@ -439,17 +440,23 @@ with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 
 
+class VersionInfo(NamedTuple):
+    """Version information as a named tuple."""
+
+    major: int
+    minor: int
+    micro: int
+
+
 def VTKVersionInfo():
     """Return the vtk version as a namedtuple.
 
     Returns
     -------
-    collections.namedtuple
+    VersionInfo
         Version information as a named tuple.
 
     """
-    version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
-
     try:
         ver = vtkVersion()
         major = ver.GetVTKMajorVersion()
@@ -459,7 +466,7 @@ def VTKVersionInfo():
         warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
         major, minor, micro = (4, 0, 0)
 
-    return version_info(major, minor, micro)
+    return VersionInfo(major, minor, micro)
 
 
 vtk_version_info = VTKVersionInfo()

@@ -1,5 +1,7 @@
 """This module contains the Property class."""
 
+from __future__ import annotations
+
 from typing import Union
 
 import pyvista
@@ -1230,7 +1232,7 @@ class Property(_vtk.vtkProperty):
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
-    def copy(self) -> 'Property':
+    def copy(self) -> Property:
         """Create a deep copy of this property.
 
         Returns

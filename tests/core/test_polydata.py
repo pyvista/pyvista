@@ -3,6 +3,7 @@ import pathlib
 from pathlib import Path
 import re
 from typing import Dict, List
+from unittest.mock import patch
 import warnings
 
 import numpy as np
@@ -334,15 +335,30 @@ def test_ray_trace_origin():
 
 
 def test_multi_ray_trace(sphere):
-    pytest.importorskip('rtree')
-    pytest.importorskip('pyembree')
-    pytest.importorskip('trimesh')
-    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
+    trimesh = pytest.importorskip('trimesh')
+    if not trimesh.ray.has_embree:
+        pytest.skip("Requires Embree")
+    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
-    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
     assert np.any(points)
     assert np.any(ind_r)
     assert np.any(ind_t)
+
+    # patch embree to test retry
+    with patch.object(
+        trimesh.ray.ray_pyembree.RayMeshIntersector,
+        'intersects_location',
+        return_value=[np.array([])] * 3,
+    ):
+        points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+        known_points = np.array(
+            [[0.25, 0, 0.42424145], [0.25, 0, -0.42424145], [0, 0, 0.5], [0, 0, -0.5]],
+        )
+        known_ind_r = np.array([2, 2, 3, 3])
+        np.testing.assert_allclose(points, known_points)
+        np.testing.assert_allclose(ind_r, known_ind_r)
+        assert len(ind_t) == 4
 
     # check non-triangulated
     mesh = pv.Cylinder()

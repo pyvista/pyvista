@@ -1,5 +1,7 @@
 """Contains the PartitionedDataSet class."""
 
+from __future__ import annotations
+
 import collections.abc
 from typing import Iterable, Optional, Union, overload
 
@@ -62,7 +64,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'PartitionedDataSet':  # noqa: D105
+    def __getitem__(self, index: slice) -> PartitionedDataSet:  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -104,7 +106,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         """Remove a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
-    def __iter__(self) -> 'PartitionedDataSet':
+    def __iter__(self) -> PartitionedDataSet:
         """Return the iterator across all partitions."""
         self._iter_n = 0
         return self

@@ -205,6 +205,11 @@ articles = dict(
         link="https://github.com/AngelFP/VisualPIC",
         image="visualpic.png",
     ),
+    pyelastica=Example(
+        title="PyElastica",
+        link="https://github.com/GazzolaLab/PyElastica",
+        image="pyelastica.gif",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
