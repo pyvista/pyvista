@@ -1026,3 +1026,13 @@ def test_fluentcffreader():
     assert blocks.n_blocks == 1
     assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_gaussian_cubes_reader():
+    filename = examples.download_m4_total_density(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GaussianCubeReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

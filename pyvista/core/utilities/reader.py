@@ -2553,12 +2553,31 @@ class FLUENTCFFReader(BaseReader):
     _vtk_class_name = "vtkFLUENTCFFReader"
 
 
+class GaussianCubeReader(BaseReader):
+    """GaussianCubeReader for .cube files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_m4_total_density(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkGaussianCubeReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.cube': GaussianCubeReader,
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,

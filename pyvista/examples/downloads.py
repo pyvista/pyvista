@@ -7673,3 +7673,36 @@ def _dataset_room_cff_files_func():
 
 
 _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
+
+
+def download_m4_total_density(load=True):  # pragma: no cover
+    """Download a total density dataset of the chemistry.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> dataset = examples.download_m4_total_density()
+    >>> dataset.plot()
+
+    .. seealso::
+
+        :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_m4_total_density, load=load)
+
+
+_dataset_m4_total_density = _SingleFileDownloadableDatasetLoader('m4_TotalDensity.cube')
