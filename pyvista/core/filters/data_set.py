@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import collections.abc
 import contextlib
-from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, Iterable, Literal, Optional, Sequence, Union, cast
 import warnings
 
 import matplotlib.pyplot as plt
@@ -5361,7 +5361,7 @@ class DataSetFilters:
             raise ValueError(
                 f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
             )
-        array = cast(np.ndarray[Any, Any], array)
+        array = cast(np.ndarray, array)  # type: ignore[type-arg]
         association = get_array_association(self, scalars, preference=preference)
 
         # Determine which ids to keep
