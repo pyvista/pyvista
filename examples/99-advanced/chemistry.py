@@ -2,7 +2,6 @@
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
-from vtkmodules.vtkIOChemistry import vtkGaussianCubeReader
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 import vtkmodules.vtkInteractionStyle
 from vtkmodules.vtkRenderingCore import (
@@ -42,26 +41,25 @@ camera.ComputeViewPlaneNormal()
 ren1.SetActiveCamera(camera)
 # Create the reader for the data
 # vtkStructuredPointsReader reader
-reader = vtkGaussianCubeReader()
 filename = examples.download_m4_total_density(load=False)
-reader.SetFileName(filename)
-reader.SetHBScale(1.1)
-reader.SetBScale(10)
-reader.Update()
+reader = pv.get_reader(filename)
+reader.reader.SetHBScale(1.1)
+reader.reader.SetBScale(10)
+reader.reader.Update()
 
-range_ = reader.GetGridOutput().GetPointData().GetScalars().GetRange()
+range_ = reader.reader.GetGridOutput().GetPointData().GetScalars().GetRange()
 
 min_ = range_[0]
 max_ = range_[1]
 
 readerSS = vtkImageShiftScale()
-readerSS.SetInputData(reader.GetGridOutput())
+readerSS.SetInputData(reader.reader.GetGridOutput())
 readerSS.SetShift(min_ * -1)
 readerSS.SetScale(255 / (max_ - min_))
 readerSS.SetOutputScalarTypeToUnsignedChar()
 
 bounds = vtkOutlineFilter()
-bounds.SetInputData(reader.GetGridOutput())
+bounds.SetInputData(reader.reader.GetGridOutput())
 
 boundsMapper = vtkPolyDataMapper()
 boundsMapper.SetInputConnection(bounds.GetOutputPort())
@@ -71,7 +69,7 @@ boundsActor.SetMapper(boundsMapper)
 boundsActor.GetProperty().SetColor(0, 0, 0)
 
 contour = vtkContourFilter()
-contour.SetInputData(reader.GetGridOutput())
+contour.SetInputData(reader.reader.GetGridOutput())
 contour.GenerateValues(5, 0, 0.05)
 
 contourMapper = vtkPolyDataMapper()
@@ -128,7 +126,7 @@ sphere.SetStartPhi(0)
 sphere.SetEndPhi(180)
 
 glyph = vtkGlyph3D()
-glyph.SetInputConnection(reader.GetOutputPort())
+glyph.SetInputConnection(reader.reader.GetOutputPort())
 glyph.SetOrient(1)
 glyph.SetColorMode(1)
 # glyph.ScalingOn()
@@ -154,7 +152,7 @@ atoms.GetProperty().SetSpecularColor(1, 1, 1)
 atoms.GetProperty().SetColor(1, 1, 1)
 
 tube = vtkTubeFilter()
-tube.SetInputConnection(reader.GetOutputPort())
+tube.SetInputConnection(reader.reader.GetOutputPort())
 tube.SetNumberOfSides(16)
 tube.SetCapping(0)
 tube.SetRadius(0.2)
