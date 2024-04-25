@@ -346,6 +346,7 @@ extend-select = [
     "B010",
     "C4",
     "COM",
+    "DTZ",
     "F",
     "FA",
     "FLY",
