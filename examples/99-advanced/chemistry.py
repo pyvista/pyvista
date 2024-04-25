@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
@@ -81,10 +80,12 @@ contourActor.SetMapper(contourMapper)
 contourActor.GetProperty().SetOpacity(0.5)
 
 # Create transfer mapping scalar value to opacity
-opacityTransferFunction = vtkPiecewiseFunction()
-opacityTransferFunction.AddPoint(0, 0.01)
-opacityTransferFunction.AddPoint(255, 0.35)
-opacityTransferFunction.ClampingOn()
+lut = pv.LookupTable()
+opacity_transfer_funtion = lut.to_opacity_tf()
+opacity_transfer_funtion.RemoveAllPoints()
+opacity_transfer_funtion.AddPoint(0, 0.01)
+opacity_transfer_funtion.AddPoint(255, 0.35)
+opacity_transfer_funtion.ClampingOn()
 
 # Create transfer mapping scalar value to color
 colorTransferFunction = vtkColorTransferFunction()
@@ -95,7 +96,7 @@ colorTransferFunction.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 # The property describes how the data will look
 volumeProperty = vtkVolumeProperty()
 volumeProperty.SetColor(colorTransferFunction)
-volumeProperty.SetScalarOpacity(opacityTransferFunction)
+volumeProperty.SetScalarOpacity(opacity_transfer_funtion)
 volumeProperty.SetInterpolationTypeToLinear()
 
 # The mapper knows how to render the data
