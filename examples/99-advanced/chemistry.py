@@ -5,8 +5,6 @@ from vtkmodules.vtkImagingCore import vtkImageShiftScale
 from vtkmodules.vtkRenderingCore import (
     vtkColorTransferFunction,
     vtkPolyDataMapper,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
     vtkVolume,
     vtkVolumeProperty,
 )
@@ -20,14 +18,6 @@ from pyvista import examples
 
 pl = pv.Plotter()
 ren1 = pl.renderer
-renWin = vtkRenderWindow()
-renWin.SetMultiSamples(0)
-renWin.AddRenderer(ren1)
-
-renWin.SetSize(300, 300)
-
-iren = vtkRenderWindowInteractor()
-iren.SetRenderWindow(renWin)
 
 camera = pv.Camera()
 camera.ParallelProjectionOn()
