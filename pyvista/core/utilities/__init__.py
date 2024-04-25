@@ -173,6 +173,7 @@ from .reader import (
     FacetReader,
     FLUENTCFFReader,
     FluentReader,
+    GaussianCubeReader,
     GIFReader,
     GLTFReader,
     HDFReader,
