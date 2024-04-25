@@ -2,7 +2,6 @@
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
-import vtkmodules.vtkInteractionStyle
 from vtkmodules.vtkRenderingCore import (
     vtkColorTransferFunction,
     vtkPolyDataMapper,
