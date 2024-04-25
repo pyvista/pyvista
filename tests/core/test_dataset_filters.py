@@ -2292,9 +2292,9 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
     values = values[0] if preference == 'point' else values[1]
     extracted = grid4x4.extract_values(values, preference=preference, invert=invert)
     if invert:
-        extracted.n_points == 0
-        extracted.n_cells == 0
-        extracted.n_arrays == 0
+        assert extracted.n_points == 0
+        assert extracted.n_cells == 0
+        assert extracted.n_arrays == 0
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
         assert np.array_equal(extracted.cells, grid4x4.faces)
@@ -2316,9 +2316,8 @@ def test_extract_values_open_intervals(grid4x4):
 
 @pytest.fixture()
 def labeled_data():
-    sphere = pv.Sphere()
-    sphere.points *= 0.5  # decrease volume
-    box = pv.Box()
+    sphere = pv.Sphere(radius = 0.25)
+    box = pv.Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
     labeled = (sphere + box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
