@@ -14,7 +14,6 @@ camera.ParallelProjectionOn()
 camera.SetViewUp(0, 1, 0)
 camera.SetFocalPoint(12, 10.5, 15)
 camera.SetPosition(-70, 15, 34)
-camera.ComputeViewPlaneNormal()
 pl.renderer.SetActiveCamera(camera)
 # Create the reader for the data
 # vtkStructuredPointsReader reader
