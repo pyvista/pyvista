@@ -7673,3 +7673,44 @@ def _dataset_room_cff_files_func():
 
 
 _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
+
+
+def download_headsq(load=True):  # pragma: no cover
+    """Download the headsq dataset.
+
+    The headsq dataset is a 3D MRI scan of a human head.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_headsq()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Headsq Dataset <headsq_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_headsq, load=load)
+
+
+def _dataset_headsq_files_func():
+    return tuple(
+        [_SingleFileDownloadableDatasetLoader('headsq/quarter.nhdr')]
+        + [_DownloadableFile('headsq/quarter.' + str(i)) for i in range(1, 94)],
+    )
+
+
+_dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func)
