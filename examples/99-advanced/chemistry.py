@@ -37,12 +37,12 @@ reader_shift_scale.SetOutputScalarTypeToUnsignedChar()
 bounds = vtkOutlineFilter()
 bounds.SetInputData(reader.reader.GetGridOutput())
 
-boundsMapper = vtkPolyDataMapper()
-boundsMapper.SetInputConnection(bounds.GetOutputPort())
+bounds_mapper = vtkPolyDataMapper()
+bounds_mapper.SetInputConnection(bounds.GetOutputPort())
 
-boundsActor = pv.Actor()
-boundsActor.SetMapper(boundsMapper)
-boundsActor.GetProperty().SetColor(0, 0, 0)
+bounds_actor = pv.Actor()
+bounds_actor.SetMapper(bounds_mapper)
+bounds_actor.GetProperty().SetColor(0, 0, 0)
 
 contour = vtkContourFilter()
 contour.SetInputData(reader.reader.GetGridOutput())
@@ -73,10 +73,10 @@ color_tf.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
 color_tf.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 
 # The property describes how the data will look
-volumeProperty = pv.VolumeProperty()
-volumeProperty.SetColor(color_tf)
-volumeProperty.SetScalarOpacity(opacity_tf)
-volumeProperty.SetInterpolationTypeToLinear()
+volume_property = pv.VolumeProperty()
+volume_property.SetColor(color_tf)
+volume_property.SetScalarOpacity(opacity_tf)
+volume_property.SetInterpolationTypeToLinear()
 
 # The mapper knows how to render the data
 volume_mapper = pv.FixedPointVolumeRayCastMapper()
@@ -86,12 +86,12 @@ volume_mapper.SetInputConnection(reader_shift_scale.GetOutputPort())
 # can be used to position/orient the volume
 volume = pv.Volume()
 volume.SetMapper(volume_mapper)
-volume.SetProperty(volumeProperty)
+volume.SetProperty(volume_property)
 
 pl.renderer.AddVolume(volume)
 
 # pl.renderer AddActor contourActor
-pl.renderer.AddActor(boundsActor)
+pl.renderer.AddActor(bounds_actor)
 
 ######################################################################
 sphere = pv.SphereSource()
