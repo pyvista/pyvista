@@ -8,10 +8,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkVolume,
     vtkVolumeProperty,
 )
-import vtkmodules.vtkRenderingFreeType
-import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkRenderingVolume import vtkFixedPointVolumeRayCastMapper
-import vtkmodules.vtkRenderingVolumeOpenGL2  # noqa: F401
 
 import pyvista as pv
 from pyvista import examples
