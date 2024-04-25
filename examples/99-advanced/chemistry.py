@@ -2,7 +2,6 @@
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
-from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkIOChemistry import vtkGaussianCubeReader
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 import vtkmodules.vtkInteractionStyle
@@ -118,7 +117,7 @@ ren1.AddVolume(volume)
 ren1.AddActor(boundsActor)
 
 ######################################################################
-Sphere = vtkSphereSource()
+Sphere = pv.SphereSource()
 Sphere.SetCenter(0, 0, 0)
 Sphere.SetRadius(1)
 Sphere.SetThetaResolution(16)
