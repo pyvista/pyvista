@@ -5381,7 +5381,7 @@ class DataSetFilters:
         for i, val in enumerate(values):
             if isinstance(val, (int, np.integer, float, np.floating)):
                 continue
-            if (
+            elif (
                 len(seq := list(val)) == 2
                 and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
                 and seq[0] <= seq[1]
