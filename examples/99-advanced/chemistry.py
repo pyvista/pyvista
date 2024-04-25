@@ -36,11 +36,11 @@ range_ = reader.reader.GetGridOutput().GetPointData().GetScalars().GetRange()
 min_ = range_[0]
 max_ = range_[1]
 
-readerSS = vtkImageShiftScale()
-readerSS.SetInputData(reader.reader.GetGridOutput())
-readerSS.SetShift(min_ * -1)
-readerSS.SetScale(255 / (max_ - min_))
-readerSS.SetOutputScalarTypeToUnsignedChar()
+reader_shift_scale = vtkImageShiftScale()
+reader_shift_scale.SetInputData(reader.reader.GetGridOutput())
+reader_shift_scale.SetShift(min_ * -1)
+reader_shift_scale.SetScale(255 / (max_ - min_))
+reader_shift_scale.SetOutputScalarTypeToUnsignedChar()
 
 bounds = vtkOutlineFilter()
 bounds.SetInputData(reader.reader.GetGridOutput())
@@ -87,7 +87,7 @@ volumeProperty.SetInterpolationTypeToLinear()
 
 # The mapper knows how to render the data
 volumeMapper = vtkFixedPointVolumeRayCastMapper()
-volumeMapper.SetInputConnection(readerSS.GetOutputPort())
+volumeMapper.SetInputConnection(reader_shift_scale.GetOutputPort())
 
 # The volume holds the mapper and the property and
 # can be used to position/orient the volume
