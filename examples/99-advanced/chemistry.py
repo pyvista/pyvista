@@ -5,7 +5,6 @@ from vtkmodules.vtkImagingCore import vtkImageShiftScale
 from vtkmodules.vtkRenderingCore import (
     vtkColorTransferFunction,
     vtkPolyDataMapper,
-    vtkVolume,
     vtkVolumeProperty,
 )
 from vtkmodules.vtkRenderingVolume import vtkFixedPointVolumeRayCastMapper
@@ -90,7 +89,7 @@ volumeMapper.SetInputConnection(reader_shift_scale.GetOutputPort())
 
 # The volume holds the mapper and the property and
 # can be used to position/orient the volume
-volume = vtkVolume()
+volume = pv.Volume()
 volume.SetMapper(volumeMapper)
 volume.SetProperty(volumeProperty)
 
