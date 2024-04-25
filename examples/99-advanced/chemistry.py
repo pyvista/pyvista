@@ -2,11 +2,7 @@
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
-from vtkmodules.vtkRenderingCore import (
-    vtkColorTransferFunction,
-    vtkPolyDataMapper,
-    vtkVolumeProperty,
-)
+from vtkmodules.vtkRenderingCore import vtkColorTransferFunction, vtkPolyDataMapper
 
 import pyvista as pv
 from pyvista import examples
@@ -77,7 +73,7 @@ colorTransferFunction.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
 colorTransferFunction.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 
 # The property describes how the data will look
-volumeProperty = vtkVolumeProperty()
+volumeProperty = pv.VolumeProperty()
 volumeProperty.SetColor(colorTransferFunction)
 volumeProperty.SetScalarOpacity(opacity_transfer_funtion)
 volumeProperty.SetInterpolationTypeToLinear()
