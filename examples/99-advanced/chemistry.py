@@ -2,7 +2,6 @@
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
-from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 
 import pyvista as pv
 from pyvista import examples
@@ -37,8 +36,7 @@ reader_shift_scale.SetOutputScalarTypeToUnsignedChar()
 bounds = vtkOutlineFilter()
 bounds.SetInputData(reader.reader.GetGridOutput())
 
-bounds_mapper = vtkPolyDataMapper()
-bounds_mapper.SetInputConnection(bounds.GetOutputPort())
+bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
 
 bounds_actor = pv.Actor()
 bounds_actor.SetMapper(bounds_mapper)
@@ -48,13 +46,12 @@ contour = vtkContourFilter()
 contour.SetInputData(reader.reader.GetGridOutput())
 contour.GenerateValues(5, 0, 0.05)
 
-contourMapper = vtkPolyDataMapper()
-contourMapper.SetInputConnection(contour.GetOutputPort())
-contourMapper.SetScalarRange(0, 0.1)
-contourMapper.GetLookupTable().SetHueRange(0.32, 0)
+contour_mapper = pv.DataSetMapper(contour.GetOutputPort())
+contour_mapper.SetScalarRange(0, 0.1)
+contour_mapper.GetLookupTable().SetHueRange(0.32, 0)
 
 contourActor = pv.Actor()
-contourActor.SetMapper(contourMapper)
+contourActor.SetMapper(contour_mapper)
 contourActor.GetProperty().SetOpacity(0.5)
 
 # Create transfer mapping scalar value to opacity
@@ -113,8 +110,7 @@ glyph.SetScaleMode(2)
 glyph.SetScaleFactor(0.6)
 glyph.SetSourceConnection(sphere.GetOutputPort())
 
-atoms_mapper = vtkPolyDataMapper()
-atoms_mapper.SetInputConnection(glyph.GetOutputPort())
+atoms_mapper = pv.DataSetMapper(glyph.GetOutputPort())
 atoms_mapper.UseLookupTableScalarRangeOff()
 atoms_mapper.SetScalarVisibility(1)
 atoms_mapper.SetScalarModeToDefault()
@@ -138,8 +134,7 @@ tube.SetRadius(0.2)
 tube.SetVaryRadius(0)
 tube.SetRadiusFactor(10)
 
-bonds_mapper = vtkPolyDataMapper()
-bonds_mapper.SetInputConnection(tube.GetOutputPort())
+bonds_mapper = pv.DataSetMapper(tube.GetOutputPort())
 bonds_mapper.UseLookupTableScalarRangeOff()
 bonds_mapper.SetScalarVisibility(1)
 bonds_mapper.SetScalarModeToDefault()
