@@ -1047,8 +1047,13 @@ class LookupTable(_vtk.vtkLookupTable):
             color_tf.AddRGBPoint(ii, *self.map_value(value, False))
         return color_tf
 
-    def to_opacity_tf(self):
+    def to_opacity_tf(self, clamping: bool = True) -> _vtk.vtkPiecewiseFunction:
         """Return the opacity transfer function of this table.
+
+        Parameters
+        ----------
+        clamping : bool, optional
+            When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
 
         Returns
         -------
@@ -1065,6 +1070,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         opacity_tf = _vtk.vtkPiecewiseFunction()
+        opacity_tf.SetClamping(clamping)
         for ii, value in enumerate(self.values[:, 3]):
             opacity_tf.AddPoint(ii, value / self.n_values)
         return opacity_tf
