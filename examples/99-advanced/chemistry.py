@@ -2,7 +2,7 @@
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
-from vtkmodules.vtkRenderingCore import vtkColorTransferFunction, vtkPolyDataMapper
+from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 
 import pyvista as pv
 from pyvista import examples
@@ -59,22 +59,23 @@ contourActor.GetProperty().SetOpacity(0.5)
 
 # Create transfer mapping scalar value to opacity
 lut = pv.LookupTable()
-opacity_transfer_funtion = lut.to_opacity_tf()
-opacity_transfer_funtion.RemoveAllPoints()
-opacity_transfer_funtion.AddPoint(0, 0.01)
-opacity_transfer_funtion.AddPoint(255, 0.35)
-opacity_transfer_funtion.ClampingOn()
+opacity_tf = lut.to_opacity_tf()
+opacity_tf.RemoveAllPoints()
+opacity_tf.AddPoint(0, 0.01)
+opacity_tf.AddPoint(255, 0.35)
+opacity_tf.ClampingOn()
 
 # Create transfer mapping scalar value to color
-colorTransferFunction = vtkColorTransferFunction()
-colorTransferFunction.AddHSVPoint(0.0, 0.66, 1.0, 1.0)
-colorTransferFunction.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
-colorTransferFunction.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
+color_tf = lut.to_color_tf()
+color_tf.RemoveAllPoints()
+color_tf.AddHSVPoint(0.0, 0.66, 1.0, 1.0)
+color_tf.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
+color_tf.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 
 # The property describes how the data will look
 volumeProperty = pv.VolumeProperty()
-volumeProperty.SetColor(colorTransferFunction)
-volumeProperty.SetScalarOpacity(opacity_transfer_funtion)
+volumeProperty.SetColor(color_tf)
+volumeProperty.SetScalarOpacity(opacity_tf)
 volumeProperty.SetInterpolationTypeToLinear()
 
 # The mapper knows how to render the data
