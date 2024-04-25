@@ -180,15 +180,4 @@ ren1.AddActor(atoms)
 ren1.SetBackground(1, 1, 1)
 ren1.ResetCamera()
 
-renWin.Render()
-
-
-def TkCheckAbort(obj=None, event=""):
-    if renWin.GetEventPending():
-        renWin.SetAbortRender(1)
-
-
-renWin.AddObserver("AbortCheckEvent", TkCheckAbort)
-
-iren.Initialize()
-iren.Start()
+pl.show()
