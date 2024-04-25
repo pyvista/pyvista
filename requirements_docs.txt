@@ -29,4 +29,4 @@ sympy==1.12
 trame==3.6.0
 trame-vtk==2.8.6
 trame-vuetify==2.4.3
-trimesh==4.3.0
+trimesh==4.3.1
