@@ -44,7 +44,7 @@ class OfflineViewerDirective(Directive):
         source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
         source_file = Path(source_file).absolute().resolve()
         if not Path(source_file).is_file():
-            logger.warning(f'Source file {source_file} does not exist.')
+            logger.warn(f'Source file {source_file} does not exist.')
             return []
 
         # copy viewer HTML to _static
@@ -67,7 +67,7 @@ class OfflineViewerDirective(Directive):
         elif is_path_relative_to(source_file, source_dir):
             dest_partial_path = Path(source_file.parent).relative_to(source_dir)
         else:
-            logger.warning(
+            logger.warn(
                 f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path',
             )
             return []
@@ -79,7 +79,7 @@ class OfflineViewerDirective(Directive):
             try:
                 shutil.copy(source_file, dest_file)
             except Exception as e:
-                logger.warning(f'Failed to copy file from {source_file} to {dest_file}: {e}')
+                logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
         # Compute the relative path of the current source to the source directory,
         # which is the same as the relative path of the '_static' directory to the
