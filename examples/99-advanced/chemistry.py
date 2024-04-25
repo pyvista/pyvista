@@ -5,7 +5,6 @@ from vtkmodules.vtkImagingCore import vtkImageShiftScale
 from vtkmodules.vtkRenderingCore import (
     vtkColorTransferFunction,
     vtkPolyDataMapper,
-    vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
     vtkVolume,
@@ -19,7 +18,8 @@ import vtkmodules.vtkRenderingVolumeOpenGL2  # noqa: F401
 import pyvista as pv
 from pyvista import examples
 
-ren1 = vtkRenderer()
+pl = pv.Plotter()
+ren1 = pl.renderer
 renWin = vtkRenderWindow()
 renWin.SetMultiSamples(0)
 renWin.AddRenderer(ren1)
