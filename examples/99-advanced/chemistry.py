@@ -7,7 +7,6 @@ from vtkmodules.vtkRenderingCore import (
     vtkPolyDataMapper,
     vtkVolumeProperty,
 )
-from vtkmodules.vtkRenderingVolume import vtkFixedPointVolumeRayCastMapper
 
 import pyvista as pv
 from pyvista import examples
@@ -84,13 +83,13 @@ volumeProperty.SetScalarOpacity(opacity_transfer_funtion)
 volumeProperty.SetInterpolationTypeToLinear()
 
 # The mapper knows how to render the data
-volumeMapper = vtkFixedPointVolumeRayCastMapper()
-volumeMapper.SetInputConnection(reader_shift_scale.GetOutputPort())
+volume_mapper = pv.FixedPointVolumeRayCastMapper()
+volume_mapper.SetInputConnection(reader_shift_scale.GetOutputPort())
 
 # The volume holds the mapper and the property and
 # can be used to position/orient the volume
 volume = pv.Volume()
-volume.SetMapper(volumeMapper)
+volume.SetMapper(volume_mapper)
 volume.SetProperty(volumeProperty)
 
 pl.renderer.AddVolume(volume)
