@@ -7,7 +7,6 @@ from vtkmodules.vtkIOChemistry import vtkGaussianCubeReader
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 import vtkmodules.vtkInteractionStyle
 from vtkmodules.vtkRenderingCore import (
-    vtkActor,
     vtkCamera,
     vtkColorTransferFunction,
     vtkPolyDataMapper,
@@ -22,6 +21,7 @@ import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkRenderingVolume import vtkFixedPointVolumeRayCastMapper
 import vtkmodules.vtkRenderingVolumeOpenGL2  # noqa: F401
 
+import pyvista as pv
 from pyvista import examples
 
 ren1 = vtkRenderer()
@@ -67,7 +67,7 @@ bounds.SetInputData(reader.GetGridOutput())
 boundsMapper = vtkPolyDataMapper()
 boundsMapper.SetInputConnection(bounds.GetOutputPort())
 
-boundsActor = vtkActor()
+boundsActor = pv.Actor()
 boundsActor.SetMapper(boundsMapper)
 boundsActor.GetProperty().SetColor(0, 0, 0)
 
@@ -80,7 +80,7 @@ contourMapper.SetInputConnection(contour.GetOutputPort())
 contourMapper.SetScalarRange(0, 0.1)
 contourMapper.GetLookupTable().SetHueRange(0.32, 0)
 
-contourActor = vtkActor()
+contourActor = pv.Actor()
 contourActor.SetMapper(contourMapper)
 contourActor.GetProperty().SetOpacity(0.5)
 
@@ -143,7 +143,7 @@ AtomsMapper.UseLookupTableScalarRangeOff()
 AtomsMapper.SetScalarVisibility(1)
 AtomsMapper.SetScalarModeToDefault()
 
-Atoms = vtkActor()
+Atoms = pv.Actor()
 Atoms.SetMapper(AtomsMapper)
 Atoms.GetProperty().SetRepresentationToSurface()
 Atoms.GetProperty().SetInterpolationToGouraud()
@@ -168,7 +168,7 @@ BondsMapper.UseLookupTableScalarRangeOff()
 BondsMapper.SetScalarVisibility(1)
 BondsMapper.SetScalarModeToDefault()
 
-Bonds = vtkActor()
+Bonds = pv.Actor()
 Bonds.SetMapper(BondsMapper)
 Bonds.GetProperty().SetRepresentationToSurface()
 Bonds.GetProperty().SetInterpolationToGouraud()
