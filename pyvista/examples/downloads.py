@@ -26,6 +26,7 @@ import logging
 import os
 from pathlib import Path, PureWindowsPath
 import shutil
+import sys
 from typing import Union
 import warnings
 
@@ -71,7 +72,7 @@ if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _FILE_CACHE = True
 
 else:
-    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    SOURCE = "https://github.com/user27182/vtk-data/raw/whole_body_ct_colors/Data/"
     _FILE_CACHE = False
 
 # allow user to override the local path
@@ -7487,12 +7488,27 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 def _whole_body_ct_load_func(dataset):  # pragma: no cover
     # Process the dataset to create a label map from the segmentation masks
 
+    def _import_colors_dict():
+        # Import color mapping from 'whole_body_ct/colors.py'
+        new_path = str(Path(USER_DATA_PATH, 'whole_body_ct'))
+        if new_path not in sys.path:
+            sys.path.insert(0, new_path)
+        from colors import colors
+
+        if new_path in sys.path:
+            sys.path.remove(new_path)
+        return colors
+
+    dataset.user_dict['colors'] = _import_colors_dict()
     segmentations = dataset['segmentations']
+
+    label_names = sorted(segmentations.keys())
+    dataset.user_dict['ids'] = {key: i + 1 for i, key in enumerate(label_names)}
 
     # Create label map array from segmentation masks
     # Initialize array with background values (zeros)
     label_map_array = np.zeros((segmentations[0].n_points,), dtype=np.uint8)
-    label_names = sorted(segmentations.keys())
+
     for i, name in enumerate(label_names):
         label_map_array[segmentations[name].active_scalars == 1] = i + 1
 
@@ -7507,10 +7523,22 @@ def _whole_body_ct_load_func(dataset):  # pragma: no cover
     return dataset
 
 
-_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1397.zip',
-    target_file='s1397',
-    load_func=_whole_body_ct_load_func,
+def _whole_body_ct_files_func(subject: str):
+    # Return partial function with the subject name included
+    def files_func(subject):
+        dataset = _SingleFileDownloadableDatasetLoader(
+            f'whole_body_ct/{subject}.zip',
+            target_file=subject,
+            load_func=_whole_body_ct_load_func,
+        )
+        colors = _DownloadableFile('whole_body_ct/colors.py')
+        return dataset, colors
+
+    return functools.partial(files_func, subject)
+
+
+_dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1397'),
 )
 
 
@@ -7628,10 +7656,8 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
-_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1380.zip',
-    target_file='s1380',
-    load_func=_whole_body_ct_load_func,
+_dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1380'),
 )
 
 
