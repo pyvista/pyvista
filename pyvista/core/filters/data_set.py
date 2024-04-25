@@ -5229,8 +5229,8 @@ class DataSetFilters:
         -   If extracting values from cell data, only the cells (and their points)
             with the specified values(s) are included in the output.
 
-        Internally, :meth:`~pyvista.core.DataSetFilters.extract_points` is called
-        to extract points for point data, and :meth:`~pyvista.core.DataSetFilters.extract_cells`
+        Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called
+        to extract points for point data, and :meth:`~pyvista.DataSetFilters.extract_cells`
         is called to extract cells for cell data.
 
         By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
@@ -5244,10 +5244,10 @@ class DataSetFilters:
         values : iterable[float | sequence[float, float]], optional
             Iterable of point values to be extracted. Each item of the iterable may be
             a single number or a sequence of two numbers defining a range of values
-            in the form``[lower, upper]``. Multiple single-number entries and/or
+            in the form ``[lower, upper]``. Multiple single-number entries and/or
             multiple ranges may be specified. If no values are specified, each unique
             value in the data is extracted independently and returned as a
-            :class:`~pyvista.MultiBlock` dataset.
+            :class:`~pyvista.MultiBlock` dataset (i.e. ``split`` will be set to ``True``).
 
             .. note::
                 Use ``+/-`` infinity when specifying range values for open
@@ -5292,7 +5292,17 @@ class DataSetFilters:
         split : bool, default: False
             If ``True``, each item in the ``values`` input is extracted
             independently and a :class:`~pyvista.MultiBlock` is returned
-            with each extraction stored as a separate mesh.
+            with each extraction stored as a separate mesh. The number 
+            of blocks returned equals the number of input values, i.e. 
+            ``n_blocks == len(values)``
+            
+            .. note::
+                Output blocks may contain empty meshes if any specified ``values``
+                do not exist in the mesh. This can impact plotting since empty meshes
+                cannot be plotted by default. Use :meth:`pyvista.MultiBlock.clean` on 
+                the output to remove empty meshes, or set ``pv.global_theme.allow_empty_mesh = True``
+                to enable plotting empty meshes.
+
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
