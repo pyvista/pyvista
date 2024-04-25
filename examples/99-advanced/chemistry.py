@@ -14,7 +14,6 @@ import pyvista as pv
 from pyvista import examples
 
 pl = pv.Plotter()
-ren1 = pl.renderer
 
 camera = pv.Camera()
 camera.ParallelProjectionOn()
@@ -22,7 +21,7 @@ camera.SetViewUp(0, 1, 0)
 camera.SetFocalPoint(12, 10.5, 15)
 camera.SetPosition(-70, 15, 34)
 camera.ComputeViewPlaneNormal()
-ren1.SetActiveCamera(camera)
+pl.renderer.SetActiveCamera(camera)
 # Create the reader for the data
 # vtkStructuredPointsReader reader
 filename = examples.download_m4_total_density(load=False)
@@ -95,10 +94,10 @@ volume = vtkVolume()
 volume.SetMapper(volumeMapper)
 volume.SetProperty(volumeProperty)
 
-ren1.AddVolume(volume)
+pl.renderer.AddVolume(volume)
 
-# ren1 AddActor contourActor
-ren1.AddActor(boundsActor)
+# pl.renderer AddActor contourActor
+pl.renderer.AddActor(boundsActor)
 
 ######################################################################
 sphere = pv.SphereSource()
@@ -161,10 +160,10 @@ bonds.GetProperty().SetSpecular(0.1)
 bonds.GetProperty().SetSpecularPower(100)
 bonds.GetProperty().SetSpecularColor(1, 1, 1)
 bonds.GetProperty().SetColor(1, 1, 1)
-ren1.AddActor(bonds)
-ren1.AddActor(atoms)
+pl.renderer.AddActor(bonds)
+pl.renderer.AddActor(atoms)
 ####################################################
-ren1.SetBackground(1, 1, 1)
-ren1.ResetCamera()
+pl.renderer.SetBackground(1, 1, 1)
+pl.renderer.ResetCamera()
 
 pl.show()
