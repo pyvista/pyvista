@@ -2316,7 +2316,7 @@ def test_extract_values_open_intervals(grid4x4):
 
 @pytest.fixture()
 def labeled_data():
-    sphere = pv.Sphere(radius = 0.25)
+    sphere = pv.Sphere(radius=0.25)
     box = pv.Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
     labeled = (sphere + box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
