@@ -5,7 +5,6 @@ from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 import vtkmodules.vtkInteractionStyle
 from vtkmodules.vtkRenderingCore import (
-    vtkCamera,
     vtkColorTransferFunction,
     vtkPolyDataMapper,
     vtkRenderer,
@@ -32,7 +31,7 @@ renWin.SetSize(300, 300)
 iren = vtkRenderWindowInteractor()
 iren.SetRenderWindow(renWin)
 
-camera = vtkCamera()
+camera = pv.Camera()
 camera.ParallelProjectionOn()
 camera.SetViewUp(0, 1, 0)
 camera.SetFocalPoint(12, 10.5, 15)
