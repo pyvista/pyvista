@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vtkmodules.util.misc import vtkGetDataRoot
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
@@ -23,7 +22,7 @@ import vtkmodules.vtkRenderingOpenGL2
 from vtkmodules.vtkRenderingVolume import vtkFixedPointVolumeRayCastMapper
 import vtkmodules.vtkRenderingVolumeOpenGL2  # noqa: F401
 
-VTK_DATA_ROOT = vtkGetDataRoot()
+from pyvista import examples
 
 ren1 = vtkRenderer()
 renWin = vtkRenderWindow()
@@ -45,7 +44,8 @@ ren1.SetActiveCamera(camera)
 # Create the reader for the data
 # vtkStructuredPointsReader reader
 reader = vtkGaussianCubeReader()
-reader.SetFileName("m4_TotalDensity.cube")
+filename = examples.download_m4_total_density(load=False)
+reader.SetFileName(filename)
 reader.SetHBScale(1.1)
 reader.SetBScale(10)
 reader.Update()
