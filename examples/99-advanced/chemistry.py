@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
+from vtkmodules.vtkFiltersCore import vtkGlyph3D, vtkTubeFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
@@ -40,11 +40,9 @@ bounds_actor = pv.Actor()
 bounds_actor.SetMapper(bounds_mapper)
 bounds_actor.GetProperty().SetColor(0, 0, 0)
 
-contour = vtkContourFilter()
-contour.SetInputData(reader.reader.GetGridOutput())
-contour.GenerateValues(5, 0, 0.05)
+dataset = pv.wrap(reader.reader.GetGridOutput())
 
-contour_mapper = pv.DataSetMapper(contour.GetOutputPort())
+contour_mapper = pv.DataSetMapper(dataset.contour(isosurfaces=[0, 0.05]))
 contour_mapper.SetScalarRange(0, 0.1)
 contour_mapper.GetLookupTable().SetHueRange(0.32, 0)
 
