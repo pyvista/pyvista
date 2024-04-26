@@ -386,6 +386,8 @@ sphinx_gallery_conf = {
     "reset_modules_order": "both",
 }
 
+suppress_warnings = ["config.cache"]
+
 import re
 
 # -- .. pyvista-plot:: directive ----------------------------------------------
