@@ -8,18 +8,18 @@ from vtkmodules.vtkIOImage import vtkImageReader
 from vtkmodules.vtkIOXML import vtkXMLImageDataReader, vtkXMLImageDataWriter
 from vtkmodules.vtkImagingCore import vtkExtractVOI
 from vtkmodules.vtkRenderingCore import (
-    vtkActor,
     vtkPolyDataMapper,
     vtkRenderer,
     vtkRenderWindow,
     vtkRenderWindowInteractor,
 )
 
+import pyvista as pv
+from pyvista import examples
+
 file0 = 'idFile0.vti'
 file1 = 'idFile1.vti'
 file2 = 'idFile2.vti'
-
-from pyvista import examples
 
 filename = examples.download_headsq(load=False)
 
@@ -77,7 +77,7 @@ mapper0 = vtkPolyDataMapper()
 mapper0.SetInputConnection(cF0.GetOutputPort())
 mapper0.ScalarVisibilityOff()
 
-actor0 = vtkActor()
+actor0 = pv.Actor()
 actor0.SetMapper(mapper0)
 actor0.SetPosition(180, -60, 0)
 
@@ -108,7 +108,7 @@ mapper1 = vtkPolyDataMapper()
 mapper1.SetInputConnection(cF1.GetOutputPort())
 mapper1.ScalarVisibilityOff()
 
-actor1 = vtkActor()
+actor1 = pv.Actor()
 actor1.SetMapper(mapper1)
 actor1.SetOrientation(90, 0, 0)
 
@@ -125,7 +125,7 @@ mapper2 = vtkPolyDataMapper()
 mapper2.SetInputConnection(cF2.GetOutputPort())
 mapper2.ScalarVisibilityOff()
 
-actor2 = vtkActor()
+actor2 = pv.Actor()
 actor2.SetMapper(mapper2)
 actor2.SetOrientation(0, -90, 0)
 actor2.SetPosition(180, -30, 0)
