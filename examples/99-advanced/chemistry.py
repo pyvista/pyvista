@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from vtkmodules.vtkFiltersCore import vtkContourFilter, vtkGlyph3D, vtkTubeFilter
-from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
@@ -33,8 +32,7 @@ reader_shift_scale.SetShift(min_ * -1)
 reader_shift_scale.SetScale(255 / (max_ - min_))
 reader_shift_scale.SetOutputScalarTypeToUnsignedChar()
 
-bounds = vtkOutlineFilter()
-bounds.SetInputData(reader.reader.GetGridOutput())
+bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
 
 bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
 
