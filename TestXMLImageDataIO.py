@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from vtkmodules.util.misc import vtkGetDataRoot, vtkGetTempDir
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkFiltersCore import vtkContourFilter
 from vtkmodules.vtkIOImage import vtkImageReader
@@ -16,12 +15,9 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindowInteractor,
 )
 
-VTK_DATA_ROOT = vtkGetDataRoot()
-VTK_TEMP_DIR = vtkGetTempDir()
-
-file0 = VTK_TEMP_DIR + '/idFile0.vti'
-file1 = VTK_TEMP_DIR + '/idFile1.vti'
-file2 = VTK_TEMP_DIR + '/idFile2.vti'
+file0 = 'idFile0.vti'
+file1 = 'idFile1.vti'
+file2 = 'idFile2.vti'
 
 from pyvista import examples
 
