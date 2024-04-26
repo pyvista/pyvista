@@ -5292,14 +5292,14 @@ class DataSetFilters:
         split : bool, default: False
             If ``True``, each item in the ``values`` input is extracted
             independently and a :class:`~pyvista.MultiBlock` is returned
-            with each extraction stored as a separate mesh. The number 
-            of blocks returned equals the number of input values, i.e. 
+            with each extraction stored as a separate mesh. The number
+            of blocks returned equals the number of input values, i.e.
             ``n_blocks == len(values)``
-            
+
             .. note::
                 Output blocks may contain empty meshes if any specified ``values``
                 do not exist in the mesh. This can impact plotting since empty meshes
-                cannot be plotted by default. Use :meth:`pyvista.MultiBlock.clean` on 
+                cannot be plotted by default. Use :meth:`pyvista.MultiBlock.clean` on
                 the output to remove empty meshes, or set ``pv.global_theme.allow_empty_mesh = True``
                 to enable plotting empty meshes.
 
