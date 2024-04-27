@@ -2201,6 +2201,7 @@ class DataSetFilters:
         absolute=False,
         clamping=False,
         rng=None,
+        color_mode='scale',
         progress_bar=False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
@@ -2257,6 +2258,11 @@ class DataSetFilters:
         rng : sequence[float], optional
             Set the range of values to be considered by the filter
             when scalars values are provided.
+
+        color_mode : str, optional, default: ``scale``
+            If ``scale`` color by scale the glyphs.
+            If ``scalar`` color by scalar the glyphs.
+            If ``vector`` color by vector the glyphs.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2410,6 +2416,15 @@ class DataSetFilters:
                 source_data.set_active_scalars(dataset.active_scalars_name, preference='point')
             if orient:
                 source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
+
+        if color_mode == 'scale':
+            alg.SetColorModeToColorByScale()
+        elif color_mode == 'scalar':
+            alg.SetColorModeToColorByScalar()
+        elif color_mode == 'vector':
+            alg.SetColorModeToColorByVector()
+        else:
+            raise ValueError(f"Invalid color_mode '{color_mode}'")
 
         if rng is not None:
             alg.SetRange(rng)

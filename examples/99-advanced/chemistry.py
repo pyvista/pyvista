@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from vtkmodules.vtkFiltersCore import vtkGlyph3D, vtkTubeFilter
+from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
@@ -97,16 +97,10 @@ sphere.SetPhiResolution(16)
 sphere.SetStartPhi(0)
 sphere.SetEndPhi(180)
 
-glyph = vtkGlyph3D()
-glyph.SetInputConnection(reader.reader.GetOutputPort())
-glyph.SetOrient(1)
-glyph.SetColorMode(1)
-# glyph.ScalingOn()
-glyph.SetScaleMode(2)
-glyph.SetScaleFactor(0.6)
-glyph.SetSourceConnection(sphere.GetOutputPort())
+dataset = pv.wrap(reader.reader.GetOutput())
+glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
-atoms_mapper = pv.DataSetMapper(glyph.GetOutputPort())
+atoms_mapper = pv.DataSetMapper(glyph)
 atoms_mapper.UseLookupTableScalarRangeOff()
 atoms_mapper.SetScalarVisibility(1)
 atoms_mapper.SetScalarModeToDefault()
