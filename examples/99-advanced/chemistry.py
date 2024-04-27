@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vtkmodules.vtkFiltersCore import vtkTubeFilter
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
@@ -116,15 +115,10 @@ atoms.GetProperty().SetSpecularPower(100)
 atoms.GetProperty().SetSpecularColor(1, 1, 1)
 atoms.GetProperty().SetColor(1, 1, 1)
 
-tube = vtkTubeFilter()
-tube.SetInputConnection(reader.reader.GetOutputPort())
-tube.SetNumberOfSides(16)
-tube.SetCapping(0)
-tube.SetRadius(0.2)
-tube.SetVaryRadius(0)
-tube.SetRadiusFactor(10)
+dataset = pv.wrap(reader.reader.GetOutput())
+tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
-bonds_mapper = pv.DataSetMapper(tube.GetOutputPort())
+bonds_mapper = pv.DataSetMapper(tube)
 bonds_mapper.UseLookupTableScalarRangeOff()
 bonds_mapper.SetScalarVisibility(1)
 bonds_mapper.SetScalarModeToDefault()
