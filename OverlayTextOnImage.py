@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-from vtkmodules.util.misc import vtkGetDataRoot
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 from vtkmodules.vtkRenderingCore import vtkActor2D, vtkImageMapper, vtkTextMapper
 
 import pyvista as pv
 
-VTK_DATA_ROOT = vtkGetDataRoot()
-
-#
-# display text over an image
-#
 pl = pv.Plotter()
 ellipse = vtkImageEllipsoidSource()
 mapImage = vtkImageMapper()
@@ -30,4 +24,3 @@ txt.SetPosition(138, 128)
 pl.add_actor(img)
 pl.add_actor(txt)
 pl.show()
-# --- end of script --
