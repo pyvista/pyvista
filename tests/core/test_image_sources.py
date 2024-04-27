@@ -18,3 +18,4 @@ def test_image_ellip_soid_source():
     assert source.whole_extent == whole_extent
     assert source.center == center
     assert source.radius == radius
+    assert isinstance(source.output, pv.ImageData)
