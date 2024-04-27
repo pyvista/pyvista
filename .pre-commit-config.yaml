@@ -6,7 +6,7 @@ ci:
 
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 24.4.1
     hooks:
       - id: black
         exclude: tests/core/typing
@@ -76,7 +76,7 @@ repos:
             --enable-error-code,
             ignore-without-code,
           ]
-        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
+        exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
             "mypy-extensions==1.0.0",

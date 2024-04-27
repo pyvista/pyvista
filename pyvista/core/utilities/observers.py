@@ -1,6 +1,5 @@
 """Core error utilities."""
 
-import collections
 import logging
 from pathlib import Path
 import re
@@ -8,6 +7,7 @@ import signal
 import sys
 import threading
 import traceback
+from typing import NamedTuple
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -83,6 +83,15 @@ class VtkErrorCatcher:
             raise RuntimeError(errors)
 
 
+class VtkEvent(NamedTuple):
+    """Named tuple to store VTK event information."""
+
+    kind: str
+    path: str
+    address: str
+    alert: str
+
+
 class Observer:
     """A standard class for observing VTK objects."""
 
@@ -129,7 +138,6 @@ class Observer:
             kind, path, address, alert = self.parse_message(message)
             self.__message = alert
             if self.store_history:
-                VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
                 self.event_history.append(VtkEvent(kind, path, address, alert))
             if self.__log:
                 self.log_message(kind, alert)
@@ -247,7 +255,9 @@ class ProgressMonitor:
         if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
-            total=1, leave=True, bar_format='{l_bar}{bar}[{elapsed}<{remaining}]'
+            total=1,
+            leave=True,
+            bar_format='{l_bar}{bar}[{elapsed}<{remaining}]',
         )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)

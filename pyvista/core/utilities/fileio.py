@@ -13,7 +13,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .observers import Observer
 
 
-def set_pickle_format(format: str):
+def set_pickle_format(format: str):  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
     Parameters
@@ -28,12 +28,12 @@ def set_pickle_format(format: str):
 
     """
     supported = {'xml', 'legacy'}
-    format = format.lower()
-    if format not in supported:
+    format_ = format.lower()
+    if format_ not in supported:
         raise ValueError(
-            f'Unsupported pickle format `{format}`. Valid options are `{"`, `".join(supported)}`.'
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
         )
-    pyvista.PICKLE_FORMAT = format
+    pyvista.PICKLE_FORMAT = format_
 
 
 def _get_ext_force(filename, force_ext=None):
@@ -203,7 +203,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
             warnings.warn(
                 f"The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error"
                 "while reading the file.\n"
-                f'\t"{observer.get_message()}"'
+                f'\t"{observer.get_message()}"',
             )
         return mesh
 
@@ -649,7 +649,7 @@ def _try_imageio_imread(filename):
         raise ModuleNotFoundError(
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
-            '   pip install imageio'
+            '   pip install imageio',
         ) from None
 
     return imread(filename)

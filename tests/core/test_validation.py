@@ -7,6 +7,7 @@ from numbers import Real
 from re import escape
 import sys
 from typing import Any, Callable, Dict, Union, get_args, get_origin
+from typing import NamedTuple, Union, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -396,12 +397,20 @@ def test_check_range():
         check_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
+class Case(NamedTuple):
+    kwarg: dict
+    valid_array: np.ndarray
+    invalid_array: np.ndarray
+    error_type: type
+    error_msg: str
+
+
 def numeric_array_test_cases():
-    Case = namedtuple("Case", ["kwarg", "valid_array", "invalid_array", "error_type", "error_msg"])
     return (
         Case(
             dict(
-                must_be_finite=True, must_be_real=False
+                must_be_finite=True,
+                must_be_real=False,
             ),  # must be real is only added for extra coverage
             0,
             np.inf,
@@ -669,7 +678,8 @@ def test_check_type():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10), reason="Union type input requires python3.10 or higher"
+    sys.version_info < (3, 10),
+    reason="Union type input requires python3.10 or higher",
 )
 def test_check_type_union():
     check_type(0, Union[int, float])
@@ -771,7 +781,7 @@ def test_check_length():
     check_length(
         [
             1,
-        ]
+        ],
     )
     check_length(np.ndarray((1,)))
     check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
@@ -858,7 +868,8 @@ def test_check_sorted(shape, axis, ascending, strict, as_list):
     except AxisError:
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
-            ValueError, match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}'
+            ValueError,
+            match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}',
         ):
             _check_sorted_params(arr_strict_ascending)
         return
@@ -984,7 +995,10 @@ def test_validate_axes(name):
     axes = validate_axes(axes_right)
     assert np.array_equal(axes, axes_right)
     axes = validate_axes(
-        [[1], [0], [0]], [[0, 1, 0]], must_have_orientation='right', must_be_orthogonal=True
+        [[1], [0], [0]],
+        [[0, 1, 0]],
+        must_have_orientation='right',
+        must_be_orthogonal=True,
     )
     assert np.array_equal(axes, axes_right)
     axes = validate_axes([1, 0, 0], [[0, 1, 0]], (0, 0, 1))
@@ -1036,7 +1050,8 @@ def test_validate_axes(name):
 
     # test specifying two vectors without orientation raises error (3rd cannot be computed)
     with pytest.raises(
-        ValueError, match=f"{name} orientation must be specified when only two vectors are given."
+        ValueError,
+        match=f"{name} orientation must be specified when only two vectors are given.",
     ):
         validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
 
@@ -1065,14 +1080,20 @@ def test_validate_axes_orthogonal(bias_index):
 
     msg = "Axes are not orthogonal."
     axes = validate_axes(
-        axes_right, must_be_orthogonal=False, normalize=False, must_have_orientation='right'
+        axes_right,
+        must_be_orthogonal=False,
+        normalize=False,
+        must_have_orientation='right',
     )
     assert np.array_equal(axes, axes_right)
     with pytest.raises(ValueError, match=msg):
         validate_axes(axes_right, must_be_orthogonal=True)
 
     axes = validate_axes(
-        axes_left, must_be_orthogonal=False, normalize=False, must_have_orientation='left'
+        axes_left,
+        must_be_orthogonal=False,
+        normalize=False,
+        must_have_orientation='left',
     )
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=msg):

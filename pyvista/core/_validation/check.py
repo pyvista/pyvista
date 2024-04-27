@@ -27,6 +27,11 @@ from typing import (
     get_args,
     get_origin,
 )
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
+from numbers import Number
+from typing import Tuple, Union, get_args, get_origin
 
 import numpy as np
 import numpy.typing as npt
@@ -1172,7 +1177,10 @@ def check_iterable_items(
     try:
         any(
             check_instance(
-                item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
+                item,
+                item_type,
+                allow_subclass=allow_subclass,
+                name=f"All items of {name}",
             )
             for item in iterable_obj
         )

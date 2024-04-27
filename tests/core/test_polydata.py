@@ -3,6 +3,7 @@ import pathlib
 from pathlib import Path
 import re
 from typing import Dict, List
+from unittest.mock import patch
 import warnings
 
 import numpy as np
@@ -96,7 +97,7 @@ def test_init_from_arrays_with_vert(faces_is_cell_array):
 
     # mesh faces
     faces = np.hstack(
-        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]]  # [quad, triangle, triangle, vertex]
+        [[4, 0, 1, 2, 3], [3, 0, 1, 4], [3, 1, 2, 4], [1, 5]],  # [quad, triangle, triangle, vertex]
     ).astype(np.int8)
     if faces_is_cell_array:
         faces = pv.CellArray(faces)
@@ -246,7 +247,10 @@ def test_verts(verts_is_cell_array):
     verts = [2, 0, 1, 1, 2]
     mesh = pv.PolyData(vertices, verts=pv.CellArray(verts) if verts_is_cell_array else verts)
     _assert_verts_equal(
-        mesh, verts, n_verts=2, cell_types={0: pv.CellType.POLY_VERTEX, 1: pv.CellType.VERTEX}
+        mesh,
+        verts,
+        n_verts=2,
+        cell_types={0: pv.CellType.POLY_VERTEX, 1: pv.CellType.VERTEX},
     )
 
 
@@ -309,7 +313,9 @@ def test_geodesic_distance(sphere):
 
     # Use scalar weights
     distance_use_scalar_weights = sphere.geodesic_distance(
-        0, sphere.n_points - 1, use_scalar_weights=True
+        0,
+        sphere.n_points - 1,
+        use_scalar_weights=True,
     )
     assert isinstance(distance_use_scalar_weights, float)
 
@@ -329,15 +335,30 @@ def test_ray_trace_origin():
 
 
 def test_multi_ray_trace(sphere):
-    pytest.importorskip('rtree')
-    pytest.importorskip('pyembree')
-    pytest.importorskip('trimesh')
-    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
+    trimesh = pytest.importorskip('trimesh')
+    if not trimesh.ray.has_embree:
+        pytest.skip("Requires Embree")
+    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
-    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
     assert np.any(points)
     assert np.any(ind_r)
     assert np.any(ind_t)
+
+    # patch embree to test retry
+    with patch.object(
+        trimesh.ray.ray_pyembree.RayMeshIntersector,
+        'intersects_location',
+        return_value=[np.array([])] * 3,
+    ):
+        points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+        known_points = np.array(
+            [[0.25, 0, 0.42424145], [0.25, 0, -0.42424145], [0, 0, 0.5], [0, 0, -0.5]],
+        )
+        known_ind_r = np.array([2, 2, 3, 3])
+        np.testing.assert_allclose(points, known_points)
+        np.testing.assert_allclose(ind_r, known_ind_r)
+        assert len(ind_t) == 4
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -463,9 +484,9 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     assert merged.active_scalars_name == 'Distance'
 
 
-@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_active_scalars(input):
-    mesh1 = input.copy()
+@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_active_scalars(input_):
+    mesh1 = input_.copy()
     mesh1['foo'] = np.arange(mesh1.n_points)
     mesh2 = mesh1.copy()
 
@@ -506,9 +527,9 @@ def test_merge_active_scalars(input):
     assert merged.active_scalars_name == 'foo'
 
 
-@pytest.mark.parametrize('input', [examples.load_hexbeam(), pv.Sphere()])
-def test_merge_main_has_priority(input):
-    mesh = input.copy()
+@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+def test_merge_main_has_priority(input_):
+    mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
     mesh.point_data['present_in_both'] = data_main
     mesh.set_active_scalars('present_in_both')
@@ -545,7 +566,10 @@ def test_add(sphere, sphere_shifted):
 
 def test_intersection(sphere, sphere_shifted):
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=True, split_second=True, progress_bar=True
+        sphere_shifted,
+        split_first=True,
+        split_second=True,
+        progress_bar=True,
     )
 
     assert intersection.n_points
@@ -553,7 +577,10 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points > sphere_shifted.n_points
 
     intersection, first, second = sphere.intersection(
-        sphere_shifted, split_first=False, split_second=False, progress_bar=True
+        sphere_shifted,
+        split_first=False,
+        split_second=False,
+        progress_bar=True,
     )
     assert intersection.n_points
     assert first.n_points == sphere.n_points
@@ -784,7 +811,10 @@ def test_face_normals(sphere):
 
 def test_clip_plane(sphere):
     clipped_sphere = sphere.clip(
-        origin=[0, 0, 0], normal=[0, 0, -1], invert=False, progress_bar=True
+        origin=[0, 0, 0],
+        normal=[0, 0, -1],
+        invert=False,
+        progress_bar=True,
     )
     faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)

@@ -76,24 +76,29 @@ def using_mesa():
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt', reason='Does not display correctly within OSMesa on Windows'
+    using_mesa() and os.name == 'nt',
+    reason='Does not display correctly within OSMesa on Windows',
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
 skip_lesser_9_0_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
+    pv.vtk_version_info < (9, 1),
+    reason="Functions not implemented before 9.0.X",
 )
 skip_lesser_9_3_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+    pv.vtk_version_info < (9, 3),
+    reason="Functions not implemented before 9.3.X",
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+    platform.system() == 'Darwin',
+    reason='This is a flaky test on MacOS',
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
@@ -195,7 +200,13 @@ def test_pbr(sphere, verify_image_cache):
     pl.set_environment_texture(texture)
     pl.add_light(pv.Light())
     pl.add_mesh(
-        sphere, color='w', pbr=True, metallic=0.8, roughness=0.2, smooth_shading=True, diffuse=1
+        sphere,
+        color='w',
+        pbr=True,
+        metallic=0.8,
+        roughness=0.2,
+        smooth_shading=True,
+        diffuse=1,
     )
     pl.add_mesh(
         pv.Sphere(center=(0, 0, 1)),
@@ -589,7 +600,8 @@ def test_set_camera_position(cpos, sphere):
 
 
 @pytest.mark.parametrize(
-    'cpos', [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid']
+    'cpos',
+    [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
 )
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pv.Plotter()
@@ -760,7 +772,11 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(
-        label_font_size=10, title_font_size=20, title='woa', interactive=True, vertical=True
+        label_font_size=10,
+        title_font_size=20,
+        title='woa',
+        interactive=True,
+        vertical=True,
     )
     plotter.add_scalar_bar(background_color='white', n_colors=256)
     assert isinstance(plotter.scalar_bar, vtk.vtkScalarBarActor)
@@ -850,7 +866,11 @@ def test_legend_circle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "circle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -861,7 +881,11 @@ def test_legend_rectangle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "rectangle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -873,7 +897,11 @@ def test_legend_invalid_face(sphere):
     face = "invalid_face"
     with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_legend(
-            labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+            labels=legend_labels,
+            border=True,
+            bcolor=None,
+            size=[0.1, 0.1],
+            face=face,
         )
 
 
@@ -955,7 +983,11 @@ def test_add_point_labels():
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
     plotter.add_point_labels(
-        points - 1, range(n), show_points=False, point_color='r', point_size=10
+        points - 1,
+        range(n),
+        show_points=False,
+        point_color='r',
+        point_size=10,
     )
     plotter.show()
 
@@ -965,7 +997,9 @@ def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
     plotter = pv.Plotter()
     plotter.add_point_labels(
-        np.array([[0.0, 0.0, 0.0]]), ['hello world'], always_visible=always_visible
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        always_visible=always_visible,
     )
     plotter.show()
 
@@ -1022,7 +1056,11 @@ def test_add_points():
     n = points.shape[0]
 
     plotter.add_points(
-        points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False
+        points,
+        scalars=np.arange(n),
+        cmap=None,
+        flip_scalars=True,
+        show_scalar_bar=False,
     )
     plotter.show()
 
@@ -1778,7 +1816,7 @@ def test_multiblock_volume_rendering(uniform):
             b=ds_b,
             c=ds_c,
             d=ds_d,
-        )
+        ),
     )
     data['a'].rename_array('Spatial Point Data', 'a')
     data['b'].rename_array('Spatial Point Data', 'b')
@@ -1937,6 +1975,31 @@ def test_opacity_transfer_functions():
     foo = [3, 5, 6, 10]
     mapping = pv.opacity_transfer_function(foo, n)
     assert len(mapping) == n
+
+
+@skip_windows_mesa
+@pytest.mark.parametrize(
+    'opacity',
+    [
+        'sigmoid',
+        'sigmoid_1',
+        'sigmoid_2',
+        'sigmoid_3',
+        'sigmoid_4',
+        'sigmoid_5',
+        'sigmoid_6',
+        'sigmoid_7',
+        'sigmoid_8',
+        'sigmoid_9',
+        'sigmoid_10',
+        'sigmoid_15',
+        'sigmoid_20',
+    ],
+)
+def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
+    pl = pv.Plotter()
+    pl.add_volume(uniform, opacity=opacity)
+    pl.show()
 
 
 def test_closing_and_mem_cleanup(verify_image_cache):
@@ -2339,7 +2402,11 @@ def test_plot_shadows_enable_disable():
         plotter.add_mesh(screen, color='white')
 
     light = pv.Light(
-        position=(0, 0, 0), focal_point=(0, 1, 0), color='cyan', intensity=15, cone_angle=15
+        position=(0, 0, 0),
+        focal_point=(0, 1, 0),
+        color='cyan',
+        intensity=15,
+        cone_angle=15,
     )
     light.positional = True
     light.attenuation_values = (2, 0, 0)
@@ -2762,7 +2829,11 @@ def test_add_text_font_file():
     font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     plotter.add_text("左上", position='upper_left', font_size=25, color='blue', font_file=font_file)
     plotter.add_text(
-        "中央", position=(0.5, 0.5), viewport=True, orientation=-90, font_file=font_file
+        "中央",
+        position=(0.5, 0.5),
+        viewport=True,
+        orientation=-90,
+        font_file=font_file,
     )
     plotter.show()
 
@@ -3171,7 +3242,7 @@ def test_tight_direction(view, negative, colorful_tetrahedron):
 def test_tight_multiple_objects():
     pl = pv.Plotter()
     pl.add_mesh(
-        pv.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0)
+        pv.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0),
     )
     pl.add_mesh(pv.Sphere(center=(0.0, 0.0, 0.0)))
     pl.camera.tight()
@@ -3274,7 +3345,10 @@ def test_plot_nan_color(uniform):
     # nan annotation should appear on scalar bar
     pl = pv.Plotter()
     pl.add_mesh(
-        uniform, nan_opacity=0.5, nan_color='green', scalar_bar_args=dict(nan_annotation=True)
+        uniform,
+        nan_opacity=0.5,
+        nan_color='green',
+        scalar_bar_args=dict(nan_annotation=True),
     )
     pl.enable_depth_peeling()
     pl.show()
@@ -3711,7 +3785,8 @@ def test_plot_cubemap_alone(cubemap):
 
 
 @pytest.mark.skipif(
-    uses_egl(), reason="Render window will be current with offscreen builds of VTK."
+    uses_egl(),
+    reason="Render window will be current with offscreen builds of VTK.",
 )
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
@@ -4166,7 +4241,7 @@ def test_direction_objects(direction_obj_test_case):
         legacy_vtk = pv.vtk_version_info < (9, 3)
         if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
             pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
+                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
             )
 
     direction_param_name = None

@@ -615,6 +615,9 @@ def validate_array(  # numpydoc ignore=GL08
     **kwargs: Unpack[_TypedKwargs],
 ) -> NumpyArray[_NumberType]: ...
 
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
+
 
 def validate_array(
     array: _ArrayLikeOrScalar[NumberType],
@@ -1259,7 +1262,7 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform") -> N
                 '\tvtkMatrix3x3\n'
                 '\tvtkTransform\n'
                 '\t4x4 np.ndarray\n'
-                '\t3x3 np.ndarray\n'
+                '\t3x3 np.ndarray\n',
             )
 
     return array

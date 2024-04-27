@@ -154,7 +154,12 @@ def test_text3d_source():
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
-        string=string, center=center, height=height, width=width, depth=depth, normal=normal
+        string=string,
+        center=center,
+        height=height,
+        width=width,
+        depth=depth,
+        normal=normal,
     )
     out = src.output
     bnds = out.bounds
