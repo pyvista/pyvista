@@ -36,6 +36,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 
+class ContourFilter(_vtk.vtkContourFilter):
+    """Contour filter."""
+
+
 @abstract_class
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""

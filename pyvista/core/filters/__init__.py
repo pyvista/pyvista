@@ -65,7 +65,7 @@ def _get_output(
 from .composite import CompositeFilters
 
 # Re-export submodules to maintain the same import paths before filters.py was split into submodules
-from .data_set import DataSetFilters
+from .data_set import ContourFilter, DataSetFilters
 from .image_data import ImageDataFilters
 from .poly_data import PolyDataFilters
 from .rectilinear_grid import RectilinearGridFilters
@@ -82,4 +82,5 @@ __all__ = [
     'StructuredGridFilters',
     'ImageDataFilters',
     'UnstructuredGridFilters',
+    'ContourFilter',
 ]
