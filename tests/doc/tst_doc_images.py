@@ -1,10 +1,9 @@
 """Test the images generated from building the documentation."""
 
-from collections import namedtuple
 import glob
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, NamedTuple
 import warnings
 
 from PIL import Image
@@ -19,7 +18,10 @@ DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
 
 
-_TestCaseTuple = namedtuple('_TestCaseTuple', ['filename', 'docs_image_path', 'cached_image_path'])
+class _TestCaseTuple(NamedTuple):
+    filename: str
+    docs_image_path: str
+    cached_image_path: str
 
 
 def _get_file_paths(dir_: str, ext: str):
