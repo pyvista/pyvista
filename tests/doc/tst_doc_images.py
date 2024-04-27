@@ -116,7 +116,7 @@ def test_docs(test_case):
         pytest.fail(
             f"Test setup failed for test case:\n"
             f"\t{filename}\n"
-            f"The image exists in the {exists}, but is missing from the {missing}."
+            f"The image exists in the {exists}, but is missing from the {missing}.",
         )
 
     docs_image = pv.read(docs_image_path)
@@ -128,11 +128,11 @@ def test_docs(test_case):
     if error > allowed_error:
         pytest.fail(
             f"{filename} Exceeded image regression error of "
-            f"{allowed_error} with an image error equal to: {error}"
+            f"{allowed_error} with an image error equal to: {error}",
         )
     if error > allowed_warning:
         warnings.warn(
             f"{filename} Exceeded image regression warning of "
             f"{allowed_warning} with an image error of "
-            f"{error}"
+            f"{error}",
         )
