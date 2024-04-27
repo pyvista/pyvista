@@ -1146,7 +1146,7 @@ class ImageDataFilters(DataSetFilters):
             # WARNING: Setting either of:
             #  - SetOutputStyleToSelected()
             #  - SetOutputStyleToDefault()
-            # alone does not produce the output you expect!
+            # alone does not produce the output you expect
             #
             # Contrary to what might be expected from the vtkSurfaceNets docs, setting
             # SetOutputStyleToDefault() by itself does not produce meshes with interior faces
