@@ -2268,6 +2268,8 @@ class DataSetFilters:
             If ``scalar`` color by scalar the glyphs.
             If ``vector`` color by vector the glyphs.
 
+            .. versionadded:: 0.44
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
