@@ -2430,7 +2430,7 @@ class DataSetFilters:
         elif color_mode == 'vector':
             alg.SetColorModeToColorByVector()
         else:
-            raise ValueError(f"Invalid color_mode '{color_mode}'")
+            raise ValueError(f"Invalid color mode '{color_mode}'")
 
         if rng is not None:
             alg.SetRange(rng)
