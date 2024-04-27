@@ -192,8 +192,8 @@ def labeled_image(first_label_info=first_label_info(), second_label_info=second_
 
     dim = (4, 3, 3)
     labels = np.zeros(np.prod(dim))
-    labels[first_label_info.point_ids] = first_label_info.label_id
-    labels[second_label_info.point_ids] = second_label_info.label_id
+    labels[list(first_label_info.point_ids)] = first_label_info.label_id
+    labels[list(second_label_info.point_ids)] = second_label_info.label_id
     image = pv.ImageData(dimensions=dim)
     image.point_data['labels'] = labels
 
@@ -331,24 +331,22 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         [first_label_info().label_id, second_label_info().label_id],
     ],
 )
-@pytest.mark.parametrize('shared_boundaries', [True, False])
+@pytest.mark.parametrize('internal_boundaries', [True, False])
 @pytest.mark.parametrize('image_boundaries', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_output_surface(
     labeled_image,
     select_inputs,
     select_outputs,
-    shared_boundaries,
+    internal_boundaries,
     image_boundaries,
-    first_label_info=first_label_info(),
-    second_label_info=second_label_info(),
 ):
     ALL_LABEL_IDS = _get_unique_ids(labeled_image['labels'], include_background_id=False)
 
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
-        internal_boundaries=shared_boundaries,
+        internal_boundaries=internal_boundaries,
     )  # , image_boundary_faces=image_boundary_faces)
     assert 'BoundaryLabels' in mesh.cell_data
     actual_output_ids = _get_unique_ids_BoundaryLabels_with_background(mesh)
@@ -362,7 +360,7 @@ def test_contour_labels_output_surface(
 
     assert actual_output_ids == expected_output_ids
 
-    if shared_boundaries and len(select_inputs_iter) == 2:
+    if internal_boundaries and len(select_inputs_iter) == 2:
         # The two labels share a boundary by default
         # Boundary exists if not removed from input
         expected_shared_region_ids = ALL_LABEL_IDS
@@ -371,24 +369,6 @@ def test_contour_labels_output_surface(
 
     actual_shared_region_ids = _get_unique_ids_BoundaryLabels_with_foreground(mesh)
     assert actual_shared_region_ids == expected_shared_region_ids
-
-
-@pytest.fixture()
-def boundary_image(labeled_image):
-    dim_outer = (5, 5, 5)
-    labels = np.zeros(np.prod(dim_outer)).reshape(dim_outer, order='F')
-
-    labels[1:4, 1:4, 1:4] = np.ones((3, 3, 3))
-    labels[2, 2, 2] = 2
-
-    image = pv.ImageData(dimensions=dim_outer)
-    image.point_data['labels'] = labels.ravel()
-
-    class info:
-        boundary_n_quads = np.prod((3, 3, 3)) * 2
-        default_n_quads = boundary_n_quads + 6
-
-    return image, info
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
