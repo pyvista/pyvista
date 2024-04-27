@@ -1021,6 +1021,16 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[1] == geom.bounds[1]
 
 
+@pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
+def test_glyph_color_mode(sphere, color_mode):
+    assert sphere.glyph(color_mode=color_mode)
+
+
+def test_glyph_raises(sphere):
+    with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
+        sphere.glyph(color_mode="foo")
+
+
 @pytest.fixture()
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
