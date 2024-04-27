@@ -181,7 +181,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[NumberType]):
         return self._array.flatten()
 
     def to_list(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> _FiniteNestedList[NumberType]:
         return self._array.tolist()
 
@@ -189,7 +189,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[NumberType]):
         return _cast_to_tuple(self._array)
 
     def to_numpy(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> NumpyArray[NumberType]:
         out = self._array
         return np.ndarray.copy(out) if copy and out is input_array else out
@@ -203,7 +203,7 @@ class _BuiltinWrapper(_ArrayLikeWrapper[NumberType]):
         return all(func(x, *args) for x in self.as_iterable())
 
     def to_numpy(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> NumpyArray[NumberType]:
         return np.array(self._array)
 
@@ -279,7 +279,7 @@ class _SequenceWrapper(_BuiltinWrapper[NumberType]):
         return deepcopy(out) if copy and out is input_array else out
 
     def to_tuple(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> Tuple[NumberType, ...]:
         out = self._array if isinstance(self._array, tuple) else tuple(self._array)
         return deepcopy(out) if copy and out is input_array else out
@@ -318,7 +318,7 @@ class _NestedSequenceWrapper(_BuiltinWrapper[NumberType]):
         return self  # type: ignore[return-value]
 
     def to_list(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> List[List[NumberType]]:
         return (
             self._array
@@ -327,7 +327,7 @@ class _NestedSequenceWrapper(_BuiltinWrapper[NumberType]):
         )
 
     def to_tuple(
-        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool
+        self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool,
     ) -> Tuple[Tuple[NumberType, ...]]:
         return (
             self._array
@@ -363,5 +363,5 @@ def _get_dtype_from_iterable(iterable: Iterable[NumberType]):
         return cast(Type[NumberType], bool)
     else:
         raise TypeError(  # pragma: no cover
-            f"Unexpected error: dtype should be numeric, got {dtypes} instead."
+            f"Unexpected error: dtype should be numeric, got {dtypes} instead.",
         )

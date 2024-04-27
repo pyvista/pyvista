@@ -6,8 +6,7 @@ import itertools
 from numbers import Real
 from re import escape
 import sys
-from typing import Any, Callable, Dict, Union, get_args, get_origin
-from typing import NamedTuple, Union, get_args, get_origin
+from typing import Any, Callable, Dict, NamedTuple, Union, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -440,7 +439,7 @@ def numeric_array_test_cases():
 @pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
 @pytest.mark.parametrize('return_type', [tuple, list, np.ndarray, None])
 def test_validate_array(
-    name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, return_type
+    name, copy, as_any, dtype_in, dtype_out, case, stack_input, input_type, return_type,
 ):
     # Set up
     valid_array = np.array(case.valid_array)
@@ -1206,7 +1205,7 @@ arraylike_shapes = [
 ]
 
 ArrayLikePropsTuple = namedtuple(
-    'ArrayLikePropsTuple', ['array', 'shape', 'dtype', 'ndim', 'size', 'wrapper', 'return_original']
+    'ArrayLikePropsTuple', ['array', 'shape', 'dtype', 'ndim', 'size', 'wrapper', 'return_original'],
 )
 
 

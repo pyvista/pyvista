@@ -10,6 +10,9 @@ A ``check`` function typically:
 
 """
 
+from __future__ import annotations
+
+from collections.abc import Iterable, Sequence
 import math
 from numbers import Number, Real
 import operator
@@ -27,11 +30,6 @@ from typing import (
     get_args,
     get_origin,
 )
-from __future__ import annotations
-
-from collections.abc import Iterable, Sequence
-from numbers import Number
-from typing import Tuple, Union, get_args, get_origin
 
 import numpy as np
 import numpy.typing as npt
@@ -287,7 +285,7 @@ def check_sorted(
         strict_ = "strict " if strict else ""
         raise ValueError(
             f"{name} {msg_body} must be sorted in {strict_}{order} order. "
-            f"Got:\n    {reprlib.repr(wrapped._array)}"
+            f"Got:\n    {reprlib.repr(wrapped._array)}",
         )
 
 
@@ -330,7 +328,7 @@ def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array
 
 
 def check_integer(
-    array: _ArrayLikeOrScalar[NumberType], /, *, strict: bool = False, name: str = "Array"
+    array: _ArrayLikeOrScalar[NumberType], /, *, strict: bool = False, name: str = "Array",
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -1321,7 +1319,7 @@ def check_length(
         if array_len not in wrapped_exact_len.as_iterable():
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {array_len} instead."
+                f"Got length {array_len} instead.",
             )
 
     # Validate min/max length
@@ -1336,13 +1334,13 @@ def check_length(
         if array_len < min_length:
             raise ValueError(
                 f"{name} must have a minimum length of {min_length}. "
-                f"Got length {array_len} instead."
+                f"Got length {array_len} instead.",
             )
     if max_length is not None:
         if array_len > max_length:
             raise ValueError(
                 f"{name} must have a maximum length of {max_length}. "
-                f"Got length {array_len} instead."
+                f"Got length {array_len} instead.",
             )
 
 
