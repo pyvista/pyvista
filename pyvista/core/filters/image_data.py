@@ -1,5 +1,7 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 
+from __future__ import annotations
+
 import collections.abc
 from typing import Literal, Optional, cast
 
@@ -791,7 +793,7 @@ class ImageDataFilters(DataSetFilters):
                 '`numpy.complex128`.',
             )
 
-    def _flip_uniform(self, axis) -> 'pyvista.ImageData':
+    def _flip_uniform(self, axis) -> pyvista.ImageData:
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -814,7 +816,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: Optional[str] = None,
         progress_bar: bool = False,
-    ) -> 'pyvista.PolyData':
+    ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp

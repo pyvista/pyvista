@@ -1558,10 +1558,7 @@ class CategoryBadge(_BaseDatasetBadge):
 
 @dataclass
 class CellTypeBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based with a specific cell type.
-
-    e.g. 'Medical' for medical datasets.
-    """
+    """Badge given to a dataset based with a specific cell type."""
 
     name: str
     ref: str
@@ -1958,7 +1955,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
     @classmethod
     def fetch_dataset_names(cls):
         return sorted(
-            (
+            [
                 'brain',
                 'brain_atlas_with_sides',
                 'chest',
@@ -1973,7 +1970,9 @@ class MedicalCarousel(DatasetGalleryCarousel):
                 'knee',
                 'knee_full',
                 'prostate',
-            ),
+                'whole_body_ct_female',
+                'whole_body_ct_male',
+            ],
         )
 
 

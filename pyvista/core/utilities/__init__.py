@@ -171,6 +171,7 @@ from .reader import (
     DICOMReader,
     EnSightReader,
     FacetReader,
+    FLUENTCFFReader,
     FluentReader,
     GIFReader,
     GLTFReader,

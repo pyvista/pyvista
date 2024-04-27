@@ -1010,3 +1010,19 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3, 0),
+    reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
+)
+def test_fluentcffreader():
+    filename = examples.download_room_cff(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.FLUENTCFFReader)
+    assert reader.path == filename
+
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 import collections.abc
 from copy import deepcopy
 from functools import partial
@@ -14,6 +13,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -48,7 +48,13 @@ from .utilities.points import vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
+
+
+class ActiveArrayInfoTuple(NamedTuple):
+    """Active array info tuple to provide legacy support."""
+
+    association: FieldAssociation
+    name: str
 
 
 class ActiveArrayInfo:
