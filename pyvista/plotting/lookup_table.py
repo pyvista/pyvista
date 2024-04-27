@@ -1055,6 +1055,8 @@ class LookupTable(_vtk.vtkLookupTable):
         clamping : bool, optional
             When zero range clamping is False, values returns 0.0 when a value is requested outside of the points specified.
 
+            .. versionadded:: 0.44
+
         Returns
         -------
         vtk.vtkPiecewiseFunction
