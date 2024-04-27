@@ -2264,9 +2264,9 @@ class DataSetFilters:
             when scalars values are provided.
 
         color_mode : str, optional, default: ``scale``
-            If ``scale`` color by scale the glyphs.
-            If ``scalar`` color by scalar the glyphs.
-            If ``vector`` color by vector the glyphs.
+            If ``scale`` , color by scale the glyphs.
+            If ``scalar`` , color by scalar the glyphs.
+            If ``vector`` , color by vector the glyphs.
 
             .. versionadded:: 0.44
 
