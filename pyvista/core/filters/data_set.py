@@ -2264,9 +2264,11 @@ class DataSetFilters:
             when scalars values are provided.
 
         color_mode : str, optional, default: ``scale``
-            If ``scale`` color by scale the glyphs.
-            If ``scalar`` color by scalar the glyphs.
-            If ``vector`` color by vector the glyphs.
+            If ``scale`` , color by scale the glyphs.
+            If ``scalar`` , color by scalar the glyphs.
+            If ``vector`` , color by vector the glyphs.
+
+            .. versionadded:: 0.44
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2428,7 +2430,7 @@ class DataSetFilters:
         elif color_mode == 'vector':
             alg.SetColorModeToColorByVector()
         else:
-            raise ValueError(f"Invalid color_mode '{color_mode}'")
+            raise ValueError(f"Invalid color mode '{color_mode}'")
 
         if rng is not None:
             alg.SetRange(rng)
