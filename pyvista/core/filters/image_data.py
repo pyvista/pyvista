@@ -949,16 +949,17 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(
         self,
-        n_labels: Optional[int] = None,
-        smoothing: bool = False,
-        smoothing_num_iterations: int = 50,
+        *,
+        select_inputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
+        select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
+        internal_boundaries: bool = True,
+        image_boundaries: bool = False,
+        output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
+        smoothing: bool = True,
+        smoothing_num_iterations: int = 16,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: Optional[float] = None,
         smoothing_constraint_scale: float = 1.0,
-        output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
-        output_style: Optional[Literal['default', 'boundary', 'selected']] = None,
-        select_inputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
-        select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
         scalars: Optional[str] = None,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
@@ -984,33 +985,25 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        n_labels : int, optional
-            Number of labels to be extracted (all are extracted if None is given).
+        select_inputs : int | list[int], default: None
+            Specify label ids to include as inputs to the filter. Labels that are
+            not selected are removed from the input *before* generating surfaces.
+            By default, all label ids are used.
 
-        smoothing : bool, default: False
-            Apply smoothing to the meshes.
+        select_outputs : int | list[int], default: None
+            Specify label ids to include in the output of the filter. Labels that are
+            not selected are removed from the output *after* generating surfaces.
+            By default, all label ids are used.
 
-        smoothing_num_iterations : int, default: 16
-            Number of smoothing iterations.
+        internal_boundaries : bool, default: True
+            If `True``, polygons are generated which define the boundaries between
+            adjacent foreground labels. Otherwise, polygons are only generated at
+            the boundaries between labels and the background.
 
-        smoothing_relaxation_factor : float, default: 0.5
-            Relaxation factor of the smoothing.
-
-        smoothing_constraint_distance : float, default: None
-            Constraint distance of the smoothing. Specify the maximum distance
-            each point is allowed to move (in any direction) during smoothing.
-            Set either this parameter or ``smoothing_constraint_scale`` to
-            control the constraint distance, but not both. By default, the
-            constraint distance is computed dynamically from the image spacing.
-
-        smoothing_constraint_scale : float, default: 1.0
-            Apply a scale factor when the constraint distance is coe. By default, each
-            point is constrained to move by some maximum value during smoothing.
-            constraint distance is computed as
-            sphere which is placed around each point to restrict its motion. By
-            default, it is calculated as ``(norm(spacing) / 2) * scale``, where
-            norm is the ``L2`` norm, ``spacing`` is the image spacing, and scale
-            is the ``smoothing_constraint_scale`` parameter.
+        image_boundaries : bool, default: False
+            If ``True``, polygons are generated to "close" the surface at the edges
+            of the image. Otherwise, no polygons are generated at the edges, and
+            the generated surfaces will therefore be "open" or "clipped at the edges.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``.
@@ -1023,26 +1016,31 @@ class ImageDataFilters(DataSetFilters):
                 If smoothing is enabled and the type is ``'quads'``, the resulting
                 quads may not be planar.
 
-        output_style : str, default: None
-            Style of the output mesh. Must be one of:
+        smoothing : bool, default: True
+            Apply smoothing to the meshes.
 
-            - ``'default'``: the filter produces a mesh with both interior and
-              exterior polygons. A surface is generated for all input labels.
-            - ``'boundary'``: only polygons on the border with the background are
-              produced (without interior polygons).
-            - ``'selected'``: the filter produces a surface for the specified labels
-              only.
+        smoothing_num_iterations : int, default: 16
+            Number of smoothing iterations.
 
-            By default, the ``'default'`` style is used.
+        smoothing_relaxation_factor : float, default: 0.5
+            Relaxation factor of the smoothing.
 
-        select_inputs : int | list[int], default: None
-            Specify a list of label numbers to include as inputs when generating
-            surfaces. Labels that are not selected are treated as though they
-            are background. By default, all inputs are selected.
+        smoothing_constraint_distance : float, default: None
+            Constraint distance of the smoothing. Specify the maximum distance
+            each point is allowed to move (in any direction) during smoothing.
+            This distance may be scaled with ``smoothing_constraint_scale``.
+            By default, the constraint distance is computed dynamically from
+            the image spacing as
 
-        select_outputs : int | list[int], default: None
-            Specify a list of label numbers to generate surfaces for. Setting this
-            parameter will implicitly set ``output_style`` to ``'selected'``.
+                ``(norm(spacing) / 2) * scale``
+
+            where norm is the Euclidean norm, ``spacing`` is the image spacing,
+            and ``scale`` scaling parameter. For isotropic images with a spacing
+            of one, this constrains the distance to half the spacing.
+
+        smoothing_constraint_scale : float, default: 1.0
+            Relative scaling factor applied to ``smoothing_constraint_distance``.
+            See that parameter for more details.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1122,8 +1120,6 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetInputData(self)
-        if n_labels is not None:
-            alg.GenerateLabels(n_labels, 1, n_labels)
 
         if output_mesh_type is None:
             alg.SetOutputMeshTypeToDefault()
@@ -1136,32 +1132,36 @@ class ImageDataFilters(DataSetFilters):
                 f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
             )
 
+        output_ids: Optional[collections.abc.Sequence[float]] = None
         if select_outputs:
-            if output_style not in (None, 'selected'):
-                raise ValueError(
-                    f'output_style must be "selected" when select_outputs is set.\nGot {output_style} instead.',
-                )
-            output_style = 'selected'
-
-        if output_style == 'selected':
-            if select_outputs is None:
-                raise ValueError(
-                    'Param "select_outputs" must be specified when output_style is "selected"',
-                )
             alg.SetOutputStyleToSelected()
-            # alg.InitializeSelectedLabelsList()
-            label_nums = [select_outputs] if isinstance(select_outputs, int) else select_outputs
-            [alg.AddSelectedLabel(float(num)) for num in label_nums]
-        else:
-            if output_style in (None, 'default'):
-                alg.SetOutputStyleToDefault()
-            elif output_style == 'boundary':
-                alg.SetOutputStyleToBoundary()
-            else:
-                raise ValueError(
-                    f'Invalid output style "{output_style}", use "default", "boundary", or "selected".',
-                )
-            [alg.SetLabel(i, val) for i, val in enumerate(np.unique(self.active_scalars))]  # type: ignore[attr-defined]
+            output_ids = (
+                [select_outputs]
+                if isinstance(select_outputs, (int, np.integer))
+                else select_outputs
+            )
+            [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids]
+
+        if internal_boundaries:
+            # WARNING: Setting either of:
+            #  - SetOutputStyleToSelected()
+            #  - SetOutputStyleToDefault()
+            # alone does not produce the output you expect!
+            #
+            # Contrary to what might be expected from the vtkSurfaceNets docs, setting
+            # SetOutputStyleToDefault() by itself does not produce meshes with interior faces
+            # at the boundaries between foreground regions.
+            #
+            # Instead, The `SetLabels` must be called to include interior faces in the output
+            # (i.e. to include region boundaries).
+            #
+            # As such, it's possible to 'toggle' interior faces on/off (and thus mimic the behaviour of
+            # SetOutputStyleToBoundary()) without actually needing to use SetOutputStyleToBoundary().
+            # This way, we can select outputs and omit/include interior faces independently with
+            # two parameters.
+            output_ids = output_ids if output_ids else np.unique(self.active_scalars).tolist()  # type: ignore[attr-defined]
+            [alg.SetLabel(i, val) for i, val in enumerate(output_ids)]
+
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
@@ -1182,7 +1182,7 @@ class ImageDataFilters(DataSetFilters):
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        _update_alg(alg, progress_bar, 'Generating Label Contours')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         output = cast(pyvista.PolyData, wrap(alg.GetOutput()))
@@ -1192,3 +1192,75 @@ class ImageDataFilters(DataSetFilters):
             else None
         )
         return output
+
+
+# def pad_image(
+#     image: pyvista.ImageData,
+#     pad_width: int | tuple[int, int, int] | tuple[int, int, int, int, int, int] = 1,
+#     pad_value: float = 0,
+#     pad_empty_dimensions: bool = False,
+# ) -> pyvista.ImageData:
+#     """Pad an image.
+#
+#     Parameters
+#     ----------
+#     pad_width : int | sequence[int], default : 1
+#         Specify the amount of padding to add. Specify:
+#
+#         - A single value to apply constant padding around the entire image.
+#         - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetrical
+#           padding to each axis independently.
+#         - Six values, one for each ``(-X,+X,-Y,+Y,-Z,+Z)`` direction, to apply
+#           padding to each direction independently.
+#
+#     pad_value : int | float, default : 0
+#         Value to use for padded elements.
+#
+#     pad_empty_dimensions : bool, default : False
+#         Control if empty dimensions should be padded. E.g. if ``False`` (the default),
+#         padding 2D data ensures the output remains 2D. Otherwise, all dimensions are padded,
+#         even if they are empty.
+#     """
+#
+#     # parse pad_width to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
+#     pw = (pad_width,) if isinstance(pad_width, int) else pad_width
+#     if not isinstance(pw, collections.abc.Sequence) and not all(
+#         isinstance(val, (int, np.integer)) for val in pw
+#     ):
+#         raise TypeError("Pad width must an integer or an iterable of integers.")
+#     length = len(pw)
+#     if length == 1:
+#         all_pad_widths = pw * 6
+#     elif length == 3:
+#         all_pad_widths = (pw[0], pw[0], pw[1], pw[1], pw[2], pw[2])
+#     elif length == 6:
+#         all_pad_widths = pw
+#     else:
+#         raise ValueError(f"Pad width must have 1, 3, or 6 values, got {length} instead.")
+#
+#     if pad_empty_dimensions is False:
+#         # set pad width to zero for dimensions which are empty (e.g. 2D cases)
+#         dims = image.dimensions
+#         dim_pairs = (dims[0], dims[0], dims[1], dims[1], dims[2], dims[2])
+#         is_not_empty = np.asarray(dim_pairs) != 0
+#         all_pad_widths = tuple(is_not_empty * np.asarray(all_pad_widths))
+#
+#     # define new extents after padding
+#     pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_widths
+#     ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = image.GetExtent()
+#
+#     padded_extents = (
+#         ext_xn - pad_xn,  # minX
+#         ext_xp + pad_xp,  # maxX
+#         ext_yn - pad_yn,  # minY
+#         ext_yp + pad_yp,  # maxY
+#         ext_zn - pad_zn,  # minZ
+#         ext_zp + pad_zp,
+#     )  # maxZ
+#
+#     constant_pad = _vtk.vtkImageConstantPad()
+#     constant_pad.SetInputData(image)
+#     constant_pad.SetConstant(pad_value)
+#     constant_pad.SetOutputWholeExtent(*padded_extents)
+#     constant_pad.Update()
+#     return constant_pad.GetOutput()
