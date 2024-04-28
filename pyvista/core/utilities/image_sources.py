@@ -14,6 +14,8 @@ from .helpers import wrap
 class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     """Create a binary image of an ellipsoid class.
 
+    .. versionadded:: 0.44.0
+
     Parameters
     ----------
     whole_extent : sequence[int]
