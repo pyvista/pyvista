@@ -1077,17 +1077,17 @@ class ImageDataFilters(DataSetFilters):
             See that parameter for more details.
 
         surface_labels : bool, default: True
-            Include a single-component cell data array ``'surface_labels'`` in
+            Include a single-component cell data array ``'SurfaceLabels'`` in
             the output. The array indicates the labels/regions of the polygons
             composing the output. If ``True``, this array will be set as the
             active scalars of the generated mesh.
 
             .. note::
-                This array is a simplified representation of the ``'boundary_labels'``
+                This array is a simplified representation of the ``'BoundaryLabels'``
                 array.
 
         boundary_labels : int, default: False
-            Include a two-component cell data array ``'boundary_labels'`` in
+            Include a two-component cell data array ``'BoundaryLabels'`` in
             the output. The array indicates the labels/regions on either side
             of the polygons composing the output.
 
