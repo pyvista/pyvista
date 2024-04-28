@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
