@@ -11,5 +11,6 @@ writing files.
    :maxdepth: 2
 
    geometric
+   image
    parametric
    utilities
