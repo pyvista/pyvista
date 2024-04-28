@@ -242,7 +242,7 @@ def _split_BoundaryLabels(mesh) -> Tuple[np.ndarray, np.ndarray]:
     return BoundaryLabels_background_boundary, BoundaryLabels_foreground_boundary
 
 
-def _classify_BoundaryLabels_cells(mesh) -> tuple[np.ndarray, np.ndarray]:
+def _classify_BoundaryLabels_cells(mesh) -> Tuple[np.ndarray, np.ndarray]:
     """Classify cells as boundary with background region or between two foreground regions."""
     background_value = 0
     array = mesh['BoundaryLabels']
