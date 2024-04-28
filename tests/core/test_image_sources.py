@@ -10,7 +10,7 @@ def test_image_ellip_soid_source():
     assert source.center == center
     assert source.radius == radius
     whole_extent = (-5, 5, -5, 5, -5, 5)
-    center = (1, 1, 1)
+    center = (1.0, 1.0, 1.0)
     radius = (3.0, 3.0, 3.0)
     source.whole_extent = whole_extent
     source.center = center
