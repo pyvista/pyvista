@@ -3,9 +3,6 @@ from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
 
-# First one tests the changing display extent without
-# changing the size of the display extent (so it
-# reuses a texture, but not a contiguous one)
 gsOne = pv.ImageEllipsoidSource()
 gsOne.SetWholeExtent(0, 999, 0, 999, 0, 0)
 gsOne.SetCenter(500, 500, 0)
