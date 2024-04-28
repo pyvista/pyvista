@@ -954,12 +954,15 @@ class ImageDataFilters(DataSetFilters):
         select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
         internal_boundaries: bool = True,
         image_boundaries: bool = False,
+        independent_regions: bool = True,
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
         smoothing: bool = True,
         smoothing_num_iterations: int = 16,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: Optional[float] = None,
         smoothing_constraint_scale: float = 1.0,
+        surface_labels: bool = True,
+        boundary_labels: bool = False,
         scalars: Optional[str] = None,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
@@ -990,20 +993,55 @@ class ImageDataFilters(DataSetFilters):
             not selected are removed from the input *before* generating surfaces.
             By default, all label ids are used.
 
+            .. note::
+                This parameter has a similar effect as ``select_outputs``.
+                ``select_outputs`` should generally be preferred, however, since
+                the generated meshes will be exactly the same regardless of the
+                selected labels.
+
         select_outputs : int | list[int], default: None
             Specify label ids to include in the output of the filter. Labels that are
             not selected are removed from the output *after* generating surfaces.
             By default, all label ids are used.
 
         internal_boundaries : bool, default: True
-            If `True``, polygons are generated which define the boundaries between
-            adjacent foreground labels. Otherwise, polygons are only generated at
-            the boundaries between labels and the background.
+            Generate polygons which define the boundaries between adjacent
+            foreground labels. If ``False``, polygons are only generated at the
+            boundaries between foreground labels and the background.
 
         image_boundaries : bool, default: False
-            If ``True``, polygons are generated to "close" the surface at the edges
-            of the image. Otherwise, no polygons are generated at the edges, and
-            the generated surfaces will therefore be "open" or "clipped at the edges.
+            Generate polygons to "close" the surface at the edges of the image.
+            If ``False``, no polygons are generated at the edges, and the generated
+            surfaces will therefore be "open" or "clipped at the image boundaries.
+
+        independent_regions : bool, default: True
+            Generate duplicate polygons at internal boundaries such that every labeled
+            surface at the output has independent boundary cells. This is useful for
+            generating complete, independent surface polygons for each labeled region.
+
+            If ``False``, internal boundary polygons between two regions are shared
+            by both regions. Has no effect when ``internal_boundaries`` is ``False``,
+            since all other boundaries (i.e. between foreground and background, or at
+            the edges of the image) do not share cells with other labeled regions.
+
+            Only the cells (quads or triangles) are duplicated, not the points. The
+            duplicated cells are inserted next the original cells (i.e. their cell
+            ids are off by one).
+
+            .. note::
+                In the returned ``'BoundaryLabels'`` array, duplicated cells have a
+                descending order. This is in contrast to the default values, where
+                foreground labels are sorted in ascending order. E.g. a cell on the
+                boundary between regions ``1`` and ``2`` has a default value of
+                ``[1, 2]`` in the output, whereas the duplicated cell has a value of
+                ``[2, 1]``.
+
+            .. note::
+                In the returned ``'SurfaceLabels'`` array, the original cell is
+                labeled as the first region, and the duplicated cell is labeled as
+                the second region. E.g. a single cell at the boundary between regions
+                ``1`` and ``2`` is duplicated such that there are two cells in the
+                output, one with a value of ``1`` and the other with value of ``2``.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``.
@@ -1032,15 +1070,26 @@ class ImageDataFilters(DataSetFilters):
             By default, the constraint distance is computed dynamically from
             the image spacing as
 
-                ``(norm(spacing) / 2) * scale``
-
-            where norm is the Euclidean norm, ``spacing`` is the image spacing,
-            and ``scale`` scaling parameter. For isotropic images with a spacing
-            of one, this constrains the distance to half the spacing.
+                ``distance = norm(spacing) * scale``.
 
         smoothing_constraint_scale : float, default: 1.0
             Relative scaling factor applied to ``smoothing_constraint_distance``.
             See that parameter for more details.
+
+        surface_labels : bool, default: True
+            Include a single-component cell data array ``'surface_labels'`` in
+            the output. The array indicates the labels/regions of the polygons
+            composing the output. If ``True``, this array will be set as the
+            active scalars of the generated mesh.
+
+            .. note::
+                This array is a simplified representation of the ``'boundary_labels'``
+                array.
+
+        boundary_labels : int, default: False
+            Include a two-component cell data array ``'boundary_labels'`` in
+            the output. The array indicates the labels/regions on either side
+            of the polygons composing the output.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars.
@@ -1074,12 +1123,13 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
+        BOUNDARY_LABELS = 'BoundaryLabels'
+        SURFACE_LABELS = 'SurfaceLabels'
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
-        alg = _vtk.vtkSurfaceNets3D()
         # Validate scalars
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
@@ -1092,6 +1142,8 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f'Can only process point data, given `scalars` are {field.name.lower()} data.',
                 )
+
+        alg = _vtk.vtkSurfaceNets3D()
         temp_scalars_name = '_PYVISTA_TEMP'
         if select_inputs:
             # Remove non-selected label ids from the input
@@ -1103,7 +1155,7 @@ class ImageDataFilters(DataSetFilters):
             for label in unique_labels:
                 select_inputs = (
                     [select_inputs]
-                    if isinstance(select_inputs, (int, np.integer))
+                    if isinstance(select_inputs, (int, np.integer, float, np.floating))
                     else select_inputs
                 )
                 if label not in select_inputs:
@@ -1133,41 +1185,52 @@ class ImageDataFilters(DataSetFilters):
             )
 
         output_ids: Optional[collections.abc.Sequence[float]] = None
-        if select_outputs:
+        if internal_boundaries or select_outputs:
+            # NOTE: We use 'select_outputs' and 'internal_boundaries' params to implement
+            #  similar functionality to `SetOutputStyle`.
+            #
+            # WARNING: Setting the output style to default or boundary does not really work as
+            # expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
+            # produce meshes with interior faces at the boundaries between foreground regions
+            # (even though this is what is suggested by the docs). Instead, simply calling
+            # `SetLabels` below will enable internal boundaries, regardless of the value of
+            # `OutputStyle`. This way, we can enable/disable internal boundaries and call
+            # `SetOutputStyleToSelected` independently.
+
             alg.SetOutputStyleToSelected()
-            output_ids = (
-                [select_outputs]
-                if isinstance(select_outputs, (int, np.integer))
-                else select_outputs
+            if select_outputs:
+                output_ids = (
+                    [select_outputs]
+                    if isinstance(select_outputs, (int, np.integer, float, np.floating))
+                    else select_outputs
+                )
+            else:
+                # Select all inputs as outputs
+                # These inputs should already be filtered by `select_inputs`
+                output_ids = output_ids if output_ids else np.unique(self.active_scalars).tolist()  # type: ignore[attr-defined]
+
+            # Add selected outputs. Do not add the background value.
+            output_ids_list = list(output_ids)
+            (
+                output_ids_list.remove(bg)
+                if (bg := alg.GetBackgroundLabel()) in output_ids_list
+                else None
             )
             [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids]
-
-        if internal_boundaries:
-            # WARNING: Setting either of:
-            #  - SetOutputStyleToSelected()
-            #  - SetOutputStyleToDefault()
-            # alone does not produce the output you expect
-            #
-            # Contrary to what might be expected from the vtkSurfaceNets docs, setting
-            # SetOutputStyleToDefault() by itself does not produce meshes with interior faces
-            # at the boundaries between foreground regions.
-            #
-            # Instead, The `SetLabels` must be called to include interior faces in the output
-            # (i.e. to include region boundaries).
-            #
-            # As such, it's possible to 'toggle' interior faces on/off (and thus mimic the behaviour of
-            # SetOutputStyleToBoundary()) without actually needing to use SetOutputStyleToBoundary().
-            # This way, we can select outputs and omit/include interior faces independently with
-            # two parameters.
-            output_ids = output_ids if output_ids else np.unique(self.active_scalars).tolist()  # type: ignore[attr-defined]
-            [alg.SetLabel(i, val) for i, val in enumerate(output_ids)]
+            if internal_boundaries:
+                mapping = {
+                    val: i + 1
+                    for i, val in enumerate(output_ids)
+                    if val != alg.GetBackgroundLabel()
+                }
+                [alg.SetLabel(val, key) for key, val in mapping.items()]
 
         if smoothing:
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
             alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
-            # Auto-constraints are On by default which only allows you to scale
-            # distance (with SetConstraintScale) but not set its value directly.
+            # Auto-constraints are On by default which only allows you to scale relative distance
+            # (with SetConstraintScale) but not set its value directly.
             # Here, we turn this off so that we can both set its value and/or scale it
             alg.AutomaticSmoothingConstraintsOff()
             # If distance not specified, emulate the auto-constraint calc from vtkSurfaceNets3D
@@ -1179,18 +1242,69 @@ class ImageDataFilters(DataSetFilters):
             alg.GetSmoother().SetConstraintDistance(distance * smoothing_constraint_scale)
         else:
             alg.SmoothingOff()
+
+        # Get output
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Generating Label Contours')
+        _update_alg(alg, progress_bar, 'Generating label contours')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        output = cast(pyvista.PolyData, wrap(alg.GetOutput()))
-        (
-            output.point_data.remove(temp_scalars_name)
-            if temp_scalars_name in output.point_data.keys()
+        output: pyvista.PolyData = _get_output(alg)
+
+        (  # Clear temp scalars
+            self.point_data.remove(temp_scalars_name)  # type: ignore[attr-defined]
+            if temp_scalars_name in self.point_data  # type: ignore[attr-defined]
             else None
         )
+
+        if internal_boundaries and independent_regions:
+
+            def duplicate_internal_boundary_cells():
+                background_value = alg.GetBackgroundLabel()
+                boundary_labels_array = output[BOUNDARY_LABELS]
+
+                # Duplicate if foreground label on both sides of cell
+                is_internal_boundary = np.all(boundary_labels_array != background_value, axis=1)
+                if np.any(is_internal_boundary):
+                    internal_ids = np.nonzero(is_internal_boundary)[0]
+                    duplicated_labels = boundary_labels_array[internal_ids]
+
+                    # Insert duplicated scalars. Swap order of 1st and 2nd components
+                    duplicated_labels = duplicated_labels[:, ::-1]
+                    inserted_array = np.insert(
+                        boundary_labels_array,
+                        obj=internal_ids,
+                        values=duplicated_labels,
+                        axis=0,
+                    )
+
+                    # Insert duplicated cells
+                    faces = output.regular_faces
+                    inserted_faces = np.insert(
+                        faces,
+                        obj=internal_ids,
+                        values=faces[internal_ids],
+                        axis=0,
+                    )
+
+                    # Update output
+                    output.regular_faces = inserted_faces
+                    output.cell_data[BOUNDARY_LABELS] = inserted_array
+
+            duplicate_internal_boundary_cells()
+            # With internal boundaries duplicated, each surface can be uniquely
+            # labeled using the first component of the boundary labels
+            output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
+
+        if surface_labels:
+            if SURFACE_LABELS not in output.cell_data:
+                output[SURFACE_LABELS] = np.linalg.norm(output[BOUNDARY_LABELS], axis=1)
+            output.set_active_scalars(SURFACE_LABELS)
+
+        if not boundary_labels:
+            output.cell_data.remove(BOUNDARY_LABELS)
+
         return output
 
 

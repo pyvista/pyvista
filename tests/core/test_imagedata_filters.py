@@ -145,14 +145,9 @@ def first_label_info():
         point_ids = (17,)
 
         # Cube sharing one side with other label
-        n_quads_background = 5
-        n_quads_foreground = 1
-        n_quads_total = n_quads_background + n_quads_foreground
-
-        # n_quads_default = n_quads_total
-        # n_quads_select_inputs = n_quads_default
-        # n_quads_select_outputs = n_quads_default
-        # n_quads_boundary = n_quads_background
+        n_quads_background_boundary = 5
+        n_quads_internal_boundary = 1
+        n_quads_total = n_quads_background_boundary + n_quads_internal_boundary
 
     return FirstLabel()
 
@@ -171,17 +166,12 @@ def second_label_info():
         point_ids = (18, 19)
 
         # 6 sides of cube * 2 points = 12 quad cells
-        # minus 2 internal faces of this label
+        # minus 2 internal faces of this label that don't exist
         # minus 1 image boundary face
         # minus 1 shared face with other label
-        n_quads_background = 8
-        n_quads_foreground = 1
-        n_quads_total = n_quads_background + n_quads_foreground
-
-        # n_quads_default = n_quads_total
-        # n_quads_select_inputs = n_quads_default
-        # n_quads_select_outputs = n_quads_default
-        # n_quads_boundary = n_quads_background
+        n_quads_background_boundary = 8
+        n_quads_internal_boundary = 1
+        n_quads_total = n_quads_background_boundary + n_quads_internal_boundary
 
     return SecondLabel()
 
@@ -277,6 +267,10 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     first_label_info=first_label_info(),
     second_label_info=second_label_info(),
 ):
+    FIXED_PARAMS = dict(
+        boundary_labels=True,
+        independent_regions=False,
+    )
     # Determine expected output
     if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
         has_correct_celltype = _is_triangles
@@ -291,8 +285,8 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         scalars=scalars,
         smoothing=smoothing,
         output_mesh_type=output_mesh_type,
+        **FIXED_PARAMS,
     )
-    print(mesh['BoundaryLabels'])
     assert 'BoundaryLabels' in mesh.cell_data
     assert has_correct_celltype(mesh)
     label_ids = _get_unique_ids_BoundaryLabels_with_background(mesh)
@@ -300,36 +294,36 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
 
     info = first_label_info
     background_contour, foreground_contour = _get_contours(mesh, info.label_id)
-    expected_n_cells_background = info.n_quads_background * multiplier
+    expected_n_cells_background = info.n_quads_background_boundary * multiplier
     assert background_contour.n_cells == expected_n_cells_background
-    expected_n_cells_foreground = info.n_quads_foreground * multiplier
+    expected_n_cells_foreground = info.n_quads_internal_boundary * multiplier
     assert foreground_contour.n_cells == expected_n_cells_foreground
+
+    if smoothing:
+        assert mesh.area < 0.01
+    else:
+        assert mesh.area == mesh.n_cells / multiplier
 
     info = second_label_info
     background_contour, foreground_contour = _get_contours(mesh, info.label_id)
-    expected_n_cells_background = info.n_quads_background * multiplier
+    expected_n_cells_background = info.n_quads_background_boundary * multiplier
     assert background_contour.n_cells == expected_n_cells_background
-    expected_n_cells_foreground = info.n_quads_foreground * multiplier
+    expected_n_cells_foreground = info.n_quads_internal_boundary * multiplier
     assert foreground_contour.n_cells == expected_n_cells_foreground
 
 
-@pytest.mark.parametrize(
-    'select_inputs',
-    [
-        None,
-        first_label_info().label_id,
-        second_label_info().label_id,
-        [first_label_info().label_id, second_label_info().label_id],
-    ],
-)
+selected_cases = [
+    None,
+    first_label_info().label_id,
+    second_label_info().label_id,
+    [first_label_info().label_id, second_label_info().label_id],
+]
+
+
+@pytest.mark.parametrize('select_inputs', selected_cases)
 @pytest.mark.parametrize(
     'select_outputs',
-    [
-        None,
-        first_label_info().label_id,
-        second_label_info().label_id,
-        [first_label_info().label_id, second_label_info().label_id],
-    ],
+    selected_cases,
 )
 @pytest.mark.parametrize('internal_boundaries', [True, False])
 @pytest.mark.parametrize('image_boundaries', [True, False])
@@ -341,12 +335,14 @@ def test_contour_labels_output_surface(
     internal_boundaries,
     image_boundaries,
 ):
+    FIXED_PARAMS = dict(boundary_labels=True, independent_regions=False)
     ALL_LABEL_IDS = _get_unique_ids(labeled_image['labels'], include_background_id=False)
 
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
         internal_boundaries=internal_boundaries,
+        **FIXED_PARAMS,
     )  # , image_boundary_faces=image_boundary_faces)
     assert 'BoundaryLabels' in mesh.cell_data
     actual_output_ids = _get_unique_ids_BoundaryLabels_with_background(mesh)
@@ -362,8 +358,10 @@ def test_contour_labels_output_surface(
 
     if internal_boundaries and len(select_inputs_iter) == 2:
         # The two labels share a boundary by default
-        # Boundary exists if not removed from input
+        # Boundary exists if no labels removed from input
         expected_shared_region_ids = ALL_LABEL_IDS
+        shared_cells = _split_BoundaryLabels(mesh)[1]
+        assert len(shared_cells) == 2
     else:
         expected_shared_region_ids = []
 
@@ -371,11 +369,84 @@ def test_contour_labels_output_surface(
     assert actual_shared_region_ids == expected_shared_region_ids
 
 
+def test_contour_labels_independent_regions_surface_labels(labeled_image):
+    # Disable smoothing so output has simple quad geometry
+    # Include boundary labels for testing
+    FIXED_PARAMS = dict(smoothing=False, boundary_labels=True)
+
+    # test internal boundary is shared
+    mesh = labeled_image.contour_labels(independent_regions=False, **FIXED_PARAMS)
+    assert mesh.active_scalars_name == 'SurfaceLabels'
+
+    actual_shared_boundary_labels = mesh['BoundaryLabels'].tolist()
+    expected_shared_boundary_labels = [
+        [2.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [2.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 5.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+    ]
+    assert actual_shared_boundary_labels == expected_shared_boundary_labels
+    assert np.shape(expected_shared_boundary_labels) == (14, 2)
+
+    actual_shared_surface_labels = mesh['SurfaceLabels'].tolist()
+    expected_shared_surface_labels = np.linalg.norm(
+        expected_shared_boundary_labels,
+        axis=1,
+    ).tolist()
+    assert actual_shared_surface_labels == expected_shared_surface_labels
+    assert np.shape(expected_shared_surface_labels) == (14,)
+
+    # test internal boundary is *not* shared
+    mesh = labeled_image.contour_labels(independent_regions=True, **FIXED_PARAMS)
+    assert mesh.active_scalars_name == 'SurfaceLabels'
+
+    actual_independent_boundary_labels = mesh['BoundaryLabels'].tolist()
+    expected_independent_boundary_labels = [
+        [2.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [2.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 0.0],
+        [2.0, 0.0],
+        [5.0, 2.0],
+        [2.0, 5.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+        [5.0, 0.0],
+    ]
+    assert actual_independent_boundary_labels == expected_independent_boundary_labels
+    assert np.shape(expected_independent_boundary_labels) == (15, 2)
+
+    actual_independent_surface_labels = mesh['SurfaceLabels'].tolist()
+    expected_independent_surface_labels = np.array(expected_independent_boundary_labels)[
+        :,
+        0,
+    ].tolist()
+    assert actual_independent_surface_labels == expected_independent_surface_labels
+    assert np.shape(expected_independent_surface_labels) == (15,)
+
+
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     match = 'Invalid output mesh type "invalid", use "quads" or "triangles"'
     with pytest.raises(ValueError, match=match):
         labeled_image.contour_labels(output_mesh_type='invalid')
+
+    # TODO: test float input vs int for select_input/output
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
