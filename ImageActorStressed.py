@@ -1,11 +1,8 @@
 #!/usr/bin/env python
-from vtkmodules.util.misc import vtkGetDataRoot
 from vtkmodules.vtkImagingCore import vtkImageShiftScale
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 
 import pyvista as pv
-
-VTK_DATA_ROOT = vtkGetDataRoot()
 
 # First one tests the changing display extent without
 # changing the size of the display extent (so it
