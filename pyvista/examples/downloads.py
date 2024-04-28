@@ -7697,7 +7697,7 @@ def download_headsq(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> mesh = examples.download_headsq()
-    >>> mesh.plot()
+    >>> mesh.plot(cpos="xy")
 
     .. seealso::
 
