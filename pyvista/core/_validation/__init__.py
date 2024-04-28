@@ -23,7 +23,7 @@ from .check import (  # noqa: F401
     check_type,
 )
 from .validate import (  # noqa: F401
-    validate_array as validate_array,
+    validate_array,
     validate_array3,
     validate_arrayN,
     validate_arrayN_unsigned,

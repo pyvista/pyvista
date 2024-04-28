@@ -12,12 +12,12 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
 import math
 from numbers import Number, Real
 import operator
 import reprlib
 from typing import (
+    TYPE_CHECKING,
     Any,
     Iterable,
     List,
@@ -35,13 +35,15 @@ import numpy as np
 import numpy.typing as npt
 
 from pyvista.core._typing_core import ArrayLike, NumberType, NumpyArray, VectorLike
-from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-from pyvista.core._typing_core._array_like import _NumberType
 from pyvista.core._validation._array_wrapper import (
     _ArrayLikeWrapper,
     _NestedSequenceWrapper,
     _SequenceWrapper,
 )
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+    from pyvista.core._typing_core._array_like import _NumberType
 
 _ScalarShape = Tuple[()]
 _ArrayShape = Tuple[int, ...]
@@ -328,7 +330,11 @@ def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array
 
 
 def check_integer(
-    array: _ArrayLikeOrScalar[NumberType], /, *, strict: bool = False, name: str = "Array",
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    *,
+    strict: bool = False,
+    name: str = "Array",
 ):
     """Check if an array has integer or integer-like float values.
 
@@ -751,7 +757,7 @@ def check_ndim(
 
 
 def check_number(
-    num: Union[float, int, complex, np.number, Number],  # type: ignore[type-arg]
+    num: Union[complex, np.number, Number],  # type: ignore[type-arg]
     /,
     *,
     definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',

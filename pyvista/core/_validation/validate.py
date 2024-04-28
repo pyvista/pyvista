@@ -15,12 +15,13 @@ A ``validate`` function typically:
 
 from __future__ import annotations
 
-from collections import namedtuple
 from itertools import product
 from typing import (
+    TYPE_CHECKING,
     Dict,
     List,
     Literal,
+    NamedTuple,
     Optional,
     Tuple,
     Type,
@@ -35,8 +36,6 @@ import numpy as np
 from typing_extensions import Unpack
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import MatrixLike, NumberType, NumpyArray, TransformLike, VectorLike
-from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 from pyvista.core._typing_core._array_like import (
     _FiniteNestedList,
     _FiniteNestedTuple,
@@ -58,11 +57,25 @@ from pyvista.core._validation.check import (
     check_subdtype,
 )
 
-_ValidationFlags = namedtuple(
-    '_ValidationFlags', ['same_shape', 'same_dtype', 'same_type', 'same_object'],
-)
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import (
+        MatrixLike,
+        NumberType,
+        NumpyArray,
+        TransformLike,
+        VectorLike,
+    )
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
-_FloatType = TypeVar('_FloatType', bound=float)
+
+class _ValidationFlags(NamedTuple):
+    same_shape: bool
+    same_dtype: bool
+    same_type: bool
+    same_object: bool
+
+
+_FloatType = TypeVar('_FloatType', bound=float)  # noqa: PYI018
 _ShapeLike = Union[int, Tuple[int, ...], Tuple[()]]
 
 _NumpyReturnType = Union[
@@ -616,10 +629,6 @@ def validate_array(  # numpydoc ignore=GL08
 ) -> NumpyArray[_NumberType]: ...
 
 
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core._array_like import NumpyArray
-
-
 def validate_array(
     array: _ArrayLikeOrScalar[NumberType],
     /,
@@ -1135,7 +1144,9 @@ def validate_axes(
     """
     if must_have_orientation is not None:
         check_contains(
-            ['right', 'left'], must_contain=must_have_orientation, name=f"{name} orientation",
+            ['right', 'left'],
+            must_contain=must_have_orientation,
+            name=f"{name} orientation",
         )
 
     # Validate number of args
@@ -1152,7 +1163,10 @@ def validate_axes(
     vector2: Optional[NumpyArray[float]] = None
     if num_args == 1:
         axes_array = validate_array(
-            axes[0], must_have_shape=[(2, 3), (3, 3)], name=name, dtype_out=np.floating,
+            axes[0],
+            must_have_shape=[(2, 3), (3, 3)],
+            name=name,
+            dtype_out=np.floating,
         )
         vector0 = axes_array[0]
         vector1 = axes_array[1]
@@ -1184,7 +1198,8 @@ def validate_axes(
 
     # Check non-parallel
     if np.isclose(np.dot(axes_norm[0], axes_norm[1]), 1) or np.isclose(
-        np.dot(axes_norm[0], axes_norm[2]), 1,
+        np.dot(axes_norm[0], axes_norm[2]),
+        1,
     ):
         raise ValueError(f"{name} cannot be parallel.")
 
@@ -1270,7 +1285,10 @@ def validate_transform4x4(transform: TransformLike, /, *, name="Transform") -> N
 
 
 def validate_transform3x3(
-    transform: Union[MatrixLike[float], _vtk.vtkMatrix3x3], /, *, name="Transform",
+    transform: Union[MatrixLike[float], _vtk.vtkMatrix3x3],
+    /,
+    *,
+    name="Transform",
 ) -> NumpyArray[float]:
     """Validate transform-like input as a 3x3 ndarray.
 
@@ -1303,7 +1321,10 @@ def validate_transform3x3(
     else:
         try:
             array = validate_array(
-                transform, must_have_shape=(3, 3), name=name, return_type="numpy",
+                transform,
+                must_have_shape=(3, 3),
+                name=name,
+                return_type="numpy",
             )
         except ValueError:
             raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')

@@ -1,13 +1,20 @@
 """Array casting functions."""
 
-from typing import Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._typing_core import ArrayLike, NumpyArray
-from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList, _FiniteNestedTuple
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import ArrayLike, NumpyArray
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+    from pyvista.core._typing_core._array_like import (
+        NumberType,
+        _FiniteNestedList,
+        _FiniteNestedTuple,
+    )
 
 
 def _cast_to_list(

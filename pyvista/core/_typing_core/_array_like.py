@@ -38,12 +38,12 @@ NumberType = TypeVar(
 NumberType.__doc__ = """Type variable for numeric data types."""
 
 # Create a copy of the typevar
-_NumberType = TypeVar(
+_NumberType = TypeVar(  # noqa: PYI018
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
-_PyNumberType = TypeVar('_PyNumberType', float, int, bool)
-_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)
+_PyNumberType = TypeVar('_PyNumberType', float, int, bool)  # noqa: PYI018
+_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)  # noqa: PYI018
 
 
 _T = TypeVar('_T')

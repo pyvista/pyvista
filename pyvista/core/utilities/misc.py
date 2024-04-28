@@ -10,12 +10,12 @@ import inspect
 import sys
 import threading
 import traceback
-from typing import Any, Dict, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Type, TypeVar, Union
 import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
