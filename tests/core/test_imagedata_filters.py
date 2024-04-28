@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import numpy as np
 import pytest
@@ -231,7 +231,7 @@ def _get_unique_ids_BoundaryLabels_with_foreground(mesh):
     return _get_unique_ids(BoundaryLabels_foreground_boundary)
 
 
-def _split_BoundaryLabels(mesh) -> tuple[np.ndarray, np.ndarray]:
+def _split_BoundaryLabels(mesh) -> Tuple[np.ndarray, np.ndarray]:
     # Split boundary labels array into two groups:
     #   foreground-foreground boundaries
     #   background-foreground boundaries
