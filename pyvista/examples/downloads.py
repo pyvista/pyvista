@@ -7680,6 +7680,8 @@ def download_headsq(load=True):  # pragma: no cover
 
     The headsq dataset is a 3D MRI scan of a human head.
 
+    .. versionadded:: 0.44.0
+
     Parameters
     ----------
     load : bool, default: True
