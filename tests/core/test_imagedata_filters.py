@@ -369,6 +369,7 @@ def test_contour_labels_output_surface(
     assert actual_shared_region_ids == expected_shared_region_ids
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_independent_regions_surface_labels(labeled_image):
     # Disable smoothing so output has simple quad geometry
     # Include boundary labels for testing
