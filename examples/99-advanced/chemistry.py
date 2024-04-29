@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vtkmodules.vtkImagingCore import vtkImageShiftScale
 
 import pyvista as pv
 from pyvista import examples
@@ -25,11 +24,10 @@ range_ = reader.reader.GetGridOutput().GetPointData().GetScalars().GetRange()
 min_ = range_[0]
 max_ = range_[1]
 
-reader_shift_scale = vtkImageShiftScale()
-reader_shift_scale.SetInputData(reader.reader.GetGridOutput())
-reader_shift_scale.SetShift(min_ * -1)
-reader_shift_scale.SetScale(255 / (max_ - min_))
-reader_shift_scale.SetOutputScalarTypeToUnsignedChar()
+reader_shift_scale = pv.wrap(reader.reader.GetGridOutput()).shift_scale(
+    min_ * -1,
+    255 / (max_ - min_),
+)
 
 bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
 
@@ -70,17 +68,9 @@ volume_property.SetColor(color_tf)
 volume_property.SetScalarOpacity(opacity_tf)
 volume_property.SetInterpolationTypeToLinear()
 
-# The mapper knows how to render the data
-volume_mapper = pv.FixedPointVolumeRayCastMapper()
-volume_mapper.SetInputConnection(reader_shift_scale.GetOutputPort())
 
-# The volume holds the mapper and the property and
-# can be used to position/orient the volume
-volume = pv.Volume()
-volume.SetMapper(volume_mapper)
+volume = pl.add_volume(reader_shift_scale)
 volume.SetProperty(volume_property)
-
-pl.renderer.AddVolume(volume)
 
 # pl.renderer AddActor contourActor
 pl.renderer.AddActor(bounds_actor)
