@@ -127,9 +127,11 @@ def test_contour_labeled_with_invalid_scalars():
         label_map.contour_labeled()
 
 
-def test_shft_scale():
+def test_shift_scale():
     image = pv.ImageEllipsoidSource()
     shift = 100
     scale = 2
     shifted_scaled = image.output.shift_scale(shift=shift, scale=scale)
-    assert np.all(shifted_scaled['ImageScalars'] == (image.output['ImageScalars'] + shift) * scale)
+    assert np.all(
+        shifted_scaled['ImageScalars'] == ((image.output['ImageScalars'] + shift) * scale),
+    )
