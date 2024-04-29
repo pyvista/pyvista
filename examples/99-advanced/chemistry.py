@@ -5,11 +5,6 @@ from pyvista import examples
 
 pl = pv.Plotter()
 
-pl.camera.enable_parallel_projection()
-pl.camera.up = (0, 1, 0)
-pl.camera.focal_point = (12, 10.5, 15)
-pl.camera.position = (-70, 15, 34)
-
 filename = examples.download_m4_total_density(load=False)
 reader = pv.get_reader(filename)
 reader.reader.SetHBScale(1.1)
@@ -89,5 +84,10 @@ pl.add_actor(bonds)
 pl.add_actor(atoms)
 pl.set_background('white')
 pl.renderer.ResetCamera()
+
+pl.camera.enable_parallel_projection()
+pl.camera.up = (0, 1, 0)
+pl.camera.focal_point = (12, 10.5, 15)
+pl.camera.position = (-70, 15, 34)
 
 pl.show()
