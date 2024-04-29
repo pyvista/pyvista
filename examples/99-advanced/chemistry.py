@@ -58,7 +58,6 @@ volume.SetProperty(volume_property)
 
 pl.renderer.AddActor(bounds_actor)
 
-######################################################################
 sphere = pv.SphereSource()
 sphere.SetCenter(0, 0, 0)
 sphere.SetRadius(1)
@@ -108,7 +107,6 @@ bonds.GetProperty().SetSpecularColor(1, 1, 1)
 bonds.GetProperty().SetColor(1, 1, 1)
 pl.renderer.AddActor(bonds)
 pl.renderer.AddActor(atoms)
-####################################################
 pl.renderer.SetBackground(1, 1, 1)
 pl.renderer.ResetCamera()
 
