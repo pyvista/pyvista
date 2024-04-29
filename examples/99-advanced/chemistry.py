@@ -15,6 +15,7 @@ grid = pv.wrap(reader.reader.GetGridOutput())
 
 bounds_actor = pv.Actor(mapper=pv.DataSetMapper(grid.outline()))
 bounds_actor.prop.color = "black"
+pl.add_actor(bounds_actor)
 
 # Create transfer mapping scalar value to opacity
 lut = pv.LookupTable()
@@ -36,17 +37,16 @@ volume.prop.SetColor(color_tf)
 volume.prop.SetScalarOpacity(opacity_tf)
 volume.prop.SetInterpolationTypeToLinear()
 
-pl.add_actor(bounds_actor)
-
-sphere = pv.SphereSource()
-sphere.SetCenter(0, 0, 0)
-sphere.SetRadius(1)
-sphere.SetThetaResolution(16)
-sphere.SetStartTheta(0)
-sphere.SetEndTheta(360)
-sphere.SetPhiResolution(16)
-sphere.SetStartPhi(0)
-sphere.SetEndPhi(180)
+sphere = pv.SphereSource(
+    center=(0, 0, 0),
+    radius=1,
+    theta_resolution=16,
+    start_theta=0,
+    end_theta=360,
+    phi_resolution=16,
+    start_phi=0,
+    end_phi=180,
+)
 
 dataset = pv.wrap(reader.reader.GetOutput())
 
@@ -64,6 +64,7 @@ atoms.prop.SetSpecular(0.1)
 atoms.prop.SetSpecularPower(100)
 atoms.prop.SetSpecularColor(1, 1, 1)
 atoms.prop.SetColor(1, 1, 1)
+pl.add_actor(atoms)
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
@@ -79,9 +80,8 @@ bonds.prop.SetSpecular(0.1)
 bonds.prop.SetSpecularPower(100)
 bonds.prop.SetSpecularColor(1, 1, 1)
 bonds.prop.SetColor(1, 1, 1)
-
 pl.add_actor(bonds)
-pl.add_actor(atoms)
+
 pl.set_background('white')
 pl.renderer.ResetCamera()
 
