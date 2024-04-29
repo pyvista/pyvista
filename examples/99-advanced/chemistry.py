@@ -21,9 +21,8 @@ bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
 
 bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
 
-bounds_actor = pv.Actor()
-bounds_actor.SetMapper(bounds_mapper)
-bounds_actor.prop.SetColor(0, 0, 0)
+bounds_actor = pv.Actor(mapper=bounds_mapper)
+bounds_actor.prop.color = "black"
 
 dataset = pv.wrap(reader.reader.GetGridOutput())
 
