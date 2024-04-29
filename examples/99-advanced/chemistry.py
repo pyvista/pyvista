@@ -18,14 +18,8 @@ reader.reader.Update()
 
 grid = pv.wrap(reader.reader.GetGridOutput())
 
-bounds_mapper = pv.DataSetMapper(grid.outline())
-
-bounds_actor = pv.Actor(mapper=bounds_mapper)
+bounds_actor = pv.Actor(mapper=pv.DataSetMapper(grid.outline()))
 bounds_actor.prop.color = "black"
-
-contour_mapper = pv.DataSetMapper(grid.contour(isosurfaces=[0, 0.05]))
-contour_mapper.SetScalarRange(0, 0.1)
-contour_mapper.GetLookupTable().SetHueRange(0.32, 0)
 
 # Create transfer mapping scalar value to opacity
 lut = pv.LookupTable()
@@ -65,8 +59,8 @@ sphere.SetStartPhi(0)
 sphere.SetEndPhi(180)
 
 dataset = pv.wrap(reader.reader.GetOutput())
-glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
+glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
 atoms = pv.Actor(mapper=pv.DataSetMapper(glyph))
 atoms.mapper.UseLookupTableScalarRangeOff()
@@ -83,12 +77,10 @@ atoms.prop.SetColor(1, 1, 1)
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
-bonds_mapper = pv.DataSetMapper(tube)
-bonds_mapper.UseLookupTableScalarRangeOff()
-bonds_mapper.SetScalarVisibility(1)
-bonds_mapper.SetScalarModeToDefault()
-
-bonds = pv.Actor(mapper=bonds_mapper)
+bonds = pv.Actor(mapper=pv.DataSetMapper(tube))
+bonds.mapper.UseLookupTableScalarRangeOff()
+bonds.mapper.SetScalarVisibility(1)
+bonds.mapper.SetScalarModeToDefault()
 bonds.prop.SetRepresentationToSurface()
 bonds.prop.SetInterpolationToGouraud()
 bonds.prop.SetAmbient(0.15)
