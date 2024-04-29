@@ -819,7 +819,7 @@ class ImageDataFilters(DataSetFilters):
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
-        .. warning::
+        .. deprecated:: 0.44
             This filter produces unexpected results and is deprecated.
             Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
             See https://github.com/pyvista/pyvista/issues/5981 for details.
@@ -831,12 +831,12 @@ class ImageDataFilters(DataSetFilters):
 
                 n_labels = range(N)
                 contour_labels(
-                    select_outputs=n_labels,  #   -replaces old 'n_labels' param
-                    internal_boundaries=False,  # -replaces old 'output_style' param
-                    smoothing=False,  #           -smoothing is now on by default
-                    output_mesh_type='quads',  #  -output type is no longer fixed to 'quads'
-                    surface_labels=False,  #      -new default 'SurfaceLabels' array
-                    boundary_labels=True,  #      -old 'BoundaryLabels' array is removed by default
+                    select_outputs=n_labels,  #    # replaces old 'n_labels' param
+                    internal_boundaries=False,  #  # replaces old 'output_style' param
+                    smoothing=False,  #            # smoothing is now on by default
+                    output_mesh_type='quads',  #   # output type is no longer fixed to 'quads'
+                    surface_labels=False,  #       # new default 'SurfaceLabels' array
+                    boundary_labels=True,  #       # old 'BoundaryLabels' array is removed by default
                 )
 
         SurfaceNets algorithm is used to extract contours preserving sharp
