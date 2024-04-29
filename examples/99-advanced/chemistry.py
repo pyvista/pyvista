@@ -36,15 +36,10 @@ color_tf.AddHSVPoint(0.0, 0.66, 1.0, 1.0)
 color_tf.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
 color_tf.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 
-# The property describes how the data will look
-volume_property = pv.VolumeProperty()
-volume_property.SetColor(color_tf)
-volume_property.SetScalarOpacity(opacity_tf)
-volume_property.SetInterpolationTypeToLinear()
-
-
 volume = pl.add_volume(grid)
-volume.SetProperty(volume_property)
+volume.prop.SetColor(color_tf)
+volume.prop.SetScalarOpacity(opacity_tf)
+volume.prop.SetInterpolationTypeToLinear()
 
 pl.add_actor(bounds_actor)
 
