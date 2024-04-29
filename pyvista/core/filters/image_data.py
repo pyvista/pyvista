@@ -1271,10 +1271,11 @@ class ImageDataFilters(DataSetFilters):
                     duplicated_labels = boundary_labels_array[internal_ids]
 
                     # Insert duplicated scalars. Swap order of 1st and 2nd components
+                    insertion_ids = internal_ids + 1
                     duplicated_labels = duplicated_labels[:, ::-1]
                     inserted_array = np.insert(
                         boundary_labels_array,
-                        obj=internal_ids,
+                        obj=insertion_ids,
                         values=duplicated_labels,
                         axis=0,
                     )
@@ -1283,7 +1284,7 @@ class ImageDataFilters(DataSetFilters):
                     faces = output.regular_faces
                     inserted_faces = np.insert(
                         faces,
-                        obj=internal_ids,
+                        obj=insertion_ids,
                         values=faces[internal_ids],
                         axis=0,
                     )
@@ -1293,12 +1294,15 @@ class ImageDataFilters(DataSetFilters):
                     output.cell_data[BOUNDARY_LABELS] = inserted_array
 
             duplicate_internal_boundary_cells()
-            # With internal boundaries duplicated, each surface can be uniquely
-            # labeled using the first component of the boundary labels
-            output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
+
+            if surface_labels:
+                # Since internal boundaries are duplicated, each surface can be uniquely
+                # labeled using the first component of the boundary labels
+                output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
 
         if surface_labels:
             if SURFACE_LABELS not in output.cell_data:
+                # Replicate what
                 output[SURFACE_LABELS] = np.linalg.norm(output[BOUNDARY_LABELS], axis=1)
             output.set_active_scalars(SURFACE_LABELS)
 

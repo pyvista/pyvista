@@ -375,7 +375,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
     # Include boundary labels for testing
     FIXED_PARAMS = dict(smoothing=False, boundary_labels=True)
 
-    # test internal boundary is shared
+    # Test internal boundary is shared
     mesh = labeled_image.contour_labels(independent_regions=False, **FIXED_PARAMS)
     assert mesh.active_scalars_name == 'SurfaceLabels'
 
@@ -390,7 +390,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
         [2.0, 0.0],
         [2.0, 0.0],
         [2.0, 0.0],
-        [2.0, 5.0],
+        [2.0, 5.0],  # <-- Single shared boundary cell here
         [5.0, 0.0],
         [5.0, 0.0],
         [5.0, 0.0],
@@ -399,6 +399,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
     assert actual_shared_boundary_labels == expected_shared_boundary_labels
     assert np.shape(expected_shared_boundary_labels) == (14, 2)
 
+    # Test surface labels is norm of boundary labels
     actual_shared_surface_labels = mesh['SurfaceLabels'].tolist()
     expected_shared_surface_labels = np.linalg.norm(
         expected_shared_boundary_labels,
@@ -407,7 +408,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
     assert actual_shared_surface_labels == expected_shared_surface_labels
     assert np.shape(expected_shared_surface_labels) == (14,)
 
-    # test internal boundary is *not* shared
+    # Test internal boundary is *not* shared
     mesh = labeled_image.contour_labels(independent_regions=True, **FIXED_PARAMS)
     assert mesh.active_scalars_name == 'SurfaceLabels'
 
@@ -422,8 +423,8 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
         [2.0, 0.0],
         [2.0, 0.0],
         [2.0, 0.0],
-        [5.0, 2.0],
-        [2.0, 5.0],
+        [2.0, 5.0],  # <- Original cell, ascending order
+        [5.0, 2.0],  # <- Test this cell is inserted, descending order
         [5.0, 0.0],
         [5.0, 0.0],
         [5.0, 0.0],
@@ -432,6 +433,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
     assert actual_independent_boundary_labels == expected_independent_boundary_labels
     assert np.shape(expected_independent_boundary_labels) == (15, 2)
 
+    # Test surface labels equals first component of boundary labels
     actual_independent_surface_labels = mesh['SurfaceLabels'].tolist()
     expected_independent_surface_labels = np.array(expected_independent_boundary_labels)[
         :,
@@ -439,6 +441,36 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
     ].tolist()
     assert actual_independent_surface_labels == expected_independent_surface_labels
     assert np.shape(expected_independent_surface_labels) == (15,)
+
+
+@pytest.mark.parametrize('surface_labels', [True, False])
+@pytest.mark.parametrize('boundary_labels', [True, False])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_output_arrays(labeled_image, surface_labels, boundary_labels):
+    SURFACE_LABELS = 'SurfaceLabels'
+    BOUNDARY_LABELS = 'BoundaryLabels'
+    assert labeled_image.array_names == ['labels']
+
+    mesh = labeled_image.contour_labels()
+    assert mesh.array_names == [SURFACE_LABELS]
+
+    mesh = labeled_image.contour_labels(
+        surface_labels=surface_labels,
+        boundary_labels=boundary_labels,
+    )
+    if surface_labels:
+        assert mesh.active_scalars_name == SURFACE_LABELS
+        assert SURFACE_LABELS in mesh.cell_data
+
+    if boundary_labels:
+        assert BOUNDARY_LABELS in mesh.cell_data
+
+    if surface_labels and boundary_labels:
+        assert mesh.array_names == [SURFACE_LABELS, BOUNDARY_LABELS]
+    if not surface_labels and not boundary_labels:
+        assert mesh.array_names == []
+
+    assert labeled_image.array_names == ['labels']
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
