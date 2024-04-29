@@ -914,64 +914,6 @@ class ImageDataFilters(DataSetFilters):
             "\nSee https://github.com/pyvista/pyvista/issues/5981 for details.",
         )
 
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
-
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
-
-        alg = _vtk.vtkSurfaceNets3D()
-        if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
-            if field != FieldAssociation.POINT:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
-        else:
-            field = self.get_array_association(scalars, preference='point')
-            if field != FieldAssociation.POINT:
-                raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
-                )
-        alg.SetInputArrayToProcess(
-            0,
-            0,
-            0,
-            field.value,
-            scalars,
-        )  # args: (idx, port, connection, field, name)
-        alg.SetInputData(self)
-        if n_labels is not None:
-            alg.GenerateLabels(n_labels, 1, n_labels)
-        if output_mesh_type == 'quads':
-            alg.SetOutputMeshTypeToQuads()
-        elif output_mesh_type == 'triangles':
-            alg.SetOutputMeshTypeToTriangles()
-        else:
-            raise ValueError(
-                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
-            )
-        if output_style == 'default':
-            alg.SetOutputStyleToDefault()
-        elif output_style == 'boundary':
-            alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':
-            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
-        else:
-            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
-        if smoothing:
-            alg.SmoothingOn()
-            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
-            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
-            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
-        else:
-            alg.SmoothingOff()
-        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
-        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
-        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
-        # Restore the original vtkLogger verbosity level
-        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
-
     def contour_labels(
         self,
         *,
