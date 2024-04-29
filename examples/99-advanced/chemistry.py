@@ -5,30 +5,18 @@ from pyvista import examples
 
 pl = pv.Plotter()
 
-camera = pv.Camera()
-camera.enable_parallel_projection()
-camera.up = (0, 1, 0)
-camera.focal_point = (12, 10.5, 15)
-camera.position = (-70, 15, 34)
-pl.renderer.SetActiveCamera(camera)
-# Create the reader for the data
-# vtkStructuredPointsReader reader
+pl.camera.enable_parallel_projection()
+pl.camera.up = (0, 1, 0)
+pl.camera.focal_point = (12, 10.5, 15)
+pl.camera.position = (-70, 15, 34)
+
 filename = examples.download_m4_total_density(load=False)
 reader = pv.get_reader(filename)
 reader.reader.SetHBScale(1.1)
 reader.reader.SetBScale(10)
 reader.reader.Update()
 
-range_ = reader.reader.GetGridOutput().GetPointData().GetScalars().GetRange()
-
-min_ = range_[0]
-max_ = range_[1]
-
-reader_shift_scale = pv.wrap(reader.reader.GetGridOutput()).shift_scale(
-    min_ * -1,
-    255 / (max_ - min_),
-)
-
+reader_shift_scale = pv.wrap(reader.reader.GetGridOutput())
 bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
 
 bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
