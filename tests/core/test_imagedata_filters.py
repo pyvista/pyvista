@@ -11,7 +11,7 @@ from pyvista import DeprecationError
 def test_contour_labeled_deprecated():
     match = 'This filter produces unexpected results and is deprecated.'
     with pytest.raises(DeprecationError, match=match):
-        pv.PolyData().contour_labeled()
+        pv.ImageData().contour_labeled()
 
 
 def first_label_info():
