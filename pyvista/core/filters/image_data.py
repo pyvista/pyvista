@@ -950,6 +950,8 @@ class ImageDataFilters(DataSetFilters):
     def shift_scale(self, shift: float = 0.0, scale: float = 1.0, progress_bar: bool = False):
         """Shift and scale the image data.
 
+        .. versionadded:: 0.44.0
+
         Parameters
         ----------
         shift : float, default: 0.0
