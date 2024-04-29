@@ -132,5 +132,4 @@ def test_shft_scale():
     shift = 100
     scale = 2
     shifted_scaled = image.output.shift_scale(shift=shift, scale=scale)
-    assert np.max(shifted_scaled['ImageScalars']) == shift * scale
-    assert np.min(shifted_scaled['ImageScalars']) == (shift - 1) * scale
+    assert np.all(shifted_scaled['ImageScalars'] == (image.output['ImageScalars'] + shift) * scale)

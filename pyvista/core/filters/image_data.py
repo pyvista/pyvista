@@ -981,7 +981,6 @@ class ImageDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkImageShiftScale()
         alg.SetInputData(self)
-        alg.SetOutputScalarTypeToUnsignedChar()
         alg.SetShift(shift)
         alg.SetScale(scale)
         alg.UpdateWholeExtent()
