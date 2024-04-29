@@ -31,10 +31,6 @@ contour_mapper = pv.DataSetMapper(dataset.contour(isosurfaces=[0, 0.05]))
 contour_mapper.SetScalarRange(0, 0.1)
 contour_mapper.GetLookupTable().SetHueRange(0.32, 0)
 
-contourActor = pv.Actor()
-contourActor.SetMapper(contour_mapper)
-contourActor.GetProperty().SetOpacity(0.5)
-
 # Create transfer mapping scalar value to opacity
 lut = pv.LookupTable()
 opacity_tf = lut.to_opacity_tf()
@@ -60,7 +56,6 @@ volume_property.SetInterpolationTypeToLinear()
 volume = pl.add_volume(reader_shift_scale)
 volume.SetProperty(volume_property)
 
-# pl.renderer AddActor contourActor
 pl.renderer.AddActor(bounds_actor)
 
 ######################################################################
