@@ -76,16 +76,16 @@ def labeled_image(first_label_info=first_label_info(), second_label_info=second_
 
 def _get_contours(mesh, label_id: int):
     # Remove any cells which do not have the label_id
-    is_background_boundary, is_foreground_boundary = _classify_BoundaryLabels_cells(mesh)
+    is_background_boundary, is_internal_boundary = _classify_BoundaryLabels_cells(mesh)
     array = mesh['BoundaryLabels']
     is_label_boundary = np.any(array == label_id, axis=1)
     background_contour = mesh.extract_cells(
         np.logical_and(is_background_boundary, is_label_boundary),
     )
-    foreground_contour = mesh.extract_cells(
-        np.logical_and(is_foreground_boundary, is_label_boundary),
+    internal_contour = mesh.extract_cells(
+        np.logical_and(is_internal_boundary, is_label_boundary),
     )
-    return background_contour, foreground_contour
+    return background_contour, internal_contour
 
 
 def _is_triangles(mesh):
@@ -96,41 +96,44 @@ def _is_quads(mesh):
     return all(cell.type == pv.CellType.QUAD for cell in mesh.cell)
 
 
-def _get_unique_ids_BoundaryLabels_with_background(mesh):
-    BoundaryLabels_background_boundary, _ = _split_BoundaryLabels(mesh)
-    return _get_unique_ids(BoundaryLabels_background_boundary, include_background_id=False)
-
-
 def _get_unique_ids(array, include_background_id=True):
+    """Get unique region values from the array. Optionally include a background value of 0."""
     ids = np.unique(array).tolist()
     if not include_background_id:
         ids.remove(0) if 0 in ids else None
     return ids
 
 
-def _get_unique_ids_BoundaryLabels_with_foreground(mesh):
-    _, BoundaryLabels_foreground_boundary = _split_BoundaryLabels(mesh)
-    return _get_unique_ids(BoundaryLabels_foreground_boundary)
+def _get_unique_ids_background_boundary(mesh):
+    """Return region ids from the BoundaryLabels array which share a boundary with the background."""
+    background_boundaries, _ = _split_BoundaryLabels(mesh)
+    return _get_unique_ids(background_boundaries, include_background_id=False)
+
+
+def _get_unique_ids_internal_boundary(mesh):
+    """Return region ids from the BoundaryLabels array which share internal boundaries."""
+    _, internal_boundaries = _split_BoundaryLabels(mesh)
+    return _get_unique_ids(internal_boundaries)
 
 
 def _split_BoundaryLabels(mesh) -> Tuple[np.ndarray, np.ndarray]:
     # Split boundary labels array into two groups:
-    #   foreground-foreground boundaries
+    #   foreground-foreground (internal) boundaries
     #   background-foreground boundaries
     array = mesh['BoundaryLabels']
-    is_background_boundary, is_foreground_boundary = _classify_BoundaryLabels_cells(mesh)
-    BoundaryLabels_background_boundary = array[is_background_boundary]
-    BoundaryLabels_foreground_boundary = array[is_foreground_boundary]
-    return BoundaryLabels_background_boundary, BoundaryLabels_foreground_boundary
+    is_background_boundary, is_internal_boundary = _classify_BoundaryLabels_cells(mesh)
+    background_boundaries = array[is_background_boundary]
+    internal_boundaries = array[is_internal_boundary]
+    return background_boundaries, internal_boundaries
 
 
 def _classify_BoundaryLabels_cells(mesh) -> Tuple[np.ndarray, np.ndarray]:
-    """Classify cells as boundary with background region or between two foreground regions."""
+    """Classify cells as boundary with background or internal boundary between foreground regions."""
     background_value = 0
     array = mesh['BoundaryLabels']
     is_background_boundary = np.any(array == background_value, axis=1)
-    is_foreground_boundary = np.invert(is_background_boundary)
-    return is_background_boundary, is_foreground_boundary
+    is_internal_boundary = np.invert(is_background_boundary)
+    return is_background_boundary, is_internal_boundary
 
 
 def _make_iterable(item):
@@ -171,15 +174,15 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     )
     assert 'BoundaryLabels' in mesh.cell_data
     assert has_correct_celltype(mesh)
-    label_ids = _get_unique_ids_BoundaryLabels_with_background(mesh)
+    label_ids = _get_unique_ids_background_boundary(mesh)
     assert label_ids == [first_label_info.label_id, second_label_info.label_id]
 
     info = first_label_info
-    background_contour, foreground_contour = _get_contours(mesh, info.label_id)
+    background_contour, internal_contour = _get_contours(mesh, info.label_id)
     expected_n_cells_background = info.n_quads_background_boundary * multiplier
     assert background_contour.n_cells == expected_n_cells_background
-    expected_n_cells_foreground = info.n_quads_internal_boundary * multiplier
-    assert foreground_contour.n_cells == expected_n_cells_foreground
+    expected_n_cells_internal = info.n_quads_internal_boundary * multiplier
+    assert internal_contour.n_cells == expected_n_cells_internal
 
     if smoothing:
         assert mesh.area < 0.01
@@ -187,14 +190,14 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         assert mesh.area == mesh.n_cells / multiplier
 
     info = second_label_info
-    background_contour, foreground_contour = _get_contours(mesh, info.label_id)
+    background_contour, internal_contour = _get_contours(mesh, info.label_id)
     expected_n_cells_background = info.n_quads_background_boundary * multiplier
     assert background_contour.n_cells == expected_n_cells_background
-    expected_n_cells_foreground = info.n_quads_internal_boundary * multiplier
-    assert foreground_contour.n_cells == expected_n_cells_foreground
+    expected_n_cells_internal = info.n_quads_internal_boundary * multiplier
+    assert internal_contour.n_cells == expected_n_cells_internal
 
 
-selected_cases = [
+select_cases = [
     None,
     first_label_info().label_id,
     second_label_info().label_id,
@@ -202,21 +205,24 @@ selected_cases = [
 ]
 
 
-@pytest.mark.parametrize('select_inputs', selected_cases)
+@pytest.mark.parametrize('select_inputs', select_cases)
 @pytest.mark.parametrize(
     'select_outputs',
-    selected_cases,
+    select_cases,
 )
 @pytest.mark.parametrize('internal_boundaries', [True, False])
 @pytest.mark.parametrize('image_boundaries', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_output_surface(
+def test_contour_labels_boundaries(
     labeled_image,
     select_inputs,
     select_outputs,
     internal_boundaries,
     image_boundaries,
 ):
+    # Test correct BoundaryLabels output
+    # Fix params boundary_labels=True and independent_regions=False for tests since we want
+    # to test the unmodified 'stock' BoundaryLabels array output from vtkSurfaceNets
     FIXED_PARAMS = dict(boundary_labels=True, independent_regions=False)
     ALL_LABEL_IDS = _get_unique_ids(labeled_image['labels'], include_background_id=False)
 
@@ -227,7 +233,7 @@ def test_contour_labels_output_surface(
         **FIXED_PARAMS,
     )  # , image_boundary_faces=image_boundary_faces)
     assert 'BoundaryLabels' in mesh.cell_data
-    actual_output_ids = _get_unique_ids_BoundaryLabels_with_background(mesh)
+    actual_output_ids = _get_unique_ids_background_boundary(mesh)
 
     # Make sure param values are iterable
     select_inputs_iter = _make_iterable(select_inputs if select_inputs else ALL_LABEL_IDS)
@@ -247,7 +253,7 @@ def test_contour_labels_output_surface(
     else:
         expected_shared_region_ids = []
 
-    actual_shared_region_ids = _get_unique_ids_BoundaryLabels_with_foreground(mesh)
+    actual_shared_region_ids = _get_unique_ids_internal_boundary(mesh)
     assert actual_shared_region_ids == expected_shared_region_ids
 
 
@@ -272,7 +278,7 @@ def test_contour_labels_independent_regions_surface_labels(labeled_image):
         [2.0, 0.0],
         [2.0, 0.0],
         [2.0, 0.0],
-        [2.0, 5.0],  # <-- Single shared boundary cell here
+        [2.0, 5.0],  # <-- Single shared internal boundary cell here
         [5.0, 0.0],
         [5.0, 0.0],
         [5.0, 0.0],
