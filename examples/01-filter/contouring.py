@@ -53,7 +53,7 @@ pl.show()
 ###############################################################################
 # Banded Contours
 # +++++++++++++++
-# Create banded contours for surface meshes using :func:`contour_banded() <pyvista.PolyDataFilters.contour_banded>`.
+# Create banded contours for surface meshes using :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
 ###############################################################################
@@ -81,9 +81,9 @@ pl.show()
 # +++++++++++++++++++++++++
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
-# using :func:`contour_labeled() <pyvista.ImageDataFilters.contour_labeled>`.
+# using :func:`~pyvista.ImageDataFilters.contour_labels`.
 # Requires VTK version 9.3
 if pv.vtk_version_info >= (9, 3):
     label_map = pv.examples.download_frog_tissue()
-    mesh = label_map.contour_labeled()
-    mesh.plot(cmap="glasbey_warm", cpos="yx", show_scalar_bar=False)
+    mesh = label_map.contour_labels()
+    mesh.plot(cmap="glasbey_warm", cpos="yx", show_scalar_bar=False, categorical=True)

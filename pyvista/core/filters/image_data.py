@@ -9,7 +9,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError, DeprecationError, MissingDataError
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
@@ -819,6 +819,26 @@ class ImageDataFilters(DataSetFilters):
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
+        .. warning::
+            This filter produces unexpected results and is deprecated.
+            Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
+            See https://github.com/pyvista/pyvista/issues/5981 for details.
+
+            To replicate the default behavior from this filter, call `contour_labels`
+            with the following arguments:
+
+            .. code::
+
+                n_labels = range(N)
+                contour_labels(
+                    select_outputs=n_labels,  #   -replaces old 'n_labels' param
+                    internal_boundaries=False,  # -replaces old 'output_style' param
+                    smoothing=False,  #           -smoothing is now on by default
+                    output_mesh_type='quads',  #  -output type is no longer fixed to 'quads'
+                    surface_labels=False,  #      -new default 'SurfaceLabels' array
+                    boundary_labels=True,  #      -old 'BoundaryLabels' array is removed by default
+                )
+
         SurfaceNets algorithm is used to extract contours preserving sharp
         boundaries for the selected labels from the label maps.
         Optionally, the boundaries can be smoothened to reduce the staircase
@@ -889,6 +909,11 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
+        raise DeprecationError(
+            "This filter produces unexpected results and is deprecated. Use `contour_labels` instead."
+            "\nSee https://github.com/pyvista/pyvista/issues/5981 for details.",
+        )
+
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -896,12 +921,12 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            field, scalars = self.active_scalars_info
             if field != FieldAssociation.POINT:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f'Can only process point data, given `scalars` are {field.name.lower()} data.',
