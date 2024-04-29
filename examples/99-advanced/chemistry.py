@@ -16,14 +16,12 @@ reader.reader.SetHBScale(1.1)
 reader.reader.SetBScale(10)
 reader.reader.Update()
 
-bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
+grid = pv.wrap(reader.reader.GetGridOutput())
 
-bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
+bounds_mapper = pv.DataSetMapper(grid.outline())
 
 bounds_actor = pv.Actor(mapper=bounds_mapper)
 bounds_actor.prop.color = "black"
-
-grid = pv.wrap(reader.reader.GetGridOutput())
 
 contour_mapper = pv.DataSetMapper(grid.contour(isosurfaces=[0, 0.05]))
 contour_mapper.SetScalarRange(0, 0.1)
