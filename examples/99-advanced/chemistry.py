@@ -24,9 +24,9 @@ bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
 bounds_actor = pv.Actor(mapper=bounds_mapper)
 bounds_actor.prop.color = "black"
 
-dataset = pv.wrap(reader.reader.GetGridOutput())
+grid = pv.wrap(reader.reader.GetGridOutput())
 
-contour_mapper = pv.DataSetMapper(dataset.contour(isosurfaces=[0, 0.05]))
+contour_mapper = pv.DataSetMapper(grid.contour(isosurfaces=[0, 0.05]))
 contour_mapper.SetScalarRange(0, 0.1)
 contour_mapper.GetLookupTable().SetHueRange(0.32, 0)
 
@@ -52,7 +52,7 @@ volume_property.SetScalarOpacity(opacity_tf)
 volume_property.SetInterpolationTypeToLinear()
 
 
-volume = pl.add_volume(reader_shift_scale)
+volume = pl.add_volume(grid)
 volume.SetProperty(volume_property)
 
 pl.renderer.AddActor(bounds_actor)
@@ -85,7 +85,6 @@ atoms.prop.SetSpecularPower(100)
 atoms.prop.SetSpecularColor(1, 1, 1)
 atoms.prop.SetColor(1, 1, 1)
 
-dataset = pv.wrap(reader.reader.GetOutput())
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
 bonds_mapper = pv.DataSetMapper(tube)
