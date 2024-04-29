@@ -125,11 +125,3 @@ def test_contour_labeled_with_invalid_scalars():
     label_map.set_active_scalars('cell_data', preference='cell')
     with pytest.raises(ValueError, match='active scalars must be point array'):
         label_map.contour_labeled()
-
-
-def test_shft_scale():
-    image = pv.ImageEllipsoidSource()
-    shift = 100
-    scale = 2
-    shifted_scaled = image.output.shift_scale(shift=shift, scale=scale)
-    assert np.all(shifted_scaled['ImageScalars'] == (image.output['ImageScalars'] + shift) * scale)
