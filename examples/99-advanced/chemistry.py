@@ -16,7 +16,6 @@ reader.reader.SetHBScale(1.1)
 reader.reader.SetBScale(10)
 reader.reader.Update()
 
-reader_shift_scale = pv.wrap(reader.reader.GetGridOutput())
 bounds = pv.outline_algorithm(reader.reader.GetGridOutput())
 
 bounds_mapper = pv.DataSetMapper(bounds.GetOutputPort())
@@ -55,7 +54,7 @@ volume_property.SetInterpolationTypeToLinear()
 volume = pl.add_volume(grid)
 volume.SetProperty(volume_property)
 
-pl.renderer.AddActor(bounds_actor)
+pl.add_actor(bounds_actor)
 
 sphere = pv.SphereSource()
 sphere.SetCenter(0, 0, 0)
@@ -101,9 +100,10 @@ bonds.prop.SetSpecular(0.1)
 bonds.prop.SetSpecularPower(100)
 bonds.prop.SetSpecularColor(1, 1, 1)
 bonds.prop.SetColor(1, 1, 1)
-pl.renderer.AddActor(bonds)
-pl.renderer.AddActor(atoms)
-pl.renderer.SetBackground(1, 1, 1)
+
+pl.add_actor(bonds)
+pl.add_actor(atoms)
+pl.set_background('white')
 pl.renderer.ResetCamera()
 
 pl.show()
