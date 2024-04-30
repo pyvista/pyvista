@@ -5295,7 +5295,7 @@ class DataSetFilters:
               component has the specified value(s), or
             - ``'any'``: extract points or cells where any component has the
               specified value(s), or
-            - ``'all'`` to extract points or cells where all components have the
+            - ``'all'``: extract points or cells where all components have the
               specified value(s).
 
         invert : bool, default: False
