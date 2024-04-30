@@ -241,7 +241,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
 
     >>> import pyvista as pv
     >>> source = pv.ImageNoiseSource(
-    ...     whole_extent=(0, 20, 0, 20, 0, 0),
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     minimum=0,
     ...     maximum=255,
     ... )
