@@ -2538,7 +2538,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
             if isinstance(k, collections.abc.Iterable):
-                raise RuntimeError('Fancy indexing is not supported.')
+                raise TypeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
                 step = 1

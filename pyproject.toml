@@ -377,6 +377,7 @@ extend-select = [
     "T10",
     "TCH",
     "TRIO",
+    "TRY004",
     "TRY201",
     "W",
     "YTT",

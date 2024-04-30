@@ -138,7 +138,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
-        raise ValueError('`member` must be a callable.')
+        raise TypeError('`member` must be a callable.')
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
 

@@ -3651,7 +3651,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         color = None
 
                 else:
-                    raise ValueError(
+                    raise TypeError(
                         f"The object passed to the legend ({type(args)}) is not valid.",
                     )
 

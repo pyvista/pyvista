@@ -163,7 +163,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f"{cls.__name__} has no value matching {value}")
+            raise TypeError(f"{cls.__name__} has no value matching {value}")
 
 
 @lru_cache(maxsize=None)
