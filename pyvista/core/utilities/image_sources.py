@@ -126,7 +126,94 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+@no_new_attr
+class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
+    """Create an image of the Mandelbrot set.
 
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    whole_extent : sequence[int]
+        The extent of the whole output image.
+
+    maxiter : int
+        The maximum number of iterations.
+
+    Examples
+    --------
+    Create an image of the Mandelbrot set.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageMandelbrotSource(
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
+    ...     maxiter=100,
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    def __init__(self, whole_extent=None, maxiter=None) -> None:
+        super().__init__()
+        if whole_extent is not None:
+            self.whole_extent = whole_extent
+        if maxiter is not None:
+            self.maxiter = maxiter
+
+    @property
+    def whole_extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+        """
+        return self.GetWholeExtent()
+
+    @whole_extent.setter
+    def whole_extent(self, whole_extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        whole_extent : sequence[int]
+            The extent of the whole output image.
+        """
+        self.SetWholeExtent(whole_extent)
+
+    @property
+    def maxiter(self) -> int:
+        """Get the maximum number of iterations.
+
+        Returns
+        -------
+        int
+            The maximum number of iterations.
+        """
+        return self.GetMaximumNumberOfIterations()
+
+    @maxiter.setter
+    def maxiter(self, maxiter: int) -> None:
+        """Set the maximum number of iterations.
+
+        Parameters
+        ----------
+        maxiter : int
+            The maximum number of iterations.
+        """
+        self.SetMaximumNumberOfIterations(maxiter)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
 
 @no_new_attr
 class ImageNoiseSource(_vtk.vtkImageNoiseSource):
