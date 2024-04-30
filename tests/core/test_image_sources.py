@@ -23,17 +23,17 @@ def test_image_ellip_soid_source():
 
 def test_image_mandelbrot_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
-    maximum_number_of_iterations = 10
+    maxiter = 10
     source = pv.ImageMandelbrotSource(
         whole_extent=whole_extent,
-        maximum_number_of_iterations=maximum_number_of_iterations,
+        maxiter=maxiter,
     )
     assert source.whole_extent == whole_extent
-    assert source.maximum_number_of_iterations == maximum_number_of_iterations
+    assert source.maxiter == maxiter
     whole_extent = (0, 200, 0, 200, 0, 0)
-    maximum_number_of_iterations = 100
+    maxiter = 100
     source.whole_extent = whole_extent
-    source.maximum_number_of_iterations = maximum_number_of_iterations
+    source.maxiter = maxiter
     assert source.whole_extent == whole_extent
-    assert source.maximum_number_of_iterations == maximum_number_of_iterations
+    assert source.maxiter == maxiter
     assert isinstance(source.output, pv.ImageData)

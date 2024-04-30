@@ -139,7 +139,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     whole_extent : sequence[int]
         The extent of the whole output image.
 
-    maximum_number_of_iterations : int
+    maxiter : int
         The maximum number of iterations.
 
     Examples
@@ -149,17 +149,17 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     >>> import pyvista as pv
     >>> source = pv.ImageMandelbrotSource(
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
-    ...     maximum_number_of_iterations=100,
+    ...     maxiter=100,
     ... )
     >>> source.output.plot(cpos="xy")
     """
 
-    def __init__(self, whole_extent=None, maximum_number_of_iterations=None) -> None:
+    def __init__(self, whole_extent=None, maxiter=None) -> None:
         super().__init__()
         if whole_extent is not None:
             self.whole_extent = whole_extent
-        if maximum_number_of_iterations is not None:
-            self.maximum_number_of_iterations = maximum_number_of_iterations
+        if maxiter is not None:
+            self.maxiter = maxiter
 
     @property
     def whole_extent(self) -> Sequence[int]:
@@ -184,7 +184,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         self.SetWholeExtent(whole_extent)
 
     @property
-    def maximum_number_of_iterations(self) -> int:
+    def maxiter(self) -> int:
         """Get the maximum number of iterations.
 
         Returns
@@ -194,16 +194,16 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         """
         return self.GetMaximumNumberOfIterations()
 
-    @maximum_number_of_iterations.setter
-    def maximum_number_of_iterations(self, maximum_number_of_iterations: int) -> None:
+    @maxiter.setter
+    def maxiter(self, maxiter: int) -> None:
         """Set the maximum number of iterations.
 
         Parameters
         ----------
-        maximum_number_of_iterations : int
+        maxiter : int
             The maximum number of iterations.
         """
-        self.SetMaximumNumberOfIterations(maximum_number_of_iterations)
+        self.SetMaximumNumberOfIterations(maxiter)
 
     @property
     def output(self):
