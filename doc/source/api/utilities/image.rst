@@ -12,3 +12,4 @@ PyVista includes a simple image classes to handle 2D image data.
 
    ImageEllipsoidSource
    ImageMandelbrotSource
+   ImageSinusoidSource

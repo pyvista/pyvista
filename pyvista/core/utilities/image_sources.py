@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import ClassVar, List, Sequence
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
@@ -204,6 +204,197 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
             The maximum number of iterations.
         """
         self.SetMaximumNumberOfIterations(maxiter)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
+    """Create an image of a sinusoid.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    whole_extent : sequence[int]
+        The extent of the whole output image.
+
+    direction : tuple
+        The direction vector which determines the sinusoidal orientation.
+
+    period : float
+        The period of the sinusoid in pixel.
+
+    phase : tuple
+        The phase of the sinusoid in pixel.
+
+    amplitude : float
+        The magnitude of the sinusoid.
+
+    Examples
+    --------
+    Create an image of a sinusoid.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageSinusoidSource(
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
+    ...     period=20.0,
+    ...     phase=0.0,
+    ...     amplitude=255,
+    ...     direction=(1.0, 0.0, 0.0),
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+
+    def __init__(
+        self,
+        whole_extent=None,
+        direction=None,
+        period=None,
+        phase=None,
+        amplitude=None,
+    ) -> None:
+        super().__init__()
+        if whole_extent is not None:
+            self.whole_extent = whole_extent
+        if direction is not None:
+            self.direction = direction
+        if period is not None:
+            self.period = period
+        if phase is not None:
+            self.phase = phase
+        if amplitude is not None:
+            self.amplitude = amplitude
+
+    @property
+    def whole_extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+        """
+        return self._whole_extent
+
+    @whole_extent.setter
+    def whole_extent(self, whole_extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        whole_extent : sequence[int]
+            The extent of the whole output image.
+        """
+        self._whole_extent = whole_extent
+        self.SetWholeExtent(
+            whole_extent[0],
+            whole_extent[1],
+            whole_extent[2],
+            whole_extent[3],
+            whole_extent[4],
+            whole_extent[5],
+        )
+
+    @property
+    def direction(self) -> Sequence[float]:
+        """Get the direction of the sinusoid.
+
+        Returns
+        -------
+        sequence[float]
+            The direction of the sinusoid.
+        """
+        return self.GetDirection()
+
+    @direction.setter
+    def direction(self, direction: Sequence[float]) -> None:
+        """Set the direction of the sinusoid.
+
+        Parameters
+        ----------
+        direction : sequence[float]
+            The direction of the sinusoid.
+        """
+        self.SetDirection(direction)
+
+    @property
+    def period(self) -> float:
+        """Get the period of the sinusoid.
+
+        Returns
+        -------
+        float
+            The period of the sinusoid.
+        """
+        return self.GetPeriod()
+
+    @period.setter
+    def period(self, period: float) -> None:
+        """Set the period of the sinusoid.
+
+        Parameters
+        ----------
+        period : float
+            The period of the sinusoid.
+        """
+        self.SetPeriod(period)
+
+    @property
+    def phase(self) -> Sequence[float]:
+        """Get the phase of the sinusoid.
+
+        Returns
+        -------
+        sequence[float]
+            The phase of the sinusoid.
+        """
+        return self.GetPhase()
+
+    @phase.setter
+    def phase(self, phase: Sequence[float]) -> None:
+        """Set the phase of the sinusoid.
+
+        Parameters
+        ----------
+        phase : sequence[float]
+            The phase of the sinusoid.
+        """
+        self.SetPhase(phase)
+
+    @property
+    def amplitude(self) -> float:
+        """Get the magnitude of the sinusoid.
+
+        Returns
+        -------
+        float
+            The magnitude of the sinusoid.
+        """
+        return self.GetAmplitude()
+
+    @amplitude.setter
+    def amplitude(self, amplitude: float) -> None:
+        """Set the magnitude of the sinusoid.
+
+        Parameters
+        ----------
+        amplitude : float
+            The magnitude of the sinusoid.
+        """
+        self.SetAmplitude(amplitude)
 
     @property
     def output(self):
