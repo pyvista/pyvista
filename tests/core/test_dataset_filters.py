@@ -2326,27 +2326,67 @@ def test_extract_values_open_intervals(grid4x4):
 
 @pytest.fixture()
 def labeled_data():
-    sphere = pv.Sphere(radius=0.25)
-    box = pv.Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
-    labeled = (sphere + box).extract_geometry().connectivity()
+    bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
+    small_box = pv.Box(bounds=bounds)
+    big_box = pv.Box(bounds=bounds * 2)
+    labeled = (small_box + big_box).extract_geometry().connectivity()
     assert isinstance(labeled, pv.PolyData)
     assert labeled.array_names == ['RegionId', 'RegionId']
-    assert box.volume > 0
-    assert sphere.volume > 0
-    return sphere, box, labeled
+    assert np.allclose(small_box.volume, 1**3)
+    assert np.allclose(big_box.volume, 2**3)
+    return small_box, big_box, labeled
 
 
-def test_extract_values_split(labeled_data):
-    sphere, box, labeled = labeled_data
-    multiblock = labeled.extract_values()
-    assert len(multiblock) == 2
-    assert isinstance(multiblock[0], pv.UnstructuredGrid)
-    assert isinstance(multiblock[1], pv.UnstructuredGrid)
+def add_component_to_labeled_data(labeled_data, offset):
+    """Add second component to scalars by duplicating first component and adding offset."""
+    small_box, big_box, labeled_data = labeled_data
+
+    point_data = labeled_data.point_data['RegionId']
+    point_data = np.vstack([point_data, point_data + offset]).T
+    labeled_data.point_data['RegionId'] = point_data
+
+    cell_data = labeled_data.cell_data['RegionId']
+    cell_data = np.vstack([cell_data, cell_data + offset]).T
+    labeled_data.cell_data['RegionId'] = cell_data
+
+    return small_box, big_box, labeled_data
+
+
+@pytest.mark.parametrize('component_offset', [0, -0.5])
+@pytest.mark.parametrize('component', [0, 1, 'any', 'all'])
+def test_extract_values_component_split(labeled_data, component_offset, component):
+    # Add second component to fixture for test
+    small_box, big_box, labeled_data = add_component_to_labeled_data(labeled_data, component_offset)
+
+    multiblock = labeled_data.extract_values(component=component)
+    assert isinstance(multiblock, pv.MultiBlock)
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
 
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
-    assert np.array_equal(multiblock[0].volume, sphere.volume)
-    assert np.array_equal(multiblock[1].volume, box.volume)
+
+    if component in [0, 1]:
+        assert len(multiblock) == 2
+        assert np.array_equal(multiblock[0].volume, small_box.volume)
+        assert np.array_equal(multiblock[1].volume, big_box.volume)
+    else:
+        assert len(multiblock) == len(np.unique(labeled_data['RegionId']))
+        if component_offset == 0:
+            # 1st and 2nd components identical
+            # expect 'all' and 'any to produce the same result
+            assert len(multiblock) == 2
+            assert multiblock[0].volume == small_box.volume
+            assert multiblock[1].volume == big_box.volume
+        else:  # component_offset == -0.5
+            assert len(multiblock) == 4
+            if component == 'any':
+                # surfaces are extracted
+                assert multiblock[0].volume, small_box.volume
+                assert multiblock[1].volume, small_box.volume
+                assert multiblock[2].volume, big_box.volume
+                assert multiblock[3].volume, big_box.volume
+            else:  # component =='all'
+                assert all(block.volume == 0 for block in multiblock)
 
 
 def test_extract_values_keep_original_ids(grid4x4):
@@ -2379,6 +2419,18 @@ def test_extract_values_raises(grid4x4):
     match = 'No point data or cell data found. Scalar data is required to use this filter.'
     with pytest.raises(ValueError, match=match):
         pv.PolyData().extract_values([0])
+
+    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component=1)
+
+    match = "Invalid component index '-1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component=-1)
+
+    match = "Invalid component 'foo'. Must be an integer, 'any', or 'all'."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component='foo')
 
 
 def test_slice_along_line_composite(composite):
