@@ -127,6 +127,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         self.Update()
         return wrap(self.GetOutput())
 
+
 @no_new_attr
 class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     """Create an image of the Mandelbrot set.
