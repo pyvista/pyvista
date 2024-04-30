@@ -5759,9 +5759,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
-        arrow = pyvista.ArrowSource()
+        arrow = _vtk.vtkArrowSource()
+        arrow.Update()
         glyph3D = _vtk.vtkGlyph3D()
-        glyph3D.SetSourceData(arrow.output)
+        glyph3D.SetSourceData(arrow.GetOutput())
         glyph3D.SetInputData(pdata)
         glyph3D.SetVectorModeToUseVector()
         glyph3D.Update()
