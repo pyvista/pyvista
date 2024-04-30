@@ -126,3 +126,93 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
+    """Create an image of the Mandelbrot set.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    whole_extent : sequence[int]
+        The extent of the whole output image.
+
+    maximum_number_of_iterations : int
+        The maximum number of iterations.
+
+    Examples
+    --------
+    Create an image of the Mandelbrot set.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageMandelbrotSource(
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
+    ...     maximum_number_of_iterations=100,
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    def __init__(self, whole_extent=None, maximum_number_of_iterations=None) -> None:
+        super().__init__()
+        if whole_extent is not None:
+            self.whole_extent = whole_extent
+        if maximum_number_of_iterations is not None:
+            self.maximum_number_of_iterations = maximum_number_of_iterations
+
+    @property
+    def whole_extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+        """
+        return self.GetWholeExtent()
+
+    @whole_extent.setter
+    def whole_extent(self, whole_extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        whole_extent : sequence[int]
+            The extent of the whole output image.
+        """
+        self.SetWholeExtent(whole_extent)
+
+    @property
+    def maximum_number_of_iterations(self) -> int:
+        """Get the maximum number of iterations.
+
+        Returns
+        -------
+        int
+            The maximum number of iterations.
+        """
+        return self.GetMaximumNumberOfIterations()
+
+    @maximum_number_of_iterations.setter
+    def maximum_number_of_iterations(self, maximum_number_of_iterations: int) -> None:
+        """Set the maximum number of iterations.
+
+        Parameters
+        ----------
+        maximum_number_of_iterations : int
+            The maximum number of iterations.
+        """
+        self.SetMaximumNumberOfIterations(maximum_number_of_iterations)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
