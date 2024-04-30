@@ -51,19 +51,12 @@ sphere = pv.SphereSource(
 
 glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
-atoms = pv.Actor(mapper=pv.DataSetMapper(glyph))
+atoms = pl.add_mesh(glyph, color="white", ambient=0.15, diffuse=0.85, specular=0.1)
 atoms.mapper.UseLookupTableScalarRangeOff()
 atoms.mapper.SetScalarVisibility(1)
 atoms.mapper.SetScalarModeToDefault()
 atoms.prop.SetRepresentationToSurface()
 atoms.prop.SetInterpolationToGouraud()
-atoms.prop.SetAmbient(0.15)
-atoms.prop.SetDiffuse(0.85)
-atoms.prop.SetSpecular(0.1)
-atoms.prop.SetSpecularPower(100)
-atoms.prop.SetSpecularColor(1, 1, 1)
-atoms.prop.SetColor(1, 1, 1)
-pl.add_actor(atoms)
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
