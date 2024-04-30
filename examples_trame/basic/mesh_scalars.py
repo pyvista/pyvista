@@ -37,8 +37,10 @@ pl.view_xy()
 
 @state.change("scalars")
 def set_scalars(scalars=mesh.active_scalars_name, **kwargs):
+    mesh.set_active_scalars(scalars)
     actor.mapper.array_name = scalars
     actor.mapper.scalar_range = mesh.get_data_range(scalars)
+    # TODO: update scalar bar title
     ctrl.view_update()
 
 
