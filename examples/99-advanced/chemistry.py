@@ -14,9 +14,7 @@ reader.reader.Update()
 grid = pv.wrap(reader.reader.GetGridOutput())
 dataset = pv.wrap(reader.reader.GetOutput())
 
-bounds_actor = pv.Actor(mapper=pv.DataSetMapper(grid.outline()))
-bounds_actor.prop.color = "black"
-pl.add_actor(bounds_actor)
+pl.add_mesh(grid.outline(), color="black")
 
 # Create transfer mapping scalar value to opacity
 lut = pv.LookupTable()
