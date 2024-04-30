@@ -2352,11 +2352,23 @@ def add_component_to_labeled_data(labeled_data, offset):
     return small_box, big_box, labeled_data
 
 
-@pytest.mark.parametrize('component_offset', [0, -0.5])
+@pytest.mark.parametrize('component_offset', [0, -0.5, None])
 @pytest.mark.parametrize('component', [0, 1, 'any', 'all'])
 def test_extract_values_component_split(labeled_data, component_offset, component):
-    # Add second component to fixture for test
-    small_box, big_box, labeled_data = add_component_to_labeled_data(labeled_data, component_offset)
+
+    if component_offset is None:
+        # Use single-component input
+        multicomponent_input = False
+        small_box, big_box, labeled_data = labeled_data
+        if component == 1:
+            pytest.xfail("2nd component specified with single component input.")
+    else:
+        # Add second component to fixture for test
+        multicomponent_input = True
+        small_box, big_box, labeled_data = add_component_to_labeled_data(
+            labeled_data,
+            component_offset,
+        )
 
     multiblock = labeled_data.extract_values(component=component)
     assert isinstance(multiblock, pv.MultiBlock)
@@ -2365,7 +2377,7 @@ def test_extract_values_component_split(labeled_data, component_offset, componen
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
 
-    if component in [0, 1]:
+    if component in [0, 1] or not multicomponent_input:
         assert len(multiblock) == 2
         assert np.array_equal(multiblock[0].volume, small_box.volume)
         assert np.array_equal(multiblock[1].volume, big_box.volume)

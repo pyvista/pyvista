@@ -1181,17 +1181,15 @@ class DataSetFilters:
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
-        component_mode : {'all', 'any', 'component'}, default: 'all'
+        component_mode : {'selected', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars. Must be one of:
-
-            - 'all' (default): requires all components to meet criteria.
-            - 'any': any component can satisfy the criteria.
-            - 'component': uses the value specified by the
-              ``component`` parameter.
+            multicomponent scalars.  'selected' (default)
+            uses only the ``component``.  'all' requires all
+            components to meet criteria.  'any' is when
+            any component satisfies the criteria.
 
         component : int, default: 0
-            When using ``component_mode='component'``, this sets
+            When using ``component_mode='selected'``, this sets
             which component to threshold on.
 
         method : str, default: 'upper'
@@ -5421,7 +5419,7 @@ class DataSetFilters:
                 raise ValueError(
                     f"Invalid component index '{component}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
                 )
-            array = array[:, component]
+            array = array[:, component] if num_components > 1 else array
             component_func = None
         elif isinstance(component, str) and component in ['any', 'all']:
             if array.ndim == 1:
