@@ -1181,15 +1181,17 @@ class DataSetFilters:
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
-        component_mode : {'selected', 'all', 'any'}
+        component_mode : {'all', 'any', 'component'}, default: 'all'
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars.  'selected' (default)
-            uses only the ``component``.  'all' requires all
-            components to meet criteria.  'any' is when
-            any component satisfies the criteria.
+            multicomponent scalars. Must be one of:
+
+            - 'all' (default): requires all components to meet criteria.
+            - 'any': any component can satisfy the criteria.
+            - 'component': uses the value specified by the
+              ``component`` parameter.
 
         component : int, default: 0
-            When using ``component_mode='selected'``, this sets
+            When using ``component_mode='component'``, this sets
             which component to threshold on.
 
         method : str, default: 'upper'
