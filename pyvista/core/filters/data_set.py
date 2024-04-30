@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections.abc
 import contextlib
+import functools
 from typing import TYPE_CHECKING, Iterable, Literal, Optional, Sequence, Union, cast
 import warnings
 
@@ -5217,6 +5218,7 @@ class DataSetFilters:
         *,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
+        component: Union[Literal['any', 'all'], int] = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
         include_cells: bool = True,
@@ -5283,6 +5285,18 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
+
+        component : int | 'any' | 'all', default: 'any'
+            Specify the scalar component(s) to use when the input scalar array is
+            two-dimensional. Has no effect when the scalars are one-dimensional.
+            Set this value to:
+
+            - an integer (0-indexed): extract points or cells where the specified
+              component has the specified value(s), or
+            - ``'any'``: extract points or cells where any component has the
+              specified value(s), or
+            - ``'all'`` to extract points or cells where all components have the
+              specified value(s).
 
         invert : bool, default: False
             Invert the extraction values. If ``True`` extract the points (with
@@ -5398,26 +5412,48 @@ class DataSetFilters:
         array = cast(np.ndarray, array)  # type: ignore[type-arg]
         association = get_array_association(self, scalars, preference=preference)
 
+        # Validate array component
+        if isinstance(component, (int, np.integer)):
+            num_components = 1 if array.ndim == 1 else array.shape[1]
+            if component > num_components - 1 or component < 0:
+                raise ValueError(
+                    f"Invalid component index '{component}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
+                )
+            array = array[:, component]
+            component_func = None
+        elif isinstance(component, str) and component in ['any', 'all']:
+            if array.ndim == 1:
+                component_func = None
+            elif component == 'any':
+                component_func = functools.partial(np.any, axis=1)
+            elif component == 'all':
+                component_func = functools.partial(np.all, axis=1)
+        else:
+            raise ValueError(
+                f"Invalid component '{component}'. Must be an integer, 'any', or 'all'.",
+            )
+
         # Validate input values
         if values is None:
             values = np.unique(array).tolist()
             split = True
-        if not isinstance(values, collections.abc.Iterable):
-            raise TypeError(f'Values must be iterable, got {type(values)}.')
-        values = list(values)
-        for i, val in enumerate(values):
-            if isinstance(val, (int, np.integer, float, np.floating)):
-                continue
-            elif (
-                len(seq := list(val)) == 2
-                and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
-                and seq[0] <= seq[1]
-            ):
-                values[i] = seq
-                continue
-            raise ValueError(
-                f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
-            )
+        else:
+            if not isinstance(values, collections.abc.Iterable):
+                raise TypeError(f'Values must be iterable, got {type(values)}.')
+            values = list(values)
+            for i, val in enumerate(values):
+                if isinstance(val, (int, np.integer, float, np.floating)):
+                    continue
+                elif (
+                    len(seq := list(val)) == 2
+                    and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
+                    and seq[0] <= seq[1]
+                ):
+                    values[i] = seq
+                    continue
+                raise ValueError(
+                    f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
+                )
 
         if split:
             return pyvista.MultiBlock(
@@ -5426,6 +5462,7 @@ class DataSetFilters:
                         [val],
                         scalars=scalars,
                         preference=preference,
+                        component=component,
                         invert=invert,
                         adjacent_cells=adjacent_cells,
                         include_cells=include_cells,
@@ -5454,6 +5491,7 @@ class DataSetFilters:
                     logic = np.ones_like(array, dtype=np.bool_)
             else:
                 logic = array == val
+            logic = component_func(logic) if component_func else logic  # type: ignore[assignment]
             id_mask[logic] = not invert
 
         # Extract cell or point ids
