@@ -16,7 +16,7 @@ from typing import NamedTuple
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
-from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
+from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource, vtkImageMandelbrotSource
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
