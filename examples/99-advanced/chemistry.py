@@ -12,6 +12,7 @@ reader.reader.SetBScale(10)
 reader.reader.Update()
 
 grid = pv.wrap(reader.reader.GetGridOutput())
+dataset = pv.wrap(reader.reader.GetOutput())
 
 bounds_actor = pv.Actor(mapper=pv.DataSetMapper(grid.outline()))
 bounds_actor.prop.color = "black"
@@ -48,8 +49,6 @@ sphere = pv.SphereSource(
     end_phi=180,
 )
 
-dataset = pv.wrap(reader.reader.GetOutput())
-
 glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
 atoms = pv.Actor(mapper=pv.DataSetMapper(glyph))
@@ -83,11 +82,8 @@ bonds.prop.SetColor(1, 1, 1)
 pl.add_actor(bonds)
 
 pl.set_background('white')
-pl.renderer.ResetCamera()
-
 pl.camera.enable_parallel_projection()
 pl.camera.up = (0, 1, 0)
 pl.camera.focal_point = (12, 10.5, 15)
 pl.camera.position = (-70, 15, 34)
-
 pl.show()
