@@ -58,12 +58,18 @@ atoms.prop.SetInterpolationToGouraud()
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
-bonds = pl.add_mesh(tube, color="white", ambient=0.15, diffuse=0.85, specular=0.1)
+bonds = pl.add_mesh(
+    tube,
+    color="white",
+    ambient=0.15,
+    diffuse=0.85,
+    specular=0.1,
+    style="surface",
+    interpolation='Gouraud',
+)
 bonds.mapper.UseLookupTableScalarRangeOff()
 bonds.mapper.SetScalarVisibility(1)
 bonds.mapper.SetScalarModeToDefault()
-bonds.prop.SetRepresentationToSurface()
-bonds.prop.SetInterpolationToGouraud()
 
 pl.set_background('white')
 pl.camera.enable_parallel_projection()
