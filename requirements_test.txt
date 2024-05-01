@@ -16,7 +16,7 @@ pydata-sphinx-theme<0.16.0
 pytest<8.3.0
 pytest-cov<5.1.0
 pytest-memprof<0.3.0
-pytest-xdist<3.6.0
+pytest-xdist<3.7.0
 pytest_pyvista==0.1.8
 sphinx<7.4.0
 sphinx-gallery<0.16.0
