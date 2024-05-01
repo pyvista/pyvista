@@ -11,5 +11,6 @@ PyVista includes a simple image classes to handle 2D image data.
    :toctree: _autosummary
 
    ImageEllipsoidSource
+   ImageGaussianSource
    ImageMandelbrotSource
    ImageNoiseSource
