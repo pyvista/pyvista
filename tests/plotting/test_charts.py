@@ -690,6 +690,7 @@ def test_barplot(chart_2d, bar_plot):
     assert plot.orientation == ori
     assert plot.label == l[0]
 
+    # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):  # noqa: PT011
         charts.BarPlot(chart_2d, x, y, c[0], ori, l)
     # charts.BarPlot(chart_2d, x, y, c, off, ori, l[0])  # This one is valid
@@ -732,6 +733,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert plot.color == c[0]
     assert plot.label == l[0]
 
+    # Test multi and single comp constructors with inconsistent arguments
     with pytest.raises(ValueError):  # noqa: PT011
         charts.StackPlot(chart_2d, x, ys, c[0], l)
     # charts.StackPlot(chart_2d, x, ys, c, l[0])  # This one is valid
