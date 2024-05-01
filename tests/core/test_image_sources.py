@@ -83,6 +83,8 @@ def test_image_gradient_source():
     assert source.maximum == maximum
     assert source.std == std
     assert isinstance(source.output, pv.ImageData)
+
+
 def test_image_sinusolid_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
     period = 20.0

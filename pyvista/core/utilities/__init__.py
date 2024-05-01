@@ -108,8 +108,6 @@ from .image_sources import (
     ImageGaussianSource,
     ImageMandelbrotSource,
     ImageNoiseSource,
-    ImageMandelbrotSource,
-    ImageNoiseSource,
     ImageSinusoidSource,
 )
 
