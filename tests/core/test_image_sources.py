@@ -21,6 +21,22 @@ def test_image_ellip_soid_source():
     assert isinstance(source.output, pv.ImageData)
 
 
+def test_image_noise_source():
+    whole_extent = (-10, 10, -10, 10, -10, 10)
+    source = pv.ImageNoiseSource(whole_extent=whole_extent, minimum=0, maximum=255)
+    assert source.whole_extent == whole_extent
+    whole_extent = (-5, 5, -5, 5, -5, 5)
+    minimum = 100
+    maximum = 200
+    source.whole_extent = whole_extent
+    source.minimum = minimum
+    source.maximum = maximum
+    assert source.whole_extent == whole_extent
+    assert source.minimum == minimum
+    assert source.maximum == maximum
+    assert isinstance(source.output, pv.ImageData)
+
+
 def test_image_mandelbrot_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
     maxiter = 10

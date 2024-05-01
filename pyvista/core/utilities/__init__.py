@@ -104,6 +104,7 @@ from .geometric_sources import (
     Text3DSource,
 )
 from .image_sources import ImageEllipsoidSource, ImageMandelbrotSource, ImageSinusoidSource
+from .image_sources import ImageEllipsoidSource, ImageMandelbrotSource, ImageNoiseSource
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
