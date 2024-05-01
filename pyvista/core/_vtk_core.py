@@ -20,6 +20,7 @@ from vtkmodules.vtkImagingSources import (
     vtkImageEllipsoidSource,
     vtkImageMandelbrotSource,
     vtkImageNoiseSource,
+    vtkImageSinusoidSource,
 )
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
