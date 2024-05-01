@@ -763,7 +763,7 @@ class Color:
             else:
                 raise TypeError(f"Unsupported color type: {type(color)}")
             self._name = color_names.get(self.hex_rgb, None)
-        except ValueError as e:
+        except TypeError as e:
             raise ValueError(
                 "\n"
                 f"\tInvalid color input: ({color})\n"
