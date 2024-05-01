@@ -337,7 +337,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         Returns
         -------
         float
-            The period of the sinusoid.
+            The period of the sinusoid in pixel.
         """
         return self.GetPeriod()
 
@@ -348,7 +348,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         Parameters
         ----------
         period : float
-            The period of the sinusoid.
+            The period of the sinusoid in pixel.
         """
         self.SetPeriod(period)
 
@@ -359,7 +359,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         Returns
         -------
         sequence[float]
-            The phase of the sinusoid.
+            The phase of the sinusoid in pixel.
         """
         return self.GetPhase()
 
@@ -370,7 +370,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         Parameters
         ----------
         phase : sequence[float]
-            The phase of the sinusoid.
+            The phase of the sinusoid in pixel.
         """
         self.SetPhase(phase)
 
