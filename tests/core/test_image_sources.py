@@ -77,6 +77,7 @@ def test_image_sinusolid_source():
     period = 200.0
     phase = 0.0
     amplitude = 100
+    direction = (0.0, 1.0, 0.0)
     source.whole_extent = whole_extent
     source.period = period
     source.phase = phase
