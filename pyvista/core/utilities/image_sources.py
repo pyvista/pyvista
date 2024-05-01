@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import ClassVar, List, Sequence
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
@@ -213,6 +213,127 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
         -------
         pyvista.ImageData
             The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageNoiseSource(_vtk.vtkImageNoiseSource):
+    """Create a binary image of an ellipsoid class.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    whole_extent : sequence[int]
+        The extent of the whole output image.
+
+    minimum : float
+        The minimum value for the generated noise.
+
+    maximum : float
+        The maximum value for the generated noise.
+
+    Examples
+    --------
+    Create an image of noise.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageNoiseSource(
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
+    ...     minimum=0,
+    ...     maximum=255,
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+
+    def __init__(self, whole_extent=None, minimum=None, maximum=None) -> None:
+        super().__init__()
+        if whole_extent is not None:
+            self.whole_extent = whole_extent
+        if minimum is not None:
+            self.minimum = minimum
+        if maximum is not None:
+            self.maximum = maximum
+
+    @property
+    def whole_extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+          The extent of the whole output image.
+        """
+        return self._whole_extent
+
+    @whole_extent.setter
+    def whole_extent(self, whole_extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        whole_extent : sequence[int]
+          The extent of the whole output image.
+        """
+        self._whole_extent = whole_extent
+        self.SetWholeExtent(whole_extent)
+
+    @property
+    def minimum(self) -> float:
+        """Get the minimum value for the generated noise.
+
+        Returns
+        -------
+        float
+          The minimum value for the generated noise.
+        """
+        return self.GetMinimum()
+
+    @minimum.setter
+    def minimum(self, minimum: float) -> None:
+        """Set the minimum value for the generated noise.
+
+        Parameters
+        ----------
+        minimum : float
+          The minimum value for the generated noise.
+        """
+        self.SetMinimum(minimum)
+
+    @property
+    def maximum(self) -> float:
+        """Get the maximum value for the generated noise.
+
+        Returns
+        -------
+        float
+          The maximum value for the generated noise.
+        """
+        return self.GetMaximum()
+
+    @maximum.setter
+    def maximum(self, maximum: float) -> None:
+        """Set the maximum value for the generated noise.
+
+        Parameters
+        ----------
+        maximum : float
+          The maximum value for the generated noise.
+        """
+        self.SetMaximum(maximum)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+          The output image.
         """
         self.Update()
         return wrap(self.GetOutput())
