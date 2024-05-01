@@ -59,7 +59,7 @@ def test_image_gradient_source():
     center = (0.0, 0.0, 0.0)
     whole_extent = (-10, 10, -10, 10, -10, 10)
     maximum = 255
-    std = 0.25
+    std = 10.0
     source = pv.ImageGaussianSource(
         center=center,
         whole_extent=whole_extent,
@@ -73,7 +73,7 @@ def test_image_gradient_source():
     center = (5.0, 0.0, 0.0)
     whole_extent = (-20, 20, -20, 20, -20, 20)
     maximum = 100
-    std = 0.50
+    std = 20.0
     source.center = center
     source.whole_extent = whole_extent
     source.maximum = maximum

@@ -368,7 +368,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     center=(100, 100, 0),
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maximum=255,
-    ...     std=0.25,
+    ...     std=100.0,
     ... )
     >>> source.output.plot(cpos="xy")
     """
