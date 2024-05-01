@@ -49,12 +49,18 @@ sphere = pv.SphereSource(
 
 glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, color_mode="scalar")
 
-atoms = pl.add_mesh(glyph, color="white", ambient=0.15, diffuse=0.85, specular=0.1)
+atoms = pl.add_mesh(
+    glyph,
+    color="white",
+    ambient=0.15,
+    diffuse=0.85,
+    specular=0.1,
+    style="surface",
+    interpolation='Gouraud',
+)
 atoms.mapper.UseLookupTableScalarRangeOff()
 atoms.mapper.SetScalarVisibility(1)
 atoms.mapper.SetScalarModeToDefault()
-atoms.prop.SetRepresentationToSurface()
-atoms.prop.SetInterpolationToGouraud()
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
