@@ -55,6 +55,36 @@ def test_image_mandelbrot_source():
     assert isinstance(source.output, pv.ImageData)
 
 
+def test_image_gradient_source():
+    center = (0.0, 0.0, 0.0)
+    whole_extent = (-10, 10, -10, 10, -10, 10)
+    maximum = 255
+    std = 10.0
+    source = pv.ImageGaussianSource(
+        center=center,
+        whole_extent=whole_extent,
+        maximum=maximum,
+        std=std,
+    )
+    assert source.center == center
+    assert source.whole_extent == whole_extent
+    assert source.maximum == maximum
+    assert source.std == std
+    center = (5.0, 0.0, 0.0)
+    whole_extent = (-20, 20, -20, 20, -20, 20)
+    maximum = 100
+    std = 20.0
+    source.center = center
+    source.whole_extent = whole_extent
+    source.maximum = maximum
+    source.std = std
+    assert source.center == center
+    assert source.whole_extent == whole_extent
+    assert source.maximum == maximum
+    assert source.std == std
+    assert isinstance(source.output, pv.ImageData)
+
+
 def test_image_sinusolid_source():
     whole_extent = (0, 20, 0, 20, 0, 0)
     period = 20.0
