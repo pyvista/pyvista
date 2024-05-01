@@ -338,6 +338,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         self.Update()
         return wrap(self.GetOutput())
 
+
 @no_new_attr
 class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     """Create an image of a sinusoid.
