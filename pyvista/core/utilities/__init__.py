@@ -105,6 +105,7 @@ from .geometric_sources import (
 )
 from .image_sources import (
     ImageEllipsoidSource,
+    ImageGaussianSource,
     ImageMandelbrotSource,
     ImageNoiseSource,
     ImageSinusoidSource,

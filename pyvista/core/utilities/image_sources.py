@@ -528,3 +528,159 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageGaussianSource(_vtk.vtkImageGaussianSource):
+    """Create a binary image with Gaussian pixel values.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float]
+        The center of the gaussian.
+
+    whole_extent : sequence[int]
+        The extent of the whole output image.
+
+    maximum : float
+        The maximum value of the gaussian.
+
+    std : sequence[float]
+        The standard deviation of the gaussian.
+
+    Examples
+    --------
+    Create an image of Gaussian pixel values.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageGaussianSource(
+    ...     center=(100, 100, 0),
+    ...     whole_extent=(0, 200, 0, 200, 0, 0),
+    ...     maximum=255,
+    ...     std=100.0,
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+
+    def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
+        super().__init__()
+        if center is not None:
+            self.center = center
+        if whole_extent is not None:
+            self.whole_extent = whole_extent
+        if maximum is not None:
+            self.maximum = maximum
+        if std is not None:
+            self.std = std
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center of the gaussian.
+
+        Returns
+        -------
+        sequence[float]
+          The center of the gaussian.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]) -> None:
+        """Set the center of the gaussian.
+
+        Parameters
+        ----------
+        center : sequence[float]
+          The center of the gaussian.
+        """
+        self.SetCenter(center)
+
+    @property
+    def whole_extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+          The extent of the whole output image.
+        """
+        return self._whole_extent
+
+    @whole_extent.setter
+    def whole_extent(self, whole_extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        whole_extent : sequence[int]
+          The extent of the whole output image.
+        """
+        self._whole_extent = whole_extent
+        self.SetWholeExtent(
+            whole_extent[0],
+            whole_extent[1],
+            whole_extent[2],
+            whole_extent[3],
+            whole_extent[4],
+            whole_extent[5],
+        )
+
+    @property
+    def maximum(self) -> float:
+        """Get the maximum value of the gaussian.
+
+        Returns
+        -------
+        float
+          The maximum value of the gaussian.
+        """
+        return self.GetMaximum()
+
+    @maximum.setter
+    def maximum(self, maximum: float) -> None:
+        """Set the maximum value of the gaussian.
+
+        Parameters
+        ----------
+        maximum : float
+          The maximum value of the gaussian.
+        """
+        self.SetMaximum(maximum)
+
+    @property
+    def std(self) -> float:
+        """Get the standard deviation of the gaussian.
+
+        Returns
+        -------
+        float
+          The standard deviation of the gaussian.
+        """
+        return self.GetStandardDeviation()
+
+    @std.setter
+    def std(self, std: float) -> None:
+        """Set the standard deviation of the gaussian.
+
+        Parameters
+        ----------
+        std : float
+          The standard deviation of the gaussian.
+        """
+        self.SetStandardDeviation(std)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+          The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
