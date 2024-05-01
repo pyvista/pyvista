@@ -474,11 +474,10 @@ def test_check_valid_vector():
 
 
 def test_cells_dict_utils():
-    # No pyvista object
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError, match="Expected a pyvista object"):
         cells.get_mixed_cells(None)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError, match="Expected a pyvista object"):
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
