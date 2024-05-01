@@ -108,6 +108,7 @@ from .image_sources import (
     ImageGaussianSource,
     ImageMandelbrotSource,
     ImageNoiseSource,
+    ImageSinusoidSource,
 )
 
 with contextlib.suppress(ImportError):
