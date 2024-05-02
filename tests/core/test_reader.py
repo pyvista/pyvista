@@ -1028,6 +1028,10 @@ def test_fluentcffreader():
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
     reader = pv.get_reader(filename)
