@@ -58,6 +58,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
+    +----------------+---------------------------------------------+
     | ``.dat``       | :class:`pyvista.TecplotReader`              |
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
