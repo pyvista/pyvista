@@ -387,4 +387,7 @@ extend-select = [
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
-"examples/**" = ["B015"]
+"examples/**" = [
+    # https://github.com/pyvista/pyvista/pull/6014
+    "B015",
+]
