@@ -394,7 +394,6 @@ from vtkmodules.vtkImagingCore import (
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,
-    vtkImageShiftScale,
     vtkImageThreshold,
     vtkRTAnalyticSource,
 )
