@@ -3,6 +3,7 @@ import itertools
 from pathlib import Path
 import platform
 import re
+from typing import Any, NamedTuple
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -2280,15 +2281,11 @@ def extract_values_values():
         range(16),
         list(range(16)),
         np.array(range(16)),
-        [[0, 15]],
-        [0, [1, 1], [2, 5], 6, [7, 15]],
     ]
     cell_values = [
         range(10),
         list(range(10)),
         np.array(range(10)),
-        [[0, 9]],
-        [0, [1, 1], [2, 5], 6, [7, 9]],
     ]
 
     return list(zip(point_values, cell_values))
@@ -2311,15 +2308,15 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
 
 
 def test_extract_values_open_intervals(grid4x4):
-    extracted = grid4x4.extract_values([[float('-inf'), float('inf')]])
+    extracted = grid4x4.extract_values(ranges=[float('-inf'), float('inf')])
     assert extracted.n_points == 16
     assert extracted.n_cells == 9
 
-    extracted = grid4x4.extract_values([[0, np.inf]])
+    extracted = grid4x4.extract_values(ranges=[0, np.inf])
     assert extracted.n_points == 16
     assert extracted.n_cells == 9
 
-    extracted = grid4x4.extract_values([[-np.inf, 16]])
+    extracted = grid4x4.extract_values(ranges=[-np.inf, 16])
     assert extracted.n_points == 16
     assert extracted.n_cells == 9
 
@@ -2355,7 +2352,6 @@ def add_component_to_labeled_data(labeled_data, offset):
 @pytest.mark.parametrize('component_offset', [0, -0.5, None])
 @pytest.mark.parametrize('component', [0, 1, 'any', 'all'])
 def test_extract_values_component_split(labeled_data, component_offset, component):
-
     if component_offset is None:
         # Use single-component input
         multicomponent_input = False
@@ -2370,7 +2366,7 @@ def test_extract_values_component_split(labeled_data, component_offset, componen
             component_offset,
         )
 
-    multiblock = labeled_data.extract_values(component=component)
+    multiblock = labeled_data.extract_values(component_mode=component)
     assert isinstance(multiblock, pv.MultiBlock)
     assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
 
@@ -2401,48 +2397,165 @@ def test_extract_values_component_split(labeled_data, component_offset, componen
                 assert all(block.volume == 0 for block in multiblock)
 
 
-def test_extract_values_keep_original_ids(grid4x4):
-    extracted = grid4x4.extract_values([grid4x4.get_data_range()])
-    assert extracted.point_data.keys() == ['labels', 'vtkOriginalPointIds']
-    assert extracted.cell_data.keys() == ['labels', 'vtkOriginalCellIds']
+WHITE = [0.0, 0.0, 0.0]
+BLACK = [1.0, 1.0, 1.0]
+RED = [1.0, 0.0, 0.0]
+GREEN = [0.0, 1.0, 0.0]
+BLUE = [0.0, 0.0, 1.0]
 
-    extracted = grid4x4.extract_values([grid4x4.get_data_range()], keep_original_ids=False)
-    assert extracted.point_data.keys() == ['labels']
-    assert extracted.cell_data.keys() == ['labels']
 
-    extracted = grid4x4.extract_values([0], keep_original_ids=True, invert=True)
-    assert extracted.point_data.keys() == []
-    assert extracted.cell_data.keys() == []
+@pytest.fixture()
+def point_cloud_colors():
+    # Define point cloud where the points and rgb scalars are the same
+    array = [WHITE, BLACK, RED, GREEN, BLUE]
+    point_cloud = pv.PointSet(array)
+    point_cloud['colors'] = array
+    return point_cloud
+
+
+class component_mode_test_case(NamedTuple):
+    values: Any
+    component_mode: Any
+    expected: Any
+
+
+component_mode_test_cases = [
+    component_mode_test_case(
+        values=0,
+        component_mode=0,
+        expected=[WHITE, GREEN, BLUE],
+    ),
+    component_mode_test_case(
+        values=0,
+        component_mode=1,
+        expected=[WHITE, RED, BLUE],
+    ),
+    component_mode_test_case(
+        values=0,
+        component_mode=2,
+        expected=[WHITE, RED, GREEN],
+    ),
+    component_mode_test_case(
+        values=0,
+        component_mode='any',
+        expected=[WHITE, RED, GREEN, BLUE],
+    ),
+    component_mode_test_case(
+        values=1,
+        component_mode='any',
+        expected=[BLACK, RED, GREEN, BLUE],
+    ),
+    component_mode_test_case(values=0, component_mode='all', expected=[WHITE]),
+    component_mode_test_case(values=1, component_mode='all', expected=[BLACK]),
+    component_mode_test_case(values=WHITE, component_mode='values', expected=[WHITE]),
+    component_mode_test_case(
+        values=[BLACK, RED],
+        component_mode='values',
+        expected=[BLACK, RED],
+    ),
+]
+
+
+@pytest.mark.parametrize('split', [True, False])
+@pytest.mark.parametrize(
+    ['values', 'component_mode', 'expected'],  # noqa: PT006
+    component_mode_test_cases,
+)
+def test_extract_values_component_mode(
+    point_cloud_colors,
+    values,
+    component_mode,
+    expected,
+    split,
+):
+    extracted = point_cloud_colors.extract_values(
+        values,
+        component_mode=component_mode,
+        split=split,
+    )
+    single_mesh = extracted.combine() if split else extracted
+    actual_points = single_mesh.points
+    actual_colors = single_mesh['colors']
+    assert np.array_equal(actual_points, expected)
+    assert np.array_equal(actual_colors, expected)
+
+    # # Test automatic split
+    # extracted = rgb_point_cloud.extract_values(component_mode=component)
+    # assert len(extracted) == 2
+    # assert extracted[0].points.tolist() == expected[0]
+    # assert extracted[1].points.tolist() == expected[1]
+    # assert extracted[2].points.tolist() == expected[2]
+
+
+@pytest.mark.parametrize('pass_point_ids', [True, False])
+@pytest.mark.parametrize('pass_cell_ids', [True, False])
+def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
+    POINT_IDS = 'vtkOriginalPointIds'
+    CELL_IDS = 'vtkOriginalCellIds'
+    extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
+    assert extracted.point_data.keys() == ['labels', POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(),
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert CELL_IDS in extracted.cell_data
+    if pass_point_ids:
+        assert POINT_IDS in extracted.point_data
+
+    extracted = grid4x4.extract_values(
+        0,
+        invert=True,
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert extracted.cell_data.keys() == []
+    if pass_point_ids:
+        assert extracted.cell_data.keys() == []
+
+
+def test_extract_values_empty():
+    assert pv.PolyData().extract_values()
 
 
 def test_extract_values_raises(grid4x4):
-    match = "Values must be iterable, got <class 'int'>."
+    match = 'Values must be numeric.'
     with pytest.raises(TypeError, match=match):
-        grid4x4.extract_values(0)
-
-    match = 'Invalid value a. Value must be number or a sequence of two numbers representing a [lower, upper] range.'
-    with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values('abc')
+
+    match = 'Values must be one-dimensional. Got 2d values.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values([[2, 3]])
 
     match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
     with pytest.raises(ValueError, match=match):
-        grid4x4.extract_values([0], scalars='invalid_scalars')
+        grid4x4.extract_values(0, scalars='invalid_scalars')
 
     match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    grid = grid4x4.copy()
+    grid.clear_data()
     with pytest.raises(ValueError, match=match):
-        pv.PolyData().extract_values([0])
+        grid.extract_values([0])
 
     match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid4x4.extract_values(component=1)
+        grid4x4.extract_values(component_mode=1)
 
     match = "Invalid component index '-1' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid4x4.extract_values(component=-1)
+        grid4x4.extract_values(component_mode=-1)
 
-    match = "Invalid component 'foo'. Must be an integer, 'any', or 'all'."
+    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'values'."
     with pytest.raises(ValueError, match=match):
-        grid4x4.extract_values(component='foo')
+        grid4x4.extract_values(component_mode='foo')
+
+    match = "Ranges cannot be extracted using component mode 'values'. Expected None, got [0, 1]."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1], component_mode='values')
 
 
 def test_slice_along_line_composite(composite):
