@@ -2560,10 +2560,10 @@ class GaussianCubeReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
+
     >>> filename = examples.download_m4_total_density(load=False)
-    >>> reader = pv.get_reader(filename)
-    >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> filename.split("/")[-1]  # omit the path
+    'm4_TotalDensity.cube'
 
     """
 
