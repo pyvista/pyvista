@@ -33,6 +33,7 @@ Reader Classes
     FacetReader
     FLUENTCFFReader
     FluentReader
+    GaussianCubeReader
     GIFReader
     GLTFReader
     HDFReader
