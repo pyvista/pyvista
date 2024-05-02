@@ -2572,6 +2572,56 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = "vtkIOChemistry"
     _vtk_class_name = "vtkGaussianCubeReader"
 
+    @property
+    def hb_scale(self) -> float:
+        """Get the scaling factor to compute bonds with hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        return self.reader.GetHBScale()
+
+    @hb_scale.setter
+    def hb_scale(self, hb_scale: float):
+        """Set the scaling factor to compute bonds with hydrogen atoms.
+
+        Parameters
+        ----------
+        hb_scale : float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        self.reader.SetHBScale(hb_scale)
+        self.reader.Update()
+
+    @property
+    def b_scale(self) -> float:
+        """Get the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        return self.reader.GetBScale()
+
+    @b_scale.setter
+    def b_scale(self, b_scale: float):
+        """Set the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Parameters
+        ----------
+        b_scale : float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        self.reader.SetBScale(b_scale)
+        self.reader.Update()
+
 
 CLASS_READERS = {
     # Standard dataset readers:

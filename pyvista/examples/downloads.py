@@ -7696,9 +7696,8 @@ def download_m4_total_density(load=True):  # pragma: no cover
 
     >>> filename = examples.download_m4_total_density(load=False)
     >>> reader = pv.get_reader(filename)
-    >>> reader.reader.SetHBScale(1.1)
-    >>> reader.reader.SetBScale(10)
-    >>> reader.reader.Update()
+    >>> reader.reader.hb_scale = 1.1
+    >>> reader.reader.b_scale = 10
 
     >>> grid = pv.wrap(reader.reader.GetGridOutput())
     >>> dataset = pv.wrap(reader.reader.GetOutput())
