@@ -297,7 +297,7 @@ class PartitionedDataSetCollection(
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'PartitionedDataSetCollection':  # noqa: D105
+    def __getitem__(self, index: slice) -> PartitionedDataSetCollection:  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
