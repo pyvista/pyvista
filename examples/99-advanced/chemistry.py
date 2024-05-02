@@ -31,10 +31,10 @@ color_tf.AddHSVPoint(0.0, 0.66, 1.0, 1.0)
 color_tf.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
 color_tf.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
 
-volume = pl.add_volume(grid)
-volume.prop.SetColor(color_tf)
-volume.prop.SetScalarOpacity(opacity_tf)
-volume.prop.SetInterpolationTypeToLinear()
+vol = pl.add_volume(grid)
+vol.prop.SetColor(color_tf)
+vol.prop.SetScalarOpacity(opacity_tf)
+vol.prop.SetInterpolationTypeToLinear()
 
 sphere = pv.SphereSource(
     center=(0, 0, 0),
