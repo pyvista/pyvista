@@ -59,8 +59,8 @@ atoms = pl.add_mesh(
     interpolation='Gouraud',
 )
 atoms.mapper.UseLookupTableScalarRangeOff()
-atoms.mapper.SetScalarVisibility(1)
-atoms.mapper.SetScalarModeToDefault()
+atoms.mapper.scalar_visibility = True
+atoms.mapper.scalar_map_mode = 'default'
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
@@ -74,8 +74,8 @@ bonds = pl.add_mesh(
     interpolation='Gouraud',
 )
 bonds.mapper.UseLookupTableScalarRangeOff()
-bonds.mapper.SetScalarVisibility(1)
-bonds.mapper.SetScalarModeToDefault()
+bonds.mapper.scalar_visibility = True
+atoms.mapper.scalar_map_mode = 'default'
 
 pl.set_background('white')
 pl.camera.enable_parallel_projection()
