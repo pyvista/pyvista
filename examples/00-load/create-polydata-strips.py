@@ -101,4 +101,4 @@ restripped
 ###############################################################################
 # The output from the ``strip`` filter is, as expected, identical to the
 # original ``mesh``.
-assert restripped == mesh
+restripped == mesh

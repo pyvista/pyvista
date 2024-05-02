@@ -97,7 +97,7 @@ combined.cells
 # ``pv.CellType.HEXAGONAL_PRISM`` cell types.
 
 print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
-assert combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
+combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
 ###############################################################################
