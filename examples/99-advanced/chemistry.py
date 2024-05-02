@@ -16,25 +16,7 @@ dataset = pv.wrap(reader.reader.GetOutput())
 
 pl.add_mesh(grid.outline(), color="black")
 
-# Create transfer mapping scalar value to opacity
-lut = pv.LookupTable()
-opacity_tf = lut.to_opacity_tf()
-opacity_tf.RemoveAllPoints()
-opacity_tf.AddPoint(0, 0.01)
-opacity_tf.AddPoint(255, 0.35)
-opacity_tf.ClampingOn()
-
-# Create transfer mapping scalar value to color
-color_tf = lut.to_color_tf()
-color_tf.RemoveAllPoints()
-color_tf.AddHSVPoint(0.0, 0.66, 1.0, 1.0)
-color_tf.AddHSVPoint(50.0, 0.33, 1.0, 1.0)
-color_tf.AddHSVPoint(100.0, 0.00, 1.0, 1.0)
-
 vol = pl.add_volume(grid)
-vol.prop.SetColor(color_tf)
-vol.prop.SetScalarOpacity(opacity_tf)
-vol.prop.SetInterpolationTypeToLinear()
 
 sphere = pv.SphereSource(
     center=(0, 0, 0),
@@ -51,16 +33,13 @@ glyph = dataset.glyph(orient=True, scale=True, factor=0.6, geom=sphere.output, c
 
 atoms = pl.add_mesh(
     glyph,
-    color="white",
+    color="red",
     ambient=0.15,
     diffuse=0.85,
     specular=0.1,
     style="surface",
     interpolation='Gouraud',
 )
-atoms.mapper.UseLookupTableScalarRangeOff()
-atoms.mapper.scalar_visibility = True
-atoms.mapper.scalar_map_mode = 'default'
 
 tube = dataset.tube(n_sides=16, capping=False, radius=0.2, radius_factor=10)
 
@@ -73,13 +52,6 @@ bonds = pl.add_mesh(
     style="surface",
     interpolation='Gouraud',
 )
-bonds.mapper.UseLookupTableScalarRangeOff()
-bonds.mapper.scalar_visibility = True
-bonds.mapper.scalar_map_mode = 'default'
 
 pl.set_background('white')
-pl.camera.enable_parallel_projection()
-pl.camera.up = (0, 1, 0)
-pl.camera.focal_point = (12, 10.5, 15)
-pl.camera.position = (-70, 15, 34)
-pl.show()
+pl.show(cpos="zx")
