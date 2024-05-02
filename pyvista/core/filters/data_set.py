@@ -5185,6 +5185,7 @@ class DataSetFilters:
         >>> extracted.plot()
 
         """
+        ind = np.array(ind)
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -5416,13 +5417,10 @@ class DataSetFilters:
 
         Extract values from multi-component scalars.
 
-        First, define a point cloud with 5 points and a multi-component array with
-        RGB values.
-
         >>> # Create a point cloud with a 3-component RGB color array.
         >>> rng = np.random.default_rng(seed=1)
-        >>> points = rng.random((100, 3))
-        >>> colors = rng.random((100, 3))
+        >>> points = rng.random((30, 3))
+        >>> colors = rng.random((30, 3))
         >>> point_cloud = pv.PointSet(points)
         >>> point_cloud['colors'] = colors
         >>> plot_kwargs = dict(
@@ -5451,8 +5449,9 @@ class DataSetFilters:
         >>> # Round the scalars to create binary RGB components
         >>> point_cloud['colors'] = np.round(point_cloud['colors'])
         >>> # Extract only green and blue values
-        >>> blue = [0, 0, 1]
         >>> green = [0, 1, 0]
+        >>> blue = [0, 0, 1]
+        >>>
         >>> extracted = point_cloud.extract_values(
         ...     values=[blue, green], component_mode='values'
         ... )
@@ -5482,7 +5481,8 @@ class DataSetFilters:
 
         # Validate component mode
         num_components = 1 if array.ndim == 1 else array.shape[1]
-        if isinstance(component_mode, (int, np.integer)):
+        if isinstance(component_mode, (int, np.integer)) or component_mode in ['0', '1', '2']:
+            component_mode = int(component_mode)
             if component_mode > num_components - 1 or component_mode < 0:
                 raise ValueError(
                     f"Invalid component index '{component_mode}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
@@ -5582,7 +5582,7 @@ class DataSetFilters:
             id_mask[logic_] = not invert
 
         # Determine which ids to keep
-        id_mask = np.zeros_like(array, dtype=np.bool_)
+        id_mask = np.zeros((len(array),), dtype=np.bool_)
         if values is not None:
             for val in values:
                 logic = array == val
@@ -5601,6 +5601,7 @@ class DataSetFilters:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
+        assert id_mask.ndim == 1
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
