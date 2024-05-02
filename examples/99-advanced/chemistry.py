@@ -75,7 +75,7 @@ bonds = pl.add_mesh(
 )
 bonds.mapper.UseLookupTableScalarRangeOff()
 bonds.mapper.scalar_visibility = True
-atoms.mapper.scalar_map_mode = 'default'
+bonds.mapper.scalar_map_mode = 'default'
 
 pl.set_background('white')
 pl.camera.enable_parallel_projection()
