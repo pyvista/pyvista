@@ -7711,32 +7711,8 @@ def download_m4_total_density(load=True):  # pragma: no cover
 
     Add atoms and bonds to the plotter.
 
-    >>> atoms = pl.add_mesh(
-    ...     dataset.glyph(
-    ...         orient=True,
-    ...         scale=True,
-    ...         factor=0.6,
-    ...         geom=pv.SphereSource().output,
-    ...         color_mode="scalar",
-    ...     ),
-    ...     color="red",
-    ...     ambient=0.15,
-    ...     diffuse=0.85,
-    ...     specular=0.1,
-    ...     style="surface",
-    ...     interpolation='Gouraud',
-    ... )
-    >>> bonds = pl.add_mesh(
-    ...     dataset.tube(
-    ...         n_sides=16, capping=False, radius=0.2, radius_factor=10
-    ...     ),
-    ...     color="white",
-    ...     ambient=0.15,
-    ...     diffuse=0.85,
-    ...     specular=0.1,
-    ...     style="surface",
-    ...     interpolation='Gouraud',
-    ... )
+    >>> atoms = pl.add_mesh(dataset.glyph(geom=pv.Sphere()), color="red")
+    >>> bonds = pl.add_mesh(dataset.tube(), color="white")
 
     >>> pl.show(cpos="zx")
 
