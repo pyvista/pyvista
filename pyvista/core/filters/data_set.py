@@ -5509,7 +5509,7 @@ class DataSetFilters:
                     f"Ranges cannot be extracted using component mode '{component_mode}'. Expected {None}, got {ranges}.",
                 )
             if ranges is None or component_values:
-                axis = 1 if component_values else None
+                axis = 0 if component_values else None
                 values = np.unique(array, axis=axis)
                 split = True
 
@@ -5522,7 +5522,7 @@ class DataSetFilters:
                     )
                 if not values.shape[1] == num_components:
                     raise ValueError(
-                        f'Num components in values array ({values.shape[1]} must match num components in data array ({num_components}.',
+                        f'Num components in values array ({values.shape[1]}) must match num components in data array ({num_components}).',
                     )
             else:
                 values = np.atleast_1d(values)

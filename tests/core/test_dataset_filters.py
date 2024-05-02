@@ -2436,7 +2436,7 @@ split_component_test_cases = [
     ['component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'],  # noqa: PT006
     split_component_test_cases,
 )
-def test_extract_values_component_split(
+def test_extract_values_component_implicit_split(
     labeled_data,
     component_offset,
     component_mode,
@@ -2480,14 +2480,24 @@ WHITE = [1.0, 1.0, 1.0]
 RED = [1.0, 0.0, 0.0]
 GREEN = [0.0, 1.0, 0.0]
 BLUE = [0.0, 0.0, 1.0]
+COLORS_LIST = [BLACK, WHITE, RED, GREEN, BLUE]
 
 
 @pytest.fixture()
 def point_cloud_colors():
     # Define point cloud where the points and rgb scalars are the same
-    array = [BLACK, WHITE, RED, GREEN, BLUE]
+    array = COLORS_LIST
     point_cloud = pv.PointSet(array)
     point_cloud['colors'] = array
+    return point_cloud
+
+
+@pytest.fixture()
+def point_cloud_colors_duplicates(point_cloud_colors):
+    # Define point cloud where the points and rgb scalars are the same
+    copied = point_cloud_colors.copy()
+    copied.points += 0.5
+    point_cloud = point_cloud_colors + copied
     return point_cloud
 
 
@@ -2534,6 +2544,7 @@ component_mode_test_cases = [
 ]
 
 
+@pytest.mark.parametrize('values_as_ranges', [True, False])
 @pytest.mark.parametrize('split', [True, False])
 @pytest.mark.parametrize(
     ['values', 'component_mode', 'expected'],  # noqa: PT006
@@ -2546,9 +2557,17 @@ def test_extract_values_component_mode(
     component_mode,
     expected,
     split,
+    values_as_ranges,
 ):
+    values_kwarg = dict(values=values)
+    if values_as_ranges:
+        # Get additional test coverage by converting single value inputs into a range
+        if component_mode == 'values':
+            pytest.skip("Cannot use ranges with 'values' mode.")
+        values_kwarg = dict(ranges=[values - 0.5, values + 0.5])
+
     extracted = point_cloud_colors.extract_values(
-        values,
+        **values_kwarg,
         component_mode=component_mode,
         split=split,
     )
@@ -2558,12 +2577,19 @@ def test_extract_values_component_mode(
     assert np.array_equal(actual_points, expected)
     assert np.array_equal(actual_colors, expected)
 
-    # # Test automatic split
-    # extracted = rgb_point_cloud.extract_values(component_mode=component)
-    # assert len(extracted) == 2
-    # assert extracted[0].points.tolist() == expected[0]
-    # assert extracted[1].points.tolist() == expected[1]
-    # assert extracted[2].points.tolist() == expected[2]
+
+def test_extract_values_component_mode_values_implicit_split(
+    point_cloud_colors_duplicates,
+):
+    extracted = point_cloud_colors_duplicates.extract_values(
+        component_mode='values',
+    )
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == len(COLORS_LIST)
+    assert (
+        np.array_equal(block['colors'], [color, color])
+        for block, color in zip(extracted, COLORS_LIST)
+    )
 
 
 @pytest.mark.parametrize('pass_point_ids', [True, False])
@@ -2655,6 +2681,10 @@ def test_extract_values_raises(grid4x4):
     match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=2)
+
+    match = 'Num components in values array (2) must match num components in data array (1).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(values=[0, 1], component_mode='values')
 
 
 def test_slice_along_line_composite(composite):
