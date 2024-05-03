@@ -5,7 +5,7 @@ from __future__ import annotations
 import collections.abc
 import contextlib
 import functools
-from typing import TYPE_CHECKING, List, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -5239,8 +5239,11 @@ class DataSetFilters:
         Parameters
         ----------
         values : float | iterable[float], optional
-            Value(s) to extract. Can be a number or an iterable of numbers. Any
-            combination of ``values`` and ``ranges`` may be specified together.
+            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            with numeric items. For ``dict`` inputs, either its keys or values may be
+            numeric, and the other field must be strings. The numeric field is used as
+            the input for this parameter, and if ``split`` is ``True``, the string field
+            is used to set the names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 When extracting multi-component values with ``component_mode=values``,
@@ -5249,10 +5252,15 @@ class DataSetFilters:
 
         ranges : sequence[float, float], optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
-            two numbers in the form ``[lower, upper]``) or a sequence of ranges. Any
-            combination of ``values`` and ``ranges`` may be specified together. The end
-            points of the ranges are included in the extraction. Has no effect when
-            ``component_mode=values``.
+            two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
+            dictionary with range items. Any combination of ``values`` and ``ranges``
+            may be specified together. The end points of the ranges are included in the
+            extraction. Has no effect when ``component_mode=values``.
+
+            For ``dict`` inputs, either its keys or values may be numeric, and the other
+            field must be strings. The numeric field is used as the input for this
+            parameter, and if ``split`` is ``True``, the string field is used to set the
+            names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 Use ``+/-`` infinity to specify an unlimited bound, e.g.:
@@ -5276,7 +5284,7 @@ class DataSetFilters:
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
             - ``'values'``: the entire multicomponent value must have the specified
-              values. With this option, each item ``values`` must be
+              values.
 
         **kwargs : dict, optional
             Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
@@ -5328,9 +5336,18 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: Optional[Union[float, VectorLike[float]]] = None,
+        values: Optional[
+            Union[float, VectorLike[float], Dict[str, float], Dict[float, str]]
+        ] = None,
         *,
-        ranges: Optional[Union[VectorLike[float], MatrixLike[float]]] = None,
+        ranges: Optional[
+            Union[
+                VectorLike[float],
+                MatrixLike[float],
+                Dict[str, VectorLike[float]],
+                Dict[Tuple[float, float], str],
+            ]
+        ] = None,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Union[Literal['any', 'all', 'values'], int] = 'all',
@@ -5352,7 +5369,7 @@ class DataSetFilters:
 
         This filter operates on point data and cell data distinctly:
 
-        -   Point data
+        -   **Point data**
 
             All cells with at least one point with the specified value(s) are returned.
             Optionally, set ``adjacent_cells`` to ``False`` to only extract points from
@@ -5363,7 +5380,7 @@ class DataSetFilters:
             Alternatively, set ``include_cells`` to ``False`` to exclude cells from
             the operation completely and extract all points with a specified value.
 
-        -   Cell Data
+        -   **Cell Data**
 
             Only the cells (and their points) with the specified values(s) are included
             in the output.
@@ -5381,8 +5398,11 @@ class DataSetFilters:
         Parameters
         ----------
         values : float | iterable[float], optional
-            Value(s) to extract. Can be a number or an iterable of numbers. Any
-            combination of ``values`` and ``ranges`` may be specified together.
+            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            with numeric items. For ``dict`` inputs, either its keys or values may be
+            numeric, and the other field must be strings. The numeric field is used as
+            the input for this parameter, and if ``split`` is ``True``, the string field
+            is used to set the names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 When extracting multi-component values with ``component_mode=values``,
@@ -5391,10 +5411,15 @@ class DataSetFilters:
 
         ranges : sequence[float, float], optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
-            two numbers in the form ``[lower, upper]``) or a sequence of ranges. Any
-            combination of ``values`` and ``ranges`` may be specified together. The end
-            points of the ranges are included in the extraction. Has no effect when
-            ``component_mode=values``.
+            two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
+            dictionary with range items. Any combination of ``values`` and ``ranges``
+            may be specified together. The end points of the ranges are included in the
+            extraction. Has no effect when ``component_mode=values``.
+
+            For ``dict`` inputs, either its keys or values may be numeric, and the other
+            field must be strings. The numeric field is used as the input for this
+            parameter, and if ``split`` is ``True``, the string field is used to set the
+            names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 Use ``+/-`` infinity to specify an unlimited bound, e.g.:
@@ -5418,7 +5443,7 @@ class DataSetFilters:
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
             - ``'values'``: the entire multicomponent value must have the specified
-              values. With this option, each item ``values`` must be
+              values.
 
         invert : bool, default: False
             Invert the extraction values. If ``True`` extract the points (with cells)
@@ -5575,7 +5600,7 @@ class DataSetFilters:
         """
 
         def _validate_scalar_array(scalars_, preference_):
-            # Get the scalar array to use for extraction
+            # Get the scalar array and field association to use for extraction
             try:
                 if scalars_ is None:
                     set_default_active_scalars(self)
@@ -5593,7 +5618,7 @@ class DataSetFilters:
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
-            # Validate component mode
+            # Validate component mode and return logic function
             num_components = 1 if array_.ndim == 1 else array_.shape[1]
             if isinstance(component_mode_, (int, np.integer)) or component_mode_ in ['0', '1', '2']:
                 component_mode_ = int(component_mode_)
@@ -5602,19 +5627,35 @@ class DataSetFilters:
                         f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
                     )
                 array_ = array_[:, component_mode_] if num_components > 1 else array_
-                component_logic = None
+                component_logic_function = None
             elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'values']:
                 if array_.ndim == 1:
-                    component_logic = None
+                    component_logic_function = None
                 elif component_mode_ == 'any':
-                    component_logic = functools.partial(np.any, axis=1)
+                    component_logic_function = functools.partial(np.any, axis=1)
                 elif component_mode_ in ['all', 'values']:
-                    component_logic = functools.partial(np.all, axis=1)
+                    component_logic_function = functools.partial(np.all, axis=1)
             else:
                 raise ValueError(
                     f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'values'.",
                 )
-            return array_, num_components, component_logic
+            return array_, num_components, component_logic_function
+
+        def _get_inputs_from_dict(input_):
+            # Get extraction values from dict if applicable.
+            # If dict, also validate names/labels mapped to the values
+            if not isinstance(input_, dict):
+                return None, input_
+            else:
+                dict_keys, dict_values = list(input_.keys()), list(input_.values())
+                if all(isinstance(key, str) for key in dict_keys):
+                    return dict_keys, dict_values
+                elif all(isinstance(val, str) for val in dict_values):
+                    return dict_values, dict_keys
+                else:
+                    raise ValueError(
+                        "Invalid dict mapping. The dict's keys or values must contain strings.",
+                    )
 
         def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
             # Make sure we have input values to extract
@@ -5622,7 +5663,7 @@ class DataSetFilters:
             if values_ is None:
                 if ranges_ is None:
                     raise TypeError(
-                        'No ranges or values are specified. Specify one or both, or set `split=True` to split unique values.',
+                        'No ranges or values were specified. At least one must be specified.',
                     )
                 elif is_values_mode:
                     raise TypeError(
@@ -5683,7 +5724,9 @@ class DataSetFilters:
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
-        values, ranges = _validate_values_and_ranges(
+        value_names, values = _get_inputs_from_dict(values)
+        range_names, ranges = _get_inputs_from_dict(ranges)
+        valid_values, valid_ranges = _validate_values_and_ranges(
             array,
             values,
             ranges,
@@ -5708,18 +5751,28 @@ class DataSetFilters:
         )
 
         if split:
-            blocks: List[pyvista.UnstructuredGrid] = []
+            multi = pyvista.MultiBlock()
             # Split values and ranges separately and combine into single multiblock
             if values is not None:
-                blocks.extend(self._extract_values(values=[val], **kwargs) for val in values)  # type: ignore[union-attr]
+                value_names = value_names if value_names else [None] * len(valid_values)
+                for (
+                    name,
+                    val,
+                ) in zip(value_names, valid_values):
+                    multi.append(self._extract_values(values=[val], **kwargs), name)
             if ranges is not None:
-                blocks.extend(self._extract_values(ranges=[range_], **kwargs) for range_ in ranges)
-            return pyvista.MultiBlock(blocks)
+                range_names = range_names if range_names else [None] * len(valid_ranges)
+                for (
+                    name,
+                    rng,
+                ) in zip(range_names, valid_ranges):
+                    multi.append(self._extract_values(ranges=[rng], **kwargs), name)
+            return multi
 
         return DataSetFilters._extract_values(
             self,
-            values=values,
-            ranges=ranges,
+            values=valid_values,
+            ranges=valid_ranges,
             **kwargs,
         )
 
@@ -5740,7 +5793,8 @@ class DataSetFilters:
     ):
         """Extract values using validated input.
 
-        Internal method for extract_values filter.
+        Internal method for extract_values filter to avoid repeated calls to input
+        validation methods.
         """
 
         def _update_id_mask(logic_):
@@ -5768,7 +5822,6 @@ class DataSetFilters:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
-        assert id_mask.ndim == 1
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
