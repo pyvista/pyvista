@@ -32,6 +32,7 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -4297,5 +4298,94 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_text(f"{direction_param_name}={direction}", **text_kwargs)
     plot.view_xy()
     plot.add_axes(**axes_kwargs)
+
+    plot.show()
+
+
+@pytest.fixture()
+def _allow_empty_mesh():
+    # setup
+    flag = pv.global_theme.allow_empty_mesh
+    pv.global_theme.allow_empty_mesh = True
+    yield
+    # teardown
+    pv.global_theme.allow_empty_mesh = flag
+
+
+@pytest.mark.usefixtures('_allow_empty_mesh')
+@pytest.mark.parametrize('select_inputs', [None, 2])
+@pytest.mark.parametrize('select_outputs', [None, 2])
+@pytest.mark.parametrize(
+    'bool_parameter',
+    ['internal_boundaries', 'independent_regions'],
+)  # image_boundaries
+def test_contour_labels(
+    labeled_image,  # noqa: F811
+    select_inputs,
+    select_outputs,
+    bool_parameter,
+):
+    plot = pv.Plotter(shape=(2, 2))
+    BOUNDARY_LABELS = 'BoundaryLabels'
+    SURFACE_LABELS = 'SurfaceLabels'
+    SHRINK_VAL = 0.7
+
+    def add_subplot(row, mesh):
+        text_kwargs = dict(font_size=8)
+        mesh = mesh.shrink(SHRINK_VAL)
+
+        def set_camera():
+            plot.camera.azimuth = -35
+            plot.camera.elevation = -35
+            plot.camera.zoom(1.5)
+
+        # Plot surface labels
+        plot.subplot(row, 0)
+        plot.add_title(SURFACE_LABELS, **text_kwargs)
+
+        label_meshes = mesh.split_values([2, 5], scalars=SURFACE_LABELS)
+        plot.add_mesh(label_meshes[0], color='red')
+        plot.add_mesh(label_meshes[1], color='blue')
+        set_camera()
+
+        # Plot boundary labels
+        plot.subplot(row, 1)
+        plot.add_title(BOUNDARY_LABELS, **text_kwargs)
+
+        label_meshes = mesh.split_values(
+            [[2, 0], [2, 5], [5, 0], [5, 2]],
+            scalars=BOUNDARY_LABELS,
+            component_mode='values',
+        )
+        plot.add_mesh(label_meshes[0], color='red')
+        plot.add_mesh(label_meshes[1], color='green')
+        plot.add_mesh(label_meshes[2], color='blue')
+        plot.add_mesh(label_meshes[3], color='yellow')
+        set_camera()
+
+    # Generate surface with param TRUE
+    fixed_kwargs = dict(
+        smoothing_constraint_distance=0.3,
+        output_mesh_type='quads',
+        boundary_labels=True,
+    )
+    param = {bool_parameter: True}
+    mesh_true = labeled_image.contour_labels(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+        **param,
+        **fixed_kwargs,
+    )
+    add_subplot(0, mesh_true)
+
+    # Generate surface with param FALSE
+    param[bool_parameter] = False
+    mesh_false = labeled_image.contour_labels(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+        **param,
+        **fixed_kwargs,
+    )
+    add_subplot(1, mesh_false)
 
     plot.show()
