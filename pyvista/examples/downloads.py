@@ -7686,7 +7686,7 @@ def download_m4_total_density(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData | str
+    pyvista.ImageData | str
         DataSet or filename depending on ``load``.
 
     Examples
