@@ -5670,7 +5670,7 @@ class DataSetFilters:
                 elif all(isinstance(val, str) for val in dict_values):
                     return dict_values, dict_keys
                 else:
-                    raise ValueError(
+                    raise TypeError(
                         "Invalid dict mapping. The dict's keys or values must contain strings.",
                     )
 

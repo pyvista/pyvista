@@ -2697,6 +2697,10 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(TypeError, match=re.escape(match)):
         grid4x4.extract_values()
 
+    match = "Invalid dict mapping. The dict's keys or values must contain strings."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values({0: 1})
+
     match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
     with pytest.raises(ValueError, match=match):
         grid4x4.extract_values(0, scalars='invalid_scalars')
