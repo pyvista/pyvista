@@ -130,8 +130,8 @@ def set_plot_theme(theme):
         theme = theme.lower()
         try:
             new_theme_type = _NATIVE_THEMES[theme].value
-        except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
+        except KeyError as exc:
+            raise ValueError(f"Theme {theme} not found in PyVista's native themes.") from exc
         pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)

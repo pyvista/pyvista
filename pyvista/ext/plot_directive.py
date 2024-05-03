@@ -181,7 +181,7 @@ class PlotDirective(Directive):
                 self.lineno,
             )
         except Exception as e:  # pragma: no cover
-            raise self.error(str(e))
+            raise self.error(str(e)) from e
 
 
 def setup(app):

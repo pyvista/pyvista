@@ -1614,11 +1614,11 @@ class DataSetFilters:
         if use_all_points:
             try:
                 alg.SetUseAllPoints(use_all_points)
-            except AttributeError:  # pragma: no cover
+            except AttributeError as exc:  # pragma: no cover
                 raise VTKVersionError(
                     'This version of VTK does not support `use_all_points=True`. '
                     'VTK v9.1 or newer is required.',
-                )
+                ) from exc
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
@@ -3762,8 +3762,10 @@ class DataSetFilters:
         if snap_to_closest_point:
             try:
                 alg.SnapToCellWithClosestPointOn()
-            except AttributeError:  # pragma: no cover
-                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
+            except AttributeError as exc:  # pragma: no cover
+                raise VTKVersionError(
+                    "`snap_to_closest_point=True` requires vtk 9.3.0 or newer",
+                ) from exc
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -5387,14 +5389,14 @@ class DataSetFilters:
                 set_default_active_scalars(self)  # type: ignore[arg-type]
                 _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             array = get_array(self, scalars, preference=preference, err=True)
-        except MissingDataError:
+        except MissingDataError as exc:
             raise ValueError(
                 'No point data or cell data found. Scalar data is required to use this filter.',
-            )
-        except KeyError:
+            ) from exc
+        except KeyError as exc:
             raise ValueError(
                 f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
-            )
+            ) from exc
         array = cast(np.ndarray, array)  # type: ignore[type-arg]
         association = get_array_association(self, scalars, preference=preference)
 
@@ -5934,11 +5936,11 @@ class DataSetFilters:
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
-        except (KeyError, IndexError):
+        except (KeyError, IndexError) as exc:
             options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
             raise KeyError(
                 f'Cell quality type ({quality_measure}) not available. Options are: {options}',
-            )
+            ) from exc
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
         _update_alg(alg, progress_bar, 'Computing Cell Quality')

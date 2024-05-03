@@ -195,8 +195,8 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
             axis = int(axis)
             try:
                 check_range(axis, rng=[-arr.ndim, arr.ndim - 1], name="Axis")
-            except ValueError:
-                raise ValueError(f"Axis {axis} is out of bounds for ndim {arr.ndim}.")
+            except ValueError as exc:
+                raise ValueError(f"Axis {axis} is out of bounds for ndim {arr.ndim}.") from exc
         if axis < 0:
             # Convert to positive axis index
             axis = arr.ndim + axis

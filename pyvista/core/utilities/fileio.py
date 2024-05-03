@@ -183,16 +183,16 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
-    except ValueError:
+    except ValueError as exc:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise OSError("This file was not able to be automatically read by pvista.")
+            raise OSError("This file was not able to be automatically read by pvista.") from exc
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
-        except ReadError:
-            raise OSError("This file was not able to be automatically read by pyvista.")
+        except ReadError as exc:
+            raise OSError("This file was not able to be automatically read by pyvista.") from exc
     else:
         observer = Observer()
         observer.observe(reader.reader)
@@ -499,8 +499,8 @@ def read_meshio(filename, file_format=None):
     """
     try:
         import meshio
-    except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError("To use this feature install meshio with:\n\npip install meshio") from exc
 
     # Make sure relative paths will work
     filename = str(Path(str(filename)).expanduser().resolve())
@@ -540,8 +540,8 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     """
     try:
         import meshio
-    except ImportError:  # pragma: no cover
-        raise ImportError("To use this feature install meshio with:\n\npip install meshio")
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError("To use this feature install meshio with:\n\npip install meshio") from exc
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type

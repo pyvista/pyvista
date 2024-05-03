@@ -330,8 +330,8 @@ class Table(_vtk.vtkTable, DataObject):
         """
         try:
             import pandas as pd
-        except ImportError:  # pragma: no cover
-            raise ImportError('Install ``pandas`` to use this feature.')
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError('Install ``pandas`` to use this feature.') from exc
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array

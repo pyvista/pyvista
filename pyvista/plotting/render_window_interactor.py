@@ -1453,8 +1453,8 @@ class RenderWindowInteractor:
             picker = PickerType.from_any(picker)
             try:
                 picker = pickers[picker]()
-            except KeyError:
-                raise KeyError(f'Picker class `{picker}` is unknown.')
+            except KeyError as exc:
+                raise KeyError(f'Picker class `{picker}` is unknown.') from exc
             # Set default tolerance for internal configurations
             if hasattr(picker, 'SetTolerance'):
                 picker.SetTolerance(0.025)

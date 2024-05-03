@@ -217,8 +217,8 @@ class ProgressMonitor:
         """Initialize observer."""
         try:
             from tqdm import tqdm  # noqa: F401
-        except ImportError:
-            raise ImportError("Please install `tqdm` to monitor algorithms.")
+        except ImportError as exc:
+            raise ImportError("Please install `tqdm` to monitor algorithms.") from exc
         self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
