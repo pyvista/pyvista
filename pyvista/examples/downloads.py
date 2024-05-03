@@ -7697,7 +7697,7 @@ def download_m4_total_density(load=True):  # pragma: no cover
     >>> filename = examples.download_m4_total_density(load=False)
     >>> reader = pv.get_reader(filename)
     >>> reader.hb_scale = 1.1
-    >>> reader.b_scale = 10
+    >>> reader.b_scale = 10.0
 
     >>> grid = reader.read()
     >>> poly = reader.read(grid=False)

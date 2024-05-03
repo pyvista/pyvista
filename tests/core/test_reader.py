@@ -1038,5 +1038,17 @@ def test_gaussian_cubes_reader():
     assert isinstance(reader, pv.GaussianCubeReader)
     assert reader.path == filename
 
-    mesh = reader.read()
-    assert all([mesh.n_points, mesh.n_cells])
+    hb_scale = 1.1
+    b_scale = 10.0
+    reader.hb_scale = hb_scale
+    reader.b_scale = b_scale
+    assert reader.hb_scale == hb_scale
+    assert reader.b_scale == b_scale
+
+    grid = reader.read(grid=True)
+    assert isinstance(grid, pv.ImageData)
+    assert all([grid.n_points, grid.n_cells])
+
+    poly = reader.read(grid=False)
+    assert isinstance(poly, pv.PolyData)
+    assert all([poly.n_points, poly.n_cells])
