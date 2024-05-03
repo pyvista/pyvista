@@ -7699,9 +7699,8 @@ def download_m4_total_density(load=True):  # pragma: no cover
     >>> reader.hb_scale = 1.1
     >>> reader.b_scale = 10
 
-    >>> reader.reader.Update()
-    >>> grid = pv.wrap(reader.reader.GetGridOutput())
-    >>> dataset = pv.wrap(reader.reader.GetOutput())
+    >>> grid = reader.read()
+    >>> poly = reader.read(grid=False)
 
     Add the outline and volume to the plotter.
 
@@ -7711,8 +7710,8 @@ def download_m4_total_density(load=True):  # pragma: no cover
 
     Add atoms and bonds to the plotter.
 
-    >>> atoms = pl.add_mesh(dataset.glyph(geom=pv.Sphere()), color="red")
-    >>> bonds = pl.add_mesh(dataset.tube(), color="white")
+    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color="red")
+    >>> bonds = pl.add_mesh(poly.tube(), color="white")
 
     >>> pl.show(cpos="zx")
 

@@ -2572,6 +2572,28 @@ class GaussianCubeReader(BaseReader):
     _vtk_module_name = "vtkIOChemistry"
     _vtk_class_name = "vtkGaussianCubeReader"
 
+    def read(self, grid: bool = True):
+        """Read the file and return the output.
+
+        Parameters
+        ----------
+        grid : bool, default: False
+            Output as a grid if ``True``, otherwise return the polydata.
+        """
+        from pyvista.core.filters import _update_alg  # avoid circular import
+
+        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        data = (
+            wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
+        )
+        if data is None:  # pragma: no cover
+            raise RuntimeError("File reader failed to read and/or produced no output.")
+        data._post_file_load_processing()  # type: ignore[union-attr]
+
+        # check for any pyvista metadata
+        data._restore_metadata()  # type: ignore[union-attr]
+        return data
+
     @property
     def hb_scale(self) -> float:
         """Get the scaling factor to compute bonds with hydrogen atoms.
