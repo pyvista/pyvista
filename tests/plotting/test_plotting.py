@@ -4319,6 +4319,7 @@ def _allow_empty_mesh():
     'bool_parameter',
     ['internal_boundaries', 'independent_regions'],
 )  # image_boundaries
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels(
     labeled_image,  # noqa: F811
     select_inputs,
@@ -4343,6 +4344,7 @@ def test_contour_labels(
         plot.subplot(row, 0)
         plot.add_title(SURFACE_LABELS, **text_kwargs)
 
+        # Split labeled surfaces 2 and 5
         label_meshes = mesh.split_values([2, 5], scalars=SURFACE_LABELS)
         plot.add_mesh(label_meshes[0], color='red')
         plot.add_mesh(label_meshes[1], color='blue')
@@ -4352,6 +4354,7 @@ def test_contour_labels(
         plot.subplot(row, 1)
         plot.add_title(BOUNDARY_LABELS, **text_kwargs)
 
+        # Split labeled boundaries for regions 2 and 5
         label_meshes = mesh.split_values(
             [[2, 0], [2, 5], [5, 0], [5, 2]],
             scalars=BOUNDARY_LABELS,
