@@ -222,4 +222,5 @@ from .reader import (
     XMLStructuredGridReader,
     XMLUnstructuredGridReader,
     get_reader,
+    GambitReader
 )
