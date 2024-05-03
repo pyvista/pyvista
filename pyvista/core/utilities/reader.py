@@ -2595,7 +2595,6 @@ class GaussianCubeReader(BaseReader):
 
         """
         self.reader.SetHBScale(hb_scale)
-        self.reader.Update()
 
     @property
     def b_scale(self) -> float:
@@ -2620,7 +2619,6 @@ class GaussianCubeReader(BaseReader):
 
         """
         self.reader.SetBScale(b_scale)
-        self.reader.Update()
 
 
 CLASS_READERS = {
