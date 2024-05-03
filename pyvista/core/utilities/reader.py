@@ -2402,6 +2402,9 @@ class _GIFReader(BaseVTKReader):
         self._n_frames = 0
         self._current_frame = 0
 
+    def UpdateInformation(self):
+        """Update Information from file."""
+
     def GetProgress(self):
         return self._current_frame / self._n_frames
 
