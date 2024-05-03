@@ -5,7 +5,7 @@ from __future__ import annotations
 import collections.abc
 import contextlib
 import functools
-from typing import TYPE_CHECKING, List, Literal, Optional, Sequence, Union, cast
+from typing import TYPE_CHECKING, List, Literal, Optional, Sequence, Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -5293,19 +5293,23 @@ class DataSetFilters:
         Examples
         --------
         Load image with four labeled regions.
+
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> image = examples.load_channels()
-        >>> image.get_data_range()
-        (0, 4)
+        >>> np.unique(image.active_scalars)
+        pyvista_ndarray([0, 1, 2, 3, 4])
 
         Split the image into separate regions.
-        >>> split = image.split_values()
+
+        >>> multiblock = image.split_values()
 
         Plot the regions.
-        >>> _ = split.pop(0)  # Remove region 0 for visualization
+
+        >>> _ = multiblock.pop(0)  # Remove region 0 for visualization
         >>> plot = pv.Plotter()
-        >>> _ = plot.add_composite(split, multi_colors=True)
+        >>> _ = plot.add_composite(multiblock, multi_colors=True)
         >>> _ = plot.show_grid()
         >>> plot.show()
 
@@ -5494,7 +5498,6 @@ class DataSetFilters:
         Use ``ranges`` to extract a range of values from a grid's point data.
         Use ``+/-`` infinity to extract all values of ``100`` or less.
 
-        >>> mesh = examples.load_uniform()
         >>> extracted = mesh.extract_values(ranges=[-np.inf, 100])
         >>> extracted.plot()
 
@@ -5570,130 +5573,175 @@ class DataSetFilters:
         >>> extracted.plot(**plot_kwargs)
 
         """
-        # Get the scalar array to use for extraction
-        try:
-            if scalars is None:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            array = get_array(self, scalars, preference=preference, err=True)
-        except MissingDataError:
-            # Raise error only if input is empty mesh
-            if self.n_points == 0:  # type: ignore[attr-defined]
-                return self.copy()  # type: ignore[attr-defined]
-            else:
+
+        def _validate_scalar_array(scalars_, preference_):
+            # Get the scalar array to use for extraction
+            try:
+                if scalars_ is None:
+                    set_default_active_scalars(self)
+                    _, scalars_ = self.active_scalars_info
+                array_ = get_array(self, scalars_, preference=preference_, err=True)
+            except MissingDataError:
                 raise ValueError(
                     'No point data or cell data found. Scalar data is required to use this filter.',
                 )
-        except KeyError:
-            raise ValueError(
-                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
-            )
-        array = cast(np.ndarray, array)  # type: ignore[type-arg]
-        association = get_array_association(self, scalars, preference=preference)
-
-        # Validate component mode
-        num_components = 1 if array.ndim == 1 else array.shape[1]
-        if isinstance(component_mode, (int, np.integer)) or component_mode in ['0', '1', '2']:
-            component_mode = int(component_mode)
-            if component_mode > num_components - 1 or component_mode < 0:
+            except KeyError:
                 raise ValueError(
-                    f"Invalid component index '{component_mode}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
+                    f'Array name \'{scalars_}\' is not valid and does not exist with this dataset.',
                 )
-            array = array[:, component_mode] if num_components > 1 else array
-            component_logic = None
-        elif isinstance(component_mode, str) and component_mode in ['any', 'all', 'values']:
-            if array.ndim == 1:
+            association_ = get_array_association(self, scalars_, preference=preference_)
+            return array_, association_
+
+        def _validate_component_mode(array_, component_mode_):
+            # Validate component mode
+            num_components = 1 if array_.ndim == 1 else array_.shape[1]
+            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in ['0', '1', '2']:
+                component_mode_ = int(component_mode_)
+                if component_mode_ > num_components - 1 or component_mode_ < 0:
+                    raise ValueError(
+                        f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
+                    )
+                array_ = array_[:, component_mode_] if num_components > 1 else array_
                 component_logic = None
-            elif component_mode == 'any':
-                component_logic = functools.partial(np.any, axis=1)
-            elif component_mode in ['all', 'values']:
-                component_logic = functools.partial(np.all, axis=1)
-        else:
-            raise ValueError(
-                f"Invalid component '{component_mode}'. Must be an integer, 'any', 'all', or 'values'.",
-            )
-
-        # Make sure we have input values to extract
-        component_values = component_mode == 'values'
-        if values is None:
-            if ranges is None:
-                raise TypeError(
-                    'No ranges or values are specified. Specify one or both, or set `split=True` to split unique values.',
-                )
-            elif component_values:
-                raise TypeError(
-                    f"Ranges cannot be extracted using component mode '{component_mode}'. Expected {None}, got {ranges}.",
-                )
-        elif (
-            isinstance(values, str) and values == '_unique'
-        ):  # Private flag used by `split_values` to use unique values
-            axis = 0 if component_values else None
-            values = np.unique(array, axis=axis)
-
-        # Validate values
-        if values is not None:
-            if component_values:
-                values = np.atleast_2d(values)
-                if values.ndim > 2:
-                    raise ValueError(
-                        f'Component values cannot be more than 2 dimensions. Got {values.ndim}.',
-                    )
-                if not values.shape[1] == num_components:
-                    raise ValueError(
-                        f'Num components in values array ({values.shape[1]}) must match num components in data array ({num_components}).',
-                    )
+            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'values']:
+                if array_.ndim == 1:
+                    component_logic = None
+                elif component_mode_ == 'any':
+                    component_logic = functools.partial(np.any, axis=1)
+                elif component_mode_ in ['all', 'values']:
+                    component_logic = functools.partial(np.all, axis=1)
             else:
-                values = np.atleast_1d(values)
-                if values.ndim > 1:
-                    raise ValueError(f'Values must be one-dimensional. Got {values.ndim}d values.')
-            if not (
-                np.issubdtype(dtype := values.dtype, np.floating)
-                or np.issubdtype(dtype, np.integer)
-            ):
-                raise TypeError('Values must be numeric.')
-
-        # Validate ranges
-        if ranges is not None:
-            ranges = np.atleast_2d(ranges)
-            if (ndim := ranges.ndim) > 2:
-                raise ValueError(f'Ranges must be 2 dimensional. Got {ndim}.')
-            if not (
-                np.issubdtype(dtype := ranges.dtype, np.floating)
-                or np.issubdtype(dtype, np.integer)
-            ):
-                raise TypeError('Ranges must be numeric.')
-            is_valid_range = ranges[:, 0] <= ranges[:, 1]
-            not_valid = np.invert(is_valid_range)
-            if np.any(not_valid):
-                invalid_ranges = ranges[not_valid]
                 raise ValueError(
-                    f'Invalid range {invalid_ranges[0]} specified. Lower value cannot be greater than upper value.',
+                    f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'values'.",
                 )
+            return array_, num_components, component_logic
+
+        def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
+            # Make sure we have input values to extract
+            is_values_mode = component_mode_ == 'values'
+            if values_ is None:
+                if ranges_ is None:
+                    raise TypeError(
+                        'No ranges or values are specified. Specify one or both, or set `split=True` to split unique values.',
+                    )
+                elif is_values_mode:
+                    raise TypeError(
+                        f"Ranges cannot be extracted using component mode '{component_mode_}'. Expected {None}, got {ranges_}.",
+                    )
+            elif (
+                isinstance(values_, str) and values_ == '_unique'
+            ):  # Private flag used by `split_values` to use unique values
+                axis = 0 if is_values_mode else None
+                values_ = np.unique(array_, axis=axis)
+
+            # Validate values
+            if values_ is not None:
+                if is_values_mode:
+                    values_ = np.atleast_2d(values_)
+                    if values_.ndim > 2:
+                        raise ValueError(
+                            f'Component values cannot be more than 2 dimensions. Got {values_.ndim}.',
+                        )
+                    if not values_.shape[1] == num_components_:
+                        raise ValueError(
+                            f'Num components in values array ({values_.shape[1]}) must match num components in data array ({num_components_}).',
+                        )
+                else:
+                    values_ = np.atleast_1d(values_)
+                    if values_.ndim > 1:
+                        raise ValueError(
+                            f'Values must be one-dimensional. Got {values_.ndim}d values.',
+                        )
+                if not (
+                    np.issubdtype(dtype := values_.dtype, np.floating)
+                    or np.issubdtype(dtype, np.integer)
+                ):
+                    raise TypeError('Values must be numeric.')
+
+            # Validate ranges
+            if ranges_ is not None:
+                ranges_ = np.atleast_2d(ranges_)
+                if (ndim := ranges_.ndim) > 2:
+                    raise ValueError(f'Ranges must be 2 dimensional. Got {ndim}.')
+                if not (
+                    np.issubdtype(dtype := ranges_.dtype, np.floating)
+                    or np.issubdtype(dtype, np.integer)
+                ):
+                    raise TypeError('Ranges must be numeric.')
+                is_valid_range = ranges_[:, 0] <= ranges_[:, 1]
+                not_valid = np.invert(is_valid_range)
+                if np.any(not_valid):
+                    invalid_ranges = ranges_[not_valid]
+                    raise ValueError(
+                        f'Invalid range {invalid_ranges[0]} specified. Lower value cannot be greater than upper value.',
+                    )
+            return values_, ranges_
+
+        # Return empty mesh if input is empty mesh
+        if self.n_points == 0:  # type: ignore[attr-defined]
+            return self.copy()  # type: ignore[attr-defined]
+
+        array, association = _validate_scalar_array(scalars, preference)
+        array, num_components, component_logic = _validate_component_mode(array, component_mode)
+        values, ranges = _validate_values_and_ranges(
+            array,
+            values,
+            ranges,
+            num_components,
+            component_mode,
+        )
 
         # Set default for include cells
         if include_cells is None:
             include_cells = self.n_cells > 0  # type: ignore[attr-defined]
 
+        kwargs = dict(
+            array=array,
+            association=association,
+            component_logic=component_logic,
+            invert=invert,
+            adjacent_cells=adjacent_cells,
+            include_cells=include_cells,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+        )
+
         if split:
             blocks: List[pyvista.UnstructuredGrid] = []
-            kwargs = dict(
-                scalars=scalars,
-                preference=preference,
-                component_mode=component_mode,
-                invert=invert,
-                adjacent_cells=adjacent_cells,
-                include_cells=include_cells,
-                split=False,
-                pass_point_ids=pass_point_ids,
-                pass_cell_ids=pass_cell_ids,
-                progress_bar=progress_bar,
-            )
             # Split values and ranges separately and combine into single multiblock
             if values is not None:
-                blocks.extend(self.extract_values(values=val, **kwargs) for val in values)  # type: ignore[arg-type]
+                blocks.extend(self._extract_values(values=[val], **kwargs) for val in values)  # type: ignore[union-attr]
             if ranges is not None:
-                blocks.extend(self.extract_values(ranges=range_, **kwargs) for range_ in ranges)  # type: ignore[arg-type]
+                blocks.extend(self._extract_values(ranges=[range_], **kwargs) for range_ in ranges)
             return pyvista.MultiBlock(blocks)
+
+        return DataSetFilters._extract_values(
+            self,
+            values=values,
+            ranges=ranges,
+            **kwargs,
+        )
+
+    def _extract_values(
+        self,
+        values=None,
+        ranges=None,
+        *,
+        array,
+        association,
+        component_logic,
+        invert,
+        adjacent_cells,
+        include_cells,
+        progress_bar,
+        pass_point_ids,
+        pass_cell_ids,
+    ):
+        """Extract values using validated input.
+
+        Internal method for extract_values filter.
+        """
 
         def _update_id_mask(logic_):
             """Apply component logic and update the id mask."""
