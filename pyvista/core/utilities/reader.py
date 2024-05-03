@@ -221,6 +221,7 @@ class BaseVTKReader(ABC):
         """Set file name."""
         self._filename = filename
 
+    @abstractmethod
     def UpdateInformation(self):
         """Update Information from file."""
 
