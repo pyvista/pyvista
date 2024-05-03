@@ -180,6 +180,7 @@ from .reader import (
     FacetReader,
     FLUENTCFFReader,
     FluentReader,
+    GambitReader,
     GIFReader,
     GLTFReader,
     HDFReader,
@@ -222,5 +223,4 @@ from .reader import (
     XMLStructuredGridReader,
     XMLUnstructuredGridReader,
     get_reader,
-    GambitReader
 )
