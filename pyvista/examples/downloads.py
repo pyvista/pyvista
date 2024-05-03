@@ -7729,7 +7729,7 @@ def download_prism(load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
