@@ -1191,8 +1191,8 @@ def test_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for re, dataset in zip(res, datasets):
-        assert re == dataset.n_points
+    for res, dataset in zip(res, datasets):
+        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
