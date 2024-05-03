@@ -2433,10 +2433,19 @@ split_component_test_cases = [
 
 
 @pytest.mark.parametrize(
-    ['component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'],  # noqa: PT006
+    ('component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'),
     split_component_test_cases,
 )
-def test_extract_values_component_implicit_split(
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+def test_split_values_extract_values_component(
+    dataset_filter,
+    kwargs,
     labeled_data,
     component_offset,
     component_mode,
@@ -2448,8 +2457,7 @@ def test_extract_values_component_implicit_split(
         labeled_data,
         component_offset,
     )
-
-    multiblock = labeled_data.extract_values(component_mode=component_mode)
+    multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
     assert isinstance(multiblock, pv.MultiBlock)
     assert multiblock.n_blocks == expected_n_blocks
     assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
@@ -2547,7 +2555,7 @@ component_mode_test_cases = [
 @pytest.mark.parametrize('values_as_ranges', [True, False])
 @pytest.mark.parametrize('split', [True, False])
 @pytest.mark.parametrize(
-    ['values', 'component_mode', 'expected'],  # noqa: PT006
+    ('values', 'component_mode', 'expected'),
     component_mode_test_cases,
 )
 @pytest.mark.needs_vtk_version(9, 1, 0)
@@ -2578,12 +2586,20 @@ def test_extract_values_component_mode(
     assert np.array_equal(actual_colors, expected)
 
 
-def test_extract_values_component_mode_values_implicit_split(
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_values_split_unique(
     point_cloud_colors_duplicates,
+    dataset_filter,
+    kwargs,
 ):
-    extracted = point_cloud_colors_duplicates.extract_values(
-        component_mode='values',
-    )
+    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='values', **kwargs)
     assert isinstance(extracted, pv.MultiBlock)
     assert extracted.n_blocks == len(COLORS_LIST)
     assert (
@@ -2647,6 +2663,10 @@ def test_extract_values_raises(grid4x4):
     match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'No ranges or values are specified. Specify one or both, or set `split=True` to split unique values.'
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values()
 
     match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
     with pytest.raises(ValueError, match=match):
