@@ -346,6 +346,7 @@ extend-select = [
     "B007",
     "B009",
     "B010",
+    "B018",
     "C4",
     "COM",
     "DJ",
@@ -384,3 +385,8 @@ extend-select = [
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = [
+    "B018",
+]

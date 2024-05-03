@@ -1032,7 +1032,6 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
