@@ -221,6 +221,7 @@ class BaseVTKReader(ABC):
         """Set file name."""
         self._filename = filename
 
+    @abstractmethod
     def UpdateInformation(self):
         """Update Information from file."""
 
@@ -2400,6 +2401,9 @@ class _GIFReader(BaseVTKReader):
         super().__init__()
         self._n_frames = 0
         self._current_frame = 0
+
+    def UpdateInformation(self):
+        """Update Information from file."""
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
