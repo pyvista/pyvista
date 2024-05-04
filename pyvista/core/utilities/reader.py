@@ -2560,6 +2560,8 @@ class FLUENTCFFReader(BaseReader):
 class GambitReader(BaseReader):
     """GambitReader for .neu files.
 
+    .. versionadded:: 0.44.0
+
     Examples
     --------
     >>> import pyvista as pv
