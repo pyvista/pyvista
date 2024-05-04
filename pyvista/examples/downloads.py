@@ -7777,7 +7777,7 @@ def download_tos_O1_2001_2002(load=True):  # pragma: no cover
     >>> filename = examples.download_tos_O1_2001_2002(load=False)
     >>> reader = pv.get_reader(filename)
     >>> grid = reader.read()
-    >>> grid.set_active_scalars("tos")
+    >>> _ = grid.set_active_scalars("tos")
     >>> grid.plot()
 
     .. seealso::
