@@ -2560,6 +2560,8 @@ class FLUENTCFFReader(BaseReader):
 class NetCDFCFReader(BaseReader):
     """NetCDFCFReader for .nc files.
 
+    .. versionadded:: 0.44.0
+
     Examples
     --------
     >>> import pyvista as pv
