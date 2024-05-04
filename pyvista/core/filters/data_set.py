@@ -5229,7 +5229,7 @@ class DataSetFilters:
         ] = None,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'values'], int] = 'all',
+        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
         **kwargs,
     ):
         """Split mesh into separate sub-meshes using point or cell data.
@@ -5284,7 +5284,7 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array type to search
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
-        component_mode : int | 'any' | 'all' | 'values', default: 'all'
+        component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the component(s) to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
@@ -5292,8 +5292,8 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'values'``: the entire multicomponent value must have the specified
-              values.
+            - ``'multi'``: the entire multicomponent value must have the specified
+              value.
 
         **kwargs : dict, optional
             Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
@@ -5391,7 +5391,7 @@ class DataSetFilters:
         ] = None,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'values'], int] = 'all',
+        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
         include_cells: Optional[bool] = None,
@@ -5475,7 +5475,7 @@ class DataSetFilters:
             When ``scalars`` is specified, this is the preferred array type to search
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
-        component_mode : int | 'any' | 'all' | 'values', default: 'all'
+        component_mode : int | 'any' | 'all' | 'multi', default: 'all'
             Specify the component(s) to use when ``scalars`` is a multi-component array.
             Has no effect when the scalars have a single component. Must be one of:
 
@@ -5483,7 +5483,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'values'``: the entire multicomponent value must have the specified
+            - ``'multi'``: the entire multicomponent value must have the specified
               values.
 
         invert : bool, default: False
@@ -5647,7 +5647,7 @@ class DataSetFilters:
         >>>
         >>> extracted = point_cloud.extract_values(
         ...     values=[blue, green],
-        ...     component_mode='values',
+        ...     component_mode='multi',
         ... )
         >>> extracted.plot(**plot_kwargs)
 
@@ -5692,16 +5692,16 @@ class DataSetFilters:
                     )
                 array_ = array_[:, component_mode_] if num_components > 1 else array_
                 component_logic_function = None
-            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'values']:
+            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'multi']:
                 if array_.ndim == 1:
                     component_logic_function = None
                 elif component_mode_ == 'any':
                     component_logic_function = functools.partial(np.any, axis=1)
-                elif component_mode_ in ['all', 'values']:
+                elif component_mode_ in ['all', 'multi']:
                     component_logic_function = functools.partial(np.all, axis=1)
             else:
                 raise ValueError(
-                    f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'values'.",
+                    f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'multi'.",
                 )
             return array_, num_components, component_logic_function
 
@@ -5723,25 +5723,25 @@ class DataSetFilters:
 
         def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
             # Make sure we have input values to extract
-            is_values_mode = component_mode_ == 'values'
+            is_multi_mode = component_mode_ == 'multi'
             if values_ is None:
                 if ranges_ is None:
                     raise TypeError(
                         'No ranges or values were specified. At least one must be specified.',
                     )
-                elif is_values_mode:
+                elif is_multi_mode:
                     raise TypeError(
                         f"Ranges cannot be extracted using component mode '{component_mode_}'. Expected {None}, got {ranges_}.",
                     )
             elif (
                 isinstance(values_, str) and values_ == '_unique'
             ):  # Private flag used by `split_values` to use unique values
-                axis = 0 if is_values_mode else None
+                axis = 0 if is_multi_mode else None
                 values_ = np.unique(array_, axis=axis)
 
             # Validate values
             if values_ is not None:
-                if is_values_mode:
+                if is_multi_mode:
                     values_ = np.atleast_2d(values_)
                     if values_.ndim > 2:
                         raise ValueError(
