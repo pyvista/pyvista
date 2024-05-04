@@ -7718,6 +7718,40 @@ def _dataset_headsq_files_func():
 _dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func)
 
 
+def download_prism(load=True):  # pragma: no cover
+    """Download a prism model.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_prism()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Prism Dataset <prism_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_prism, load=load)
+
+
+_dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
+
+
 def download_tos_O1_2001_2002(load=True):  # pragma: no cover
     """Download the TOS_O1_2001_2002 dataset.
 
