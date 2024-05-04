@@ -2494,7 +2494,6 @@ values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='va
 ]
 
 
-@pytest.mark.parametrize('split', [True, False])
 @pytest.mark.parametrize(
     ('dict_inputs', 'block_names'),
     [
@@ -2531,7 +2530,7 @@ def point_cloud_colors():
 
 @pytest.fixture()
 def point_cloud_colors_duplicates(point_cloud_colors):
-    # Define point cloud where the points and rgb scalars are the same
+    # Same fixture as point_cloud_colors but with double the points
     copied = point_cloud_colors.copy()
     copied.points += 0.5
     point_cloud = point_cloud_colors + copied

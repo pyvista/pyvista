@@ -5215,9 +5215,18 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: Optional[Union[float, VectorLike[float]]] = None,
+        values: Optional[
+            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
+        ] = None,
         *,
-        ranges: Optional[Union[VectorLike[float], MatrixLike[float]]] = None,
+        ranges: Optional[
+            Union[
+                VectorLike[float],
+                MatrixLike[float],
+                Dict[str, VectorLike[float]],
+                Dict[Tuple[float, float], str],
+            ]
+        ] = None,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Union[Literal['any', 'all', 'values'], int] = 'all',
@@ -5238,29 +5247,29 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : float | iterable[float], optional
+        values : number | array_like | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
-            with numeric items. For ``dict`` inputs, either its keys or values may be
+            with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
-            is used to set the names of the returned :class:`~pyvista.MultiBlock`.
+            is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 When extracting multi-component values with ``component_mode=values``,
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector, or an array of row vectors.
 
-        ranges : sequence[float, float], optional
+        ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
-            dictionary with range items. Any combination of ``values`` and ``ranges``
+            dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The end points of the ranges are included in the
-            extraction. Has no effect when ``component_mode=values``.
+            extraction. Ranges cannot be set when ``component_mode=values``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
             parameter, and if ``split`` is ``True``, the string field is used to set the
-            names of the returned :class:`~pyvista.MultiBlock`.
+            block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 Use ``+/-`` infinity to specify an unlimited bound, e.g.:
@@ -5327,15 +5336,31 @@ class DataSetFilters:
         >>> multiblock.keys()
         ['Block-01', 'Block-02', 'Block-03', 'Block-04']
 
-        To name the output blocks, use a dictionary as input instead. Here, we
-        also explicitly omit the region with ``0`` values from the input instead of
-        removing it from the output.
+        To name the output blocks, use a dictionary as input instead.
+
+        Here, we also explicitly omit the region with ``0`` values from the input
+        instead of removing it from the output.
 
         >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
-
+        >>>
         >>> multiblock = image.split_values(labels)
         >>> multiblock.keys()
         ['region1', 'region2', 'region3', 'region4']
+
+        Plot the regions as separate meshes using the labels instead of plotting
+        the MultiBlock directly.
+
+        >>> # Clear scalar data so we can color each mesh using a single color
+        >>> _ = [block.clear_data() for block in multiblock]
+        >>>
+        >>> plot = pv.Plotter()
+        >>> plot.set_color_cycler('default')
+        >>> _ = [
+        ...     plot.add_mesh(block, label=label)
+        ...     for block, label in zip(multiblock, labels)
+        ... ]
+        >>> _ = plot.add_legend()
+        >>> plot.show()
 
         """
         if values is None and ranges is None:
@@ -5353,7 +5378,7 @@ class DataSetFilters:
     def extract_values(
         self,
         values: Optional[
-            Union[float, VectorLike[float], Dict[str, float], Dict[float, str]]
+            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
         ] = None,
         *,
         ranges: Optional[
@@ -5385,7 +5410,7 @@ class DataSetFilters:
 
         This filter operates on point data and cell data distinctly:
 
-        -   **Point data**
+        **Point data**
 
             All cells with at least one point with the specified value(s) are returned.
             Optionally, set ``adjacent_cells`` to ``False`` to only extract points from
@@ -5396,7 +5421,7 @@ class DataSetFilters:
             Alternatively, set ``include_cells`` to ``False`` to exclude cells from
             the operation completely and extract all points with a specified value.
 
-        -   **Cell Data**
+        **Cell Data**
 
             Only the cells (and their points) with the specified values(s) are included
             in the output.
@@ -5413,29 +5438,29 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : float | iterable[float], optional
+        values : number | array_like | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
-            with numeric items. For ``dict`` inputs, either its keys or values may be
+            with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
-            is used to set the names of the returned :class:`~pyvista.MultiBlock`.
+            is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 When extracting multi-component values with ``component_mode=values``,
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector, or an array of row vectors.
 
-        ranges : sequence[float, float], optional
+        ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
-            dictionary with range items. Any combination of ``values`` and ``ranges``
+            dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The end points of the ranges are included in the
-            extraction. Has no effect when ``component_mode=values``.
+            extraction. Ranges cannot be set when ``component_mode=values``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
             parameter, and if ``split`` is ``True``, the string field is used to set the
-            names of the returned :class:`~pyvista.MultiBlock`.
+            block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
                 Use ``+/-`` infinity to specify an unlimited bound, e.g.:
@@ -5485,6 +5510,8 @@ class DataSetFilters:
             If ``True``, each value in ``values`` and each range in ``range`` is
             extracted independently and returned as a :class:`~pyvista.MultiBlock`.
             The number of blocks returned equals the number of input values and ranges.
+            The blocks may be named if a dictionary is used as input. See ``values``
+            and ``ranges`` for details.
 
             .. note::
                 Output blocks may contain empty meshes if no values meet the extraction
@@ -5494,11 +5521,11 @@ class DataSetFilters:
                 enable plotting empty meshes.
 
         pass_point_ids : bool, default: True
-            Add a point array ``"vtkOriginalPointIds"`` that identifies the original
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
             points the extracted points correspond to.
 
         pass_cell_ids : bool, default: True
-            Add a cell array ``"vtkOriginalCellIds"`` that identifies the original cells
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
             the extracted cells correspond to.
 
         progress_bar : bool, default: False
@@ -5515,15 +5542,17 @@ class DataSetFilters:
 
         Examples
         --------
-        Extract a single value from a grid's point data. Since adjacent cells are
-        included by default, points with values other than ``0`` are included in
-        the output.
+        Extract a single value from a grid's point data.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
         >>> extracted = mesh.extract_values(0)
+
+        Plot extracted values. Since adjacent cells are included by default, points with
+        values other than ``0`` are included in the output.
+
         >>> extracted.get_data_range()
         (0.0, 81.0)
         >>> extracted.plot()
@@ -5537,7 +5566,8 @@ class DataSetFilters:
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
         Use ``ranges`` to extract a range of values from a grid's point data.
-        Use ``+/-`` infinity to extract all values of ``100`` or less.
+
+        Here, we use ``+/-`` infinity to extract all values of ``100`` or less.
 
         >>> extracted = mesh.extract_values(ranges=[-np.inf, 100])
         >>> extracted.plot()
@@ -5558,7 +5588,10 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(mesh.extract_all_edges())
         >>> pl.show()
 
-        Extract different parts of the mesh and split the result into a MultiBlock.
+        Any combination of values and ranges may be specified.
+
+        E.g. extract a single value and two ranges, and split the result into separate
+        blocks of a MultiBlock.
 
         >>> extracted = mesh.extract_values(
         ...     values=18, ranges=[[0, 8], [29, 40]], split=True
@@ -5587,7 +5620,8 @@ class DataSetFilters:
 
         Extract values from a single component.
 
-        >>> # Extract points with a strong red component (i.e. > 0.8)
+        E.g. extract points with a strong red component (i.e. > 0.8).
+
         >>> extracted = point_cloud.extract_values(
         ...     ranges=[0.8, 1.0], component_mode=0
         ... )
@@ -5595,7 +5629,8 @@ class DataSetFilters:
 
         Extract values from all components.
 
-        >>> # Extract points where all RGB components are dark (i.e. < 0.5)
+        E.g. extract points where all RGB components are dark (i.e. < 0.5).
+
         >>> extracted = point_cloud.extract_values(
         ...     ranges=[0.0, 0.5], component_mode='all'
         ... )
@@ -5603,16 +5638,28 @@ class DataSetFilters:
 
         Extract specific multi-component values.
 
-        >>> # Round the scalars to create binary RGB components
+        E.g. round the scalars to create binary RGB components, and extract only green
+        and blue components.
+
         >>> point_cloud['colors'] = np.round(point_cloud['colors'])
-        >>> # Extract only green and blue values
         >>> green = [0, 1, 0]
         >>> blue = [0, 0, 1]
         >>>
         >>> extracted = point_cloud.extract_values(
-        ...     values=[blue, green], component_mode='values'
+        ...     values=[blue, green],
+        ...     component_mode='values',
         ... )
         >>> extracted.plot(**plot_kwargs)
+
+        Use the original ids returned by the extraction to modify the original point
+        cloud.
+
+        E.g. change the color of the blue and green points to yellow.
+
+        >>> point_ids = extracted['vtkOriginalPointIds']
+        >>> yellow = [1, 1, 0]
+        >>> point_cloud['colors'][point_ids] = yellow
+        >>> point_cloud.plot(**plot_kwargs)
 
         """
 
