@@ -180,6 +180,7 @@ from .reader import (
     FacetReader,
     FLUENTCFFReader,
     FluentReader,
+    GambitReader,
     GIFReader,
     GLTFReader,
     HDFReader,

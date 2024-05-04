@@ -2623,6 +2623,7 @@ CLASS_READERS = {
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
     '.nc': NetCDFCFReader,
+    '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,
