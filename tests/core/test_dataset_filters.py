@@ -2483,6 +2483,35 @@ def test_extract_values_split_ranges_values(labeled_data):
     assert extracted_value1 == extracted_range11
 
 
+# Test cases with and/or without dict inputs
+# Include swapped [name, value] or [value, name] inputs
+values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
+values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
+values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='values'), [
+    'val0',
+    'val1',
+]
+
+
+@pytest.mark.parametrize('split', [True, False])
+@pytest.mark.parametrize(
+    ('dict_inputs', 'block_names'),
+    [
+        values_nodict_ranges_dict,
+        values_dict_ranges_nodict,
+        values_dict_ranges_dict,
+        values_component_dict,
+    ],
+)
+def test_extract_values_dict_input(labeled_data, dict_inputs, block_names, split):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(**dict_inputs, split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 2
+    assert extracted.keys() == block_names
+
+
 BLACK = [0.0, 0.0, 0.0]
 WHITE = [1.0, 1.0, 1.0]
 RED = [1.0, 0.0, 0.0]
@@ -2664,9 +2693,13 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(ranges=[1, 0])
 
-    match = 'No ranges or values are specified. Specify one or both, or set `split=True` to split unique values.'
+    match = 'No ranges or values were specified. At least one must be specified.'
     with pytest.raises(TypeError, match=re.escape(match)):
         grid4x4.extract_values()
+
+    match = "Invalid dict mapping. The dict's keys or values must contain strings."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values({0: 1})
 
     match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
     with pytest.raises(ValueError, match=match):
