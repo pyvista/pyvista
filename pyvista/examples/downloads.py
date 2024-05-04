@@ -7721,6 +7721,8 @@ _dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func
 def download_prism(load=True):  # pragma: no cover
     """Download a prism model.
 
+    .. versionadded:: 0.44.0
+
     Parameters
     ----------
     load : bool, default: True
