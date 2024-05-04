@@ -12,12 +12,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
+from pyvista.core.errors import MissingDataError, NotAllTrianglesError, VTKVersionError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -1620,30 +1615,6 @@ def test_sample_composite():
     assert "partial_data" not in result[0].point_data
     assert "vtkValidPointMask" in result[0].point_data
     assert "vtkGhostType" in result[0].point_data
-
-
-@pytest.mark.parametrize('use_points', [True, False])
-@pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, _vtk_core.vtkStaticCellLocator()])
-def test_probe(categorical, use_points, locator):
-    mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    data_to_probe = examples.load_uniform()
-    dataset = np.array(mesh.points) if use_points else mesh
-    with pytest.warns(PyVistaDeprecationWarning):
-        result = data_to_probe.probe(
-            dataset,
-            tolerance=1e-5,
-            categorical=categorical,
-            progress_bar=True,
-            locator=locator,
-        )
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
