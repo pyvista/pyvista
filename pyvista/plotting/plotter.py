@@ -2873,7 +2873,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic=None,
         roughness=None,
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         component=None,
         emissive=None,
         copy_mesh=False,
@@ -3332,6 +3332,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
 
         """
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
@@ -3778,7 +3780,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         log_scale=False,
         **kwargs,
     ):
@@ -4070,6 +4072,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Handle default arguments
 
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
