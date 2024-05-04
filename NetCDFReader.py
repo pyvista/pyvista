@@ -4,16 +4,11 @@ from vtkmodules.vtkFiltersCore import vtkAssignAttribute, vtkThreshold
 from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 from vtkmodules.vtkIONetCDF import vtkNetCDFCFReader
 import vtkmodules.vtkInteractionStyle
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkPolyDataMapper,
-    vtkRenderer,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-)
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkRenderer
 import vtkmodules.vtkRenderingFreeType
 import vtkmodules.vtkRenderingOpenGL2  # noqa: F401
 
+import pyvista as pv
 from pyvista import examples
 
 VTK_DATA_ROOT = vtkGetDataRoot()
@@ -60,28 +55,6 @@ actor = vtkActor()
 actor.SetMapper(mapper)
 ren = vtkRenderer()
 ren.AddActor(actor)
-renWin = vtkRenderWindow()
-renWin.SetSize(200, 200)
-renWin.AddRenderer(ren)
-iren = vtkRenderWindowInteractor()
-iren.SetRenderWindow(renWin)
-renWin.Render()
-# # Setup a lookup table.
-# vtkLookupTable lut
-# lut SetTableRange 270 310
-# lut SetHueRange 0.66 0.0
-# lut SetRampToLinear
-# # Make pretty colors
-# vtkImageMapToColors map
-# map SetInputConnection [asinine GetOutputPort]
-# map SetLookupTable lut
-# map SetOutputFormatToRGB
-# # vtkImageViewer viewer
-# # viewer SetInputConnection [map GetOutputPort]
-# # viewer SetColorWindow 256
-# # viewer SetColorLevel 127.5
-# # viewer Render
-# vtkImageViewer2 viewer
-# viewer SetInputConnection [map GetOutputPort]
-# viewer Render
-# --- end of script --
+pl = pv.Plotter()
+pl.add_actor(actor)
+pl.show(cpos="xy")
