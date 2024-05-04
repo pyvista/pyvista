@@ -348,6 +348,7 @@ extend-select = [
     "B009",
     "B010",
     "B015",
+    "B018",
     "B020",
     "B027",
     "C4",
@@ -393,4 +394,6 @@ allow-dict-calls-with-keyword-arguments = true
 "examples/**" = [
     # https://github.com/pyvista/pyvista/pull/6014
     "B015",
+    # https://github.com/pyvista/pyvista/pull/6019
+    "B018",
 ]

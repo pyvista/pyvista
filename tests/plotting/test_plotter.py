@@ -23,7 +23,7 @@ from pyvista.plotting.utilities.gl_checks import uses_egl
 def test_plotter_image_before_show():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
-        plotter.image
+        _ = plotter.image
 
 
 def test_has_render_window_fail():
