@@ -2557,6 +2557,24 @@ class FLUENTCFFReader(BaseReader):
     _vtk_class_name = "vtkFLUENTCFFReader"
 
 
+class NetCDFReader(BaseReader):
+    """NetCDFReader for .nc files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_tos_O1_2001_2002(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIONetCDF"
+    _vtk_class_name = "vtkNetCDFReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2581,6 +2599,7 @@ CLASS_READERS = {
     '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.nc': NetCDFReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,

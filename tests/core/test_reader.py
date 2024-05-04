@@ -1026,3 +1026,13 @@ def test_fluentcffreader():
     assert blocks.n_blocks == 1
     assert isinstance(blocks[0], pv.UnstructuredGrid)
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_netcdfreader():
+    filename = examples.download_tos_O1_2001_2002(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.NetCDFReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

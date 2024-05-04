@@ -14,12 +14,15 @@ from vtkmodules.vtkRenderingCore import (
 import vtkmodules.vtkRenderingFreeType
 import vtkmodules.vtkRenderingOpenGL2  # noqa: F401
 
+from pyvista import examples
+
 VTK_DATA_ROOT = vtkGetDataRoot()
 
 # This test checks netCDF reader.  It uses the COARDS convention.
 # Open the file.
+filename = examples.download_tos_O1_2001_2002(load=False)
 reader = vtkNetCDFCFReader()
-reader.SetFileName("tos_O1_2001-2002.nc")
+reader.SetFileName(filename)
 # Set the arrays we want to load.
 reader.UpdateMetaData()
 reader.SetVariableArrayStatus("tos", 1)

@@ -188,6 +188,7 @@ from .reader import (
     MetaImageReader,
     MFIXReader,
     MultiBlockPlot3DReader,
+    NetCDFReader,
     NIFTIReader,
     NRRDReader,
     OBJReader,
