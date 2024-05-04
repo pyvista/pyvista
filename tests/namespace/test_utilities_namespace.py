@@ -88,4 +88,4 @@ def test_failure_to_find():
         AttributeError,
         match=r'Module `pyvista\.utilities` has been deprecated and we could not automatically find',
     ):
-        module.this_does_not_exist
+        _ = module.this_does_not_exist
