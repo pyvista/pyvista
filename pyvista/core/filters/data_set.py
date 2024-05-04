@@ -5255,7 +5255,7 @@ class DataSetFilters:
             is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                When extracting multi-component values with ``component_mode=values``,
+                When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector, or an array of row vectors.
 
@@ -5264,7 +5264,7 @@ class DataSetFilters:
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The end points of the ranges are included in the
-            extraction. Ranges cannot be set when ``component_mode=values``.
+            extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
@@ -5292,8 +5292,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent value must have the specified
-              value.
+            - ``'multi'``: the entire multicomponent item must have the specified value.
 
         **kwargs : dict, optional
             Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
@@ -5446,7 +5445,7 @@ class DataSetFilters:
             is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                When extracting multi-component values with ``component_mode=values``,
+                When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector, or an array of row vectors.
 
@@ -5455,7 +5454,7 @@ class DataSetFilters:
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The end points of the ranges are included in the
-            extraction. Ranges cannot be set when ``component_mode=values``.
+            extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
@@ -5483,8 +5482,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent value must have the specified
-              values.
+            - ``'multi'``: the entire multicomponent item must have the specified value.
 
         invert : bool, default: False
             Invert the extraction values. If ``True`` extract the points (with cells)
