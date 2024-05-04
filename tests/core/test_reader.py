@@ -1028,10 +1028,10 @@ def test_fluentcffreader():
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
 
 
-def test_netcdfreader():
+def test_netcdfcfreader():
     filename = examples.download_tos_O1_2001_2002(load=False)
     reader = pv.get_reader(filename)
-    assert isinstance(reader, pv.NetCDFReader)
+    assert isinstance(reader, pv.NetCDFCFReader)
     assert reader.path == filename
 
     mesh = reader.read()

@@ -2557,8 +2557,8 @@ class FLUENTCFFReader(BaseReader):
     _vtk_class_name = "vtkFLUENTCFFReader"
 
 
-class NetCDFReader(BaseReader):
-    """NetCDFReader for .nc files.
+class NetCDFCFReader(BaseReader):
+    """NetCDFCFReader for .nc files.
 
     Examples
     --------
@@ -2572,7 +2572,7 @@ class NetCDFReader(BaseReader):
     """
 
     _vtk_module_name = "vtkIONetCDF"
-    _vtk_class_name = "vtkNetCDFReader"
+    _vtk_class_name = "vtkNetCDFCFReader"
 
 
 CLASS_READERS = {
@@ -2599,7 +2599,7 @@ CLASS_READERS = {
     '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
-    '.nc': NetCDFReader,
+    '.nc': NetCDFCFReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,
