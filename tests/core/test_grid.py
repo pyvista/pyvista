@@ -278,12 +278,12 @@ def test_cells_dict_variable_length():
 
     # Dynamic sizes cell types are currently unsupported
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.cells_dict
+        _ = grid.cells_dict
 
     grid.celltypes[:] = 255
     # Unknown cell types
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.cells_dict
+        _ = grid.cells_dict
 
 
 def test_cells_dict_empty_grid():
