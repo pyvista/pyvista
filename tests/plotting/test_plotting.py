@@ -4312,7 +4312,17 @@ def _allow_empty_mesh():
     pv.global_theme.allow_empty_mesh = flag
 
 
-@pytest.mark.usefixtures('_allow_empty_mesh')
+@pytest.fixture()
+def _show_edges():
+    # setup
+    flag = pv.global_theme.show_edges
+    pv.global_theme.show_edges = True
+    yield
+    # teardown
+    pv.global_theme.show_edges = flag
+
+
+@pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
 @pytest.mark.parametrize('select_inputs', [None, 2])
 @pytest.mark.parametrize('select_outputs', [None, 2])
 @pytest.mark.parametrize(
@@ -4332,7 +4342,7 @@ def test_contour_labels(
     SHRINK_VAL = 0.7
 
     def add_subplot(row, mesh):
-        text_kwargs = dict(font_size=8)
+        text_kwargs = dict(font_size=10, position='lower_left')
         mesh = mesh.shrink(SHRINK_VAL)
 
         def set_camera():
@@ -4340,30 +4350,47 @@ def test_contour_labels(
             plot.camera.elevation = -35
             plot.camera.zoom(1.5)
 
+        def add_legend():
+            plot.add_legend(size=(0.3, 0.3), bcolor=[0.5, 0.5, 0.5], loc='lower right')
+
+        def offset_meshes(multiblock):
+            scale = 0.05
+            for i, block in enumerate(multiblock):
+                if block.n_points > 0:
+                    block.points += i * scale
+
         # Plot surface labels
         plot.subplot(row, 0)
-        plot.add_title(SURFACE_LABELS, **text_kwargs)
+        if row == 0:
+            plot.add_text(title, position='upper_left', font_size=12)
+        plot.add_text(SURFACE_LABELS, **text_kwargs)
 
         # Split labeled surfaces 2 and 5
         label_meshes = mesh.split_values([2, 5], scalars=SURFACE_LABELS)
-        plot.add_mesh(label_meshes[0], color='red')
-        plot.add_mesh(label_meshes[1], color='blue')
+        offset_meshes(label_meshes)
+        plot.add_mesh(label_meshes[0], color='red', label='2')
+        plot.add_mesh(label_meshes[1], color='blue', label='5')
+        add_legend()
         set_camera()
 
         # Plot boundary labels
         plot.subplot(row, 1)
-        plot.add_title(BOUNDARY_LABELS, **text_kwargs)
+        plot.add_text(BOUNDARY_LABELS, **text_kwargs)
 
         # Split labeled boundaries for regions 2 and 5
+        values = [[2, 0], [2, 5], [5, 0], [5, 2]]
         label_meshes = mesh.split_values(
-            [[2, 0], [2, 5], [5, 0], [5, 2]],
+            values,
             scalars=BOUNDARY_LABELS,
-            component_mode='values',
+            component_mode='multi',
         )
-        plot.add_mesh(label_meshes[0], color='red')
-        plot.add_mesh(label_meshes[1], color='green')
-        plot.add_mesh(label_meshes[2], color='blue')
-        plot.add_mesh(label_meshes[3], color='yellow')
+
+        offset_meshes(label_meshes)
+        plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
+        plot.add_mesh(label_meshes[1], color='green', label=str(values[1]))
+        plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
+        plot.add_mesh(label_meshes[3], color='yellow', label=str(values[3]))
+        add_legend()
         set_camera()
 
     # Generate surface with param TRUE
@@ -4372,21 +4399,30 @@ def test_contour_labels(
         output_mesh_type='quads',
         boundary_labels=True,
     )
-    param = {bool_parameter: True}
+    test_kwargs = {
+        bool_parameter: True,
+        'select_inputs': select_inputs,
+        'select_outputs': select_outputs,
+    }
     mesh_true = labeled_image.contour_labels(
-        select_inputs=select_inputs,
-        select_outputs=select_outputs,
-        **param,
+        **test_kwargs,
         **fixed_kwargs,
+    )
+
+    title = (
+        repr(test_kwargs)
+        .replace('{\'', '')
+        .replace('}', '')
+        .replace(',', '\n')
+        .replace(' \'', '')
+        .replace('\'', '')
     )
     add_subplot(0, mesh_true)
 
     # Generate surface with param FALSE
-    param[bool_parameter] = False
+    test_kwargs[bool_parameter] = False
     mesh_false = labeled_image.contour_labels(
-        select_inputs=select_inputs,
-        select_outputs=select_outputs,
-        **param,
+        **test_kwargs,
         **fixed_kwargs,
     )
     add_subplot(1, mesh_false)
