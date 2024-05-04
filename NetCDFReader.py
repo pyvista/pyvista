@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from vtkmodules.vtkFiltersCore import vtkAssignAttribute, vtkThreshold
-from vtkmodules.vtkFiltersGeometry import vtkDataSetSurfaceFilter
 
 import pyvista as pv
 from pyvista import examples
@@ -27,8 +26,7 @@ thresh.SetInputConnection(aa.GetOutputPort())
 thresh.SetThresholdFunction(vtkThreshold.THRESHOLD_LOWER)
 thresh.SetLowerThreshold(10000.0)
 
-surface = vtkDataSetSurfaceFilter()
-surface.SetInputConnection(thresh.GetOutputPort())
+surface = pv.extract_surface_algorithm(thresh.GetOutputPort())
 mapper = pv.DataSetMapper()
 mapper.SetInputConnection(surface.GetOutputPort())
 mapper.SetScalarRange(270, 310)
