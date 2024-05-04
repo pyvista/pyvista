@@ -7721,7 +7721,7 @@ _dataset_headsq = _MultiFileDownloadableDatasetLoader(_dataset_headsq_files_func
 def download_tos_O1_2001_2002(load=True):  # pragma: no cover
     """Download the TOS_O1_2001_2002 dataset.
 
-    The TOS_O1_2001_2002 dataset is a 3D MRI scan of a human head.
+    Sea surface temperatures collected by PCMDI for use by the IPCC.
 
     .. versionadded:: 0.44.0
 
