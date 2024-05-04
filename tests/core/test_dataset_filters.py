@@ -2488,13 +2488,12 @@ def test_extract_values_split_ranges_values(labeled_data):
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
 values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
-values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='values'), [
+values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
     'val0',
     'val1',
 ]
 
 
-@pytest.mark.parametrize('split', [True, False])
 @pytest.mark.parametrize(
     ('dict_inputs', 'block_names'),
     [
@@ -2504,7 +2503,7 @@ values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='va
         values_component_dict,
     ],
 )
-def test_extract_values_dict_input(labeled_data, dict_inputs, block_names, split):
+def test_extract_values_dict_input(labeled_data, dict_inputs, block_names):
     _, _, labeled_data = labeled_data
     extracted = labeled_data.extract_values(**dict_inputs, split=True)
     assert isinstance(extracted, pv.MultiBlock)
@@ -2531,7 +2530,7 @@ def point_cloud_colors():
 
 @pytest.fixture()
 def point_cloud_colors_duplicates(point_cloud_colors):
-    # Define point cloud where the points and rgb scalars are the same
+    # Same fixture as point_cloud_colors but with double the points
     copied = point_cloud_colors.copy()
     copied.points += 0.5
     point_cloud = point_cloud_colors + copied
@@ -2572,10 +2571,10 @@ component_mode_test_cases = [
     ),
     ComponentModeTestCase(values=0, component_mode='all', expected=[BLACK]),
     ComponentModeTestCase(values=1, component_mode='all', expected=[WHITE]),
-    ComponentModeTestCase(values=BLACK, component_mode='values', expected=[BLACK]),
+    ComponentModeTestCase(values=BLACK, component_mode='multi', expected=[BLACK]),
     ComponentModeTestCase(
         values=[WHITE, RED],
-        component_mode='values',
+        component_mode='multi',
         expected=[WHITE, RED],
     ),
 ]
@@ -2599,8 +2598,8 @@ def test_extract_values_component_mode(
     values_kwarg = dict(values=values)
     if values_as_ranges:
         # Get additional test coverage by converting single value inputs into a range
-        if component_mode == 'values':
-            pytest.skip("Cannot use ranges with 'values' mode.")
+        if component_mode == 'multi':
+            pytest.skip("Cannot use ranges with 'multi' mode.")
         values_kwarg = dict(ranges=[values - 0.5, values + 0.5])
 
     extracted = point_cloud_colors.extract_values(
@@ -2628,7 +2627,7 @@ def test_extract_values_component_values_split_unique(
     dataset_filter,
     kwargs,
 ):
-    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='values', **kwargs)
+    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='multi', **kwargs)
     assert isinstance(extracted, pv.MultiBlock)
     assert extracted.n_blocks == len(COLORS_LIST)
     assert (
@@ -2694,11 +2693,11 @@ def test_extract_values_raises(grid4x4):
         grid4x4.extract_values(ranges=[1, 0])
 
     match = 'No ranges or values were specified. At least one must be specified.'
-    with pytest.raises(TypeError, match=re.escape(match)):
+    with pytest.raises(TypeError, match=match):
         grid4x4.extract_values()
 
     match = "Invalid dict mapping. The dict's keys or values must contain strings."
-    with pytest.raises(TypeError, match=re.escape(match)):
+    with pytest.raises(TypeError, match=match):
         grid4x4.extract_values({0: 1})
 
     match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
@@ -2715,21 +2714,21 @@ def test_extract_values_raises(grid4x4):
     with pytest.raises(ValueError, match=re.escape(match)):
         grid4x4.extract_values(component_mode=1)
 
-    match = "Invalid component index '-1' specified for scalars with 1 component(s). Value must be one of: (0,)."
-    with pytest.raises(ValueError, match=re.escape(match)):
+    match = "Invalid component index '-1' specified"
+    with pytest.raises(ValueError, match=match):
         grid4x4.extract_values(component_mode=-1)
 
-    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'values'."
+    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'multi'."
     with pytest.raises(ValueError, match=match):
         grid4x4.extract_values(component_mode='foo')
 
-    match = "Ranges cannot be extracted using component mode 'values'. Expected None, got [0, 1]."
+    match = "Ranges cannot be extracted using component mode 'multi'. Expected None, got [0, 1]."
     with pytest.raises(TypeError, match=re.escape(match)):
-        grid4x4.extract_values(ranges=[0, 1], component_mode='values')
+        grid4x4.extract_values(ranges=[0, 1], component_mode='multi')
 
     match = "Component values cannot be more than 2 dimensions. Got 3."
     with pytest.raises(ValueError, match=match):
-        grid4x4.extract_values(values=[[[0]]], component_mode='values')
+        grid4x4.extract_values(values=[[[0]]], component_mode='multi')
 
     match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -2737,7 +2736,7 @@ def test_extract_values_raises(grid4x4):
 
     match = 'Num components in values array (2) must match num components in data array (1).'
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid4x4.extract_values(values=[0, 1], component_mode='values')
+        grid4x4.extract_values(values=[0, 1], component_mode='multi')
 
 
 def test_slice_along_line_composite(composite):
