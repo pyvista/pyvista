@@ -261,6 +261,7 @@ class PolyDataFilters(DataSetFilters):
                 warnings.warn(
                     'Unable to compute boolean intersection when one PolyData is '
                     'contained within another and no faces intersect.',
+                    stacklevel=2,
                 )
         return bool_inter
 
@@ -2583,7 +2584,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_data[key] = self.cell_data[key][fmask]
                 except:
-                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh')
+                    warnings.warn(f'Unable to pass cell key {key} onto reduced mesh', stacklevel=2)
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -2999,6 +3000,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         alg = _vtk.vtkLinearExtrusionFilter()
@@ -3146,6 +3148,7 @@ class PolyDataFilters(DataSetFilters):
                 'a future version to ``True`` to match the behavior of VTK. We recommend '
                 'passing the keyword explicitly to prevent future surprises.',
                 PyVistaFutureWarning,
+                stacklevel=2,
             )
 
         if (

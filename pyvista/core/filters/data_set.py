@@ -2351,10 +2351,13 @@ class DataSetFilters:
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                warnings.warn("No data to use for scale. scale will be set to False.")
+                warnings.warn("No data to use for scale. scale will be set to False.", stacklevel=2)
                 scale = False
             except AmbiguousDataError as err:
-                warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
+                warnings.warn(
+                    f"{err}\nIt is unclear which one to use. scale will be set to False.",
+                    stacklevel=2,
+                )
                 scale = False
 
         if scale:
@@ -2378,11 +2381,15 @@ class DataSetFilters:
             try:
                 pyvista.set_default_active_vectors(dataset)
             except MissingDataError:
-                warnings.warn("No vector-like data to use for orient. orient will be set to False.")
+                warnings.warn(
+                    "No vector-like data to use for orient. orient will be set to False.",
+                    stacklevel=2,
+                )
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
                     f"{err}\nIt is unclear which one to use. orient will be set to False.",
+                    stacklevel=2,
                 )
                 orient = False
 
@@ -2645,6 +2652,7 @@ class DataSetFilters:
                 "Use of `largest=True` is deprecated. Use 'largest' or "
                 "`extraction_mode='largest'` instead.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             extraction_mode = 'largest'
 
@@ -3597,6 +3605,7 @@ class DataSetFilters:
             If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
             """,
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
         if not pyvista.is_pyvista_dataset(points):
@@ -6375,6 +6384,7 @@ class DataSetFilters:
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
                 'to transform properly.',
+                stacklevel=2,
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this

@@ -24,5 +24,6 @@ def __getattr__(name):
     warnings.warn(
         message,
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
     return value

@@ -637,6 +637,7 @@ class CellArray(_vtk.vtkCellArray):
                 warnings.warn(
                     f"`CellArray parameter `{k}` is deprecated and no longer used.",
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
 
     @property

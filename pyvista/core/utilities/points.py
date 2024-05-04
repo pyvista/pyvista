@@ -55,6 +55,7 @@ def vtk_points(points, deep=True, force_float=False):
                 'transforming or applying filters. Casting to '
                 '``np.float32``. Disable this by passing '
                 '``force_float=False``.',
+                stacklevel=2,
             )
             points = points.astype(np.float32)
 

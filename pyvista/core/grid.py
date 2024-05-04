@@ -566,6 +566,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
                 "Behavior of pyvista.ImageData has changed. First argument must be "
                 "either a ``vtk.vtkImageData`` or path.",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             dimensions = uinput
             uinput = None
@@ -576,6 +577,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
             warnings.warn(
                 '`dims` argument is deprecated. Please use `dimensions`.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
         assert_empty_kwargs(**kwargs)
 
@@ -590,6 +592,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
                 "    ...     origin=(10, 35, 50),\n"
                 "    ... )\n",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             origin = args[0]
             if len(args) > 1:

@@ -980,6 +980,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`numberofhills` argument is deprecated. Please use `number_of_hills`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif number_of_hills is not None:
         parametric_function.SetNumberOfHills(number_of_hills)
@@ -990,6 +991,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`hillxvariance` argument is deprecated. Please use `hill_x_variance`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif hill_x_variance is not None:
         parametric_function.SetHillXVariance(hill_x_variance)
@@ -1000,6 +1002,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`hillyvariance` argument is deprecated. Please use `hill_y_variance`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif hill_y_variance is not None:
         parametric_function.SetHillYVariance(hill_y_variance)
@@ -1010,6 +1013,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`hillvariance` argument is deprecated. Please use `hill_variance`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif hill_amplitude is not None:
         parametric_function.SetHillAmplitude(hill_amplitude)
@@ -1020,6 +1024,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`randomseed` argument is deprecated. Please use `random_seed`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif random_seed is not None:
         parametric_function.SetRandomSeed(random_seed)
@@ -1030,6 +1035,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`xvariancescalefactor` argument is deprecated. Please use `x_variance_scale_factor`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif x_variance_scale_factor is not None:
         parametric_function.SetXVarianceScaleFactor(x_variance_scale_factor)
@@ -1040,6 +1046,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`yvariancescalefactor` argument is deprecated. Please use `y_variance_scale_factor`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif y_variance_scale_factor is not None:
         parametric_function.SetYVarianceScaleFactor(y_variance_scale_factor)
@@ -1050,6 +1057,7 @@ def ParametricRandomHills(
         warnings.warn(
             '`amplitudescalefactor` argument is deprecated. Please use `amplitude_scale_factor`.',
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
     elif amplitude_scale_factor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitude_scale_factor)

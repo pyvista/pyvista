@@ -506,6 +506,7 @@ class RenderWindowInteractor:
                 warnings.warn(
                     "Interaction with charts is not possible when using multiple subplots."
                     "Upgrade to VTK 9.3 or newer to enable this feature.",
+                    stacklevel=2,
                 )
                 scene = None
         self._context_style.SetScene(scene)
@@ -1404,6 +1405,7 @@ class RenderWindowInteractor:
         warnings.warn(
             "Use of `get_picker` is deprecated. Use `picker` property instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         return self.picker
 
@@ -1419,6 +1421,7 @@ class RenderWindowInteractor:
         warnings.warn(
             "Use of `get_picker` is deprecated. Use `picker` property instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         self.picker = picker
 
@@ -1474,6 +1477,7 @@ class RenderWindowInteractor:
         warnings.warn(
             "`add_pick_obeserver` is deprecated, use `add_pick_observer`",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         self.add_pick_observer(observer)
 

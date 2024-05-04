@@ -204,6 +204,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
                 f"The VTK reader `{reader.reader.GetClassName()}` in pyvista reader `{reader}` raised an error"
                 "while reading the file.\n"
                 f'\t"{observer.get_message()}"',
+                stacklevel=2,
             )
         return mesh
 
@@ -223,6 +224,7 @@ def _apply_attrs_to_reader(reader, attrs):
     warnings.warn(
         "attrs use is deprecated.  Use a Reader class for more flexible control",
         PyVistaDeprecationWarning,
+        stacklevel=2,
     )
     for name, args in attrs.items():
         attr = getattr(reader.reader, name)

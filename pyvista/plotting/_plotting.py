@@ -160,9 +160,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn("Opacity scalars contain values over 1")
+                warnings.warn("Opacity scalars contain values over 1", stacklevel=2)
             if np.any(opacity < 0):
-                warnings.warn("Opacity scalars contain values less than 0")
+                warnings.warn("Opacity scalars contain values less than 0", stacklevel=2)
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
@@ -277,7 +277,7 @@ def _common_arg_parser(
     # account for legacy behavior
     if 'stitle' in kwargs:  # pragma: no cover
         # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
+        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning, stacklevel=2)
         scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
     if "scalar" in kwargs:

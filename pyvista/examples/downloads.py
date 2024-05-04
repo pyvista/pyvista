@@ -78,7 +78,7 @@ else:
 default_user_data_path = str(pooch.os_cache(f'pyvista_{CACHE_VERSION}'))
 if 'PYVISTA_USERDATA_PATH' in os.environ:  # pragma: no cover
     if not Path(os.environ['PYVISTA_USERDATA_PATH']).is_dir():
-        warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH')
+        warnings.warn('Ignoring invalid {PYVISTA_USERDATA_PATH', stacklevel=2)
         USER_DATA_PATH = default_user_data_path
     else:
         USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
@@ -97,6 +97,7 @@ else:
             warnings.warn(
                 f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
                 'examples cache with the PYVISTA_USERDATA_PATH environment variable.',
+                stacklevel=2,
             )
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)

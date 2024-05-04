@@ -204,7 +204,7 @@ def try_callback(func, *args):
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
-        warnings.warn(formatted_exception)
+        warnings.warn(formatted_exception, stacklevel=2)
 
 
 def threaded(fn):
