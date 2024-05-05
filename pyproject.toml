@@ -306,6 +306,10 @@ target-version = 'py39'
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
+    # https://github.com/pyvista/pyvista/pull/6030
+    "B028",
+    # https://github.com/pyvista/pyvista/pull/6022
+    "B904",
     # whitespace before ':'
     "E203",
     # line break before binary operator
@@ -342,15 +346,7 @@ extend-select = [
     "A",
     "AIR",
     "ASYNC",
-    "B006",
-    "B007",
-    "B008",
-    "B009",
-    "B010",
-    "B015",
-    "B018",
-    "B020",
-    "B027",
+    "B",
     "C4",
     "COM",
     "DJ",
