@@ -547,12 +547,10 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     def __init__(
         self,
         uinput=None,
-        *args,
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep=False,
-        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
