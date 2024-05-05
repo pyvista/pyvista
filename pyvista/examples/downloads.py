@@ -7750,3 +7750,37 @@ def download_prism(load=True):  # pragma: no cover
 
 
 _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
+
+
+def download_particles(load=True):  # pragma: no cover
+    """Download a particle dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_particles()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Particles Dataset <particles_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_particles, load=load)
+
+
+_dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')
