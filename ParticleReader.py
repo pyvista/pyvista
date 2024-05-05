@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from vtkmodules.util.misc import vtkGetDataRoot
 from vtkmodules.vtkIOGeometry import vtkParticleReader
 from vtkmodules.vtkRenderingCore import (
     vtkActor,
@@ -10,8 +9,6 @@ from vtkmodules.vtkRenderingCore import (
 )
 
 from pyvista import examples
-
-VTK_DATA_ROOT = vtkGetDataRoot()
 
 # Create the RenderWindow, Renderer and both Actors
 #
