@@ -616,7 +616,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: PT011
+    with pytest.raises(Exception):  # noqa: B017, PT011
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available
