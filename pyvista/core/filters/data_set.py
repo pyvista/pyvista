@@ -5153,7 +5153,7 @@ class DataSetFilters:
         Parameters
         ----------
         values : number | array_like | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -5162,13 +5162,13 @@ class DataSetFilters:
             .. note::
                 When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
-                ``values`` can be a single vector, or an array of row vectors.
+                ``values`` can be a single vector or an array of row vectors.
 
         ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
-            may be specified together. The end points of the ranges are included in the
+            may be specified together. The endpoints of the ranges are included in the
             extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
@@ -5197,7 +5197,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent item must have the specified value.
+            - ``'multi'``: the entire multi-component item must have the specified value.
 
         **kwargs : dict, optional
             Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
@@ -5254,7 +5254,7 @@ class DataSetFilters:
         Plot the regions as separate meshes using the labels instead of plotting
         the MultiBlock directly.
 
-        >>> # Clear scalar data so we can color each mesh using a single color
+        Clear scalar data so we can color each mesh using a single color
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
         >>> plot = pv.Plotter()
@@ -5343,7 +5343,7 @@ class DataSetFilters:
         Parameters
         ----------
         values : number | array_like | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
@@ -5352,13 +5352,13 @@ class DataSetFilters:
             .. note::
                 When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
-                ``values`` can be a single vector, or an array of row vectors.
+                ``values`` can be a single vector or an array of row vectors.
 
         ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
-            may be specified together. The end points of the ranges are included in the
+            may be specified together. The endpoints of the ranges are included in the
             extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
@@ -5387,7 +5387,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent item must have the specified value.
+            - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
             Invert the extraction values. If ``True`` extract the points (with cells)
@@ -5395,7 +5395,7 @@ class DataSetFilters:
 
         adjacent_cells : bool, default: True
             If ``True``, include cells (and their points) that contain at least one of
-            the extracted points. If ``False``, only include cells which contain
+            the extracted points. If ``False``, only include cells that contain
             exclusively points from the extracted points list. Has no effect if
             ``include_cells`` is ``False``. Has no effect when extracting values from
             cell data.
@@ -5441,7 +5441,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.UnstructuredGrid or pyvista.MultiBlock
-            Extracted mesh or a composite of extracted meshes depending on ``split``.
+            An extracted mesh or a composite of extracted meshes, depending on ``split``.
 
         Examples
         --------
@@ -5468,7 +5468,7 @@ class DataSetFilters:
         (0.0, 0.0)
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
-        Use ``ranges`` to extract a range of values from a grid's point data.
+        Use ``ranges`` to extract values from a grid's point data in range.
 
         Here, we use ``+/-`` infinity to extract all values of ``100`` or less.
 
@@ -5554,10 +5554,10 @@ class DataSetFilters:
         ... )
         >>> extracted.plot(**plot_kwargs)
 
-        Use the original ids returned by the extraction to modify the original point
+        Use the original IDs returned by the extraction to modify the original point
         cloud.
 
-        E.g. change the color of the blue and green points to yellow.
+        For example, change the color of the blue and green points to yellow.
 
         >>> point_ids = extracted['vtkOriginalPointIds']
         >>> yellow = [1, 1, 0]
