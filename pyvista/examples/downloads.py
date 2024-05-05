@@ -7752,6 +7752,38 @@ def download_prism(load=True):  # pragma: no cover
 _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
 
 
+def download_iron_protein(load=True):  # pragma: no cover
+    """Download iron protein dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_iron_protein()
+    >>> dataset.plot(volume=True, cmap='blues')
+
+    .. seealso::
+
+        :ref:`Iron Protein Dataset <iron_protein_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_iron_protein, load=load)
+
+
+_dataset_iron_protein = _SingleFileDownloadableDatasetLoader('ironProt.vtk')
+
+
 def download_caffeine(load=True):  # pragma: no cover
     """Download the caffeine molecule.
 
