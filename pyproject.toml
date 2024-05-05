@@ -308,8 +308,6 @@ external = ["E131", "D102", "D105"]
 ignore = [
     # https://github.com/pyvista/pyvista/pull/6030
     "B028",
-    # https://github.com/pyvista/pyvista/pull/6022
-    "B904",
     # whitespace before ':'
     "E203",
     # line break before binary operator
