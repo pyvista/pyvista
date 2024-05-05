@@ -189,6 +189,7 @@ from .reader import (
     JPEGReader,
     MetaImageReader,
     MFIXReader,
+    MINCImageReader,
     MultiBlockPlot3DReader,
     NIFTIReader,
     NRRDReader,
