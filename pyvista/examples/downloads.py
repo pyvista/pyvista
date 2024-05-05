@@ -7752,6 +7752,40 @@ def download_prism(load=True):  # pragma: no cover
 _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
 
 
+def download_t3_grid_0(load=True):  # pragma: no cover
+    """Download a T3 grid 0 image.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_t3_grid_0()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`T3 Grid 0 Dataset <t3_grid_0_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_t3_grid_0, load=load)
+
+
+_dataset_t3_grid_0 = _SingleFileDownloadableDatasetLoader('t3_grid_0.mnc')
+
+
 def download_iron_protein(load=True):  # pragma: no cover
     """Download iron protein dataset.
 
