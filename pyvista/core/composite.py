@@ -4,6 +4,8 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 
+from __future__ import annotations
+
 import collections.abc
 from itertools import zip_longest
 import pathlib
@@ -26,7 +28,10 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet, CompositeFilters, DataObject, collections.abc.MutableSequence  # type: ignore[type-arg]
+    _vtk.vtkMultiBlockDataSet,
+    CompositeFilters,
+    DataObject,
+    collections.abc.MutableSequence,  # type: ignore[type-arg]
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -135,7 +140,7 @@ class MultiBlock(
 
         elif len(args) > 1:
             raise ValueError(
-                'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.'
+                'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.',
             )
 
         # Upon creation make sure all nested structures are wrapped
@@ -370,12 +375,13 @@ class MultiBlock(
 
     @overload
     def __getitem__(
-        self, index: Union[int, str]
+        self,
+        index: Union[int, str],
     ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -482,7 +488,9 @@ class MultiBlock(
                 self.append(v)
 
     def get(
-        self, index: str, default: Optional[_TypeMultiBlockLeaf] = None
+        self,
+        index: str,
+        default: Optional[_TypeMultiBlockLeaf] = None,
     ) -> Optional[_TypeMultiBlockLeaf]:
         """Get a block by its name.
 
@@ -638,13 +646,17 @@ class MultiBlock(
 
     @overload
     def __setitem__(
-        self, index: Union[int, str], data: Optional[_TypeMultiBlockLeaf]
+        self,
+        index: Union[int, str],
+        data: Optional[_TypeMultiBlockLeaf],
     ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
-        self, index: slice, data: Iterable[Optional[_TypeMultiBlockLeaf]]
+        self,
+        index: slice,
+        data: Iterable[Optional[_TypeMultiBlockLeaf]],
     ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -685,7 +697,8 @@ class MultiBlock(
             for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
-                        index_iter[-1] + 1 + (i - len(index_iter)), d
+                        index_iter[-1] + 1 + (i - len(index_iter)),
+                        d,
                     )  # insert after last entry, increasing
                 elif d is None:
                     del self[index_iter[-1] + 1]  # delete next entry
@@ -736,7 +749,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> 'MultiBlock':
+    def __iter__(self) -> MultiBlock:
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
@@ -1032,7 +1045,10 @@ class MultiBlock(
             self.ShallowCopy(to_copy)
 
     def set_active_scalars(
-        self, name: Optional[str], preference: str = 'cell', allow_missing: bool = False
+        self,
+        name: Optional[str],
+        preference: str = 'cell',
+        allow_missing: bool = False,
     ) -> Tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
@@ -1072,7 +1088,9 @@ class MultiBlock(
             if block is not None:
                 if isinstance(block, MultiBlock):
                     field, scalars = block.set_active_scalars(
-                        name, preference, allow_missing=allow_missing
+                        name,
+                        preference,
+                        allow_missing=allow_missing,
                     )
                 else:
                     try:
@@ -1223,7 +1241,7 @@ class MultiBlock(
                 if component >= scalars.shape[1] or component < 0:
                     raise ValueError(
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                        f'dimensionality of the scalars array: {scalars.shape[1]}',
                     )
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
@@ -1244,7 +1262,10 @@ class MultiBlock(
         return f'{scalars_name}-real'
 
     def _convert_to_single_component(
-        self, data_attr: str, scalars_name: str, component: Union[None, str]
+        self,
+        data_attr: str,
+        scalars_name: str,
+        component: Union[None, str],
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:

@@ -132,7 +132,7 @@ class Texture(_vtk.vtkTexture, DataObject):
                 if not isinstance(image, pyvista.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
-                        'pyvista.ImageData'
+                        'pyvista.ImageData',
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
@@ -210,7 +210,8 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
+            (-1, n_components),
+            order='F',
         )
         grid.set_active_scalars('Image')
         self._from_image_data(grid)
@@ -335,7 +336,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         return self.to_image().active_scalars.reshape(
-            list(self.dimensions)[::-1] + [self.n_components]
+            list(self.dimensions)[::-1] + [self.n_components],
         )[::-1]
 
     def rotate_cw(self) -> 'Texture':

@@ -27,7 +27,9 @@ def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()
     ids = np.random.default_rng().integers(
-        low=0, high=dataset.n_points - 1, size=int(dataset.n_points * subset)
+        low=0,
+        high=dataset.n_points - 1,
+        size=int(dataset.n_points * subset),
     )
     return dataset.points[ids]
 

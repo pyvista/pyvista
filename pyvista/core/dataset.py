@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 import collections.abc
 from copy import deepcopy
 from functools import partial
@@ -14,6 +13,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -48,7 +48,13 @@ from .utilities.points import vtk_points
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
-ActiveArrayInfoTuple = namedtuple('ActiveArrayInfoTuple', ['association', 'name'])
+
+
+class ActiveArrayInfoTuple(NamedTuple):
+    """Active array info tuple to provide legacy support."""
+
+    association: FieldAssociation
+    name: str
 
 
 class ActiveArrayInfo:
@@ -202,7 +208,8 @@ class DataSet(DataSetFilters, DataObject):
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
                     self._active_scalars_info = ActiveArrayInfo(
-                        attr.association, attr.active_scalars_name
+                        attr.association,
+                        attr.active_scalars_name,
                     )
                     break
 
@@ -600,7 +607,9 @@ class DataSet(DataSetFilters, DataObject):
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
-        self, name: Optional[str], preference='cell'
+        self,
+        name: Optional[str],
+        preference='cell',
     ) -> Tuple[FieldAssociation, Optional[NumpyArray[float]]]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -649,7 +658,7 @@ class DataSet(DataSetFilters, DataObject):
 
         if ret < 0:
             raise ValueError(
-                f'Data field "{name}" with type ({field}) could not be set as the active scalars'
+                f'Data field "{name}" with type ({field}) could not be set as the active scalars',
             )
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
@@ -691,7 +700,7 @@ class DataSet(DataSetFilters, DataObject):
 
             if ret < 0:
                 raise ValueError(
-                    f'Data field ({name}) with type ({field}) could not be set as the active vectors'
+                    f'Data field ({name}) with type ({field}) could not be set as the active vectors',
                 )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
@@ -728,7 +737,7 @@ class DataSet(DataSetFilters, DataObject):
 
             if ret < 0:
                 raise ValueError(
-                    f'Data field ({name}) with type ({field}) could not be set as the active tensors'
+                    f'Data field ({name}) with type ({field}) could not be set as the active tensors',
                 )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
@@ -843,7 +852,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.cell_data.active_normals
 
     def get_data_range(
-        self, arr_var: Optional[Union[str, NumpyArray[float]]] = None, preference='cell'
+        self,
+        arr_var: Optional[Union[str, NumpyArray[float]]] = None,
+        preference='cell',
     ) -> Tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -938,7 +949,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_y(
@@ -995,7 +1008,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_z(
@@ -1053,7 +1068,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def rotate_vector(
@@ -1116,7 +1133,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def translate(
@@ -1166,7 +1185,9 @@ class DataSet(DataSetFilters, DataObject):
         transform = _vtk.vtkTransform()
         transform.Translate(cast(Sequence[float], xyz))
         return self.transform(
-            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def scale(
@@ -1224,7 +1245,9 @@ class DataSet(DataSetFilters, DataObject):
         transform = _vtk.vtkTransform()
         transform.Scale(xyz)
         return self.transform(
-            transform, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_x(
@@ -1280,7 +1303,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((1, 0, 0), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_y(
@@ -1336,7 +1361,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 1, 0), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_z(
@@ -1392,7 +1419,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def flip_normal(
@@ -1453,7 +1482,9 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
         return self.transform(
-            t, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def copy_meta_from(self, ido: DataSet, deep: bool = True) -> None:
@@ -1526,7 +1557,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
-            self.GetPointData(), dataset=self, association=FieldAssociation.POINT
+            self.GetPointData(),
+            dataset=self,
+            association=FieldAssociation.POINT,
         )
 
     def clear_point_data(self) -> None:
@@ -1617,7 +1650,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
-            self.GetCellData(), dataset=self, association=FieldAssociation.CELL
+            self.GetCellData(),
+            dataset=self,
+            association=FieldAssociation.CELL,
         )
 
     @property
@@ -1837,7 +1872,9 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Area'].sum()
 
     def get_array(
-        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
+        self,
+        name: str,
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
@@ -1891,7 +1928,9 @@ class DataSet(DataSetFilters, DataObject):
         return arr
 
     def get_array_association(
-        self, name: str, preference: Literal['cell', 'point', 'field'] = 'cell'
+        self,
+        name: str,
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> FieldAssociation:
         """Get the association of an array.
 
@@ -1951,7 +1990,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             raise KeyError(
                 f'Index ({index}) not understood.'
-                ' Index must be a string name or a tuple of string name and string preference.'
+                ' Index must be a string name or a tuple of string name and string preference.',
             )
         return self.get_array(name, preference=preference)
 
@@ -1960,7 +1999,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.array_names
 
     def __setitem__(
-        self, name: str, scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float]
+        self,
+        name: str,
+        scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float],
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2139,7 +2180,7 @@ class DataSet(DataSetFilters, DataObject):
         if not isinstance(self, type(mesh)):
             raise TypeError(
                 f'The Input DataSet type {type(mesh)} must be '
-                f'compatible with the one being overwritten {type(self)}'
+                f'compatible with the one being overwritten {type(self)}',
             )
         if deep:
             self.deep_copy(mesh)
@@ -2466,7 +2507,8 @@ class DataSet(DataSetFilters, DataObject):
         return out_cells
 
     def find_containing_cell(
-        self, point: Union[VectorLike[float], MatrixLike[float]]
+        self,
+        point: Union[VectorLike[float], MatrixLike[float]],
     ) -> Union[int, NumpyArray[int]]:
         """Find index of a cell that contains the given point.
 
@@ -3005,7 +3047,9 @@ class DataSet(DataSetFilters, DataObject):
         return list(set(out))
 
     def point_neighbors_levels(
-        self, ind: int, n_levels: int = 1
+        self,
+        ind: int,
+        n_levels: int = 1,
     ) -> Generator[List[int], None, None]:
         """Get consecutive levels of point neighbors.
 
@@ -3080,7 +3124,10 @@ class DataSet(DataSetFilters, DataObject):
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def cell_neighbors_levels(
-        self, ind: int, connections: str = "points", n_levels: int = 1
+        self,
+        ind: int,
+        connections: str = "points",
+        n_levels: int = 1,
     ) -> Generator[List[int], None, None]:
         """Get consecutive levels of cell neighbors.
 
@@ -3180,7 +3227,10 @@ class DataSet(DataSetFilters, DataObject):
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
-        self, ind: int, n_levels: int, method: Callable[[Any], Any]
+        self,
+        ind: int,
+        n_levels: int,
+        method: Callable[[Any], Any],
     ) -> Generator[List[int], None, None]:  # numpydoc ignore=PR01,RT01
         """Provide helper method that yields neighbors ids."""
         neighbors = set(method(ind))
@@ -3270,7 +3320,9 @@ class DataSet(DataSetFilters, DataObject):
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
     def point_is_inside_cell(
-        self, ind: int, point: Union[VectorLike[float] | MatrixLike[float]]
+        self,
+        ind: int,
+        point: Union[VectorLike[float] | MatrixLike[float]],
     ) -> Union[bool, NumpyArray[np.bool_]]:
         """Return whether one or more points are inside a cell.
 
@@ -3322,7 +3374,7 @@ class DataSet(DataSetFilters, DataObject):
             is_inside = cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights)
             if not 0 <= is_inside <= 1:
                 raise RuntimeError(
-                    f"Computational difficulty encountered for point {node} in cell {ind}"
+                    f"Computational difficulty encountered for point {node} in cell {ind}",
                 )
             in_cell[i] = bool(is_inside)
 
@@ -3359,7 +3411,8 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_texture_coordinates.setter
     def active_texture_coordinates(
-        self, texture_coordinates: NumpyArray[float]
+        self,
+        texture_coordinates: NumpyArray[float],
     ):  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 

@@ -208,7 +208,10 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     title_opacity = np.random.default_rng().random()
     s = p.add_slider_widget(
-        callback=func, rng=[0, 10], style="classic", title_opacity=title_opacity
+        callback=func,
+        rng=[0, 10],
+        style="classic",
+        title_opacity=title_opacity,
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
@@ -228,7 +231,11 @@ def test_widget_slider(uniform):
     # custom width
     p = pv.Plotter()
     slider = p.add_slider_widget(
-        callback=func, rng=[0, 10], fmt=fmt, tube_width=0.1, slider_width=0.2
+        callback=func,
+        rng=[0, 10],
+        fmt=fmt,
+        tube_width=0.1,
+        slider_width=0.2,
     )
     assert slider.GetRepresentation().GetSliderWidth() == 0.2
     assert slider.GetRepresentation().GetTubeWidth() == 0.1
@@ -472,7 +479,9 @@ def test_affine_widget(sphere):
         pl.add_affine_transform_widget(actor, axes=axes)
 
     widget = pl.add_affine_transform_widget(
-        actor, interact_callback=interact_callback, release_callback=release_callback
+        actor,
+        interact_callback=interact_callback,
+        release_callback=release_callback,
     )
     pl.show(auto_close=False)
 
@@ -560,7 +569,7 @@ def test_affine_widget(sphere):
 
     # test change axes
     axes = np.array(
-        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]]
+        [[0.70710678, 0.70710678, 0.0], [-0.70710678, 0.70710678, 0.0], [0.0, 0.0, 1.0]],
     )
     widget.axes = axes
     assert np.allclose(widget.axes, axes)
@@ -607,7 +616,9 @@ def test_logo_widget(verify_image_cache):
 
     pl = pv.Plotter()
     pl.add_logo_widget(
-        examples.download_vtk_logo().to_image(), position=(0.0, 0.0), size=(0.8, 0.8)
+        examples.download_vtk_logo().to_image(),
+        position=(0.0, 0.0),
+        size=(0.8, 0.8),
     )
     pl.show()
 

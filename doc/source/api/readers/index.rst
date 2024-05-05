@@ -31,7 +31,9 @@ Reader Classes
     DICOMReader
     EnSightReader
     FacetReader
+    FLUENTCFFReader
     FluentReader
+    GambitReader
     GIFReader
     GLTFReader
     HDFReader
@@ -63,12 +65,12 @@ Reader Classes
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
+    XMLPartitionedDataSetReader
     XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader
     XMLUnstructuredGridReader
     XdmfReader
-    XMLPartitionedDataSetReader
 
 Inherited Classes
 ~~~~~~~~~~~~~~~~~

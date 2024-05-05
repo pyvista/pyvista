@@ -342,7 +342,15 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
 @pytest.mark.parametrize('extension', pv.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, tetbeam
+    extension,
+    binary,
+    tmpdir,
+    use_pathlib,
+    ant,
+    sphere,
+    uniform,
+    airplane,
+    tetbeam,
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
@@ -652,7 +660,7 @@ def test_set_active_scalars(multiblock_all):
     with pytest.raises(KeyError, match='does not exist'):
         multiblock_all.set_active_scalars('point_data_a')
     multiblock_all.set_active_scalars('point_data_a', allow_missing=True)
-    multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
+    assert multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
 
     with pytest.raises(KeyError, match='is missing from all'):
         multiblock_all.set_active_scalars('does not exist', allow_missing=True)
@@ -758,7 +766,9 @@ def test_compute_normals(multiblock_poly):
         block.clear_data()
         block['point_data'] = range(block.n_points)
     mblock = multiblock_poly._compute_normals(
-        cell_normals=False, split_vertices=True, track_vertices=True
+        cell_normals=False,
+        split_vertices=True,
+        track_vertices=True,
     )
     for block in mblock:
         assert 'Normals' in block.point_data

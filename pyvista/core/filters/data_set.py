@@ -1,15 +1,16 @@
 """Filters module with a class of common filters that can be applied to any vtkDataSet."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
-from typing import Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Iterable, Literal, Optional, Sequence, Union, cast
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import (
     AmbiguousDataError,
@@ -30,6 +31,9 @@ from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -488,7 +492,13 @@ class DataSetFilters:
         return result
 
     def clip_scalar(
-        self, scalars=None, invert=True, value=0.0, inplace=False, progress_bar=False, both=False
+        self,
+        scalars=None,
+        invert=True,
+        value=0.0,
+        inplace=False,
+        progress_bar=False,
+        both=False,
     ):
         """Clip a dataset by a scalar.
 
@@ -665,7 +675,11 @@ class DataSetFilters:
         )
 
     def slice_implicit(
-        self, implicit_function, generate_triangles=False, contour=False, progress_bar=False
+        self,
+        implicit_function,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Slice a dataset by a VTK implicit function.
 
@@ -722,7 +736,12 @@ class DataSetFilters:
         return output
 
     def slice(
-        self, normal='x', origin=None, generate_triangles=False, contour=False, progress_bar=False
+        self,
+        normal='x',
+        origin=None,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -786,7 +805,13 @@ class DataSetFilters:
         )
 
     def slice_orthogonal(
-        self, x=None, y=None, z=None, generate_triangles=False, contour=False, progress_bar=False
+        self,
+        x=None,
+        y=None,
+        z=None,
+        generate_triangles=False,
+        contour=False,
+        progress_bar=False,
     ):
         """Create three orthogonal slices through the dataset on the three cartesian planes.
 
@@ -842,8 +867,12 @@ class DataSetFilters:
             for i in range(self.n_blocks):
                 output.append(
                     self[i].slice_orthogonal(
-                        x=x, y=y, z=z, generate_triangles=generate_triangles, contour=contour
-                    )
+                        x=x,
+                        y=y,
+                        z=z,
+                        generate_triangles=generate_triangles,
+                        contour=contour,
+                    ),
                 )
             return output
         output.append(
@@ -960,7 +989,7 @@ class DataSetFilters:
                 ax_index = label_to_index[axis.lower()]
             except KeyError:
                 raise ValueError(
-                    f'Axis ({axis!r}) not understood. Choose one of {labels}.'
+                    f'Axis ({axis!r}) not understood. Choose one of {labels}.',
                 ) from None
             ax_label = axis
         # get the locations along that axis
@@ -985,7 +1014,7 @@ class DataSetFilters:
                         contour=contour,
                         bounds=bounds,
                         center=center,
-                    )
+                    ),
                 )
             return output
         for i in range(n):
@@ -1172,6 +1201,10 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        See Also
+        --------
+        threshold_percent, :meth:`~pyvista.ImageDataFilters.image_threshold`, extract_values
+
         Returns
         -------
         pyvista.UnstructuredGrid
@@ -1240,7 +1273,11 @@ class DataSetFilters:
         alg.SetAllScalars(all_scalars)
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
@@ -1257,7 +1294,7 @@ class DataSetFilters:
                 raise TypeError("component must be int")
             if component > (dim - 1) or component < 0:
                 raise ValueError(
-                    f"scalars has {dim} components: supplied component {component} not in range"
+                    f"scalars has {dim} components: supplied component {component} not in range",
                 )
             alg.SetSelectedComponent(component)
         elif component_mode == "all":
@@ -1266,7 +1303,7 @@ class DataSetFilters:
             alg.SetComponentModeToUseAny()
         else:
             raise ValueError(
-                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+                f"component_mode must be 'component', 'all', or 'any' got: {component_mode}",
             )
 
         # Run the threshold
@@ -1579,7 +1616,7 @@ class DataSetFilters:
             except AttributeError:  # pragma: no cover
                 raise VTKVersionError(
                     'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.'
+                    'VTK v9.1 or newer is required.',
                 )
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
@@ -1844,7 +1881,7 @@ class DataSetFilters:
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
-                'a numpy.ndarray, a string, or None.'
+                'a numpy.ndarray, a string, or None.',
             )
 
         # Make sure the input has scalars to contour on
@@ -2054,7 +2091,12 @@ class DataSetFilters:
         return self
 
     def compute_cell_sizes(
-        self, length=True, area=True, volume=True, progress_bar=False, vertex_count=False
+        self,
+        length=True,
+        area=True,
+        volume=True,
+        progress_bar=False,
+        vertex_count=False,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -2162,6 +2204,7 @@ class DataSetFilters:
         absolute=False,
         clamping=False,
         rng=None,
+        color_mode='scale',
         progress_bar=False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
@@ -2219,6 +2262,13 @@ class DataSetFilters:
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
+        color_mode : str, optional, default: ``scale``
+            If ``scale`` , color by scale the glyphs.
+            If ``scalar`` , color by scalar the glyphs.
+            If ``vector`` , color by vector the glyphs.
+
+            .. versionadded:: 0.44
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -2267,7 +2317,7 @@ class DataSetFilters:
             if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError(
                     'If "geom" is a sequence then "indices" must '
-                    'also be a sequence of the same length.'
+                    'also be a sequence of the same length.',
                 )
             if len(indices) != len(geom) and len(geom) != 1:
                 raise ValueError('The sequence "indices" must be the same length as "geom".')
@@ -2331,7 +2381,7 @@ class DataSetFilters:
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
-                    f"{err}\nIt is unclear which one to use. orient will be set to False."
+                    f"{err}\nIt is unclear which one to use. orient will be set to False.",
                 )
                 orient = False
 
@@ -2372,6 +2422,15 @@ class DataSetFilters:
             if orient:
                 source_data.set_active_vectors(dataset.active_vectors_name, preference='point')
 
+        if color_mode == 'scale':
+            alg.SetColorModeToColorByScale()
+        elif color_mode == 'scalar':
+            alg.SetColorModeToColorByScalar()
+        elif color_mode == 'vector':
+            alg.SetColorModeToColorByVector()
+        else:
+            raise ValueError(f"Invalid color mode '{color_mode}'")
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
@@ -2391,7 +2450,12 @@ class DataSetFilters:
     def connectivity(
         self,
         extraction_mode: Literal[
-            'all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'
+            'all',
+            'largest',
+            'specified',
+            'cell_seed',
+            'point_seed',
+            'closest',
         ] = 'all',
         variable_input=None,
         scalar_range=None,
@@ -2511,13 +2575,13 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Dataset with labeled connected bodies. Return type is
+            Dataset with labeled connected regions. Return type is
             ``pyvista.PolyData`` if input type is ``pyvista.PolyData`` and
             ``pyvista.UnstructuredGrid`` otherwise.
 
         See Also
         --------
-            :meth:`extract_largest`, :meth:`split_bodies`
+        extract_largest, split_bodies, threshold, extract_values
 
         Examples
         --------
@@ -2591,41 +2655,36 @@ class DataSetFilters:
                 raise ValueError('IDs must be positive integer values.')
             return np.unique(ids)
 
-        def _extract_points(_input, points):
-            # This method is similar to `mesh.extract_points` but the
-            # output arrays are removed and the output type is PolyData
-            # if the input type is PolyData
-            _output = _input.extract_points(points, progress_bar=progress_bar)
-            has_cells = _output.n_cells != 0
-
-            if isinstance(_input, pyvista.PolyData):
-                # Output is UnstructuredGrid, so apply vtkRemovePolyData
-                # to input to make the output as PolyData type instead
-                all_ids = set(range(_input.n_cells))
+        def _post_process_extract_values(before_extraction, extracted):
+            # Output is UnstructuredGrid, so apply vtkRemovePolyData
+            # to input to cast the output as PolyData type instead
+            has_cells = extracted.n_cells != 0
+            if isinstance(before_extraction, pyvista.PolyData):
+                all_ids = set(range(before_extraction.n_cells))
 
                 ids_to_keep = set()
                 if has_cells:
-                    ids_to_keep |= set(_output['vtkOriginalCellIds'])
+                    ids_to_keep |= set(extracted['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
-                if len(ids_to_remove) == 0:
-                    _output = _input
-                else:
+                if len(ids_to_remove) != 0:
                     if pyvista.vtk_version_info < (9, 1, 0):
                         raise VTKVersionError(
-                            '`connectivity` with PolyData requires vtk>=9.1.0'
+                            '`connectivity` with PolyData requires vtk>=9.1.0',
                         )  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
-                    remove.SetInputData(_input)
+                    remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
                     _update_alg(remove, progress_bar, "Removing Cells.")
-                    _output = _get_output(remove)
-                    _output.clean(
-                        point_merging=False, inplace=True, progress_bar=progress_bar
+                    extracted = _get_output(remove)
+                    extracted.clean(
+                        point_merging=False,
+                        inplace=True,
+                        progress_bar=progress_bar,
                     )  # remove unused points
             if has_cells:
-                _output.point_data.remove('vtkOriginalPointIds')
-                _output.cell_data.remove('vtkOriginalCellIds')
-            return _output
+                extracted.point_data.remove('vtkOriginalPointIds')
+                extracted.cell_data.remove('vtkOriginalCellIds')
+            return extracted
 
         # Store active scalars info to restore later if needed
         active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
@@ -2644,7 +2703,7 @@ class DataSetFilters:
                 raise ValueError('Scalar range must have two elements defining the min and max.')
             if scalar_range[0] > scalar_range[1]:
                 raise ValueError(
-                    f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}"
+                    f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}",
                 )
 
             # Input will be modified, so copy first
@@ -2668,12 +2727,15 @@ class DataSetFilters:
                 # can sometimes fail for some datasets/scalar values.
                 # So, we filter scalar values beforehand
                 if scalar_range is not None:
-                    # Use extract_points to ensure that cells with at least one
+                    # Use extract_values to ensure that cells with at least one
                     # point within the range are kept (this is consistent
                     # with how the filter operates for other modes)
-                    lower = input_mesh.active_scalars >= scalar_range[0]
-                    upper = input_mesh.active_scalars <= scalar_range[1]
-                    input_mesh = _extract_points(input_mesh, np.logical_and(upper, lower))
+                    extracted = DataSetFilters.extract_values(
+                        input_mesh,
+                        [scalar_range],
+                        progress_bar=progress_bar,
+                    )
+                    input_mesh = _post_process_extract_values(input_mesh, extracted)
 
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputDataObject(input_mesh)
@@ -2699,7 +2761,7 @@ class DataSetFilters:
             if region_ids is None:
                 if variable_input is None:
                     raise ValueError(
-                        "`region_ids` must be specified when `extraction_mode='specified'`."
+                        "`region_ids` must be specified when `extraction_mode='specified'`.",
                     )
                 else:
                     region_ids = variable_input
@@ -2714,7 +2776,7 @@ class DataSetFilters:
             if cell_ids is None:
                 if variable_input is None:
                     raise ValueError(
-                        "`cell_ids` must be specified when `extraction_mode='cell_seed'`."
+                        "`cell_ids` must be specified when `extraction_mode='cell_seed'`.",
                     )
                 else:
                     cell_ids = variable_input
@@ -2727,7 +2789,7 @@ class DataSetFilters:
             if point_ids is None:
                 if variable_input is None:
                     raise ValueError(
-                        "`point_ids` must be specified when `extraction_mode='point_seed'`."
+                        "`point_ids` must be specified when `extraction_mode='point_seed'`.",
                     )
                 else:
                     point_ids = variable_input
@@ -2740,7 +2802,7 @@ class DataSetFilters:
             if closest_point is None:
                 if variable_input is None:
                     raise ValueError(
-                        "`closest_point` must be specified when `extraction_mode='closest'`."
+                        "`closest_point` must be specified when `extraction_mode='closest'`.",
                     )
                 else:
                     closest_point = variable_input
@@ -2749,7 +2811,7 @@ class DataSetFilters:
 
         else:
             raise ValueError(
-                f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
+                f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'",
             )
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
@@ -2762,14 +2824,15 @@ class DataSetFilters:
         elif extraction_mode == 'specified':
             # All regions were initially extracted, so extract only the
             # specified regions
-            point_scalars = output.point_data['RegionId']
-            point_id_mask = np.zeros_like(point_scalars)
-            for i in region_ids:
-                point_id_mask[point_scalars == i] = True
-            output = _extract_points(output, np.nonzero(point_id_mask)[0])
+            extracted = DataSetFilters.extract_values(
+                output,
+                values=region_ids,
+                progress_bar=progress_bar,
+            )
+            output = _post_process_extract_values(output, extracted)
 
             if label_regions:
-                # Tresholded regions may not be contiguous and zero-based
+                # Extracted regions may not be contiguous and zero-based
                 # which will need to be fixed
                 output_needs_fixing = True
 
@@ -2850,7 +2913,11 @@ class DataSetFilters:
 
         """
         return DataSetFilters.connectivity(
-            self, 'largest', label_regions=False, inplace=inplace, progress_bar=progress_bar
+            self,
+            'largest',
+            label_regions=False,
+            inplace=inplace,
+            progress_bar=progress_bar,
         )
 
     def split_bodies(self, label=False, progress_bar=False):
@@ -2867,6 +2934,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_values, partition, connectivity
 
         Returns
         -------
@@ -2895,7 +2966,9 @@ class DataSetFilters:
         for vid in np.unique(classifier):
             # Now extract it:
             b = labeled.threshold(
-                [vid - 0.5, vid + 0.5], scalars='RegionId', progress_bar=progress_bar
+                [vid - 0.5, vid + 0.5],
+                scalars='RegionId',
+                progress_bar=progress_bar,
             )
             if not label:
                 # strange behavior:
@@ -2908,7 +2981,13 @@ class DataSetFilters:
         return bodies
 
     def warp_by_scalar(
-        self, scalars=None, factor=1.0, normal=None, inplace=False, progress_bar=False, **kwargs
+        self,
+        scalars=None,
+        factor=1.0,
+        normal=None,
+        inplace=False,
+        progress_bar=False,
+        **kwargs,
     ):
         """Warp the dataset's points by a point data scalars array's values.
 
@@ -2973,7 +3052,11 @@ class DataSetFilters:
         alg = _vtk.vtkWarpScalar()
         alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
@@ -3050,7 +3133,7 @@ class DataSetFilters:
         if arr.ndim != 2 or arr.shape[1] != 3:
             raise ValueError(
                 'Dataset can only by warped by a 3D vector point data array. '
-                'The values you provided do not satisfy this requirement'
+                'The values you provided do not satisfy this requirement',
             )
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(self)
@@ -3149,7 +3232,10 @@ class DataSetFilters:
 
         """
         return DataSetFilters.cell_data_to_point_data(
-            self, pass_cell_data=pass_cell_data, progress_bar=progress_bar, **kwargs
+            self,
+            pass_cell_data=pass_cell_data,
+            progress_bar=progress_bar,
+            **kwargs,
         )
 
     def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
@@ -3236,7 +3322,10 @@ class DataSetFilters:
 
         """
         return DataSetFilters.point_data_to_cell_data(
-            self, pass_point_data=pass_point_data, progress_bar=progress_bar, **kwargs
+            self,
+            pass_point_data=pass_point_data,
+            progress_bar=progress_bar,
+            **kwargs,
         )
 
     def triangulate(self, inplace=False, progress_bar=False):
@@ -3337,7 +3426,12 @@ class DataSetFilters:
         return _get_output(alg)
 
     def select_enclosed_points(
-        self, surface, tolerance=0.001, inside_out=False, check_surface=True, progress_bar=False
+        self,
+        surface,
+        tolerance=0.001,
+        inside_out=False,
+        check_surface=True,
+        progress_bar=False,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3412,7 +3506,7 @@ class DataSetFilters:
             raise RuntimeError(
                 "Surface is not closed. Please read the warning in the "
                 "documentation for this function and either pass "
-                "`check_surface=False` or repair the surface."
+                "`check_surface=False` or repair the surface.",
             )
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
@@ -3660,7 +3754,7 @@ class DataSetFilters:
                     locator = locator_map[locator]
                 except KeyError as err:
                     raise ValueError(
-                        f"locator must be a string from {locator_map.keys()}, got {locator}"
+                        f"locator must be a string from {locator_map.keys()}, got {locator}",
                     ) from err
             alg.SetCellLocatorPrototype(locator)
 
@@ -3923,7 +4017,10 @@ class DataSetFilters:
         source.Update()
         input_source = wrap(source.GetOutput())
         output = self.streamlines_from_source(
-            input_source, vectors, progress_bar=progress_bar, **kwargs
+            input_source,
+            vectors,
+            progress_bar=progress_bar,
+            **kwargs,
         )
         if return_source:
             return output, input_source
@@ -4047,7 +4144,7 @@ class DataSetFilters:
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
             raise ValueError(
                 "Integration direction must be one of:\n 'backward', "
-                f"'forward', or 'both' - not '{integration_direction}'."
+                f"'forward', or 'both' - not '{integration_direction}'.",
             )
         if integrator_type not in [2, 4, 45]:
             raise ValueError('Integrator type must be one of `2`, `4`, or `45`.')
@@ -4453,7 +4550,12 @@ class DataSetFilters:
         """
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
-            self, pointa, pointb, resolution, tolerance, progress_bar=progress_bar
+            self,
+            pointa,
+            pointb,
+            resolution,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -4539,7 +4641,13 @@ class DataSetFilters:
         return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(
-        self, pointa, pointb, center, resolution=None, tolerance=None, progress_bar=False
+        self,
+        pointa,
+        pointb,
+        center,
+        resolution=None,
+        tolerance=None,
+        progress_bar=False,
     ):
         """Sample a dataset over a circular arc.
 
@@ -4690,7 +4798,11 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArcFromNormal(
-            center, resolution=resolution, normal=normal, polar=polar, angle=angle
+            center,
+            resolution=resolution,
+            normal=normal,
+            polar=polar,
+            angle=angle,
         )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
@@ -4778,7 +4890,13 @@ class DataSetFilters:
         """
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
-            self, pointa, pointb, center, resolution, tolerance, progress_bar=progress_bar
+            self,
+            pointa,
+            pointb,
+            center,
+            resolution,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -4904,7 +5022,14 @@ class DataSetFilters:
         """
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
-            self, center, resolution, normal, polar, angle, tolerance, progress_bar=progress_bar
+            self,
+            center,
+            resolution,
+            normal,
+            polar,
+            angle,
+            tolerance,
+            progress_bar=progress_bar,
         )
 
         # Get variable of interest
@@ -4951,6 +5076,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_points, extract_values
 
         Returns
         -------
@@ -5013,12 +5142,17 @@ class DataSetFilters:
             If ``True``, extract the cells that contain at least one of
             the extracted points. If ``False``, extract the cells that
             contain exclusively points from the extracted points list.
+            Has no effect if ``include_cells`` is ``False``.
 
         include_cells : bool, default: True
             Specifies if the cells shall be returned or not.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_cells, extract_values
 
         Returns
         -------
@@ -5065,8 +5199,283 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
+    def extract_values(
+        self,
+        values: Optional[Iterable[Union[float, Sequence[float]]]] = None,
+        *,
+        scalars: Optional[str] = None,
+        preference: Literal['point', 'cell'] = 'point',
+        invert: bool = False,
+        adjacent_cells: bool = True,
+        include_cells: bool = True,
+        keep_original_ids: bool = True,
+        split: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Return a subset of the mesh based on the value(s) of point or cell data.
+
+        Points and cells may be extracted with a single value, multiple values, a
+        range of values, or any mix of values and ranges. This enables threshold-like
+        filtering of data in a discontinuous manner to extract a single label or groups
+        of labels from categorical data, or to extract multiple regions of continuous
+        data.
+
+        This filter operates on point data and cell data distinctly:
+
+        -   If extracting values from point data, all cells with at least one point
+            with the specified value(s) are returned. Optionally, set ``adjacent_cells``
+            to ``False`` to only extract points from cells where all points in the cell
+            strictly have the specified value(s). In these cases, a point is only included
+            in the output if that point is part of an extracted cell.
+
+            Alternatively, set ``include_cells`` to ``False`` to exclude cells from
+            the operation completely and extract all points with a specified value.
+
+        -   If extracting values from cell data, only the cells (and their points)
+            with the specified values(s) are included in the output.
+
+        Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called
+        to extract points for point data, and :meth:`~pyvista.DataSetFilters.extract_cells`
+        is called to extract cells for cell data.
+
+        By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
+        and ``'vtkOriginalCellIds'``. These arrays can be used to link the filtered
+        points or cells directly to the input.
+
+        .. versionadded:: 0.44
+
+        Parameters
+        ----------
+        values : iterable[float | sequence[float, float]], optional
+            Iterable of point values to be extracted. Each item of the iterable may be
+            a single number or a sequence of two numbers defining a range of values
+            in the form ``[lower, upper]``. Multiple single-number entries and/or
+            multiple ranges may be specified. If no values are specified, each unique
+            value in the data is extracted independently and returned as a
+            :class:`~pyvista.MultiBlock` dataset (i.e. ``split`` will be set to ``True``).
+
+            .. note::
+                Use ``+/-`` infinity when specifying range values for open
+                intervals, e.g.:
+
+                -   ``[0, float('inf')]`` to extract all values greater than
+                    or equal to zero
+                -   ``[float('-inf'), 0]`` to extract all values less than
+                    or equal to zero.
+
+        scalars : str, optional
+            Name of scalars to extract points with. Defaults to currently
+            active scalars.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        invert : bool, default: False
+            Invert the extraction values. If ``True`` extract the points (with
+            cells) which do *not* have the specified values.
+
+        adjacent_cells : bool, default: True
+            If ``True``, include cells (and their points) that contain
+            at least one of the extracted points. If ``False``, only
+            include cells which contain exclusively points from the
+            extracted points list. Has no effect if ``include_cells``
+            is ``False``. Has no effect when extracting values from
+            cell data.
+
+        include_cells : bool, default: True
+            Specifies if the cells shall be returned or not. If ``False``,
+            all cells in the output will be vertex cells, one for each point.
+            Has no effect when extracting values from cell data.
+
+        keep_original_ids : bool, default: True
+            If ``True``, two arrays ``'vtkOriginalPointIds'`` and ``'vtkOriginalCellIds'``
+            are included with the output. Otherwise, these arrays are cleared
+            from the output.
+
+        split : bool, default: False
+            If ``True``, each item in the ``values`` input is extracted
+            independently and a :class:`~pyvista.MultiBlock` is returned
+            with each extraction stored as a separate mesh. The number
+            of blocks returned equals the number of input values, i.e.
+            ``n_blocks == len(values)``
+
+            .. note::
+                Output blocks may contain empty meshes if any specified ``values``
+                do not exist in the mesh. This can impact plotting since empty meshes
+                cannot be plotted by default. Use :meth:`pyvista.MultiBlock.clean` on
+                the output to remove empty meshes, or set ``pv.global_theme.allow_empty_mesh = True``
+                to enable plotting empty meshes.
+
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_points, extract_cells, split_bodies, threshold, partition
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid or pyvista.MultiBlock
+            Extracted mesh or a composite of extracted meshes depending on
+            ``values`` and ``split``.
+
+        Examples
+        --------
+        Extract a single value from a grid's point data. Note that since
+        adjacent cells are included by default, points with values outside
+        the specified value of ``0`` are included.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> mesh = examples.load_uniform()
+        >>> extracted = mesh.extract_values([0])
+        >>> extracted.plot()
+
+        Extract two discontinuous ranges of values from a grid's point data.
+        Use ``+/-`` infinity to extract all values of ``100`` or less, and all values
+        of ``600`` or more.
+
+        >>> mesh = examples.load_uniform()
+        >>> extracted = mesh.extract_values(
+        ...     [[-np.inf, 100], [600, np.inf]]
+        ... )
+        >>> extracted.plot()
+
+        Extract every third cell value from cell data.
+
+        >>> mesh = examples.load_hexbeam()
+        >>> lower, upper = mesh.get_data_range()
+        >>> step = 3
+        >>> extracted = mesh.extract_values(
+        ...     range(lower, upper, step)  # values 0, 3, 6, ...
+        ... )
+
+        Plot result and show an outline of the input for context.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(extracted)
+        >>> _ = pl.add_mesh(mesh.extract_all_edges())
+        >>> pl.show()
+
+        Extract different parts of the mesh and split the result.
+
+        >>> extracted = mesh.extract_values(
+        ...     [[0, 10], 19, [25, 40]], split=True
+        ... )
+        >>> extracted.plot(multi_colors=True)
+
+        """
+        # Get the scalar array to use for extraction
+        try:
+            if scalars is None:
+                set_default_active_scalars(self)  # type: ignore[arg-type]
+                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            array = get_array(self, scalars, preference=preference, err=True)
+        except MissingDataError:
+            raise ValueError(
+                'No point data or cell data found. Scalar data is required to use this filter.',
+            )
+        except KeyError:
+            raise ValueError(
+                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
+            )
+        array = cast(np.ndarray, array)  # type: ignore[type-arg]
+        association = get_array_association(self, scalars, preference=preference)
+
+        # Validate input values
+        if values is None:
+            values = np.unique(array).tolist()
+            split = True
+        if not isinstance(values, collections.abc.Iterable):
+            raise TypeError(f'Values must be iterable, got {type(values)}.')
+        values = list(values)
+        for i, val in enumerate(values):
+            if isinstance(val, (int, np.integer, float, np.floating)):
+                continue
+            elif (
+                len(seq := list(val)) == 2
+                and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
+                and seq[0] <= seq[1]
+            ):
+                values[i] = seq
+                continue
+            raise ValueError(
+                f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
+            )
+
+        if split:
+            return pyvista.MultiBlock(
+                [
+                    self.extract_values(
+                        [val],
+                        scalars=scalars,
+                        preference=preference,
+                        invert=invert,
+                        adjacent_cells=adjacent_cells,
+                        include_cells=include_cells,
+                        keep_original_ids=keep_original_ids,
+                        split=False,
+                        progress_bar=progress_bar,
+                    )
+                    for val in values
+                ],
+            )
+
+        # Determine which ids to keep
+        id_mask = np.zeros_like(array, dtype=np.bool_)
+        for val in values:
+            if isinstance(val, Sequence):
+                lower, upper = val
+                finite_lower, finite_upper = np.isfinite(lower), np.isfinite(upper)
+                if finite_lower and finite_upper:
+                    logic = np.logical_and(array >= lower, array <= upper)
+                elif not finite_lower and finite_upper:
+                    logic = array <= upper
+                elif finite_lower and not finite_upper:
+                    logic = array >= lower
+                else:
+                    # Extract all
+                    logic = np.ones_like(array, dtype=np.bool_)
+            else:
+                logic = array == val
+            id_mask[logic] = not invert
+
+        # Extract cell or point ids
+        if association == FieldAssociation.CELL:
+            output = self.extract_cells(
+                id_mask,
+                progress_bar=progress_bar,
+            )
+        else:
+            output = self.extract_points(
+                id_mask,
+                adjacent_cells=adjacent_cells,
+                include_cells=include_cells,
+                progress_bar=progress_bar,
+            )
+        if not keep_original_ids:
+            (
+                output.cell_data.remove(orig_cell_ids)
+                if (orig_cell_ids := 'vtkOriginalCellIds') in output.cell_data.keys()
+                else None
+            )
+            (
+                output.point_data.remove(orig_cell_ids)
+                if (orig_cell_ids := 'vtkOriginalPointIds') in output.point_data.keys()
+                else None
+            )
+        return output
+
     def extract_surface(
-        self, pass_pointid=True, pass_cellid=True, nonlinear_subdivision=1, progress_bar=False
+        self,
+        pass_pointid=True,
+        pass_cellid=True,
+        nonlinear_subdivision=1,
+        progress_bar=False,
     ):
         """Extract surface mesh of the grid.
 
@@ -5104,6 +5513,13 @@ class DataSetFilters:
         -------
         pyvista.PolyData
             Surface mesh of the grid.
+
+        Warnings
+        --------
+        Both ``"vtkOriginalPointIds"`` and ``"vtkOriginalCellIds"`` may be
+        affected by other VTK operations. See `issue 1164
+        <https://github.com/pyvista/pyvista/issues/1164>`_ for
+        recommendations on tracking indices across operations.
 
         Examples
         --------
@@ -5379,12 +5795,15 @@ class DataSetFilters:
             raise TypeError(
                 'In-place merge only possible if the target mesh '
                 'is an UnstructuredGrid.\nPlease use `mesh + other_mesh` '
-                'instead, which returns a new UnstructuredGrid.'
+                'instead, which returns a new UnstructuredGrid.',
             ) from None
         return merged
 
     def compute_cell_quality(
-        self, quality_measure='scaled_jacobian', null_value=-1.0, progress_bar=False
+        self,
+        quality_measure='scaled_jacobian',
+        null_value=-1.0,
+        progress_bar=False,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -5506,7 +5925,7 @@ class DataSetFilters:
         except (KeyError, IndexError):
             options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
             raise KeyError(
-                f'Cell quality type ({quality_measure}) not available. Options are: {options}'
+                f'Cell quality type ({quality_measure}) not available. Options are: {options}',
             )
         alg.SetInputData(self)
         alg.SetUndefinedQuality(null_value)
@@ -5559,7 +5978,7 @@ class DataSetFilters:
         """
         if pyvista.vtk_version_info < (9, 3, 0):
             raise VTKVersionError(
-                '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
+                '`vtkBoundaryMeshQuality` requires vtk>=9.3.0',
             )  # pragma: no cover
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
@@ -5657,7 +6076,7 @@ class DataSetFilters:
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
             raise ValueError(
-                'must set at least one of gradient, divergence, vorticity, or qcriterion'
+                'must set at least one of gradient, divergence, vorticity, or qcriterion',
             )
 
             # bool(non-empty string/True) == True, bool(None/False) == False
@@ -5896,7 +6315,7 @@ class DataSetFilters:
                 'Input transform must be either:\n'
                 '\tvtk.vtkMatrix4x4\n'
                 '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n'
+                '\t4x4 np.ndarray\n',
             )
 
         if m.GetElement(3, 3) == 0:
@@ -5942,7 +6361,7 @@ class DataSetFilters:
             warnings.warn(
                 'Integer points, vector and normal data (if any) of the input mesh '
                 'have been converted to ``np.float32``. This is necessary in order '
-                'to transform properly.'
+                'to transform properly.',
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
@@ -6116,6 +6535,10 @@ class DataSetFilters:
         as_composite : bool, default: False
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
+        See Also
+        --------
+        split_bodies, extract_values
+
         Returns
         -------
         pyvista.MultiBlock or pyvista.UnstructuredGrid
@@ -6146,7 +6569,7 @@ class DataSetFilters:
         if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
             raise VTKVersionError(
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
-                f'was not found in VTK {pyvista.vtk_version_info}'
+                f'was not found in VTK {pyvista.vtk_version_info}',
             )  # pragma: no cover
 
         alg = _vtk.vtkRedistributeDataSetFilter()
@@ -6308,7 +6731,7 @@ class DataSetFilters:
                 alg.AddCellType(cell_type)
         else:
             raise TypeError(
-                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.'
+                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.',
             )
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
@@ -6583,12 +7006,12 @@ def _set_threshold_limit(alg, value, method, invert):
     if isinstance(value, (np.ndarray, collections.abc.Sequence)):
         if len(value) != 2:
             raise ValueError(
-                f'Value range must be length one for a float value or two for min/max; not ({value}).'
+                f'Value range must be length one for a float value or two for min/max; not ({value}).',
             )
         # Check range
         if value[0] > value[1]:
             raise ValueError(
-                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.'
+                'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.',
             )
     elif isinstance(value, collections.abc.Iterable):
         raise TypeError('Value must either be a single scalar or a sequence.')

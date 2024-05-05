@@ -200,11 +200,11 @@ def get_reader(filename, force_ext=None):
                 Reader = DICOMReader
             else:
                 raise ValueError(
-                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}"
+                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}",
                 )
         else:
             raise ValueError(
-                f"`pyvista.get_reader` does not support a file with the {ext} extension"
+                f"`pyvista.get_reader` does not support a file with the {ext} extension",
             )
 
     return Reader(filename)
@@ -221,6 +221,7 @@ class BaseVTKReader(ABC):
         """Set file name."""
         self._filename = filename
 
+    @abstractmethod
     def UpdateInformation(self):
         """Update Information from file."""
 
@@ -862,7 +863,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.SetTimeValue(time_value)
 
@@ -928,14 +929,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
             raise AttributeError(
-                "Inspecting active time value only supported for vtk versions >9.1.0"
+                "Inspecting active time value only supported for vtk versions >9.1.0",
             ) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -1951,7 +1952,7 @@ class _PVDReader(BaseVTKReader):
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
-                )
+                ),
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
@@ -2359,7 +2360,7 @@ class HDFReader(BaseReader):
                 raise RuntimeError(
                     f'{self.path} is missing the Type attribute. '
                     'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.'
+                    f'see {HDF_HELP} for more details.',
                 )
             else:
                 raise
@@ -2400,6 +2401,9 @@ class _GIFReader(BaseVTKReader):
         super().__init__()
         self._n_frames = 0
         self._current_frame = 0
+
+    def UpdateInformation(self):
+        """Update Information from file."""
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
@@ -2486,7 +2490,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
@@ -2535,6 +2539,44 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
+class FLUENTCFFReader(BaseReader):
+    """FLUENTCFFReader for .h5 files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_room_cff(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
+    """
+
+    _vtk_module_name = "vtkIOFLUENTCFF"
+    _vtk_class_name = "vtkFLUENTCFFReader"
+
+
+class GambitReader(BaseReader):
+    """GambitReader for .neu files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prism(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkGAMBITReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2550,17 +2592,19 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
-    '.img': DICOMReader,
-    '.inp': AVSucdReader,
-    '.jpg': JPEGReader,
-    '.jpeg': JPEGReader,
+    '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
+    '.img': DICOMReader,
+    '.inp': AVSucdReader,
+    '.jpeg': JPEGReader,
+    '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.neu': GambitReader,
+    '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,
-    '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
@@ -2586,9 +2630,9 @@ CLASS_READERS = {
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
+    '.vtpd': XMLPartitionedDataSetReader,
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
-    '.vtpd': XMLPartitionedDataSetReader,
 }

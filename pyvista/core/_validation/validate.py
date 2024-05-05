@@ -13,13 +13,14 @@ A ``validate`` function typically:
 
 """
 
+from __future__ import annotations
+
 import inspect
 from itertools import product
-from typing import Any, Dict, Literal, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core._validation import (
     check_contains,
     check_finite,
@@ -35,6 +36,9 @@ from pyvista.core._validation import (
 )
 from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
 from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
 
 
 def validate_array(
@@ -336,7 +340,11 @@ def validate_array(
 
 
 def validate_axes(
-    *axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right', name="Axes"
+    *axes,
+    normalize=True,
+    must_be_orthogonal=True,
+    must_have_orientation='right',
+    name="Axes",
 ):
     """Validate 3D axes vectors.
 
@@ -407,7 +415,9 @@ def validate_axes(
     check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
         check_contains(
-            item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
+            item=must_have_orientation,
+            container=['right', 'left'],
+            name=f"{name} orientation",
         )
     elif must_have_orientation is None and len(axes) == 2:
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
@@ -429,7 +439,8 @@ def validate_axes(
     check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
-        np.dot(axes_array[0], axes_array[2]), 1
+        np.dot(axes_array[0], axes_array[2]),
+        1,
     ):
         raise ValueError(f"{name} cannot be parallel.")
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
@@ -497,7 +508,10 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     else:
         try:
             valid_arr = validate_array(
-                transform, must_have_shape=[(3, 3), (4, 4)], must_be_finite=True, name=name
+                transform,
+                must_have_shape=[(3, 3), (4, 4)],
+                must_be_finite=True,
+                name=name,
             )
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
@@ -510,7 +524,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
                 '\tvtkMatrix3x3\n'
                 '\tvtkTransform\n'
                 '\t4x4 np.ndarray\n'
-                '\t3x3 np.ndarray\n'
+                '\t3x3 np.ndarray\n',
             )
 
     return arr

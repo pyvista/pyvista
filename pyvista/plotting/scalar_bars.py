@@ -49,7 +49,10 @@ class ScalarBars:
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(
-        self, actor, reset_camera=False, render=False
+        self,
+        actor,
+        reset_camera=False,
+        render=False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -73,7 +76,9 @@ class ScalarBars:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
                     self._plotter.remove_actor(
-                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render
+                        self._scalar_bar_actors.pop(name),
+                        reset_camera=reset_camera,
+                        render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
             return
@@ -110,7 +115,7 @@ class ScalarBars:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
                 raise ValueError(
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}'
+                    f'scalar bar from one of the following:\n{titles}',
                 )
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))

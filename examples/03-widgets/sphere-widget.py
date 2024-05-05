@@ -39,7 +39,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -79,7 +79,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 

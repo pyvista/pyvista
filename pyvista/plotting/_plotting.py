@@ -5,22 +5,12 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
-
-USE_SCALAR_BAR_ARGS = """
-"stitle" is a deprecated keyword argument and will be removed in a future
-release.
-
-Use ``scalar_bar_args`` instead.  For example:
-
-scalar_bar_args={'title': 'Scalar Bar Title'}
-"""
 
 
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
@@ -170,7 +160,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number of elements."
+                    "Opacity array and scalars array must have the same number of elements.",
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
@@ -274,15 +264,9 @@ def _common_arg_parser(
     else:
         interpolation = theme.lighting_params.interpolation
 
-    # account for legacy behavior
-    if 'stitle' in kwargs:  # pragma: no cover
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-        scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
     if "scalar" in kwargs:
         raise TypeError(
-            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?"
+            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?",
         )
 
     assert_empty_kwargs(**kwargs)

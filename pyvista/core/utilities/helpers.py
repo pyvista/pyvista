@@ -1,9 +1,12 @@
 """Core helper utilities."""
 
+from __future__ import annotations
+
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
     from trimesh import Trimesh
     from meshio import Mesh
 
@@ -11,15 +14,14 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumpyArray
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
-) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
+    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, Trimesh, Mesh]],
+) -> Optional[Union[pyvista.DataSet, pyvista.pyvista_ndarray]]:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
@@ -153,7 +155,8 @@ def wrap(
         # trimesh doesn't pad faces
         dataset = cast('Trimesh', dataset)
         polydata = pyvista.PolyData.from_regular_faces(
-            np.asarray(dataset.vertices), faces=dataset.faces
+            np.asarray(dataset.vertices),
+            faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
@@ -279,7 +282,8 @@ def is_inside_bounds(point, bounds):
     if isinstance(point, (int, float)):
         point = [point]
     if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
-        point, collections.deque
+        point,
+        collections.deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')

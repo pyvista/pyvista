@@ -204,6 +204,11 @@ articles = dict(
         link="https://github.com/AngelFP/VisualPIC",
         image="visualpic.png",
     ),
+    pyelastica=Example(
+        title="PyElastica",
+        link="https://github.com/GazzolaLab/PyElastica",
+        image="pyelastica.gif",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
@@ -242,7 +247,7 @@ glad to add it.
 .. grid:: 3
    :gutter: 1
 
-"""
+""",
         )
         # Reverse to put the latest items at the top
         for example in list(articles.values())[::-1]:
@@ -256,7 +261,7 @@ glad to add it.
     <div class="sphx-glr-clear"></div>
 
 
-"""
+""",
         )
         new_fid.seek(0)
         new_text = new_fid.read()
