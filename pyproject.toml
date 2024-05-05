@@ -306,6 +306,10 @@ target-version = 'py39'
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
+    # https://github.com/pyvista/pyvista/pull/6030
+    "B028",
+    # https://github.com/pyvista/pyvista/pull/6022
+    "B904",
     # whitespace before ':'
     "E203",
     # line break before binary operator
@@ -342,14 +346,7 @@ extend-select = [
     "A",
     "AIR",
     "ASYNC",
-    "B006",
-    "B007",
-    "B008",
-    "B009",
-    "B010",
-    "B027",
-    "B020",
-    "B904",
+    "B",
     "C4",
     "COM",
     "DJ",
@@ -388,3 +385,11 @@ extend-select = [
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = [
+    # https://github.com/pyvista/pyvista/pull/6014
+    "B015",
+    # https://github.com/pyvista/pyvista/pull/6019
+    "B018",
+]
