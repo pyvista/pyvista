@@ -1,21 +1,23 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 
+from __future__ import annotations
+
 from functools import wraps
 import pathlib
-from typing import ClassVar, Dict, List, Sequence, Tuple, Type, Union
-import warnings
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Type, Union
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
-from .errors import PyVistaDeprecationWarning
 from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
 from .utilities.arrays import convert_array, raise_has_duplicates
-from .utilities.misc import abstract_class, assert_empty_kwargs
+from .utilities.misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -439,7 +441,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             "defined and thus cannot be set.",
         )
 
-    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
+    def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
         """Cast this rectilinear grid to a structured grid.
 
         Returns
@@ -545,56 +547,13 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     def __init__(
         self,
         uinput=None,
-        *args,
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep=False,
-        **kwargs,
     ):
         """Initialize the uniform grid."""
         super().__init__()
-
-        # permit old behavior
-        if isinstance(uinput, Sequence) and not isinstance(uinput, str):
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                "Behavior of pyvista.ImageData has changed. First argument must be "
-                "either a ``vtk.vtkImageData`` or path.",
-                PyVistaDeprecationWarning,
-            )
-            dimensions = uinput
-            uinput = None
-
-        if dimensions is None and 'dims' in kwargs:
-            dimensions = kwargs.pop('dims')
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                '`dims` argument is deprecated. Please use `dimensions`.',
-                PyVistaDeprecationWarning,
-            )
-        assert_empty_kwargs(**kwargs)
-
-        if args:
-            # Deprecated on v0.37.0, estimated removal on v0.40.0
-            warnings.warn(
-                "Behavior of pyvista.ImageData has changed. Use keyword arguments "
-                "to specify dimensions, spacing, and origin. For example:\n\n"
-                "    >>> grid = pv.ImageData(\n"
-                "    ...     dimensions=(10, 10, 10),\n"
-                "    ...     spacing=(2, 1, 5),\n"
-                "    ...     origin=(10, 35, 50),\n"
-                "    ... )\n",
-                PyVistaDeprecationWarning,
-            )
-            origin = args[0]
-            if len(args) > 1:
-                spacing = args[1]
-            if len(args) > 2:
-                raise ValueError(
-                    "Too many additional arguments specified for ImageData. "
-                    f"Accepts at most 2, and {len(args)} have been input.",
-                )
 
         # first argument must be either vtkImageData or a path
         if uinput is not None:
@@ -837,7 +796,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
 
-    def cast_to_structured_grid(self) -> 'pyvista.StructuredGrid':
+    def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
         """Cast this uniform grid to a structured grid.
 
         Returns
@@ -851,7 +810,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_rectilinear_grid(self) -> 'RectilinearGrid':
+    def cast_to_rectilinear_grid(self) -> RectilinearGrid:
         """Cast this uniform grid to a rectilinear grid.
 
         Returns

@@ -1013,6 +1013,32 @@ def test_xmlpartitioneddatasetreader(tmpdir):
 
 
 @pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3, 0),
+    reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
+)
+def test_fluentcffreader():
+    filename = examples.download_room_cff(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.FLUENTCFFReader)
+    assert reader.path == filename
+
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_gambitreader():
+    filename = examples.download_prism(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GambitReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
     reason="Requires VTK>=9.1.0 for a concrete XMLPartitionedDataSetCollectionReader class.",
 )

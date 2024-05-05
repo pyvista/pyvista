@@ -1,5 +1,7 @@
 """PyVista plotting module."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
 from contextlib import contextmanager, suppress
@@ -16,7 +18,7 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 import uuid
 import warnings
 import weakref
@@ -26,7 +28,6 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
@@ -40,12 +41,7 @@ from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 from . import _vtk
-from ._plotting import (
-    USE_SCALAR_BAR_ARGS,
-    _common_arg_parser,
-    prepare_smooth_shading,
-    process_opacity,
-)
+from ._plotting import _common_arg_parser, prepare_smooth_shading, process_opacity
 from ._property import Property
 from .actor import Actor
 from .colors import Color, get_cmap_safe
@@ -83,6 +79,9 @@ from .utilities.regression import image_from_window, run_image_filter
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
@@ -2869,7 +2868,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic=None,
         roughness=None,
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         component=None,
         emissive=None,
         copy_mesh=False,
@@ -3328,6 +3327,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
 
         """
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
@@ -3774,7 +3775,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         log_scale=False,
         **kwargs,
     ):
@@ -3852,6 +3853,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             * ``'sigmoid_8'`` - Linear map between -8.0 and 8.0
             * ``'sigmoid_9'`` - Linear map between -9.0 and 9.0
             * ``'sigmoid_10'`` - Linear map between -10.0 and 10.0
+            * ``'sigmoid_15'`` - Linear map between -15.0 and 15.0
+            * ``'sigmoid_20'`` - Linear map between -20.0 and 20.0
             * ``'foreground'`` - Transparent background and opaque foreground.
                 Intended for use with segmentation labels. Assumes the smallest
                 scalar value of the array is the background value (e.g. 0).
@@ -4064,6 +4067,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Handle default arguments
 
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
@@ -4080,11 +4085,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Avoid mutating input
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            # Deprecated on ..., estimated removal on v0.40.0
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if culling is True:
             culling = 'backface'

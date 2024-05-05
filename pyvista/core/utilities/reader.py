@@ -223,6 +223,7 @@ class BaseVTKReader(ABC):
         """Set file name."""
         self._filename = filename
 
+    @abstractmethod
     def UpdateInformation(self):
         """Update Information from file."""
 
@@ -2403,6 +2404,9 @@ class _GIFReader(BaseVTKReader):
         self._n_frames = 0
         self._current_frame = 0
 
+    def UpdateInformation(self):
+        """Update Information from file."""
+
     def GetProgress(self):
         return self._current_frame / self._n_frames
 
@@ -2537,6 +2541,44 @@ class XMLPartitionedDataSetReader(BaseReader):
     _vtk_class_name = "vtkXMLPartitionedDataSetReader"
 
 
+class FLUENTCFFReader(BaseReader):
+    """FLUENTCFFReader for .h5 files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_room_cff(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
+    """
+
+    _vtk_module_name = "vtkIOFLUENTCFF"
+    _vtk_class_name = "vtkFLUENTCFFReader"
+
+
+class GambitReader(BaseReader):
+    """GambitReader for .neu files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prism(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkGAMBITReader"
+
+
 class XMLPartitionedDataSetCollectionReader(BaseReader):
     """XML PartitionedDataSetCollection Reader for reading .vtpc files."""
 
@@ -2559,17 +2601,19 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
-    '.img': DICOMReader,
-    '.inp': AVSucdReader,
-    '.jpg': JPEGReader,
-    '.jpeg': JPEGReader,
+    '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
+    '.img': DICOMReader,
+    '.inp': AVSucdReader,
+    '.jpeg': JPEGReader,
+    '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.neu': GambitReader,
+    '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,
-    '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
@@ -2595,10 +2639,10 @@ CLASS_READERS = {
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
+    '.vtpc': XMLPartitionedDataSetCollectionReader,
+    '.vtpd': XMLPartitionedDataSetReader,
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,
     '.xdmf': XdmfReader,
-    '.vtpd': XMLPartitionedDataSetReader,
-    '.vtpc': XMLPartitionedDataSetCollectionReader,
 }

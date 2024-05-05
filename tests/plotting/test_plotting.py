@@ -1032,7 +1032,7 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    plotter.background_color
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
@@ -1975,6 +1975,31 @@ def test_opacity_transfer_functions():
     foo = [3, 5, 6, 10]
     mapping = pv.opacity_transfer_function(foo, n)
     assert len(mapping) == n
+
+
+@skip_windows_mesa
+@pytest.mark.parametrize(
+    'opacity',
+    [
+        'sigmoid',
+        'sigmoid_1',
+        'sigmoid_2',
+        'sigmoid_3',
+        'sigmoid_4',
+        'sigmoid_5',
+        'sigmoid_6',
+        'sigmoid_7',
+        'sigmoid_8',
+        'sigmoid_9',
+        'sigmoid_10',
+        'sigmoid_15',
+        'sigmoid_20',
+    ],
+)
+def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
+    pl = pv.Plotter()
+    pl.add_volume(uniform, opacity=opacity)
+    pl.show()
 
 
 def test_closing_and_mem_cleanup(verify_image_cache):

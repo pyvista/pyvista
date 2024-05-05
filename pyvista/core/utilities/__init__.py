@@ -103,6 +103,13 @@ from .geometric_sources import (
     SuperquadricSource,
     Text3DSource,
 )
+from .image_sources import (
+    ImageEllipsoidSource,
+    ImageGaussianSource,
+    ImageMandelbrotSource,
+    ImageNoiseSource,
+    ImageSinusoidSource,
+)
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
@@ -171,7 +178,9 @@ from .reader import (
     DICOMReader,
     EnSightReader,
     FacetReader,
+    FLUENTCFFReader,
     FluentReader,
+    GambitReader,
     GIFReader,
     GLTFReader,
     HDFReader,
