@@ -1036,3 +1036,28 @@ def test_gambitreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete XMLPartitionedDataSetCollectionReader class.",
+)
+def test_compositedatareader(tmpdir):
+    tmpfile = tmpdir.join("temp.vtpc")
+    partitions = pv.PartitionedDataSet(
+        [
+            pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 0, 5])),
+            pv.ImageData(pv.Wavelet(extent=[0, 10, 0, 10, 5, 10])),
+        ],
+    )
+    collection = pv.PartitionedDataSetCollection([partitions, partitions.copy()])
+    collection.save(tmpfile.strpath)
+    new_collection = pv.read(tmpfile.strpath)
+    assert isinstance(new_collection, pv.PartitionedDataSetCollection)
+    assert new_collection.n_pdatasets == collection.n_pdatasets
+    for i in range(new_collection.n_pdatasets):
+        new_partitions = new_collection[i]
+        partitions = collection[i]
+        assert isinstance(new_partitions, pv.PartitionedDataSet)
+        assert new_partitions.n_partitions == partitions.n_partitions
+        assert new_partitions[0].n_cells == partitions[0].n_cells

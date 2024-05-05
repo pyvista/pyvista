@@ -189,6 +189,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPartitionedDataSet,
+    vtkPartitionedDataSetCollection,
     vtkPerlinNoise,
     vtkPiecewiseFunction,
     vtkPlane,
@@ -373,6 +374,7 @@ from vtkmodules.vtkIOXML import (
     vtkXMLImageDataWriter,
     vtkXMLMultiBlockDataReader,
     vtkXMLMultiBlockDataWriter,
+    vtkXMLPartitionedDataSetCollectionReader,
     vtkXMLPartitionedDataSetReader,
     vtkXMLPImageDataReader,
     vtkXMLPolyDataReader,
@@ -440,6 +442,10 @@ with contextlib.suppress(ImportError):
 # 9.1+ imports
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
+
+# 9.1+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 
 
 class VersionInfo(NamedTuple):
