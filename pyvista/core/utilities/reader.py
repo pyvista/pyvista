@@ -2555,6 +2555,26 @@ class FLUENTCFFReader(BaseReader):
     _vtk_class_name = "vtkFLUENTCFFReader"
 
 
+class GambitReader(BaseReader):
+    """GambitReader for .neu files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prism(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkGAMBITReader"
+
+
 class GaussianCubeReader(BaseReader):
     """GaussianCubeReader for .cube files.
 
