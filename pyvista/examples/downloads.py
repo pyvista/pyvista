@@ -7770,9 +7770,18 @@ def download_particles(load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> mesh = examples.download_particles()
-    >>> mesh.plot()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(
+    ...     mesh,
+    ...     point_size=10.0,
+    ...     render_points_as_spheres=True,
+    ...     clim=[4, 9],
+    ... )
+    >>> pl.background_color = "black"
+    >>> pl.show()
 
     .. seealso::
 

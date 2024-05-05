@@ -2577,6 +2577,26 @@ class GambitReader(BaseReader):
     _vtk_class_name = "vtkGAMBITReader"
 
 
+class ParticleReader(BaseReader):
+    """ParticleReader for .raw files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_particles()
+    >>> reader = pv.get_reader(filename)
+    >>> filename.split("/")[-1]  # omit the path
+    'particles.raw'
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkParticleReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2617,6 +2637,7 @@ CLASS_READERS = {
     '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
+    '.raw': ParticleReader,
     '.res': MFIXReader,
     '.segy': SegYReader,
     '.sgy': SegYReader,

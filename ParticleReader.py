@@ -2,7 +2,6 @@
 from vtkmodules.vtkIOGeometry import vtkParticleReader
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 
-import pyvista as pv
 from pyvista import examples
 
 reader = vtkParticleReader()
@@ -11,14 +10,11 @@ reader.SetFileName(filename)
 reader.SetDataByteOrderToBigEndian()
 mapper = vtkPolyDataMapper()
 mapper.SetInputConnection(reader.GetOutputPort())
-mapper.SetScalarRange(4, 9)
 mapper.SetPiece(1)
 mapper.SetNumberOfPieces(2)
 
-pl = pv.Plotter()
-actor = pv.Actor(mapper)
-actor.SetMapper(mapper)
-actor.GetProperty().SetPointSize(10.0)
-_ = pl.add_actor(actor)
-pl.background_color = "black"
-pl.show()
+mesh = examples.download_particles()
+# pl = pv.Plotter()
+mesh.plot()
+# pl.add_points(mesh.points, point_size=10.0, render_points_as_spheres=True, clim=[4, 9])
+# pl.show()
