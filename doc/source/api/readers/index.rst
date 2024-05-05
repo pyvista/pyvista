@@ -34,6 +34,7 @@ Reader Classes
     FLUENTCFFReader
     FluentReader
     GambitReader
+    GaussianCubeReader
     GIFReader
     GLTFReader
     HDFReader

@@ -181,6 +181,7 @@ from .reader import (
     FLUENTCFFReader,
     FluentReader,
     GambitReader,
+    GaussianCubeReader,
     GIFReader,
     GLTFReader,
     HDFReader,

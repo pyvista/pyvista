@@ -7675,6 +7675,58 @@ def _dataset_room_cff_files_func():
 _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
 
 
+def download_m4_total_density(load=True):  # pragma: no cover
+    """Download a total density dataset of the chemistry.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+
+    >>> filename = examples.download_m4_total_density(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.hb_scale = 1.1
+    >>> reader.b_scale = 10.0
+
+    >>> grid = reader.read()
+    >>> poly = reader.read(grid=False)
+
+    Add the outline and volume to the plotter.
+
+    >>> pl = pv.Plotter()
+    >>> outline = pl.add_mesh(grid.outline(), color="black")
+    >>> volume = pl.add_volume(grid)
+
+    Add atoms and bonds to the plotter.
+
+    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color="red")
+    >>> bonds = pl.add_mesh(poly.tube(), color="white")
+
+    >>> pl.show(cpos="zx")
+
+    .. seealso::
+
+        :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_m4_total_density, load=load)
+
+
+_dataset_m4_total_density = _SingleFileDownloadableDatasetLoader('m4_TotalDensity.cube')
+
+
 def download_headsq(load=True):  # pragma: no cover
     """Download the headsq dataset.
 
