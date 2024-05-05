@@ -1028,6 +1028,16 @@ def test_fluentcffreader():
     assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
 
 
+def test_gambitreader():
+    filename = examples.download_prism(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GambitReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
     reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
