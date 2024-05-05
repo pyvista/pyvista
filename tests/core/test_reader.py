@@ -1036,3 +1036,13 @@ def test_gambitreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_pdbreader():
+    filename = examples.download_caffeine(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.PDBReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

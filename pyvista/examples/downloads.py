@@ -7750,3 +7750,48 @@ def download_prism(load=True):  # pragma: no cover
 
 
 _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
+
+
+def download_caffeine(load=True):  # pragma: no cover
+    """Download the caffeine molecule.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_caffeine(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> poly = reader.read()
+
+    Add atoms and bonds to the plotter.
+
+    >>> pl = pv.Plotter()
+    >>> atoms = pl.add_mesh(
+    ...     poly.glyph(geom=pv.Sphere(radius=0.1)), color="red"
+    ... )
+    >>> bonds = pl.add_mesh(poly.tube(radius=0.1), color="gray")
+    >>> pl.show(cpos="xy")
+
+    .. seealso::
+
+        :ref:`Caffeine Dataset <caffeine_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_caffeine, load=load)
+
+
+_dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')

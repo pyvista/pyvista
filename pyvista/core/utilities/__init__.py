@@ -193,6 +193,7 @@ from .reader import (
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
+    PDBReader,
     Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,
