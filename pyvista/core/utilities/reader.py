@@ -2577,6 +2577,26 @@ class GambitReader(BaseReader):
     _vtk_class_name = "vtkGAMBITReader"
 
 
+class MINCImageReader(BaseReader):
+    """MINCImageReader for .mnc files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_t3_grid_0(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOMINC"
+    _vtk_class_name = "vtkMINCImageReader"
+
+
 class PDBReader(BaseReader):
     """PDBReader for .pdb files.
 
