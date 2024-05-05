@@ -34,6 +34,7 @@ Reader Classes
     FLUENTCFFReader
     FluentReader
     GambitReader
+    GaussianCubeReader
     GIFReader
     GLTFReader
     HDFReader
@@ -41,6 +42,7 @@ Reader Classes
     JPEGReader
     MFIXReader
     MetaImageReader
+    MINCImageReader
     MultiBlockPlot3DReader
     NIFTIReader
     NRRDReader
