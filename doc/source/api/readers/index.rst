@@ -41,6 +41,7 @@ Reader Classes
     JPEGReader
     MFIXReader
     MetaImageReader
+    MINCImageReader
     MultiBlockPlot3DReader
     NIFTIReader
     NRRDReader
