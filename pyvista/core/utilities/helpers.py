@@ -142,8 +142,10 @@ def wrap(
         key = dataset.GetClassName()
         try:
             return pyvista._wrappers[key](dataset)
-        except KeyError:
-            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
+        except KeyError as exc:
+            raise TypeError(
+                f'VTK data type ({key}) is not currently supported by pyvista.',
+            ) from exc
         return
 
     # wrap meshio

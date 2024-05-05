@@ -445,14 +445,14 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     """
     try:
         import nest_asyncio
-    except ImportError:
+    except ImportError as exc:
         raise ImportError(
             """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
 """,
-        )
+        ) from exc
 
     async def launch_it():  # numpydoc ignore=GL08
         await launch_server(*args, **kwargs).ready

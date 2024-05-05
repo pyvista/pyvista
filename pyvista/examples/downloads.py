@@ -5242,8 +5242,8 @@ def download_osmnx_graph():  # pragma: no cover
     """
     try:
         import osmnx  # noqa: F401
-    except ImportError:
-        raise ImportError('Install `osmnx` to use this example')
+    except ImportError as exc:
+        raise ImportError('Install `osmnx` to use this example') from exc
     # TODO: add `load` parameter
     return _download_dataset(_dataset_osmnx_graph)
 

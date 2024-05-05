@@ -1710,17 +1710,17 @@ class PolyDataFilters(DataSetFilters):
         mesh = _get_output(normal)
         try:
             mesh['Normals']
-        except KeyError:
+        except KeyError as exc:
             if (self.n_verts + self.n_lines) == self.n_cells:
                 raise TypeError(
                     "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
                     "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).",
-                )
+                ) from exc
             else:  # pragma: no cover
                 raise RuntimeError(
                     'Normals could not be computed for unknown reasons.\n'
                     'Please report the issue at https://github.com/pyvista/pyvista/issues.',
-                )
+                ) from None
         if point_normals:
             mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:
@@ -2301,12 +2301,12 @@ class PolyDataFilters(DataSetFilters):
 
             if not trimesh.ray.has_embree:
                 raise ImportError
-        except ImportError:
+        except ImportError as exc:
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
                 "\tconda install embree=2 trimesh pyembree\nOR\n"
                 "\tpip install trimesh embreex",
-            )
+            ) from exc
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)

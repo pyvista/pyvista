@@ -600,8 +600,10 @@ class LookupTable(_vtk.vtkLookupTable):
     def ramp(self, value: str):  # numpydoc ignore=GL08
         try:
             self.SetRamp(RAMP_MAP_INV[value])
-        except KeyError:
-            raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
+        except KeyError as exc:
+            raise ValueError(
+                f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}',
+            ) from exc
         self.rebuild()
 
     @property
@@ -1122,5 +1124,7 @@ class LookupTable(_vtk.vtkLookupTable):
         else:
             try:
                 return np.array([self.map_value(item) for item in value])
-            except:
-                raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+            except TypeError as exc:
+                raise TypeError(
+                    'LookupTable __call__ expects a single value or an iterable.',
+                ) from exc

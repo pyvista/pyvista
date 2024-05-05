@@ -2654,10 +2654,10 @@ class WidgetHelper:
         """
         try:
             from vtkmodules.vtkInteractionWidgets import vtkCameraOrientationWidget
-        except ImportError:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
+            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0') from exc
 
         widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
@@ -2784,10 +2784,10 @@ class WidgetHelper:
                 vtkCamera3DRepresentation,
                 vtkCamera3DWidget,
             )
-        except ImportError:  # pragma: no cover
+        except ImportError as exc:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0') from exc
         representation = vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())
         widget = vtkCamera3DWidget()

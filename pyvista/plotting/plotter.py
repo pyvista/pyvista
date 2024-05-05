@@ -537,8 +537,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         try:
             from trame_vtk.tools.vtksz2html import write_html
-        except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame-vtk to export')
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError('Please install trame-vtk to export') from exc
 
         data = self.export_vtksz(filename=None)
         buffer = io.StringIO()
@@ -580,8 +580,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from pyvista.trame import PyVistaLocalView
             from pyvista.trame.jupyter import elegantly_launch
             from pyvista.trame.views import get_server
-        except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame to export')
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError('Please install trame to export') from exc
 
         # Ensure trame server is launched
         server = get_server(pyvista.global_theme.trame.jupyter_server_name)
@@ -6114,8 +6114,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if progress_bar:
             try:
                 from tqdm import tqdm
-            except ImportError:  # pragma: no cover
-                raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
+            except ImportError as exc:  # pragma: no cover
+                raise ImportError("Please install `tqdm` to use ``progress_bar=True``") from exc
 
         def orbit():
             """Define the internal thread for running the orbit."""
@@ -6845,10 +6845,10 @@ class Plotter(BasePlotter):
                 if pyvista.vtk_version_info < (9, 2, 3):  # pragma: no cover
                     self.iren.initialize()
 
-            except KeyboardInterrupt:
+            except KeyboardInterrupt as exc:
                 log.debug('KeyboardInterrupt')
                 self.close()
-                raise KeyboardInterrupt
+                raise KeyboardInterrupt from exc
         # In the event that the user hits the exit-button on the GUI  (on
         # Windows OS) then it must be finalized and deleted as accessing it
         # will kill the kernel.
@@ -6894,8 +6894,8 @@ class Plotter(BasePlotter):
             # Default behaviour is to display the Jupyter viewer
             try:
                 from IPython import display
-            except ImportError:  # pragma: no cover
-                raise ImportError('Install IPython to display an image in a notebook')
+            except ImportError as exc:  # pragma: no cover
+                raise ImportError('Install IPython to display an image in a notebook') from exc
             display.display(jupyter_disp)
 
         # Three possible return values: (cpos, image, widget)

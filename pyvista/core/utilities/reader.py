@@ -192,7 +192,7 @@ def get_reader(filename, force_ext=None):
 
     try:
         Reader = CLASS_READERS[ext]
-    except KeyError:
+    except KeyError as exc:
         if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
                 pathlib.Path(f).suffix == '.dcm' for f in files
@@ -201,11 +201,11 @@ def get_reader(filename, force_ext=None):
             else:
                 raise ValueError(
                     f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}",
-                )
+                ) from exc
         else:
             raise ValueError(
                 f"`pyvista.get_reader` does not support a file with the {ext} extension",
-            )
+            ) from exc
 
     return Reader(filename)
 
@@ -2361,7 +2361,7 @@ class HDFReader(BaseReader):
                     f'{self.path} is missing the Type attribute. '
                     'The VTKHDF format has changed as of 9.2.0, '
                     f'see {HDF_HELP} for more details.',
-                )
+                ) from err
             else:
                 raise
 

@@ -30,8 +30,8 @@ def _validate_jupyter_backend(backend):
 
     try:
         import IPython
-    except ImportError:  # pragma: no cover
-        raise ImportError('Install IPython to display with pyvista in a notebook.')
+    except ImportError as exc:  # pragma: no cover
+        raise ImportError('Install IPython to display with pyvista in a notebook.') from exc
 
     if backend not in ALLOWED_BACKENDS:
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
@@ -43,8 +43,10 @@ def _validate_jupyter_backend(backend):
     if backend in ['server', 'client', 'trame', 'html']:
         try:
             from pyvista.trame.jupyter import show_trame
-        except ImportError:  # pragma: no cover
-            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError(
+                'Please install `trame` and `ipywidgets` to use this feature.',
+            ) from exc
 
     if backend == 'none':
         backend = None

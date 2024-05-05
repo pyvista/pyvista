@@ -268,9 +268,11 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         try:
             self.SetLineType(self.LINE_STYLES[val]["id"])
             self._line_style = val
-        except KeyError:
+        except KeyError as exc:
             formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
-            raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
+            raise ValueError(
+                f"Invalid line style. Allowed line styles: \"{formatted_styles}\"",
+            ) from exc
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -629,9 +631,11 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         try:
             self.SetBehavior(self.BEHAVIORS[val])
             self._behavior = val
-        except KeyError:
+        except KeyError as exc:
             formatted_behaviors = "\", \"".join(self.BEHAVIORS.keys())
-            raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
+            raise ValueError(
+                f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"",
+            ) from exc
 
     @property
     def margin(self):  # numpydoc ignore=RT01
@@ -2041,8 +2045,8 @@ class _MultiCompPlot(_Plot):
             if val is not None:
                 for label in val:
                     self._labels.InsertNextValue(label)
-        except TypeError:
-            raise ValueError("Invalid labels specified.")
+        except TypeError as exc:
+            raise ValueError("Invalid labels specified.") from exc
 
     @property
     @doc_subs
@@ -2460,9 +2464,11 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         try:
             self.SetMarkerStyle(self.MARKER_STYLES[val]["id"])
             self._marker_style = val
-        except KeyError:
+        except KeyError as exc:
             formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
-            raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
+            raise ValueError(
+                f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"",
+            ) from exc
 
 
 class AreaPlot(_vtk.vtkPlotArea, _Plot):
@@ -2856,11 +2862,11 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         try:
             self.SetOrientation(self.ORIENTATIONS[val])
             self._orientation = val
-        except KeyError:
+        except KeyError as exc:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
                 f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
-            )
+            ) from exc
 
 
 class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
@@ -3611,8 +3617,8 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             plot_type = self._PLOT_CLASSES[type(plot)]
             self._plots[plot_type].remove(plot)
             self.RemovePlotInstance(plot)
-        except (KeyError, ValueError):
-            raise ValueError("The given plot is not part of this chart.")
+        except (KeyError, ValueError) as exc:
+            raise ValueError("The given plot is not part of this chart.") from exc
 
     def clear(self, plot_type=None):
         """Remove all plots of the specified type from this chart.
