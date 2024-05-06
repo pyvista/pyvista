@@ -7836,3 +7836,36 @@ def download_t3_grid_0(load=True):  # pragma: no cover
 
 
 _dataset_t3_grid_0 = _SingleFileDownloadableDatasetLoader('t3_grid_0.mnc')
+
+
+def download_e07733s002i009(load=True):  # paragma: no cover
+    """Download a e07733s002i009 image.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_e07733s002i009()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+    """
+    return _download_dataset(_dataset_e07733s002i009, load=load)
+
+
+_dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.MR')
