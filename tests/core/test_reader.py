@@ -1062,3 +1062,17 @@ def test_gaussian_cubes_reader():
     poly = reader.read(grid=False)
     assert isinstance(poly, pv.PolyData)
     assert all([poly.n_points, poly.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
+def test_pdbreader():
+    filename = examples.download_caffeine(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.PDBReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
