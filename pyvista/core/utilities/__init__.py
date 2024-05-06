@@ -103,7 +103,13 @@ from .geometric_sources import (
     SuperquadricSource,
     Text3DSource,
 )
-from .image_sources import ImageEllipsoidSource
+from .image_sources import (
+    ImageEllipsoidSource,
+    ImageGaussianSource,
+    ImageMandelbrotSource,
+    ImageNoiseSource,
+    ImageSinusoidSource,
+)
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
@@ -174,6 +180,8 @@ from .reader import (
     FacetReader,
     FLUENTCFFReader,
     FluentReader,
+    GambitReader,
+    GaussianCubeReader,
     GIFReader,
     GLTFReader,
     HDFReader,
@@ -181,11 +189,13 @@ from .reader import (
     JPEGReader,
     MetaImageReader,
     MFIXReader,
+    MINCImageReader,
     MultiBlockPlot3DReader,
     NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
+    PDBReader,
     Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,

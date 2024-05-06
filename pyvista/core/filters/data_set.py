@@ -3524,101 +3524,6 @@ class DataSetFilters:
         out['SelectedPoints'] = bools
         return out
 
-    def probe(
-        self,
-        points,
-        tolerance=None,
-        pass_cell_data=True,
-        pass_point_data=True,
-        categorical=False,
-        progress_bar=False,
-        locator=None,
-    ):
-        """Sample data values at specified point locations.
-
-        .. deprecated:: 0.41.0
-           `probe` will be removed in a future version. Use
-           :func:`pyvista.DataSetFilters.sample` instead.
-           If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
-
-        This uses :class:`vtkProbeFilter`.
-
-        Parameters
-        ----------
-        points : pyvista.DataSet
-            The points to probe values on to. This should be a PyVista mesh
-            or something :func:`wrap` can handle.
-
-        tolerance : float, optional
-            Tolerance used to compute whether a point in the source is
-            in a cell of the input.  If not given, tolerance is
-            automatically generated.
-
-        pass_cell_data : bool, default: True
-            Preserve source mesh's original cell data arrays.
-
-        pass_point_data : bool, default: True
-            Preserve source mesh's original point data arrays.
-
-        categorical : bool, default: False
-            Control whether the source point data is to be treated as
-            categorical. If the data is categorical, then the resultant data
-            will be determined by a nearest neighbor interpolation scheme.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        locator : vtkAbstractCellLocator, optional
-            Prototype cell locator to perform the ``FindCell()``
-            operation.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset containing the probed data.
-
-        Examples
-        --------
-        Probe the active scalars in ``grid`` at the points in ``mesh``.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-        >>> grid = examples.load_uniform()
-        >>> result = grid.probe(mesh)  # doctest:+SKIP
-        >>> 'Spatial Point Data' in result.point_data  # doctest:+SKIP
-        True
-
-        """
-        # deprecated in v0.41.0
-        # remove in v0.44.0
-        warnings.warn(
-            """probe filter is deprecated and will be removed in a future version.
-            Use sample filter instead.
-            If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
-            """,
-            PyVistaDeprecationWarning,
-        )
-
-        if not pyvista.is_pyvista_dataset(points):
-            points = wrap(points)
-        alg = _vtk.vtkProbeFilter()
-        alg.SetInputData(points)
-        alg.SetSourceData(self)
-        alg.SetPassCellArrays(pass_cell_data)
-        alg.SetPassPointArrays(pass_point_data)
-        alg.SetCategoricalData(categorical)
-
-        if tolerance is not None:
-            alg.SetComputeTolerance(False)
-            alg.SetTolerance(tolerance)
-
-        if locator:
-            alg.SetCellLocatorPrototype(locator)
-
-        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
-        return _get_output(alg)
-
     def sample(
         self,
         target,
@@ -5248,23 +5153,23 @@ class DataSetFilters:
         Parameters
         ----------
         values : number | array_like | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
             is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                When extracting multi-component values with ``component_mode=values``,
+                When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
-                ``values`` can be a single vector, or an array of row vectors.
+                ``values`` can be a single vector or an array of row vectors.
 
         ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
-            may be specified together. The end points of the ranges are included in the
-            extraction. Ranges cannot be set when ``component_mode=values``.
+            may be specified together. The endpoints of the ranges are included in the
+            extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
@@ -5292,8 +5197,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent value must have the specified
-              value.
+            - ``'multi'``: the entire multi-component item must have the specified value.
 
         **kwargs : dict, optional
             Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
@@ -5350,7 +5254,7 @@ class DataSetFilters:
         Plot the regions as separate meshes using the labels instead of plotting
         the MultiBlock directly.
 
-        >>> # Clear scalar data so we can color each mesh using a single color
+        Clear scalar data so we can color each mesh using a single color
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
         >>> plot = pv.Plotter()
@@ -5439,23 +5343,23 @@ class DataSetFilters:
         Parameters
         ----------
         values : number | array_like | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or dictionary
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
             is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                When extracting multi-component values with ``component_mode=values``,
+                When extracting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
-                ``values`` can be a single vector, or an array of row vectors.
+                ``values`` can be a single vector or an array of row vectors.
 
         ranges : array_like | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
-            may be specified together. The end points of the ranges are included in the
-            extraction. Ranges cannot be set when ``component_mode=values``.
+            may be specified together. The endpoints of the ranges are included in the
+            extraction. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
@@ -5483,8 +5387,7 @@ class DataSetFilters:
               component must have the specified value(s).
             - ``'any'``: any single component can have the specified value(s).
             - ``'all'``: all individual components must have the specified values(s).
-            - ``'multi'``: the entire multicomponent value must have the specified
-              values.
+            - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
             Invert the extraction values. If ``True`` extract the points (with cells)
@@ -5492,7 +5395,7 @@ class DataSetFilters:
 
         adjacent_cells : bool, default: True
             If ``True``, include cells (and their points) that contain at least one of
-            the extracted points. If ``False``, only include cells which contain
+            the extracted points. If ``False``, only include cells that contain
             exclusively points from the extracted points list. Has no effect if
             ``include_cells`` is ``False``. Has no effect when extracting values from
             cell data.
@@ -5538,7 +5441,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.UnstructuredGrid or pyvista.MultiBlock
-            Extracted mesh or a composite of extracted meshes depending on ``split``.
+            An extracted mesh or a composite of extracted meshes, depending on ``split``.
 
         Examples
         --------
@@ -5565,7 +5468,7 @@ class DataSetFilters:
         (0.0, 0.0)
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
-        Use ``ranges`` to extract a range of values from a grid's point data.
+        Use ``ranges`` to extract values from a grid's point data in range.
 
         Here, we use ``+/-`` infinity to extract all values of ``100`` or less.
 
@@ -5651,10 +5554,10 @@ class DataSetFilters:
         ... )
         >>> extracted.plot(**plot_kwargs)
 
-        Use the original ids returned by the extraction to modify the original point
+        Use the original IDs returned by the extraction to modify the original point
         cloud.
 
-        E.g. change the color of the blue and green points to yellow.
+        For example, change the color of the blue and green points to yellow.
 
         >>> point_ids = extracted['vtkOriginalPointIds']
         >>> yellow = [1, 1, 0]

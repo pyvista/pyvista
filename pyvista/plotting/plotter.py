@@ -41,12 +41,7 @@ from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 from . import _vtk
-from ._plotting import (
-    USE_SCALAR_BAR_ARGS,
-    _common_arg_parser,
-    prepare_smooth_shading,
-    process_opacity,
-)
+from ._plotting import _common_arg_parser, prepare_smooth_shading, process_opacity
 from ._property import Property
 from .actor import Actor
 from .colors import Color, get_cmap_safe
@@ -2873,7 +2868,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         metallic=None,
         roughness=None,
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         component=None,
         emissive=None,
         copy_mesh=False,
@@ -3332,6 +3327,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ... )
 
         """
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         if style == 'points_gaussian':
             self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
         else:
@@ -3778,7 +3775,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
         render=True,
-        user_matrix=np.eye(4),
+        user_matrix=None,
         log_scale=False,
         **kwargs,
     ):
@@ -4070,6 +4067,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Handle default arguments
 
+        if user_matrix is None:
+            user_matrix = np.eye(4)
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
@@ -4086,11 +4085,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Avoid mutating input
         scalar_bar_args = {} if scalar_bar_args is None else scalar_bar_args.copy()
-        # account for legacy behavior
-        if 'stitle' in kwargs:  # pragma: no cover
-            # Deprecated on ..., estimated removal on v0.40.0
-            warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-            scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
         if culling is True:
             culling = 'backface'
