@@ -2687,6 +2687,25 @@ class MINCImageReader(BaseReader):
     _vtk_class_name = "vtkMINCImageReader"
 
 
+class PDBReader(BaseReader):
+    """PDBReader for .pdb files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_caffeine(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'caffeine.pdb'
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkPDBReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2720,6 +2739,7 @@ CLASS_READERS = {
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
+    '.pdb': PDBReader,
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,
