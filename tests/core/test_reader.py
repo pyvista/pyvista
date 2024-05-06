@@ -1062,3 +1062,13 @@ def test_gaussian_cubes_reader():
     poly = reader.read(grid=False)
     assert isinstance(poly, pv.PolyData)
     assert all([poly.n_points, poly.n_cells])
+
+
+def test_gesignareader():
+    filename = examples.download_e07733s002i009(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GESignaReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
