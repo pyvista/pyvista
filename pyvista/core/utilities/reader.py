@@ -2760,6 +2760,7 @@ CLASS_READERS = {
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
+    '.pdb': PDBReader,
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,
