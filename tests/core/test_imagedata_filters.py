@@ -342,16 +342,23 @@ def test_contour_labels_independent_regions(labeled_image):
 
 
 @pytest.mark.parametrize(
-    ('output_labels', 'array_name'),
-    [('boundary', BOUNDARY_LABELS), ('surface', SURFACE_LABELS)],
+    ('output_labels', 'array_names'),
+    [
+        ('boundary', [BOUNDARY_LABELS]),
+        ('surface', [SURFACE_LABELS]),
+        ('all', [SURFACE_LABELS, BOUNDARY_LABELS]),
+        (None, []),
+    ],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_output_arrays(labeled_image, output_labels, array_name):
+def test_contour_labels_output_labels(labeled_image, output_labels, array_names):
     assert labeled_image.array_names == ['labels']
 
     mesh = labeled_image.contour_labels(output_labels=output_labels)
-    assert mesh.active_scalars_name == array_name
-    assert labeled_image.array_names == ['labels']
+    assert mesh.array_names == array_names
+
+    if SURFACE_LABELS in mesh.array_names:
+        assert mesh.active_scalars_name == SURFACE_LABELS
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)

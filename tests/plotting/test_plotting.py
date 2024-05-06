@@ -14,7 +14,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from typing import Any, Callable, Dict, ItemsView, NamedTuple, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -4322,12 +4322,21 @@ def _show_edges():
     pv.global_theme.show_edges = flag
 
 
+class BoolParamOutputLabelsOption(NamedTuple):
+    true: dict = dict(output_labels='all')  # noqa: RUF012
+    false: dict = dict(output_labels='all')  # noqa: RUF012
+
+
+default_option = BoolParamOutputLabelsOption()
+independent_regions_option = BoolParamOutputLabelsOption(false=dict(output_labels='boundary'))
+
+
 @pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
 @pytest.mark.parametrize('select_inputs', [None, 2])
 @pytest.mark.parametrize('select_outputs', [None, 2])
 @pytest.mark.parametrize(
-    'bool_parameter',
-    ['internal_boundaries', 'independent_regions'],
+    ('bool_parameter', 'bool_parameter_option'),
+    [('internal_boundaries', default_option), ('independent_regions', independent_regions_option)],
 )  # image_boundaries
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels(
@@ -4335,20 +4344,38 @@ def test_contour_labels(
     select_inputs,
     select_outputs,
     bool_parameter,
+    bool_parameter_option,
 ):
+    # labeled_image['labels'][18] = 2
     plot = pv.Plotter(shape=(2, 2))
-    BOUNDARY_LABELS = 'BoundaryLabels'
-    SURFACE_LABELS = 'SurfaceLabels'
+    BOUNDARY_LABELS = 'boundary_labels'
+    SURFACE_LABELS = 'surface_labels'
     SHRINK_VAL = 0.7
 
     def add_subplot(row, mesh):
         text_kwargs = dict(font_size=10, position='lower_left')
         mesh = mesh.shrink(SHRINK_VAL)
 
+        def add_title():
+            plot.add_text(format_dict_repr(test_kwargs), position='upper_left', font_size=12)
+
+        def format_dict_repr(dict_):
+            return (
+                repr(dict_)
+                .replace('{\'', '')
+                .replace('}', '')
+                .replace(',', '\n')
+                .replace(' \'', '')
+                .replace('\'', '')
+            )
+
         def set_camera():
+            if mesh.n_cells > 10:
+                plot.camera.zoom(2)
+            else:
+                plot.camera.zoom(1.3)
             plot.camera.azimuth = -35
             plot.camera.elevation = -35
-            plot.camera.zoom(1.5)
 
         def add_legend():
             plot.add_legend(size=(0.3, 0.3), bcolor=[0.5, 0.5, 0.5], loc='lower right')
@@ -4361,20 +4388,22 @@ def test_contour_labels(
 
         # Plot surface labels
         plot.subplot(row, 0)
-        if row == 0:
-            plot.add_text(title, position='upper_left', font_size=12)
-        plot.add_text(SURFACE_LABELS, **text_kwargs)
+        add_title()
 
-        # Split labeled surfaces 2 and 5
-        label_meshes = mesh.split_values([2, 5], scalars=SURFACE_LABELS)
-        offset_meshes(label_meshes)
-        plot.add_mesh(label_meshes[0], color='red', label='2')
-        plot.add_mesh(label_meshes[1], color='blue', label='5')
-        add_legend()
-        set_camera()
+        if SURFACE_LABELS in mesh.array_names:
+            plot.add_text(SURFACE_LABELS, **text_kwargs)
+
+            # Split labeled surfaces 2 and 5
+            label_meshes = mesh.split_values([2, 5], scalars=SURFACE_LABELS)
+            offset_meshes(label_meshes)
+            plot.add_mesh(label_meshes[0], color='red', label='2')
+            plot.add_mesh(label_meshes[1], color='blue', label='5')
+            add_legend()
+            set_camera()
 
         # Plot boundary labels
         plot.subplot(row, 1)
+        add_title()
         plot.add_text(BOUNDARY_LABELS, **text_kwargs)
 
         # Split labeled boundaries for regions 2 and 5
@@ -4397,10 +4426,10 @@ def test_contour_labels(
     fixed_kwargs = dict(
         smoothing_constraint_distance=0.3,
         output_mesh_type='quads',
-        boundary_labels=True,
     )
     test_kwargs = {
         bool_parameter: True,
+        **bool_parameter_option.true,
         'select_inputs': select_inputs,
         'select_outputs': select_outputs,
     }
@@ -4409,18 +4438,11 @@ def test_contour_labels(
         **fixed_kwargs,
     )
 
-    title = (
-        repr(test_kwargs)
-        .replace('{\'', '')
-        .replace('}', '')
-        .replace(',', '\n')
-        .replace(' \'', '')
-        .replace('\'', '')
-    )
     add_subplot(0, mesh_true)
 
     # Generate surface with param FALSE
     test_kwargs[bool_parameter] = False
+    test_kwargs.update(bool_parameter_option.false)
     mesh_false = labeled_image.contour_labels(
         **test_kwargs,
         **fixed_kwargs,

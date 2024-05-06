@@ -924,7 +924,7 @@ class ImageDataFilters(DataSetFilters):
         image_boundaries: bool = False,
         independent_regions: bool = True,
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
-        output_labels: Literal['surface', 'boundary'] = 'surface',
+        output_labels: Optional[Literal['surface', 'boundary', 'all']] = 'surface',
         smoothing: bool = True,
         smoothing_num_iterations: int = 16,
         smoothing_relaxation_factor: float = 0.5,
@@ -1030,12 +1030,15 @@ class ImageDataFilters(DataSetFilters):
                 If smoothing is enabled and the type is ``'quads'``, the resulting
                 quads may not be planar.
 
-        output_labels : 'surface' | 'boundary', default: 'surface'
-            Select the labeled cell data array to include with the output. Must be
-            either 'surface' or 'boundary'. The default is ``'surface'``, which is
-            recommended for most applications where a simple mapping from labeled image
-            data at the input to labeled polygonal at the output is required. For more
-            advanced workflows, choose ``'boundary'``.
+        output_labels : 'surface' | 'boundary' | 'all' | None, default: 'surface'
+            Select the labeled cell data array(s) to include with the output. Choose
+            either ``'surface'`` or ``'boundary'`` to include a single array, ``'all'``
+            to include both arrays, or ``None`` to remove the data array from the output.
+
+            The default is ``'surface'``, which is recommended for most applications
+            where a simple mapping from labeled image data at the input to labeled
+            polygonal at the output is required. For more advanced workflows, choose
+            ``'boundary'``. See details about the arrays below.
 
             - ``'surface'``: Include a single-component cell data array ``'surface_labels'``
                 with the output. The array indicates the labels/regions of the polygons
@@ -1129,7 +1132,24 @@ class ImageDataFilters(DataSetFilters):
 
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
-        surface_labels = output_labels == 'surface'
+        if output_labels:
+            if output_labels == 'all':
+                surface_labels = True
+                boundary_labels = True
+            elif output_labels == 'surface':
+                surface_labels = True
+                boundary_labels = False
+            elif output_labels == 'boundary':
+                surface_labels = False
+                boundary_labels = True
+            else:
+                raise ValueError(
+                    f"Output labels must be one of 'surface', 'boundary', 'all', or None. Got {output_labels}.",
+                )
+        else:
+            surface_labels = False
+            boundary_labels = False
+
         if surface_labels and internal_boundaries and not independent_regions:
             raise ValueError(
                 'Parameter independent_regions cannot be False when generating surface labels with internal boundaries.'
@@ -1269,13 +1289,13 @@ class ImageDataFilters(DataSetFilters):
                 if np.any(is_internal_boundary):
                     internal_ids = np.nonzero(is_internal_boundary)[0]
                     duplicated_labels = boundary_labels_array[internal_ids]
-                    if select_outputs:
-                        # Do not duplicate if other region not included in output
-                        in_first_component = np.isin(select_outputs, duplicated_labels[:, 0])
-                        in_second_component = np.isin(select_outputs, duplicated_labels[:, 1])
-                        keep = np.invert(np.logical_or(in_first_component, in_second_component))
-                        internal_ids = internal_ids[keep]
-                        duplicated_labels = boundary_labels_array[internal_ids]
+                    # if select_outputs:
+                    #     # Do not duplicate if other region not included in output
+                    #     in_first_component = np.isin(select_outputs, duplicated_labels[:, 0])
+                    #     in_second_component = np.isin(select_outputs, duplicated_labels[:, 1])
+                    #     keep = np.invert(np.logical_or(in_first_component, in_second_component))
+                    #     internal_ids = internal_ids[keep]
+                    #     duplicated_labels = boundary_labels_array[internal_ids]
 
                     # Insert duplicated scalars. Swap order of 1st and 2nd components
                     insertion_ids = internal_ids + 1
@@ -1317,6 +1337,8 @@ class ImageDataFilters(DataSetFilters):
 
             output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
             output.set_active_scalars(SURFACE_LABELS)
+
+        if not boundary_labels:
             output.cell_data.remove(BOUNDARY_LABELS)
 
         return output
