@@ -2706,6 +2706,26 @@ class PDBReader(BaseReader):
     _vtk_class_name = "vtkPDBReader"
 
 
+class GESignaReader(BaseReader):
+    """GESignaReader for .MR files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_e07733s002i009(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkGESignaReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2732,6 +2752,7 @@ CLASS_READERS = {
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
+    '.mr': GESignaReader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
