@@ -14,7 +14,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, NamedTuple, Type, TypeVar
+from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
 from PIL import Image
 import numpy as np
@@ -4327,7 +4327,7 @@ def _show_edges():
 @pytest.mark.parametrize('select_outputs', [None, 2])
 @pytest.mark.parametrize(
     'bool_parameter',
-    ['internal_boundaries','independent_regions'],
+    ['internal_boundaries', 'independent_regions'],
 )  # image_boundaries
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels(
@@ -4339,9 +4339,8 @@ def test_contour_labels(
 
     def add_subplot(row, mesh):
 
-        def add_text(labels_array:str):
-            text=(f'{bool_parameter}: {test_kwargs[bool_parameter]}\n'
-                   f'array: {labels_array}')
+        def add_text(labels_array: str):
+            text = f'{bool_parameter}: {test_kwargs[bool_parameter]}\narray: {labels_array}'
             plot.add_text(text, position='upper_left', font_size=12)
 
         def set_camera():
@@ -4365,7 +4364,7 @@ def test_contour_labels(
             add_text(SURFACE_LABELS)
             if SURFACE_LABELS in mesh.array_names:
                 # Split labeled surfaces 2 and 5
-                values=[2,5]
+                values = [2, 5]
                 label_meshes = mesh.split_values(values, scalars=SURFACE_LABELS)
                 assert label_meshes.n_blocks <= len(values)
                 offset_meshes(label_meshes)
@@ -4417,7 +4416,7 @@ def test_contour_labels(
         bool_parameter: True,
         'select_inputs': select_inputs,
         'select_outputs': select_outputs,
-        'output_labels': 'all'
+        'output_labels': 'all',
     }
     mesh_true = labeled_image.contour_labels(
         **test_kwargs,

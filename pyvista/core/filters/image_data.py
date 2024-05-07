@@ -1289,13 +1289,14 @@ class ImageDataFilters(DataSetFilters):
                 if np.any(is_internal_boundary):
                     internal_ids = np.nonzero(is_internal_boundary)[0]
                     duplicated_labels = boundary_labels_array[internal_ids]
-                    # if select_outputs:
-                    #     # Do not duplicate if other region not included in output
-                    #     in_first_component = np.isin(select_outputs, duplicated_labels[:, 0])
-                    #     in_second_component = np.isin(select_outputs, duplicated_labels[:, 1])
-                    #     keep = np.invert(np.logical_or(in_first_component, in_second_component))
-                    #     internal_ids = internal_ids[keep]
-                    #     duplicated_labels = boundary_labels_array[internal_ids]
+                    if select_outputs:
+                        # Only duplicate if both regions on each side
+                        # of the boundary are included in the output
+                        in_first_component = np.isin(duplicated_labels[:, 0], select_outputs)
+                        in_second_component = np.isin(duplicated_labels[:, 1], select_outputs)
+                        keep = np.logical_and(in_first_component, in_second_component)
+                        internal_ids = internal_ids[keep]
+                        duplicated_labels = boundary_labels_array[internal_ids]
 
                     # Insert duplicated scalars. Swap order of 1st and 2nd components
                     insertion_ids = internal_ids + 1
