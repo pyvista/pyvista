@@ -387,6 +387,3 @@ def test_contour_labels_invalid_scalars(labeled_image):
     labeled_image.set_active_scalars('cell_data', preference='cell')
     with pytest.raises(ValueError, match='active scalars must be point array'):
         labeled_image.contour_labels()
-
-
-x = 1

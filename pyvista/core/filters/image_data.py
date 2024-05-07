@@ -924,7 +924,7 @@ class ImageDataFilters(DataSetFilters):
         image_boundaries: bool = False,
         independent_regions: bool = True,
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
-        output_labels: Optional[Literal['surface', 'boundary', 'all']] = 'surface',
+        output_labels: Union[Literal['surface', 'boundary'], bool] = 'surface',
         smoothing: bool = True,
         smoothing_num_iterations: int = 16,
         smoothing_relaxation_factor: float = 0.5,
@@ -1030,15 +1030,16 @@ class ImageDataFilters(DataSetFilters):
                 If smoothing is enabled and the type is ``'quads'``, the resulting
                 quads may not be planar.
 
-        output_labels : 'surface' | 'boundary' | 'all' | None, default: 'surface'
+        output_labels : 'surface' | 'boundary' | True | False, default: 'surface'
             Select the labeled cell data array(s) to include with the output. Choose
-            either ``'surface'`` or ``'boundary'`` to include a single array, ``'all'``
-            to include both arrays, or ``None`` to remove the data array from the output.
+            either ``'surface'`` or ``'boundary'`` to include a single array, ``True``
+            to include both arrays, or ``False`` to not include any data arrays in the
+            output.
 
-            The default is ``'surface'``, which is recommended for most applications
-            where a simple mapping from labeled image data at the input to labeled
-            polygonal at the output is required. For more advanced workflows, choose
-            ``'boundary'``. See details about the arrays below.
+            The default is ``'surface'``, which is recommended for applications where a
+            simple mapping of labeled image data at the input to labeled polygonal at
+            the output is required. For more advanced workflows, choose ``'boundary'``.
+            See details about the arrays options below.
 
             - ``'surface'``: Include a single-component cell data array ``'surface_labels'``
                 with the output. The array indicates the labels/regions of the polygons
@@ -1155,6 +1156,7 @@ class ImageDataFilters(DataSetFilters):
                 'Parameter independent_regions cannot be False when generating surface labels with internal boundaries.'
                 '\nEither set independent_regions to True or set internal_boundaries to False.',
             )
+
         # Validate scalars
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
@@ -1328,14 +1330,8 @@ class ImageDataFilters(DataSetFilters):
             assert independent_regions if internal_boundaries else True
 
             # Need to simplify the 2-component boundary labels scalars.
-            # NOTE: If no internal boundaries are generated, the second component of
-            # BoundaryLabels is all zeros (i.e. shared boundary with background only)
-            # In this case:
-            #    SurfaceLabels == BoundaryLabels[:,0] by default
-            #
-            # Otherwise, internal boundaries must be duplicated (and their components
-            # swapped) in order for this to be true.
-
+            # In general, we cannot simply take the first component and expect correct
+            # output, but this method was designed to make this possible
             output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
             output.set_active_scalars(SURFACE_LABELS)
 
