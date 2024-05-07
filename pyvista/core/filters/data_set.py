@@ -7262,9 +7262,7 @@ class DataSetFilters:
         default_output_scalars = "packed_labels"
         if output_scalars is None:
             output_scalars = default_output_scalars
-        elif isinstance(output_scalars, str):
-            output_scalars = output_scalars
-        else:
+        if not isinstance(output_scalars, str):
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
         # Do packing
