@@ -2873,9 +2873,10 @@ class DataSetFilters:
         if inplace:
             try:
                 self.copy_from(output, deep=False)  # type: ignore[attr-defined]
-                return self
             except:
                 pass
+            else:
+                return self
         return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
