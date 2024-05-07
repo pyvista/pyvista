@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import collections.abc
-from typing import Literal, Optional, cast
+from typing import TYPE_CHECKING, Literal, Optional, cast
 
 import numpy as np
 
@@ -15,6 +15,9 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -946,3 +949,134 @@ class ImageDataFilters(DataSetFilters):
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+
+    def pad_image(
+        self,
+        value: float = 0.0,
+        *,
+        width: int | VectorLike[int] = 1,
+        all_dimensions: bool = False,
+        scalars: Optional[str] = None,
+        all_point_data: bool = True,
+        progress_bar=False,
+    ) -> pyvista.ImageData:
+        """Pad an image.
+
+        Pad image point data with a constant value.
+
+        Parameters
+        ----------
+        value : int | float, default : 0
+            Constant value to use for padded elements.
+
+        width : int | sequence[int], default : 1
+            Amount of padding to apply to each axis. This value represents the number of
+            points to add to the extents of the image. Specify:
+
+            - A single value to apply constant padding around the entire image.
+            - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetrical
+              padding to each axis independently.
+            - Six values, one for each ``(-X,+X,-Y,+Y,-Z,+Z)`` direction, to apply
+              padding to each direction independently.
+
+        all_dimensions : bool, default : False
+            Control whether to pad all dimensions. If ``True``, all dimensions are
+            padded. If ``False`` (default), only non-singleton dimensions are padded.
+            This means that 2D images (which have a third, singleton dimension) will
+            remain 2D after padding by default.
+
+        scalars : str, optional
+            Name of scalars to pad. Defaults to currently active scalars. All other
+            data arrays are ignored are not be included in the output. Has no effect
+            when ``all_point_data`` is ``True``.
+
+        all_point_data : bool, default: True
+            Pad all point data arrays and include them in the output. If ``False``,
+            only the specified ``scalars`` are padded.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Padded image.
+
+        """
+        # Validate scalars
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+        if field != FieldAssociation.POINT:
+            raise ValueError(
+                f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
+            )
+
+        # Process width to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
+        pw = np.atleast_1d(width)
+        if not pw.ndim == 1:
+            raise ValueError(f'Pad width must be one dimensional. Got {pw.ndim} dimensions.')
+        if not np.issubdtype(pw.dtype, np.integer):
+            raise TypeError(f'Pad width must be integers. Got dtype {pw.dtype.name}.')
+        if np.any(pw < 0):
+            raise ValueError('Pad width cannot be negative.')
+
+        length = len(pw)
+        if length == 1:
+            all_pad_widths = np.broadcast_to(pw, (6,)).copy()
+        elif length == 3:
+            all_pad_widths = np.array((pw[0], pw[0], pw[1], pw[1], pw[2], pw[2]))
+        elif length == 6:
+            all_pad_widths = pw
+        else:
+            raise ValueError(f"Pad width must have 1, 3, or 6 values, got {length} instead.")
+
+        if not all_dimensions:
+            # Set pad width to zero for singleton dimensions (e.g. 2D cases)
+            dims = self.dimensions  # type: ignore[attr-defined]
+            dim_pairs = (dims[0], dims[0], dims[1], dims[1], dims[2], dims[2])
+            is_singleton = np.asarray(dim_pairs) == 1
+            all_pad_widths[is_singleton] = 0
+
+        # Define new extents after padding
+        pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_widths
+        ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = self.GetExtent()  # type: ignore[attr-defined]
+
+        padded_extents = (
+            ext_xn - pad_xn,  # minX
+            ext_xp + pad_xp,  # maxX
+            ext_yn - pad_yn,  # minY
+            ext_yp + pad_yp,  # maxY
+            ext_zn - pad_zn,  # minZ
+            ext_zp + pad_zp,  # maxZ
+        )
+
+        alg = _vtk.vtkImageConstantPad()
+        alg.SetInputDataObject(self)
+        alg.SetConstant(value)
+        alg.SetOutputWholeExtent(*padded_extents)
+
+        def _get_padded_output(scalars_):
+            self.set_active_scalars(scalars_, preference='point')
+            alg.Update()
+            _update_alg(alg, progress_bar, 'Padding image')
+            return _get_output(alg)
+
+        output = _get_padded_output(scalars)
+
+        # This filter pads only the active scalars, other arrays are returned empty.
+        # We need to pad those other arrays and/or remove them from the output.
+        for point_array in self.point_data:  # type: ignore[attr-defined]
+            if point_array != scalars:
+                if all_point_data:
+                    output[point_array] = _get_padded_output(point_array)[point_array]
+                else:
+                    output.point_data.remove(point_array)
+        for cell_array in (data := output.cell_data):
+            data.remove(cell_array)
+
+        # Restore active scalars
+        self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        return output
