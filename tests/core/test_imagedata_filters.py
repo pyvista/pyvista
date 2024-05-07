@@ -17,7 +17,7 @@ def test_contour_labeled_deprecated():
         pv.ImageData().contour_labeled()
 
 
-def first_label_info():
+def FirstLabelInfo():
     """Define info for a labeled region for the labeled_image fixture."""
 
     @dataclass(frozen=True)
@@ -37,7 +37,7 @@ def first_label_info():
     return FirstLabel()
 
 
-def second_label_info():
+def SecondLabelInfo():
     """Define info for a labeled region for the labeled_image fixture."""
 
     @dataclass(frozen=True)
@@ -62,8 +62,10 @@ def second_label_info():
 
 
 @pytest.fixture()
-def labeled_image(first_label_info=first_label_info(), second_label_info=second_label_info()):
+def labeled_image():
     # Create 4x3x3 image with two adjacent labels
+    first_label_info = FirstLabelInfo()
+    second_label_info = SecondLabelInfo()
 
     dim = (4, 3, 3)
     labels = np.zeros(np.prod(dim))
@@ -152,9 +154,9 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     smoothing,
     output_mesh_type,
     scalars,
-    first_label_info=first_label_info(),
-    second_label_info=second_label_info(),
 ):
+    first_label_info = FirstLabelInfo()
+    second_label_info = SecondLabelInfo()
     FIXED_PARAMS = dict(
         output_labels='boundary',
         independent_regions=False,
@@ -202,9 +204,9 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
 
 select_cases = [
     None,
-    first_label_info().label_id,
-    second_label_info().label_id,
-    [first_label_info().label_id, second_label_info().label_id],
+    FirstLabelInfo().label_id,
+    SecondLabelInfo().label_id,
+    [FirstLabelInfo().label_id, SecondLabelInfo().label_id],
 ]
 
 
@@ -385,3 +387,6 @@ def test_contour_labels_invalid_scalars(labeled_image):
     labeled_image.set_active_scalars('cell_data', preference='cell')
     with pytest.raises(ValueError, match='active scalars must be point array'):
         labeled_image.contour_labels()
+
+
+x = 1
