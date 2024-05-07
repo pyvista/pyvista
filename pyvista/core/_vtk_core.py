@@ -392,6 +392,7 @@ from vtkmodules.vtkIOXML import (
 )
 from vtkmodules.vtkImagingCore import (
     vtkExtractVOI,
+    vtkImageConstantPad,
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,

@@ -387,3 +387,158 @@ def test_contour_labels_invalid_scalars(labeled_image):
     labeled_image.set_active_scalars('cell_data', preference='cell')
     with pytest.raises(ValueError, match='active scalars must be point array'):
         labeled_image.contour_labels()
+
+
+@pytest.fixture()
+def single_point_image():
+    image = pv.ImageData(dimensions=(1, 1, 1))
+    image.point_data['image'] = 99
+    image.point_data['other'] = 42
+    return image
+
+
+@pytest.mark.parametrize('pad_width', [1, 2])
+@pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
+@pytest.mark.parametrize('pad_singleton', [True, False])
+def test_pad_image(single_point_image, pad_width, pad_value, pad_singleton):
+    image_point_value = single_point_image['image'][0]
+    if pad_singleton:
+        # Input is expected to be padded
+        dim = pad_width * 2 + 1
+        expected_dimensions = (dim, dim, dim)
+        expected_array = (
+            np.ones(np.prod(expected_dimensions)).reshape(*expected_dimensions) * pad_value
+        )
+        expected_array[pad_width, pad_width, pad_width] = image_point_value
+    else:
+        # Input is all singletons, expect no padding to be applied
+        expected_dimensions = (1, 1, 1)
+        expected_array = image_point_value
+
+    padded = single_point_image.pad_image(
+        width=pad_width,
+        value=pad_value,
+        all_dimensions=pad_singleton,
+    )
+    assert padded.dimensions == expected_dimensions
+
+    # Test correct padding values
+    actual_array = padded['image']
+    assert actual_array.size == expected_array.size
+    assert np.array_equal(actual_array, expected_array.ravel())
+
+
+@pytest.mark.parametrize(
+    ('pad_width', 'expected_dimensions', 'expected_bounds'),
+    [
+        ((1, 0, 0), (3, 1, 1), (-1, 1, 0, 0, 0, 0)),
+        ((0, 1, 0), (1, 3, 1), (0, 0, -1, 1, 0, 0)),
+        ((0, 0, 1), (1, 1, 3), (0, 0, 0, 0, -1, 1)),
+    ],
+)
+def test_pad_image_pad_width_axis(
+    single_point_image,
+    pad_width,
+    expected_dimensions,
+    expected_bounds,
+):
+    image_point_value = single_point_image['image'][0]
+    pad_value = 7
+
+    padded = single_point_image.pad_image(
+        width=pad_width,
+        all_dimensions=True,
+        value=pad_value,
+    )
+    assert padded.dimensions == expected_dimensions
+    assert padded.bounds == expected_bounds
+    assert padded['image'][0] == pad_value
+    assert padded['image'][1] == image_point_value
+    assert padded['image'][2] == pad_value
+
+
+@pytest.mark.parametrize(
+    ('pad_width', 'expected_dimensions', 'expected_bounds'),
+    [
+        ((1, 0, 0, 0, 0, 0), (2, 1, 1), (-1, 0, 0, 0, 0, 0)),
+        ((0, 1, 0, 0, 0, 0), (2, 1, 1), (0, 1, 0, 0, 0, 0)),
+        ((0, 0, 1, 0, 0, 0), (1, 2, 1), (0, 0, -1, 0, 0, 0)),
+        ((0, 0, 0, 1, 0, 0), (1, 2, 1), (0, 0, 0, 1, 0, 0)),
+        ((0, 0, 0, 0, 1, 0), (1, 1, 2), (0, 0, 0, 0, -1, 0)),
+        ((0, 0, 0, 0, 0, 1), (1, 1, 2), (0, 0, 0, 0, 0, 1)),
+    ],
+)
+def test_pad_image_pad_width_direction(
+    single_point_image,
+    pad_width,
+    expected_dimensions,
+    expected_bounds,
+):
+    image_point_value = single_point_image['image'][0]
+    other_point_value = single_point_image['other'][0]
+    pad_value = 7
+
+    padded = single_point_image.pad_image(
+        width=pad_width,
+        all_dimensions=True,
+        value=pad_value,
+    )
+    assert single_point_image.active_scalars_name == 'image'
+    assert padded.active_scalars_name == 'image'
+    assert padded.dimensions == expected_dimensions
+    assert padded.bounds == expected_bounds
+
+    if np.any(np.array(expected_bounds) > 0):
+        assert padded['image'][0] == image_point_value
+        assert padded['image'][1] == pad_value
+        assert padded['other'][0] == other_point_value
+        assert padded['other'][1] == pad_value
+    else:
+        assert padded['image'][0] == pad_value
+        assert padded['image'][1] == image_point_value
+        assert padded['other'][0] == pad_value
+        assert padded['other'][1] == other_point_value
+
+
+@pytest.mark.parametrize('all_point_data', [True, False])
+@pytest.mark.parametrize(('scalars', 'expected_scalars'), [(None, 'image'), ('other', 'other')])
+def test_pad_image_scalars(single_point_image, all_point_data, scalars, expected_scalars):
+    padded = single_point_image.pad_image(scalars=scalars, all_point_data=all_point_data)
+    assert padded.active_scalars_name == expected_scalars
+    actual_array_names = padded.array_names
+    if all_point_data:
+        assert set(actual_array_names) == {'image', 'other'}
+    else:
+        assert actual_array_names == [expected_scalars]
+
+
+@pytest.mark.parametrize('all_point_data', [True, False])
+def test_pad_image_does_not_pad_cell_data(uniform, all_point_data):
+    assert len(uniform.cell_data.keys()) != 0
+    scalars = 'Spatial Point Data'
+    padded = uniform.pad_image(all_point_data=all_point_data)
+    assert padded.active_scalars_name == scalars
+    actual_array_names = padded.array_names
+    assert actual_array_names == [scalars]
+
+
+def test_pad_image_raises(single_point_image, uniform):
+    match = 'Pad width cannot be negative.'
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(width=-1)
+
+    match = "Pad width must have 1, 3, or 6 values, got 4 instead."
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(width=(1, 2, 3, 4))
+
+    match = 'Pad width must be one dimensional. Got 2 dimensions.'
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(width=[[1]])
+
+    match = "Pad width must be integers. Got dtype float64."
+    with pytest.raises(TypeError, match=match):
+        single_point_image.pad_image(width=1.0)
+
+    match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.pad_image(scalars='Spatial Cell Data')
