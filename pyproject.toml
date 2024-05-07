@@ -333,6 +333,12 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
+    "PLR5501",
     # https://github.com/pyvista/pyvista/pull/5877
     "SIM102",
     # https://github.com/pyvista/pyvista/pull/5888
@@ -364,9 +370,7 @@ extend-select = [
     "PGH",
     "PIE",
     "PLC",
-    "PLR0402",
-    "PLR1711",
-    "PLR1714",
+    "PLR",
     "PT",
     "PTH",
     "PYI",
