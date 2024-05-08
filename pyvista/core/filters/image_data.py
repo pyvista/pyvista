@@ -962,7 +962,7 @@ class ImageDataFilters(DataSetFilters):
 
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
-            selected are removed from the input *before* generating surfaces. By
+            selected are removed from the input *before* generating the surface. By
             default, all label ids are used.
 
             .. note::
@@ -975,7 +975,7 @@ class ImageDataFilters(DataSetFilters):
 
         select_outputs : int | VectorLike[int], default: None
             Specify label ids to include in the output of the filter. Labels that are
-            not selected are removed from the output *after* generating surfaces. By
+            not selected are removed from the output *after* generating the surface. By
             default, all label ids are used.
 
             .. note::
@@ -1004,7 +1004,7 @@ class ImageDataFilters(DataSetFilters):
         image_boundaries : bool, default: False
             Generate polygons to "close" the surface at the edges of the image. If
             ``False``, no polygons are generated at the edges, and the generated
-            surfaces will therefore be "open" or "clipped" at the image boundaries.
+            surface will therefore be "open" or "clipped" at the image boundaries.
 
         independent_regions : bool, default: True
             Generate duplicate polygons at internal boundaries such that every labeled
@@ -1174,12 +1174,18 @@ class ImageDataFilters(DataSetFilters):
                 )
 
         alg = _vtk.vtkSurfaceNets3D()
+
+        # Pad with background values to create background/foreground polygons at
+        # image boundaries
+        alg_input = self.pad_image(alg.GetBackgroundLabel()) if image_boundaries else self
+
         temp_scalars_name = '_PYVISTA_TEMP'
         if select_inputs:
             # Remove non-selected label ids from the input
             # We do this by copying the scalars and setting non-selected ids
             # to the background value to remove them from the input
-            temp_scalars = self.active_scalars.copy()  # type: ignore[attr-defined]
+            temp_scalars = alg_input.active_scalars  # type: ignore[attr-defined]
+            temp_scalars = temp_scalars.copy() if alg_input is self else temp_scalars
             unique_labels = np.unique(temp_scalars)
             background = alg.GetBackgroundLabel()
             for label in unique_labels:
@@ -1191,7 +1197,7 @@ class ImageDataFilters(DataSetFilters):
                 if label not in select_inputs:
                     temp_scalars[temp_scalars == label] = background
 
-            self.point_data.set_array(temp_scalars, name=temp_scalars_name)  # type: ignore[attr-defined]
+            alg_input.point_data[temp_scalars_name] = temp_scalars  # type: ignore[attr-defined]
             scalars = temp_scalars_name
 
         alg.SetInputArrayToProcess(
@@ -1201,7 +1207,7 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        alg.SetInputData(self)
+        alg.SetInputData(alg_input)
 
         if output_mesh_type is None:
             alg.SetOutputMeshTypeToDefault()
@@ -1237,7 +1243,7 @@ class ImageDataFilters(DataSetFilters):
             else:
                 # Select all inputs as outputs
                 # These inputs should already be filtered by `select_inputs`
-                output_ids = output_ids if output_ids else np.unique(self.active_scalars).tolist()  # type: ignore[attr-defined]
+                output_ids = output_ids if output_ids else np.unique(alg_input.active_scalars).tolist()  # type: ignore[attr-defined]
 
             # Add selected outputs. Do not add the background value.
             output_ids_list = list(output_ids)
@@ -1246,9 +1252,9 @@ class ImageDataFilters(DataSetFilters):
                 if (bg := alg.GetBackgroundLabel()) in output_ids_list
                 else None
             )
-            [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids]
+            [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids_list]
             if internal_boundaries:
-                [alg.SetLabel(i, float(val)) for i, val in enumerate(output_ids)]
+                [alg.SetLabel(i, float(val)) for i, val in enumerate(output_ids_list)]
 
         if smoothing:
             alg.SmoothingOn()
@@ -1262,7 +1268,7 @@ class ImageDataFilters(DataSetFilters):
             distance = (
                 smoothing_constraint_distance
                 if smoothing_constraint_distance
-                else np.linalg.norm(self.spacing)  # type: ignore[attr-defined]
+                else np.linalg.norm(alg_input.spacing)  # type: ignore[attr-defined]
             )
             alg.GetSmoother().SetConstraintDistance(distance * smoothing_constraint_scale)
         else:
@@ -1278,8 +1284,8 @@ class ImageDataFilters(DataSetFilters):
         output: pyvista.PolyData = _get_output(alg)
         output.rename_array('BoundaryLabels', BOUNDARY_LABELS)
         (  # Clear temp scalars
-            self.point_data.remove(temp_scalars_name)  # type: ignore[attr-defined]
-            if temp_scalars_name in self.point_data  # type: ignore[attr-defined]
+            alg_input.point_data.remove(temp_scalars_name)  # type: ignore[attr-defined]
+            if temp_scalars_name in alg_input.point_data  # type: ignore[attr-defined]
             else None
         )
 
@@ -1287,7 +1293,7 @@ class ImageDataFilters(DataSetFilters):
 
             def duplicate_internal_boundary_cells():
                 background_value = alg.GetBackgroundLabel()
-                boundary_labels_array = output[BOUNDARY_LABELS]
+                boundary_labels_array = output.cell_data[BOUNDARY_LABELS]
 
                 # Duplicate if foreground label on both sides of cell
                 is_internal_boundary = np.all(boundary_labels_array != background_value, axis=1)
@@ -1334,8 +1340,8 @@ class ImageDataFilters(DataSetFilters):
 
             # Need to simplify the 2-component boundary labels scalars.
             # In general, we cannot simply take the first component and expect correct
-            # output, but this method was designed to make this possible
-            output[SURFACE_LABELS] = output[BOUNDARY_LABELS][:, 0]
+            # output, but this method applies constraints to make this possible
+            output.cell_data[SURFACE_LABELS] = output.cell_data[BOUNDARY_LABELS][:, 0]
             output.set_active_scalars(SURFACE_LABELS)
 
         if not boundary_labels:

@@ -4323,12 +4323,15 @@ def _show_edges():
 
 
 @pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
-@pytest.mark.parametrize('select_inputs', [None, 2])
-@pytest.mark.parametrize('select_outputs', [None, 2])
+@pytest.mark.parametrize(
+    ('select_inputs', 'select_outputs'),
+    [(None, None), (None, 2), (2, 2)],
+    ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
+)
 @pytest.mark.parametrize(
     'bool_parameter',
-    ['internal_boundaries', 'independent_regions'],
-)  # image_boundaries
+    ['internal_boundaries', 'independent_regions', 'image_boundaries'],
+)
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels(
     labeled_image,  # noqa: F811
@@ -4424,7 +4427,7 @@ def test_contour_labels(
     )
     add_subplot(0, mesh_true)
 
-    ## Generate surface with bool parameter FALSE
+    # Generate surface with bool parameter FALSE
     test_kwargs[bool_parameter] = False
     if bool_parameter == 'independent_regions':
         # Setting this parameter to False will raise error for
