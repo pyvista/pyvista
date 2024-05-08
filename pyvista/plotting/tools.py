@@ -84,7 +84,7 @@ def _system_supports_plotting():
         proc.communicate(timeout=10)
     except (OSError, TimeoutExpired):
         return False
-    else:  # paragma: no cover
+    else:  # pragma: no cover
         return proc.returncode == 0
 
 
