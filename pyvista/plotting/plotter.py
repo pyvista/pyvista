@@ -516,9 +516,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> _3ds_file = examples._3ds.download_iflamigm()
+        >>> download_3ds_file = examples.download_3ds.download_iflamigm()
         >>> pl = pv.Plotter()
-        >>> pl.import_3ds(_3ds_file)
+        >>> pl.import_3ds(download_3ds_file)
         >>> pl.show()
 
         """
