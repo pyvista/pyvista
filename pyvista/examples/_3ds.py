@@ -15,6 +15,7 @@ def download_iflamigm():  # pragma: no cover
 
     Examples
     --------
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> _3ds_file = examples._3ds.download_iflamigm()
     >>> pl = pv.Plotter()
