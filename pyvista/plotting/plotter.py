@@ -502,6 +502,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
+    def import_3ds(self, filename):
+        """Import a 3DS file into the plotter.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the 3DS file.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> _3ds_file = examples._3ds.download_iflamigm()
+        >>> pl = pv.Plotter()
+        >>> pl.import_3ds(_3ds_file)
+        >>> pl.show()
+
+        """
+        from vtkmodules.vtkIOImport import vtk3DSImporter
+
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        importer = vtk3DSImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.render_window)
+        importer.Update()
+
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
