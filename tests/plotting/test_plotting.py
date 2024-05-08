@@ -189,7 +189,7 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
 
 
 def test_import_3ds():
-    filename = examples._3ds.download_iflamigm()
+    filename = examples.download_3ds.download_iflamigm()
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
