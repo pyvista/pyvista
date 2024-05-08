@@ -694,8 +694,7 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
-    >>> padded = image.pad_image()
-    >>> padded.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
+    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
 
