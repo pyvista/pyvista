@@ -58,6 +58,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
+    +----------------+---------------------------------------------+
     | ``.dat``       | :class:`pyvista.TecplotReader`              |
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
@@ -2577,12 +2579,160 @@ class GambitReader(BaseReader):
     _vtk_class_name = "vtkGAMBITReader"
 
 
+class GaussianCubeReader(BaseReader):
+    """GaussianCubeReader for .cube files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+
+    >>> filename = examples.download_m4_total_density(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'm4_TotalDensity.cube'
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkGaussianCubeReader"
+
+    def read(self, grid: bool = True):
+        """Read the file and return the output.
+
+        Parameters
+        ----------
+        grid : bool, default: False
+            Output as a grid if ``True``, otherwise return the polydata.
+        """
+        from pyvista.core.filters import _update_alg  # avoid circular import
+
+        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        data = (
+            wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
+        )
+        if data is None:  # pragma: no cover
+            raise RuntimeError("File reader failed to read and/or produced no output.")
+        data._post_file_load_processing()  # type: ignore[union-attr]
+
+        # check for any pyvista metadata
+        data._restore_metadata()  # type: ignore[union-attr]
+        return data
+
+    @property
+    def hb_scale(self) -> float:
+        """Get the scaling factor to compute bonds with hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        return self.reader.GetHBScale()
+
+    @hb_scale.setter
+    def hb_scale(self, hb_scale: float):
+        """Set the scaling factor to compute bonds with hydrogen atoms.
+
+        Parameters
+        ----------
+        hb_scale : float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        self.reader.SetHBScale(hb_scale)
+
+    @property
+    def b_scale(self) -> float:
+        """Get the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        return self.reader.GetBScale()
+
+    @b_scale.setter
+    def b_scale(self, b_scale: float):
+        """Set the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Parameters
+        ----------
+        b_scale : float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        self.reader.SetBScale(b_scale)
+
+
+class MINCImageReader(BaseReader):
+    """MINCImageReader for .mnc files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_t3_grid_0(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOMINC"
+    _vtk_class_name = "vtkMINCImageReader"
+
+
+class PDBReader(BaseReader):
+    """PDBReader for .pdb files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_caffeine(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'caffeine.pdb'
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkPDBReader"
+
+
+class GESignaReader(BaseReader):
+    """GESignaReader for .MR files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_e07733s002i009(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkGESignaReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.cube': GaussianCubeReader,
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
@@ -2601,6 +2751,8 @@ CLASS_READERS = {
     '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.mnc': MINCImageReader,
+    '.mr': GESignaReader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
@@ -2608,6 +2760,7 @@ CLASS_READERS = {
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
+    '.pdb': PDBReader,
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,

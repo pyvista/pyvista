@@ -785,3 +785,51 @@ def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
         block.point_data.set_array(data, 'data')
+
+
+def test_clear_all_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() == []
+                assert subblock.cell_data.keys() == []
+        else:
+            assert block.point_data.keys() == []
+            assert block.cell_data.keys() == []
+
+
+def test_clear_all_point_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_point_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() == []
+                assert subblock.cell_data.keys() != []
+        else:
+            assert block.point_data.keys() == []
+            assert block.cell_data.keys() != []
+
+
+def test_clear_all_cell_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_cell_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() != []
+                assert subblock.cell_data.keys() == []
+        else:
+            assert block.point_data.keys() != []
+            assert block.cell_data.keys() == []
