@@ -56,6 +56,7 @@ API Reference
    examples.examples
    examples.downloads
    examples.planets
+   examples._3ds
    demos.demos
 
 Usage Considerations
