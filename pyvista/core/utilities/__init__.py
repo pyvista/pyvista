@@ -182,6 +182,7 @@ from .reader import (
     FluentReader,
     GambitReader,
     GaussianCubeReader,
+    GESignaReader,
     GIFReader,
     GLTFReader,
     HDFReader,
