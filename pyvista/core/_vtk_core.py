@@ -396,7 +396,9 @@ from vtkmodules.vtkImagingCore import (
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,
+    vtkImageMirrorPad,
     vtkImageThreshold,
+    vtkImageWrapPad,
     vtkRTAnalyticSource,
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D

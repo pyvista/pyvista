@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pytest
 
@@ -135,28 +137,26 @@ def single_point_image():
     return image
 
 
-@pytest.mark.parametrize('pad_width', [1, 2])
-@pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
-@pytest.mark.parametrize('pad_singleton', [True, False])
-def test_pad_image(single_point_image, pad_width, pad_value, pad_singleton):
+@pytest.mark.parametrize('size', [1, 2])
+@pytest.mark.parametrize('value', [-1, 0, 1, 2])
+@pytest.mark.parametrize('all_dimensions', [True, False])
+def test_pad_image(single_point_image, size, value, all_dimensions):
     image_point_value = single_point_image['image'][0]
-    if pad_singleton:
+    if all_dimensions:
         # Input is expected to be padded
-        dim = pad_width * 2 + 1
+        dim = size * 2 + 1
         expected_dimensions = (dim, dim, dim)
-        expected_array = (
-            np.ones(np.prod(expected_dimensions)).reshape(*expected_dimensions) * pad_value
-        )
-        expected_array[pad_width, pad_width, pad_width] = image_point_value
+        expected_array = np.ones(np.prod(expected_dimensions)).reshape(*expected_dimensions) * value
+        expected_array[size, size, size] = image_point_value
     else:
         # Input is all singletons, expect no padding to be applied
         expected_dimensions = (1, 1, 1)
         expected_array = image_point_value
 
     padded = single_point_image.pad_image(
-        width=pad_width,
-        value=pad_value,
-        all_dimensions=pad_singleton,
+        size=size,
+        value=value,
+        all_dimensions=all_dimensions,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -184,7 +184,7 @@ def test_pad_image_pad_width_axis(
     pad_value = 7
 
     padded = single_point_image.pad_image(
-        width=pad_width,
+        size=pad_width,
         all_dimensions=True,
         value=pad_value,
     )
@@ -217,7 +217,7 @@ def test_pad_image_pad_width_direction(
     pad_value = 7
 
     padded = single_point_image.pad_image(
-        width=pad_width,
+        size=pad_width,
         all_dimensions=True,
         value=pad_value,
     )
@@ -241,7 +241,7 @@ def test_pad_image_pad_width_direction(
 @pytest.mark.parametrize('all_point_data', [True, False])
 @pytest.mark.parametrize(('scalars', 'expected_scalars'), [(None, 'image'), ('other', 'other')])
 def test_pad_image_scalars(single_point_image, all_point_data, scalars, expected_scalars):
-    padded = single_point_image.pad_image(scalars=scalars, all_point_data=all_point_data)
+    padded = single_point_image.pad_image(0, scalars=scalars, all_scalars=all_point_data)
     assert padded.active_scalars_name == expected_scalars
     actual_array_names = padded.array_names
     if all_point_data:
@@ -254,29 +254,88 @@ def test_pad_image_scalars(single_point_image, all_point_data, scalars, expected
 def test_pad_image_does_not_pad_cell_data(uniform, all_point_data):
     assert len(uniform.cell_data.keys()) != 0
     scalars = 'Spatial Point Data'
-    padded = uniform.pad_image(all_point_data=all_point_data)
+    padded = uniform.pad_image(all_scalars=all_point_data)
     assert padded.active_scalars_name == scalars
     actual_array_names = padded.array_names
     assert actual_array_names == [scalars]
 
 
-def test_pad_image_raises(single_point_image, uniform):
-    match = 'Pad width cannot be negative.'
-    with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(width=-1)
+@pytest.mark.parametrize('value', ['wrap', 'mirror'])
+def test_pad_image_wrap_mirror(uniform, value):
+    dims = np.array(uniform.dimensions)
+    scalars = uniform.active_scalars
+    scalars3D = scalars.reshape(dims)
+    size = 1
 
-    match = "Pad width must have 1, 3, or 6 values, got 4 instead."
-    with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(width=(1, 2, 3, 4))
+    padded = uniform.pad_image(value, size=size)
+    padded_scalars3D = padded.active_scalars.reshape(dims + size * 2)
+    if value == 'wrap':
+        assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, -1, -1])
+    else:
+        assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
 
-    match = 'Pad width must be one dimensional. Got 2 dimensions.'
-    with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(width=[[1]])
 
-    match = "Pad width must be integers. Got dtype float64."
+@pytest.fixture()
+def logo():
+    return examples.load_logo()
+
+
+def test_pad_image_multi_component(single_point_image):
+    single_point_image.clear_data()
+    new_value = np.array([10, 20, 30, 40])
+    single_point_image['scalars'] = [new_value]
+
+    dims = np.array(single_point_image.dimensions)
+    size = 10
+
+    padded = single_point_image.pad_image(new_value, size=size, all_dimensions=True)
+    assert np.array_equal(len(padded.active_scalars), np.prod(dims + size * 2))
+    assert np.all(padded.active_scalars == new_value)
+
+    single_point_image['scalars2'] = [new_value * 2]
+
+    padded = single_point_image.pad_image('wrap', size=size, all_dimensions=True)
+    assert np.array_equal(len(padded.active_scalars), np.prod(dims + size * 2))
+    assert np.all(padded.active_scalars == new_value)
+    assert np.all(padded['scalars2'] == new_value * 2)
+
+
+def test_pad_image_raises(single_point_image, uniform, logo):
+    match = 'Pad size cannot be negative.'
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(size=-1)
+
+    match = "Pad size must have 1, 3, or 6 values, got 4 instead."
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(size=(1, 2, 3, 4))
+
+    match = 'Pad size must be one dimensional. Got 2 dimensions.'
+    with pytest.raises(ValueError, match=match):
+        single_point_image.pad_image(size=[[1]])
+
+    match = "Pad size must be integers. Got dtype float64."
     with pytest.raises(TypeError, match=match):
-        single_point_image.pad_image(width=1.0)
+        single_point_image.pad_image(size=1.0)
 
     match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
         uniform.pad_image(scalars='Spatial Cell Data')
+
+    logo.pad_image()
+    match = "Input value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array PNGImage."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        logo.pad_image(0.1)
+
+    logo.pad_image()
+    match = "Number of components (2) in padding value (0, 0) must match the number components (4) in array 'PNGImage'."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        logo.pad_image((0, 0))
+
+    logo['single'] = range(logo.n_points)  # Create data with varying num array components
+    match = (
+        "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
+        "\nTry setting `all_scalars=False` or update the array."
+    )
+    logo.pad_image(value=(0, 0, 0, 0), all_scalars=False)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        logo.pad_image(value=(0, 0, 0, 0))
