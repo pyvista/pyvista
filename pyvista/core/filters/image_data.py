@@ -954,10 +954,10 @@ class ImageDataFilters(DataSetFilters):
         self,
         value: Union[float, VectorLike[float], Literal['wrap', 'mirror']] = 0.0,
         *,
-        size: int | VectorLike[int] = 1,
+        pad_size: int | VectorLike[int] = 1,
         all_dimensions: bool = False,
         scalars: Optional[str] = None,
-        all_scalars: bool = True,
+        all_scalars: bool = False,
         progress_bar=False,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
@@ -978,14 +978,24 @@ class ImageDataFilters(DataSetFilters):
             - ``'wrap'``': New points are filled by wrapping around the padding axis.
             - ``'mirror'``': New points are filled by mirroring the padding axis.
 
-        size : int | sequence[int], default : 1
+        pad_size : int | sequence[int], default : 1
             Number of points to add to the image boundaries. Specify:
 
             - A single value to pad all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to apply symmetric padding to
+              these axes independently.
             - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetric padding
               to each axis independently.
+            - Four values, one for each ``(-X,+X,-Y,+Y)`` bound, to apply symmetric
+              padding to the these bounds independently.
             - Six values, one for each ``(-X,+X,-Y,+Y,-Z,+Z)`` bound, to apply padding
-              to each boundary independently.
+              to each bound independently.
+
+            .. note::
+                The pad size for singleton dimensions is always ``0`` by default, even
+                if non-zero values are specified with this parameter. Set
+                ``all_dimensions`` to ``True`` to enable padding any or all
+                dimensions/bounds for images with less than three dimensions.
 
         all_dimensions : bool, default : False
             Control whether to pad all dimensions. If ``True``, all dimensions are
@@ -994,11 +1004,11 @@ class ImageDataFilters(DataSetFilters):
             remain 2D after padding.
 
         scalars : str, optional
-            Name of scalars to pad. Defaults to currently active scalars. No other
-            scalar point data is included in the output. Has no effect when
+            Name of scalars to pad. Defaults to currently active scalars. If specified,
+            no other scalar point data is included in the output. Has no effect when
             ``all_point_data`` is ``True``.
 
-        all_scalars : bool, default: True
+        all_scalars : bool, default: False
             Pad all point data scalars and include them in the output. If ``False``,
             only the specified ``scalars`` are padded.
 
@@ -1018,7 +1028,7 @@ class ImageDataFilters(DataSetFilters):
         >>> from pyvista import examples
         >>>
         >>> gray_image = examples.download_moonlanding_image()
-        >>> padded = gray_image.pad_image(size=50)
+        >>> padded = gray_image.pad_image(pad_size=50)
 
         Plot the image. To show grayscale images correctly, we define a custom plotting
         method.
@@ -1040,17 +1050,17 @@ class ImageDataFilters(DataSetFilters):
 
         Pad only the x-axis with a white border.
 
-        >>> padded = gray_image.pad_image(255, size=(100, 0, 0))
+        >>> padded = gray_image.pad_image(255, pad_size=(100, 0, 0))
         >>> plot_grayscale_image(padded)
 
         Pad with wrapping.
 
-        >>> padded = gray_image.pad_image('wrap', size=100)
+        >>> padded = gray_image.pad_image('wrap', pad_size=100)
         >>> plot_grayscale_image(padded)
 
         Pad with mirroring.
 
-        >>> padded = gray_image.pad_image('mirror', size=100)
+        >>> padded = gray_image.pad_image('mirror', pad_size=100)
         >>> plot_grayscale_image(padded)
 
         Pad a color image using multi-component color vectors. Here, RGBA values are
@@ -1058,7 +1068,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> color_image = examples.load_logo()
         >>> red = (255, 0, 0, 255)
-        >>> padded = color_image.pad_image(red, size=200)
+        >>> padded = color_image.pad_image(red, pad_size=200)
         >>>
         >>> plot_kwargs = dict(
         ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
@@ -1072,12 +1082,10 @@ class ImageDataFilters(DataSetFilters):
         >>> blue = pv.Color('blue').int_rgba
         >>> green = pv.Color('green').int_rgba
         >>>
-        >>> padded = color_image.pad_image(
-        ...     orange, size=(100, 0, 0, 0, 0, 0)
-        ... )
-        >>> padded = padded.pad_image(purple, size=(0, 100, 0, 0, 0, 0))
-        >>> padded = padded.pad_image(blue, size=(0, 0, 100, 0, 0, 0))
-        >>> padded = padded.pad_image(green, size=(0, 0, 0, 100, 0, 0))
+        >>> padded = color_image.pad_image(orange, pad_size=(100, 0, 0, 0))
+        >>> padded = padded.pad_image(purple, pad_size=(0, 100, 0, 0))
+        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 100, 0))
+        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 100))
         >>>
         >>> plot_kwargs = dict(
         ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
@@ -1101,7 +1109,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
         # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
-        pad_sz = np.atleast_1d(size)
+        pad_sz = np.atleast_1d(pad_size)
         if not pad_sz.ndim == 1:
             raise ValueError(f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.')
         if not np.issubdtype(pad_sz.dtype, np.integer):
@@ -1112,14 +1120,22 @@ class ImageDataFilters(DataSetFilters):
         length = len(pad_sz)
         if length == 1:
             all_pad_sizes = np.broadcast_to(pad_sz, (6,)).copy()
+        elif length == 2:
+            all_pad_sizes = np.array(
+                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], 0, 0),
+            )
         elif length == 3:
             all_pad_sizes = np.array(
                 (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], pad_sz[2], pad_sz[2]),
             )
+        elif length == 4:
+            all_pad_sizes = np.array(
+                (pad_sz[0], pad_sz[1], pad_sz[2], pad_sz[3], 0, 0),
+            )
         elif length == 6:
             all_pad_sizes = pad_sz
         else:
-            raise ValueError(f"Pad size must have 1, 3, or 6 values, got {length} instead.")
+            raise ValueError(f"Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.")
 
         if not all_dimensions:
             # Set pad size to zero for singleton dimensions (e.g. 2D cases)
@@ -1168,23 +1184,24 @@ class ImageDataFilters(DataSetFilters):
                 )
             if num_input_components > 1:
                 pad_multi_component = True
-                if all_scalars:
-                    for array_name in (data := self.point_data):  # type: ignore[attr-defined]
-                        array = data[array_name]
-                        if not np.array_equal(val, val.astype(array.dtype)):
-                            raise TypeError(
-                                f"Input value {value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}.",
-                            )
-                        if (
-                            not (n_comp := _get_num_components(data[array_name]))
-                            == num_input_components
-                        ):
-                            raise ValueError(
-                                f"Cannot pad array '{array_name}' with value {value}. "
-                                f"Number of components ({n_comp}) in '{array_name}' must match "
-                                f"the number of components ({num_value_components}) in value."
-                                f"\nTry setting `all_scalars=False` or update the array.",
-                            )
+                data = self.point_data  # type: ignore[attr-defined]
+                array_names = data.keys() if all_scalars else [scalars]
+                for array_name in array_names:
+                    array = data[array_name]
+                    if not np.array_equal(val, val.astype(array.dtype)):
+                        raise TypeError(
+                            f"Input value {value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}.",
+                        )
+                    if (
+                        not (n_comp := _get_num_components(data[array_name]))
+                        == num_input_components
+                    ):
+                        raise ValueError(
+                            f"Cannot pad array '{array_name}' with value {value}. "
+                            f"Number of components ({n_comp}) in '{array_name}' must match "
+                            f"the number of components ({num_value_components}) in value."
+                            f"\nTry setting `all_scalars=False` or update the array.",
+                        )
             else:
                 pad_multi_component = False
             alg = _vtk.vtkImageConstantPad()
