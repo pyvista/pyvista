@@ -505,6 +505,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def import_3ds(self, filename):
         """Import a 3DS file into the plotter.
 
+        .. versionadded:: 0.44.0
+
         Parameters
         ----------
         filename : str
