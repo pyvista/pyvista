@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista import DeprecationError, examples
+from pyvista import PyVistaDeprecationWarning, examples
 
 SURFACE_LABELS = 'surface_labels'
 BOUNDARY_LABELS = 'boundary_labels'
@@ -12,7 +12,7 @@ BOUNDARY_LABELS = 'boundary_labels'
 
 def test_contour_labeled_deprecated():
     match = 'This filter produces unexpected results and is deprecated.'
-    with pytest.raises(DeprecationError, match=match):
+    with pytest.raises(PyVistaDeprecationWarning, match=match):
         pv.ImageData().contour_labeled()
 
 

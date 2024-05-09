@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import collections.abc
 from typing import TYPE_CHECKING, Literal, Optional, Union, cast
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, DeprecationError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError, MissingDataError, PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output, _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
@@ -808,7 +809,7 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast(pyvista.ImageData, wrap(alg.GetOutput()))
 
-    def contour_labeled(
+    def contour_labeled(  # pragma: no cover
         self,
         n_labels: Optional[int] = None,
         smoothing: bool = False,
@@ -822,6 +823,17 @@ class ImageDataFilters(DataSetFilters):
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
+        SurfaceNets algorithm is used to extract contours preserving sharp
+        boundaries for the selected labels from the label maps.
+        Optionally, the boundaries can be smoothened to reduce the staircase
+        appearance in case of low resolution input label maps.
+
+        This filter requires that the :class:`ImageData` has integer point
+        scalars, such as multi-label maps generated from image segmentation.
+
+        .. note::
+           Requires ``vtk>=9.3.0``.
+
         .. deprecated:: 0.44
             This filter produces unexpected results and is deprecated.
             Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
@@ -834,24 +846,12 @@ class ImageDataFilters(DataSetFilters):
 
                 n_labels = range(N)
                 contour_labels(
-                    select_outputs=n_labels,  #    # replaces old 'n_labels' param
-                    internal_boundaries=False,  #  # replaces old 'output_style' param
-                    smoothing=False,  #            # smoothing is now on by default
-                    output_mesh_type='quads',  #   # output type is no longer fixed to 'quads'
-                    surface_labels=False,  #       # new default 'SurfaceLabels' array
-                    boundary_labels=True,  #       # old 'BoundaryLabels' array is removed by default
+                    select_outputs=n_labels,  # replacement for 'n_labels' param
+                    internal_polygons=False,  # replacement for 'output_style' param
+                    smoothing=False,  # smoothing is now on by default
+                    output_mesh_type='quads',  # mesh type is no longer fixed to 'quads'
+                    output_labels='boundary',  # return 'boundary_labels' array
                 )
-
-        SurfaceNets algorithm is used to extract contours preserving sharp
-        boundaries for the selected labels from the label maps.
-        Optionally, the boundaries can be smoothened to reduce the staircase
-        appearance in case of low resolution input label maps.
-
-        This filter requires that the :class:`ImageData` has integer point
-        scalars, such as multi-label maps generated from image segmentation.
-
-        .. note::
-           Requires ``vtk>=9.3.0``.
 
         Parameters
         ----------
@@ -912,10 +912,70 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        raise DeprecationError(
+        warnings.warn(
             "This filter produces unexpected results and is deprecated. Use `contour_labels` instead."
+            "\nRefer to the documentation for `contour_labeled` for details on how to transition to the new filter."
             "\nSee https://github.com/pyvista/pyvista/issues/5981 for details.",
+            PyVistaDeprecationWarning,
         )
+
+        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+
+        alg = _vtk.vtkSurfaceNets3D()
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+            if field != FieldAssociation.POINT:
+                raise ValueError('If `scalars` not given, active scalars must be point array.')
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            if field != FieldAssociation.POINT:
+                raise ValueError(
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
+                )
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )  # args: (idx, port, connection, field, name)
+        alg.SetInputData(self)
+        if n_labels is not None:
+            alg.GenerateLabels(n_labels, 1, n_labels)
+        if output_mesh_type == 'quads':
+            alg.SetOutputMeshTypeToQuads()
+        elif output_mesh_type == 'triangles':
+            alg.SetOutputMeshTypeToTriangles()
+        else:
+            raise ValueError(
+                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
+            )
+        if output_style == 'default':
+            alg.SetOutputStyleToDefault()
+        elif output_style == 'boundary':
+            alg.SetOutputStyleToBoundary()
+        elif output_style == 'selected':
+            raise NotImplementedError(f'Output style "{output_style}" is not implemented')
+        else:
+            raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
+        if smoothing:
+            alg.SmoothingOn()
+            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
+            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
+            alg.GetSmoother().SetConstraintDistance(smoothing_constraint_distance)
+        else:
+            alg.SmoothingOff()
+        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
     def contour_labels(
         self,
