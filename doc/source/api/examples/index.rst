@@ -56,6 +56,7 @@ API Reference
    examples.examples
    examples.downloads
    examples.planets
+   examples.vrml
    examples.download_3ds
    demos.demos
 
