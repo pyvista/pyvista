@@ -21,6 +21,7 @@ import numpy as np
 import pytest
 import vtk
 
+import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
@@ -2619,6 +2620,19 @@ def test_splitting():
         feature_angle=50,
         show_scalar_bar=False,
     )
+
+
+@pytest.mark.parametrize('use_custom_normals', [True, False])
+def test_plot_normals(sphere, use_custom_normals):
+    sphere = pyvista.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere.clear_data()
+
+    normals = [[0, 0, -1]] * sphere.n_points
+    if use_custom_normals:
+        sphere.point_data['CustomNormals'] = normals
+        sphere.point_data.active_normals_name = 'CustomNormals'
+
+    sphere.plot_normals(show_mesh=False, color='green')  # smooth_shading=True)
 
 
 @skip_mac_flaky
