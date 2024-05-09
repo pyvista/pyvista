@@ -3791,6 +3791,8 @@ class PolyDataFilters(DataSetFilters):
     def triangulate_contours(self, display_errors=False, progress_bar=False):
         """Triangulate and fill all 2D contours to create polygons.
 
+    .. versionadded:: 0.44.0
+
         This filter will generate triangles to fill all of the 2D contours
         in its input. The input to the filter is a set of lines (not polylines)
         which when joined form loops. The contours may be concave, and may even
