@@ -2632,10 +2632,7 @@ def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading)
         normals = [[0, 0, -1]] * sphere.n_points
         sphere.point_data.active_normals = normals
 
-    if smooth_shading:
-        sphere.plot_normals(show_mesh=True, color='red', smooth_shading=True)
-    else:
-        sphere.plot_normals(show_mesh=False, color='red')
+    sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
 @skip_mac_flaky
