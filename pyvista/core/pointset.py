@@ -1497,7 +1497,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the point normals.
 
         The active point normals are returned if they exist. Otherwise, they
-        are computed with :func:~pyvista.PolyDataFilters.compute_normals`
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
         using the default options.
 
         Returns
@@ -1509,15 +1509,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.point_normals  # doctest:+SKIP
-        pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
-                         [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
-                         [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
+        >>> sphere.point_normals
+        pyvista_ndarray([[ 0.        ,  0.        ,  1.        ],
+                         [ 0.        ,  0.        , -1.        ],
+                         [ 0.10811902,  0.        ,  0.99413794],
                          ...,
-                         [-3.11940581e-01, -6.81432486e-02,  9.47654784e-01],
-                         [-2.09880397e-01, -4.65070531e-02,  9.76620376e-01],
-                         [-1.15582108e-01, -2.80492082e-02,  9.92901802e-01]],
-                        dtype=float32)
+                         [ 0.31232402, -0.06638652, -0.9476532 ],
+                         [ 0.21027282, -0.04469487, -0.97662055],
+                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
+
 
         """
         if self.point_data.active_normals is not None:
@@ -1531,7 +1531,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the cell normals.
 
         The active cell normals are returned if they exist. Otherwise, they
-        are computed with :func:~pyvista.PolyDataFilters.compute_normals`
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
         using the default options.
 
         Returns
@@ -1543,14 +1543,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.cell_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.cell_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         if self.cell_data.active_normals is not None:
@@ -1574,14 +1574,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.face_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.face_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         return self.cell_normals
