@@ -1298,10 +1298,20 @@ class ImageDataFilters(DataSetFilters):
             if internal_polygons:
                 [alg.SetLabel(i, float(val)) for i, val in enumerate(output_ids_list)]
 
-        if smoothing:
+        def _is_small_number(num):
+            return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
+
+        if (
+            smoothing
+            and not _is_small_number(smoothing_constraint_scale)
+            and not _is_small_number(smoothing_constraint_distance)
+        ):
+            # Only enable smoothing if distance is not very small, since a small distance will
+            # actually result in large smoothing (suspected division by zero error in vtk code)
             alg.SmoothingOn()
             alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
             alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
+
             # Auto-constraints are On by default which only allows you to scale relative distance
             # (with SetConstraintScale) but not set its value directly.
             # Here, we turn this off so that we can both set its value and/or scale it

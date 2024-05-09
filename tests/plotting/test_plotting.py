@@ -4442,3 +4442,41 @@ def test_contour_labels(
     add_subplot(1, mesh_false)
 
     plot.show()
+
+
+@pytest.mark.parametrize(
+    ('smoothing_constraint_distance', 'smoothing_constraint_scale'),
+    [(0, None), (None, 0), (5, 0.5), (5, 1)],
+)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_smoothing_constraint(
+    labeled_image,  # noqa: F811
+    smoothing_constraint_distance,
+    smoothing_constraint_scale,
+):
+    # Scale spacing for visualization
+    labeled_image.spacing = (10, 10, 10)
+
+    mesh = labeled_image.contour_labels(
+        smoothing_constraint_distance=smoothing_constraint_distance,
+        smoothing_constraint_scale=smoothing_constraint_scale,
+    )
+
+    # Translate so origin is in bottom left corner
+    mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
+
+    # Add box of fixed size for scale
+    box = pv.Box(bounds=(0, 10, 0, 10, 0, 10)).extract_all_edges()
+    plot = pv.Plotter()
+    plot.add_mesh(mesh, show_scalar_bar=False)
+    plot.add_mesh(box)
+
+    # Configure plot to enable showing one side of the mesh
+    # so we can visualize the scale of the smoothing applied by
+    # the smoothing constraints
+    plot.enable_parallel_projection()
+    plot.view_yz()
+    plot.show_grid()
+    plot.reset_camera()
+    plot.camera.zoom(1.5)
+    plot.show()
