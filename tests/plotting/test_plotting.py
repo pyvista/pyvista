@@ -4331,7 +4331,7 @@ def _show_edges():
 )
 @pytest.mark.parametrize(
     'bool_parameter',
-    ['internal_boundaries', 'independent_regions', 'image_boundaries'],
+    ['internal_polygons', 'duplicate_polygons', 'closed_boundary'],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels(
@@ -4420,7 +4420,7 @@ def test_contour_labels(
         bool_parameter: True,
         'select_inputs': select_inputs,
         'select_outputs': select_outputs,
-        'output_labels': 'all',
+        'output_labels': True,
     }
     mesh_true = labeled_image.contour_labels(
         **test_kwargs,
@@ -4430,7 +4430,7 @@ def test_contour_labels(
 
     # Generate surface with bool parameter FALSE
     test_kwargs[bool_parameter] = False
-    if bool_parameter == 'independent_regions':
+    if bool_parameter == 'duplicate_polygons':
         # Setting this parameter to False will raise error for
         # 'surface' labels, so only generate 'boundary' labels
         # (and leave plot blank)
