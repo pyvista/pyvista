@@ -2622,17 +2622,20 @@ def test_splitting():
     )
 
 
+@pytest.mark.parametrize('smooth_shading', [True, False])
 @pytest.mark.parametrize('use_custom_normals', [True, False])
-def test_plot_normals(sphere, use_custom_normals):
+def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
     sphere = pyvista.Sphere(phi_resolution=5, theta_resolution=5)
     sphere.clear_data()
 
-    normals = [[0, 0, -1]] * sphere.n_points
     if use_custom_normals:
-        sphere.point_data['CustomNormals'] = normals
-        sphere.point_data.active_normals_name = 'CustomNormals'
+        normals = [[0, 0, -1]] * sphere.n_points
+        sphere.point_data.active_normals = normals
 
-    sphere.plot_normals(show_mesh=False, color='green')  # smooth_shading=True)
+    if smooth_shading:
+        sphere.plot_normals(show_mesh=True, color='red', smooth_shading=True)
+    else:
+        sphere.plot_normals(show_mesh=False, color='red')
 
 
 @skip_mac_flaky
