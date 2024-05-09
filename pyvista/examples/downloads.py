@@ -7756,6 +7756,7 @@ def download_tos_O1_2001_2002(load=True):  # pragma: no cover
     """Download the TOS_O1_2001_2002 dataset.
 
     Sea surface temperatures collected by PCMDI for use by the IPCC.
+    From `Example netCDF files <https://www.unidata.ucar.edu/software/netcdf/examples/files.html>`_ .
 
     .. versionadded:: 0.44.0
 
