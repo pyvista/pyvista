@@ -96,6 +96,9 @@ def test_clip_filter(datasets):
     clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
 
 
 @skip_mac
