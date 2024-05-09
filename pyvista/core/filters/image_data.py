@@ -962,6 +962,8 @@ class ImageDataFilters(DataSetFilters):
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
+        .. versionadded:: 0.44.0
+
         Padded points may be mirrored, wrapped, or filled with a constant value. By
         default, all boundaries of the image are padded with a single constant value.
 
