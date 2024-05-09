@@ -51,19 +51,15 @@ def _get_label_ids(array):
 def _get_ids_with_background_boundary(mesh):
     """Return region ids from the boundary_labels array which share a boundary with the background."""
     extracted = mesh.extract_values(0, component_mode=1)
-    background_boundaries = (
-        extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
-    )
-    return _get_label_ids(background_boundaries)
+    external_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
+    return _get_label_ids(external_polygons)
 
 
 def _get_ids_with_internal_boundary(mesh):
     """Return region ids from the boundary_labels array which share internal boundaries."""
     extracted = mesh.extract_values(0, invert=True, component_mode=1)
-    internal_boundaries = (
-        extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
-    )
-    return _get_label_ids(internal_boundaries)
+    internal_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
+    return _get_label_ids(internal_polygons)
 
 
 @pytest.mark.parametrize('smoothing', [True, False, None])
@@ -91,7 +87,7 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         smoothing=smoothing,
         output_mesh_type=output_mesh_type,
         output_labels='boundary',
-        independent_regions=False,
+        duplicate_polygons=False,
     )
     assert BOUNDARY_LABELS in mesh.cell_data
     assert all(cell.type == expected_celltype for cell in mesh.cell)
@@ -109,13 +105,13 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     'select_outputs',
     [None, 2, 5, [2, 5]],
 )
-@pytest.mark.parametrize('internal_boundaries', [True, False])
+@pytest.mark.parametrize('internal_polygons', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundaries(
     labeled_image,
     select_inputs,
     select_outputs,
-    internal_boundaries,
+    internal_polygons,
 ):
     # Test correct boundary_labels output
     ALL_LABEL_IDS = np.array([2, 5])
@@ -123,9 +119,9 @@ def test_contour_labels_boundaries(
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
-        internal_boundaries=internal_boundaries,
+        internal_polygons=internal_polygons,
         output_labels='boundary',
-        independent_regions=False,
+        duplicate_polygons=False,
     )  # , image_boundary_faces=image_boundary_faces)
     assert BOUNDARY_LABELS in mesh.cell_data
     actual_output_ids = _get_ids_with_background_boundary(mesh)
@@ -139,7 +135,7 @@ def test_contour_labels_boundaries(
 
     assert actual_output_ids == expected_output_ids
 
-    if internal_boundaries and len(select_inputs_iter) == 2:
+    if internal_polygons and len(select_inputs_iter) == 2:
         # The two labels share a boundary by default
         # Boundary exists if no labels removed from input
         expected_shared_region_ids = ALL_LABEL_IDS
@@ -157,16 +153,16 @@ def test_contour_labels_boundaries(
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_image_boundaries(labeled_image):
-    mesh_true = labeled_image.contour_labels(image_boundaries=True, output_mesh_type='quads')
-    mesh_false = labeled_image.contour_labels(image_boundaries=False, output_mesh_type='quads')
+    mesh_true = labeled_image.contour_labels(closed_boundary=True, output_mesh_type='quads')
+    mesh_false = labeled_image.contour_labels(closed_boundary=False, output_mesh_type='quads')
     assert mesh_true.n_cells - mesh_false.n_cells == 1
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_independent_regions(labeled_image):
-    # test boundary labels are *not* independent
+def test_contour_labels_duplicate_polygons(labeled_image):
+    # test boundary labels are *not* duplicated
     mesh = labeled_image.contour_labels(
-        independent_regions=False,
+        duplicate_polygons=False,
         output_labels='boundary',
         output_mesh_type='quads',
     )
@@ -190,9 +186,9 @@ def test_contour_labels_independent_regions(labeled_image):
     assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
     assert np.shape(expected_boundary_labels) == (14, 2)
 
-    # test boundary labels *are* independent
+    # test boundary labels *are* duplicated
     mesh = labeled_image.contour_labels(
-        independent_regions=True,
+        duplicate_polygons=True,
         output_labels='boundary',
         output_mesh_type='quads',
     )
@@ -217,17 +213,17 @@ def test_contour_labels_independent_regions(labeled_image):
     assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
     assert np.shape(expected_boundary_labels) == (15, 2)
 
-    # Test surface labels requires independent_regions=True
+    # Test surface labels requires duplicate_polygons=True
     match = (
-        'Parameter independent_regions cannot be False when generating surface labels with internal boundaries.'
-        '\nEither set independent_regions to True or set internal_boundaries to False.'
+        'Parameter duplicate_polygons must be True when generating surface labels with internal polygons.'
+        '\nEither set duplicate_polygons to True or set internal_polygons to False.'
     )
     with pytest.raises(ValueError, match=match):
-        labeled_image.contour_labels(independent_regions=False, output_labels='surface')
+        labeled_image.contour_labels(duplicate_polygons=False, output_labels='surface')
 
     # Test surface labels equals first component of boundary labels
     mesh = labeled_image.contour_labels(
-        independent_regions=True,
+        duplicate_polygons=True,
         output_labels='surface',
         output_mesh_type='quads',
     )
@@ -245,7 +241,7 @@ def test_contour_labels_independent_regions(labeled_image):
     [
         ('boundary', [BOUNDARY_LABELS]),
         ('surface', [SURFACE_LABELS]),
-        ('all', [SURFACE_LABELS, BOUNDARY_LABELS]),
+        (True, [SURFACE_LABELS, BOUNDARY_LABELS]),
         (None, []),
     ],
 )
@@ -265,6 +261,10 @@ def test_contour_labels_raises(labeled_image):
     match = 'Invalid output mesh type "invalid", use "quads" or "triangles"'
     with pytest.raises(ValueError, match=match):
         labeled_image.contour_labels(output_mesh_type='invalid')
+
+    match = "Output labels must be one of 'surface', 'boundary', or True. Got all."
+    with pytest.raises(ValueError, match=match):
+        labeled_image.contour_labels(output_labels='all')
 
     # TODO: test float input vs int for select_input/output
 

@@ -16,7 +16,7 @@ from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_s
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
@@ -923,11 +923,11 @@ class ImageDataFilters(DataSetFilters):
         scalars: Optional[str] = None,
         select_inputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
         select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
-        internal_boundaries: bool = True,
-        image_boundaries: bool = False,
-        independent_regions: bool = True,
+        internal_polygons: bool = True,
+        duplicate_polygons: bool = True,
+        closed_boundary: bool = False,
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
-        output_labels: Union[Literal['surface', 'boundary'], bool] = 'surface',
+        output_labels: Optional[Union[Literal['surface', 'boundary'], bool]] = 'surface',
         smoothing: bool = True,
         smoothing_num_iterations: int = 16,
         smoothing_relaxation_factor: float = 0.5,
@@ -965,62 +965,48 @@ class ImageDataFilters(DataSetFilters):
             selected are removed from the input *before* generating the surface. By
             default, all label ids are used.
 
-            .. note::
-                This parameter has a similar effect to ``select_outputs``. If ``smoothing``
-                is ``False``, both options will produce identical surfaces. If
-                ``smoothing`` is ``True``, the smoothing operation will only occur across
-                the specified input regions, which can result in smoother output
-                surfaces than with ``select_outputs``. However, this also means that
-                the generated surface changes shapes depending on the selected inputs.
+            Since the smoothing operation occurs across selected input regions, using
+            this option to filter the input can result in smoother and more visually
+            pleasing surfaces since non-selected inputs are not considered during
+            smoothing. However, this also means that the generated surface will change
+            shape depending on which inputs are selected.
 
         select_outputs : int | VectorLike[int], default: None
             Specify label ids to include in the output of the filter. Labels that are
             not selected are removed from the output *after* generating the surface. By
             default, all label ids are used.
 
-            .. note::
-                This parameter has a similar effect to ``select_inputs``. If ``smoothing``
-                is ``False``, both options will produce identical surfaces. If
-                ``smoothing`` is ``True``, the smoothing operation will occur across all
-                specified input regions, meaning that the selected regions do not change
-                shape due to changes in the specified output regions.
+            Since the smoothing operation occurs across all input regions, using this
+            option to filter the output means that the selected output regions will have
+            the same shape (i.e. smoothed in the same manner), regardless of the outputs
+            that are selected. This is useful for generating a surface for specific
+            labels while also preserving the effects that non-selected outputs would
+            have on the generated surface.
 
-        internal_boundaries : bool, default: True
-            Generate polygons which define the boundaries between adjacent foreground
-            labels. If ``False``, polygons are only generated at the boundaries between
+        internal_polygons : bool, default: True
+            Generate internal polygons which define the boundaries between adjacent
+            foreground labels. If ``False``, polygons are only generated between
             foreground labels and the background.
 
-            .. note::
-                The generation of internal boundaries can also improve the appearance
-                of external boundaries when smoothing is enabled. Specifically, the
-                presence of internal boundaries can help constrain the smoothing such
-                that the cell topology at the interface between regions will be a
-                relatively smooth line. Without this constraint, the external interface
-                between two regions may be more jagged and zig-zag across cells.
+        duplicate_polygons : bool, default: True
+            Generate duplicate polygons at internal boundaries betweens regions such
+            that every labeled surface at the output has independent boundary cells.
+            This is useful for generating complete, independent surface polygons for
+            each labeled region.
 
-                Therefore, the default value ``True`` is recommended even if internal
-                boundaries are not strictly required for a particular application.
-
-        image_boundaries : bool, default: False
-            Generate polygons to "close" the surface at the edges of the image. If
-            ``False``, no polygons are generated at the edges, and the generated
-            surface will therefore be "open" or "clipped" at the image boundaries.
-
-        independent_regions : bool, default: True
-            Generate duplicate polygons at internal boundaries such that every labeled
-            surface at the output has independent boundary cells. This is useful for
-            generating complete, independent surface polygons for each labeled region.
             If ``False``, internal boundary polygons between two regions are shared
-            by both regions.
-
-            Has no effect when ``internal_boundaries`` is ``False`` since external
-            boundaries (i.e. between foreground and background, or at the edges of the
-            image) are independent by default.
+            by both regions. Has no effect when ``internal_polygons`` is ``False``
+            since only internal polygons are duplicated.
 
             .. note::
-                Only the cells (quads or triangles) are duplicated, not the points. The
-                duplicated cells are inserted next the original cells (i.e. their cell
+                Only the cells (quads or triangles) are duplicated, not the points.
+                Duplicated cells are inserted next the original cells (i.e. their cell
                 ids are off by one).
+
+        closed_boundary : bool, default: False
+            Generate polygons to "close" the surface at the boundaries of the image.
+            By default, no polygons are generated on the boundary so that multiple
+            volumes can be processed and fit together without creating surface overlap.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
@@ -1033,7 +1019,7 @@ class ImageDataFilters(DataSetFilters):
                 If smoothing is enabled and the type is ``'quads'``, the resulting
                 quads may not be planar.
 
-        output_labels : 'surface' | 'boundary' | True | False, default: 'surface'
+        output_labels : 'surface' | 'boundary' | bool, default: 'surface'
             Select the labeled cell data array(s) to include with the output. Choose
             either ``'surface'`` or ``'boundary'`` to include a single array, ``True``
             to include both arrays, or ``False`` to not include any data arrays in the
@@ -1048,35 +1034,31 @@ class ImageDataFilters(DataSetFilters):
                 with the output. The array indicates the labels/regions of the polygons
                 composing the output.
 
-                .. note::
-                    This array is a simplified representation of the ``'boundary_labels'``
-                    array. It is generated by returning only the first component of that
-                    array but only when specific constraints are applied. Specifically,
-                    if ``internal_boundaries=True``, selecting this option also requires
-                    setting ``independent_regions=True``.
+                This array is a simplified representation of the ``'boundary_labels'``
+                array. If ``internal_boundaries=True``, selecting this option also
+                requires setting ``independent_regions=True``.
 
             - ``'boundary'``: Include a two-component cell data array ``'boundary_labels'``
                 with the output. The array indicates the labels/regions on either side
-                of the polygons composing the output.
+                of the polygons composing the output. The array's values are structured
+                as follows:
 
-                .. note::
-                    Boundary labels between foreground regions and background are
-                    always ordered as ``[foreground, background]``.
+                -   Boundary labels between foreground regions and background are always
+                    ordered as ``[foreground, background]``.
 
-                        E.g. ``[1, 0]`` for the boundary between region ``1`` and
-                        background ``0``.
+                    E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
-                    If ``internal_boundaries`` is ``True``, boundary labels between two
+                -   If ``internal_boundaries`` is ``True``, boundary labels between two
                     foreground regions are sorted in ascending order.
 
-                        E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
+                    E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-                    If ``independent_regions`` is ``True``, internal boundary cells are
+                -   If ``independent_regions`` is ``True``, internal boundary cells are
                     duplicated, and the labels of the duplicated cells are sorted in
                     descending order.
 
-                        E.g. a cell with the label ``[1, 2]`` is duplicated and labeled
-                        as ``[2, 1]`` for the boundary between regions ``1`` and ``2``.
+                    E.g. a cell with the label ``[1, 2]`` is duplicated and labeled
+                    as ``[2, 1]`` for the boundary between regions ``1`` and ``2``.
 
         smoothing : bool, default: True
             Apply smoothing to the meshes.
@@ -1137,7 +1119,7 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         if output_labels:
-            if output_labels == 'all':
+            if output_labels is True:
                 surface_labels = True
                 boundary_labels = True
             elif output_labels == 'surface':
@@ -1148,16 +1130,16 @@ class ImageDataFilters(DataSetFilters):
                 boundary_labels = True
             else:
                 raise ValueError(
-                    f"Output labels must be one of 'surface', 'boundary', 'all', or None. Got {output_labels}.",
+                    f"Output labels must be one of 'surface', 'boundary', or True. Got {output_labels}.",
                 )
         else:
             surface_labels = False
             boundary_labels = False
 
-        if surface_labels and internal_boundaries and not independent_regions:
+        if surface_labels and internal_polygons and not duplicate_polygons:
             raise ValueError(
-                'Parameter independent_regions cannot be False when generating surface labels with internal boundaries.'
-                '\nEither set independent_regions to True or set internal_boundaries to False.',
+                'Parameter duplicate_polygons must be True when generating surface labels with internal polygons.'
+                '\nEither set duplicate_polygons to True or set internal_polygons to False.',
             )
 
         # Validate scalars
@@ -1177,7 +1159,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Pad with background values to create background/foreground polygons at
         # image boundaries
-        alg_input = self.pad_image(alg.GetBackgroundLabel()) if image_boundaries else self
+        alg_input = self.pad_image(alg.GetBackgroundLabel()) if closed_boundary else self
 
         temp_scalars_name = '_PYVISTA_TEMP'
         if select_inputs:
@@ -1221,7 +1203,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
         output_ids: Optional[collections.abc.Sequence[float]] = None
-        if internal_boundaries or select_outputs:
+        if internal_polygons or select_outputs:
             # NOTE: We use 'select_outputs' and 'internal_boundaries' params to implement
             #  similar functionality to `SetOutputStyle`.
             #
@@ -1253,7 +1235,7 @@ class ImageDataFilters(DataSetFilters):
                 else None
             )
             [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids_list]
-            if internal_boundaries:
+            if internal_polygons:
                 [alg.SetLabel(i, float(val)) for i, val in enumerate(output_ids_list)]
 
         if smoothing:
@@ -1289,7 +1271,7 @@ class ImageDataFilters(DataSetFilters):
             else None
         )
 
-        if internal_boundaries and independent_regions:
+        if internal_polygons and duplicate_polygons:
 
             def duplicate_internal_boundary_cells():
                 background_value = alg.GetBackgroundLabel()
@@ -1336,7 +1318,7 @@ class ImageDataFilters(DataSetFilters):
 
         if surface_labels:
             # Safeguard, an error should have been raised earlier
-            assert independent_regions if internal_boundaries else True
+            assert duplicate_polygons if internal_polygons else True
 
             # Need to simplify the 2-component boundary labels scalars.
             # In general, we cannot simply take the first component and expect correct
