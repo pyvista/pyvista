@@ -3788,7 +3788,7 @@ class PolyDataFilters(DataSetFilters):
         surf = wrap(mc.GetOutput())
         return surf
 
-    def triangulate_contours(self, progress_bar=False):
+    def triangulate_contours(self, display_errors=False, progress_bar=False):
         """Triangulate and fill all 2D contours to create polygons.
 
         This filter will generate triangles to fill all of the 2D contours
@@ -3813,6 +3813,16 @@ class PolyDataFilters(DataSetFilters):
             triangulation algorithms, in contrast, are O(n log n). The
             resulting triangles may be quite narrow, the algorithm does not
             attempt to produce high-quality triangles.
+
+        Parameters
+        ----------
+        display_errors : bool, default: False
+            Generate errors when the triangulation fails. Note that
+            triangulation failures are often minor, because they involve tiny
+            triangles that are too small to see.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3842,5 +3852,6 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkContourTriangulator()
         alg.SetInputDataObject(self)
+        alg.SetTriangulationErrorDisplay(display_errors)
         _update_alg(alg, progress_bar, 'Triangulating Contours')
         return _get_output(alg)
