@@ -21,7 +21,6 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
@@ -2625,7 +2624,7 @@ def test_splitting():
 @pytest.mark.parametrize('smooth_shading', [True, False])
 @pytest.mark.parametrize('use_custom_normals', [True, False])
 def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
-    sphere = pyvista.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere = pv.Sphere(phi_resolution=5, theta_resolution=5)
     sphere.clear_data()
 
     if use_custom_normals:
