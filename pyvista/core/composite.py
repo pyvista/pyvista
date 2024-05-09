@@ -1308,3 +1308,27 @@ class MultiBlock(
         point_name = point_names.pop() if len(point_names) == 1 else None
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
+
+    def clear_all_data(self):
+        """Clear all data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_data()
+            elif block is not None:
+                block.clear_data()
+
+    def clear_all_point_data(self):
+        """Clear all point data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_point_data()
+            elif block is not None:
+                block.clear_point_data()
+
+    def clear_all_cell_data(self):
+        """Clear all cell data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_cell_data()
+            elif block is not None:
+                block.clear_cell_data()

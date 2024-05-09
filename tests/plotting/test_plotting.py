@@ -188,6 +188,17 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
+def test_import_3ds():
+    filename = examples.download_3ds.download_iflamigm()
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_3ds('not a file')
+
+    pl.import_3ds(filename)
+    pl.show()
+
+
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
@@ -4144,10 +4155,11 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-            return True
         except BaseException as ex:
             # Param is not valid only if a kwarg TypeError is raised
             return not ("TypeError" in repr(ex) and "unexpected keyword argument" in repr(ex))
+        else:
+            return True
 
 
 def _get_default_param_value(call: Callable, param: str) -> Any:

@@ -306,6 +306,10 @@ target-version = 'py39'
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
+    # https://github.com/pyvista/pyvista/pull/6030
+    "B028",
+    # https://github.com/pyvista/pyvista/pull/6022
+    "B904",
     # whitespace before ':'
     "E203",
     # line break before binary operator
@@ -329,6 +333,8 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/6037
+    "PERF203",
     # https://github.com/pyvista/pyvista/pull/5877
     "SIM102",
     # https://github.com/pyvista/pyvista/pull/5888
@@ -342,15 +348,7 @@ extend-select = [
     "A",
     "AIR",
     "ASYNC",
-    "B006",
-    "B007",
-    "B008",
-    "B009",
-    "B010",
-    "B015",
-    "B018",
-    "B020",
-    "B027",
+    "B",
     "C4",
     "COM",
     "DJ",
@@ -364,13 +362,14 @@ extend-select = [
     "ISC",
     "LOG",
     "NPY",
-    "PERF401",
+    "PERF",
     "PGH",
     "PIE",
     "PLC",
     "PLR0402",
     "PLR1711",
     "PLR1714",
+    "PLW0127",
     "PT",
     "PTH",
     "PYI",
@@ -383,6 +382,7 @@ extend-select = [
     "TCH",
     "TRIO",
     "TRY201",
+    "TRY300",
     "W",
     "YTT",
 ]
