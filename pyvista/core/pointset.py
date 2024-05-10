@@ -1518,7 +1518,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                          [ 0.21027282, -0.04469487, -0.97662055],
                          [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
-
         """
         if self.point_data.active_normals is not None:
             normals = self.point_data.active_normals
