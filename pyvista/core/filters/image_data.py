@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import collections.abc
+import operator
 from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 import warnings
 
@@ -1005,13 +1006,18 @@ class ImageDataFilters(DataSetFilters):
         may be fine-tuned to control the smoothing process. Optionally, smoothing may
         be disabled to generate a voxelized staircase-like surface.
 
+        This filter is designed to generate surfaces from voxel *points*, i.e.
+        points which represent voxels, such as point arrays from 3D medical images.
+        If the input is voxel *cells* (i.e. cell scalars are specified), the cell
+        centers are used to generate the output.
+
         .. note::
             By default, the generated surface polygons are labeled using a single-component
             scalar array. This differs from the ``vtkSurfaceNets`` filter, which outputs
             a two-component scalar array. See the documentation for the ``output_labels``
             parameter for details about these arrays.
 
-            If desired, the default output from ``vtkSurfaceNets`` can be  obtained with:
+            If desired, the default output from ``vtkSurfaceNets`` can be obtained with:
 
             .. code::
 
@@ -1029,7 +1035,8 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         scalars : str, optional
-            Name of scalars to process. Defaults to currently active scalars.
+            Name of scalars to process. Defaults to currently active scalars. If cell
+            scalars are specified, the cell centers are used.
 
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
@@ -1056,8 +1063,8 @@ class ImageDataFilters(DataSetFilters):
 
         internal_polygons : bool, default: True
             Generate internal polygons which define the boundaries between adjacent
-            foreground labels. If ``False``, polygons are only generated between
-            foreground labels and the background.
+            foreground labels. If ``False``, only external polygons are generated
+            between foreground labels and the background.
 
         duplicate_polygons : bool, default: True
             Generate duplicate polygons at internal boundaries betweens regions such
@@ -1074,10 +1081,10 @@ class ImageDataFilters(DataSetFilters):
                 Duplicated cells are inserted next the original cells (i.e. their cell
                 ids are off by one).
 
-        closed_boundary : bool, default: False
+        closed_boundary : bool, default: True
             Generate polygons to "close" the surface at the boundaries of the image.
-            By default, no polygons are generated on the boundary so that multiple
-            volumes can be processed and fit together without creating surface overlap.
+            Setting this value to ``False`` is useful if processing multiple volumes
+            separately so that they fit together without creating surface overlap.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
@@ -1224,20 +1231,21 @@ class ImageDataFilters(DataSetFilters):
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
-            if field != FieldAssociation.POINT:
-                raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
-                )
+
+        # Make sure we have points to work with
+        if field == FieldAssociation.POINT:
+            alg_input = self
+        else:
+            alg_input = self._cell_voxels_to_point_voxels(cell_scalars=scalars)
 
         alg = _vtk.vtkSurfaceNets3D()
-
+        background_value = 0
+        alg.SetBackgroundLabel(background_value)
         # Pad with background values to create background/foreground polygons at
         # image boundaries
-        alg_input = self.pad_image(alg.GetBackgroundLabel()) if closed_boundary else self
+        alg_input = alg_input.pad_image(alg.GetBackgroundLabel()) if closed_boundary else alg_input
 
         temp_scalars_name = '_PYVISTA_TEMP'
         if select_inputs:
@@ -1418,6 +1426,64 @@ class ImageDataFilters(DataSetFilters):
             output.cell_data.remove(BOUNDARY_LABELS)
 
         return output
+
+    def _point_voxels_to_cell_voxels(self, point_scalars: Optional[str] = None):
+        """Convert point voxel data to cell voxel data."""
+        return self._convert_voxels('points_to_cells', scalars=point_scalars)
+
+    def _cell_voxels_to_point_voxels(self, cell_scalars: Optional[str] = None):
+        """Convert cell voxel data to point voxel data."""
+        return self._convert_voxels('cells_to_points', scalars=cell_scalars)
+
+    def _convert_voxels(
+        self,
+        method: Optional[Literal['points_to_cells', 'cells_to_points']] = None,
+        scalars: Optional[str] = None,
+    ):
+        point_data = self.point_data  # type: ignore[attr-defined]
+        cell_data = self.cell_data  # type: ignore[attr-defined]
+        if method is None and scalars is None:
+            # Need to determine which method to use
+            point_len = len(point_data.keys())
+            cell_len = len(cell_data.keys())
+            ambiguous_msg = "Dataset contains {} cell data {}} point data. Specify method explicitly with 'points_to_cells' to convert point data, or 'cells_to_points' to convert cell data"
+            if point_len > 0 and cell_len > 0:
+                raise AmbiguousDataError(ambiguous_msg.format('both', 'and'))
+            elif point_len == 0 and cell_len == 0:
+                raise AmbiguousDataError(ambiguous_msg.format('no', 'or'))
+            elif point_len > 0:
+                method = 'points_to_cells'
+            elif cell_len > 0:
+                method = 'cells_to_points'
+            else:
+                raise RuntimeError("Error, this code should not be reachable.")
+
+        new_image = pyvista.ImageData()
+        if method == 'cells_to_points':
+            origin_operator = operator.add
+            dims_operator = operator.sub
+            old_data = cell_data
+            new_data = new_image.point_data
+        else:
+            origin_operator = operator.sub
+            dims_operator = operator.add
+            old_data = point_data
+            new_data = new_image.cell_data
+
+        # Create new image
+        # Point voxels should equal cell voxel centers
+        new_image.origin = origin_operator(self.origin, np.array(self.spacing) / 2)  # type: ignore[attr-defined]
+        new_image.dimensions = dims_operator(np.array(self.dimensions), 1)  # type: ignore[attr-defined]
+        new_image.spacing = self.spacing  # type: ignore[attr-defined]
+        new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
+
+        # Copy old data to new data
+        # new_image.field_data = self.field_data.copy()  # type: ignore[attr-defined]
+
+        array_names = old_data.keys() if scalars else [scalars]
+        for array_name in array_names:
+            new_data[array_name] = old_data[array_name]
+        return new_image
 
     def pad_image(
         self,
