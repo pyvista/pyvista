@@ -989,31 +989,42 @@ class ImageDataFilters(DataSetFilters):
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
         output_labels: Optional[Union[Literal['surface', 'boundary'], bool]] = 'surface',
         smoothing: bool = True,
-        smoothing_num_iterations: int = 16,
-        smoothing_relaxation_factor: float = 0.5,
-        smoothing_constraint_distance: Optional[float] = None,
-        smoothing_constraint_scale: float = 1.0,
+        smoothing_iterations: int = 16,
+        smoothing_relaxation: float = 0.5,
+        smoothing_distance: Optional[float] = None,
+        smoothing_scale: float = 1.0,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
-        """Generate surface contours from 3D image labels.
+        """Generate surface contours from 3D image label maps.
 
-        SurfaceNets algorithm is used to extract contours preserving sharp
-        boundaries for the selected labels from the label maps.
-        Optionally, the boundaries can be smoothened to reduce the staircase
-        appearance in case of low resolution input label maps.
+        This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
+        to extract polygonal surface contours from non-continuous label maps, which
+        corresponds to discrete regions in an input 3D image (i.e., volume).
 
-        When smoothing is enabled, a local constraint sphere which is placed
-        around each point to restrict its motion. By default, the distance
-        (radius of the sphere) is automatically computed using the image
-        spacing. This distance can optionally be scaled with
-        ``smoothing_constraint_scale``, or alternatively the distance can
-        be manually specified with ``smoothing_constraint_distance``.
+        The generated surface is smoothed using a constrained smoothing filter, which
+        may be fine-tuned to control the smoothing process. Optionally, smoothing may
+        be disabled to generate a voxelized staircase-like surface.
+
+        .. note::
+            By default, the generated surface polygons are labeled using a single-component
+            scalar array. This differs from the ``vtkSurfaceNets`` filter, which outputs
+            a two-component scalar array. See the documentation for the ``output_labels``
+            parameter for details about these arrays.
+
+            If desired, the default output from ``vtkSurfaceNets`` can be  obtained with:
+
+            .. code::
+
+                contour_labels(
+                    duplicate_polygons=False, output_labels='boundary'
+                )
+
 
         This filter requires that the :class:`ImageData` has integer point
         scalars, such as multi-label maps generated from image segmentation.
 
         .. note::
-           Requires ``vtk>=9.3.0``.
+           This filter requires ``vtk>=9.3.0``.
 
         Parameters
         ----------
@@ -1121,26 +1132,31 @@ class ImageDataFilters(DataSetFilters):
                     as ``[2, 1]`` for the boundary between regions ``1`` and ``2``.
 
         smoothing : bool, default: True
-            Apply smoothing to the meshes.
+            Smooth the generated surface using a constrained smoothing filter. Each
+            point in surface is smoothed as follows:
 
-        smoothing_num_iterations : int, default: 16
-            Number of smoothing iterations.
+            For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
+            is moved towards the average position of ``pj`` multiplied by the
+            ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
+            constraint. This process is repeated either until convergence occurs, or
+            the maximum number of ``smoothing_iterations`` is reached.
 
-        smoothing_relaxation_factor : float, default: 0.5
-            Relaxation factor of the smoothing.
+        smoothing_iterations : int, default: 16
+            Maximum number of smoothing iterations to use.
 
-        smoothing_constraint_distance : float, default: None
-            Constraint distance of the smoothing. Specify the maximum distance
-            each point is allowed to move (in any direction) during smoothing.
-            This distance may be scaled with ``smoothing_constraint_scale``.
-            By default, the constraint distance is computed dynamically from
-            the image spacing as
+        smoothing_relaxation : float, default: 0.5
+            Relaxation factor of the smoothing process.
 
-                ``distance = norm(spacing) * scale``.
+        smoothing_distance : float, default: None
+            Maximum distance each point is allowed to move (in any direction) during
+            smoothing. This distance may be scaled with ``smoothing_scale``. By default,
+            the distance is computed dynamically from the image spacing as:
 
-        smoothing_constraint_scale : float, default: 1.0
-            Relative scaling factor applied to ``smoothing_constraint_distance``.
-            See that parameter for more details.
+                ``distance = norm(image_spacing) * smoothing_scale``
+
+        smoothing_scale : float, default: 1.0
+            Relative scaling factor applied to ``smoothing_distance``. See that
+            parameter for details.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1152,11 +1168,13 @@ class ImageDataFilters(DataSetFilters):
 
         References
         ----------
-        Sarah F. Frisken, SurfaceNets for Multi-Label Segmentations with Preservation
-        of Sharp Boundaries, Journal of Computer Graphics Techniques (JCGT), vol. 11,
-        no. 1, 34-54, 2022. Available online http://jcgt.org/published/0011/01/03/
+        S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
+        Sharp Boundaries”, J. Computer Graphics Techniques, 2022. Available online:
+        http://jcgt.org/published/0011/01/03/
 
-        https://www.kitware.com/really-fast-isocontouring/
+        W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
+        Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
+        http://arxiv.org/abs/2401.14906
 
         Examples
         --------
@@ -1303,14 +1321,14 @@ class ImageDataFilters(DataSetFilters):
 
         if (
             smoothing
-            and not _is_small_number(smoothing_constraint_scale)
-            and not _is_small_number(smoothing_constraint_distance)
+            and not _is_small_number(smoothing_scale)
+            and not _is_small_number(smoothing_distance)
         ):
             # Only enable smoothing if distance is not very small, since a small distance will
             # actually result in large smoothing (suspected division by zero error in vtk code)
             alg.SmoothingOn()
-            alg.GetSmoother().SetNumberOfIterations(smoothing_num_iterations)
-            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation_factor)
+            alg.GetSmoother().SetNumberOfIterations(smoothing_iterations)
+            alg.GetSmoother().SetRelaxationFactor(smoothing_relaxation)
 
             # Auto-constraints are On by default which only allows you to scale relative distance
             # (with SetConstraintScale) but not set its value directly.
@@ -1318,11 +1336,11 @@ class ImageDataFilters(DataSetFilters):
             alg.AutomaticSmoothingConstraintsOff()
             # If distance not specified, emulate the auto-constraint calc from vtkSurfaceNets3D
             distance = (
-                smoothing_constraint_distance
-                if smoothing_constraint_distance
+                smoothing_distance
+                if smoothing_distance
                 else np.linalg.norm(alg_input.spacing)  # type: ignore[attr-defined]
             )
-            alg.GetSmoother().SetConstraintDistance(distance * smoothing_constraint_scale)
+            alg.GetSmoother().SetConstraintDistance(distance * smoothing_scale)
         else:
             alg.SmoothingOff()
 

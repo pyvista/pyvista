@@ -4411,7 +4411,7 @@ def test_contour_labels(
     plot = pv.Plotter(shape=(2, 2))
 
     fixed_kwargs = dict(
-        smoothing_constraint_distance=0.3,
+        smoothing_distance=0.3,
         output_mesh_type='quads',
     )
 
@@ -4445,21 +4445,21 @@ def test_contour_labels(
 
 
 @pytest.mark.parametrize(
-    ('smoothing_constraint_distance', 'smoothing_constraint_scale'),
+    ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
     labeled_image,  # noqa: F811
-    smoothing_constraint_distance,
-    smoothing_constraint_scale,
+    smoothing_distance,
+    smoothing_scale,
 ):
     # Scale spacing for visualization
     labeled_image.spacing = (10, 10, 10)
 
     mesh = labeled_image.contour_labels(
-        smoothing_constraint_distance=smoothing_constraint_distance,
-        smoothing_constraint_scale=smoothing_constraint_scale,
+        smoothing_distance=smoothing_distance,
+        smoothing_scale=smoothing_scale,
     )
 
     # Translate so origin is in bottom left corner
