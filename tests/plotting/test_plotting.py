@@ -1205,6 +1205,13 @@ def test_add_box_axes():
     plotter.show()
 
 
+def test_add_north_arrow():
+    plotter = pv.Plotter()
+    plotter.add_north_arrow_widget(viewport=(0, 0, 0.5, 0.5))
+    plotter.add_mesh(pv.Arrow(direction=(0, 1, 0)))
+    plotter.show()
+
+
 def test_screenshot(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())

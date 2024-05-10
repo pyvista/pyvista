@@ -1274,6 +1274,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
 
+    @wraps(Renderer.add_north_arrow_widget)
+    def add_north_arrow_widget(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.add_north_arrow_widget``."""
+        return self.renderer.add_north_arrow_widget(*args, **kwargs)
+
     @wraps(Renderer.hide_axes)
     def hide_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.hide_axes``."""

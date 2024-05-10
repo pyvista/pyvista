@@ -445,6 +445,64 @@ def create_axes_orientation_box(
     return actor
 
 
+def create_north_arrow():
+    """Create a north arrow mesh.
+
+    Returns
+    -------
+    pyvista.PolyData
+        North arrow mesh.
+
+    """
+    points = np.array(
+        [
+            [0.0, 5.0, 0.0],
+            [-2.0, 0.0, 0.0],
+            [0.0, 1.5, 0.0],
+            [2.0, 0.0, 0.0],
+            [0.0, 5.0, 1.0],
+            [-2.0, 0.0, 1.0],
+            [0.0, 1.5, 1.0],
+            [2.0, 0.0, 1.0],
+        ],
+    )
+    faces = np.array(
+        [
+            4,
+            3,
+            7,
+            4,
+            0,
+            4,
+            2,
+            6,
+            7,
+            3,
+            4,
+            1,
+            5,
+            6,
+            2,
+            4,
+            0,
+            4,
+            5,
+            1,
+            4,
+            0,
+            1,
+            2,
+            3,
+            4,
+            4,
+            7,
+            6,
+            5,
+        ],
+    )
+    return pyvista.PolyData(points, faces)
+
+
 def normalize(x, minimum=None, maximum=None):
     """
     Normalize the given value between [minimum, maximum].
