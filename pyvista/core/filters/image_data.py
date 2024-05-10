@@ -1480,7 +1480,7 @@ class ImageDataFilters(DataSetFilters):
         # Copy old data to new data
         # new_image.field_data = self.field_data.copy()  # type: ignore[attr-defined]
 
-        array_names = old_data.keys() if scalars else [scalars]
+        array_names = [scalars] if scalars else old_data.keys()
         for array_name in array_names:
             new_data[array_name] = old_data[array_name]
         return new_image

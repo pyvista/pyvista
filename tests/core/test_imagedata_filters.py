@@ -526,3 +526,30 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
         logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+
+
+def test_point_voxels_to_cell_voxels(labeled_image):
+    point_voxel_image = labeled_image
+    point_voxel_points = point_voxel_image.points
+
+    cell_voxel_image = point_voxel_image._point_voxels_to_cell_voxels()
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    assert np.array_equal(point_voxel_points, cell_voxel_center_points)
+    assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
+
+
+@pytest.fixture()
+def channels():
+    return examples.load_channels()
+
+
+def test_cell_voxels_to_point_voxels(channels):
+    cell_voxel_image = channels
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    point_voxel_image = cell_voxel_image._cell_voxels_to_point_voxels()
+    point_voxel_points = point_voxel_image.points
+
+    assert np.array_equal(cell_voxel_center_points, point_voxel_points)
+    assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
