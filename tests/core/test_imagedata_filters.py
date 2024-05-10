@@ -17,6 +17,12 @@ def test_contour_labeled_deprecated():
 
 
 @pytest.fixture()
+def channels():
+    # ImageData will cell data
+    return examples.load_channels()
+
+
+@pytest.fixture()
 def labeled_image():
     # Create 4x3x3 image with two adjacent labels
 
@@ -125,8 +131,11 @@ def test_contour_labels_boundaries(
         output_labels='boundary',
         duplicate_polygons=False,
     )  # , image_boundary_faces=image_boundary_faces)
-    assert BOUNDARY_LABELS in mesh.cell_data
-    actual_output_ids = _get_ids_with_background_boundary(mesh)
+    if mesh.n_cells > 0:
+        assert BOUNDARY_LABELS in mesh.cell_data
+        actual_output_ids = _get_ids_with_background_boundary(mesh)
+    else:
+        actual_output_ids = []
 
     # Make sure param values are iterable
     select_inputs_iter = np.atleast_1d(select_inputs) if select_inputs else ALL_LABEL_IDS
@@ -163,10 +172,12 @@ def test_contour_labels_image_boundaries(labeled_image):
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_duplicate_polygons(labeled_image):
     # test boundary labels are *not* duplicated
+    common_kwargs = dict(output_mesh_type='quads', closed_boundary=False)
+
     mesh = labeled_image.contour_labels(
-        duplicate_polygons=False,
         output_labels='boundary',
-        output_mesh_type='quads',
+        duplicate_polygons=False,
+        **common_kwargs,
     )
     actual_boundary_labels = mesh[BOUNDARY_LABELS]
     expected_boundary_labels = [
@@ -190,9 +201,9 @@ def test_contour_labels_duplicate_polygons(labeled_image):
 
     # test boundary labels *are* duplicated
     mesh = labeled_image.contour_labels(
-        duplicate_polygons=True,
         output_labels='boundary',
-        output_mesh_type='quads',
+        duplicate_polygons=True,
+        **common_kwargs,
     )
     actual_boundary_labels = mesh[BOUNDARY_LABELS].tolist()
     expected_boundary_labels = [
@@ -212,8 +223,9 @@ def test_contour_labels_duplicate_polygons(labeled_image):
         [5.0, 0.0],
         [5.0, 0.0],
     ]
-    assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
     assert np.shape(expected_boundary_labels) == (15, 2)
+    assert np.shape(actual_boundary_labels) == (15, 2)
+    assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
 
     # Test surface labels requires duplicate_polygons=True
     match = (
@@ -221,13 +233,17 @@ def test_contour_labels_duplicate_polygons(labeled_image):
         '\nEither set duplicate_polygons to True or set internal_polygons to False.'
     )
     with pytest.raises(ValueError, match=match):
-        labeled_image.contour_labels(duplicate_polygons=False, output_labels='surface')
+        labeled_image.contour_labels(
+            output_labels='surface',
+            duplicate_polygons=False,
+            **common_kwargs,
+        )
 
     # Test surface labels equals first component of boundary labels
     mesh = labeled_image.contour_labels(
-        duplicate_polygons=True,
         output_labels='surface',
-        output_mesh_type='quads',
+        duplicate_polygons=True,
+        **common_kwargs,
     )
     actual_surface_labels = mesh[SURFACE_LABELS]
     expected_surface_labels = np.array(expected_boundary_labels)[
@@ -259,6 +275,17 @@ def test_contour_labels_output_labels(labeled_image, output_labels, array_names)
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_cell_data(channels):
+    # Extract voxelized surface from image with cell voxels in two ways
+    # Both should have an equal number of quad cells
+
+    voxel_surface_contoured = channels.contour_labels(smoothing=False, internal_polygons=False)
+    vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+
+    assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     match = 'Invalid output mesh type "invalid", use "quads" or "triangles"'
     with pytest.raises(ValueError, match=match):
@@ -268,24 +295,37 @@ def test_contour_labels_raises(labeled_image):
     with pytest.raises(ValueError, match=match):
         labeled_image.contour_labels(output_labels='all')
 
-    # TODO: test float input vs int for select_input/output
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_invalid_scalars(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
         labeled_image.contour_labels(scalars='nonexistent_key')
 
-    # Using cell data
-    labeled_image.cell_data['cell_data'] = np.zeros(labeled_image.n_cells)
-    with pytest.raises(ValueError, match='Can only process point data'):
-        labeled_image.contour_labels(scalars='cell_data')
+    # Empty inputs
+    with pytest.raises(pv.MissingDataError, match='No data available'):
+        pv.ImageData().contour_labels()
 
-    # When no scalars are given and active scalars are not point data
-    labeled_image.set_active_scalars('cell_data', preference='cell')
-    with pytest.raises(ValueError, match='active scalars must be point array'):
-        labeled_image.contour_labels()
+    # TODO: test float input vs int for select_input/output
+
+
+def test_point_voxels_to_cell_voxels(labeled_image):
+    point_voxel_image = labeled_image
+    point_voxel_points = point_voxel_image.points
+
+    cell_voxel_image = point_voxel_image._point_voxels_to_cell_voxels()
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    assert np.array_equal(point_voxel_points, cell_voxel_center_points)
+    assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
+
+
+def test_cell_voxels_to_point_voxels(channels):
+    cell_voxel_image = channels
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    point_voxel_image = cell_voxel_image._cell_voxels_to_point_voxels()
+    point_voxel_points = point_voxel_image.points
+
+    assert np.array_equal(cell_voxel_center_points, point_voxel_points)
+    assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
 
 
 @pytest.fixture()
@@ -526,30 +566,3 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
         logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
-
-
-def test_point_voxels_to_cell_voxels(labeled_image):
-    point_voxel_image = labeled_image
-    point_voxel_points = point_voxel_image.points
-
-    cell_voxel_image = point_voxel_image._point_voxels_to_cell_voxels()
-    cell_voxel_center_points = cell_voxel_image.cell_centers().points
-
-    assert np.array_equal(point_voxel_points, cell_voxel_center_points)
-    assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
-
-
-@pytest.fixture()
-def channels():
-    return examples.load_channels()
-
-
-def test_cell_voxels_to_point_voxels(channels):
-    cell_voxel_image = channels
-    cell_voxel_center_points = cell_voxel_image.cell_centers().points
-
-    point_voxel_image = cell_voxel_image._cell_voxels_to_point_voxels()
-    point_voxel_points = point_voxel_image.points
-
-    assert np.array_equal(cell_voxel_center_points, point_voxel_points)
-    assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)

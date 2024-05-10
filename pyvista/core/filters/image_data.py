@@ -986,7 +986,7 @@ class ImageDataFilters(DataSetFilters):
         select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
         internal_polygons: bool = True,
         duplicate_polygons: bool = True,
-        closed_boundary: bool = False,
+        closed_boundary: bool = True,
         output_mesh_type: Optional[Literal['quads', 'triangles']] = None,
         output_labels: Optional[Union[Literal['surface', 'boundary'], bool]] = 'surface',
         smoothing: bool = True,
@@ -1238,6 +1238,7 @@ class ImageDataFilters(DataSetFilters):
         if field == FieldAssociation.POINT:
             alg_input = self
         else:
+            field = FieldAssociation.POINT
             alg_input = self._cell_voxels_to_point_voxels(cell_scalars=scalars)
 
         alg = _vtk.vtkSurfaceNets3D()
@@ -1245,7 +1246,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetBackgroundLabel(background_value)
         # Pad with background values to create background/foreground polygons at
         # image boundaries
-        alg_input = alg_input.pad_image(alg.GetBackgroundLabel()) if closed_boundary else alg_input
+        alg_input = alg_input.pad_image(background_value) if closed_boundary else alg_input
 
         temp_scalars_name = '_PYVISTA_TEMP'
         if select_inputs:
@@ -1316,8 +1317,8 @@ class ImageDataFilters(DataSetFilters):
             # Add selected outputs. Do not add the background value.
             output_ids_list = list(output_ids)
             (
-                output_ids_list.remove(bg)
-                if (bg := alg.GetBackgroundLabel()) in output_ids_list
+                output_ids_list.remove(background_value)
+                if background_value in output_ids_list
                 else None
             )
             [alg.AddSelectedLabel(float(label_id)) for label_id in output_ids_list]
@@ -1360,70 +1361,73 @@ class ImageDataFilters(DataSetFilters):
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         output: pyvista.PolyData = _get_output(alg)
-        output.rename_array('BoundaryLabels', BOUNDARY_LABELS)
+
         (  # Clear temp scalars
             alg_input.point_data.remove(temp_scalars_name)  # type: ignore[attr-defined]
             if temp_scalars_name in alg_input.point_data  # type: ignore[attr-defined]
             else None
         )
 
-        if internal_polygons and duplicate_polygons:
+        if output.n_points > 0:
+            output.rename_array('BoundaryLabels', BOUNDARY_LABELS)
 
-            def duplicate_internal_boundary_cells():
-                background_value = alg.GetBackgroundLabel()
-                boundary_labels_array = output.cell_data[BOUNDARY_LABELS]
+            if internal_polygons and duplicate_polygons:
 
-                # Duplicate if foreground label on both sides of cell
-                is_internal_boundary = np.all(boundary_labels_array != background_value, axis=1)
-                if np.any(is_internal_boundary):
-                    internal_ids = np.nonzero(is_internal_boundary)[0]
-                    duplicated_labels = boundary_labels_array[internal_ids]
-                    if select_outputs:
-                        # Only duplicate if both regions on each side
-                        # of the boundary are included in the output
-                        in_first_component = np.isin(duplicated_labels[:, 0], select_outputs)
-                        in_second_component = np.isin(duplicated_labels[:, 1], select_outputs)
-                        keep = np.logical_and(in_first_component, in_second_component)
-                        internal_ids = internal_ids[keep]
+                def duplicate_internal_boundary_cells():
+                    background_value = alg.GetBackgroundLabel()
+                    boundary_labels_array = output.cell_data[BOUNDARY_LABELS]
+
+                    # Duplicate if foreground label on both sides of cell
+                    is_internal_boundary = np.all(boundary_labels_array != background_value, axis=1)
+                    if np.any(is_internal_boundary):
+                        internal_ids = np.nonzero(is_internal_boundary)[0]
                         duplicated_labels = boundary_labels_array[internal_ids]
+                        if select_outputs:
+                            # Only duplicate if both regions on each side
+                            # of the boundary are included in the output
+                            in_first_component = np.isin(duplicated_labels[:, 0], select_outputs)
+                            in_second_component = np.isin(duplicated_labels[:, 1], select_outputs)
+                            keep = np.logical_and(in_first_component, in_second_component)
+                            internal_ids = internal_ids[keep]
+                            duplicated_labels = boundary_labels_array[internal_ids]
 
-                    # Insert duplicated scalars. Swap order of 1st and 2nd components
-                    insertion_ids = internal_ids + 1
-                    duplicated_labels = duplicated_labels[:, ::-1]
-                    inserted_array = np.insert(
-                        boundary_labels_array,
-                        obj=insertion_ids,
-                        values=duplicated_labels,
-                        axis=0,
-                    )
+                        # Insert duplicated scalars. Swap order of 1st and 2nd components
+                        insertion_ids = internal_ids + 1
+                        duplicated_labels = duplicated_labels[:, ::-1]
+                        inserted_array = np.insert(
+                            boundary_labels_array,
+                            obj=insertion_ids,
+                            values=duplicated_labels,
+                            axis=0,
+                        )
 
-                    # Insert duplicated cells
-                    faces = output.regular_faces
-                    inserted_faces = np.insert(
-                        faces,
-                        obj=insertion_ids,
-                        values=faces[internal_ids],
-                        axis=0,
-                    )
+                        # Insert duplicated cells
+                        faces = output.regular_faces
+                        inserted_faces = np.insert(
+                            faces,
+                            obj=insertion_ids,
+                            values=faces[internal_ids],
+                            axis=0,
+                        )
 
-                    # Update output
-                    output.regular_faces = inserted_faces
-                    output.cell_data[BOUNDARY_LABELS] = inserted_array
+                        # Update output
+                        output.regular_faces = inserted_faces
+                        output.cell_data[BOUNDARY_LABELS] = inserted_array
 
-            duplicate_internal_boundary_cells()
+                duplicate_internal_boundary_cells()
 
-        if surface_labels:
-            # Safeguard, an error should have been raised earlier
-            assert duplicate_polygons if internal_polygons else True
+            if surface_labels:
+                # Safeguard, an error should have been raised earlier
+                assert duplicate_polygons if internal_polygons else True
 
-            # Need to simplify the 2-component boundary labels scalars.
-            # In general, we cannot simply take the first component and expect correct
-            # output, but this method applies constraints to make this possible
-            output.cell_data[SURFACE_LABELS] = output.cell_data[BOUNDARY_LABELS][:, 0]
-            output.set_active_scalars(SURFACE_LABELS)
+                # Need to simplify the 2-component boundary labels scalars.
+                # In general, we cannot simply take the first component and expect correct
+                # output, but this method applies constraints to make this possible
+                output.cell_data[SURFACE_LABELS] = output.cell_data[BOUNDARY_LABELS][:, 0]
+                output.set_active_scalars(SURFACE_LABELS)
 
-        if not boundary_labels:
-            output.cell_data.remove(BOUNDARY_LABELS)
+            if not boundary_labels:
+                output.cell_data.remove(BOUNDARY_LABELS)
 
         return output
 
@@ -1482,7 +1486,7 @@ class ImageDataFilters(DataSetFilters):
 
         array_names = [scalars] if scalars else old_data.keys()
         for array_name in array_names:
-            new_data[array_name] = old_data[array_name]
+            new_data[array_name] = np.array(old_data[array_name].tolist())
         return new_image
 
     def pad_image(
