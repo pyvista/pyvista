@@ -978,8 +978,8 @@ class ImageDataFilters(DataSetFilters):
 
             - a number: New points are filled with the specified constant value.
             - a vector: New points are filled with the specified multi-component vector.
-            - ``'wrap'``': New points are filled by wrapping around the padding axis.
-            - ``'mirror'``': New points are filled by mirroring the padding axis.
+            - ``'wrap'``: New points are filled by wrapping around the padding axis.
+            - ``'mirror'``: New points are filled by mirroring the padding axis.
 
         pad_size : int | sequence[int], default : 1
             Number of points to add to the image boundaries. Specify:
