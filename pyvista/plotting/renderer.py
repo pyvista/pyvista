@@ -1191,7 +1191,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ):
         """Add a geographic north arrow to the scene.
 
-    .. versionadded:: 0.44.0
+        .. versionadded:: 0.44.0
+
         Parameters
         ----------
         interactive : bool, optional
