@@ -91,11 +91,16 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pv.UnstructuredGrid)
 
     # crinkle clip
-    clp = pv.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    mesh = pv.Wavelet()
+    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
-    clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
+    assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
 @skip_mac
