@@ -448,6 +448,8 @@ def create_axes_orientation_box(
 def create_north_arrow():
     """Create a north arrow mesh.
 
+    .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
