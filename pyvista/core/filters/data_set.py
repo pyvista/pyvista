@@ -65,8 +65,10 @@ class DataSetFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a = self.extract_cells(np.unique(a.cell_data['cell_ids']))
-                b = self.extract_cells(np.unique(b.cell_data['cell_ids']))
+                set_a = set(a.cell_data['cell_ids'])
+                set_b = set(b.cell_data['cell_ids']) - set_a
+                a = self.extract_cells(list(set_a))
+                b = self.extract_cells(list(set_b))
             return a, b
         clipped = _get_output(alg)
         if crinkle:
