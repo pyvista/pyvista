@@ -199,6 +199,7 @@ def test_import_3ds():
     pl.show()
 
 
+@skip_9_0_X
 def test_import_obj():
     download_obj_file = examples.download_room_surface_mesh(load=False)
     pl = pv.Plotter()
