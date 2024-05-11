@@ -965,13 +965,68 @@ class ImageDataFilters(DataSetFilters):
 
         All point data (if any) is converted into cell data. Any active point scalars
         will remain active as cell scalars in the output. If the input contains cell
-        data, it is ignored and removed the output. The dimensions of the returned
+        data, it is ignored and removed from the output. The dimensions of the returned
         image are all increased by one relative to the input dimensions.
+
+        .. versionadded:: 0.44.0
+
+        See Also
+        --------
+        cell_voxels_to_point_voxels
+        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
 
         Returns
         -------
         pyvista.ImageData
             Image with voxels represented as cells.
+
+        Examples
+        --------
+        Create image data with eight points representing eight point voxels.
+
+        >>> import pyvista as pv
+        >>> voxel_points = pv.ImageData(dimensions=(2, 2, 2))
+        >>> voxel_points.point_data['Data'] = range(8)
+        >>> voxel_points.dimensions
+        (2, 2, 2)
+
+        If we plot the image, it is visually represented as a single voxel **cell** with
+        eight points.
+
+        >>> voxel_points.plot(show_edges=True)
+
+        However, this does not visually show the correct representation when point data
+        is used to represent the centers of voxels. In this case we can convert the
+        point data to cell data to create a cell-based representation of the voxels.
+
+        >>> voxel_cells = voxel_points.point_voxels_to_cell_voxels()
+        >>> voxel_cells.dimensions
+        (3, 3, 3)
+        >>> voxel_cells.plot(show_edges=True)
+
+        Show the two representations together. The cell centers of the voxel cells
+        correspond to the original voxel points.
+
+        >>> # Clear scalar data for plotting
+        >>> voxel_points.clear_data()
+        >>> voxel_cells.clear_data()
+        >>>
+        >>> cell_centers = voxel_cells.cell_centers()
+        >>> cell_edges = voxel_cells.extract_all_edges()
+        >>>
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(voxel_points, show_edges=True, opacity=0.7)
+        >>> _ = plot.add_mesh(cell_edges, color='black')
+        >>> _ = plot.add_points(
+        ...     cell_centers,
+        ...     render_points_as_spheres=True,
+        ...     color='red',
+        ...     point_size=20,
+        ... )
+        >>> _ = plot.camera.azimuth = -25
+        >>> _ = plot.camera.elevation = 25
+        >>> plot.show()
         """
         return self._convert_voxels(points_to_cells=True)
 
@@ -989,13 +1044,66 @@ class ImageDataFilters(DataSetFilters):
 
         All cell data (if any) is converted into point data. Any active cell scalars
         will remain active as point scalars in the output. If the input contains point
-        data, it is ignored and removed the output. The dimensions of the returned
+        data, it is ignored and removed from the output. The dimensions of the returned
         image are all decreased by one relative to the input dimensions.
+
+        .. versionadded:: 0.44.0
+
+        See Also
+        --------
+        point_voxels_to_cell_voxels
+        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
 
         Returns
         -------
         pyvista.ImageData
             Image with voxels represented as points.
+
+        Examples
+        --------
+        Create image data with eight voxel cells.
+
+        >>> import pyvista as pv
+        >>> voxel_cells = pv.ImageData(dimensions=(3, 3, 3))
+        >>> voxel_cells.cell_data['Data'] = range(8)
+        >>> voxel_cells.dimensions
+        (3, 3, 3)
+
+        If we plot the image, it is visually represented as eight voxel cells with
+        27 points.
+
+        >>> voxel_cells.plot(show_edges=True)
+
+        Alternatively, we can represent the voxels as eight points instead.
+
+        >>> voxel_points = voxel_cells.cell_voxels_to_point_voxels()
+        >>> voxel_points.dimensions
+        (2, 2, 2)
+        >>> voxel_points.plot(show_edges=True)
+
+        Show the two representations together. The voxel points correspond to the
+        cell centers of the original voxel cells.
+
+        >>> # Clear scalar data for plotting
+        >>> voxel_points.clear_data()
+        >>> voxel_cells.clear_data()
+        >>>
+        >>> cell_centers = voxel_cells.cell_centers()
+        >>> cell_edges = voxel_cells.extract_all_edges()
+        >>>
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(voxel_points, show_edges=True, opacity=0.7)
+        >>> _ = plot.add_mesh(cell_edges, color='black')
+        >>> _ = plot.add_points(
+        ...     cell_centers,
+        ...     render_points_as_spheres=True,
+        ...     color='red',
+        ...     point_size=20,
+        ... )
+        >>> _ = plot.camera.azimuth = -25
+        >>> _ = plot.camera.elevation = 25
+        >>> plot.show()
         """
         return self._convert_voxels(points_to_cells=False)
 
