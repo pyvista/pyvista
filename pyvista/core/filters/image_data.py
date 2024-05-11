@@ -951,30 +951,46 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
-    def point_voxels_to_cell_voxels(self):
+    def point_voxels_to_cell_voxels(self, copy: bool = True):
         """Convert point voxel data to cell voxel data.
 
         Convert voxel data represented as points in a uniform grid into voxel cells
         in a uniform grid. The conversion is performed such that the input points have
         the same world coordinates as the centers of the converted voxel cells.
 
-        Since many filters are inherently either point filters (e.g. ImageDataFilters)
-        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
-        to be used with cell-based filters while ensuring the voxels have the
-        appropriate representation.
+        All point data at the input (if any) is passed through unmodified and associated
+        with cell data at the output. The data arrays are copied by default, but this
+        can be disabled to allow both the input (point voxels) and output (cell voxels)
+        to refer to the same data array(s) in memory. Any cell data at the input is
+        ignored and is not used.
 
-        All point data (if any) is converted into cell data. Any active point scalars
-        will remain active as cell scalars in the output. If the input contains cell
-        data, it is ignored and removed from the output. The dimensions of the returned
-        image are all increased by one relative to the input dimensions.
+        The dimensions of the returned image are all increased by one relative to the
+        input dimensions. The number of cells at the output equals the number of points
+        at the input.
+
+        Since many filters operate on point data exclusively or are inherently cell-based,
+        this conversion enables the same data to be used with either kind of filter while
+        ensuring the input data to those filters has the appropriate representation of
+        the voxels.
 
         .. versionadded:: 0.44.0
+
+        .. note::
+            This function can be used with any :class:`pyvista.ImageData`, not just
+            3D image data. For example, it can also be used to convert 2D point pixels
+            to cell pixels.
 
         See Also
         --------
         cell_voxels_to_point_voxels
         :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
         :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+
+        Parameters
+        ----------
+        copy : bool, default: True
+            Copy the input point data before associating it with the output cell data.
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -1028,32 +1044,48 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plot.camera.elevation = 25
         >>> plot.show()
         """
-        return self._convert_voxels(points_to_cells=True)
+        return self._convert_voxels(points_to_cells=True, copy=copy)
 
-    def cell_voxels_to_point_voxels(self):
+    def cell_voxels_to_point_voxels(self, copy: bool = True):
         """Convert cell voxel data to point voxel data.
 
         Convert voxel data represented as voxel cells in a uniform grid into points
         in a uniform grid. The conversion is performed such that the centers of the
         input voxel cells have the same world coordinates as the converted points.
 
-        Since many filters are inherently either point filters (e.g. ImageDataFilters)
-        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
-        to be used with cell-based filters while ensuring the voxels have the
-        appropriate representation.
+        All cell data at the input (if any) is passed through unmodified and associated
+        with point data at the output. The data arrays are copied by default, but this
+        can be disabled to allow both the input (cell voxels) and output (point voxels)
+        to refer to the same data array(s) in memory. Any point data at the input is
+        ignored and is not used.
 
-        All cell data (if any) is converted into point data. Any active cell scalars
-        will remain active as point scalars in the output. If the input contains point
-        data, it is ignored and removed from the output. The dimensions of the returned
-        image are all decreased by one relative to the input dimensions.
+        The dimensions of the returned image are all decreased by one relative to the
+        input dimensions. The number of points at the output equals the number of cells
+        at the input.
+
+        Since many filters are inherently cell-based or operate on point data exclusively,
+        this conversion enables the same data to be used with either kind of filter while
+        ensuring the input data to those filters has the appropriate representation of
+        the voxels.
 
         .. versionadded:: 0.44.0
+
+        .. note::
+            This function can be used with any :class:`pyvista.ImageData`, not just
+            3D image data. For example, it can also be used to convert 2D point pixels
+            to cell pixels.
 
         See Also
         --------
         point_voxels_to_cell_voxels
         :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
         :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+
+        Parameters
+        ----------
+        copy : bool, default: True
+            Copy the input cell data before associating it with the output point data.
+            If ``False``, the input and output will both refer to the same data arrays.
 
         Returns
         -------
@@ -1105,9 +1137,9 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plot.camera.elevation = 25
         >>> plot.show()
         """
-        return self._convert_voxels(points_to_cells=False)
+        return self._convert_voxels(points_to_cells=False, copy=copy)
 
-    def _convert_voxels(self, points_to_cells: bool):
+    def _convert_voxels(self, points_to_cells: bool, copy: bool):
         """Convert point voxels to cell voxels or vice-versa.
 
         If there are active scalars for the input voxels, they will be set to active
@@ -1120,6 +1152,9 @@ class ImageDataFilters(DataSetFilters):
         points_to_cells : bool
             Set to ``True`` to convert point voxels to cell voxels.
             Set to ``False`` to convert cell voxels to point voxels.
+
+        copy : bool
+            Copy the input data before associating it with the output data.
 
         Returns
         -------
@@ -1173,7 +1208,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Copy old data (point or cell) to new data (cell or point)
         for array_name in old_data.keys():
-            new_data[array_name] = old_data[array_name]
+            new_data[array_name] = old_data[array_name].copy() if copy else old_data[array_name]
 
         new_image.set_active_scalars(output_scalars)
         return new_image
