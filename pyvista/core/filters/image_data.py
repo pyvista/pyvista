@@ -1072,8 +1072,8 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
             This function can be used with any :class:`pyvista.ImageData`, not just
-            3D image data. For example, it can also be used to convert 2D point pixels
-            to cell pixels.
+            3D image data. For example, it can also be used to convert 2D cell pixels
+            to point pixels.
 
         See Also
         --------
