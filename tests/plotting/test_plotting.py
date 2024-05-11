@@ -4416,12 +4416,14 @@ def test_contour_labels(
     )
 
     # Generate surface with bool parameter TRUE
+
     test_kwargs = {
-        bool_parameter: True,
         'select_inputs': select_inputs,
         'select_outputs': select_outputs,
         'output_labels': True,
+        'closed_boundary': False,
     }
+    test_kwargs[bool_parameter] = True
     mesh_true = labeled_image.contour_labels(
         **test_kwargs,
         **fixed_kwargs,
@@ -4460,6 +4462,7 @@ def test_contour_labels_smoothing_constraint(
     mesh = labeled_image.contour_labels(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
+        closed_boundary=False,
     )
 
     # Translate so origin is in bottom left corner
