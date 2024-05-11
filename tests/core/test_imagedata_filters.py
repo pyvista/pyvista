@@ -130,7 +130,7 @@ def test_contour_labels_boundaries(
         internal_polygons=internal_polygons,
         output_labels='boundary',
         duplicate_polygons=False,
-    )  # , image_boundary_faces=image_boundary_faces)
+    )
     if mesh.n_cells > 0:
         assert BOUNDARY_LABELS in mesh.cell_data
         actual_output_ids = _get_ids_with_background_boundary(mesh)
@@ -306,24 +306,47 @@ def test_contour_labels_raises(labeled_image):
     # TODO: test float input vs int for select_input/output
 
 
-def test_point_voxels_to_cell_voxels(labeled_image):
-    point_voxel_image = labeled_image
+@pytest.fixture()
+def uniform_many_scalars(uniform):
+    uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
+    uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
+    return uniform
+
+
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Point Data2', 'Spatial Point Data'],
+)  # , ('labels','labels'),('other_labels')])
+def test_point_voxels_to_cell_voxels(uniform_many_scalars, active_scalars):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    point_voxel_image = uniform_many_scalars
     point_voxel_points = point_voxel_image.points
 
-    cell_voxel_image = point_voxel_image._point_voxels_to_cell_voxels()
+    cell_voxel_image = point_voxel_image.point_voxels_to_cell_voxels()
     cell_voxel_center_points = cell_voxel_image.cell_centers().points
 
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(cell_voxel_image.array_names) == {'Spatial Point Data', 'Spatial Point Data2'}
     assert np.array_equal(point_voxel_points, cell_voxel_center_points)
     assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
 
 
-def test_cell_voxels_to_point_voxels(channels):
-    cell_voxel_image = channels
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Cell Data2', 'Spatial Cell Data'],
+)  # , ('labels','labels'),('other_labels')])
+def test_cell_voxels_to_point_voxels(uniform_many_scalars, active_scalars):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    cell_voxel_image = uniform_many_scalars
     cell_voxel_center_points = cell_voxel_image.cell_centers().points
 
-    point_voxel_image = cell_voxel_image._cell_voxels_to_point_voxels()
+    point_voxel_image = cell_voxel_image.cell_voxels_to_point_voxels()
     point_voxel_points = point_voxel_image.points
 
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(point_voxel_image.array_names) == {'Spatial Cell Data', 'Spatial Cell Data2'}
     assert np.array_equal(cell_voxel_center_points, point_voxel_points)
     assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
 

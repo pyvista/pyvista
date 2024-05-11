@@ -1238,8 +1238,8 @@ class ImageDataFilters(DataSetFilters):
         if field == FieldAssociation.POINT:
             alg_input = self
         else:
+            alg_input = self.cell_voxels_to_point_voxels()
             field = FieldAssociation.POINT
-            alg_input = self._cell_voxels_to_point_voxels(cell_scalars=scalars)
 
         alg = _vtk.vtkSurfaceNets3D()
         background_value = 0
@@ -1431,62 +1431,120 @@ class ImageDataFilters(DataSetFilters):
 
         return output
 
-    def _point_voxels_to_cell_voxels(self, point_scalars: Optional[str] = None):
-        """Convert point voxel data to cell voxel data."""
-        return self._convert_voxels('points_to_cells', scalars=point_scalars)
+    def point_voxels_to_cell_voxels(self):
+        """Convert point voxel data to cell voxel data.
 
-    def _cell_voxels_to_point_voxels(self, cell_scalars: Optional[str] = None):
-        """Convert cell voxel data to point voxel data."""
-        return self._convert_voxels('cells_to_points', scalars=cell_scalars)
+        Convert voxel data represented as points in a uniform grid into voxel cells
+        in a uniform grid. The conversion is performed such that the input points have
+        the same world coordinates as the centers of the converted voxel cells.
 
-    def _convert_voxels(
-        self,
-        method: Optional[Literal['points_to_cells', 'cells_to_points']] = None,
-        scalars: Optional[str] = None,
-    ):
+        Since many filters are inherently either point filters (e.g. ImageDataFilters)
+        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
+        to be used with cell-based filters while ensuring the voxels have the
+        appropriate representation.
+
+        All point data (if any) is converted into cell data. Any active point scalars
+        will remain active as cell scalars in the output. If the input contains cell
+        data, it is ignored and removed the output. The dimensions of the returned
+        image are all increased by one relative to the input dimensions.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image with voxels represented as cells.
+
+        """
+        return self._convert_voxels(points_to_cells=True)
+
+    def cell_voxels_to_point_voxels(self):
+        """Convert cell voxel data to point voxel data.
+
+        Convert voxel data represented as voxel cells in a uniform grid into points
+        in a uniform grid. The conversion is performed such that the centers of the
+        input voxel cells have the same world coordinates as the converted points.
+
+        Since many filters are inherently either point filters (e.g. ImageDataFilters)
+        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
+        to be used with cell-based filters while ensuring the voxels have the
+        appropriate representation.
+
+        All cell data (if any) is converted into point data. Any active cell scalars
+        will remain active as point scalars in the output. If the input contains point
+        data, it is ignored and removed the output. The dimensions of the returned
+        image are all decreased by one relative to the input dimensions.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image with voxels represented as points.
+
+        """
+        return self._convert_voxels(points_to_cells=False)
+
+    def _convert_voxels(self, points_to_cells: bool):
+        """Convert point voxels to cell voxels or vice-versa.
+
+        If there are active scalars for the input voxels, they will be set to active
+        for the output voxels. For example, if converting point voxels to cell voxels,
+        and the input has active point scalars, the same scalar name will be made active
+        for returned cell voxels (as active cell scalars).
+
+        Parameters
+        ----------
+        points_to_cells : bool
+            Set to ``True`` to convert point voxels to cell voxels.
+            Set to ``False`` to convert cell voxels to point voxels.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Image with converted voxels.
+
+        """
+
+        def _get_output_scalars(preference):
+            active_scalars = self.active_scalars_name
+            if active_scalars:
+                field = self.get_array_association(
+                    active_scalars,
+                    preference=preference,
+                )
+                active_scalars = active_scalars if field.name.lower() == preference else None
+            return active_scalars
+
         point_data = self.point_data  # type: ignore[attr-defined]
         cell_data = self.cell_data  # type: ignore[attr-defined]
-        if method is None and scalars is None:
-            # Need to determine which method to use
-            point_len = len(point_data.keys())
-            cell_len = len(cell_data.keys())
-            ambiguous_msg = "Dataset contains {} cell data {}} point data. Specify method explicitly with 'points_to_cells' to convert point data, or 'cells_to_points' to convert cell data"
-            if point_len > 0 and cell_len > 0:
-                raise AmbiguousDataError(ambiguous_msg.format('both', 'and'))
-            elif point_len == 0 and cell_len == 0:
-                raise AmbiguousDataError(ambiguous_msg.format('no', 'or'))
-            elif point_len > 0:
-                method = 'points_to_cells'
-            elif cell_len > 0:
-                method = 'cells_to_points'
-            else:
-                raise RuntimeError("Error, this code should not be reachable.")
 
+        # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
-        if method == 'cells_to_points':
-            origin_operator = operator.add
-            dims_operator = operator.sub
-            old_data = cell_data
-            new_data = new_image.point_data
-        else:
+        if points_to_cells:
+            output_scalars = _get_output_scalars('point')
+            # Enlarge image so points become cell centers
             origin_operator = operator.sub
-            dims_operator = operator.add
+            dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
+        else:  # cells_to_points
+            output_scalars = _get_output_scalars('cell')
+            # Shrink image so cell centers become points
+            origin_operator = operator.add
+            dims_operator = operator.sub  # Decrease dimensions
+            old_data = cell_data
+            new_data = new_image.point_data
 
-        # Create new image
-        # Point voxels should equal cell voxel centers
         new_image.origin = origin_operator(self.origin, np.array(self.spacing) / 2)  # type: ignore[attr-defined]
         new_image.dimensions = dims_operator(np.array(self.dimensions), 1)  # type: ignore[attr-defined]
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
         new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
 
-        # Copy old data to new data
-        # new_image.field_data = self.field_data.copy()  # type: ignore[attr-defined]
+        # Copy field data
+        new_image.field_data.update(self.field_data)  # type: ignore[attr-defined]
 
-        array_names = [scalars] if scalars else old_data.keys()
-        for array_name in array_names:
-            new_data[array_name] = np.array(old_data[array_name].tolist())
+        # Copy old data (point or cell) to new data (cell or point)
+        for array_name in old_data.keys():
+            new_data[array_name] = old_data[array_name]
+
+        new_image.set_active_scalars(output_scalars)
         return new_image
 
     def pad_image(
