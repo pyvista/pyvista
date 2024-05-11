@@ -188,6 +188,29 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
+def test_import_3ds():
+    filename = examples.download_3ds.download_iflamigm()
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_3ds('not a file')
+
+    pl.import_3ds(filename)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj():
+    download_obj_file = examples.download_room_surface_mesh(load=False)
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj('not a file')
+
+    pl.import_obj(download_obj_file)
+    pl.show()
+
+
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
