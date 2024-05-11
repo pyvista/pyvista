@@ -130,6 +130,51 @@ def test_contour_labeled_with_invalid_scalars():
 
 
 @pytest.fixture()
+def uniform_many_scalars(uniform):
+    uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
+    uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
+    return uniform
+
+
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Point Data2', 'Spatial Point Data'],
+)
+def test_point_voxels_to_cell_voxels(uniform_many_scalars, active_scalars):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    point_voxel_image = uniform_many_scalars
+    point_voxel_points = point_voxel_image.points
+
+    cell_voxel_image = point_voxel_image.point_voxels_to_cell_voxels()
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(cell_voxel_image.array_names) == {'Spatial Point Data', 'Spatial Point Data2'}
+    assert np.array_equal(point_voxel_points, cell_voxel_center_points)
+    assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
+
+
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Cell Data2', 'Spatial Cell Data'],
+)
+def test_cell_voxels_to_point_voxels(uniform_many_scalars, active_scalars):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    cell_voxel_image = uniform_many_scalars
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    point_voxel_image = cell_voxel_image.cell_voxels_to_point_voxels()
+    point_voxel_points = point_voxel_image.points
+
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(point_voxel_image.array_names) == {'Spatial Cell Data', 'Spatial Cell Data2'}
+    assert np.array_equal(cell_voxel_center_points, point_voxel_points)
+    assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
+
+
+@pytest.fixture()
 def single_point_image():
     image = pv.ImageData(dimensions=(1, 1, 1))
     image.point_data['image'] = 99
