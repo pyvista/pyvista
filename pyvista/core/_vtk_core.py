@@ -275,6 +275,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter,
     vtkBoxClipDataSet,
     vtkClipClosedSurface,
+    vtkContourTriangulator,
     vtkCursor3D,
     vtkCurvatures,
     vtkDataSetTriangleFilter,

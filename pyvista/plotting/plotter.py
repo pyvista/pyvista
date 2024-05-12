@@ -534,6 +534,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
+    def import_obj(self, filename):
+        """Import from .obj wavefront files.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        filename : str
+            Path to the .obj file.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> download_obj_file = examples.download_room_surface_mesh(
+        ...     load=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> pl.import_obj(download_obj_file)
+        >>> pl.show()
+        """
+        from vtkmodules.vtkIOImport import vtkOBJImporter
+
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        importer = vtkOBJImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.render_window)
+        importer.Update()
+
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
