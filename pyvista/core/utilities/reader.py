@@ -2739,6 +2739,8 @@ class NetCDFCFReader(BaseReader):
     >>> from pyvista import examples
     >>> filename = examples.download_tos_O1_2001_2002(load=False)
     >>> reader = pv.get_reader(filename)
+    >>> reader.variable_array_names
+    ['tos']
     >>> grid = reader.read()
     >>> _ = grid.set_active_scalars("tos")
     >>> grid.plot()
@@ -2747,6 +2749,51 @@ class NetCDFCFReader(BaseReader):
 
     _vtk_module_name = "vtkIONetCDF"
     _vtk_class_name = "vtkNetCDFCFReader"
+
+    @property
+    def number_variable_arrays(self) -> int:
+        """Return the number of variable arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfVariableArrays()
+
+    @property
+    def dimensions(self) -> int:
+        """Return the dimensions of the data.
+
+        Returns
+        -------
+        list[int]
+
+        """
+        return self.reader.GetAllDimensions()
+
+    @dimensions.setter
+    def dimensions(self, dimensions: list[int]):
+        """Set the dimension of the data.
+
+        Parameters
+        ----------
+        dimension : list[int]
+            The dimension of the data.
+
+        """
+        self.reader.SetDimensions(dimensions)
+
+    @property
+    def variable_array_names(self) -> List[str]:
+        """Return the list of all variable array names.
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetVariableArrayName(i) for i in range(self.number_variable_arrays)]
 
 
 CLASS_READERS = {

@@ -1093,6 +1093,7 @@ def test_netcdfcfreader():
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.NetCDFCFReader)
     assert reader.path == filename
+    assert reader.variable_array_names == ['tos']
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
