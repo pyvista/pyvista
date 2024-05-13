@@ -5770,7 +5770,7 @@ class DataSetFilters:
         def _update_id_mask(logic_):
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = not invert
+            id_mask[logic_] = True
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=np.bool_)
@@ -5792,6 +5792,8 @@ class DataSetFilters:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
+
+        id_mask = np.invert(id_mask) if invert else id_mask
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
