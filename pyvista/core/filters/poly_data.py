@@ -3787,3 +3787,73 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(mc, progress_bar, 'Reconstructing surface')
         surf = wrap(mc.GetOutput())
         return surf
+
+    def triangulate_contours(self, display_errors=False, progress_bar=False):
+        """Triangulate and fill all 2D contours to create polygons.
+
+        .. versionadded:: 0.44.0
+
+        This filter will generate triangles to fill all of the 2D contours
+        in its input. The input to the filter is a set of lines (not polylines)
+        which when joined form loops. The contours may be concave, and may even
+        contain holes i.e. a contour may contain an internal contour that is
+        wound in the opposite direction (as compared to the outer polygon
+        normal) to indicate that it is a hole.
+
+        .. note::
+
+            This filter will assume that the input polygons lie in the same
+            plane and will not perform any projection or transformation of the
+            input data. You may need to project your data to a plane before
+            using this filter.
+
+        .. warning::
+
+            The triangulation of is done in O(n) time for simple convex inputs,
+            but for non-convex inputs the worst-case time is O(n^2*m^2) where n
+            is the number of points and m is the number of holes. The best
+            triangulation algorithms, in contrast, are O(n log n). The
+            resulting triangles may be quite narrow, the algorithm does not
+            attempt to produce high-quality triangles.
+
+        Parameters
+        ----------
+        display_errors : bool, default: False
+            Generate errors when the triangulation fails. Note that
+            triangulation failures are often minor, because they involve tiny
+            triangles that are too small to see.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Triangulated mesh with the filled contours.
+
+        Examples
+        --------
+        Create banded contour and fill.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> image = examples.download_st_helens()
+        >>> contours = image.contour([1302.3334, 1922.6666])
+        >>> filled = contours.triangulate_contours()
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(image, show_scalar_bar=False)
+        >>> _ = pl.add_mesh(contours, color='black')
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(contours, color='black')
+        >>> _ = pl.add_mesh(filled, color='red')
+        >>> pl.link_views()
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkContourTriangulator()
+        alg.SetInputDataObject(self)
+        alg.SetTriangulationErrorDisplay(display_errors)
+        _update_alg(alg, progress_bar, 'Triangulating Contours')
+        return _get_output(alg)

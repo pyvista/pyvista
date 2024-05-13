@@ -54,3 +54,10 @@ def test_boolean_intersect_edge_case():
 def test_identical_boolean(sphere):
     with pytest.raises(ValueError, match='identical points'):
         sphere.boolean_intersection(sphere.copy())
+
+
+def test_triangulate_contours():
+    poly = pv.Polygon(n_sides=4, fill=False)
+    filled = poly.triangulate_contours()
+    for cell in filled.cell:
+        assert cell.type == pv.CellType.TRIANGLE
