@@ -32,7 +32,7 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
-from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
+from tests.core.test_imagedata_filters import labeled_image, single_point_image  # noqa: F401
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -4485,12 +4485,33 @@ def test_contour_labels_smoothing_constraint(
     plot.add_mesh(mesh, show_scalar_bar=False)
     plot.add_mesh(box)
 
-    # Configure plot to enable showing one side of the mesh
-    # so we can visualize the scale of the smoothing applied by
-    # the smoothing constraints
+    # Configure plot to enable showing one side of the mesh to visualize
+    # the scale of the smoothing applied by the smoothing constraints
     plot.enable_parallel_projection()
     plot.view_yz()
     plot.show_grid()
     plot.reset_camera()
     plot.camera.zoom(1.5)
     plot.show()
+
+
+@pytest.mark.usefixtures('_show_edges')
+@pytest.mark.parametrize('smoothing', [True, False])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_compare_select_inputs_select_outputs(
+    labeled_image,  # noqa: F811
+    smoothing,
+):
+    common_kwargs = dict(smoothing=smoothing, smoothing_distance=0.8, output_mesh_type='quads')
+    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+
+    plot = pv.Plotter()
+    plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
+    plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
+    plot.view_xy()
+    plot.show()
+
+    # mesh_select_inputs = labeled_image.contour_labels(select_inputs = 1, smoothing=False)
+    # mesh_select_outputs = labeled_image.contour_labels(select_outputs=1,smoothing=False)
+    # assert np.array_equal(mesh_select_inputs.points, mesh_select_outputs.points)

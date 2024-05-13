@@ -108,10 +108,25 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         assert mesh.area == mesh.n_cells / multiplier
 
 
-@pytest.mark.parametrize('select_inputs', [None, 2, 5, [2, 5]])
+def _remove_duplicate_points(polydata):
+    return polydata.clean(
+        point_merging=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+        inplace=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'select_inputs',
+    [None, 2, 5, [2, 5]],
+    ids=['in_None', 'in_2', 'in_5', 'in_2_5'],
+)
 @pytest.mark.parametrize(
     'select_outputs',
     [None, 2, 5, [2, 5]],
+    ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
 @pytest.mark.parametrize('internal_polygons', [True, False])
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -131,6 +146,10 @@ def test_contour_labels_boundaries(
         output_labels='boundary',
         duplicate_polygons=False,
     )
+    cleaned = _remove_duplicate_points(mesh)
+    assert mesh.n_cells == cleaned.n_cells
+    assert mesh.n_points == cleaned.n_points
+
     if mesh.n_cells > 0:
         assert BOUNDARY_LABELS in mesh.cell_data
         actual_output_ids = _get_ids_with_background_boundary(mesh)
@@ -160,10 +179,11 @@ def test_contour_labels_boundaries(
 
     # Make sure temp array created for select_inputs is removed
     assert labeled_image.array_names == ['labels']
+    assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_image_boundaries(labeled_image):
+def test_contour_labels_closed_boundary(labeled_image):
     mesh_true = labeled_image.contour_labels(closed_boundary=True, output_mesh_type='quads')
     mesh_false = labeled_image.contour_labels(closed_boundary=False, output_mesh_type='quads')
     assert mesh_true.n_cells - mesh_false.n_cells == 1
