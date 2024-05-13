@@ -2611,7 +2611,6 @@ def test_extract_values_component_mode(
     single_mesh = extracted.combine() if split else extracted
     actual_points = single_mesh.points
     actual_colors = single_mesh['colors']
-
     assert np.array_equal(actual_points, expected_invert) if invert else np.array_equal(actual_points, expected)
     assert np.array_equal(actual_colors, expected_invert) if invert else np.array_equal(actual_colors, expected)
 
