@@ -1295,10 +1295,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active point normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1320,8 +1319,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                         dtype=float32)
 
         """
-        if 'Normals' in self.point_data:
-            normals = self.point_data['Normals']
+        if self.point_data.active_normals is not None:
+            normals = self.point_data.active_normals
         else:
             normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
@@ -1330,10 +1329,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active cell normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1354,8 +1352,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                          [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
 
         """
-        if 'Normals' in self.cell_data:
-            normals = self.cell_data['Normals']
+        if self.cell_data.active_normals is not None:
+            normals = self.cell_data.active_normals
         else:
             normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals
