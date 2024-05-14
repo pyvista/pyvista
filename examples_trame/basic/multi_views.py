@@ -1,6 +1,6 @@
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista import examples
@@ -12,7 +12,7 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "Multi Views"
@@ -44,7 +44,7 @@ with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
 
     with layout.content:
-        with vuetify.VContainer(
+        with vuetify3.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):

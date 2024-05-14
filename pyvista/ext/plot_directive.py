@@ -108,6 +108,7 @@ import re
 import shutil
 import textwrap
 import traceback
+from typing import Callable, ClassVar, Dict
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
@@ -153,7 +154,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[Dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -205,9 +206,10 @@ def _contains_doctest(text):
     try:
         # check if it's valid Python as-is
         compile(text, '<string>', 'exec')
-        return False
     except SyntaxError:
         pass
+    else:
+        return False
     r = re.compile(r'^\s*>>>', re.M)
     m = r.search(text)
     return bool(m)
@@ -328,7 +330,7 @@ class ImageFile:
     @property
     def filename(self):  # numpydoc ignore=RT01
         """Return the filename of this image."""
-        return os.path.join(self.dirname, self.basename)
+        return str(Path(self.dirname) / self.basename)
 
     @property
     def stem(self):  # numpydoc ignore=RT01
@@ -436,7 +438,7 @@ def render_figures(
                         continue
                     else:
                         image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with open(image_file.filename, "wb") as f:
+                        with Path(image_file.filename).open("wb") as f:
                             f.write(plotter.last_vtksz)
                 images.append(image_file)
 
@@ -464,14 +466,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = None if not keep_context else options['context']
 
     rst_file = document.attributes['source']
-    rst_dir = os.path.dirname(rst_file)
+    rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
         if not config.plot_basedir:
-            source_file_name = os.path.join(setup.app.builder.srcdir, directives.uri(arguments[0]))
+            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
-            source_file_name = os.path.join(
-                setup.confdir, config.plot_basedir, directives.uri(arguments[0])
+            source_file_name = str(
+                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -481,30 +483,27 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.'
+                    'Caption specified in both content and options. Please remove ambiguity.',
                 )
             # Use caption option
             caption = options["caption"]
 
         # If the optional function name is provided, use it
-        if len(arguments) == 2:
-            function_name = arguments[1]
-        else:
-            function_name = None
+        function_name = arguments[1] if len(arguments) == 2 else None
 
         code = Path(source_file_name).read_text(encoding='utf-8')
-        output_base = os.path.basename(source_file_name)
+        output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
         code = textwrap.dedent("\n".join(map(str, content)))
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = os.path.splitext(os.path.basename(source_file_name))
+        base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = os.path.splitext(output_base)
+    base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
     if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
     else:
@@ -516,33 +515,29 @@ def run(arguments, content, options, state_machine, state, lineno):
     # is it in doctest format?
     is_doctest = _contains_doctest(code)
     if 'format' in options:
-        if options['format'] == 'python':
-            is_doctest = False
-        else:
-            is_doctest = True
+        is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
-    source_rel_dir = os.path.dirname(source_rel_name).lstrip(os.path.sep)
+    source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = os.path.join(
-        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir
-    )
+    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
     build_dir = os.path.normpath(build_dir)
-    os.makedirs(build_dir, exist_ok=True)
+    Path(build_dir).mkdir(parents=True, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = os.path.abspath(os.path.join(setup.app.builder.outdir, source_rel_dir))
-    os.makedirs(dest_dir, exist_ok=True)
+    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(relpath(setup.confdir, rst_dir), source_rel_dir).replace(
-        os.path.sep, '/'
-    )
+    dest_dir_link = os.path.join(  # noqa: PTH118
+        relpath(setup.confdir, rst_dir),
+        source_rel_dir,
+    ).replace(os.path.sep, '/')
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
@@ -569,7 +564,9 @@ def run(arguments, content, options, state_machine, state, lineno):
         sm = reporter.system_message(
             2,
             "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base, source_file_name, err
+                output_base,
+                source_file_name,
+                err,
             ),
             line=lineno,
         )
@@ -628,7 +625,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     for _, images in results:
         for image in images:
-            destimg = os.path.join(dest_dir, image.basename)
+            destimg = str(Path(dest_dir) / image.basename)
             if image.filename != destimg:
                 shutil.copyfile(image.filename, destimg)
 

@@ -1,13 +1,17 @@
 """Prop3D module."""
 
-from typing import Tuple, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, NumpyArray, Vector
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 from . import _vtk
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 
 
 class Prop3D(_vtk.vtkProp3D):
@@ -42,8 +46,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: Vector[float]):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -67,7 +71,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
@@ -303,7 +307,8 @@ class Prop3D(_vtk.vtkProp3D):
 
     @user_matrix.setter
     def user_matrix(
-        self, value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]]
+        self,
+        value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]],
     ):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             if value.shape != (4, 4):
@@ -314,5 +319,5 @@ class Prop3D(_vtk.vtkProp3D):
             self.SetUserMatrix(value)
         else:
             raise TypeError(
-                'Input user matrix must be either:\n' '\tvtk.vtkMatrix4x4\n' '\t4x4 np.ndarray\n'
+                'Input user matrix must be either:\n\tvtk.vtkMatrix4x4\n\t4x4 np.ndarray\n',
             )

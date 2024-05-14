@@ -9,6 +9,7 @@ from functools import wraps
 import importlib
 import os
 import pathlib
+from pathlib import Path
 from typing import Any, Callable, List, Union
 from xml.etree import ElementTree
 
@@ -56,6 +57,8 @@ def get_reader(filename, force_ext=None):
     | ``.case``      | :class:`pyvista.EnSightReader`              |
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
+    +----------------+---------------------------------------------+
+    | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
     +----------------+---------------------------------------------+
     | ``.dat``       | :class:`pyvista.TecplotReader`              |
     +----------------+---------------------------------------------+
@@ -155,6 +158,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
+    | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
@@ -190,7 +195,19 @@ def get_reader(filename, force_ext=None):
     try:
         Reader = CLASS_READERS[ext]
     except KeyError:
-        raise ValueError(f"`pyvista.get_reader` does not support a file with the {ext} extension")
+        if Path(filename).is_dir():
+            if len(files := os.listdir(filename)) > 0 and all(
+                pathlib.Path(f).suffix == '.dcm' for f in files
+            ):
+                Reader = DICOMReader
+            else:
+                raise ValueError(
+                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}",
+                )
+        else:
+            raise ValueError(
+                f"`pyvista.get_reader` does not support a file with the {ext} extension",
+            )
 
     return Reader(filename)
 
@@ -206,6 +223,7 @@ class BaseVTKReader(ABC):
         """Set file name."""
         self._filename = filename
 
+    @abstractmethod
     def UpdateInformation(self):
         """Update Information from file."""
 
@@ -296,7 +314,7 @@ class BaseReader:
         """
         self._progress_bar = True
         if msg is None:
-            msg = f"Reading {os.path.basename(self.path)}"
+            msg = f"Reading {Path(self.path).name}"
         self._progress_msg = msg
 
     def hide_progress(self):
@@ -347,9 +365,9 @@ class BaseReader:
 
     @path.setter
     def path(self, path: str):  # numpydoc ignore=GL08
-        if os.path.isdir(path):
+        if Path(path).is_dir():
             self._set_directory(path)
-        elif os.path.isfile(path):
+        elif Path(path).is_file():
             self._set_filename(path)
         else:
             raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
@@ -847,7 +865,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.SetTimeValue(time_value)
 
@@ -913,14 +931,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
             raise AttributeError(
-                "Inspecting active time value only supported for vtk versions >9.1.0"
+                "Inspecting active time value only supported for vtk versions >9.1.0",
             ) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -1918,7 +1936,7 @@ class _PVDReader(BaseVTKReader):
     def SetFileName(self, filename):
         """Set filename and update reader."""
         self._filename = filename
-        self._directory = os.path.join(os.path.dirname(filename))
+        self._directory = str(Path(filename).parent)
 
     def UpdateInformation(self):
         """Parse PVD file."""
@@ -1936,7 +1954,7 @@ class _PVDReader(BaseVTKReader):
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
                     element_attrib.get('group'),
-                )
+                ),
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
@@ -1953,7 +1971,7 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(os.path.join(self._directory, dataset.path))
+            get_reader(str(Path(self._directory) / dataset.path))
             for dataset in self._active_datasets
         ]
 
@@ -2344,10 +2362,10 @@ class HDFReader(BaseReader):
                 raise RuntimeError(
                     f'{self.path} is missing the Type attribute. '
                     'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.'
+                    f'see {HDF_HELP} for more details.',
                 )
             else:
-                raise err
+                raise
 
 
 class GLTFReader(BaseReader):
@@ -2385,6 +2403,9 @@ class _GIFReader(BaseVTKReader):
         super().__init__()
         self._n_frames = 0
         self._current_frame = 0
+
+    def UpdateInformation(self):
+        """Update Information from file."""
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
@@ -2471,7 +2492,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}"
+                f"Not a valid time {time_value} from available time values: {self.time_values}",
             )
         self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
@@ -2500,12 +2521,218 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
         self.set_active_time_value(self._active_time_value)
 
 
+class XMLPartitionedDataSetReader(BaseReader):
+    """XML PartitionedDataSet Reader for reading .vtpd files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> partitions = pv.PartitionedDataSet(
+    ...     [
+    ...         pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)),
+    ...         pv.Wavelet(extent=(0, 10, 0, 10, 5, 10)),
+    ...     ]
+    ... )
+    >>> partitions.save("my_partitions.vtpd")
+    >>> _ = pv.read("my_partitions.vtpd")
+    """
+
+    _vtk_module_name = "vtkIOXML"
+    _vtk_class_name = "vtkXMLPartitionedDataSetReader"
+
+
+class FLUENTCFFReader(BaseReader):
+    """FLUENTCFFReader for .h5 files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_room_cff(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> blocks = reader.read()
+    >>> mesh = blocks[0]
+    >>> mesh.plot(cpos="xy", scalars="SV_T")
+    """
+
+    _vtk_module_name = "vtkIOFLUENTCFF"
+    _vtk_class_name = "vtkFLUENTCFFReader"
+
+
+class GambitReader(BaseReader):
+    """GambitReader for .neu files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prism(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkGAMBITReader"
+
+
+class GaussianCubeReader(BaseReader):
+    """GaussianCubeReader for .cube files.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+
+    >>> filename = examples.download_m4_total_density(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'm4_TotalDensity.cube'
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkGaussianCubeReader"
+
+    def read(self, grid: bool = True):
+        """Read the file and return the output.
+
+        Parameters
+        ----------
+        grid : bool, default: False
+            Output as a grid if ``True``, otherwise return the polydata.
+        """
+        from pyvista.core.filters import _update_alg  # avoid circular import
+
+        _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
+        data = (
+            wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
+        )
+        if data is None:  # pragma: no cover
+            raise RuntimeError("File reader failed to read and/or produced no output.")
+        data._post_file_load_processing()  # type: ignore[union-attr]
+
+        # check for any pyvista metadata
+        data._restore_metadata()  # type: ignore[union-attr]
+        return data
+
+    @property
+    def hb_scale(self) -> float:
+        """Get the scaling factor to compute bonds with hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        return self.reader.GetHBScale()
+
+    @hb_scale.setter
+    def hb_scale(self, hb_scale: float):
+        """Set the scaling factor to compute bonds with hydrogen atoms.
+
+        Parameters
+        ----------
+        hb_scale : float
+            The scaling factor to compute bonds with hydrogen atoms.
+
+        """
+        self.reader.SetHBScale(hb_scale)
+
+    @property
+    def b_scale(self) -> float:
+        """Get the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Returns
+        -------
+        float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        return self.reader.GetBScale()
+
+    @b_scale.setter
+    def b_scale(self, b_scale: float):
+        """Set the scaling factor to compute bonds between non-hydrogen atoms.
+
+        Parameters
+        ----------
+        b_scale : float
+            The scaling factor to compute bonds between non-hydrogen atoms.
+
+        """
+        self.reader.SetBScale(b_scale)
+
+
+class MINCImageReader(BaseReader):
+    """MINCImageReader for .mnc files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_t3_grid_0(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOMINC"
+    _vtk_class_name = "vtkMINCImageReader"
+
+
+class PDBReader(BaseReader):
+    """PDBReader for .pdb files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_caffeine(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    'caffeine.pdb'
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkPDBReader"
+
+
+class GESignaReader(BaseReader):
+    """GESignaReader for .MR files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_e07733s002i009(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOImage"
+    _vtk_class_name = "vtkGESignaReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.cube': GaussianCubeReader,
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
@@ -2515,20 +2742,25 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
-    '.img': DICOMReader,
-    '.inp': AVSucdReader,
-    '.jpg': JPEGReader,
-    '.jpeg': JPEGReader,
+    '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,
+    '.img': DICOMReader,
+    '.inp': AVSucdReader,
+    '.jpeg': JPEGReader,
+    '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.mnc': MINCImageReader,
+    '.mr': GESignaReader,
+    '.neu': GambitReader,
+    '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
     '.nii.gz': NIFTIReader,
-    '.nhdr': NRRDReader,
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
+    '.pdb': PDBReader,
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,
@@ -2551,6 +2783,7 @@ CLASS_READERS = {
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
+    '.vtpd': XMLPartitionedDataSetReader,
     '.vtr': XMLRectilinearGridReader,
     '.vts': XMLStructuredGridReader,
     '.vtu': XMLUnstructuredGridReader,

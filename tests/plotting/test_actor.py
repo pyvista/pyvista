@@ -8,7 +8,8 @@ import pyvista as pv
 from pyvista import examples
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -42,6 +43,16 @@ def test_actor_init_empty():
         actor.not_an_attribute = None
 
     assert actor.memory_address == actor.GetAddressAsString("")
+
+
+def test_actor_from_argument():
+    mapper = pv.DataSetMapper()
+    prop = pv.Property()
+    name = 'Actor'
+    actor = pv.Actor(mapper=mapper, prop=prop, name=name)
+    assert actor.mapper is mapper
+    assert actor.prop is prop
+    assert actor.name == name
 
 
 def test_actor_from_plotter():
@@ -128,7 +139,7 @@ def test_actor_rotate_z(actor):
 
 
 def test_actor_orientation(actor):
-    actor.orientation == (0, 0, 0)
+    assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)

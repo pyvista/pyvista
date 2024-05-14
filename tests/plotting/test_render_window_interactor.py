@@ -40,7 +40,7 @@ def test_observers():
 
     # Custom events
     assert not pl.iren.interactor.HasObserver(
-        "PickEvent"
+        "PickEvent",
     ), "Subsequent PickEvent HasObserver tests are wrong if this fails."
     # Add different observers
     obs_move = pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)

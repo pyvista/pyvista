@@ -2,6 +2,8 @@
 
 # flake8: noqa: F401
 
+import contextlib
+
 from .arrays import (
     FieldAssociation,
     array_from_vtkmatrix,
@@ -52,6 +54,7 @@ from .geometric_objects import (
     NORMALS,
     Arrow,
     Box,
+    Capsule,
     Circle,
     CircularArc,
     CircularArcFromNormal,
@@ -97,8 +100,20 @@ from .geometric_sources import (
     PlatonicSolidSource,
     PolygonSource,
     SphereSource,
+    SuperquadricSource,
     Text3DSource,
 )
+from .image_sources import (
+    ImageEllipsoidSource,
+    ImageGaussianSource,
+    ImageMandelbrotSource,
+    ImageNoiseSource,
+    ImageSinusoidSource,
+)
+
+with contextlib.suppress(ImportError):
+    from .geometric_sources import CapsuleSource
+
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
     AnnotatedIntEnum,
@@ -163,7 +178,11 @@ from .reader import (
     DICOMReader,
     EnSightReader,
     FacetReader,
+    FLUENTCFFReader,
     FluentReader,
+    GambitReader,
+    GaussianCubeReader,
+    GESignaReader,
     GIFReader,
     GLTFReader,
     HDFReader,
@@ -171,11 +190,13 @@ from .reader import (
     JPEGReader,
     MetaImageReader,
     MFIXReader,
+    MINCImageReader,
     MultiBlockPlot3DReader,
     NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
+    PDBReader,
     Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,
@@ -197,6 +218,7 @@ from .reader import (
     XdmfReader,
     XMLImageDataReader,
     XMLMultiBlockDataReader,
+    XMLPartitionedDataSetReader,
     XMLPImageDataReader,
     XMLPolyDataReader,
     XMLPRectilinearGridReader,

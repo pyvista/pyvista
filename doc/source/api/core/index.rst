@@ -31,6 +31,8 @@ PyVista has the following mesh types:
 
 - :class:`pyvista.MultiBlock` datasets are containers to hold several VTK datasets in one accessible and spatially referenced object. The :class:`pyvista.MultiBlock` class is an extension of `vtk.vtkMultiBlockDataSet`_.
 
+- :class:`pyvista.PartitionedDataSet` datasets are composite dataset to encapsulates a dataset consisting of partitions. The :class:`pyvista.PartitionedDataSet` class is an extension of `vtk.vtkPartitionedDataSet`_.
+
 .. _vtk.vtkPointSet: https://www.vtk.org/doc/nightly/html/classvtkPointSet.html
 .. _vtk.vtkPolyData: https://vtk.org/doc/nightly/html/classvtkPolyData.html
 .. _vtk.vtkUnstructuredGrid: https://vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html
@@ -38,6 +40,7 @@ PyVista has the following mesh types:
 .. _vtk.vtkRectilinearGrid: https://vtk.org/doc/nightly/html/classvtkRectilinearGrid.html
 .. _vtk.vtkImageData: https://vtk.org/doc/nightly/html/classvtkImageData.html
 .. _vtk.vtkMultiBlockDataSet: https://vtk.org/doc/nightly/html/classvtkMultiBlockDataSet.html
+.. _vtk.vtkPartitionedDataSet: https://vtk.org/doc/nightly/html/classvtkPartitionedDataSet.html
 
 .. toctree::
    :maxdepth: 2
@@ -53,4 +56,6 @@ PyVista has the following mesh types:
    cells
    helpers
    misc
+   typing
+   partitioned
    _validation

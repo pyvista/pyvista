@@ -1,10 +1,12 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
+from __future__ import annotations
+
 from functools import wraps
 import inspect
 import itertools
 import re
-from typing import Dict, Optional, Sequence
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Sequence, Type, Union
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -12,11 +14,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.report import vtk_version_info
+from pyvista import vtk_version_info
 
 from . import _vtk
-from ._typing import Chart
 from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import Chart
 
 
 # region Some metaclass wrapping magic
@@ -69,7 +73,7 @@ class DocSubs:
     # The substitutions to use for this (sub)class
     _DOC_SUBS: Optional[Dict[str, str]] = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
-    _DOC_STORE = {}  # type: ignore
+    _DOC_STORE = {}  # type: ignore[var-annotated] # noqa: RUF012
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
@@ -116,7 +120,7 @@ class DocSubs:
             mem_sub = property(member.fget, member.fset, member.fdel)
         else:
             raise NotImplementedError(
-                "Members other than methods and properties are currently not supported."
+                "Members other than methods and properties are currently not supported.",
             )
         return mem_sub
 
@@ -170,14 +174,16 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
-        "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
-        "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
-        ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
-        "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
-        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
-    }
+    LINE_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
+            "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
+            "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
+            ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
+            "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
+            "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
+        }
+    )
 
     def __init__(self, color="k", width=1, style="-"):
         """Initialize a new Pen instance."""
@@ -452,9 +458,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     """
 
-    BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
+    BEHAVIORS: ClassVar[Dict[str, int]] = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label="", range=None, grid=True):
+    def __init__(self, label="", range=None, grid=True):  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -1079,7 +1085,7 @@ class _ChartBackground(_CustomContextItem):
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
-                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush
+                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush,
             )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
@@ -1547,7 +1553,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        dev_kwargs={},
+        dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1611,6 +1617,8 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
+        if dev_kwargs is None:
+            dev_kwargs = {}
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
@@ -1959,13 +1967,14 @@ class _MultiCompPlot(_Plot):
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(
-                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                    self._lookup_table,
+                    _vtk.vtkColorSeries.CATEGORICAL,
                 )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
                 raise ValueError(
-                    "Invalid colors specified, falling back to default color scheme."
+                    "Invalid colors specified, falling back to default color scheme.",
                 ) from e
 
     @property
@@ -2119,14 +2128,21 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D line plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
     def __init__(
-        self, chart, x, y, color="b", width=1.0, style="-", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        width=1.0,
+        style="-",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
@@ -2272,22 +2288,31 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     """
 
-    MARKER_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
-        "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
-        "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
-        "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
-        "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
-        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
-    }
-    _DOC_SUBS = {
+    MARKER_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
+            "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
+            "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
+            "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
+            "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
+            "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
+        }
+    )
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D scatter plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
     def __init__(
-        self, chart, x, y, color="b", size=10, style="o", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        size=10,
+        style="o",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
@@ -2490,7 +2515,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "area plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
@@ -2504,7 +2529,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 "x": np.empty(0, np.float32),
                 "y1": np.empty(0, np.float32),
                 "y2": np.empty(0, np.float32),
-            }
+            },
         )
         self.SetInputData(self._table)
         self.SetInputArray(0, "x")
@@ -2618,7 +2643,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                     "x": np.array(x, copy=False),
                     "y1": np.array(y1, copy=False),
                     "y2": np.array(y2, copy=False),
-                }
+                },
             )
             self.visible = True
         else:
@@ -2680,8 +2705,11 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
 
     """
 
-    ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
-    _DOC_SUBS = {
+    ORIENTATIONS: ClassVar[Dict[str, int]] = {
+        "H": _vtk.vtkPlotBar.HORIZONTAL,
+        "V": _vtk.vtkPlotBar.VERTICAL,
+    }
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "bar plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
@@ -2690,7 +2718,13 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     }
 
     def __init__(
-        self, chart, x, y, color=None, orientation="V", label=None
+        self,
+        chart,
+        x,
+        y,
+        color=None,
+        orientation="V",
+        label=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
@@ -2825,7 +2859,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\""
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
             )
 
 
@@ -2883,7 +2917,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "stack plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
@@ -3054,15 +3088,37 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     """
 
-    PLOT_TYPES = {
+    PLOT_TYPES: ClassVar[
+        Dict[
+            str,
+            Union[
+                Type[ScatterPlot2D],
+                Type[LinePlot2D],
+                Type[AreaPlot],
+                Type[BarPlot],
+                Type[StackPlot],
+            ],
+        ]
+    ] = {
         "scatter": ScatterPlot2D,
         "line": LinePlot2D,
         "area": AreaPlot,
         "bar": BarPlot,
         "stack": StackPlot,
     }
-    _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
-    _DOC_SUBS = {
+    _PLOT_CLASSES: ClassVar[
+        Dict[
+            Union[
+                Type[ScatterPlot2D],
+                Type[LinePlot2D],
+                Type[AreaPlot],
+                Type[BarPlot],
+                Type[StackPlot],
+            ],
+            str,
+        ]
+    ] = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "2D chart",
         "chart_args": "",
         "chart_init": """
@@ -3071,7 +3127,12 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     }
 
     def __init__(
-        self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True
+        self,
+        size=(1, 1),
+        loc=(0, 0),
+        x_label="x",
+        y_label="y",
+        grid=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -3172,7 +3233,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             if style in fmt:
                 marker_style = style
                 fmt = fmt.replace(
-                    marker_style, "", 1
+                    marker_style,
+                    "",
+                    1,
                 )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
@@ -3830,7 +3893,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "box plot",
         "chart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
@@ -3842,7 +3905,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
-            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
@@ -3968,7 +4031,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "boxplot chart",
         "chart_args": "[[0, 1, 1, 2, 3, 3, 4]]",
         "chart_init": "",
@@ -3976,7 +4039,12 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
@@ -4075,7 +4143,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4117,7 +4185,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4161,7 +4229,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "pie plot",
         "chart_init": "pv.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
@@ -4272,7 +4340,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "pie chart",
         "chart_args": "[5, 4, 3, 2, 1]",
         "chart_init": "",
@@ -4280,7 +4348,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
@@ -4382,7 +4455,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4424,7 +4497,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4492,7 +4565,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "matplotlib chart",
         "chart_args": "",
         "chart_init": """
@@ -4501,7 +4574,11 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     }
 
     def __init__(
-        self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
+        self,
+        figure=None,
+        size=(1, 1),
+        loc=(0, 0),
+        redraw_on_render=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4509,7 +4586,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             figure, _ = plt.subplots()
         self._fig = figure
         self._canvas = FigureCanvasAgg(
-            self._fig
+            self._fig,
         )  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
         self._fig.patch.set_alpha(0)
@@ -4594,7 +4671,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         else:
             # Called from draw_event callback
             img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8
+                self._canvas.buffer_rgba(),
+                dtype=np.uint8,
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
