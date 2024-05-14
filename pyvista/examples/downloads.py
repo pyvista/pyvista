@@ -4225,7 +4225,7 @@ _dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
 )
 
 
-def download_cubemap_park(load=False):  # pragma: no cover
+def download_cubemap_park(load=True):  # pragma: no cover
     """Download a cubemap of a park.
 
     Downloaded from http://www.humus.name/index.php?page=Textures
@@ -4332,7 +4332,6 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
-    # TODO: add `load` parameter
     return _download_dataset(_dataset_cubemap_space_4k, load=load)
 
 
@@ -5276,7 +5275,6 @@ def download_osmnx_graph(load=True):  # pragma: no cover
         import osmnx  # noqa: F401
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
-    # TODO: add `load` parameter
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
