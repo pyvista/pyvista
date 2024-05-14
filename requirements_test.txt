@@ -4,7 +4,7 @@
 cmocean<4.0.4
 colorcet<3.2.0
 embreex<2.17.8
-hypothesis<6.100.3
+hypothesis<6.102.2
 imageio<2.35.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
