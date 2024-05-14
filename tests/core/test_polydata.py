@@ -11,6 +11,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.datasetattributes import DataSetAttributes
 from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
 
 radius = 0.5
@@ -52,6 +53,8 @@ def test_init():
     mesh = pv.PolyData()
     assert not mesh.n_points
     assert not mesh.n_cells
+    assert isinstance(mesh.point_data, DataSetAttributes)
+    assert isinstance(mesh.cell_data, DataSetAttributes)
 
 
 def test_init_from_pdata(sphere):
