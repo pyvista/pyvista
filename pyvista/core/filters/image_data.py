@@ -1159,63 +1159,6 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plot.camera.azimuth = -25
         >>> _ = plot.camera.elevation = 25
         >>> plot.show()
-
-
-
-
-               Create image data with eight points representing eight voxels.
-
-        >>> import pyvista as pv
-        >>> points_image = pv.ImageData(dimensions=(2, 2, 2))
-        >>> points_image.point_data['Data'] = range(8)
-        >>> points_image.n_points
-        8
-        >>> points_image.n_cells
-        1
-        >>> points_image.dimensions
-        (2, 2, 2)
-
-        If we plot the image, it is visually represented as a single cell with
-        eight points.
-
-        >>> points_image.plot(show_edges=True)
-
-        However, this does not show the correct representation of our eight input points
-        when the point samples are used to represent the center-points of voxels. In
-        this case we can convert the point data to cell data to create a cell-based
-        representation of the image.
-
-        >>> cells_image = points_image.points_to_cells()
-        >>> cells_image.n_points
-        27
-        >>> cells_image.n_cells
-        8
-        >>> cells_image.dimensions
-        (3, 3, 3)
-        >>> cells_image.plot(show_edges=True)
-
-        Show the two representations together. The points of the points image correspond
-        to the cell centers of the cells image.
-
-        >>> # Clear scalar data for plotting
-        >>> points_image.clear_data()
-        >>> cells_image.clear_data()
-        >>>
-        >>> cell_centers = cells_image.cell_centers()
-        >>> cell_edges = cells_image.extract_all_edges()
-        >>>
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(points_image, show_edges=True, opacity=0.7)
-        >>> _ = plot.add_mesh(cell_edges, color='black')
-        >>> _ = plot.add_points(
-        ...     cell_centers,
-        ...     render_points_as_spheres=True,
-        ...     color='red',
-        ...     point_size=20,
-        ... )
-        >>> _ = plot.camera.azimuth = -25
-        >>> _ = plot.camera.elevation = 25
-        >>> plot.show()
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
