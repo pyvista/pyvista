@@ -1252,24 +1252,24 @@ class ImageDataFilters(DataSetFilters):
         generated surface is smoothed independently of non-selected regions. This can
         result in gaps or intersections between two surfaces.
 
-        >>> input2 = image.contour_labels(select_inputs=2)
-        >>> input3 = image.contour_labels(select_inputs=3)
+        >>> selected_input2 = image.contour_labels(select_inputs=2)
+        >>> selected_input3 = image.contour_labels(select_inputs=3)
         >>>
-        >>> plot = pyvista.Plotter()
-        >>> _ = plot.add_mesh(input2, **plot_kwargs)
-        >>> _ = plot.add_mesh(input3, **plot_kwargs)
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(selected_input2, **plot_kwargs)
+        >>> _ = plot.add_mesh(selected_input3, **plot_kwargs)
         >>> plot.view_xy()
         >>> plot.show()
 
         If we use ``select_outputs`` instead, the smoothing is applied consistently,
         independent of the selected regions.
 
-        >>> output2 = image.contour_labels(select_outputs=2)
-        >>> output3 = image.contour_labels(select_outputs=3)
+        >>> selected_output2 = image.contour_labels(select_outputs=2)
+        >>> selected_output3 = image.contour_labels(select_outputs=3)
         >>>
-        >>> plot = pyvista.Plotter()
-        >>> _ = plot.add_mesh(output2, **plot_kwargs)
-        >>> _ = plot.add_mesh(output3, **plot_kwargs)
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(selected_output2, **plot_kwargs)
+        >>> _ = plot.add_mesh(selected_output3, **plot_kwargs)
         >>> plot.view_xy()
         >>> plot.show()
 
