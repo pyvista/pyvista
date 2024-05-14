@@ -982,8 +982,8 @@ class ImageDataFilters(DataSetFilters):
         self,
         *,
         scalars: Optional[str] = None,
-        select_inputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
-        select_outputs: Optional[Union[int, collections.abc.Sequence[int]]] = None,
+        select_inputs: Optional[Union[int, VectorLike[int]]] = None,
+        select_outputs: Optional[Union[int, VectorLike[int]]] = None,
         internal_polygons: bool = True,
         duplicate_polygons: bool = True,
         closed_boundary: bool = True,
@@ -1006,18 +1006,17 @@ class ImageDataFilters(DataSetFilters):
         may be fine-tuned to control the smoothing process. Optionally, smoothing may
         be disabled to generate a voxelized staircase-like surface.
 
-        This filter is designed to generate surfaces from voxel *points*, i.e.
-        points which represent voxels, such as point arrays from 3D medical images.
-        If the input is voxel *cells* (i.e. cell scalars are specified), the cell
-        centers are used to generate the output.
+        This filter is designed to generate surfaces from point data, e.g. voxel point
+        samples from 3D medical images. If the input is cell data, it is first converted
+        to point data using :meth:`~pyvista.ImageDataFilters.cells_to_points`.
 
         VTK version ``9.3.0`` or greater is required to use this filter.
 
         .. note::
             By default, the generated surface polygons are labeled using a single-component
-            scalar array. This differs from the ``vtkSurfaceNets`` filter, which outputs
-            a two-component scalar array. See the documentation for the ``output_labels``
-            parameter for details about these arrays.
+            scalar array. This differs from the underlying ``vtkSurfaceNets`` filter,
+            which outputs a two-component scalar array. See the documentation for the
+            ``output_labels`` parameter for details about these arrays.
 
             If desired, the default output from ``vtkSurfaceNets`` can be obtained with:
 
@@ -1033,8 +1032,8 @@ class ImageDataFilters(DataSetFilters):
         ----------
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars. If cell
-            scalars are specified, the cell centers are used as input points for the
-            filter.
+            scalars are specified, they are first converted to point scalars using
+            :meth:`~pyvista.ImageDataFilters.cells_to_points`.
 
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
@@ -1056,7 +1055,7 @@ class ImageDataFilters(DataSetFilters):
             option to filter the output means that the selected output regions will have
             the same shape (i.e. smoothed in the same manner), regardless of the outputs
             that are selected. This is useful for generating a surface for specific
-            labels while also preserving the effects that non-selected outputs would
+            labels while also preserving the smoothing effects that non-selected outputs
             have on the generated surface.
 
         internal_polygons : bool, default: True
@@ -1076,8 +1075,6 @@ class ImageDataFilters(DataSetFilters):
 
             .. note::
                 Only the cells (quads or triangles) are duplicated, not the points.
-                Duplicated cells are inserted next the original cells (i.e. their cell
-                ids are off by one).
 
         closed_boundary : bool, default: True
             Generate polygons to "close" the surface at the boundaries of the image.
@@ -1106,15 +1103,19 @@ class ImageDataFilters(DataSetFilters):
             the output is required. For more advanced workflows, choose ``'boundary'``.
             See details about the arrays options below.
 
-            - ``'surface'``: Include a single-component cell data array ``'surface_labels'``
+            -   ``'surface'``
+
+                Include a single-component cell data array ``'surface_labels'``
                 with the output. The array indicates the labels/regions of the polygons
                 composing the output.
 
                 This array is a simplified representation of the ``'boundary_labels'``
-                array. If ``internal_boundaries=True``, selecting this option also
-                requires setting ``independent_regions=True``.
+                array. If ``internal_polygons=True``, selecting this option also
+                requires setting ``duplicate_polygons=True``.
 
-            - ``'boundary'``: Include a two-component cell data array ``'boundary_labels'``
+            -   ``'boundary'``
+
+                Include a two-component cell data array ``'boundary_labels'``
                 with the output. The array indicates the labels/regions on either side
                 of the polygons composing the output. The array's values are structured
                 as follows:
@@ -1124,12 +1125,12 @@ class ImageDataFilters(DataSetFilters):
 
                     E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
-                -   If ``internal_boundaries`` is ``True``, boundary labels between two
+                -   If ``internal_polygons`` is ``True``, boundary labels between two
                     foreground regions are sorted in ascending order.
 
                     E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-                -   If ``independent_regions`` is ``True``, internal boundary cells are
+                -   If ``duplicate_polygons`` is ``True``, internal boundary cells are
                     duplicated, and the labels of the duplicated cells are sorted in
                     descending order.
 
@@ -1183,7 +1184,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load labeled image data with a background region (0) and four foreground
+        Load labeled image data with a background region ``0`` and four foreground
         regions.
 
         >>> import pyvista as pv
@@ -1221,7 +1222,8 @@ class ImageDataFilters(DataSetFilters):
         >>> contours.plot(cpos='xy', **plot_kwargs)
 
         Since internal polygons are generated and duplicated by default, we can easily
-        split the result into separate meshes in a :class:`~pyvista.MultiBlock`.
+        :meth:`split <pyvista.DataSetFilters.split_values>` the result into separate
+        independent meshes in a :class:`~pyvista.MultiBlock`.
 
         >>> split_contours = contours.split_values()
         >>> split_contours
@@ -1248,9 +1250,12 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plot.view_xy()
         >>> plot.show()
 
-        Generate contours for selected regions only. If we use ``select_inputs``, each
-        generated surface is smoothed independently of non-selected regions. This can
-        result in gaps or intersections between two surfaces.
+        Generate contours for selected regions only.
+
+        Use ``select_inputs``, to generate independently-smoothed surfaces. This can
+        result in less noisy surfaces but will also typically result in poorly defined
+        boundaries between two separately-contoured regions. For example, observe the
+        gap between regions two and three.
 
         >>> selected_input2 = image.contour_labels(select_inputs=2)
         >>> selected_input3 = image.contour_labels(select_inputs=3)
@@ -1261,8 +1266,8 @@ class ImageDataFilters(DataSetFilters):
         >>> plot.view_xy()
         >>> plot.show()
 
-        If we use ``select_outputs`` instead, the smoothing is applied consistently,
-        independent of the selected regions.
+        Use ``select_outputs`` to generate surfaces separately while preserving boundary
+        definitions between regions.
 
         >>> selected_output2 = image.contour_labels(select_outputs=2)
         >>> selected_output3 = image.contour_labels(select_outputs=3)
@@ -1272,6 +1277,21 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plot.add_mesh(selected_output3, **plot_kwargs)
         >>> plot.view_xy()
         >>> plot.show()
+
+        #
+        # The input image has foreground regions at the image boundaries. By default,
+        # these are closed, but this can be disabled.
+        #
+        # >>> surf = image.contour_labels(select_inputs=[1,2],closed_boundary=False, smoothing=False, output_labels='boundary', internal_polygons=True, duplicate_polygons=False)
+        # >>> surf.plot(cpos='xy', **plot_kwargs, opacity=0.5)
+        #
+        # Disable smoothing to generate a voxelized surface.
+        #
+        # >>> surf = image.contour_labels(smoothing=False)
+        # >>> surf.plot(cpos='xy', **plot_kwargs)
+        #
+        # # >>> surf = image.contour_labels(smoothing=False, )
+        # # >>> surf.plot(cpos='xy', **plot_kwargs)
 
         See :ref:`contouring_example` for a full example using this filter.
 
@@ -1284,6 +1304,11 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
+
+        def _get_unique_labels_no_background(array, background):
+            unique = np.unique(array)
+            return unique[unique != background]
+
         BOUNDARY_LABELS = 'boundary_labels'
         SURFACE_LABELS = 'surface_labels'
 
@@ -1326,7 +1351,11 @@ class ImageDataFilters(DataSetFilters):
         # Make sure we have points to work with. Store reference to original input
         # array in case we need to make a copy
         input_array = self.active_scalars  # type: ignore[attr-defined]
-        alg_input = self if field == FieldAssociation.POINT else self.cells_to_points()
+        alg_input = (
+            self
+            if field == FieldAssociation.POINT
+            else self.cells_to_points(scalars=scalars, copy=False)
+        )
 
         alg = _vtk.vtkSurfaceNets3D()
         background_value = 0
@@ -1337,17 +1366,16 @@ class ImageDataFilters(DataSetFilters):
 
         temp_scalars_name = '_PYVISTA_TEMP'
         input_ids = None
-        select_inputs_valid: np.ndarray  # type: ignore[type-arg]
         if select_inputs is not None:
-            select_inputs_valid = np.atleast_1d(select_inputs)
+            select_inputs = np.atleast_1d(select_inputs)
+            select_inputs = cast(np.ndarray, select_inputs)  # type: ignore[type-arg]
             # Remove non-selected label ids from the input
             # We do this by copying the scalars and setting non-selected ids
             # to the background value to remove them from the input
             temp_scalars = alg_input.active_scalars
             temp_scalars = temp_scalars.copy() if temp_scalars is input_array else temp_scalars
-            input_ids = np.unique(temp_scalars)
-            input_ids = input_ids[input_ids != background_value]
-            keep_labels = [*select_inputs_valid, background_value]
+            input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
+            keep_labels = [*select_inputs, background_value]
             for label in input_ids:
                 if label not in keep_labels:
                     temp_scalars[temp_scalars == label] = background_value
@@ -1370,7 +1398,7 @@ class ImageDataFilters(DataSetFilters):
 
         output_ids = None
         if internal_polygons or select_outputs:
-            # NOTE: We use 'select_outputs' and 'internal_boundaries' params to implement
+            # NOTE: We use 'select_outputs' and 'internal_polygons' params to implement
             #  similar functionality to `SetOutputStyle`.
             #
             # WARNING: Setting the output style to default or boundary does not really work as
@@ -1383,27 +1411,38 @@ class ImageDataFilters(DataSetFilters):
 
             alg.SetOutputStyleToSelected()
             if select_outputs is not None:
-                output_ids = np.unique(np.atleast_1d(select_outputs))
+                # Use selected outputs
+                output_ids = _get_unique_labels_no_background(
+                    np.atleast_1d(select_outputs),
+                    background_value,
+                )
             elif select_inputs is not None:
                 # Set outputs to be same as inputs
-                output_ids = select_inputs_valid
+                output_ids = select_inputs
             else:
                 # Output all labels
-                output_ids = np.unique(alg_input.active_scalars)
+                output_ids = _get_unique_labels_no_background(
+                    alg_input.active_scalars,
+                    background_value,
+                )
             output_ids = output_ids.astype(float)
 
-            # Add selected outputs. Do not add the background value.
-            output_ids = output_ids[output_ids != background_value]
+            # Add selected outputs
             [alg.AddSelectedLabel(label_id) for label_id in output_ids]
 
             if internal_polygons:
                 if select_inputs is not None:
+                    # Generate internal boundaries for selected inputs only
                     internal_ids = input_ids
                 elif select_outputs is None:
+                    # No inputs or outputs selected, so generate internal
+                    # boundaries for all labels in input array
                     internal_ids = output_ids
                 else:
-                    internal_ids = np.unique(alg_input.active_scalars)
-                    internal_ids = internal_ids[internal_ids != background_value]
+                    internal_ids = _get_unique_labels_no_background(
+                        alg_input.active_scalars,
+                        background_value,
+                    )
 
                 [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[union-attr]
 
@@ -1472,13 +1511,13 @@ class ImageDataFilters(DataSetFilters):
                             in_first_component = np.isin(duplicated_labels[:, 0], output_ids)
                             in_second_component = np.isin(duplicated_labels[:, 1], output_ids)
 
-                            # If 1st component is not part of output, it needs to be swapped
-                            swap = ~in_first_component & in_second_component
-                            swap_ids = internal_ids[swap]
-                            boundary_labels_array[swap_ids] = boundary_labels_array[swap_ids][
-                                :,
-                                ::-1,
-                            ]
+                            # # If 1st component is not part of output, it needs to be swapped
+                            # swap = ~in_first_component & in_second_component
+                            # swap_ids = internal_ids[swap]
+                            # boundary_labels_array[swap_ids] = boundary_labels_array[swap_ids][
+                            #     :,
+                            #     ::-1,
+                            # ]
 
                             # Duplicate cells only if both regions on each side of the
                             # boundary are included in the output
@@ -1516,7 +1555,7 @@ class ImageDataFilters(DataSetFilters):
                 assert duplicate_polygons if internal_polygons else True
 
                 # Need to simplify the 2-component boundary labels scalars.
-                # In general, we coutput3 = image.contour_labels(select_outputs=3)annot simply take the first component and expect correct
+                # In general, we cannot simply take the first component and expect correct
                 # output, but this method applies constraints to make this possible
                 output.cell_data[SURFACE_LABELS] = output.cell_data[BOUNDARY_LABELS][:, 0]
                 output.set_active_scalars(SURFACE_LABELS)

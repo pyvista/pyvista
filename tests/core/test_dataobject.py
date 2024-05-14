@@ -200,11 +200,11 @@ def test_user_dict_persists_with_pack_labels_filter():
 
 def test_user_dict_persists_with_point_voxels_to_cell_voxels(uniform):
     uniform.user_dict['name'] = 'image'
-    uniform.cell_voxels_to_point_voxels()
+    uniform.cells_to_points()
     assert uniform.user_dict['name'] == 'image'
 
 
 def test_user_dict_persists_with_cell_voxels_to_point_voxels(uniform):
     uniform.user_dict['name'] = 'image'
-    uniform.point_voxels_to_cell_voxels()
+    uniform.points_to_cells()
     assert uniform.user_dict['name'] == 'image'
