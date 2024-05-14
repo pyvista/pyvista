@@ -11,7 +11,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .dataset import DataSet
+from .dataset import DataSet, _VTKDataSetShadower
 from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
 from .utilities.arrays import convert_array, raise_has_duplicates
 from .utilities.misc import abstract_class
@@ -70,7 +70,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
+class RectilinearGrid(_VTKDataSetShadower, _vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:

@@ -28,7 +28,7 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike, MatrixLike, Number, NumpyArray, VectorLike
-from .dataobject import DataObject
+from .dataobject import DataObject, _VTKDataObjectShadower
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning, VTKVersionError
 from .filters import DataSetFilters, _get_output
@@ -3421,3 +3421,27 @@ class DataSet(DataSetFilters, DataObject):
             Active texture coordinates on the points.
         """
         self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
+
+
+class _VTKDataSetShadower(_VTKDataObjectShadower):
+    @property
+    def point_data(self):
+        """Return point data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Point data as DataSetAttributes.
+        """
+        return DataSet.point_data.fget(self)
+
+    @property
+    def cell_data(self):
+        """Return cell data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Cell data as DataSetAttributes.
+        """
+        return DataSet.cell_data.fget(self)

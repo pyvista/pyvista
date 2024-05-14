@@ -25,7 +25,7 @@ from .cell import (
     _get_regular_cells,
 )
 from .celltype import CellType
-from .dataset import DataSet
+from .dataset import DataSet, _VTKDataSetShadower
 from .errors import (
     CellSizeError,
     PointSetCellOperationError,
@@ -469,7 +469,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
+class PolyData(_VTKDataSetShadower, _vtk.vtkPolyData, _PointSet, PolyDataFilters):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -826,28 +826,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def __str__(self) -> str:
         """Return the standard str representation."""
         return DataSet.__str__(self)
-
-    @property
-    def point_data(self):
-        """Return point data as DataSetAttributes.
-
-        Returns
-        -------
-        DataSetAttributes
-            Point data as DataSetAttributes.
-        """
-        return super(_PointSet, self).point_data
-
-    @property
-    def cell_data(self):
-        """Return cell data as DataSetAttributes.
-
-        Returns
-        -------
-        DataSetAttributes
-            Cell data as DataSetAttributes.
-        """
-        return super(_PointSet, self).cell_data
 
     @staticmethod
     def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
@@ -1712,7 +1690,7 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
-class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
+class UnstructuredGrid(_VTKDataSetShadower, _vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:

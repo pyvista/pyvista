@@ -187,6 +187,7 @@ class DataObject:
 
         """
         fdata = self.field_data
+        assert isinstance(fdata, pyvista.DataSetAttributes), self.__class__
         for assoc_name in ('bitarray', 'complex'):
             for assoc_type in ('POINT', 'CELL'):
                 key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
@@ -787,3 +788,20 @@ class DataObject:
         # copy data
         self.copy_structure(mesh)
         self.copy_attributes(mesh)
+
+
+class _VTKDataObjectShadower:
+    @property
+    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+        """Return FieldData as DataSetAttributes.
+
+        Use field data when size of the data you wish to associate
+        with the dataset does not match the number of points or cells
+        of the dataset.
+
+        Returns
+        -------
+        DataSetAttributes
+            FieldData as DataSetAttributes.
+        """
+        return DataObject.field_data.fget(self)
