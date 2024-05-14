@@ -827,6 +827,28 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
+    @property
+    def point_data(self):
+        """Return point data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Point data as DataSetAttributes.
+        """
+        return super(_PointSet, self).point_data
+
+    @property
+    def cell_data(self):
+        """Return cell data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Cell data as DataSetAttributes.
+        """
+        return super(_PointSet, self).cell_data
+
     @staticmethod
     def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)

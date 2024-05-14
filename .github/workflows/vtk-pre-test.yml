@@ -57,7 +57,7 @@ jobs:
       - name: Set up VTK with OSMesa
         run: |
           pip uninstall vtk -y
-          pip install vtk_osmesa --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install vtk_osmesa --pre --no-cache --index-url https://wheels.vtk.org
 
       - name: Software Report
         run: |
