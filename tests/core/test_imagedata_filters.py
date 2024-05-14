@@ -333,42 +333,92 @@ def uniform_many_scalars(uniform):
     return uniform
 
 
+@pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize(
     'active_scalars',
     [None, 'Spatial Point Data2', 'Spatial Point Data'],
-)  # , ('labels','labels'),('other_labels')])
-def test_point_voxels_to_cell_voxels(uniform_many_scalars, active_scalars):
+)
+def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
     uniform_many_scalars.set_active_scalars(active_scalars)
 
     point_voxel_image = uniform_many_scalars
     point_voxel_points = point_voxel_image.points
 
-    cell_voxel_image = point_voxel_image.point_voxels_to_cell_voxels()
+    cell_voxel_image = point_voxel_image.points_to_cells(copy=copy)
     cell_voxel_center_points = cell_voxel_image.cell_centers().points
 
+    assert point_voxel_image.n_points == cell_voxel_image.n_cells
     assert cell_voxel_image.active_scalars_name == active_scalars
     assert set(cell_voxel_image.array_names) == {'Spatial Point Data', 'Spatial Point Data2'}
     assert np.array_equal(point_voxel_points, cell_voxel_center_points)
     assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
+    assert cell_voxel_image.point_data.keys() == []
+
+    for array_in, array_out in zip(
+        point_voxel_image.point_data.keys(),
+        cell_voxel_image.cell_data.keys(),
+    ):
+        shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
 
 
+@pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize(
     'active_scalars',
     [None, 'Spatial Cell Data2', 'Spatial Cell Data'],
-)  # , ('labels','labels'),('other_labels')])
-def test_cell_voxels_to_point_voxels(uniform_many_scalars, active_scalars):
+)
+def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
     uniform_many_scalars.set_active_scalars(active_scalars)
 
     cell_voxel_image = uniform_many_scalars
     cell_voxel_center_points = cell_voxel_image.cell_centers().points
 
-    point_voxel_image = cell_voxel_image.cell_voxels_to_point_voxels()
+    point_voxel_image = cell_voxel_image.cells_to_points(copy=copy)
     point_voxel_points = point_voxel_image.points
 
+    assert cell_voxel_image.n_cells == point_voxel_image.n_points
     assert cell_voxel_image.active_scalars_name == active_scalars
     assert set(point_voxel_image.array_names) == {'Spatial Cell Data', 'Spatial Cell Data2'}
     assert np.array_equal(cell_voxel_center_points, point_voxel_points)
     assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
+    assert point_voxel_image.cell_data.keys() == []
+
+    for array_in, array_out in zip(
+        cell_voxel_image.cell_data.keys(),
+        point_voxel_image.point_data.keys(),
+    ):
+        shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
+
+
+def test_points_to_cells_scalars(uniform):
+    scalars = 'Spatial Point Data'
+    converted = uniform.points_to_cells(scalars)
+    assert converted.active_scalars_name == scalars
+    assert converted.cell_data.keys() == [scalars]
+
+    match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.points_to_cells('Spatial Cell Data')
+
+
+def test_cells_to_points_scalars(uniform):
+    scalars = 'Spatial Cell Data'
+    converted = uniform.cells_to_points(scalars)
+    assert converted.active_scalars_name == scalars
+    assert converted.point_data.keys() == [scalars]
+
+    match = (
+        "Scalars 'Spatial Point Data' must be associated with cell data. Got point data instead."
+    )
+    with pytest.raises(ValueError, match=match):
+        uniform.cells_to_points('Spatial Point Data')
 
 
 @pytest.fixture()

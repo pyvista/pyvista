@@ -1326,7 +1326,7 @@ class ImageDataFilters(DataSetFilters):
         # Make sure we have points to work with. Store reference to original input
         # array in case we need to make a copy
         input_array = self.active_scalars  # type: ignore[attr-defined]
-        alg_input = self if field == FieldAssociation.POINT else self.cell_voxels_to_point_voxels()
+        alg_input = self if field == FieldAssociation.POINT else self.cells_to_points()
 
         alg = _vtk.vtkSurfaceNets3D()
         background_value = 0
@@ -1537,58 +1537,225 @@ class ImageDataFilters(DataSetFilters):
             assert cleaned.n_points == output.n_points
         return output
 
-    def point_voxels_to_cell_voxels(self):
-        """Convert point voxel data to cell voxel data.
+    def points_to_cells(self, scalars: Optional[str] = None, *, copy: bool = True):
+        """Convert image data from a points-based to a cells-based representation.
 
-        Convert voxel data represented as points in a uniform grid into voxel cells
-        in a uniform grid. The conversion is performed such that the input points have
-        the same world coordinates as the centers of the converted voxel cells.
+        Convert an image represented as points with point data into an alternative
+        representation using cells with cell data. The conversion is lossless in the
+        sense that point data at the input is passed through unmodified and stored as
+        cell data at the output.
 
-        Since many filters are inherently either point filters (e.g. ImageDataFilters)
-        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
-        to be used with cell-based filters while ensuring the voxels have the
-        appropriate representation.
+        The main effect of this filter is to transform the :class:`~pyvista.ImageData`
+        container itself. The input points are used to represent the centers of the
+        output cells, which has the effect of "growing" the input image dimensions by
+        one along each axis (i.e. 1/2 cell width on each side). For example, an image
+        with 100 points and 99 cells along an axis at the input will have 101 points and
+        100 cells at the output; if the input has 1mm spacing, the axis size is increased
+        from 99mm to 100mm.
 
-        All point data (if any) is converted into cell data. Any active point scalars
-        will remain active as cell scalars in the output. If the input contains cell
-        data, it is ignored and removed the output. The dimensions of the returned
-        image are all increased by one relative to the input dimensions.
+        Since many filters are inherently cell-based or may operate on point data
+        exclusively, this conversion enables the same data to be used with either kind
+        of filter while ensuring the input data to those filters has the appropriate
+        representation of the voxels. It may also be useful for plotting to achieve
+        a desired visual effect.
+
+        .. versionadded:: 0.44.0
+
+        See Also
+        --------
+        cells_to_points
+        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of point data scalars to pass through to the output as cell data. Use
+            this parameter to restrict the output to only include the specified array.
+            By default, all point data arrays are passed through as cell data.
+
+        copy : bool, default: True
+            Copy the input point data before associating it with the output cell data.
+            If ``False``, the input and output will both refer to the same data array(s).
 
         Returns
         -------
         pyvista.ImageData
-            Image with voxels represented as cells.
+            Image with a cells-based representation.
 
+        Examples
+        --------
+        Create image data with eight points representing eight voxels.
+
+        >>> import pyvista as pv
+        >>> points_image = pv.ImageData(dimensions=(2, 2, 2))
+        >>> points_image.point_data['Data'] = range(8)
+        >>> points_image.n_points
+        8
+        >>> points_image.n_cells
+        1
+        >>> points_image.dimensions
+        (2, 2, 2)
+
+        If we plot the image, it is visually represented as a single cell with
+        eight points.
+
+        >>> points_image.plot(show_edges=True)
+
+        However, this does not show the correct representation of our eight input points
+        when the point samples are used to represent the center-points of voxels. In
+        this case we can convert the point data to cell data to create a cell-based
+        representation of the image.
+
+        >>> cells_image = points_image.points_to_cells()
+        >>> cells_image.n_points
+        27
+        >>> cells_image.n_cells
+        8
+        >>> cells_image.dimensions
+        (3, 3, 3)
+        >>> cells_image.plot(show_edges=True)
+
+        Show the two representations together. The cell centers of the voxel cells
+        correspond to the original voxel points.
+
+        >>> # Clear scalar data for plotting
+        >>> points_image.clear_data()
+        >>> cells_image.clear_data()
+        >>>
+        >>> cell_centers = cells_image.cell_centers()
+        >>> cell_edges = cells_image.extract_all_edges()
+        >>>
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(points_image, show_edges=True, opacity=0.7)
+        >>> _ = plot.add_mesh(cell_edges, color='black')
+        >>> _ = plot.add_points(
+        ...     cell_centers,
+        ...     render_points_as_spheres=True,
+        ...     color='red',
+        ...     point_size=20,
+        ... )
+        >>> _ = plot.camera.azimuth = -25
+        >>> _ = plot.camera.elevation = 25
+        >>> plot.show()
         """
-        return self._convert_voxels(points_to_cells=True)
+        if scalars is not None:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            if field != FieldAssociation.POINT:
+                raise ValueError(
+                    f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
+                )
+        return self._convert_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
 
-    def cell_voxels_to_point_voxels(self):
-        """Convert cell voxel data to point voxel data.
+    def cells_to_points(self, scalars: Optional[str] = None, *, copy: bool = True):
+        """Convert image data from a cells-based to a points-based representation.
 
-        Convert voxel data represented as voxel cells in a uniform grid into points
-        in a uniform grid. The conversion is performed such that the centers of the
-        input voxel cells have the same world coordinates as the converted points.
+        Convert an image represented as cells with cell data into an alternative
+        representation using points with point data. The conversion is lossless in the
+        sense that cell data at the input is passed through unmodified and stored as
+        point data at the output.
 
-        Since many filters are inherently either point filters (e.g. ImageDataFilters)
-        or cell filters (e.g. DataSetFilters), this conversion enables point voxel data
-        to be used with cell-based filters while ensuring the voxels have the
-        appropriate representation.
+        The main effect of this filter is to transform the :class:`~pyvista.ImageData`
+        container itself. The input cell centers are used to represent the output points,
+        which has the effect of "shrinking" the input image dimensions by one along each
+        axis (i.e. 1/2 cell width on each side). For example, an image with 101 points
+        and 100 cells along an axis at the input will have 100 points and 99 cells at
+        the output; if the input has 1mm spacing, the axis size is reduced from 100mm
+        to 99mm.
 
-        All cell data (if any) is converted into point data. Any active cell scalars
-        will remain active as point scalars in the output. If the input contains point
-        data, it is ignored and removed the output. The dimensions of the returned
-        image are all decreased by one relative to the input dimensions.
+        Since many filters are inherently cell-based or may operate on point data
+        exclusively, this conversion enables the same data to be used with either kind
+        of filter while ensuring the input data to those filters has the appropriate
+        representation of the voxels. It may also be useful for plotting to achieve
+        a desired visual effect.
+
+        .. versionadded:: 0.44.0
+
+        See Also
+        --------
+        points_to_cells
+        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of cell data scalars to pass through to the output as point data. Use
+            this parameter to restrict the output to only include the specified array.
+            By default, all cell data arrays are passed through as point data.
+
+        copy : bool, default: True
+            Copy the input cell data before associating it with the output point data.
+            If ``False``, the input and output will both refer to the same data array(s).
 
         Returns
         -------
         pyvista.ImageData
-            Image with voxels represented as points.
+            Image with a points-based representation.
 
+        Examples
+        --------
+        Create image data with eight cells representing eight voxels.
+
+        >>> import pyvista as pv
+        >>> cells_image = pv.ImageData(dimensions=(3, 3, 3))
+        >>> cells_image.cell_data['Data'] = range(8)
+        >>> cells_image.n_points
+        27
+        >>> cells_image.n_cells
+        8
+        >>> cells_image.dimensions
+        (3, 3, 3)
+
+        If we plot the image, it is visually represented as eight voxel cells with
+        27 points.
+
+        >>> cells_image.plot(show_edges=True)
+
+        Alternatively, we can represent the voxels as eight points instead.
+
+        >>> points_image = cells_image.cells_to_points()
+        >>> points_image.n_points
+        8
+        >>> points_image.n_cells
+        1
+        >>> points_image.dimensions
+        (2, 2, 2)
+        >>> points_image.plot(show_edges=True)
+
+        Show the two representations together. The points of the points image correspond
+        to the cell centers of the cells image.
+
+        >>> # Clear scalar data for plotting
+        >>> points_image.clear_data()
+        >>> cells_image.clear_data()
+        >>>
+        >>> cell_centers = cells_image.cell_centers()
+        >>> cell_edges = cells_image.extract_all_edges()
+        >>>
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(points_image, show_edges=True, opacity=0.7)
+        >>> _ = plot.add_mesh(cell_edges, color='black')
+        >>> _ = plot.add_points(
+        ...     cell_centers,
+        ...     render_points_as_spheres=True,
+        ...     color='red',
+        ...     point_size=20,
+        ... )
+        >>> _ = plot.camera.azimuth = -25
+        >>> _ = plot.camera.elevation = 25
+        >>> plot.show()
         """
-        return self._convert_voxels(points_to_cells=False)
+        if scalars is not None:
+            field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
+            if field != FieldAssociation.CELL:
+                raise ValueError(
+                    f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
+                )
+        return self._convert_points_cells(points_to_cells=False, scalars=scalars, copy=copy)
 
-    def _convert_voxels(self, points_to_cells: bool):
-        """Convert point voxels to cell voxels or vice-versa.
+    def _convert_points_cells(self, points_to_cells: bool, scalars: Optional[str], copy: bool):
+        """Convert points to cells or vice-versa.
 
         If there are active scalars for the input voxels, they will be set to active
         for the output voxels. For example, if converting point voxels to cell voxels,
@@ -1601,11 +1768,16 @@ class ImageDataFilters(DataSetFilters):
             Set to ``True`` to convert point voxels to cell voxels.
             Set to ``False`` to convert cell voxels to point voxels.
 
+        scalars : str
+            If set, only these scalars are passed through.
+
+        copy : bool
+            Copy the input data before associating it with the output data.
+
         Returns
         -------
         pyvista.ImageData
             Image with converted voxels.
-
         """
 
         def _get_output_scalars(preference):
@@ -1624,22 +1796,28 @@ class ImageDataFilters(DataSetFilters):
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
         if points_to_cells:
-            output_scalars = _get_output_scalars('point')
+            output_scalars = scalars if scalars else _get_output_scalars('point')
             # Enlarge image so points become cell centers
             origin_operator = operator.sub
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
         else:  # cells_to_points
-            output_scalars = _get_output_scalars('cell')
+            output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
             origin_operator = operator.add
             dims_operator = operator.sub  # Decrease dimensions
             old_data = cell_data
             new_data = new_image.point_data
 
-        new_image.origin = origin_operator(self.origin, np.array(self.spacing) / 2)  # type: ignore[attr-defined]
-        new_image.dimensions = dims_operator(np.array(self.dimensions), 1)  # type: ignore[attr-defined]
+        new_image.origin = origin_operator(
+            self.origin,  # type: ignore[attr-defined]
+            np.array(self.spacing) / 2,  # type: ignore[attr-defined]
+        )
+        new_image.dimensions = dims_operator(
+            np.array(self.dimensions),  # type: ignore[attr-defined]
+            1,
+        )
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
         new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
 
@@ -1647,8 +1825,9 @@ class ImageDataFilters(DataSetFilters):
         new_image.field_data.update(self.field_data)  # type: ignore[attr-defined]
 
         # Copy old data (point or cell) to new data (cell or point)
-        for array_name in old_data.keys():
-            new_data[array_name] = np.array(old_data[array_name])
+        array_names = [scalars] if scalars else old_data.keys()
+        for array_name in array_names:
+            new_data[array_name] = old_data[array_name].copy() if copy else old_data[array_name]
 
         new_image.set_active_scalars(output_scalars)
         return new_image
