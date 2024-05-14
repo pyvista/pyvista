@@ -5,6 +5,7 @@ on:
   push:
     branches:
       # To resolve issues on VTK master and test, use this branch name pattern
+      # or label with "vtk-master" label on the PR
       - "maint/vtk-master*"
   workflow_dispatch:
   schedule:
