@@ -122,6 +122,7 @@ class PointPickingElementHandler:
         ds = self.picker.GetDataSet()
         if ds is not None:
             return pyvista.wrap(ds)
+        return None
 
     def get_cell(self, picked_point):
         """Get the picked cell of the picked mesh.
@@ -141,7 +142,7 @@ class PointPickingElementHandler:
         # cell_id = self.picker.GetCellId()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
         if cell_id < 0:
-            return  # TODO: this happens but shouldn't
+            return None  # TODO: this happens but shouldn't  # pragma: no cover
         cell = mesh.extract_cells(cell_id)
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
@@ -1727,8 +1728,7 @@ class PickingHelper(PickingMethods):
 
         def make_line_cells(n_points):  # numpydoc ignore=GL08
             cells = np.arange(0, n_points, dtype=np.int_)
-            cells = np.insert(cells, 0, n_points)
-            return cells
+            return np.insert(cells, 0, n_points)
 
         the_points = []
 

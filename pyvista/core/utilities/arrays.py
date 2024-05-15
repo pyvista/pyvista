@@ -210,7 +210,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     """
     if arr is None:
-        return
+        return None
     if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
