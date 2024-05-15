@@ -2977,7 +2977,7 @@ class DataSet(DataSetFilters, DataObject):
                 return cell.get_edge(i).GetPointIds()
             elif connections == "faces":
                 return cell.get_face(i).GetPointIds()
-            return None
+            return None  # pragma: no cover
 
         neighbors = set()
         for i in iterators[connections]:

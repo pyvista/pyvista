@@ -1461,7 +1461,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if result:
                 self.render_window.AlphaBitPlanesOn()
             return result
-        return None
+        return None  # pragma: no cover
 
     @wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self):  # numpydoc ignore=PR01,RT01
@@ -1469,7 +1469,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.render_window is not None:
             self.render_window.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
-        return None
+        return None  # pragma: no cover
 
     @wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
