@@ -40,10 +40,6 @@ pyvista.FIGURE_PATH = str(Path("./images/").resolve() / "auto-generated/")
 if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 
-# necessary when building the sphinx gallery
-pyvista.BUILDING_GALLERY = False
-os.environ['PYVISTA_BUILDING_GALLERY'] = 'false'
-
 # SG warnings
 import warnings
 
@@ -325,8 +321,13 @@ pygments_style = "friendly"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-if pyvista.BUILDING_GALLERY:
+if os.environ['SPHINX_PATTERN'] != 'skip_gallery':
+    # necessary when building the sphinx gallery
+    pyvista.BUILDING_GALLERY = True
+    os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+
     extensions += ["sphinx_gallery.gen_gallery"]
+
     # -- Sphinx Gallery Options
     from sphinx_gallery.sorting import FileNameSortKey
 

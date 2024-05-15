@@ -1,0 +1,106 @@
+name: Preview Pull Request 3
+on:
+  issue_comment:
+    types:
+      - created
+
+env:
+  USE_CACHE: ${{ (github.event_name == 'issue_comment') }}
+
+jobs:
+  doc:
+    name: Build Documentation
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.action == 'created'
+      && github.event.issue.pull_request != null
+      && startsWith(github.event.comment.body, '@pyvista-bot skip gallery preview')
+    runs-on: ubuntu-20.04
+    env:
+      PYVISTA_OFF_SCREEN: "True"
+      ALLOW_PLOTTING: true
+      SHELLOPTS: "errexit:pipefail"
+      SPHINX_PATTERN: "skip_gallery"
+    steps:
+      - uses: sushichop/action-repository-permission@v2
+        with:
+          required-permission: write
+          reaction-permitted: rocket
+          comment-not-permitted: You don't have permission to deploy. Please ask @pyvista/developers to deploy.
+
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements_docs.txt
+
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+        with:
+          packages: libosmesa6-dev libgl1-mesa-dev python3-tk pandoc git-restore-mtime
+          version: 3.0
+
+      - name: Install PyVista and dependencies
+        run: |
+          pip install -e . --no-deps
+          pip install -r requirements_docs.txt
+
+      - name: Install custom OSMesa VTK variant
+        run: |
+          pip uninstall vtk -y
+          pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
+
+      - name: PyVista Report
+        run: |
+          python -c "import pyvista;print(pyvista.Report())"
+          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
+          pip list
+
+      - name: Cache Sphinx-Gallery Examples
+        uses: actions/cache@v4
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
+        with:
+          path: doc/source/examples/
+          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+
+      - name: Cache example data
+        uses: actions/cache@v4
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
+        with:
+          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
+          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
+
+      - name: Build Documentation
+        run: make -C doc html
+
+      - name: Copy ads.txt
+        run: cp doc/source/ads.txt doc/_build/html/
+
+      - name: Dump Sphinx Warnings and Errors
+        if: always()
+        run: if [ -e doc/sphinx_warnings.txt ]; then cat doc/sphinx_warnings.txt; fi
+
+      - name: Dump VTK Warnings and Errors
+        if: always()
+        run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
+
+      - name: Preview HTML documentation
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: doc/_build/html/
+          production-deploy: false
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          overwrites-pull-request-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN2 }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID2 }}
+        timeout-minutes: 10
