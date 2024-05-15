@@ -2974,6 +2974,7 @@ class DataSet(DataSetFilters, DataObject):
             elif connections == "faces":
                 return cell.get_face(i).GetPointIds()
             else:
+                needed = ["points", "edges", "faces"]
                 raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
 
         neighbors = set()
