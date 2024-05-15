@@ -275,6 +275,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter,
     vtkBoxClipDataSet,
     vtkClipClosedSurface,
+    vtkContourTriangulator,
     vtkCursor3D,
     vtkCurvatures,
     vtkDataSetTriangleFilter,
@@ -392,10 +393,13 @@ from vtkmodules.vtkIOXML import (
 )
 from vtkmodules.vtkImagingCore import (
     vtkExtractVOI,
+    vtkImageConstantPad,
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,
+    vtkImageMirrorPad,
     vtkImageThreshold,
+    vtkImageWrapPad,
     vtkRTAnalyticSource,
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D

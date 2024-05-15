@@ -209,6 +209,11 @@ articles = dict(
         link="https://github.com/GazzolaLab/PyElastica",
         image="pyelastica.gif",
     ),
+    comet_fenicsx=Example(
+        title="Numerical Tours of Computational Mechanics with FEniCSx",
+        link="https://bleyerj.github.io/comet-fenicsx",
+        image="comet_fenicsx.png",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),

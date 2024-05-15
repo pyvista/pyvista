@@ -91,11 +91,16 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pv.UnstructuredGrid)
 
     # crinkle clip
-    clp = pv.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    mesh = pv.Wavelet()
+    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
-    clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
+    assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
 @skip_mac
@@ -2511,6 +2516,7 @@ class ComponentModeTestCase(NamedTuple):
     values: Any
     component_mode: Any
     expected: Any
+    expected_invert: Any
 
 
 component_mode_test_cases = [
@@ -2518,42 +2524,63 @@ component_mode_test_cases = [
         values=0,
         component_mode=0,
         expected=[BLACK, GREEN, BLUE],
+        expected_invert=[WHITE, RED],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode=1,
         expected=[BLACK, RED, BLUE],
+        expected_invert=[WHITE, GREEN],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode=2,
         expected=[BLACK, RED, GREEN],
+        expected_invert=[WHITE, BLUE],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode='any',
         expected=[BLACK, RED, GREEN, BLUE],
+        expected_invert=[WHITE],
     ),
     ComponentModeTestCase(
         values=1,
         component_mode='any',
         expected=[WHITE, RED, GREEN, BLUE],
+        expected_invert=[BLACK],
     ),
-    ComponentModeTestCase(values=0, component_mode='all', expected=[BLACK]),
-    ComponentModeTestCase(values=1, component_mode='all', expected=[WHITE]),
-    ComponentModeTestCase(values=BLACK, component_mode='multi', expected=[BLACK]),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='all',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='all',
+        expected=[WHITE],
+        expected_invert=[BLACK, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=BLACK,
+        component_mode='multi',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
     ComponentModeTestCase(
         values=[WHITE, RED],
         component_mode='multi',
         expected=[WHITE, RED],
+        expected_invert=[BLACK, GREEN, BLUE],
     ),
 ]
 
 
 @pytest.mark.parametrize('values_as_ranges', [True, False])
-@pytest.mark.parametrize('split', [True, False])
+@pytest.mark.parametrize(('split', 'invert'), [(True, False), (False, True), (False, False)])
 @pytest.mark.parametrize(
-    ('values', 'component_mode', 'expected'),
+    ('values', 'component_mode', 'expected', 'expected_invert'),
     component_mode_test_cases,
 )
 @pytest.mark.needs_vtk_version(9, 1, 0)
@@ -2562,6 +2589,8 @@ def test_extract_values_component_mode(
     values,
     component_mode,
     expected,
+    expected_invert,
+    invert,
     split,
     values_as_ranges,
 ):
@@ -2576,12 +2605,13 @@ def test_extract_values_component_mode(
         **values_kwarg,
         component_mode=component_mode,
         split=split,
+        invert=invert,
     )
     single_mesh = extracted.combine() if split else extracted
     actual_points = single_mesh.points
     actual_colors = single_mesh['colors']
-    assert np.array_equal(actual_points, expected)
-    assert np.array_equal(actual_colors, expected)
+    assert np.array_equal(actual_points, expected_invert if invert else expected)
+    assert np.array_equal(actual_colors, expected_invert if invert else expected)
 
 
 @pytest.mark.parametrize(
@@ -2626,7 +2656,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         assert POINT_IDS in extracted.point_data
 
     extracted = grid4x4.extract_values(
-        0,
+        ranges=grid4x4.get_data_range(preference='point'),
         invert=True,
         pass_point_ids=pass_point_ids,
         pass_cell_ids=pass_cell_ids,
@@ -2634,7 +2664,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
     if pass_cell_ids:
         assert extracted.cell_data.keys() == []
     if pass_point_ids:
-        assert extracted.cell_data.keys() == []
+        assert extracted.point_data.keys() == []
 
 
 def test_extract_values_empty():
