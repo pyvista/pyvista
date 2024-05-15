@@ -2956,6 +2956,10 @@ class DataSet(DataSetFilters, DataObject):
         if hasattr(self, "BuildLinks"):
             self.BuildLinks()
 
+        needed = ["points", "edges", "faces"]
+        if connections not in needed:
+            raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
+
         cell = self.get_cell(ind)
 
         iterators = {
