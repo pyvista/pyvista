@@ -142,7 +142,7 @@ def wrap(
         key = dataset.GetClassName()
         try:
             return pyvista._wrappers[key](dataset)
-        except KeyError as exc:
+        except KeyError as exc:  # pragma: no cover
             raise TypeError(
                 f'VTK data type ({key}) is not currently supported by pyvista.',
             ) from exc

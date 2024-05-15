@@ -445,7 +445,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     """
     try:
         import nest_asyncio
-    except ImportError as exc:
+    except ImportError as exc:  # pragma: no cover
         raise ImportError(
             """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
 
