@@ -6,7 +6,6 @@ import pytest
 import pyvista as pv
 from pyvista import PyVistaDeprecationWarning, examples
 
-SURFACE_LABELS = 'surface_labels'
 BOUNDARY_LABELS = 'boundary_labels'
 
 
@@ -94,18 +93,14 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         scalars=scalars,
         smoothing=smoothing,
         output_mesh_type=output_mesh_type,
-        output_labels='boundary',
-        duplicate_polygons=False,
     )
     assert BOUNDARY_LABELS in mesh.cell_data
+    assert mesh.active_scalars_name == BOUNDARY_LABELS
     assert all(cell.type == expected_celltype for cell in mesh.cell)
     label_ids = _get_ids_with_background_boundary(mesh)
     assert label_ids == [2, 5]
 
-    if smoothing:
-        assert mesh.area < 0.01
-    else:
-        assert mesh.area == mesh.n_cells / multiplier
+    assert mesh.area < 0.01 if smoothing else mesh.n_cells / multiplier
 
 
 def _remove_duplicate_points(polydata):
@@ -128,13 +123,13 @@ def _remove_duplicate_points(polydata):
     [None, 2, 5, [2, 5]],
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
-@pytest.mark.parametrize('internal_polygons', [True, False])
+@pytest.mark.parametrize('output_boundary_type', ['all', 'external'])  # , 'internal'],
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_boundaries(
+def test_contour_labels_output_boundary_type(
     labeled_image,
     select_inputs,
     select_outputs,
-    internal_polygons,
+    output_boundary_type,
 ):
     # Test correct boundary_labels output
     ALL_LABEL_IDS = np.array([2, 5])
@@ -142,9 +137,7 @@ def test_contour_labels_boundaries(
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
-        internal_polygons=internal_polygons,
-        output_labels='boundary',
-        duplicate_polygons=False,
+        output_boundary_type=output_boundary_type,
     )
     cleaned = _remove_duplicate_points(mesh)
     assert mesh.n_cells == cleaned.n_cells
@@ -165,7 +158,7 @@ def test_contour_labels_boundaries(
 
     assert actual_output_ids == expected_output_ids
 
-    if internal_polygons and len(select_inputs_iter) == 2:
+    if output_boundary_type == 'all' and len(select_inputs_iter) == 2:
         # The two labels share a boundary by default
         # Boundary exists if no labels removed from input
         expected_shared_region_ids = ALL_LABEL_IDS
@@ -183,115 +176,10 @@ def test_contour_labels_boundaries(
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_closed_boundary(labeled_image):
-    mesh_true = labeled_image.contour_labels(closed_boundary=True, output_mesh_type='quads')
-    mesh_false = labeled_image.contour_labels(closed_boundary=False, output_mesh_type='quads')
-    assert mesh_true.n_cells - mesh_false.n_cells == 1
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_duplicate_polygons(labeled_image):
-    # test boundary labels are *not* duplicated
-    common_kwargs = dict(output_mesh_type='quads', closed_boundary=False)
-
-    mesh = labeled_image.contour_labels(
-        output_labels='boundary',
-        duplicate_polygons=False,
-        **common_kwargs,
-    )
-    actual_boundary_labels = mesh[BOUNDARY_LABELS]
-    expected_boundary_labels = [
-        [2.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [2.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 5.0],  # <-- Single internal boundary cell here
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-    ]
-    assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
-    assert np.shape(expected_boundary_labels) == (14, 2)
-
-    # test boundary labels *are* duplicated
-    mesh = labeled_image.contour_labels(
-        output_labels='boundary',
-        duplicate_polygons=True,
-        **common_kwargs,
-    )
-    actual_boundary_labels = mesh[BOUNDARY_LABELS].tolist()
-    expected_boundary_labels = [
-        [2.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [2.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 0.0],
-        [2.0, 5.0],  # <- Original cell, ascending order
-        [5.0, 2.0],  # <- Test this cell is inserted, descending order
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-        [5.0, 0.0],
-    ]
-    assert np.shape(expected_boundary_labels) == (15, 2)
-    assert np.shape(actual_boundary_labels) == (15, 2)
-    assert np.array_equal(actual_boundary_labels, expected_boundary_labels)
-
-    # Test surface labels requires duplicate_polygons=True
-    match = (
-        'Parameter duplicate_polygons must be True when generating surface labels with internal polygons.'
-        '\nEither set duplicate_polygons to True or set internal_polygons to False.'
-    )
-    with pytest.raises(ValueError, match=match):
-        labeled_image.contour_labels(
-            output_labels='surface',
-            duplicate_polygons=False,
-            **common_kwargs,
-        )
-
-    # Test surface labels equals first component of boundary labels
-    mesh = labeled_image.contour_labels(
-        output_labels='surface',
-        duplicate_polygons=True,
-        **common_kwargs,
-    )
-    actual_surface_labels = mesh[SURFACE_LABELS]
-    expected_surface_labels = np.array(expected_boundary_labels)[
-        :,
-        0,
-    ]
-    assert np.array_equal(actual_surface_labels, expected_surface_labels)
-    assert np.shape(expected_surface_labels) == (15,)
-
-
-@pytest.mark.parametrize(
-    ('output_labels', 'array_names'),
-    [
-        ('boundary', [BOUNDARY_LABELS]),
-        ('surface', [SURFACE_LABELS]),
-        (True, [SURFACE_LABELS, BOUNDARY_LABELS]),
-        (None, []),
-    ],
-)
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_output_labels(labeled_image, output_labels, array_names):
-    assert labeled_image.array_names == ['labels']
-
-    mesh = labeled_image.contour_labels(output_labels=output_labels)
-    assert mesh.array_names == array_names
-
-    if SURFACE_LABELS in mesh.array_names:
-        assert mesh.active_scalars_name == SURFACE_LABELS
+def test_contour_labels_closed_surface(labeled_image):
+    mesh_closed = labeled_image.contour_labels(closed_surface=True, output_mesh_type='quads')
+    mesh_open = labeled_image.contour_labels(closed_surface=False, output_mesh_type='quads')
+    assert mesh_closed.n_cells - mesh_open.n_cells == 1
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -299,7 +187,10 @@ def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
 
-    voxel_surface_contoured = channels.contour_labels(smoothing=False, internal_polygons=False)
+    voxel_surface_contoured = channels.contour_labels(
+        smoothing=False,
+        output_boundary_type='external',
+    )
     vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
     assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
@@ -311,10 +202,6 @@ def test_contour_labels_raises(labeled_image):
     with pytest.raises(ValueError, match=match):
         labeled_image.contour_labels(output_mesh_type='invalid')
 
-    match = "Output labels must be one of 'surface', 'boundary', or True. Got all."
-    with pytest.raises(ValueError, match=match):
-        labeled_image.contour_labels(output_labels='all')
-
     # Nonexistent scalar key
     with pytest.raises(KeyError):
         labeled_image.contour_labels(scalars='nonexistent_key')
@@ -324,6 +211,16 @@ def test_contour_labels_raises(labeled_image):
         pv.ImageData().contour_labels()
 
     # TODO: test float input vs int for select_input/output
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info >= (9, 3, 0),
+    reason='Requires VTK<9.3.0',
+)
+def test_contour_labels_raises_vtkversionerror():
+    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.ImageData().contour_labels()
 
 
 @pytest.fixture()

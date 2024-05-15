@@ -5577,7 +5577,9 @@ class DataSetFilters:
                     _, scalars_ = self.active_scalars_info
                 array_ = get_array(self, scalars_, preference=preference_, err=True)
             except MissingDataError:
-                raise ValueError(
+                if self.n_points == 0:
+                    return None, None
+                raise MissingDataError(
                     'No point data or cell data found. Scalar data is required to use this filter.',
                 )
             except KeyError:
@@ -5653,7 +5655,7 @@ class DataSetFilters:
                         raise ValueError(
                             f'Component values cannot be more than 2 dimensions. Got {values_.ndim}.',
                         )
-                    if not values_.shape[1] == num_components_:
+                    if not values_.shape[1] == num_components_ and num_components_ is not None:
                         raise ValueError(
                             f'Num components in values array ({values_.shape[1]}) must match num components in data array ({num_components_}).',
                         )
@@ -5688,12 +5690,12 @@ class DataSetFilters:
                     )
             return values_, ranges_
 
-        # Return empty mesh if input is empty mesh
-        if self.n_points == 0:  # type: ignore[attr-defined]
-            return self.copy()  # type: ignore[attr-defined]
-
         array, association = _validate_scalar_array(scalars, preference)
-        array, num_components, component_logic = _validate_component_mode(array, component_mode)
+        empty_mesh = array is None and association is None
+        if empty_mesh:
+            num_components = None
+        else:
+            array, num_components, component_logic = _validate_component_mode(array, component_mode)
         value_names, values = _get_inputs_from_dict(values)
         range_names, ranges = _get_inputs_from_dict(ranges)
         valid_values, valid_ranges = _validate_values_and_ranges(
@@ -5703,6 +5705,16 @@ class DataSetFilters:
             num_components,
             component_mode,
         )
+        if empty_mesh:
+            if split:
+                n_blocks = (
+                    0
+                    if valid_values is None
+                    else len(valid_values) + 0 if valid_ranges is None else len(valid_ranges)
+                )
+                return pyvista.MultiBlock([self.copy() for _ in range(n_blocks)])  # type: ignore[attr-defined]
+            else:
+                return self.copy()  # type: ignore[attr-defined]
 
         # Set default for include cells
         if include_cells is None:

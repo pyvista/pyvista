@@ -4365,126 +4365,75 @@ def _show_edges():
     [(None, None), (None, 2), (2, 2)],
     ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
 )
-@pytest.mark.parametrize(
-    'bool_parameter',
-    ['internal_polygons', 'duplicate_polygons', 'closed_boundary'],
-)
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels(
+def test_contour_labels_output_boundary_type(
     labeled_image,  # noqa: F811
     select_inputs,
     select_outputs,
-    bool_parameter,
 ):
+    def plot_boundary_labels(mesh_):
+        # Split labeled boundaries for regions 2 and 5
+        values = [[2, 0], [2, 5], [5, 0]]
+        label_meshes = mesh_.split_values(
+            values,
+            component_mode='multi',
+        )
+        assert label_meshes.n_blocks <= len(values)
+        plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
+        plot.add_mesh(label_meshes[1], color='lime', label=str(values[1]))
+        plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
 
-    def add_subplot(row, mesh):
-
-        def add_text(labels_array: str):
-            text = f'{bool_parameter}: {test_kwargs[bool_parameter]}\narray: {labels_array}'
-            plot.add_text(text, position='upper_left', font_size=12)
-
-        def set_camera():
-            # Zoom for more detail. Needs more zoom for larger meshes.
-            plot.camera.zoom(2) if mesh.n_cells > 10 else plot.camera.zoom(1.3)
-
-            plot.camera.azimuth = -35
-            plot.camera.elevation = -35
-
-        def add_legend():
-            plot.add_legend(size=(0.3, 0.3), bcolor=[0.5, 0.5, 0.5], loc='lower right')
-
-        def offset_meshes(multiblock):
-            # Offset each mesh to reveal any coincident/duplicated cells
-            scale = 0.05
-            for i, block in enumerate(multiblock):
-                if block.n_points > 0:
-                    block.points += i * scale
-
-        def plot_surface_labels():
-            add_text(SURFACE_LABELS)
-            if SURFACE_LABELS in mesh.array_names:
-                # Split labeled surfaces 2 and 5
-                values = [2, 5]
-                label_meshes = mesh.split_values(values, scalars=SURFACE_LABELS)
-                assert label_meshes.n_blocks <= len(values)
-                offset_meshes(label_meshes)
-                plot.add_mesh(label_meshes[0], color='red', label='2')
-                plot.add_mesh(label_meshes[1], color='blue', label='5')
-                add_legend()
-                set_camera()
-
-        def plot_boundary_labels():
-            add_text(BOUNDARY_LABELS)
-
-            # Split labeled boundaries for regions 2 and 5
-            values = [[2, 0], [2, 5], [5, 0], [5, 2]]
-            label_meshes = mesh.split_values(
-                values,
-                scalars=BOUNDARY_LABELS,
-                component_mode='multi',
-            )
-            assert label_meshes.n_blocks <= len(values)
-            offset_meshes(label_meshes)
-            plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
-            plot.add_mesh(label_meshes[1], color='green', label=str(values[1]))
-            plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
-            plot.add_mesh(label_meshes[3], color='yellow', label=str(values[3]))
-            add_legend()
-            set_camera()
-
+    def _generate_mesh(style):
+        mesh = labeled_image.contour_labels(
+            output_boundary_type=style,
+            **test_kwargs,
+            **fixed_kwargs,
+        )
         # Shrink mesh to help reveal cells hidden behind other cells
-        mesh = mesh.shrink(0.7)
-        plot.subplot(row, 0)
-        plot_surface_labels()
+        return mesh.shrink(0.7)
 
-        # Plot boundary labels
-        plot.subplot(row, 1)
-        plot_boundary_labels()
-
-    BOUNDARY_LABELS = 'boundary_labels'
-    SURFACE_LABELS = 'surface_labels'
-
-    plot = pv.Plotter(shape=(2, 2))
+    # Remove one foreground point from the fixture to simplify plots
+    labeled_image.active_scalars[19] = 0
 
     fixed_kwargs = dict(
         smoothing_distance=0.3,
         output_mesh_type='quads',
     )
 
-    # Generate surface with bool parameter TRUE
-
-    test_kwargs = {
-        'select_inputs': select_inputs,
-        'select_outputs': select_outputs,
-        'output_labels': True,
-        'closed_boundary': False,
-    }
-    test_kwargs[bool_parameter] = True
-    mesh_true = labeled_image.contour_labels(
-        **test_kwargs,
-        **fixed_kwargs,
+    test_kwargs = dict(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
     )
-    add_subplot(0, mesh_true)
 
-    # Generate surface with bool parameter FALSE
-    test_kwargs[bool_parameter] = False
-    if bool_parameter == 'duplicate_polygons':
-        # Setting this parameter to False will raise error for
-        # 'surface' labels, so only generate 'boundary' labels
-        # (and leave plot blank)
-        test_kwargs['output_labels'] = 'boundary'
-    mesh_false = labeled_image.contour_labels(
-        **test_kwargs,
-        **fixed_kwargs,
-    )
-    add_subplot(1, mesh_false)
+    # Create meshes to plot
+    EXTERNAL, ALL, INTERNAL = 'external', 'all', 'internal'
+    external_mesh = _generate_mesh(EXTERNAL)
+    all_mesh = _generate_mesh(ALL)
+    internal_mesh = _generate_mesh(INTERNAL)
 
-    plot.show()
+    # Offset to fit in a single frame
+    external_mesh.points += (0, 0, 1)
+    internal_mesh.points += (0, 0, -1)
+
+    plot = pv.Plotter()
+
+    plot_boundary_labels(external_mesh)
+    plot.add_text(EXTERNAL, position='upper_left')
+
+    plot_boundary_labels(all_mesh)
+    plot.add_text(ALL, position='left_edge')
+
+    plot_boundary_labels(internal_mesh)
+    plot.add_text(INTERNAL, position='lower_left')
+
+    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.show(return_cpos=True)
 
 
 @pytest.mark.parametrize(
     ('smoothing_distance', 'smoothing_scale'),
     [(0, None), (None, 0), (5, 0.5), (5, 1)],
+    ids=['dist_0-scale_None', 'dist_None-scale_0', 'dist_5-scale_0.5', 'dist_5-scale_1'],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_smoothing_constraint(
@@ -4498,7 +4447,7 @@ def test_contour_labels_smoothing_constraint(
     mesh = labeled_image.contour_labels(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
-        closed_boundary=False,
+        closed_surface=False,
     )
 
     # Translate so origin is in bottom left corner
@@ -4536,7 +4485,3 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
     plot.view_xy()
     plot.show()
-
-    # mesh_select_inputs = labeled_image.contour_labels(select_inputs = 1, smoothing=False)
-    # mesh_select_outputs = labeled_image.contour_labels(select_outputs=1,smoothing=False)
-    # assert np.array_equal(mesh_select_inputs.points, mesh_select_outputs.points)
