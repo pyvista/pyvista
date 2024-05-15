@@ -5861,9 +5861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 Image.fromarray(image).save(filename, format="PNG")
         # return image array if requested
-        if return_img:
-            return image
-        return None
+        return image if return_img else None
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
