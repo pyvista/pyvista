@@ -22,7 +22,6 @@ make_tables.make_all_tables()
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
-from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
 pyvista.set_error_output_file("errors.txt")
@@ -42,8 +41,8 @@ if not Path(pyvista.FIGURE_PATH).exists():
     Path(pyvista.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
-pyvista.BUILDING_GALLERY = True
-os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
+pyvista.BUILDING_GALLERY = False
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'false'
 
 # SG warnings
 import warnings
@@ -84,7 +83,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
     "sphinx_design",
-    "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
@@ -327,64 +325,64 @@ pygments_style = "friendly"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-# -- Sphinx Gallery Options
-from sphinx_gallery.sorting import FileNameSortKey
+if pyvista.BUILDING_GALLERY:
+    extensions += ["sphinx_gallery.gen_gallery"]
+    # -- Sphinx Gallery Options
+    from sphinx_gallery.sorting import FileNameSortKey
 
+    from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
-class ResetPyVista:
-    """Reset pyvista module to default settings."""
+    class ResetPyVista:
+        """Reset pyvista module to default settings."""
 
-    def __call__(self, gallery_conf, fname):
-        """Reset pyvista module to default settings
+        def __call__(self, gallery_conf, fname):
+            """Reset pyvista module to default settings
 
-        If default documentation settings are modified in any example, reset here.
-        """
-        import pyvista
+            If default documentation settings are modified in any example, reset here.
+            """
+            import pyvista
 
-        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
-        pyvista.set_plot_theme('document')
+            pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+            pyvista.set_plot_theme('document')
 
-    def __repr__(self):
-        return 'ResetPyVista'
+        def __repr__(self):
+            return 'ResetPyVista'
 
+    reset_pyvista = ResetPyVista()
 
-reset_pyvista = ResetPyVista()
+    # skip building the osmnx example if osmnx is not installed
+    has_osmnx = False
+    try:
+        import osmnx, fiona  # noqa: F401,E401 isort: skip
 
+        has_osmnx = True
+    except:
+        pass
 
-# skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import osmnx, fiona  # noqa: F401,E401 isort: skip
-
-    has_osmnx = True
-except:
-    pass
-
-
-sphinx_gallery_conf = {
-    # convert rst to md for ipynb
-    "pypandoc": True,
-    # path to your examples scripts
-    "examples_dirs": ["../../examples/"],
-    # path where to save gallery generated examples
-    "gallery_dirs": ["examples"],
-    # Pattern to search for example files
-    "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
-    # Remove the "Download all examples" button from the top level gallery
-    "download_all_examples": False,
-    # Remove sphinx configuration comments from code blocks
-    "remove_config_comments": True,
-    # Sort gallery example by file name instead of number of lines (default)
-    "within_subsection_order": FileNameSortKey,
-    # directory where function granular galleries are stored
-    "backreferences_dir": None,
-    # Modules for which function level galleries are created.  In
-    "doc_module": "pyvista",
-    "image_scrapers": (DynamicScraper(), "matplotlib"),
-    "first_notebook_cell": "%matplotlib inline",
-    "reset_modules": (reset_pyvista,),
-    "reset_modules_order": "both",
-}
+    sphinx_gallery_conf = {
+        # convert rst to md for ipynb
+        "pypandoc": True,
+        # path to your examples scripts
+        "examples_dirs": ["../../examples/"],
+        # path where to save gallery generated examples
+        "gallery_dirs": ["examples"],
+        # Pattern to search for example files
+        "filename_pattern": r"\.py" if has_osmnx else r"(?!osmnx-example)\.py",
+        # Remove the "Download all examples" button from the top level gallery
+        "download_all_examples": False,
+        # Remove sphinx configuration comments from code blocks
+        "remove_config_comments": True,
+        # Sort gallery example by file name instead of number of lines (default)
+        "within_subsection_order": FileNameSortKey,
+        # directory where function granular galleries are stored
+        "backreferences_dir": None,
+        # Modules for which function level galleries are created.  In
+        "doc_module": "pyvista",
+        "image_scrapers": (DynamicScraper(), "matplotlib"),
+        "first_notebook_cell": "%matplotlib inline",
+        "reset_modules": (reset_pyvista,),
+        "reset_modules_order": "both",
+    }
 
 suppress_warnings = ["config.cache"]
 
