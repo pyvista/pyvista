@@ -952,41 +952,48 @@ class ImageDataFilters(DataSetFilters):
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
     def points_to_cells(self, scalars: Optional[str] = None, *, copy: bool = True):
-        """Convert image data from a points-based to a cells-based representation.
+        """Re-mesh image data from a points-based to a cells-based representation.
 
-        Convert an image represented as points with point data into an alternative
-        representation using cells with cell data. The conversion is lossless in the
-        sense that point data at the input is passed through unmodified and stored as
-        cell data at the output.
+        This filter changes how image data is represented. Data represented as points
+        at the input is re-meshed into an alternative representation as cells at the
+        output. Only the :class:`~pyvista.ImageData` container is modified so that
+        the number of input points equals the number of output cells. The re-meshing is
+        otherwise lossless in the sense that point data at the input is passed through
+        unmodified and stored as cell data at the output. Any cell data at the input is
+        ignored and is not used by this filter.
 
-        The main effect of this filter is to transform the :class:`~pyvista.ImageData`
-        container itself. The input points are used to represent the centers of the
-        output cells, which has the effect of "growing" the input image dimensions by
-        one along each axis (i.e. 1/2 cell width on each side). For example, an image
-        with 100 points and 99 cells along an axis at the input will have 101 points and
-        100 cells at the output; if the input has 1mm spacing, the axis size is increased
-        from 99mm to 100mm.
+        To change the image data's representation, the input points are used to
+        represent the centers of the output cells. This has the effect of "growing" the
+        input image dimensions by one along each axis (i.e. half the cell width on each
+        side). For example, an image with 100 points and 99 cells along an axis at the
+        input will have 101 points and 100 cells at the output. If the input has 1mm
+        spacing, the axis size will also increase from 99mm to 100mm.
 
-        Since many filters are inherently cell-based or may operate on point data
-        exclusively, this conversion enables the same data to be used with either kind
-        of filter while ensuring the input data to those filters has the appropriate
-        representation of the voxels. It may also be useful for plotting to achieve
-        a desired visual effect.
+        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
+        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
+        re-meshing enables the same data to be used with either kind of filter while
+        ensuring the input data to those filters has the appropriate representation.
+        This filter is also useful when plotting image data to achieve a desired visual
+        effect, such as plotting images as voxel cells instead of as points.
 
         .. versionadded:: 0.44.0
 
         See Also
         --------
         cells_to_points
+            Apply the inverse re-meshing operation to this filter.
         :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+            Resample point data as cell data without modifying the container.
         :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+            Resample cell data as point data without modifying the container.
 
         Parameters
         ----------
         scalars : str, optional
             Name of point data scalars to pass through to the output as cell data. Use
             this parameter to restrict the output to only include the specified array.
-            By default, all point data arrays are passed through as cell data.
+            By default, all point data arrays at the input are passed through as cell
+            data at the output.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1062,41 +1069,48 @@ class ImageDataFilters(DataSetFilters):
         return self._convert_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
 
     def cells_to_points(self, scalars: Optional[str] = None, *, copy: bool = True):
-        """Convert image data from a cells-based to a points-based representation.
+        """Re-mesh image data from a cells-based to a points-based representation.
 
-        Convert an image represented as cells with cell data into an alternative
-        representation using points with point data. The conversion is lossless in the
-        sense that cell data at the input is passed through unmodified and stored as
-        point data at the output.
+        This filter changes how image data is represented. Data represented as cells
+        at the input is re-meshed into an alternative representation as points at the
+        output. Only the :class:`~pyvista.ImageData` container is modified so that
+        the number of input cells equals the number of output points. The re-meshing is
+        otherwise lossless in the sense that cell data at the input is passed through
+        unmodified and stored as point data at the output. Any point data at the input is
+        ignored and is not used by this filter.
 
-        The main effect of this filter is to transform the :class:`~pyvista.ImageData`
-        container itself. The input cell centers are used to represent the output points,
-        which has the effect of "shrinking" the input image dimensions by one along each
-        axis (i.e. 1/2 cell width on each side). For example, an image with 101 points
-        and 100 cells along an axis at the input will have 100 points and 99 cells at
-        the output; if the input has 1mm spacing, the axis size is reduced from 100mm
-        to 99mm.
+        To change the image data's representation, the input cell centers are used to
+        represent the output points. This has the effect of "shrinking" the
+        input image dimensions by one along each axis (i.e. half the cell width on each
+        side). For example, an image with 101 points and 100 cells along an axis at the
+        input will have 100 points and 99 cells at the output. If the input has 1mm
+        spacing, the axis size will also decrease from 100mm to 99mm.
 
-        Since many filters are inherently cell-based or may operate on point data
-        exclusively, this conversion enables the same data to be used with either kind
-        of filter while ensuring the input data to those filters has the appropriate
-        representation of the voxels. It may also be useful for plotting to achieve
-        a desired visual effect.
+        Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
+        or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
+        re-meshing enables the same data to be used with either kind of filter while
+        ensuring the input data to those filters has the appropriate representation.
+        This filter is also useful when plotting image data to achieve a desired visual
+        effect, such as plotting images as points instead of as voxel cells.
 
         .. versionadded:: 0.44.0
 
         See Also
         --------
         points_to_cells
+            Apply the inverse re-meshing operation to this filter.
         :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+            Resample cell data as point data without modifying the container.
         :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+            Resample point data as cell data without modifying the container.
 
         Parameters
         ----------
         scalars : str, optional
             Name of cell data scalars to pass through to the output as point data. Use
             this parameter to restrict the output to only include the specified array.
-            By default, all cell data arrays are passed through as point data.
+            By default, all cell data arrays at the input are passed through as point
+            data at the output.
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
