@@ -198,13 +198,13 @@ def test_user_dict_persists_with_pack_labels_filter():
     assert image.user_dict['name'] == 'image'
 
 
-def test_user_dict_persists_with_point_voxels_to_cell_voxels(uniform):
+def test_user_dict_persists_with_points_to_cells(uniform):
     uniform.user_dict['name'] = 'image'
     uniform.cells_to_points()
     assert uniform.user_dict['name'] == 'image'
 
 
-def test_user_dict_persists_with_cell_voxels_to_point_voxels(uniform):
+def test_user_dict_persists_with_cells_to_points(uniform):
     uniform.user_dict['name'] = 'image'
     uniform.points_to_cells()
     assert uniform.user_dict['name'] == 'image'
