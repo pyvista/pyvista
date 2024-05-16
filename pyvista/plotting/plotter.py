@@ -378,7 +378,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Subclass must set ``ren_win`` on initialization.
         """
         if not hasattr(self, 'ren_win'):
-            return
+            return None
         return self.ren_win
 
     @property
@@ -502,6 +502,71 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
+    def import_3ds(self, filename):
+        """Import a 3DS file into the plotter.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        filename : str
+            Path to the 3DS file.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> download_3ds_file = examples.download_3ds.download_iflamigm()
+        >>> pl = pv.Plotter()
+        >>> pl.import_3ds(download_3ds_file)
+        >>> pl.show()
+
+        """
+        from vtkmodules.vtkIOImport import vtk3DSImporter
+
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        importer = vtk3DSImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.render_window)
+        importer.Update()
+
+    def import_obj(self, filename):
+        """Import from .obj wavefront files.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        filename : str
+            Path to the .obj file.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> download_obj_file = examples.download_room_surface_mesh(
+        ...     load=False
+        ... )
+        >>> pl = pv.Plotter()
+        >>> pl.import_obj(download_obj_file)
+        >>> pl.show()
+        """
+        from vtkmodules.vtkIOImport import vtkOBJImporter
+
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
+            raise FileNotFoundError(f'Unable to locate {filename}')
+
+        # lazy import here to avoid importing unused modules
+        importer = vtkOBJImporter()
+        importer.SetFileName(filename)
+        importer.SetRenderWindow(self.render_window)
+        importer.Update()
+
     def export_html(self, filename):
         """Export this plotter as an interactive scene to a HTML file.
 
@@ -554,6 +619,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Move to final destination
         with Path(filename).open('w', encoding='utf-8') as f:
             f.write(buffer.read())
+            return None
 
     def export_vtksz(self, filename='scene-export.vtksz', format='zip'):  # noqa: A002
         """Export this plotter as a VTK.js OfflineLocalView file.
@@ -873,6 +939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
+        return None
 
     @_before_close_callback.setter
     def _before_close_callback(self, func):
@@ -1459,6 +1526,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if result:
                 self.render_window.AlphaBitPlanesOn()
             return result
+        return None  # pragma: no cover
 
     @wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self):  # numpydoc ignore=PR01,RT01
@@ -1466,6 +1534,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.render_window is not None:
             self.render_window.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
+        return None  # pragma: no cover
 
     @wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
@@ -2005,13 +2074,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         0
 
         """
-        pickable = [
+        return [
             actor
             for renderer in self.renderers
             for actor in renderer.actors.values()
             if actor.GetPickable()
         ]
-        return pickable
 
     @pickable_actors.setter
     def pickable_actors(self, actors=None):  # numpydoc ignore=GL08
@@ -5793,8 +5861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 Image.fromarray(image).save(filename, format="PNG")
         # return image array if requested
-        if return_img:
-            return image
+        return image if return_img else None
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
@@ -6372,12 +6439,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> plotter.show()
         """
-        places = [
+        return [
             tuple(self.renderers.index_to_loc(index))
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors
         ]
-        return places
 
 
 class Plotter(BasePlotter):
@@ -7033,11 +7099,7 @@ class Plotter(BasePlotter):
         List[Union[pyvista.DataSet, PyVista.MultiBlock]]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
-        meshes = [
-            actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')
-        ]
-
-        return meshes
+        return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
 
 
 # Tracks created plotters.  This is the end of the module as we need to

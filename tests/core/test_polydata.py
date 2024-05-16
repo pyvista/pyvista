@@ -775,34 +775,61 @@ def test_compute_normals_split_vertices(cube):
     assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
 
 
-def test_point_normals(sphere):
-    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+@pytest.fixture()
+def ant_with_normals(ant):
+    ant['Scalars'] = range(ant.n_points)
+    point_normals = [[0, 0, 1]] * ant.n_points
+    ant.point_data['PointNormals'] = point_normals
+    ant.point_data.active_normals_name = 'PointNormals'
 
-    # when `Normals` already exist, make sure they are returned
-    normals = sphere.point_normals
-    assert normals.shape[0] == sphere.n_points
-    assert np.all(normals == sphere.point_data['Normals'])
-    assert np.shares_memory(normals, sphere.point_data['Normals'])
-
-    # when they don't, compute them
-    sphere.point_data.pop('Normals')
-    normals = sphere.point_normals
-    assert normals.shape[0] == sphere.n_points
+    cell_normals = [[1, 0, 0]] * ant.n_cells
+    ant.cell_data['CellNormals'] = cell_normals
+    ant.cell_data.active_normals_name = 'CellNormals'
+    return ant
 
 
-def test_cell_normals(sphere):
-    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+def test_point_normals_returns_active_normals(ant_with_normals):
+    ant = ant_with_normals
+    expected_point_normals = ant['PointNormals']
 
-    # when `Normals` already exist, make sure they are returned
-    normals = sphere.cell_normals
-    assert normals.shape[0] == sphere.n_cells
-    assert np.all(normals == sphere.cell_data['Normals'])
-    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+    actual_point_normals = ant.point_normals
+    assert actual_point_normals.shape[0] == ant.n_points
+    assert np.array_equal(actual_point_normals, ant.point_data.active_normals)
+    assert np.shares_memory(actual_point_normals, ant.point_data.active_normals)
+    assert np.array_equal(actual_point_normals, expected_point_normals)
 
-    # when they don't, compute them
-    sphere.cell_data.pop('Normals')
-    normals = sphere.cell_normals
-    assert normals.shape[0] == sphere.n_cells
+
+def test_point_normals_computes_new_normals(ant):
+    expected_point_normals = ant.copy().compute_normals().point_data['Normals']
+    ant.point_data.clear()
+    assert ant.array_names == []
+    assert ant.point_data.active_normals is None
+
+    actual_point_normals = ant.point_normals
+    assert actual_point_normals.shape[0] == ant.n_points
+    assert np.array_equal(actual_point_normals, expected_point_normals)
+
+
+def test_cell_normals_returns_active_normals(ant_with_normals):
+    ant = ant_with_normals
+    expected_cell_normals = ant['CellNormals']
+
+    actual_cell_normals = ant.cell_normals
+    assert actual_cell_normals.shape[0] == ant.n_cells
+    assert np.array_equal(actual_cell_normals, ant.cell_data.active_normals)
+    assert np.shares_memory(actual_cell_normals, ant.cell_data.active_normals)
+    assert np.array_equal(actual_cell_normals, expected_cell_normals)
+
+
+def test_cell_normals_computes_new_normals(ant):
+    expected_cell_normals = ant.copy().compute_normals().cell_data['Normals']
+    ant.cell_data.clear()
+    assert ant.array_names == []
+    assert ant.cell_data.active_normals is None
+
+    actual_cell_normals = ant.cell_normals
+    assert actual_cell_normals.shape[0] == ant.n_cells
+    assert np.array_equal(actual_cell_normals, expected_cell_normals)
 
 
 def test_face_normals(sphere):

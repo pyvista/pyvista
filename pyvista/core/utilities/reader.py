@@ -58,6 +58,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
+    +----------------+---------------------------------------------+
     | ``.dat``       | :class:`pyvista.TecplotReader`              |
     +----------------+---------------------------------------------+
     | ``.dcm``       | :class:`pyvista.DICOMReader`                |
@@ -2750,6 +2752,7 @@ CLASS_READERS = {
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.cube': GaussianCubeReader,
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
@@ -2768,6 +2771,8 @@ CLASS_READERS = {
     '.jpg': JPEGReader,
     '.mha': MetaImageReader,
     '.mhd': MetaImageReader,
+    '.mnc': MINCImageReader,
+    '.mr': GESignaReader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
@@ -2775,6 +2780,7 @@ CLASS_READERS = {
     '.nrrd': NRRDReader,
     '.obj': OBJReader,
     '.p3d': Plot3DMetaReader,
+    '.pdb': PDBReader,
     '.ply': PLYReader,
     '.png': PNGReader,
     '.pnm': PNMReader,
