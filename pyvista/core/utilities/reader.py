@@ -2584,7 +2584,7 @@ class ParticleReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_particles()
+    >>> filename = examples.download_particles(load=False)
     >>> reader = pv.get_reader(filename)
     >>> filename.split("/")[-1]  # omit the path
     'particles.raw'
