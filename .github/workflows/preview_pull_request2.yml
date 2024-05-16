@@ -112,4 +112,5 @@ jobs:
         timeout-minutes: 10
 
       - name: Remove vtksz cache
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
         run: find doc/_build/html/ -name "*.vtksz" | xargs rm
