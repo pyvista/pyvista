@@ -112,5 +112,4 @@ jobs:
         timeout-minutes: 10
 
       - name: Remove vtksz cache
-        if: always()
         run: find doc/_build/html/ -name "*.vtksz" | xargs rm
