@@ -1243,8 +1243,8 @@ class ImageDataFilters(DataSetFilters):
             np.array(self.spacing) / 2,  # type: ignore[attr-defined]
         )
         new_image.dimensions = dims_operator(
-            np.array(self.dimensions),  # type: ignore[attr-defined]
-            1,
+            dims := np.array(self.dimensions),  # type: ignore[attr-defined]
+            dims > 1,  # Only operate on non-singleton dimensions
         )
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
         new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]

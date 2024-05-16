@@ -9,6 +9,11 @@ from pyvista import examples
 VTK93 = pv.vtk_version_info >= (9, 3)
 
 
+@pytest.fixture()
+def logo():
+    return examples.load_logo()
+
+
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled():
     # Load a 3D label map (segmentation of a frog's tissue)
@@ -218,6 +223,16 @@ def test_cells_to_points_scalars(uniform):
         uniform.cells_to_points('Spatial Point Data')
 
 
+def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+    assert uniform.dimensions == (10, 10, 10)
+    assert uniform.points_to_cells().dimensions == (11, 11, 11)
+    assert uniform.cells_to_points().dimensions == (9, 9, 9)
+
+    assert logo.dimensions == (1920, 718, 1)
+    assert logo.points_to_cells().dimensions == (1921, 719, 1)
+    assert logo.cells_to_points().dimensions == (1919, 717, 1)
+
+
 @pytest.fixture()
 def single_point_image():
     image = pv.ImageData(dimensions=(1, 1, 1))
@@ -371,11 +386,6 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, -1, -1])
     else:
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
-
-
-@pytest.fixture()
-def logo():
-    return examples.load_logo()
 
 
 def test_pad_image_multi_component(single_point_image):
