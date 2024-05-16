@@ -5,22 +5,12 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
-
-USE_SCALAR_BAR_ARGS = """
-"stitle" is a deprecated keyword argument and will be removed in a future
-release.
-
-Use ``scalar_bar_args`` instead.  For example:
-
-scalar_bar_args={'title': 'Scalar Bar Title'}
-"""
 
 
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
@@ -94,9 +84,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
                 if has_scalars and use_points:
                     # we must track the original IDs with our own array from compute_normals
                     indices_array = 'pyvistaOriginalPointIds'
-        else:
-            # consider checking if mesh contains active normals
-            # if mesh.point_data.active_normals is None:
+        elif mesh.point_data.active_normals is None:
             mesh.compute_normals(cell_normals=False, inplace=True)
     except TypeError as e:
         if "Normals cannot be computed" in repr(e):
@@ -273,12 +261,6 @@ def _common_arg_parser(
         interpolation = InterpolationType.PHONG
     else:
         interpolation = theme.lighting_params.interpolation
-
-    # account for legacy behavior
-    if 'stitle' in kwargs:  # pragma: no cover
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-        scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
 
     if "scalar" in kwargs:
         raise TypeError(

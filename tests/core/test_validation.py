@@ -1,8 +1,7 @@
-from collections import namedtuple
 import itertools
 from re import escape
 import sys
-from typing import Union, get_args, get_origin
+from typing import NamedTuple, Union, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -386,8 +385,15 @@ def test_check_range():
         check_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
+class Case(NamedTuple):
+    kwarg: dict
+    valid_array: np.ndarray
+    invalid_array: np.ndarray
+    error_type: type
+    error_msg: str
+
+
 def numeric_array_test_cases():
-    Case = namedtuple("Case", ["kwarg", "valid_array", "invalid_array", "error_type", "error_msg"])
     return (
         Case(
             dict(

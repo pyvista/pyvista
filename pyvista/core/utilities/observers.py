@@ -1,6 +1,5 @@
 """Core error utilities."""
 
-import collections
 import logging
 from pathlib import Path
 import re
@@ -8,6 +7,7 @@ import signal
 import sys
 import threading
 import traceback
+from typing import NamedTuple
 
 from pyvista.core import _vtk_core as _vtk
 
@@ -83,6 +83,15 @@ class VtkErrorCatcher:
             raise RuntimeError(errors)
 
 
+class VtkEvent(NamedTuple):
+    """Named tuple to store VTK event information."""
+
+    kind: str
+    path: str
+    address: str
+    alert: str
+
+
 class Observer:
     """A standard class for observing VTK objects."""
 
@@ -106,9 +115,10 @@ class Observer:
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
-            return kind, path, address, alert
         except:
             return '', '', '', message
+        else:
+            return kind, path, address, alert
 
     def log_message(self, kind, alert):
         """Parse different event types and passes them to logging."""
@@ -129,7 +139,6 @@ class Observer:
             kind, path, address, alert = self.parse_message(message)
             self.__message = alert
             if self.store_history:
-                VtkEvent = collections.namedtuple('VtkEvent', ['kind', 'path', 'address', 'alert'])
                 self.event_history.append(VtkEvent(kind, path, address, alert))
             if self.__log:
                 self.log_message(kind, alert)

@@ -856,7 +856,7 @@ complete the following steps:
       to be included in the carousel. The dataset names should not include
       any ``load_``, ``download_``, or ``dataset_`` prefix.
 
-#. Add the new carousel class to the the ``CAROUSEL_LIST`` variable defined
+#. Add the new carousel class to the ``CAROUSEL_LIST`` variable defined
    in ``doc/source/make_tables.py``. This will enable the rst to be
    auto-generated for the carousel.
 

@@ -188,6 +188,29 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
+def test_import_3ds():
+    filename = examples.download_3ds.download_iflamigm()
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_3ds('not a file')
+
+    pl.import_3ds(filename)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj():
+    download_obj_file = examples.download_room_surface_mesh(load=False)
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj('not a file')
+
+    pl.import_obj(download_obj_file)
+    pl.show()
+
+
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
@@ -1032,7 +1055,7 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    plotter.background_color
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
@@ -1977,6 +2000,31 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
+@skip_windows_mesa
+@pytest.mark.parametrize(
+    'opacity',
+    [
+        'sigmoid',
+        'sigmoid_1',
+        'sigmoid_2',
+        'sigmoid_3',
+        'sigmoid_4',
+        'sigmoid_5',
+        'sigmoid_6',
+        'sigmoid_7',
+        'sigmoid_8',
+        'sigmoid_9',
+        'sigmoid_10',
+        'sigmoid_15',
+        'sigmoid_20',
+    ],
+)
+def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
+    pl = pv.Plotter()
+    pl.add_volume(uniform, opacity=opacity)
+    pl.show()
+
+
 def test_closing_and_mem_cleanup(verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     verify_image_cache.skip = True
@@ -2594,6 +2642,19 @@ def test_splitting():
         feature_angle=50,
         show_scalar_bar=False,
     )
+
+
+@pytest.mark.parametrize('smooth_shading', [True, False])
+@pytest.mark.parametrize('use_custom_normals', [True, False])
+def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
+    sphere = pv.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere.clear_data()
+
+    if use_custom_normals:
+        normals = [[0, 0, -1]] * sphere.n_points
+        sphere.point_data.active_normals = normals
+
+    sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
 @skip_mac_flaky
@@ -4138,10 +4199,11 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-            return True
         except BaseException as ex:
             # Param is not valid only if a kwarg TypeError is raised
             return not ("TypeError" in repr(ex) and "unexpected keyword argument" in repr(ex))
+        else:
+            return True
 
 
 def _get_default_param_value(call: Callable, param: str) -> Any:

@@ -1,13 +1,17 @@
 """Prop3D module."""
 
-from typing import Tuple, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Tuple, Union
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
 
 from . import _vtk
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 
 
 class Prop3D(_vtk.vtkProp3D):

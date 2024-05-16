@@ -82,9 +82,10 @@ def _system_supports_plotting():
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate(timeout=10)
-        return proc.returncode == 0
     except (OSError, TimeoutExpired):
         return False
+    else:  # pragma: no cover
+        return proc.returncode == 0
 
 
 def system_supports_plotting():
@@ -495,7 +496,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-        ``'sigmoid_1-10'``, and ``foreground``. Append an ``'_r'`` to any
+        ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
         of those names (except ``foreground``) to reverse that mapping.
         The mapping can also be a custom user-defined array/list of values
         that will be interpolated across the ``n_color`` range.
@@ -558,6 +559,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
         'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]

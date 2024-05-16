@@ -3,7 +3,8 @@
 -r requirements.txt
 cmocean<4.0.4
 colorcet<3.2.0
-hypothesis<6.100.2
+embreex<2.17.8
+hypothesis<6.102.2
 imageio<2.35.0
 imageio-ffmpeg<0.5.0
 ipython<9.0.0
@@ -12,17 +13,17 @@ meshio<5.4.0
 nest_asyncio<1.6.1
 numpydoc==1.7.0
 pydata-sphinx-theme<0.16.0
-pytest<8.2.0
+pytest<8.3.0
 pytest-cov<5.1.0
 pytest-memprof<0.3.0
-pytest-xdist<3.6.0
-pytest_pyvista==0.1.8
-sphinx<7.2.0
-sphinx-gallery<0.16.0
+pytest-pyvista==0.1.8
+pytest-xdist<3.7.0
+sphinx<7.4.0
+sphinx-gallery<0.17.0
 sphinx_design<0.6.0
 sympy<1.13.0
 tqdm<4.67.0
 trame>=2.5.2,<3.6.1
-trame-vtk>=2.5.8,<2.8.6
-trame-vuetify>=2.3.1,<2.4.4
+trame-vtk>=2.5.8,<2.8.9
+trame-vuetify>=2.3.1,<2.5.1
 trimesh<4.4.0

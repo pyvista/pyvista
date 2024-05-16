@@ -1010,3 +1010,79 @@ def test_xmlpartitioneddatasetreader(tmpdir):
     for i, new_partition in enumerate(new_partitions):
         assert isinstance(new_partition, pv.ImageData)
         assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3, 0),
+    reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
+)
+def test_fluentcffreader():
+    filename = examples.download_room_cff(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.FLUENTCFFReader)
+    assert reader.path == filename
+
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_gambitreader():
+    filename = examples.download_prism(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GambitReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
+def test_gaussian_cubes_reader():
+    filename = examples.download_m4_total_density(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GaussianCubeReader)
+    assert reader.path == filename
+
+    hb_scale = 1.1
+    b_scale = 10.0
+    reader.hb_scale = hb_scale
+    reader.b_scale = b_scale
+    assert reader.hb_scale == hb_scale
+    assert reader.b_scale == b_scale
+
+    grid = reader.read(grid=True)
+    assert isinstance(grid, pv.ImageData)
+    assert all([grid.n_points, grid.n_cells])
+
+    poly = reader.read(grid=False)
+    assert isinstance(poly, pv.PolyData)
+    assert all([poly.n_points, poly.n_cells])
+
+
+def test_gesignareader():
+    filename = examples.download_e07733s002i009(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GESignaReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
+def test_pdbreader():
+    filename = examples.download_caffeine(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.PDBReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

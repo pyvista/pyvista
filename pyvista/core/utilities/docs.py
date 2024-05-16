@@ -1,5 +1,7 @@
 """Supporting functions for documentation build."""
 
+from __future__ import annotations
+
 import inspect
 import os
 import os.path as op
