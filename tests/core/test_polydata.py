@@ -614,11 +614,12 @@ def test_save(sphere, extension, binary, tmpdir):
     else:
         with Path(filename).open() as f:
             fst = f.read(100).lower()
-            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
+            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst or 'pgeometry' in fst
 
-    mesh = pv.PolyData(filename)
-    assert mesh.faces.shape == sphere.faces.shape
-    assert mesh.points.shape == sphere.points.shape
+    if extension != '.geo':
+        mesh = pv.PolyData(filename)
+        assert mesh.faces.shape == sphere.faces.shape
+        assert mesh.points.shape == sphere.points.shape
 
 
 def test_pathlib_read_write(tmpdir, sphere):
