@@ -1270,9 +1270,6 @@ class ImageDataFilters(DataSetFilters):
         ... )
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
-        # >>> surf = image.contour_labels(smoothing=False, )
-        # >>> surf.plot(cpos='xy', **plot_kwargs)
-
         See :ref:`contouring_example` for a full example using this filter.
 
         See Also
@@ -1296,12 +1293,11 @@ class ImageDataFilters(DataSetFilters):
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
-            alg_input = (
+            return (
                 image
                 if field == FieldAssociation.POINT
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
-            return alg_input
 
         def _process_select_inputs(image, select_inputs_):
             select_inputs = np.atleast_1d(select_inputs_)
