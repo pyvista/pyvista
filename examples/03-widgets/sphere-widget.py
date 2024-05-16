@@ -123,8 +123,7 @@ def get_colors(n):
 
     cycler = mpl.rcParams['axes.prop_cycle']
     colors = cycle(cycler)
-    colors = [next(colors)['color'] for i in range(n)]
-    return colors
+    return [next(colors)['color'] for i in range(n)]
 
 
 # Create a grid to interpolate to

@@ -98,8 +98,7 @@ point_cloud = pv.PolyData(points)
 def compute_vectors(mesh):
     origin = mesh.center
     vectors = mesh.points - origin
-    vectors = vectors / np.linalg.norm(vectors, axis=1)[:, None]
-    return vectors
+    return vectors / np.linalg.norm(vectors, axis=1)[:, None]
 
 
 vectors = compute_vectors(point_cloud)

@@ -668,7 +668,7 @@ class DataSetFilters:
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        result = DataSetFilters._clip_with_function(
+        return DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -676,7 +676,6 @@ class DataSetFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        return result
 
     def slice_implicit(
         self,
@@ -4389,8 +4388,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
-        return sampled_line
+        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_line(
         self,
@@ -4549,12 +4547,7 @@ class DataSetFilters:
         """
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
-        sampled_multiple_lines = multiple_lines.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_multiple_lines
+        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(
         self,
@@ -4633,12 +4626,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        sampled_circular_arc = circular_arc.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_circular_arc
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc_normal(
         self,
@@ -6575,8 +6563,7 @@ class DataSetFilters:
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def transform(
         self: _vtk.vtkDataSet,

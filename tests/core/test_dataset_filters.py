@@ -2509,8 +2509,7 @@ def point_cloud_colors_duplicates(point_cloud_colors):
     # Same fixture as point_cloud_colors but with double the points
     copied = point_cloud_colors.copy()
     copied.points += 0.5
-    point_cloud = point_cloud_colors + copied
-    return point_cloud
+    return point_cloud_colors + copied
 
 
 class ComponentModeTestCase(NamedTuple):
