@@ -49,10 +49,9 @@ class ImageDataFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell data
-        to point data using the :func:`cell_data_to_point_data()
-        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert any
-        cell data to point data.
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -289,10 +288,9 @@ class ImageDataFilters(DataSetFilters):
 
         Notes
         -----
-        This filter only supports point data. Consider converting any cell data
-        to point data using the :func:`cell_data_to_point_data()
-        <pyvista.DataSetFilters.cell_data_to_point_data>` filter to convert ny
-        cell data to point data.
+        This filter only supports point data. For inputs with cell data, consider
+        re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
+        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -392,6 +390,10 @@ class ImageDataFilters(DataSetFilters):
         pyvista.ImageData
             Dataset with the specified scalars thresholded.
 
+        See Also
+        --------
+        :meth:`~pyvista.DataSetFilters.threshold`
+
         Examples
         --------
         Demonstrate image threshold on an example dataset. First, plot
@@ -406,6 +408,8 @@ class ImageDataFilters(DataSetFilters):
 
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
+
+        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         alg = _vtk.vtkImageThreshold()
@@ -952,7 +956,7 @@ class ImageDataFilters(DataSetFilters):
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
     def points_to_cells(self, scalars: Optional[str] = None, *, copy: bool = True):
-        """Re-mesh image data from a points-based to a cells-based representation.
+        """Re-mesh image data from a point-based to a cell-based representation.
 
         This filter changes how image data is represented. Data represented as points
         at the input is re-meshed into an alternative representation as cells at the
@@ -1002,87 +1006,59 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.ImageData
-            Image with a cells-based representation.
+            Image with a cell-based representation.
 
         Examples
         --------
-        Create image data with eight points.
+        Load an image with point data.
 
-        >>> import pyvista as pv
-        >>> points_image = pv.ImageData(dimensions=(2, 2, 2))
-        >>> points_image.point_data['Data'] = list(range(8))[::-1]
-        >>> points_image.n_points
-        8
-        >>> points_image.n_cells
-        1
-        >>> points_image.dimensions
-        (2, 2, 2)
+        >>> from pyvista import examples
+        >>> image = examples.load_uniform()
 
-        If we plot the image, it is represented as a single cell with eight points. The
-        point data is interpolated to color the cell.
+        Show the current properties and point arrays of the image.
 
-        >>> points_image.plot(show_edges=True)
+        >>> image
+        ImageData (...)
+          N Cells:      729
+          N Points:     1000
+          X Bounds:     0.000e+00, 9.000e+00
+          Y Bounds:     0.000e+00, 9.000e+00
+          Z Bounds:     0.000e+00, 9.000e+00
+          Dimensions:   10, 10, 10
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     2
 
-        However, in many applications (e.g. 3D medical images) the point samples are
-        used to represent the center-points of voxels with discrete values. As such, it
-        may be preferred to represent the data as eight cells instead of eight points. In
-        this case, we can re-mesh the point data to cell data to create a cell-based
-        representation.
+        >>> image.point_data.keys()
+        ['Spatial Point Data']
 
-        >>> cells_image = points_image.points_to_cells()
-        >>> cells_image.n_points
-        27
-        >>> cells_image.n_cells
-        8
-        >>> cells_image.dimensions
-        (3, 3, 3)
+        Re-mesh the points and point data as cells and cell data.
 
-        Now, when we plot the image, we have a more appropriate representation with eight
-        voxel cells, and the discrete data is no longer interpolated.
+        >>> cells_image = image.points_to_cells()
 
-        >>> cells_image.plot(show_edges=True)
+        Show the properties and cell arrays of the re-meshed image.
 
-        Show the two representations together. The cell centers of the cells image
-        correspond to the points of the points image.
+        >>> cells_image
+        ImageData (...)
+          N Cells:      1000
+          N Points:     1331
+          X Bounds:     -5.000e-01, 9.500e+00
+          Y Bounds:     -5.000e-01, 9.500e+00
+          Z Bounds:     -5.000e-01, 9.500e+00
+          Dimensions:   11, 11, 11
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
 
-        >>> cell_centers = cells_image.cell_centers()
-        >>> cell_edges = cells_image.extract_all_edges()
-        >>>
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(
-        ...     points_image, color=True, show_edges=True, opacity=0.7
-        ... )
-        >>> _ = plot.add_mesh(cell_edges, color='black')
-        >>> _ = plot.add_points(
-        ...     cell_centers,
-        ...     render_points_as_spheres=True,
-        ...     color='red',
-        ...     point_size=20,
-        ... )
-        >>> _ = plot.camera.azimuth = -25
-        >>> _ = plot.camera.elevation = 25
-        >>> plot.show()
+        >>> cells_image.cell_data.keys()
+        ['Spatial Point Data']
 
-        With the data represented as cells, we can now use a cell-based filter such as
-        :meth:`~pyvista.DataSetFilters.threshold`. Since the original image data
-        represents discrete voxels, this filter produces the expected result.
+        Observe that:
+        - The input point array is now a cell array
+        - The output has one less array (the input cell data is ignored)
+        - The dimensions have increased by one
+        - The bounds have increased by half the spacing
+        - The output N Cells equals the input N Points
 
-        >>> cells_thresh = cells_image.threshold(2)
-        >>> cells_thresh.plot(show_edges=True)
-
-        For comparison, apply the same filter to the points-based representation.
-
-        >>> points_thresh = points_image.threshold(2)
-        >>> points_thresh.plot(show_edges=True)
-
-        We can see that this produces a very different result. In fact, since the input
-        only has a single cell, using the cell-based filter with the points-based
-        representation had no effect on the scalar data.
-
-        >>> points_thresh['Data']
-        pyvista_ndarray([7, 6, 5, 4, 3, 2, 1, 0])
-        >>> points_image['Data']
-        pyvista_ndarray([7, 6, 5, 4, 3, 2, 1, 0])
+        See :ref:`image_representations_example` for a full example using this filter.
 
         """
         if scalars is not None:
@@ -1094,7 +1070,7 @@ class ImageDataFilters(DataSetFilters):
         return self._remesh_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
 
     def cells_to_points(self, scalars: Optional[str] = None, *, copy: bool = True):
-        """Re-mesh image data from a cells-based to a points-based representation.
+        """Re-mesh image data from a cell-based to a point-based representation.
 
         This filter changes how image data is represented. Data represented as cells
         at the input is re-meshed into an alternative representation as points at the
@@ -1144,71 +1120,59 @@ class ImageDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.ImageData
-            Image with a points-based representation.
+            Image with a point-based representation.
 
         Examples
         --------
-        Create image data with eight cells.
+        Load an image with cell data.
 
-        >>> import pyvista as pv
-        >>> cells_image = pv.ImageData(dimensions=(3, 3, 3))
-        >>> cells_image.cell_data['Data'] = list(range(8))[::-1]
-        >>> cells_image.n_points
-        27
-        >>> cells_image.n_cells
-        8
-        >>> cells_image.dimensions
-        (3, 3, 3)
+        >>> from pyvista import examples
+        >>> image = examples.load_uniform()
 
-        If we plot the image, it is represented as eight cells with 27 points.
+        Show the current properties and cell arrays of the image.
 
-        >>> cells_image.plot(show_edges=True)
+        >>> image
+        ImageData (...)
+          N Cells:      729
+          N Points:     1000
+          X Bounds:     0.000e+00, 9.000e+00
+          Y Bounds:     0.000e+00, 9.000e+00
+          Z Bounds:     0.000e+00, 9.000e+00
+          Dimensions:   10, 10, 10
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     2
 
-        Alternatively, we can represent the cells as eight points instead.
+        >>> image.cell_data.keys()
+        ['Spatial Cell Data']
 
-        >>> points_image = cells_image.cells_to_points()
-        >>> points_image.n_points
-        8
-        >>> points_image.n_cells
-        1
-        >>> points_image.dimensions
-        (2, 2, 2)
-        >>> points_image.plot(show_edges=True)
+        Re-mesh the cells and cell data as points and point data.
 
-        Show the two representations together. The points of the points image correspond
-        to the cell centers of the cells image.
+        >>> points_image = image.cells_to_points()
 
-        >>> cell_centers = cells_image.cell_centers()
-        >>> cell_edges = cells_image.extract_all_edges()
-        >>>
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(
-        ...     points_image, color=True, show_edges=True, opacity=0.7
-        ... )
-        >>> _ = plot.add_mesh(cell_edges, color='black')
-        >>> _ = plot.add_points(
-        ...     cell_centers,
-        ...     render_points_as_spheres=True,
-        ...     color='red',
-        ...     point_size=20,
-        ... )
-        >>> _ = plot.camera.azimuth = -25
-        >>> _ = plot.camera.elevation = 25
-        >>> plot.show()
+        Show the properties and point arrays of the re-meshed image.
 
-        With a points-based representation, we can now use a points-based filter with
-        our dataset such as :meth:`~pyvista.ImageDataFilters.image_threshold`.
+        >>> points_image
+        ImageData (...)
+          N Cells:      512
+          N Points:     729
+          X Bounds:     5.000e-01, 8.500e+00
+          Y Bounds:     5.000e-01, 8.500e+00
+          Z Bounds:     5.000e-01, 8.500e+00
+          Dimensions:   9, 9, 9
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
 
-        >>> points_thresh = points_image.image_threshold(2)
+        >>> points_image.point_data.keys()
+        ['Spatial Cell Data']
 
-        The filter works as expected, but when we plot it the values are interpolated.
+        Observe that:
+        - The input cell array is now a point array
+        - The output has one less array (the input point data is ignored)
+        - The dimensions have decreased by one
+        - The bounds have decreased by half the spacing
+        - The output N Points equals the input N Cells
 
-        >>> points_thresh.plot(show_edges=True)
-
-        Convert the result back to a cell representation to better visualize the result.
-
-        >>> cells_thresh = points_thresh.points_to_cells()
-        >>> cells_thresh.plot(show_edges=True)
+        See :ref:`image_representations_example` for a full example using this filter.
 
         """
         if scalars is not None:
@@ -1241,6 +1205,7 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             Re-meshed image.
+
         """
 
         def _get_output_scalars(preference):
