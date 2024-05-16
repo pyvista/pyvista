@@ -40,8 +40,7 @@ def _cell_bounds(points, bound_position=0.5):
         raise ValueError("Only 1D points are allowed.")
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
-    bounds = np.concatenate([[points[0] - delta], points + delta])
-    return bounds
+    return np.concatenate([[points[0] - delta], points + delta])
 
 
 # First, create some dummy data

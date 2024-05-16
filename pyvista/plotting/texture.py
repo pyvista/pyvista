@@ -407,6 +407,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
             return skybox
+        return None
 
     def __repr__(self):
         """Return the object representation."""
