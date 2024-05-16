@@ -7091,7 +7091,13 @@ class Plotter(BasePlotter):
         return actor
 
     def add_dimension_line(
-        self, pointa, pointb, offset, font_size=None, text_color=None, shape_color='grey',
+        self,
+        pointa,
+        pointb,
+        offset,
+        font_size=None,
+        text_color=None,
+        shape_color='grey',
     ):
         """Add a dimension line of a PyVista or VTK dataset to the scene.
 
@@ -7164,7 +7170,10 @@ class Plotter(BasePlotter):
         #     points=pointe, labels=labels, shape_color=shape_color, text_color=text_color
         # )
         _ = self.add_point_labels(
-            points=pointe, labels=labels, shape_color=shape_color, text_color=text_color,
+            points=pointe,
+            labels=labels,
+            shape_color=shape_color,
+            text_color=text_color,
         )
         # lines = self.add_lines(lines, color="black", width=2)
         _ = self.add_lines(lines, color="black", width=2)
