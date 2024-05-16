@@ -16,6 +16,13 @@ from typing import NamedTuple
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
+from vtkmodules.vtkImagingSources import (
+    vtkImageEllipsoidSource,
+    vtkImageGaussianSource,
+    vtkImageMandelbrotSource,
+    vtkImageNoiseSource,
+    vtkImageSinusoidSource,
+)
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
@@ -268,6 +275,7 @@ from vtkmodules.vtkFiltersGeneral import (
     vtkBooleanOperationPolyDataFilter,
     vtkBoxClipDataSet,
     vtkClipClosedSurface,
+    vtkContourTriangulator,
     vtkCursor3D,
     vtkCurvatures,
     vtkDataSetTriangleFilter,
@@ -343,7 +351,7 @@ from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
 
-from vtkmodules.vtkIOGeometry import vtkSTLWriter
+from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter, vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
     vtkDataReader,
@@ -385,10 +393,13 @@ from vtkmodules.vtkIOXML import (
 )
 from vtkmodules.vtkImagingCore import (
     vtkExtractVOI,
+    vtkImageConstantPad,
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,
+    vtkImageMirrorPad,
     vtkImageThreshold,
+    vtkImageWrapPad,
     vtkRTAnalyticSource,
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D

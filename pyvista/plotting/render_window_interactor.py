@@ -1392,36 +1392,6 @@ class RenderWindowInteractor:
         """Return if the interactor has been initialized."""
         return self.interactor.GetInitialized()
 
-    def get_picker(self):
-        """Get the picker.
-
-        Returns
-        -------
-        vtk.vtkAbstractPicker
-            VTK picker.
-        """
-        # Deprecated on v0.39.0, estimated removal on v0.41.0
-        warnings.warn(
-            "Use of `get_picker` is deprecated. Use `picker` property instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.picker
-
-    def set_picker(self, picker):
-        """Set the picker for the interactor.
-
-        Parameters
-        ----------
-        picker : vtk.vtkAbstractPicker
-            The picker to set for the interactor.
-        """
-        # Deprecated on v0.39.0, estimated removal on v0.41.0
-        warnings.warn(
-            "Use of `get_picker` is deprecated. Use `picker` property instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.picker = picker
-
     @property
     def picker(self):  # numpydoc ignore=RT01
         """Get/set the picker.

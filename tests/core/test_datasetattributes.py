@@ -365,7 +365,7 @@ def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
 
 def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
     with pytest.raises(TypeError):
-        hexbeam_field_attributes.active_scalars
+        _ = hexbeam_field_attributes.active_scalars
 
 
 def test_should_remove_array(insert_arange_narray):
@@ -569,7 +569,7 @@ def test_normals_name(plane):
 
 def test_normals_raise_field(plane):
     with pytest.raises(AttributeError):
-        plane.field_data.active_normals
+        _ = plane.field_data.active_normals
 
 
 def test_add_two_vectors():
