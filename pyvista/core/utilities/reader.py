@@ -2736,7 +2736,7 @@ class ParticleReader(BaseReader):
     >>> filename = examples.download_particles(load=False)
     >>> reader = pv.get_reader(filename)
     >>> filename.split("/")[-1]  # omit the path
-    'particles.raw'
+    'Particles.raw'
     >>> mesh = reader.read()
     >>> mesh.plot()
 
