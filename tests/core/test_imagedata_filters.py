@@ -162,10 +162,7 @@ def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
         cell_voxel_image.cell_data.keys(),
     ):
         shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
-        if copy:
-            assert not shares_memory
-        else:
-            assert shares_memory
+        assert not shares_memory if copy else shares_memory
 
 
 @pytest.mark.parametrize('copy', [True, False])
@@ -194,10 +191,7 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
         point_voxel_image.point_data.keys(),
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
-        if copy:
-            assert not shares_memory
-        else:
-            assert shares_memory
+        assert not shares_memory if copy else shares_memory
 
 
 def test_points_to_cells_scalars(uniform):
