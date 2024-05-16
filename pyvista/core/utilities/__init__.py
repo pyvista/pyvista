@@ -196,7 +196,7 @@ from .reader import (
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
-    ParticleReader
+    ParticleReader,
     PDBReader,
     Plot3DFunctionEnum,
     Plot3DMetaReader,
