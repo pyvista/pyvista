@@ -1054,23 +1054,24 @@ class ImageDataFilters(DataSetFilters):
         to extract polygonal surface contours from non-continuous label maps, which
         corresponds to discrete regions in an input 3D image (i.e., volume). It is
         designed to generate surfaces from image point data, e.g. voxel point
-        samples from 3D medical images, though images will cell data are also supported.
+        samples from 3D medical images, though images with cell data are also supported.
 
         The generated surface is smoothed using a constrained smoothing filter, which
         may be fine-tuned to control the smoothing process. Optionally, smoothing may
-        be disabled to generate a voxelized staircase-like surface.
+        be disabled to generate a staircase-like surface.
 
         The output surface includes a two-component cell data array ``'boundary_labels'``.
         The array indicates the labels/regions on either side of the polygons composing
         the output. The array's values are structured as follows:
 
-        -   External boundaries: Values for external polygons between foreground regions
-            and the background have the form ``[foreground, background]``.
+        External boundary values
+            Polygons between a foreground region and the background have the
+            form ``[foreground, background]``.
 
             E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
-        -   Internal boundaries: Values for internal boundary polygons between two
-            adjacent foreground regions are sorted in ascending order.
+        Internal boundary values
+            Polygons between two connected foreground regions are sorted in ascending order.
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
@@ -1080,10 +1081,10 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         output_boundary_type : 'all' | 'internal' | 'external', default: 'all'
-            Type of boundary polygons to generate. Internal boundary polygons are
-            generated between two adjacent foreground regions. External boundary
-            polygons are generated between foreground regions and the background. By
-            default, all boundary polygons (internal and external) are generated.
+            Type of boundary polygons to generate. ``'internal'`` polygons are generated
+            between two connected foreground regions. ``'external'`` polygons are
+            generated between foreground background. By default, ``'all'`` boundary
+            polygons (internal and external) are generated.
 
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
@@ -1099,7 +1100,8 @@ class ImageDataFilters(DataSetFilters):
             .. note::
                 Selecting inputs can affect whether a boundary polygon is considered to
                 be ``internal`` or ``external``. That is, an internal boundary becomes an
-                external boundary if only one of the regions on the boundary is selected.
+                external boundary when only one of the two foreground regions on the
+                boundary is selected.
 
         select_outputs : int | VectorLike[int], default: None
             Specify label ids to include in the output of the filter. Labels that are
@@ -1110,29 +1112,26 @@ class ImageDataFilters(DataSetFilters):
             option to filter the output means that the selected output regions will have
             the same shape (i.e. smoothed in the same manner), regardless of the outputs
             that are selected. This is useful for generating a surface for specific
-            labels while also preserving the smoothing effects that non-selected outputs
-            have on the generated surface.
+            labels while also preserving sharp boundaries with non-selected outputs.
 
             .. note::
                 Selecting outputs does not affect whether a boundary polygon is
                 considered to be ``internal`` or ``external``. That is, an internal
-                boundary remains an internal boundary even if only one of the regions
+                boundary remains internal even if only one of the two foreground regions
                 on the boundary is selected.
 
         closed_surface : bool, default: True
             Generate polygons to "close" the surface at the boundaries of the image.
-            This option is only relevant when there are foreground regions exactly on
-            the border. Setting this value to ``False`` is useful if processing multiple
+            This option is only relevant when there are foreground regions on the border
+            of the image. Setting this value to ``False`` is useful if processing multiple
             volumes separately so that the generated surfaces fit together without
             creating surface overlap.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
             default, the output mesh has triangle cells when smoothing is enabled and
-            quadrilateral cells (quads) when smoothing is disabled .
-
-            The mesh type can be forced to be triangles or quads whether smoothing is
-            enabled or not. However, if smoothing is enabled and the type is ``'quads'``,
+            quadrilateral cells (quads) otherwise. The mesh type can be forced to be
+            triangles or quads; however, if smoothing is enabled and the type is ``'quads'``,
             the generated quads may not be planar.
 
         scalars : str, optional
@@ -1142,14 +1141,13 @@ class ImageDataFilters(DataSetFilters):
             data into point data.
 
         smoothing : bool, default: True
-            Smooth the generated surface using a constrained smoothing filter.Each
+            Smooth the generated surface using a constrained smoothing filter. Each
             point in the surface is smoothed as follows:
-
-            For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
-            is moved towards the average position of ``pj`` multiplied by the
-            ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
-            constraint. This process is repeated either until convergence occurs, or
-            the maximum number of ``smoothing_iterations`` is reached.
+                For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
+                is moved towards the average position of ``pj`` multiplied by the
+                ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
+                constraint. This process is repeated either until convergence occurs, or
+                the maximum number of ``smoothing_iterations`` is reached.
 
         smoothing_iterations : int, default: 16
             Maximum number of smoothing iterations to use.
@@ -1161,8 +1159,7 @@ class ImageDataFilters(DataSetFilters):
             Maximum distance each point is allowed to move (in any direction) during
             smoothing. This distance may be scaled with ``smoothing_scale``. By default,
             the distance is computed dynamically from the image spacing as:
-
-            ``distance = norm(image_spacing) * smoothing_scale``.
+                ``distance = norm(image_spacing) * smoothing_scale``.
 
         smoothing_scale : float, default: 1.0
             Relative scaling factor applied to ``smoothing_distance``. See that
@@ -1176,6 +1173,17 @@ class ImageDataFilters(DataSetFilters):
         pyvista.PolyData
             Surface mesh of labeled regions.
 
+        See Also
+        --------
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
+        :meth:`~pyvista.DataSetFilters.contour`
+            Generalized contouring method which uses MarchingCubes or FlyingEdges.
+        :meth:`~pyvista.DataSetFilters.pack_labels`
+            Function used internally by SurfaceNets to generate contiguous label data.
+        :ref:`contouring_example`
+            Additional contouring examples.
+
         References
         ----------
         S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
@@ -1184,7 +1192,7 @@ class ImageDataFilters(DataSetFilters):
 
         W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
         Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
-        http://arxiv.org/abs/2401.14906
+        `http://arxiv.org/abs/2401.14906 <http://arxiv.org/abs/2401.14906>`__
 
         Examples
         --------
@@ -1238,7 +1246,7 @@ class ImageDataFilters(DataSetFilters):
                [4, 0]])
         >>> contours.plot(zoom=1.5, **plot_kwargs)
 
-        Use :meth:`pyvista.DataSetFilters.extract_values` to extract a single region and
+        Use :meth:`~pyvista.DataSetFilters.extract_values` to extract a single region and
         show both internal and external boundary polygons.
 
         >>> region_3 = contours.extract_values(3, component_mode='any')
@@ -1269,16 +1277,6 @@ class ImageDataFilters(DataSetFilters):
         ...     smoothing=False, closed_surface=False
         ... )
         >>> surf.plot(zoom=1.5, **plot_kwargs)
-
-        See :ref:`contouring_example` for a full example using this filter.
-
-        See Also
-        --------
-        pyvista.DataSetFilters.contour
-            Generalized contouring method which uses MarchingCubes or FlyingEdges.
-
-        pyvista.DataSetFilters.pack_labels
-            Function used internally by SurfaceNets to generate contiguous label data.
 
         """
 
