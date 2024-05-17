@@ -662,8 +662,8 @@ expected revealed type returned by ``Mypy``.
 
 For example, the ``validate_array`` function by default returns a list of floats
 when a list of floats is provided at the input. The type hint should reflect this.
-Therefore, to validate the function call ``validate_array([1.0])`` we can write
-a test case as:
+To test this, we can write a test case as for the function call ``validate_array([1.0])``
+as follows:
 
 .. code:: python
     reveal_type(validate_array([1.0]))  # EXPECTED_TYPE: "list[float]"
