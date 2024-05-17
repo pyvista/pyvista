@@ -28,9 +28,9 @@ data_array = [8, 7, 6, 5, 4, 3, 1, 0]
 points_image = pv.ImageData(dimensions=(2, 2, 2))
 points_image.point_data['Data'] = data_array
 
-points_image.n_points
+print(points_image.n_points)
 
-points_image.n_cells
+print(points_image.n_cells)
 
 ################################################################################
 # If we plot the image, it is represented as a single cell with eight points,
@@ -81,9 +81,9 @@ plot.show()
 # data, but not both), it is possible to move between representations without
 # loss of data.
 
-points_image.active_scalars
+print(points_image.active_scalars)
 
-points_image.points_to_cells().cells_to_points().active_scalars
+print(points_image.points_to_cells().cells_to_points().active_scalars)
 
 ################################################################################
 # Point Filters with Image Data
@@ -96,7 +96,7 @@ points_image.points_to_cells().cells_to_points().active_scalars
 # Here, we reuse the points image defined earlier and apply the filter. For
 # context, we also show the input data array.
 
-points_image.point_data['Data']
+print(points_image.point_data['Data'])
 
 points_ithresh = points_image.image_threshold(2)
 
@@ -104,7 +104,7 @@ points_ithresh = points_image.image_threshold(2)
 # This filter returns binary point data as expected. Values above the threshold
 # of ``2`` are ones, and below the threshold are zeros.
 
-points_ithresh.point_data['Data']
+print(points_ithresh.point_data['Data'])
 
 ################################################################################
 # However, when we plot it the point values are interpolated as before.
@@ -130,7 +130,7 @@ points_ithresh_as_cells.plot(show_edges=True)
 # Here, we reuse the cells image created earlier and apply the filter. For
 # context, we also show the input data array.
 
-cells_image.cell_data['Data']
+print(cells_image.cell_data['Data'])
 
 cells_thresh = cells_image.threshold(2)
 
@@ -138,7 +138,7 @@ cells_thresh = cells_image.threshold(2)
 # When the input is cell data, this filter returns six discrete values above
 # the threshold value of ``2`` as expected.
 
-cells_thresh.cell_data['Data']
+print(cells_thresh.cell_data['Data'])
 
 cells_thresh.plot(show_edges=True)
 
@@ -151,7 +151,7 @@ points_thresh = points_image.threshold(2)
 ################################################################################
 # In this case, the filter has no effect on the data array's values.
 
-points_thresh.point_data['Data']
+print(points_thresh.point_data['Data'])
 
 ################################################################################
 # If we plot the output, the result is identical to the plot of the input points
