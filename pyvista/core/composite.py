@@ -4,6 +4,8 @@ These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
 
+from __future__ import annotations
+
 import collections.abc
 from itertools import zip_longest
 import pathlib
@@ -379,7 +381,7 @@ class MultiBlock(
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> 'MultiBlock':  # noqa: D105
+    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
         ...  # pragma: no cover
 
     def __getitem__(self, index):
@@ -747,7 +749,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> 'MultiBlock':
+    def __iter__(self) -> MultiBlock:
         """Return the iterator across all blocks."""
         self._iter_n = 0
         return self
@@ -1306,3 +1308,27 @@ class MultiBlock(
         point_name = point_names.pop() if len(point_names) == 1 else None
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
+
+    def clear_all_data(self):
+        """Clear all data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_data()
+            elif block is not None:
+                block.clear_data()
+
+    def clear_all_point_data(self):
+        """Clear all point data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_point_data()
+            elif block is not None:
+                block.clear_point_data()
+
+    def clear_all_cell_data(self):
+        """Clear all cell data from all blocks."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block.clear_all_cell_data()
+            elif block is not None:
+                block.clear_cell_data()

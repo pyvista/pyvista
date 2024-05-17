@@ -1,5 +1,7 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
+from __future__ import annotations
+
 import collections
 from typing import Sequence, Union
 

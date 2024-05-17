@@ -1,13 +1,17 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 
+from __future__ import annotations
+
 from collections.abc import Iterable
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import ArrayLike, NumpyArray
 from .utilities.arrays import FieldAssociation, convert_array
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import ArrayLike, NumpyArray
 
 
 class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02

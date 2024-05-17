@@ -1,5 +1,7 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
 from functools import wraps
@@ -7,7 +9,7 @@ import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 import warnings
 
 import numpy as np
@@ -15,7 +17,6 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import ArrayLike, BoundsLike, CellArrayLike, MatrixLike, NumpyArray, VectorLike
 from .cell import (
     CellArray,
     _get_connectivity_array,
@@ -38,6 +39,16 @@ from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import (
+        ArrayLike,
+        BoundsLike,
+        CellArrayLike,
+        MatrixLike,
+        NumpyArray,
+        VectorLike,
+    )
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -104,7 +115,7 @@ class _PointSet(DataSet):
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         inplace=False,
-    ) -> '_PointSet':
+    ) -> _PointSet:
         """Remove cells.
 
         Parameters
@@ -146,7 +157,7 @@ class _PointSet(DataSet):
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> '_PointSet':
+    def points_to_double(self) -> _PointSet:
         """Convert the points datatype to double precision.
 
         Returns
@@ -692,6 +703,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Type[_vtk.vtkXMLPolyDataWriter],
                 Type[_vtk.vtkSTLWriter],
                 Type[_vtk.vtkPolyDataWriter],
+                Type[_vtk.vtkHoudiniPolyDataWriter],
             ],
         ]
     ] = {
@@ -699,6 +711,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
         '.vtk': _vtk.vtkPolyDataWriter,
+        '.geo': _vtk.vtkHoudiniPolyDataWriter,
     }
 
     def __init__(
@@ -1360,7 +1373,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.stl'``, ``'.vtk``).
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
@@ -1482,13 +1495,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active point normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1499,31 +1511,29 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.point_normals  # doctest:+SKIP
-        pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
-                         [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
-                         [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
+        >>> sphere.point_normals
+        pyvista_ndarray([[ 0.        ,  0.        ,  1.        ],
+                         [ 0.        ,  0.        , -1.        ],
+                         [ 0.10811902,  0.        ,  0.99413794],
                          ...,
-                         [-3.11940581e-01, -6.81432486e-02,  9.47654784e-01],
-                         [-2.09880397e-01, -4.65070531e-02,  9.76620376e-01],
-                         [-1.15582108e-01, -2.80492082e-02,  9.92901802e-01]],
-                        dtype=float32)
+                         [ 0.31232402, -0.06638652, -0.9476532 ],
+                         [ 0.21027282, -0.04469487, -0.97662055],
+                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
         """
-        if 'Normals' in self.point_data:
-            normals = self.point_data['Normals']
+        if self.point_data.active_normals is not None:
+            normals = self.point_data.active_normals
         else:
             normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
 
     @property
-    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active cell normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1534,24 +1544,24 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.cell_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.cell_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
-        if 'Normals' in self.cell_data:
-            normals = self.cell_data['Normals']
+        if self.cell_data.active_normals is not None:
+            normals = self.cell_data.active_normals
         else:
             normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals
 
     @property
-    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -1565,14 +1575,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.face_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.face_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         return self.cell_normals
@@ -2775,7 +2785,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         self.SetPoints(points)
         self.SetCells(CellArray(cells))
 
-    def cast_to_unstructured_grid(self) -> 'UnstructuredGrid':
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast to an unstructured grid.
 
         Returns
@@ -2876,7 +2886,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
-    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -2919,7 +2929,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid.hide_cells(ind, inplace=True)
         return grid
 
-    def show_cells(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -3255,7 +3265,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             indices.update(rel_func(i))
         return sorted(indices)
 
-    def compute_connectivity(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with

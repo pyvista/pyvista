@@ -13,8 +13,7 @@ def format_icon(title, link, image):
 
       .. image:: ../images/external-examples/{}
 """
-    content = body.format(title, link, image)
-    return content
+    return body.format(title, link, image)
 
 
 class Example:
@@ -204,6 +203,16 @@ articles = dict(
         title="VisualPIC",
         link="https://github.com/AngelFP/VisualPIC",
         image="visualpic.png",
+    ),
+    pyelastica=Example(
+        title="PyElastica",
+        link="https://github.com/GazzolaLab/PyElastica",
+        image="pyelastica.gif",
+    ),
+    comet_fenicsx=Example(
+        title="Numerical Tours of Computational Mechanics with FEniCSx",
+        link="https://bleyerj.github.io/comet-fenicsx",
+        image="comet_fenicsx.png",
     ),
     # entry=Example(title="",
     #     link="",
