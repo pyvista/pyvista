@@ -3730,6 +3730,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
+        scale=1.0,
     ):
         """Add ruler.
 
@@ -3800,6 +3801,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             tick line colors.
 
+        scale : float, default: 1.0
+            Scale factor for the ruler.
+
         Returns
         -------
         vtk.vtkActor
@@ -3869,6 +3873,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTickLength(tick_length)
         ruler.SetMinorTickLength(minor_tick_length)
         ruler.SetTickOffset(tick_label_offset)
+
+        min_, max_ = ruler.GetRange()
+        ruler.SetRange(min_ * scale, max_ * scale)
 
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler

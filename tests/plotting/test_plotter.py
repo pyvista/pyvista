@@ -531,3 +531,11 @@ def test_edge_opacity(sphere):
     pl = pv.Plotter(sphere)
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
+
+
+def test_add_ruler_scale():
+    plotter = pv.Plotter()
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.0
+    assert max_ == 0.6
