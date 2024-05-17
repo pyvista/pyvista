@@ -539,3 +539,8 @@ def test_add_ruler_scale():
     min_, max_ = ruler.GetRange()
     assert min_ == 0.0
     assert max_ == 0.6
+    
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.6
+    assert max_ == 0.0
