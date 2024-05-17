@@ -2729,6 +2729,8 @@ class GESignaReader(BaseReader):
 class ParticleReader(BaseReader):
     """ParticleReader for .raw files.
 
+    .. versionadded:: 0.44.0
+
     Examples
     --------
     >>> import pyvista as pv
