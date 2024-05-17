@@ -929,8 +929,9 @@ def validate_array(
     (1, 2, 3, 5, 8, 13)
 
     """
-    type_in = type(array)
-    id_in = id(array)
+    type_in = type(array) if get_flags else None
+    id_in = id(array) if get_flags else None
+
     if return_type in [np.ndarray, 'numpy']:
         # Wrap directly as numpy to bypass sequence checks
         wrapped: _ArrayLikeWrapper[NumberType] = _NumpyArrayWrapper(
@@ -976,8 +977,8 @@ def validate_array(
             else _ArrayLikeWrapper(np.asarray(array))
         )
 
-    shape_in = wrapped.shape
-    dtype_in = wrapped.dtype
+    shape_in = wrapped.shape if get_flags else None
+    dtype_in = wrapped.dtype if get_flags else None
 
     # Check shape
     if must_have_shape is not None:
@@ -1028,7 +1029,7 @@ def validate_array(
             check_sorted(wrapped(), name=name)
 
     # Set dtype
-    if dtype_out is not None and wrapped.dtype is not dtype_out:
+    if dtype_out is not None:
         try:
             wrapped.change_dtype(dtype_out)
         except OverflowError as e:

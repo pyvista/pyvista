@@ -533,8 +533,8 @@ def test_validate_array(
         # Test copy
         can_be_copied = deepcopy(array_in) is not array_in
         is_same_type = type(array_in) is type(array_out)
-        is_same_dtype = np.array(array_in).dtype is np.array(array_out).dtype
-        expect_copy = (copy and can_be_copied) or not is_same_type or not is_same_dtype
+        change_dtype = dtype_out is not None and isinstance(array_in, (tuple, list))
+        expect_copy = (copy and can_be_copied) or not is_same_type or change_dtype
         if expect_copy:
             assert array_in is not array_out
         else:
