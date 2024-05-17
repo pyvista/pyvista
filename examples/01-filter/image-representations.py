@@ -1,17 +1,15 @@
 """
-
 .. _image_representations_example:
 
 Image Data Representations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 This example demonstrates how to use :meth:`~pyvista.ImageDataFilters.points_to_cells`
 and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh :class:`~pyvista.ImageData`.
 
 These filters can be used to ensure that image data has an appropriate representation
 when generating plots and/or when using either point- or cell-based filters such as
 :meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>` (point-based)
- and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
+and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
 
 """
 
