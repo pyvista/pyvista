@@ -3852,9 +3852,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
         if flip_range:
-            ruler.SetRange(distance, 0)
+            ruler.SetRange(distance * scale, 0)
         else:
-            ruler.SetRange(0, distance)
+            ruler.SetRange(0, distance * scale)
 
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
@@ -3873,9 +3873,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTickLength(tick_length)
         ruler.SetMinorTickLength(minor_tick_length)
         ruler.SetTickOffset(tick_label_offset)
-
-        min_, max_ = ruler.GetRange()
-        ruler.SetRange(min_ * scale, max_ * scale)
 
         self.add_actor(ruler, reset_camera=True, pickable=False)
         return ruler
