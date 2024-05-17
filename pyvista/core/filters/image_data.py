@@ -1052,13 +1052,14 @@ class ImageDataFilters(DataSetFilters):
         ['Spatial Point Data']
 
         Observe that:
+
         - The input point array is now a cell array
         - The output has one less array (the input cell data is ignored)
         - The dimensions have increased by one
         - The bounds have increased by half the spacing
         - The output N Cells equals the input N Points
 
-        See :ref:`image_representations_example` for a full example using this filter.
+        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:
@@ -1166,13 +1167,14 @@ class ImageDataFilters(DataSetFilters):
         ['Spatial Cell Data']
 
         Observe that:
+
         - The input cell array is now a point array
         - The output has one less array (the input point data is ignored)
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
         - The output N Points equals the input N Cells
 
-        See :ref:`image_representations_example` for a full example using this filter.
+        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:
