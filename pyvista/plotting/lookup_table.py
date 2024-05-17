@@ -277,7 +277,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetValueRange()
 
     @value_range.setter
@@ -314,7 +314,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetHueRange()
 
     @hue_range.setter
