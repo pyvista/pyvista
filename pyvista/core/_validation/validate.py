@@ -963,7 +963,12 @@ def validate_array(
     do_broadcast = broadcast_to is not None and wrapped.shape != broadcast_to
 
     # Check if re-casting is needed in case subclasses are not allowed
-    rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
+    rewrap_numpy = (
+        as_any is False
+        and isinstance(wrapped._array, np.ndarray)
+        and type(wrapped._array) is not np.ndarray
+    )
+    # rewrap_numpy = as_any is False and type(wrapped._array) is not np.ndarray
     if rewrap_numpy or return_type in ("numpy", np.ndarray):
         wrapped = (
             _ArrayLikeWrapper(np.asanyarray(array))
@@ -1023,7 +1028,7 @@ def validate_array(
             check_sorted(wrapped(), name=name)
 
     # Set dtype
-    if dtype_out is not None:
+    if dtype_out is not None and wrapped.dtype is not dtype_out:
         try:
             wrapped.change_dtype(dtype_out)
         except OverflowError as e:

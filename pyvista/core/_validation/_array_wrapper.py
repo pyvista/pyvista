@@ -336,7 +336,7 @@ class _NestedSequenceWrapper(_BuiltinWrapper[NumberType]):
     ) -> List[List[NumberType]]:
         return (
             self._array
-            if isinstance(self._array, list)
+            if isinstance(self._array, list) and not copy
             else [list(sub_array) for sub_array in self._array]
         )
 

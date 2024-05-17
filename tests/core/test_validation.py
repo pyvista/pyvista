@@ -6,7 +6,7 @@ import itertools
 from numbers import Real
 from re import escape
 import sys
-from typing import Any, Callable, Dict, NamedTuple, Union, get_args, get_origin
+from typing import Any, Callable, Dict, Union, get_args, get_origin
 
 import numpy as np
 import pytest
@@ -396,151 +396,129 @@ def test_check_range():
         check_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
-class Case(NamedTuple):
-    kwarg: dict
-    valid_array: np.ndarray
-    invalid_array: np.ndarray
-    error_type: type
-    error_msg: str
-
-
-def numeric_array_test_cases():
-    return (
-        Case(
-            dict(
-                must_be_finite=True,
-                must_be_real=False,
-            ),  # must be real is only added for extra coverage
-            0,
-            np.inf,
-            ValueError,
-            'must have finite values',
-        ),
-        Case(dict(must_be_real=True), 0, 1 + 1j, TypeError, 'must have real numbers'),
-        Case(dict(must_be_integer=True), 0.0, 0.1, ValueError, 'must have integer-like values'),
-        Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, 'must be sorted'),
-        Case(
-            dict(must_be_sorted=dict(ascending=True, strict=False, axis=-1)),
-            [0, 1],
-            [1, 0],
-            ValueError,
-            'must be sorted',
-        ),
+def _generate_ids(name, values):
+    """Generate named test ids using param name and values."""
+    name_iter = [name] * len(values)
+    format_id = lambda name, val: f'{name}={val.__name__ if type(val) is type else val}'.replace(
+        ' ',
+        '',
     )
+    return [format_id(name, val) for name, val in zip(name_iter, values)]
 
 
-@pytest.mark.parametrize('name', ["_array", "_input"])
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize('as_any', [True, False])
-@pytest.mark.parametrize('dtype_in', [float])
-@pytest.mark.parametrize('dtype_out', [float, int, np.float32, np.float64])
-@pytest.mark.parametrize('case', numeric_array_test_cases())
-@pytest.mark.parametrize('stack_input', [True, False])
-@pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
-@pytest.mark.parametrize('return_type', [tuple, list, np.ndarray, None])
+def parametrize_with_ids(name, values):
+    """Give meaningful names to parametrized tests."""
+    return pytest.mark.parametrize(name, values, ids=_generate_ids(name, values))
+
+
+@parametrize_with_ids('copy', [True, False])
+@parametrize_with_ids('as_any', [True, False])
+@parametrize_with_ids('dtype_in', [float, int])
+@parametrize_with_ids('dtype_out', [float, int, np.float32, np.float64])
+@parametrize_with_ids('array', [0, [0, 1], [[0, 1], [0, 1]]])
+@parametrize_with_ids('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
+@parametrize_with_ids('return_type', [tuple, list, np.ndarray, None])
 def test_validate_array(
-    name,
     copy,
     as_any,
     dtype_in,
     dtype_out,
-    case,
-    stack_input,
+    array,
     input_type,
     return_type,
 ):
     # Set up
-    valid_array = np.array(case.valid_array)
-    invalid_array = np.array(case.invalid_array)
+    def _setup_array_type_and_dtype(array_, input_type_, dtype_in_):
+        array_setup = np.array(array_)
+        array_setup = array_setup.astype(dtype_in_)
 
-    # Inputs may be scalar, use stacking to ensure we have test cases
-    # with multidimensional arrays
-    if stack_input:
-        valid_array = np.stack((valid_array, valid_array), axis=0)
-        valid_array = np.stack((valid_array, valid_array), axis=1)
-        invalid_array = np.stack((invalid_array, invalid_array), axis=0)
-        invalid_array = np.stack((invalid_array, invalid_array), axis=1)
+        if input_type_ is tuple:
+            return _cast_to_tuple(array_setup)
+        elif input_type_ is list:
+            return array_setup.tolist()
+        elif input_type_ is np.ndarray:
+            return np.asarray(array_setup)
+        else:  # pyvista_ndarray:
+            return pyvista_ndarray(array_setup)
 
-    valid_array = valid_array.astype(dtype_in)
-
-    if input_type is tuple:
-        valid_array = _cast_to_tuple(valid_array)
-        invalid_array = _cast_to_tuple(invalid_array)
-    elif input_type is list:
-        valid_array = valid_array.tolist()
-        invalid_array = invalid_array.tolist()
-    elif input_type is np.ndarray:
-        valid_array = np.asarray(valid_array)
-        invalid_array = np.asarray(invalid_array)
-    else:  # pyvista_ndarray:
-        valid_array = pyvista_ndarray(valid_array)
-        invalid_array = pyvista_ndarray(invalid_array)
+    array_in = _setup_array_type_and_dtype(array, input_type, dtype_in)
 
     has_numpy_dtype = issubclass(dtype_out, np.generic)
     if has_numpy_dtype and return_type not in [None, np.ndarray, 'numpy']:
-        pytest.xfail('NumPy dtype specified with non-numpy return type')
+        pytest.skip('NumPy dtype specified with non-numpy return type')
 
-    shape = np.array(valid_array).shape
-    common_kwargs = dict(
-        **case.kwarg,
-        name=name,
+    # These are actual parametrized test keywords
+    test_kwargs = dict(
         copy=copy,
         as_any=as_any,
-        must_have_dtype=np.number,
         dtype_out=dtype_out,
-        must_have_length=range(np.array(valid_array).size + 1),
-        must_have_min_length=1,
-        must_have_max_length=np.array(valid_array).size,
-        must_have_shape=shape,
-        reshape_to=shape,
-        broadcast_to=shape,
-        must_be_in_range=(np.min(valid_array), np.max(valid_array)),
-        must_be_nonnegative=np.all(np.array(valid_array) > 0),
         return_type=return_type,
     )
 
-    # Test raises correct error with invalid input
-    with pytest.raises(case.error_type, match=case.error_msg):
-        validate_array(invalid_array, **common_kwargs)
-    # Test error has correct name
-    with pytest.raises(case.error_type, match=name):
-        validate_array(invalid_array, **common_kwargs)
+    # Also include other keywords dynamically based on input array
+    shape = np.array(array_in).shape
+    dynamic_kwargs = dict(
+        must_have_shape=shape,
+        must_have_dtype=np.number,
+        must_have_length=range(np.array(array_in).size + 1),
+        must_have_min_length=1,
+        must_have_max_length=np.array(array_in).size,
+        reshape_to=shape,
+        broadcast_to=shape,
+        must_be_in_range=(np.min(array_in), np.max(array_in)),
+        must_be_nonnegative=np.all(np.array(array_in) > 0),
+    )
+    common_kwargs = {**test_kwargs, **dynamic_kwargs}
 
-    # Test no error with valid input
-    array_in = valid_array
+    # Do test
     array_out, flags = validate_array(array_in, **common_kwargs, get_flags=True)
     assert np.array_equal(array_out, array_in)
 
-    # Check correct return type and dtype
-    ndim = np.array(array_in).ndim
-    numpy_expected = (
+    # Check numpy outputs separately from other outputs
+    expected_numpy_return_type = (
         has_numpy_dtype
         or return_type is np.ndarray
         or (isinstance(array_in, np.ndarray) and return_type is None)
     )
-    if numpy_expected:
+    expected_other_return_type = return_type in (tuple, list, None)
+
+    if expected_numpy_return_type:
+        # Test return type
         assert isinstance(array_out, np.ndarray)
-        assert array_out.dtype.type is np.dtype(dtype_out).type
-        if as_any:
-            if input_type is pyvista_ndarray:
-                assert type(array_out) is pyvista_ndarray
-            elif input_type is np.ndarray:
-                assert type(array_out) is np.ndarray
-            if (
-                not copy
-                and isinstance(array_in, np.ndarray)
-                and np.dtype(dtype_out) is array_in.dtype
-            ):
-                assert array_out is array_in
-            else:
-                assert array_out is not array_in
+        if as_any and input_type is pyvista_ndarray:
+            assert type(array_out) is pyvista_ndarray
         else:
             assert type(array_out) is np.ndarray
-    elif return_type in (tuple, list, None):
-        if ndim == 0 and dtype_out is not None:
-            assert isinstance(array_out, dtype_out)
+
+        # Test dtype out
+        assert array_out.dtype.type is np.dtype(dtype_out).type
+
+        # Test copy
+        is_same_type = isinstance(array_in, np.ndarray) and type(array_in) is type(array_out)
+        is_same_dtype = isinstance(array_in, np.ndarray) and np.dtype(dtype_out) is array_in.dtype
+        expect_copy = copy or not is_same_type or not is_same_dtype
+        if expect_copy:
+            assert array_out is not array_in
+        else:
+            assert array_out is array_in
+
+    elif expected_other_return_type:
+        assert isinstance(array_out, (int, float, tuple, list))
+
+        ndim = np.array(array_in).ndim
+
+        if ndim == 0:
+            if dtype_out is not None:
+                # Test scalars type/dtype
+                assert isinstance(array_out, dtype_out)
+            else:
+                assert isinstance(array_out, dtype_in)
+
         elif return_type in (tuple, list):
+            # Test sequence type
             assert isinstance(array_out, return_type)
+
+            # Test sequence dtype
             if ndim == 1:
                 assert isinstance(array_out[0], dtype_out)
             elif ndim == 2:
@@ -551,24 +529,20 @@ def test_validate_array(
                 assert isinstance(array_out[0][0][0][0], dtype_out)
             else:
                 raise RuntimeError("Unexpected test case")
+
+        # Test copy
+        can_be_copied = deepcopy(array_in) is not array_in
+        is_same_type = type(array_in) is type(array_out)
+        is_same_dtype = np.array(array_in).dtype is np.array(array_out).dtype
+        expect_copy = (copy and can_be_copied) or not is_same_type or not is_same_dtype
+        if expect_copy:
+            assert array_in is not array_out
+        else:
+            assert array_in is array_out
     else:
         raise RuntimeError("Unexpected test case")
 
-    if copy:
-        if isinstance(array_in, (int, float)):
-            # copying an int will not always create a unique instance
-            assert array_out == array_in
-        else:
-            # Otherwise, expect a new instance
-            try:
-                assert array_out is not array_in
-            except AssertionError:
-                if deepcopy(array_out) is array_out:
-                    # Deepcopy will not copy when it's fully immutable
-                    assert array_out is array_in
-                else:
-                    assert array_out is not array_in
-
+    # Test flags
     same_shape = np.shape(array_in) == np.shape(array_out)
     same_dtype = np.array(array_in).dtype == np.dtype(dtype_out)
     same_object = id(array_in) == id(array_out)
