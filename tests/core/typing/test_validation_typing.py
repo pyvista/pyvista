@@ -18,11 +18,23 @@ import importlib
 import os
 import re
 import sys
-from typing import List, Tuple
+from typing import Any, List, Sequence, Tuple, Union
 
 from mypy import api as mypy_api
+import numpy as np
+from numpy import bool_, dtype, integer, ndarray
 import pyanalyze
 import pytest
+
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
+from pyvista.core._validation.validate import (
+    validate_array,
+    validate_array3,
+    validate_arrayN,
+    validate_arrayN_unsigned,
+    validate_arrayNx3,
+    validate_number,
+)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 TYPING_CASES_REL_PATH = 'tests/core/typing/validation_cases'
@@ -175,21 +187,6 @@ def test_typing(test_case):
     else:
         # Test that the actual runtime type is compatible with the revealed type
 
-        # imports needed for runtime evaluation
-        from typing import Any, Sequence, Union
-
-        import numpy as np
-        from numpy import bool_, dtype, integer, ndarray
-
-        from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
-        from pyvista.core._validation.validate import (
-            validate_array,
-            validate_array3,
-            validate_arrayN,
-            validate_arrayN_unsigned,
-            validate_arrayNx3,
-            validate_number,
-        )
         try:
             revealed_type = eval(revealed)
         except Exception as e:
