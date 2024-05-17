@@ -3804,6 +3804,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         scale : float, default: 1.0
             Scale factor for the ruler.
 
+            .. versionadded:: 0.44.0
         Returns
         -------
         vtk.vtkActor
