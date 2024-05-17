@@ -1068,6 +1068,7 @@ def validate_array(
             must_contain=return_type,
             name='Return type',
         )
+        return None
 
 
 def validate_axes(

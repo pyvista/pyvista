@@ -376,9 +376,10 @@ def check_integer(
     if strict:
         try:
             check_subdtype(wrapped.dtype, np.integer)
-            return
         except TypeError:
             raise
+        else:
+            return
 
     is_integer: Union[bool, np.bool_]
     try:

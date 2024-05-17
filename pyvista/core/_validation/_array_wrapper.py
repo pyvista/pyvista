@@ -106,10 +106,11 @@ class _ArrayLikeWrapper(Generic[NumberType]):
                 wrapped4 = object.__new__(_NumberWrapper)
                 wrapped4.__setattr__('_array', _array)
                 return wrapped4
-            # Everything else gets wrapped as (and possibly converted to) a numpy array
-            wrapped5 = object.__new__(_NumpyArrayWrapper)
-            wrapped5.__setattr__('_array', _cast_to_numpy(_array))
-            return wrapped5
+            else:
+                # Everything else gets wrapped as (and possibly converted to) a numpy array
+                wrapped5 = object.__new__(_NumpyArrayWrapper)
+                wrapped5.__setattr__('_array', _cast_to_numpy(_array))
+                return wrapped5
         except (ValueError, TypeError):
             raise ValueError(f"The following array is not valid:\n\t{reprlib.repr(_array)}")
 
