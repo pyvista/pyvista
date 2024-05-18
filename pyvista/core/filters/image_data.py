@@ -409,8 +409,6 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
@@ -1059,8 +1057,6 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have increased by half the spacing
         - The output N Cells equals the input N Points
 
-        See :ref:`image_representations_example` for more examples using this filter.
-
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
@@ -1173,8 +1169,6 @@ class ImageDataFilters(DataSetFilters):
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
         - The output N Points equals the input N Cells
-
-        See :ref:`image_representations_example` for more examples using this filter.
 
         """
         if scalars is not None:
