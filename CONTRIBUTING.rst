@@ -699,6 +699,7 @@ included in a single `.py` file. The test cases are all stored in
 The tests can be executed with:
 
 .. code:: python
+
     pytest tests/core/typing
 
 When executed, a single instance of ``Mypy`` will statically analyze all of the
