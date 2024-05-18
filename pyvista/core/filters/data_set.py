@@ -1258,8 +1258,7 @@ class DataSetFilters:
         ...     show_edges=True,
         ... )
 
-        See :ref:`common_filter_example` and :ref:`image_representations_example` for
-        more examples using this filter.
+        See :ref:`common_filter_example` for more examples using this filter.
 
         """
         # set the scalars to threshold on
