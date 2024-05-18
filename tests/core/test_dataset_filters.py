@@ -3132,13 +3132,18 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
 
 
 @pytest.mark.parametrize('value_dtype', [float, int])

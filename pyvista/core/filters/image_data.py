@@ -422,16 +422,15 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
-            if len(threshold) != 2:
-                raise ValueError(
-                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).',
-                )
-            alg.ThresholdBetween(threshold[0], threshold[1])
-        elif isinstance(threshold, collections.abc.Iterable):
-            raise TypeError('Threshold must either be a single scalar or a sequence.')
+        threshold_val = np.atleast_1d(threshold).astype(float)
+        if (size := threshold_val.size) not in (1, 2):
+            raise ValueError(
+                f'Threshold must have one or two values, got {size}.',
+            )
+        if size == 2:
+            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
         else:
-            alg.ThresholdByUpper(threshold)
+            alg.ThresholdByUpper(threshold_val[0])
         # set the replacement values / modes
         if in_value is not None:
             alg.SetReplaceIn(True)
