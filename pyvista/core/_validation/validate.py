@@ -780,7 +780,7 @@ def validate_array(
 
     must_be_nonnegative : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_nonnegative>`
-        if all elements of the array are nonnegative. Consider also 
+        if all elements of the array are nonnegative. Consider also
         setting ``dtype_out``, e.g. to ensure the output is an unsigned
         integer type.
 
