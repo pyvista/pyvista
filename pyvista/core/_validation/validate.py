@@ -57,7 +57,7 @@ from pyvista.core._validation.check import (
     check_subdtype,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import (
         MatrixLike,
         NumberType,
@@ -780,12 +780,9 @@ def validate_array(
 
     must_be_nonnegative : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_nonnegative>`
-        if all elements of the array are nonnegative.
-
-        .. note::
-
-            Arrays with a float values may pass this check. Set
-            ``dtype_out=int`` if the output must have an integer dtype.
+        if all elements of the array are nonnegative. Consider also 
+        setting ``dtype_out``, e.g. to ensure the output is an unsigned
+        integer type.
 
     must_be_sorted : bool | dict, default: False
         :func:`Check <pyvista.core._validation.check.check_sorted>`
@@ -1074,7 +1071,7 @@ def validate_array(
             must_contain=return_type,
             name='Return type',
         )
-        return None
+        return None  # pragma: no cover
 
 
 def validate_axes(

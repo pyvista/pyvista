@@ -41,7 +41,7 @@ from pyvista.core._validation._array_wrapper import (
     _SequenceWrapper,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import _NumberType
 
