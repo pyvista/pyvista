@@ -94,7 +94,7 @@ print(points_image.point_data['Data'])
 
 dims = (4, 4, 4)
 points_image = pv.ImageData(dimensions=dims)
-points_image['Data'] = range(4*4*4)[::-1]
+points_image['Data'] = range(4 * 4 * 4)[::-1]
 points_ithresh = points_image.image_threshold(2)
 
 ################################################################################
