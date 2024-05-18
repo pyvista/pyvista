@@ -62,7 +62,7 @@ def vtk_points(points, deep=True, force_float=False):
                 'Points is not a float type. This can cause issues when '
                 'transforming or applying filters. Casting to '
                 '``np.float32``. Disable this by passing '
-                '``force_float=False``.'
+                '``force_float=False``.',
             )
             points = points.astype(np.float32)
 
@@ -76,7 +76,7 @@ def vtk_points(points, deep=True, force_float=False):
     if points.shape[1] != 3:
         raise ValueError(
             'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)'
+            f'Shape is {points.shape} and should be (X, 3)',
         )
 
     # use the underlying vtk data if present to avoid memory leaks
@@ -575,7 +575,7 @@ def principal_axes_vectors(
                 valid_strings = list(NORMALS.keys())
                 if vector not in valid_strings:
                     raise ValueError(
-                        f"Vector string for {name} must be one of {valid_strings}, got {vector} instead."
+                        f"Vector string for {name} must be one of {valid_strings}, got {vector} instead.",
                     )
                 vector = NORMALS[vector]
             check_valid_vector(vector, name=name)
@@ -624,7 +624,7 @@ def principal_axes_vectors(
                 transformed_center = centroid
             else:
                 raise ValueError(
-                    f"Expected one of {['origin', 'centroid']}, got {transformed_center} instead."
+                    f"Expected one of {['origin', 'centroid']}, got {transformed_center} instead.",
                 )
         check_valid_vector(transformed_center, name="transform_location")
 
@@ -695,7 +695,7 @@ def principal_axes_vectors(
                 j_vector *= sign
                 k_vector *= sign
 
-    axes_vectors = np.row_stack((i_vector, j_vector, k_vector))
+    axes_vectors = np.vstack((i_vector, j_vector, k_vector))
 
     if return_transforms:
         transform, inverse = axes_rotation_matrix(
@@ -925,7 +925,9 @@ def fit_plane_to_points(
     """
     # Get best-fit axes and transforms
     axes_vectors, transform, inverse = principal_axes_vectors(
-        points, axis_2_direction=normal_direction, return_transforms=True
+        points,
+        axis_2_direction=normal_direction,
+        return_transforms=True,
     )
     dtype = axes_vectors.dtype
 
@@ -1111,7 +1113,7 @@ def vector_poly_data(orig, vec):
 
     npts = orig.shape[0]
     vcells = pyvista.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1))
+        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1)),
     )
 
     # Create vtkPolyData object

@@ -1,12 +1,12 @@
 import importlib
-import pathlib
+from pathlib import Path
 
 import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = pathlib.Path(__file__).parent / 'namespace-utilities.txt'
-with open(namespace_data) as f:
+namespace_data = Path(__file__).parent / 'namespace-utilities.txt'
+with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
@@ -15,7 +15,7 @@ with open(namespace_data) as f:
 @pytest.mark.parametrize('name', namespace)
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
-        import pyvista.utilities as utilities
+        import pyvista.utilities as utilities  # noqa: PLR0402
 
         assert hasattr(utilities, name)
 
@@ -88,4 +88,4 @@ def test_failure_to_find():
         AttributeError,
         match=r'Module `pyvista\.utilities` has been deprecated and we could not automatically find',
     ):
-        getattr(module, 'this_does_not_exist')
+        _ = module.this_does_not_exist

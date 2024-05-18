@@ -3,6 +3,7 @@
 # flake8: noqa: F401
 
 from . import _vtk_core
+from ._typing_core import *
 from .cell import Cell, CellArray
 from .celltype import CellType
 from .composite import MultiBlock
@@ -31,6 +32,7 @@ from .filters import (
 )
 from .grid import Grid, ImageData, RectilinearGrid
 from .objects import Table
+from .partitioned import PartitionedDataSet
 from .pointset import (
     ExplicitStructuredGrid,
     PointGrid,

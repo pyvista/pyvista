@@ -1,14 +1,16 @@
 """Test pyvista core utilities."""
 
 from itertools import permutations
+import json
 import os
 import pathlib
+from pathlib import Path
 import pickle
 import platform
 import random
 from re import escape
 import shutil
-import unittest.mock as mock
+from unittest import mock
 import warnings
 
 import numpy as np
@@ -28,6 +30,7 @@ from pyvista.core.utilities import (
 from pyvista.core.utilities.arrays import (
     _coerce_pointslike_arg,
     _coerce_transformlike_arg,
+    _SerializedDictArray,
     copy_vtk_array,
     get_array,
     has_duplicates,
@@ -38,7 +41,12 @@ from pyvista.core.utilities.arrays import (
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import axes_rotation, is_inside_bounds
-from pyvista.core.utilities.misc import assert_empty_kwargs, check_valid_vector, has_module
+from pyvista.core.utilities.misc import (
+    assert_empty_kwargs,
+    check_valid_vector,
+    has_module,
+    no_new_attr,
+)
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import _swap_axes, vector_poly_data
 from pyvista.core.utilities.transformations import (
@@ -152,13 +160,15 @@ def test_read_force_ext(tmpdir):
     )
 
     dummy_extension = '.dummy'
-    for fname, type in zip(fnames, types):
-        root, original_ext = os.path.splitext(fname)
+    for fname, type_ in zip(fnames, types):
+        path = Path(fname)
+        root = str(path.parent / path.stem)
+        original_ext = path.suffix
         _, name = os.path.split(root)
         new_fname = tmpdir / name + '.' + dummy_extension
         shutil.copy(fname, new_fname)
         data = fileio.read(new_fname, force_ext=original_ext)
-        assert isinstance(data, type)
+        assert isinstance(data, type_)
 
 
 @mock.patch('pyvista.BaseReader.read')
@@ -631,7 +641,7 @@ def test_reflection():
             [-1, 1, 0],
             [-1, -1, 0],
             [1, -1, 0],
-        ]
+        ],
     )
     normal = [1, 1, 0]
 
@@ -710,7 +720,8 @@ def test_convert_array():
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pv.core.utilities.arrays.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))), array_type=np.dtype('O')
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
+        array_type=np.dtype('O'),
     )
     assert arr3.GetNumberOfValues() == 4
 
@@ -718,6 +729,13 @@ def test_convert_array():
     my_list = [1, 2, 3]
     arr4 = pv.core.utilities.arrays.convert_array(my_list)
     assert arr4.GetNumberOfValues() == len(my_list)
+
+    # test string scalar is converted to string array with length on
+    my_str = 'abc'
+    arr5 = pv.core.utilities.arrays.convert_array(my_str)
+    assert arr5.GetNumberOfValues() == 1
+    arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
+    assert arr6.GetNumberOfValues() == 1
 
 
 def test_has_duplicates():
@@ -753,7 +771,7 @@ def test_copy_vtk_array():
 def test_cartesian_to_spherical():
     def polar2cart(r, phi, theta):
         return np.vstack(
-            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi))
+            (r * np.sin(phi) * np.cos(theta), r * np.sin(phi) * np.sin(theta), r * np.cos(phi)),
         ).T
 
     points = np.random.default_rng().random((1000, 3))
@@ -975,7 +993,7 @@ def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution
 
 def swap_axes_test_cases():
     d = dict(swap_all=[1, 1, 1], swap_none=[3, 2, 1], swap_0_1=[2, 2, 1], swap_1_2=[2, 1, 1])
-    return list(zip(d.keys(), d.values()))
+    return list(d.items())
 
 
 @pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
@@ -1020,11 +1038,15 @@ def test_principal_axes_vectors_returns_right_handed_frame(x, y, z, order):
     # test where direction vector may be perpendicular to axes
     points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]  # axis-aligned data
     axes = principal_axes_vectors(
-        points, axis_0_direction=directions[0], axis_1_direction=directions[1]
+        points,
+        axis_0_direction=directions[0],
+        axis_1_direction=directions[1],
     )
     assert assert_valid_right_handed_frame(axes)
     axes = principal_axes_vectors(
-        points, axis_1_direction=directions[1], axis_2_direction=directions[2]
+        points,
+        axis_1_direction=directions[1],
+        axis_2_direction=directions[2],
     )
     assert assert_valid_right_handed_frame(axes)
 
@@ -1090,7 +1112,8 @@ def test_principal_axes_vectors_return_transforms(airplane):
 
     # verify not centered and not axis-aligned
     initial_axes, transform, inverse = principal_axes_vectors(
-        initial_points, return_transforms=True
+        initial_points,
+        return_transforms=True,
     )
     initial_center = np.mean(initial_points, axis=0)
     assert not np.allclose(initial_axes, np.eye(3))
@@ -1102,7 +1125,9 @@ def test_principal_axes_vectors_return_transforms(airplane):
     airplane.transform(transform)
     aligned_points = airplane.points
     aligned_axes = principal_axes_vectors(
-        aligned_points, axis_0_direction='x', axis_1_direction='y'
+        aligned_points,
+        axis_0_direction='x',
+        axis_1_direction='y',
     )
     aligned_center = np.mean(aligned_points, axis=0)
     assert np.allclose(aligned_axes, np.eye(3))
@@ -1117,19 +1142,25 @@ def test_principal_axes_vectors_return_transforms(airplane):
 
     # test transform_location
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transformed_center="origin"
+        initial_points,
+        return_transforms=True,
+        transformed_center="origin",
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), (0, 0, 0))
 
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transformed_center="centroid"
+        initial_points,
+        return_transforms=True,
+        transformed_center="centroid",
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), np.mean(initial_points, axis=0))
 
     _, transform, _ = principal_axes_vectors(
-        initial_points, return_transforms=True, transformed_center=(1, 2, 3)
+        initial_points,
+        return_transforms=True,
+        transformed_center=(1, 2, 3),
     )
     points = apply_transformation_to_points(transform, initial_points)
     assert np.allclose(np.mean(points, axis=0), (1, 2, 3))
@@ -1243,7 +1274,10 @@ def test_principal_axes_vectors_sample_count():
 
 def test_principal_axes_transform(airplane):
     transform = principal_axes_transform(
-        airplane.points, axis_0_direction='x', axis_1_direction='y', axis_2_direction='z'
+        airplane.points,
+        axis_0_direction='x',
+        axis_1_direction='y',
+        axis_2_direction='z',
     )
     assert np.any(transform)
     assert np.array_equal(transform.shape, (4, 4))
@@ -1355,7 +1389,10 @@ def test_axes_rotation_matrix():
     )
 
     transform, inverse = axes_rotation_matrix(
-        axes, point_initial=p1, point_final=p2, return_inverse=True
+        axes,
+        point_initial=p1,
+        point_final=p2,
+        return_inverse=True,
     )
     assert np.array_equal(
         transform,
@@ -1398,3 +1435,113 @@ def test_random_sample(airplane):
     msg = "Sample larger than population or is negative"
     with pytest.raises(ValueError, match=msg):
         random_sample_points(points, count=N + 1, pass_through=False)
+
+
+@pytest.fixture()
+def no_new_attr_subclass():
+    @no_new_attr
+    class A: ...
+
+    class B(A):
+        _new_attr_exceptions = 'eggs'
+
+        def __init__(self):
+            self.eggs = 'ham'
+
+    return B
+
+
+def test_no_new_attr_subclass(no_new_attr_subclass):
+    obj = no_new_attr_subclass()
+    assert obj
+    msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
+    with pytest.raises(AttributeError, match=msg):
+        obj._eggs = 'ham'
+
+
+@pytest.fixture()
+def serial_dict_empty():
+    return _SerializedDictArray()
+
+
+@pytest.fixture()
+def serial_dict_with_foobar():
+    serial_dict = _SerializedDictArray()
+    serial_dict.data = dict(foo='bar')
+    return serial_dict
+
+
+def test_serial_dict_init():
+    # empty init
+    serial_dict = _SerializedDictArray()
+    assert serial_dict == {}
+    assert repr(serial_dict) == '{}'
+
+    # init from dict
+    new_dict = dict(ham='eggs')
+    serial_dict = _SerializedDictArray(new_dict)
+    assert serial_dict['ham'] == 'eggs'
+    assert repr(serial_dict) == '{"ham": "eggs"}'
+
+    # init from UserDict
+    serial_dict = _SerializedDictArray(serial_dict)
+    assert serial_dict['ham'] == 'eggs'
+    assert repr(serial_dict) == '{"ham": "eggs"}'
+
+    # init from JSON string
+    json_dict = json.dumps(new_dict)
+    serial_dict = _SerializedDictArray(json_dict)
+    assert serial_dict['ham'] == 'eggs'
+    assert repr(serial_dict) == '{"ham": "eggs"}'
+
+
+def test_serial_dict_as_dict(serial_dict_with_foobar):
+    assert not isinstance(serial_dict_with_foobar, dict)
+    actual_dict = dict(serial_dict_with_foobar)
+    assert isinstance(actual_dict, dict)
+    assert actual_dict == serial_dict_with_foobar.data
+
+
+def test_serial_dict_overrides__setitem__(serial_dict_empty):
+    serial_dict_empty['foo'] = 'bar'
+    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+
+
+def test_serial_dict_overrides__delitem__(serial_dict_with_foobar):
+    del serial_dict_with_foobar['foo']
+    assert repr(serial_dict_with_foobar) == '{}'
+
+
+def test_serial_dict_overrides__setattr__(serial_dict_empty):
+    serial_dict_empty.data = dict(foo='bar')
+    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+
+
+def test_serial_dict_overrides_popitem(serial_dict_with_foobar):
+    serial_dict_with_foobar['ham'] = 'eggs'
+    item = serial_dict_with_foobar.popitem()
+    assert item == ('foo', 'bar')
+    assert repr(serial_dict_with_foobar) == '{"ham": "eggs"}'
+
+
+def test_serial_dict_overrides_pop(serial_dict_with_foobar):
+    item = serial_dict_with_foobar.pop('foo')
+    assert item == 'bar'
+    assert repr(serial_dict_with_foobar) == '{}'
+
+
+def test_serial_dict_overrides_update(serial_dict_empty):
+    serial_dict_empty.update(dict(foo='bar'))
+    assert repr(serial_dict_empty) == '{"foo": "bar"}'
+
+
+def test_serial_dict_overrides_clear(serial_dict_with_foobar):
+    serial_dict_with_foobar.clear()
+    assert repr(serial_dict_with_foobar) == '{}'
+
+
+def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_foobar):
+    serial_dict_empty.setdefault('foo', 42)
+    assert repr(serial_dict_empty) == '{"foo": 42}'
+    serial_dict_with_foobar.setdefault('foo', 42)
+    assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'

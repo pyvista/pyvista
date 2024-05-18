@@ -304,13 +304,17 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
     # If inplace, set the points
     if inplace:
         points[:] = points_2
+        return None
     else:
         # otherwise return the new points
         return points_2
 
 
 def axes_rotation_matrix(
-    axes, point_initial=(0, 0, 0), point_final=(0, 0, 0), return_inverse=False
+    axes,
+    point_initial=(0, 0, 0),
+    point_final=(0, 0, 0),
+    return_inverse=False,
 ):
     """Return a 4x4 matrix to apply a rotation by axes vectors.
 
@@ -364,7 +368,7 @@ def axes_rotation_matrix(
     point_initial = np.asarray(point_initial)
     check_valid_vector(point_final)
     point_final = np.asarray(point_final)
-    if not (isinstance(axes, Sequence) or isinstance(axes, np.ndarray)):
+    if not isinstance(axes, (Sequence, np.ndarray)):
         raise TypeError("Axes vectors must a sequence or numpy array.")
     axes = np.asarray(axes)
     is_3x3 = axes.ndim == 2 and axes.shape[0] == 3 and axes.shape[1] == 3

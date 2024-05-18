@@ -1,7 +1,9 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
 
+from __future__ import annotations
+
 import collections.abc
-from typing import Literal, Optional, cast
+from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 
 import numpy as np
 
@@ -13,6 +15,9 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -82,7 +87,11 @@ class ImageDataFilters(DataSetFilters):
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
@@ -96,7 +105,11 @@ class ImageDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def median_smooth(
-        self, kernel_size=(3, 3, 3), scalars=None, preference='point', progress_bar=False
+        self,
+        kernel_size=(3, 3, 3),
+        scalars=None,
+        preference='point',
+        progress_bar=False,
     ):
         """Smooth data using a median filter.
 
@@ -167,7 +180,11 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
@@ -310,7 +327,11 @@ class ImageDataFilters(DataSetFilters):
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
@@ -394,13 +415,17 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
         if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
             if len(threshold) != 2:
                 raise ValueError(
-                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).'
+                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).',
                 )
             alg.ThresholdBetween(threshold[0], threshold[1])
         elif isinstance(threshold, collections.abc.Iterable):
@@ -497,7 +522,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -567,7 +594,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -645,7 +674,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -723,7 +754,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing High Pass Filter')
         output = _get_output(alg)
         self._change_fft_output_scalars(
-            output, self.point_data.active_scalars_name, output_scalars_name
+            output,
+            self.point_data.active_scalars_name,
+            output_scalars_name,
         )
         return output
 
@@ -751,7 +784,7 @@ class ImageDataFilters(DataSetFilters):
             elif len(possible_scalars) > 1:
                 raise AmbiguousDataError(
                     'There are multiple point scalars available. Set one to be '
-                    'active with `point_data.active_scalars_name = `'
+                    'active with `point_data.active_scalars_name = `',
                 )
             else:
                 raise MissingDataError('FFT filters require point scalars.')
@@ -760,10 +793,10 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
-                '`numpy.complex128`.'
+                '`numpy.complex128`.',
             )
 
-    def _flip_uniform(self, axis) -> 'pyvista.ImageData':
+    def _flip_uniform(self, axis) -> pyvista.ImageData:
         """Flip the uniform grid along a specified axis and return a uniform grid.
 
         This varies from :func:`DataSet.flip_x` because it returns a ImageData.
@@ -786,7 +819,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: Optional[str] = None,
         progress_bar: bool = False,
-    ) -> 'pyvista.PolyData':
+    ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -866,18 +899,22 @@ class ImageDataFilters(DataSetFilters):
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore
-            field, scalars = self.active_scalars_info  # type: ignore
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.'
+                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
                 )
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetInputData(self)
         if n_labels is not None:
@@ -888,7 +925,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputMeshTypeToTriangles()
         else:
             raise ValueError(
-                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+                f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
             )
         if output_style == 'default':
             alg.SetOutputStyleToDefault()
@@ -912,3 +949,325 @@ class ImageDataFilters(DataSetFilters):
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+
+    def pad_image(
+        self,
+        pad_value: Union[float, VectorLike[float], Literal['wrap', 'mirror']] = 0.0,
+        *,
+        pad_size: int | VectorLike[int] = 1,
+        pad_singleton_dims: bool = False,
+        scalars: Optional[str] = None,
+        pad_all_scalars: bool = False,
+        progress_bar=False,
+    ) -> pyvista.ImageData:
+        """Enlarge an image by padding its boundaries with new points.
+
+        .. versionadded:: 0.44.0
+
+        Padded points may be mirrored, wrapped, or filled with a constant value. By
+        default, all boundaries of the image are padded with a single constant value.
+
+        This filter is designed to work with 1D, 2D, or 3D image data and will only pad
+        non-singleton dimensions unless otherwise specified.
+
+        Parameters
+        ----------
+        pad_value : float | sequence[float] | 'mirror' | 'wrap', default : 0.0
+            Padding value(s) given to new points outside the original image extent.
+            Specify:
+
+            - a number: New points are filled with the specified constant value.
+            - a vector: New points are filled with the specified multi-component vector.
+            - ``'wrap'``: New points are filled by wrapping around the padding axis.
+            - ``'mirror'``: New points are filled by mirroring the padding axis.
+
+        pad_size : int | sequence[int], default : 1
+            Number of points to add to the image boundaries. Specify:
+
+            - A single value to pad all boundaries equally.
+            - Two values, one for each ``(X, Y)`` axis, to apply symmetric padding to
+              each axis independently.
+            - Three values, one for each ``(X, Y, Z)`` axis, to apply symmetric padding
+              to each axis independently.
+            - Four values, one for each ``(-X, +X, -Y, +Y)`` boundary, to apply
+              padding to each boundary independently.
+            - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
+              padding to each boundary independently.
+
+            .. note::
+                The pad size for singleton dimensions is set to ``0`` by default, even
+                if non-zero pad sizes are specified for these axes with this parameter.
+                Set ``pad_singleton_dims`` to ``True`` to override this behavior and
+                enable padding any or all dimensions.
+
+        pad_singleton_dims : bool, default : False
+            Control whether to pad singleton dimensions. By default, only non-singleton
+            dimensions are padded, which means that 1D or 2D inputs will remain 1D or
+            2D after padding. Set this to ``True`` to enable padding any or all
+            dimensions.
+
+        scalars : str, optional
+            Name of scalars to pad. Defaults to currently active scalars. Unless
+            ``pad_all_scalars`` is ``True``, only the specified ``scalars`` are included
+            in the output.
+
+        pad_all_scalars : bool, default: False
+            Pad all point data scalars and include them in the output. This is useful
+            for padding images with multiple scalars. If ``False``, only the specified
+            ``scalars`` are padded.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Padded image.
+
+        Examples
+        --------
+        Pad a grayscale image with a 100-pixel wide border. The padding is black
+        (i.e. has a value of ``0``) by default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>>
+        >>> gray_image = examples.download_moonlanding_image()
+        >>> gray_image.dimensions
+        (630, 474, 1)
+        >>> padded = gray_image.pad_image(pad_size=100)
+        >>> padded.dimensions
+        (830, 674, 1)
+
+        Plot the image. To show grayscale images correctly, we define a custom plotting
+        method.
+
+        >>> def grayscale_image_plotter(image):
+        ...     import vtk
+        ...
+        ...     actor = vtk.vtkImageActor()
+        ...     actor.GetMapper().SetInputData(image)
+        ...     actor.GetProperty().SetInterpolationTypeToNearest()
+        ...     plot = pv.Plotter()
+        ...     plot.add_actor(actor)
+        ...     plot.view_xy()
+        ...     plot.camera.tight()
+        ...     return plot
+        ...
+        >>>
+        >>> plot = grayscale_image_plotter(padded)
+        >>> plot.show()
+
+        Pad only the x-axis with a white border.
+
+        >>> padded = gray_image.pad_image(pad_value=255, pad_size=(200, 0))
+        >>> plot = grayscale_image_plotter(padded)
+        >>> plot.show()
+
+        Pad with wrapping.
+
+        >>> padded = gray_image.pad_image('wrap', pad_size=100)
+        >>> plot = grayscale_image_plotter(padded)
+        >>> plot.show()
+
+        Pad with mirroring.
+
+        >>> padded = gray_image.pad_image('mirror', pad_size=100)
+        >>> plot = grayscale_image_plotter(padded)
+        >>> plot.show()
+
+        Pad a color image using multi-component color vectors. Here, RGBA values are
+        used.
+
+        >>> color_image = examples.load_logo()
+        >>> red = (255, 0, 0, 255)  # RGBA
+        >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
+        >>>
+        >>> plot_kwargs = dict(
+        ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
+        ... )
+        >>> padded.plot(**plot_kwargs)
+
+        Pad each edge of the image separately with a different color.
+
+        >>> orange = pv.Color('orange').int_rgba
+        >>> purple = pv.Color('purple').int_rgba
+        >>> blue = pv.Color('blue').int_rgba
+        >>> green = pv.Color('green').int_rgba
+        >>>
+        >>> padded = color_image.pad_image(orange, pad_size=(100, 0, 0, 0))
+        >>> padded = padded.pad_image(purple, pad_size=(0, 100, 0, 0))
+        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 100, 0))
+        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 100))
+        >>>
+        >>> padded.plot(**plot_kwargs)
+
+        """
+
+        def _get_num_components(array_):
+            return 1 if array_.ndim == 1 else array_.shape[1]
+
+        # Validate scalars
+        if scalars is None:
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
+        else:
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+        if field != FieldAssociation.POINT:
+            raise ValueError(
+                f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
+            )
+
+        # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
+        pad_sz = np.atleast_1d(pad_size)
+        if not pad_sz.ndim == 1:
+            raise ValueError(f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.')
+        if not np.issubdtype(pad_sz.dtype, np.integer):
+            raise TypeError(f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.')
+        if np.any(pad_sz < 0):
+            raise ValueError(f'Pad size cannot be negative. Got {pad_size}.')
+
+        length = len(pad_sz)
+        if length == 1:
+            all_pad_sizes = np.broadcast_to(pad_sz, (6,)).copy()
+        elif length == 2:
+            all_pad_sizes = np.array(
+                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], 0, 0),
+            )
+        elif length == 3:
+            all_pad_sizes = np.array(
+                (pad_sz[0], pad_sz[0], pad_sz[1], pad_sz[1], pad_sz[2], pad_sz[2]),
+            )
+        elif length == 4:
+            all_pad_sizes = np.array(
+                (pad_sz[0], pad_sz[1], pad_sz[2], pad_sz[3], 0, 0),
+            )
+        elif length == 6:
+            all_pad_sizes = pad_sz
+        else:
+            raise ValueError(f"Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.")
+
+        if not pad_singleton_dims:
+            # Set pad size to zero for singleton dimensions (e.g. 2D cases)
+            dims = self.dimensions  # type: ignore[attr-defined]
+            dim_pairs = (dims[0], dims[0], dims[1], dims[1], dims[2], dims[2])
+            is_singleton = np.asarray(dim_pairs) == 1
+            all_pad_sizes[is_singleton] = 0
+
+        # Define new extents after padding
+        pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_sizes
+        ext_xn, ext_xp, ext_yn, ext_yp, ext_zn, ext_zp = self.GetExtent()  # type: ignore[attr-defined]
+
+        padded_extents = (
+            ext_xn - pad_xn,  # minX
+            ext_xp + pad_xp,  # maxX
+            ext_yn - pad_yn,  # minY
+            ext_yp + pad_yp,  # maxY
+            ext_zn - pad_zn,  # minZ
+            ext_zp + pad_zp,  # maxZ
+        )
+
+        # Validate pad value
+        pad_multi_component = None  # Flag for multi-component constants
+        error_msg = (
+            f"Invalid pad value {pad_value}. Must be 'mirror' or 'wrap', or a "
+            f"number/component vector for constant padding."
+        )
+        if isinstance(pad_value, str):
+            if pad_value == 'mirror':
+                alg = _vtk.vtkImageMirrorPad()
+            elif pad_value == 'wrap':
+                alg = _vtk.vtkImageWrapPad()
+            else:
+                raise ValueError(error_msg)
+        else:
+            val = np.atleast_1d(pad_value)
+            num_input_components = _get_num_components(self.active_scalars)  # type: ignore[attr-defined]
+            if not (
+                val.ndim == 1
+                and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))
+            ):
+                raise ValueError(error_msg)
+            if (num_value_components := len(val)) not in [1, num_input_components]:
+                raise ValueError(
+                    f"Number of components ({num_value_components}) in pad value {pad_value} must "
+                    f"match the number components ({num_input_components}) in array '{scalars}'.",
+                )
+            if num_input_components > 1:
+                pad_multi_component = True
+                data = self.point_data  # type: ignore[attr-defined]
+                array_names = data.keys() if pad_all_scalars else [scalars]
+                for array_name in array_names:
+                    array = data[array_name]
+                    if not np.array_equal(val, val.astype(array.dtype)):
+                        raise TypeError(
+                            f"Pad value {pad_value} with dtype '{val.dtype.name}' is not compatible with dtype '{array.dtype}' of array {array_name}.",
+                        )
+                    if (
+                        not (n_comp := _get_num_components(data[array_name]))
+                        == num_input_components
+                    ):
+                        raise ValueError(
+                            f"Cannot pad array '{array_name}' with value {pad_value}. "
+                            f"Number of components ({n_comp}) in '{array_name}' must match "
+                            f"the number of components ({num_value_components}) in value."
+                            f"\nTry setting `pad_all_scalars=False` or update the array.",
+                        )
+            else:
+                pad_multi_component = False
+            alg = _vtk.vtkImageConstantPad()
+
+        alg.SetInputDataObject(self)
+        alg.SetOutputWholeExtent(*padded_extents)
+
+        def _get_padded_output(scalars_):
+            """Update the active scalars and get the output.
+
+            Includes special handling for padding with multi-component values.
+            """
+
+            def _update_and_get_output():
+                _update_alg(alg, progress_bar, 'Padding image')
+                return _get_output(alg)
+
+            # Set scalars since the filter only operates on the active scalars
+            self.set_active_scalars(scalars_, preference='point')
+            if pad_multi_component is None:
+                return _update_and_get_output()
+            else:
+                # Constant padding
+                alg.SetConstant(val[0])
+                output = _update_and_get_output()
+                if pad_multi_component is False:
+                    # Single component padding
+                    return output
+                else:  # Mulit-component padding
+                    # The constant pad filter only pads with a single value.
+                    # We need to apply the filter multiple times for each component.
+                    output_scalars = output.active_scalars
+                    num_output_components = _get_num_components(output_scalars)
+                    for component in range(1, num_output_components):
+                        alg.SetConstant(val[component])
+                        output_scalars[:, component] = _update_and_get_output()[scalars_][
+                            :,
+                            component,
+                        ]
+                    output.point_data[scalars_] = output_scalars
+                    return output
+
+        output = _get_padded_output(scalars)
+
+        # This filter pads only the active scalars, other arrays are returned empty.
+        # We need to pad those other arrays or remove them from the output.
+        for point_array in self.point_data:  # type: ignore[attr-defined]
+            if point_array != scalars:
+                if pad_all_scalars:
+                    output[point_array] = _get_padded_output(point_array)[point_array]
+                else:
+                    output.point_data.remove(point_array)
+        for cell_array in (data := output.cell_data):
+            data.remove(cell_array)
+
+        # Restore active scalars
+        self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        return output

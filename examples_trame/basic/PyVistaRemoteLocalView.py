@@ -6,8 +6,8 @@ with server-side rendering.
 
 import matplotlib.pyplot as plt
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista import examples
@@ -15,7 +15,7 @@ from pyvista.trame import PyVistaRemoteLocalView
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "PyVistaRemoteView"
@@ -44,29 +44,29 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text("PyVistaRemoteLocalView")
 
     with layout.toolbar:
-        vuetify.VSpacer()
-        vuetify.VCheckbox(
+        vuetify3.VSpacer()
+        vuetify3.VCheckbox(
             v_model=("use_server_rendering", False),
-            dense=True,
+            density="compact",
             hide_details=True,
-            on_icon="mdi-dns",
-            off_icon="mdi-open-in-app",
+            true_icon="mdi-dns",
+            false_icon="mdi-open-in-app",
             classes="ma-2",
         )
-        vuetify.VSpacer()
-        vuetify.VSelect(
+        vuetify3.VSpacer()
+        vuetify3.VSelect(
             label="Color map",
             v_model=("cmap", "viridis"),
             items=("array_list", plt.colormaps()),
             hide_details=True,
-            dense=True,
+            density="compact",
             outlined=True,
             classes="pt-1 ml-2",
             style="max-width: 250px",
         )
 
     with layout.content:
-        with vuetify.VContainer(
+        with vuetify3.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):

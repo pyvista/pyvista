@@ -1,4 +1,8 @@
+from collections import UserDict
+import json
+
 import numpy as np
+import pytest
 
 import pyvista as pv
 from pyvista import examples
@@ -100,3 +104,95 @@ def test_metadata_save(hexbeam, tmpdir):
 
     # metadata should be removed from the field data
     assert not hexbeam_in.field_data
+
+
+@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+def test_user_dict(data_object):
+    field_name = '_PYVISTA_USER_DICT'
+    assert field_name not in data_object.field_data.keys()
+
+    data_object.user_dict['abc'] = 123
+    assert field_name in data_object.field_data.keys()
+
+    new_dict = dict(ham='eggs')
+    data_object.user_dict = new_dict
+    assert data_object.user_dict == new_dict
+    assert data_object.field_data[field_name] == json.dumps(new_dict)
+
+    new_dict = UserDict(test='string')
+    data_object.user_dict = new_dict
+    assert data_object.user_dict == new_dict
+    assert data_object.field_data[field_name] == json.dumps(new_dict.data)
+
+    data_object.user_dict = None
+    assert field_name not in data_object.field_data.keys()
+
+    match = (
+        "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
+        "\nGot <class 'int'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        data_object.user_dict = 42
+
+
+@pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
+def test_user_dict_values(ant, value):
+    ant.user_dict['key'] = value
+    with pytest.raises(TypeError, match='not JSON serializable'):
+        ant.user_dict['key'] = np.array(value)
+
+    retrieved_value = json.loads(repr(ant.user_dict))['key']
+
+    # Round brackets '()' are saved as square brackets '[]' in JSON
+    expected_value = list(value) if isinstance(value, tuple) else value
+    assert retrieved_value == expected_value
+
+
+@pytest.mark.parametrize(
+    ('data_object', 'ext'),
+    [(pv.MultiBlock([examples.load_ant()]), '.vtm'), (examples.load_ant(), '.vtp')],
+)
+def test_user_dict_write_read(tmp_path, data_object, ext):
+    # test dict is restored after writing to file
+    dict_data = dict(foo='bar')
+    data_object.user_dict = dict_data
+
+    dict_field_repr = repr(data_object.user_dict)
+    field_data_repr = repr(data_object.field_data)
+    assert dict_field_repr in field_data_repr
+
+    filepath = tmp_path / ('data_object' + ext)
+    data_object.save(filepath)
+
+    data_object_read = pv.read(filepath)
+
+    assert data_object_read.user_dict == dict_data
+
+    dict_field_repr = repr(data_object.user_dict)
+    field_data_repr = repr(data_object.field_data)
+    assert dict_field_repr in field_data_repr
+
+
+def test_user_dict_persists_with_merge_filter():
+    sphere1 = pv.Sphere()
+    sphere1.user_dict['name'] = 'sphere1'
+
+    sphere2 = pv.Sphere()
+    sphere2.user_dict['name'] = 'sphere2'
+
+    merged = sphere1 + sphere2
+    assert merged.user_dict['name'] == 'sphere2'
+
+
+def test_user_dict_persists_with_threshold_filter(uniform):
+    uniform.user_dict['name'] = 'uniform'
+    uniform = uniform.threshold(0.5)
+    assert uniform.user_dict['name'] == 'uniform'
+
+
+def test_user_dict_persists_with_pack_labels_filter():
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
+    image.user_dict['name'] = 'image'
+    image = image.pack_labels()
+    assert image.user_dict['name'] == 'image'

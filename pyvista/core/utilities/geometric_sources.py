@@ -6,18 +6,23 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, Matrix, NumpyArray, Vector
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
+
+SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
+DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
@@ -59,6 +64,214 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     surf.transform(trans)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center, dtype=surf.points.dtype)
+
+
+if _vtk.vtk_version_info < (9, 3):
+
+    @no_new_attr
+    class CapsuleSource(_vtk.vtkCapsuleSource):
+        """Capsule source algorithm class.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        center : sequence[float], default: (0.0, 0.0, 0.0)
+            Center in ``[x, y, z]``.
+
+        direction : sequence[float], default: (1.0, 0.0, 0.0)
+            Direction of the capsule in ``[x, y, z]``.
+
+        radius : float, default: 0.5
+            Radius of the capsule.
+
+        cylinder_length : float, default: 1.0
+            Cylinder length of the capsule.
+
+        theta_resolution : int, default: 30
+            Set the number of points in the azimuthal direction (ranging
+            from ``start_theta`` to ``end_theta``).
+
+        phi_resolution : int, default: 30
+            Set the number of points in the polar direction (ranging from
+            ``start_phi`` to ``end_phi``).
+
+        Examples
+        --------
+        Create a default CapsuleSource.
+
+        >>> import pyvista as pv
+        >>> source = pv.CapsuleSource()
+        >>> source.output.plot(show_edges=True, line_width=5)
+        """
+
+        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
+
+        def __init__(
+            self,
+            center=(0.0, 0.0, 0.0),
+            direction=(1.0, 0.0, 0.0),
+            radius=0.5,
+            cylinder_length=1.0,
+            theta_resolution=30,
+            phi_resolution=30,
+        ):
+            """Initialize the capsule source class."""
+            super().__init__()
+            self.center = center
+            self._direction = direction
+            self.radius = radius
+            self.cylinder_length = cylinder_length
+            self.theta_resolution = theta_resolution
+            self.phi_resolution = phi_resolution
+
+        @property
+        def center(self) -> Sequence[float]:
+            """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Returns
+            -------
+            sequence[float]
+                Center in ``[x, y, z]``. Axis of the capsule passes through this
+                point.
+            """
+            return self.GetCenter()
+
+        @center.setter
+        def center(self, center: Sequence[float]):
+            """Set the center in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Parameters
+            ----------
+            center : sequence[float]
+                Center in ``[x, y, z]``. Axis of the capsule passes through this
+                point.
+            """
+            self.SetCenter(center)
+
+        @property
+        def direction(self) -> Sequence[float]:
+            """Get the direction vector in ``[x, y, z]``. Orientation vector of the capsule.
+
+            Returns
+            -------
+            sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            return self._direction
+
+        @direction.setter
+        def direction(self, direction: Sequence[float]):
+            """Set the direction in ``[x, y, z]``. Axis of the capsule passes through this point.
+
+            Parameters
+            ----------
+            direction : sequence[float]
+                Direction vector in ``[x, y, z]``. Orientation vector of the
+                capsule.
+            """
+            self._direction = direction
+
+        @property
+        def cylinder_length(self) -> float:
+            """Get the cylinder length along the capsule in its specified direction.
+
+            Returns
+            -------
+            float
+                Cylinder length along the capsule in its specified direction.
+            """
+            return self.GetCylinderLength()
+
+        @cylinder_length.setter
+        def cylinder_length(self, length: float):
+            """Set the cylinder length of the capsule.
+
+            Parameters
+            ----------
+            length : float
+                Cylinder length of the capsule.
+            """
+            self.SetCylinderLength(length)
+
+        @property
+        def radius(self) -> float:
+            """Get base radius of the capsule.
+
+            Returns
+            -------
+            float
+                Base radius of the capsule.
+            """
+            return self.GetRadius()
+
+        @radius.setter
+        def radius(self, radius: float):
+            """Set base radius of the capsule.
+
+            Parameters
+            ----------
+            radius : float
+                Base radius of the capsule.
+            """
+            self.SetRadius(radius)
+
+        @property
+        def theta_resolution(self) -> int:
+            """Get the number of points in the azimuthal direction.
+
+            Returns
+            -------
+            int
+                The number of points in the azimuthal direction.
+            """
+            return self.GetThetaResolution()
+
+        @theta_resolution.setter
+        def theta_resolution(self, theta_resolution: int):
+            """Set the number of points in the azimuthal direction.
+
+            Parameters
+            ----------
+            theta_resolution : int
+                The number of points in the azimuthal direction.
+            """
+            self.SetThetaResolution(theta_resolution)
+
+        @property
+        def phi_resolution(self) -> int:
+            """Get the number of points in the polar direction.
+
+            Returns
+            -------
+            int
+                The number of points in the polar direction.
+            """
+            return self.GetPhiResolution()
+
+        @phi_resolution.setter
+        def phi_resolution(self, phi_resolution: int):
+            """Set the number of points in the polar direction.
+
+            Parameters
+            ----------
+            phi_resolution : int
+                The number of points in the polar direction.
+            """
+            self.SetPhiResolution(phi_resolution)
+
+        @property
+        def output(self):
+            """Get the output data object for a port on this algorithm.
+
+            Returns
+            -------
+            pyvista.PolyData
+                Capsule surface.
+            """
+            self.Update()
+            return wrap(self.GetOutput())
 
 
 @no_new_attr
@@ -119,7 +332,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive."
+                "Both radius and angle cannot be specified. They are mutually exclusive.",
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -360,7 +573,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
 
     def __init__(
         self,
@@ -517,6 +730,30 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.SetCapping(capping)
 
     @property
+    def capsule_cap(self) -> bool:
+        """Get whether the capping should make the cylinder a capsule.
+
+        .. versionadded:: 0.44.0
+
+        Returns
+        -------
+        bool
+            Capsule cap.
+        """
+        return bool(self.GetCapsuleCap())
+
+    @capsule_cap.setter
+    def capsule_cap(self, capsule_cap: bool):
+        """Set whether the capping should make the cylinder a capsule.
+
+        Parameters
+        ----------
+        capsule_cap : bool
+            Capsule cap.
+        """
+        self.SetCapsuleCap(capsule_cap)
+
+    @property
     def output(self):
         """Get the output data object for a port on this algorithm.
 
@@ -539,10 +776,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         List of points defining a broken line.
     """
 
-    _new_attr_exceptions = ['points']
+    _new_attr_exceptions: ClassVar[List[str]] = ['points']
 
-    def __init__(self, points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+    def __init__(self, points=None):
         """Initialize the multiple lines source class."""
+        if points is None:
+            points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         super().__init__()
         self.points = points
 
@@ -558,12 +797,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[Matrix[float], Vector[float]]):
+    def points(self, points: Union[MatrixLike[float], VectorLike[float]]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
-        points : Vector[float] | Matrix[float]
+        points : VectorLike[float] | MatrixLike[float]
             List of points defining a broken line.
         """
         points, _ = _coerce_pointslike_arg(points)
@@ -625,7 +864,7 @@ class Text3DSource(vtkVectorText):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         '_center',
         '_height',
         '_width',
@@ -692,7 +931,7 @@ class Text3DSource(vtkVectorText):
             else:
                 raise AttributeError(
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}'
+                    f'{self.__class__.__name__}',
                 )
 
     def __del__(self):
@@ -904,6 +1143,11 @@ class CubeSource(_vtk.vtkCubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        .. versionadded:: 0.44.0
+
     Examples
     --------
     Create a default CubeSource.
@@ -913,13 +1157,19 @@ class CubeSource(_vtk.vtkCubeSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
 
     def __init__(
-        self, center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None
+        self,
+        center=(0.0, 0.0, 0.0),
+        x_length=1.0,
+        y_length=1.0,
+        z_length=1.0,
+        bounds=None,
+        point_dtype='float32',
     ):
         """Initialize the cube source class."""
         super().__init__()
@@ -930,6 +1180,7 @@ class CubeSource(_vtk.vtkCubeSource):
             self.x_length = x_length
             self.y_length = y_length
             self.z_length = z_length
+        self.point_dtype = point_dtype
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
@@ -940,7 +1191,7 @@ class CubeSource(_vtk.vtkCubeSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)
@@ -1045,7 +1296,47 @@ class CubeSource(_vtk.vtkCubeSource):
         self.Update()
         return wrap(self.GetOutput())
 
+    @property
+    def point_dtype(self) -> str:
+        """Get the desired output point types.
 
+        Returns
+        -------
+        str
+            Desired output point types.
+            It must be either 'float32' or 'float64'.
+        """
+        precision = self.GetOutputPointsPrecision()
+        return {
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
+        }[precision]
+
+    @point_dtype.setter
+    def point_dtype(self, point_dtype: str):
+        """Set the desired output point types.
+
+        Parameters
+        ----------
+        point_dtype : str, default: 'float32'
+            Set the desired output point types.
+            It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        point_dtype: str
+            Desired output point types.
+        """
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
+        }[point_dtype]
+        self.SetOutputPointsPrecision(precision)
+
+
+@no_new_attr
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
 
@@ -1077,7 +1368,7 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = ["center"]
+    _new_attr_exceptions: ClassVar[List[str]] = ["center"]
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -1118,7 +1409,7 @@ class DiscSource(_vtk.vtkDiskSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1222,6 +1513,7 @@ class DiscSource(_vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
@@ -1448,7 +1740,7 @@ class SphereSource(_vtk.vtkSphereSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1618,6 +1910,7 @@ class SphereSource(_vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class PolygonSource(_vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
@@ -1651,7 +1944,12 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
     """
 
     def __init__(
-        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+        self,
+        center=(0.0, 0.0, 0.0),
+        radius=1.0,
+        normal=(0.0, 0.0, 1.0),
+        n_sides=6,
+        fill=True,
     ):
         """Initialize the polygon source class."""
         super().__init__()
@@ -1814,7 +2112,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions = ['_kinds']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
@@ -2144,7 +2442,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
@@ -2165,7 +2463,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)
@@ -2215,6 +2513,285 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
             triangle for a set of four points.
         """
         self.SetQuads(quads)
+
+    @property
+    def output(self):
+        """Get the output data object for a port on this algorithm.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Plane mesh.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class SuperquadricSource(_vtk.vtkSuperquadricSource):
+    """Create superquadric source.
+
+    .. versionadded:: 0.44
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center of the superquadric in ``[x, y, z]``.
+
+    scale : sequence[float], default: (1.0, 1.0, 1.0)
+        Scale factors of the superquadric in ``[x, y, z]``.
+
+    size : float, default: 0.5
+        Superquadric isotropic size.
+
+    theta_roundness : float, default: 1.0
+        Superquadric east/west roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    phi_roundness : float, default: 1.0
+        Superquadric north/south roundness.
+        Values range from 0 (rectangular) to 1 (circular) to higher orders.
+
+    theta_resolution : int, default: 16
+        Number of points in the longitude direction.
+        Values are rounded to nearest multiple of 4.
+
+    phi_resolution : int, default: 16
+        Number of points in the latitude direction.
+        Values are rounded to nearest multiple of 8.
+
+    toroidal : bool, default: False
+        Whether or not the superquadric is toroidal (``True``)
+        or ellipsoidal (``False``).
+
+    thickness : float, default: 0.3333333333
+        Superquadric ring thickness.
+        Only applies if toroidal is set to ``True``.
+    """
+
+    def __init__(
+        self,
+        center=(0.0, 0.0, 0.0),
+        scale=(1.0, 1.0, 1.0),
+        size=0.5,
+        theta_roundness=1.0,
+        phi_roundness=1.0,
+        theta_resolution=16,
+        phi_resolution=16,
+        toroidal=False,
+        thickness=1 / 3,
+    ):
+        """Initialize source."""
+        super().__init__()
+        self.center = center
+        self.scale = scale
+        self.size = size
+        self.theta_roundness = theta_roundness
+        self.phi_roundness = phi_roundness
+        self.theta_resolution = theta_resolution
+        self.phi_resolution = phi_resolution
+        self.toroidal = toroidal
+        self.thickness = thickness
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Center of the superquadric in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center of the superquadric in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set center of the superquadric in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center of the superquadric in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def scale(self) -> Sequence[float]:
+        """Scale factors of the superquadric in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Scale factors of the superquadric in ``[x, y, z]``.
+        """
+        return self.GetScale()
+
+    @scale.setter
+    def scale(self, scale: Sequence[float]):
+        """Set scale factors of the superquadric in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        scale : sequence[float]
+           Scale factors of the superquadric in ``[x, y, z]``.
+        """
+        self.SetScale(scale)
+
+    @property
+    def size(self) -> float:
+        """Superquadric isotropic size.
+
+        Returns
+        -------
+        float
+            Superquadric isotropic size.
+        """
+        return self.GetSize()
+
+    @size.setter
+    def size(self, size: float):
+        """Set superquadric isotropic size.
+
+        Parameters
+        ----------
+        size : float
+            Superquadric isotropic size.
+        """
+        self.SetSize(size)
+
+    @property
+    def theta_roundness(self) -> float:
+        """Superquadric east/west roundness.
+
+        Returns
+        -------
+        float
+            Superquadric east/west roundness.
+        """
+        return self.GetThetaRoundness()
+
+    @theta_roundness.setter
+    def theta_roundness(self, theta_roundness: float):
+        """Set superquadric east/west roundness.
+
+        Parameters
+        ----------
+        theta_roundness : float
+            Superquadric east/west roundness.
+        """
+        self.SetThetaRoundness(theta_roundness)
+
+    @property
+    def phi_roundness(self) -> float:
+        """Superquadric north/south roundness.
+
+        Returns
+        -------
+        float
+            Superquadric north/south roundness.
+        """
+        return self.GetPhiRoundness()
+
+    @phi_roundness.setter
+    def phi_roundness(self, phi_roundness: float):
+        """Set superquadric north/south roundness.
+
+        Parameters
+        ----------
+        phi_roundness : float
+            Superquadric north/south roundness.
+        """
+        self.SetPhiRoundness(phi_roundness)
+
+    @property
+    def theta_resolution(self) -> float:
+        """Number of points in the longitude direction.
+
+        Returns
+        -------
+        float
+            Number of points in the longitude direction.
+        """
+        return self.GetThetaResolution()
+
+    @theta_resolution.setter
+    def theta_resolution(self, theta_resolution: float):
+        """Set number of points in the longitude direction.
+
+        Parameters
+        ----------
+        theta_resolution : float
+            Number of points in the longitude direction.
+        """
+        self.SetThetaResolution(round(theta_resolution / 4) * 4)
+
+    @property
+    def phi_resolution(self) -> float:
+        """Number of points in the latitude direction.
+
+        Returns
+        -------
+        float
+            Number of points in the latitude direction.
+        """
+        return self.GetPhiResolution()
+
+    @phi_resolution.setter
+    def phi_resolution(self, phi_resolution: float):
+        """Set number of points in the latitude direction.
+
+        Parameters
+        ----------
+        phi_resolution : float
+            Number of points in the latitude direction.
+        """
+        self.SetPhiResolution(round(phi_resolution / 8) * 8)
+
+    @property
+    def toroidal(self) -> bool:
+        """Whether or not the superquadric is toroidal (``True``) or ellipsoidal (``False``).
+
+        Returns
+        -------
+        bool
+            Whether or not the superquadric is toroidal (``True``)
+            or ellipsoidal (``False``).
+        """
+        return self.GetToroidal()
+
+    @toroidal.setter
+    def toroidal(self, toroidal: bool):
+        """Set whether or not the superquadric is toroidal (``True``) or ellipsoidal (``False``).
+
+        Parameters
+        ----------
+        toroidal : bool
+            Whether or not the superquadric is toroidal (``True``)
+            or ellipsoidal (``False``).
+        """
+        self.SetToroidal(toroidal)
+
+    @property
+    def thickness(self):
+        """Superquadric ring thickness.
+
+        Returns
+        -------
+        float
+            Superquadric ring thickness.
+        """
+        return self.GetThickness()
+
+    @thickness.setter
+    def thickness(self, thickness: float):
+        """Set superquadric ring thickness.
+
+        Parameters
+        ----------
+        thickness : float
+            Superquadric ring thickness.
+        """
+        self.SetThickness(thickness)
 
     @property
     def output(self):

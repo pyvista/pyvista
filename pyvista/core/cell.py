@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Tuple, cast
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
 import warnings
 
 import numpy as np
@@ -10,11 +10,13 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import CellsLike, Matrix, NumpyArray, Vector
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError, PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
 
 
 def _get_vtk_id_type():
@@ -627,7 +629,7 @@ class CellArray(_vtk.vtkCellArray):
         self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
         self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
         if cells is not None:
-            self.cells = cells  # type: ignore
+            self.cells = cells  # type: ignore[assignment]
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (('n_cells', n_cells), ('deep', deep)):
@@ -664,7 +666,7 @@ class CellArray(_vtk.vtkCellArray):
                     f"Cell array size is invalid. Size ({cells.size}) does not"
                     f" match expected size ({imported_size}). This is likely"
                     " due to invalid connectivity array."
-                )
+                ),
             )
         self.__offsets = self.__connectivity = None
 
@@ -702,7 +704,10 @@ class CellArray(_vtk.vtkCellArray):
         return _get_offset_array(self)
 
     def _set_data(
-        self, offsets: Matrix[int], connectivity: Matrix[int], deep: bool = False
+        self,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
+        deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
         vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
@@ -713,12 +718,11 @@ class CellArray(_vtk.vtkCellArray):
         # garbage collected. Keep a reference to them for safety
         self.__offsets = vtk_offsets
         self.__connectivity = vtk_connectivity
-        return None
 
     @staticmethod
     def from_arrays(
-        offsets: Matrix[int],
-        connectivity: Matrix[int],
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
         deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
@@ -762,7 +766,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells: Matrix[int], deep: bool = False) -> pyvista.CellArray:
+    def from_regular_cells(cls, cells: MatrixLike[int], deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -786,7 +790,7 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @classmethod
-    def from_irregular_cells(cls, cells: Sequence[Vector[int]]) -> pyvista.CellArray:
+    def from_irregular_cells(cls, cells: Sequence[VectorLike[int]]) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters

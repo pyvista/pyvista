@@ -30,22 +30,28 @@ pyvista.
 
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from itertools import chain
 import json
 import os
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Union
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 import warnings
 
-import pyvista
-from pyvista.core._typing_core import Number, Vector
+import pyvista  # noqa: TCH001
 from pyvista.core.utilities.misc import _check_range
 
-from ._typing import ColorLike
 from .colors import Color, get_cmap_safe, get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import Number, VectorLike
+
+    from ._typing import ColorLike
 
 
 def _set_plot_theme_from_env() -> None:
@@ -58,9 +64,8 @@ def _set_plot_theme_from_env() -> None:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}'
+                f'Should be one of the following: {allowed}',
             )
-    return None
 
 
 def load_theme(filename):
@@ -85,7 +90,7 @@ def load_theme(filename):
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
     """
-    with open(filename) as f:
+    with Path(filename).open() as f:
         theme_dict = json.load(f)
     return Theme.from_dict(theme_dict)
 
@@ -132,7 +137,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
         )
 
 
@@ -287,7 +292,8 @@ class _LightingConfig(_ThemeConfig):
 
     @interpolation.setter
     def interpolation(
-        self, interpolation: Union[str, int, InterpolationType]
+        self,
+        interpolation: Union[str, int, InterpolationType],
     ):  # numpydoc ignore=GL08
         self._interpolation = InterpolationType.from_any(interpolation).value
 
@@ -1388,7 +1394,7 @@ class _TrameConfig(_ThemeConfig):
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))  # noqa: PTH118
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1396,6 +1402,16 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_extension_enabled = (
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
+        # if set, jupyter_mode overwrites defaults
+        jupyter_mode = os.environ.get("PYVISTA_TRAME_JUPYTER_MODE")
+        if jupyter_mode == "extension" and self._jupyter_extension_available:  # pragma: no cover
+            self._server_proxy_enabled = False
+            self._jupyter_extension_enabled = True
+        elif jupyter_mode == "proxy" and self._server_proxy_enabled:  # pragma: no cover
+            self._jupyter_extension_enabled = False
+        elif jupyter_mode == "native":  # pragma: no cover
+            self._jupyter_extension_enabled = False
+            self._server_proxy_enabled = False
         self._default_mode = 'trame'
 
     @property
@@ -1487,7 +1503,7 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
         warnings.warn(
-            "The jupyter_extension_available flag is read only and is automatically detected."
+            "The jupyter_extension_available flag is read only and is automatically detected.",
         )
 
     @property
@@ -1551,7 +1567,7 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = 1.0
 
     @property
-    def position(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera position.
 
         Examples
@@ -1565,11 +1581,11 @@ class _CameraConfig(_ThemeConfig):
         return self._position
 
     @position.setter
-    def position(self, position: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         self._position = position
 
     @property
-    def viewup(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera viewup.
 
         Examples
@@ -1583,7 +1599,7 @@ class _CameraConfig(_ThemeConfig):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
+    def viewup(self, viewup: VectorLike[float]):  # numpydoc ignore=GL08
         self._viewup = viewup
 
     @property
@@ -2037,7 +2053,7 @@ class Theme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: 'str'):  # numpydoc ignore=GL08
+    def jupyter_backend(self, backend: str):  # numpydoc ignore=GL08
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
@@ -2130,7 +2146,7 @@ class Theme(_ThemeConfig):
             self._camera = camera
         else:
             raise TypeError(
-                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}"
+                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}",
             )
 
     @property
@@ -2733,7 +2749,8 @@ class Theme(_ThemeConfig):
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
-        self, multi_rendering_splitting_position: float
+        self,
+        multi_rendering_splitting_position: float,
     ):  # numpydoc ignore=GL08
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
@@ -2765,7 +2782,7 @@ class Theme(_ThemeConfig):
         if mapper not in mappers:
             raise ValueError(
                 f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}"
+                f"include:\n {', '.join(mappers)}",
             )
 
         self._volume_mapper = mapper
@@ -2873,13 +2890,14 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
-        self, value: Callable[['pyvista.Plotter'], None]
+        self,
+        value: Callable[[pyvista.Plotter], None],
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
@@ -2978,7 +2996,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme: Union[str, 'Theme']) -> None:
+    def load_theme(self, theme: Union[str, Theme]) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -3017,12 +3035,11 @@ class Theme(_ThemeConfig):
 
         if not isinstance(theme, Theme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
             )
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
-        return None
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
@@ -3048,10 +3065,8 @@ class Theme(_ThemeConfig):
         data = self.to_dict()
         # functions are not serializable
         del data["before_close_callback"]
-        with open(filename, 'w') as f:
+        with Path(filename).open('w') as f:
             json.dump(data, f)
-
-        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
