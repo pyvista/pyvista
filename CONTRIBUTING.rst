@@ -655,6 +655,7 @@ or related functions.
 Individual test cases are written as a single line of python code with the format:
 
 .. code:: python
+
     reveal_type(arg)  # EXPECTED_TYPE: "<T>"
 
 where ``arg`` is any argument you want mypy to analyze, and ``"<T>"`` is the
@@ -666,6 +667,7 @@ To test this, we can write a test case as for the function call ``validate_array
 as follows:
 
 .. code:: python
+
     reveal_type(validate_array([1.0]))  # EXPECTED_TYPE: "list[float]"
 
 The actual revealed type returned by ``Mypy`` for this test can be generated with
@@ -673,12 +675,14 @@ the following command. Note that ``grep`` is needed to only return the output
 from the input string. Otherwise, all ``Mypy`` errors for the ``pyvista`` package
 are reported.
 
-.. code::
+.. code:: bash
+
     mypy -c "from pyvista.core._validation import validate_array; reveal_type(validate_array([1.0]))" | grep \<string\>
 
 For this test case, the revealed type by ``Mypy`` is:
 
-.. code::
+.. code:: python
+
     "builtins.list[builtins.float]"
 
 Notice that the revealed type is fully qualified, i.e. includes ``builtins``. For
