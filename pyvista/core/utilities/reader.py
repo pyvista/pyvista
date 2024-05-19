@@ -2737,6 +2737,8 @@ class ParticleReader(BaseReader):
     >>> from pyvista import examples
     >>> filename = examples.download_particles(load=False)
     >>> reader = pv.get_reader(filename)
+    >>> reader.reader.SetDataByteOrderToBigEndian()
+    >>> reader.reader.Update()
     >>> filename.split("/")[-1]  # omit the path
     'Particles.raw'
     >>> mesh = reader.read()
