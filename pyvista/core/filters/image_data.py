@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import collections.abc
+import platform
 from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 
 import numpy as np
@@ -412,7 +413,15 @@ class ImageDataFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        cast_dtype = np.issubdtype(array_dtype := self.active_scalars.dtype, (int, np.integer))
+
+        # For some systems and/or versions of numpy, integer scalars won't threshold
+        # correctly. Cast to float in these cases.
+        has_int_dtype = np.issubdtype(array_dtype := self.active_scalars.dtype, (int, np.integer))
+        cast_dtype = (
+            has_int_dtype
+            and int(np.__version__.split('.')[0]) < 2
+            and platform.system() in ['Darwin', 'Linux']
+        )
         if cast_dtype:
             self[scalars] = self[scalars].astype(float, casting='safe')
 
