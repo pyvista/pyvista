@@ -6201,11 +6201,7 @@ def download_particles_lethe(load=True):  # pragma: no cover
     Download the particles dataset and plot it after generating glyphs.
 
     >>> from pyvista import examples
-    >>> filename = examples.download_particles(load=False)
-    >>> reader = pv.get_reader(filename)
-    >>> reader.reader.SetDataByteOrderToBigEndian()
-    >>> reader.reader.Update()
-    >>> particles = reader.read()
+    >>> particles = examples.download_particles_lethe()
     >>> particles.plot(
     ...     render_points_as_spheres=True,
     ...     style='points',
@@ -7975,7 +7971,11 @@ def download_particles(load=True):  # pragma: no cover
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> mesh = examples.download_particles()
+    >>> filename = examples.download_particles(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.reader.SetDataByteOrderToBigEndian()
+    >>> reader.reader.Update()
+    >>> mesh = reader.read()
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
     ...     mesh,
