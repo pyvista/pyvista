@@ -414,7 +414,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
 
-        # For some systems and/or versions of numpy, integer scalars won't threshold
+        # For some systems and/or Numpy < 2.0, integer scalars won't threshold
         # correctly. Cast to float in these cases.
         has_int_dtype = np.issubdtype(
             array_dtype := self.active_scalars.dtype,
