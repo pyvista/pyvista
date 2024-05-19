@@ -24,7 +24,7 @@ from typing import (
 
 import numpy as np
 
-from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList
+from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList, _FiniteNestedTuple
 from pyvista.core._typing_core._type_guards import (
     _is_NestedNumberSequence,
     _is_Number,
@@ -188,10 +188,14 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[NumberType]):
         self,
         input_array: _ArrayLikeOrScalar[NumberType],
         copy: bool,
-    ) -> _FiniteNestedList[NumberType]:
+    ) -> Union[NumberType, _FiniteNestedList[NumberType]]:
         return self._array.tolist()
 
-    def to_tuple(self, input_array: _ArrayLikeOrScalar[NumberType], copy: bool):
+    def to_tuple(
+        self,
+        input_array: _ArrayLikeOrScalar[NumberType],
+        copy: bool,
+    ) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
         return _cast_to_tuple(self._array)
 
     def to_numpy(
