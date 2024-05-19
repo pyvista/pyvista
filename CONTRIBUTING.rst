@@ -704,7 +704,7 @@ The tests can be executed with:
 
 When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
-``EXPECTED_TYPE``is defined by each test case.
+``EXPECTED_TYPE`` is defined by each test case.
 
 In addition, the ``pyanalyze`` package tests the actual returned
 type at runtime to match the statically-revealed type. The
