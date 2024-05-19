@@ -31,7 +31,6 @@ from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import (
-    _set_default_kwarg_mandatory,
     assert_empty_kwargs,
     check_valid_vector,
     has_module,
@@ -936,32 +935,6 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     with pytest.raises(TypeError, match="must be one of"):
         _coerce_transformlike_arg("abc")
-
-
-def test_set_default_kwarg_mandatory():
-    default_value = 1
-    default_key = 'k'
-
-    # Test parameter unset
-    kwargs = {}
-    _set_default_kwarg_mandatory(kwargs, default_key, default_value)
-    assert kwargs[default_key] == default_value
-
-    # Test parameter already set to default
-    kwargs = {}
-    kwargs[default_key] = default_value
-    _set_default_kwarg_mandatory(kwargs, default_key, default_value)
-    assert kwargs[default_key] == default_value
-
-    # Test parameter set to non-default
-    kwargs = {}
-    kwargs[default_key] = default_value * 2
-    msg = (
-        "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"
-        "Its value is automatically set to `1`."
-    )
-    with pytest.raises(ValueError, match=msg):
-        _set_default_kwarg_mandatory(kwargs, default_key, default_value)
 
 
 @pytest.fixture()

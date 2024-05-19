@@ -6,11 +6,10 @@ from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
-import inspect
 import sys
 import threading
 import traceback
-from typing import TYPE_CHECKING, Any, Dict, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Type, TypeVar, Union
 import warnings
 
 import numpy as np
@@ -312,16 +311,3 @@ def _reciprocal(x, tol=1e-8):
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
     return x
-
-
-def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
-    """Set a kwarg and raise ValueError if not set to its default value."""
-    val = kwargs.pop(key, default)
-    if val != default:
-        calling_fname = inspect.stack()[1].function
-        msg = (
-            f"Parameter '{key}' cannot be set for function `{calling_fname}`.\n"
-            f"Its value is automatically set to `{default}`."
-        )
-        raise ValueError(msg)
-    kwargs[key] = default
