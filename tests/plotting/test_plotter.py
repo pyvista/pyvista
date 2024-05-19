@@ -23,7 +23,7 @@ from pyvista.plotting.utilities.gl_checks import uses_egl
 def test_plotter_image_before_show():
     plotter = pv.Plotter()
     with pytest.raises(AttributeError, match="not yet been set up"):
-        plotter.image
+        _ = plotter.image
 
 
 def test_has_render_window_fail():
@@ -202,7 +202,7 @@ def test_remove_scalars_single(sphere, hexbeam):
     pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
 
     # arrays will be added to the mesh
-    pl.mesh.n_arrays == 1
+    assert pl.mesh.n_arrays == 1
 
     # but not the original data
     assert sphere.n_arrays == 0
@@ -531,3 +531,16 @@ def test_edge_opacity(sphere):
     pl = pv.Plotter(sphere)
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
+
+
+def test_add_ruler_scale():
+    plotter = pv.Plotter()
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.0
+    assert max_ == 0.6
+
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.6
+    assert max_ == 0.0

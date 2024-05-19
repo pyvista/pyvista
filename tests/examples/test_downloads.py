@@ -31,9 +31,10 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 def _is_valid_url(url):
     try:
         requests.get(url)
-        return True
     except requests.RequestException:
         return False
+    else:
+        return True
 
 
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
