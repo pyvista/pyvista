@@ -37,7 +37,7 @@ points_volume.point_data['Data'] = data_array
 points_volume.plot(show_edges=True)
 
 ################################################################################
-# However, in many applications (e.g. 3D medical imaging) the scalar data arrays
+# However, in many applications (e.g. 3D medical imaging), the scalar data arrays
 # represent discretized samples at the centers of voxels. As such, it may
 # be more appropriate to represent the data as eight voxel cells instead of
 # eight points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
@@ -47,7 +47,7 @@ cells_volume = points_volume.points_to_cells()
 
 ################################################################################
 # Now, when we plot the volume, we have a more appropriate representation with
-# eight voxel cells, and the scalar data is no longer interpolated.
+# eight voxel cells and the scalar data is no longer interpolated.
 
 cells_volume.plot(show_edges=True)
 
@@ -56,7 +56,7 @@ cells_volume.plot(show_edges=True)
 #
 # For visualization, we color the points volume (inner mesh) and only show the edges
 # of the cells volume (outer mesh). We also plot the cell centers in red. Note
-# how the centers of the cells image correspond to the points of the points image.
+# how the centers of the image of the cells correspond to the points of the points image.
 
 cell_centers = cells_volume.cell_centers()
 cell_edges = cells_volume.extract_all_edges()
@@ -103,15 +103,15 @@ points_ithresh.point_data['Data']
 
 ################################################################################
 # The filter returns binary point data as expected. Values equal to or greater
-# or than the threshold of ``2`` are ones, and less than the threshold are zeros.
+# or than the threshold of ``2`` are ones and less than the threshold are zeros.
 #
-# However, when we plot it the point values are linearly interpolated. For
+# However, in plotting it, the point values are linearly interpolated. For
 # visualizing binary data, this interpolation is not desirable.
 
 points_ithresh.plot(show_edges=True)
 
 ################################################################################
-# To better visualize the result, convert the points image returned by the
+# To better visualize the result, convert the image of the point returned by the
 # filter to a cell representation with :meth:`~pyvista.ImageDataFilters.points_to_cells`
 # before plotting.
 
@@ -155,7 +155,7 @@ points_thresh = points_volume.threshold(2)
 points_thresh.point_data['Data']
 
 ################################################################################
-# In this case, since the points image only has a single cell, the filter has no
+# In this case, since the image of the point only has a single cell, the filter has no
 # effect on the data array's values. The thresholded values are the same as the
 # input values.
 #
@@ -180,7 +180,7 @@ points_image.point_data['Data'] = data_array
 
 ################################################################################
 # Plot the image. As before, the plot does not appear correct since the point
-# data is interpolated and nine cells are shown rather than the desired 16
+# data is interpolated, and nine cells are shown rather than the desired 16
 # (one for each pixel).
 
 plot_kwargs = dict(
@@ -196,7 +196,7 @@ points_image.plot(**plot_kwargs)
 ################################################################################
 # To visualize the image correctly, we first use :meth:`~pyvista.ImageDataFilters.points_to_cells`
 # to get a cell-based representation of the image and plot the result. The plot
-# now correctly shows 16 pixel cells with discrete values.
+# now correctly shows 16-pixel cells with discrete values.
 
 cells_image = points_image.points_to_cells()
 cells_image.plot(**plot_kwargs)
@@ -206,7 +206,7 @@ cells_image.plot(**plot_kwargs)
 #
 # For visualization, we color the points image (inner mesh) and show the cells
 # image (outer mesh) as a wireframe. We also plot the cell centers in red. Note
-# how the centers of the cells image correspond to the points of the points image.
+# how the centers of the image of the cells correspond to the points of the points image.
 
 cell_centers = cells_image.cell_centers()
 
