@@ -9,6 +9,11 @@ from pyvista import examples
 VTK93 = pv.vtk_version_info >= (9, 3)
 
 
+@pytest.fixture()
+def logo():
+    return examples.load_logo()
+
+
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled():
     # Load a 3D label map (segmentation of a frog's tissue)
@@ -127,6 +132,105 @@ def test_contour_labeled_with_invalid_scalars():
     label_map.set_active_scalars('cell_data', preference='cell')
     with pytest.raises(ValueError, match='active scalars must be point array'):
         label_map.contour_labeled()
+
+
+@pytest.fixture()
+def uniform_many_scalars(uniform):
+    uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
+    uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
+    return uniform
+
+
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Point Data2', 'Spatial Point Data'],
+)
+def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    point_voxel_image = uniform_many_scalars
+    point_voxel_points = point_voxel_image.points
+
+    cell_voxel_image = point_voxel_image.points_to_cells(copy=copy)
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    assert point_voxel_image.n_points == cell_voxel_image.n_cells
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(cell_voxel_image.array_names) == {'Spatial Point Data', 'Spatial Point Data2'}
+    assert np.array_equal(point_voxel_points, cell_voxel_center_points)
+    assert np.array_equal(point_voxel_image.active_scalars, cell_voxel_image.active_scalars)
+    assert cell_voxel_image.point_data.keys() == []
+
+    for array_in, array_out in zip(
+        point_voxel_image.point_data.keys(),
+        cell_voxel_image.cell_data.keys(),
+    ):
+        shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
+        assert not shares_memory if copy else shares_memory
+
+
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize(
+    'active_scalars',
+    [None, 'Spatial Cell Data2', 'Spatial Cell Data'],
+)
+def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
+    uniform_many_scalars.set_active_scalars(active_scalars)
+
+    cell_voxel_image = uniform_many_scalars
+    cell_voxel_center_points = cell_voxel_image.cell_centers().points
+
+    point_voxel_image = cell_voxel_image.cells_to_points(copy=copy)
+    point_voxel_points = point_voxel_image.points
+
+    assert cell_voxel_image.n_cells == point_voxel_image.n_points
+    assert cell_voxel_image.active_scalars_name == active_scalars
+    assert set(point_voxel_image.array_names) == {'Spatial Cell Data', 'Spatial Cell Data2'}
+    assert np.array_equal(cell_voxel_center_points, point_voxel_points)
+    assert np.array_equal(cell_voxel_image.active_scalars, point_voxel_image.active_scalars)
+    assert point_voxel_image.cell_data.keys() == []
+
+    for array_in, array_out in zip(
+        cell_voxel_image.cell_data.keys(),
+        point_voxel_image.point_data.keys(),
+    ):
+        shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
+        assert not shares_memory if copy else shares_memory
+
+
+def test_points_to_cells_scalars(uniform):
+    scalars = 'Spatial Point Data'
+    converted = uniform.points_to_cells(scalars)
+    assert converted.active_scalars_name == scalars
+    assert converted.cell_data.keys() == [scalars]
+
+    match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.points_to_cells('Spatial Cell Data')
+
+
+def test_cells_to_points_scalars(uniform):
+    scalars = 'Spatial Cell Data'
+    converted = uniform.cells_to_points(scalars)
+    assert converted.active_scalars_name == scalars
+    assert converted.point_data.keys() == [scalars]
+
+    match = (
+        "Scalars 'Spatial Point Data' must be associated with cell data. Got point data instead."
+    )
+    with pytest.raises(ValueError, match=match):
+        uniform.cells_to_points('Spatial Point Data')
+
+
+def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+    assert uniform.dimensions == (10, 10, 10)
+    assert uniform.points_to_cells().dimensions == (11, 11, 11)
+    assert uniform.cells_to_points().dimensions == (9, 9, 9)
+
+    assert logo.dimensions == (1920, 718, 1)
+    assert logo.points_to_cells().dimensions == (1921, 719, 1)
+    assert logo.cells_to_points().dimensions == (1919, 717, 1)
 
 
 @pytest.fixture()
@@ -282,11 +386,6 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, -1, -1])
     else:
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
-
-
-@pytest.fixture()
-def logo():
-    return examples.load_logo()
 
 
 def test_pad_image_multi_component(single_point_image):
