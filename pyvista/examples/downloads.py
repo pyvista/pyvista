@@ -7976,15 +7976,7 @@ def download_particles(load=True):  # pragma: no cover
     >>> reader.reader.SetDataByteOrderToBigEndian()
     >>> reader.reader.Update()
     >>> mesh = reader.read()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     mesh,
-    ...     point_size=10.0,
-    ...     render_points_as_spheres=True,
-    ...     clim=[4, 9],
-    ... )
-    >>> pl.background_color = "black"
-    >>> pl.show()
+    >>> mesh.plot()
 
     .. seealso::
 
