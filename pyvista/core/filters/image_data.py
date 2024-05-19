@@ -407,13 +407,15 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh.plot()
 
         """
-        alg = _vtk.vtkImageThreshold()
-        alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
+        array_dtype = self.active_scalars.dtype
+
+        alg = _vtk.vtkImageThreshold()
+        alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -422,7 +424,7 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        threshold_val = np.atleast_1d(threshold).astype(float)
+        threshold_val = np.atleast_1d(threshold).astype(array_dtype)
         if (size := threshold_val.size) not in (1, 2):
             raise ValueError(
                 f'Threshold must have one or two values, got {size}.',
@@ -434,12 +436,12 @@ class ImageDataFilters(DataSetFilters):
         # set the replacement values / modes
         if in_value is not None:
             alg.SetReplaceIn(True)
-            alg.SetInValue(in_value)
+            alg.SetInValue(np.array(in_value).astype(array_dtype))
         else:
             alg.SetReplaceIn(False)
         if out_value is not None:
             alg.SetReplaceOut(True)
-            alg.SetOutValue(out_value)
+            alg.SetOutValue(np.array(out_value).astype(array_dtype))
         else:
             alg.SetReplaceOut(False)
         # run the algorithm

@@ -3147,7 +3147,7 @@ def test_image_threshold_raises(uniform):
 
 
 @pytest.mark.parametrize('value_dtype', [float, int])
-@pytest.mark.parametrize('array_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
 def test_image_threshold_dtype(value_dtype, array_dtype):
     image = pv.ImageData(dimensions=(2, 2, 2))
     thresh_value = value_dtype(4)
