@@ -182,7 +182,7 @@ class _NumpyArrayWrapper(_ArrayLikeWrapper[NumberType]):
         return self  # type: ignore[return-value]
 
     def as_iterable(self) -> Iterable[NumberType]:
-        return self._array.flatten()
+        return self._array.ravel(order='A')
 
     def to_list(
         self,

@@ -265,7 +265,7 @@ def check_sorted(
     else:
         if axis is None and ndim >= 1:
             # Emulate np.sort(), which flattens array when axis is None
-            array_check = wrapped._array.flatten()
+            array_check = wrapped._array.ravel(order='A')
             ndim = 1
             axis = 0
         else:
