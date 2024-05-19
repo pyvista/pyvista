@@ -112,11 +112,11 @@ def test_check_subdtype():
     check_subdtype([1.0, 2, 3], float)
     check_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
     check_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
-    msg = "Input has incorrect dtype of dtype('int32'). The dtype must be a subtype of <class 'float'>."
-    with pytest.raises(TypeError, match=escape(msg)):
+    match = "Input has incorrect dtype of dtype('int32'). The dtype must be a subtype of <class 'float'>."
+    with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1, 2, 3]).astype('int32'), float)
-    msg = "Input has incorrect dtype of dtype('complex128'). The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
-    with pytest.raises(TypeError, match=escape(msg)):
+    match = "Input has incorrect dtype of dtype('complex128'). The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
+    with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
@@ -157,8 +157,8 @@ def test_validate_number():
     assert num == 3.0
     assert isinstance(num, float)
 
-    msg = 'Number has shape (1,) which is not allowed. Shape must be ().'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Number has shape (1,) which is not allowed. Shape must be ().'
+    with pytest.raises(ValueError, match=escape(match)):
         validate_number([1], reshape=False)
 
 
@@ -174,8 +174,8 @@ def test_validate_data_range():
     rng = validate_data_range((0, 2.5), dtype_out=float)
     assert rng == (0.0, 2.5)
 
-    msg = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    (1, 0)'
+    with pytest.raises(ValueError, match=escape(match)):
         validate_data_range((1, 0))
 
 
@@ -186,12 +186,12 @@ def test_check_shape():
     check_shape((1, 2, 3), [-1])
     check_shape((1, 2, 3), -1)
 
-    msg = 'Input has shape (3,) which is not allowed. Shape must be 0.'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Input has shape (3,) which is not allowed. Shape must be 0.'
+    with pytest.raises(ValueError, match=escape(match)):
         check_shape((1, 2, 3), 0, name="Input")
 
-    msg = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
+    with pytest.raises(ValueError, match=escape(match)):
         check_shape((1, 2, 3), [(), (4, 5)])
 
 
@@ -201,18 +201,18 @@ def test_check_ndim():
     check_ndim((1, 2, 3), range(2))
     check_ndim([[1, 2, 3]], (0, 2))
 
-    msg = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
+    with pytest.raises(ValueError, match=escape(match)):
         check_ndim((1, 2, 3), 0, name="Input")
 
-    msg = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
+    with pytest.raises(ValueError, match=escape(match)):
         check_ndim((1, 2, 3), [4, 5])
 
 
 def test_validate_shape_value():
-    msg = "`None` is not a valid shape. Use `()` instead."
-    with pytest.raises(TypeError, match=escape(msg)):
+    match = "`None` is not a valid shape. Use `()` instead."
+    with pytest.raises(TypeError, match=escape(match)):
         _validate_shape_value(None)
     shape = _validate_shape_value(())
     assert shape == ()
@@ -229,19 +229,19 @@ def test_validate_shape_value():
     shape = _validate_shape_value((-1, 2, -1))
     assert shape == (-1, 2, -1)
 
-    msg = (
+    match = (
         "Shape must be an instance of any type (<class 'int'>, <class 'tuple'>). "
         "Got <class 'float'> instead."
     )
-    with pytest.raises(TypeError, match=escape(msg)):
+    with pytest.raises(TypeError, match=escape(match)):
         _validate_shape_value(1.0)
 
-    msg = "Shape values must all be greater than or equal to -1."
-    with pytest.raises(ValueError, match=msg):
+    match = "Shape values must all be greater than or equal to -1."
+    with pytest.raises(ValueError, match=match):
         _validate_shape_value(-2)
 
-    msg = "All items of Shape must be an instance of <class 'int'>. Got <class 'tuple'> instead."
-    with pytest.raises(TypeError, match=msg):
+    match = "All items of Shape must be an instance of <class 'int'>. Got <class 'tuple'> instead."
+    with pytest.raises(TypeError, match=match):
         _validate_shape_value(((1, 2), (3, 4)))
 
 
@@ -252,15 +252,15 @@ def test_validate_arrayNx3(reshape):
     assert np.array_equal(arr, [[1, 2, 3]])
 
     if not reshape:
-        msg = "Array has shape (3,) which is not allowed. Shape must be (-1, 3)."
-        with pytest.raises(ValueError, match=escape(msg)):
+        match = "Array has shape (3,) which is not allowed. Shape must be (-1, 3)."
+        with pytest.raises(ValueError, match=escape(match)):
             validate_arrayNx3((1, 2, 3), reshape=False)
 
     arr = validate_arrayNx3([(1, 2, 3), (4, 5, 6)], reshape=reshape)
     assert np.shape(arr) == (2, 3)
 
-    msg = "Array has shape () which is not allowed. Shape must be one of [(-1, 3), (3,)]."
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = "Array has shape () which is not allowed. Shape must be one of [(-1, 3), (3,)]."
+    with pytest.raises(ValueError, match=escape(match)):
         validate_arrayNx3(0)
     with pytest.raises(ValueError, match="_input"):
         validate_arrayNx3([1, 2, 3, 4], name="_input")
@@ -283,19 +283,19 @@ def test_validate_arrayN(reshape):
     assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
-        msg = 'Array has shape () which is not allowed. Shape must be (-1,).'
-        with pytest.raises(ValueError, match=escape(msg)):
+        match = 'Array has shape () which is not allowed. Shape must be (-1,).'
+        with pytest.raises(ValueError, match=escape(match)):
             validate_arrayN(0, reshape=False)
 
-        msg = 'Array has shape (1, 3) which is not allowed. Shape must be (-1,).'
-        with pytest.raises(ValueError, match=escape(msg)):
+        match = 'Array has shape (1, 3) which is not allowed. Shape must be (-1,).'
+        with pytest.raises(ValueError, match=escape(match)):
             validate_arrayN([[1, 2, 3]], reshape=False)
 
     arr = validate_arrayN((1, 2, 3, 4, 5, 6), reshape=reshape)
     assert np.shape(arr) == (6,)
 
-    msg = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1), (-1, 1)].'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1), (-1, 1)].'
+    with pytest.raises(ValueError, match=escape(match)):
         validate_arrayN(((1, 2), (3, 4)))
     with pytest.raises(ValueError, match="_input"):
         validate_arrayN(((1, 2), (3, 4)), name="_input")
@@ -315,8 +315,8 @@ def test_validate_arrayN_unsigned(reshape):
     with pytest.raises(ValueError, match=escape('Shape must be (-1,).')):
         validate_arrayN_unsigned(0.0, reshape=False)
 
-    msg = '_input values must all be greater than or equal to 0.'
-    with pytest.raises(ValueError, match=msg):
+    match = '_input values must all be greater than or equal to 0.'
+    with pytest.raises(ValueError, match=match):
         validate_arrayN_unsigned([-1, 1], name="_input")
 
 
@@ -360,39 +360,39 @@ def test_validate_array3(reshape):
 
     if not reshape:
         # test check fails with 2D input and no reshape
-        msg = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
-        with pytest.raises(ValueError, match=escape(msg)):
+        match = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
+        with pytest.raises(ValueError, match=escape(match)):
             validate_array3([[1, 2, 3]], reshape=reshape)
 
         # test correct shape with broadcast and no reshape
-        msg = "Shape must be one of [(3,), (), (1,)]."
-        with pytest.raises(ValueError, match=escape(msg)):
+        match = "Shape must be one of [(3,), (), (1,)]."
+        with pytest.raises(ValueError, match=escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
     else:
-        # test error msg shows correct shape with broadcast and with reshape
-        msg = "Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]"
-        with pytest.raises(ValueError, match=escape(msg)):
+        # test error match shows correct shape with broadcast and with reshape
+        match = "Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]"
+        with pytest.raises(ValueError, match=escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
 
 
 def test_check_range():
     check_range((1, 2, 3), [1, 3])
 
-    msg = "Array values must all be less than or equal to 2."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be less than or equal to 2."
+    with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 2])
 
-    msg = "Input values must all be greater than or equal to 2."
-    with pytest.raises(ValueError, match=msg):
+    match = "Input values must all be greater than or equal to 2."
+    with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [2, 3], name='Input')
 
     # Test strict bounds
-    msg = "Array values must all be less than 3."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be less than 3."
+    with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 3], strict_upper=True)
 
-    msg = "Array values must all be greater than 1."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be greater than 1."
+    with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 3], strict_lower=True)
 
 
@@ -562,37 +562,37 @@ def test_validate_array_return_type_raises():
     validate_array(0, return_type=np.ndarray, dtype_out=np.float64)
     validate_array(0, return_type=list, dtype_out=float)
 
-    def msg(atype, dtype):
+    def match(atype, dtype):
         return (
             f"Return type {atype} is not compatible with dtype_out={dtype}.\n"
             f"A list or tuple can only be returned if dtype_out is float, int, or bool."
         )
 
     atype, dtype = 'list', np.float64
-    with pytest.raises(ValueError, match=msg(atype, dtype)):
+    with pytest.raises(ValueError, match=match(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
     atype, dtype = list, np.float64
-    with pytest.raises(ValueError, match=msg(atype, dtype)):
+    with pytest.raises(ValueError, match=match(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
     atype, dtype = tuple, np.float64
-    with pytest.raises(ValueError, match=msg(atype, dtype)):
+    with pytest.raises(ValueError, match=match(atype, dtype)):
         validate_array(0, return_type=atype, dtype_out=dtype)
 
-    msg = (
+    match = (
         "Return type '0' is not valid. Return type must be one of: \n\t"
         "['numpy', 'list', 'tuple', <class 'numpy.ndarray'>, <class 'list'>, <class 'tuple'>]"
     )
 
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=escape(match)):
         validate_array(0, return_type=0, dtype_out=float)
 
 
 def test_validate_array_overflow_raises():
-    msg = (
+    match = (
         "Cannot change dtype of Array from <class 'float'> to <class 'int'>.\n"
         "Float infinity cannot be converted to integer."
     )
-    with pytest.raises(TypeError, match=msg):
+    with pytest.raises(TypeError, match=match):
         validate_array(float('inf'), must_be_finite=False, dtype_out=int)
 
     # no overflow raised
@@ -646,8 +646,8 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
                 with pytest.raises(TypeError, match='Object must have type'):
                     check_type(obj, classinfo)
 
-    msg = "Name must be a string, got <class 'int'> instead."
-    with pytest.raises(TypeError, match=msg):
+    match = "Name must be a string, got <class 'int'> instead."
+    with pytest.raises(TypeError, match=match):
         check_instance(0, int, name=0)
 
 
@@ -672,14 +672,14 @@ def test_check_type_union():
 def test_check_string():
     check_string("abc")
     check_string("abc", name='123')
-    msg = "Value must be an instance of <class 'str'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=msg):
+    match = "Value must be an instance of <class 'str'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=match):
         check_string(0, name='Value')
-    msg = "Object must be an instance of <class 'str'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=msg):
+    match = "Object must be an instance of <class 'str'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=match):
         check_string(0)
-    msg = "Name must be a string, got <class 'float'> instead."
-    with pytest.raises(TypeError, match=msg):
+    match = "Name must be a string, got <class 'float'> instead."
+    with pytest.raises(TypeError, match=match):
         check_string("abc", name=0.0)
 
     class str_subclass(str):
@@ -693,22 +693,22 @@ def test_check_string():
 def test_check_less_than():
     check_less_than([0], 1)
     check_less_than(np.eye(3), 1, strict=False)
-    msg = "Array values must all be less than 0."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be less than 0."
+    with pytest.raises(ValueError, match=match):
         check_less_than(0, 0, strict=True)
-    msg = "_input values must all be less than or equal to 0."
-    with pytest.raises(ValueError, match=msg):
+    match = "_input values must all be less than or equal to 0."
+    with pytest.raises(ValueError, match=match):
         check_less_than(1, 0, strict=False, name="_input")
 
 
 def test_check_greater_than():
     check_greater_than([1], 0)
     check_greater_than(np.eye(3), 0, strict=False)
-    msg = "Array values must all be greater than 0."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be greater than 0."
+    with pytest.raises(ValueError, match=match):
         check_greater_than(0, 0, strict=True)
-    msg = "_input values must all be greater than or equal to 0."
-    with pytest.raises(ValueError, match=msg):
+    match = "_input values must all be greater than or equal to 0."
+    with pytest.raises(ValueError, match=match):
         check_greater_than(-1, 0, strict=False, name="_input")
 
 
@@ -717,29 +717,29 @@ def test_check_real():
     check_real(-2.0)
     check_real(np.array(2.0, dtype="uint8"))
     check_real(np.array(True, dtype=bool))
-    msg = 'Array must have real numbers.'
-    with pytest.raises(TypeError, match=msg):
+    match = 'Array must have real numbers.'
+    with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
-    msg = '_input must have real numbers.'
-    with pytest.raises(TypeError, match=msg):
+    match = '_input must have real numbers.'
+    with pytest.raises(TypeError, match=match):
         check_real(1 + 1j, name="_input")
 
 
 def test_check_finite():
     check_finite(0)
-    msg = '_input must have finite values.'
-    with pytest.raises(ValueError, match=msg):
+    match = '_input must have finite values.'
+    with pytest.raises(ValueError, match=match):
         check_finite(np.nan, name="_input")
 
 
 def test_check_integerlike():
     check_integer(1)
     check_integer([2, 3.0])
-    msg = "Input has incorrect dtype of <class 'float'>. The dtype must be a subtype of <class 'numpy.integer'>."
-    with pytest.raises(TypeError, match=msg):
+    match = "Input has incorrect dtype of <class 'float'>. The dtype must be a subtype of <class 'numpy.integer'>."
+    with pytest.raises(TypeError, match=match):
         check_integer([2, 3.0], strict=True, name="_input")
-    msg = "_input must have integer-like values."
-    with pytest.raises(ValueError, match=msg):
+    match = "_input must have integer-like values."
+    with pytest.raises(ValueError, match=match):
         check_integer([2, 3.4], strict=False, name="_input")
 
 
@@ -774,23 +774,23 @@ def test_check_length():
     with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
         check_length((1,), exact_length=(1, 2.4), name="_input")
 
-    msg = '_input must have a length equal to any of: 1. Got length 2 instead.'
-    with pytest.raises(ValueError, match=msg):
+    match = '_input must have a length equal to any of: 1. Got length 2 instead.'
+    with pytest.raises(ValueError, match=match):
         check_length((1, 2), exact_length=1, name="_input")
-    msg = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
+    with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 
-    msg = "_input must have a maximum length of 1. Got length 2 instead."
-    with pytest.raises(ValueError, match=msg):
+    match = "_input must have a maximum length of 1. Got length 2 instead."
+    with pytest.raises(ValueError, match=match):
         check_length((1, 2), max_length=1, name="_input")
 
-    msg = "_input must have a minimum length of 2. Got length 1 instead."
-    with pytest.raises(ValueError, match=msg):
+    match = "_input must have a minimum length of 2. Got length 1 instead."
+    with pytest.raises(ValueError, match=match):
         check_length((1,), min_length=2, name="_input")
 
-    msg = 'Range with 2 elements must be sorted in ascending order. Got:\n    (4, 2)'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Range with 2 elements must be sorted in ascending order. Got:\n    (4, 2)'
+    with pytest.raises(ValueError, match=escape(match)):
         check_length(
             (
                 1,
@@ -801,8 +801,8 @@ def test_check_length():
             max_length=2,
         )
 
-    msg = 'Array has the incorrect number of dimensions. Got 2, expected 1.'
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'Array has the incorrect number of dimensions. Got 2, expected 1.'
+    with pytest.raises(ValueError, match=escape(match)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
 
     with pytest.raises(TypeError, match="object of type 'int' has no len()"):
@@ -812,8 +812,8 @@ def test_check_length():
 def test_check_nonnegative():
     check_nonnegative(0)
     check_nonnegative(np.eye(3))
-    msg = "Array values must all be greater than or equal to 0."
-    with pytest.raises(ValueError, match=msg):
+    match = "Array values must all be greater than or equal to 0."
+    with pytest.raises(ValueError, match=match):
         check_nonnegative(-1)
 
 
@@ -898,8 +898,8 @@ def test_check_sorted(shape, axis, ascending, strict, as_list):
 
 def test_check_sorted_error_repr():
     array = np.zeros(shape=(10, 10))
-    msg = "Array with 100 elements must be sorted in strict ascending order. Got:\n    array([[0., 0... 0., 0., 0.]])"
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = "Array with 100 elements must be sorted in strict ascending order. Got:\n    array([[0., 0... 0., 0., 0.]])"
+    with pytest.raises(ValueError, match=escape(match)):
         check_sorted(array, ascending=True, strict=True)
 
 
@@ -908,8 +908,8 @@ def test_check_iterable_items():
     check_iterable_items(("a", "b", "c"), str)
     check_iterable_items("abc", str)
     check_iterable_items(range(10), int)
-    msg = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
-    with pytest.raises(TypeError, match=escape(msg)):
+    match = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
+    with pytest.raises(TypeError, match=escape(match)):
         check_iterable_items(["abc", 1], str)
     with pytest.raises(TypeError, match="All items of _input"):
         check_iterable_items(["abc", 1], str, name="_input")
@@ -947,26 +947,26 @@ def test_check_number(number, definition, must_be_real):
 
 
 def test_check_number_raises():
-    msg = (
+    match = (
         "_input must be an instance of <class 'numbers.Real'>. Got <class 'numpy.ndarray'> instead."
     )
-    with pytest.raises(TypeError, match=msg):
+    with pytest.raises(TypeError, match=match):
         check_number(np.array(0), name='_input')
-    msg = "Object must be"
-    with pytest.raises(TypeError, match=msg):
+    match = "Object must be"
+    with pytest.raises(TypeError, match=match):
         check_number(np.array(0))
-    msg = "Object must be"
-    with pytest.raises(TypeError, match=msg):
+    match = "Object must be"
+    with pytest.raises(TypeError, match=match):
         check_number(1 + 1j, must_be_real=True)
 
 
 def test_check_contains():
     check_contains(["foo", "bar"], must_contain="foo")
-    msg = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
+    with pytest.raises(ValueError, match=escape(match)):
         check_contains(["cat", "bar"], must_contain="foo")
-    msg = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
+    with pytest.raises(ValueError, match=escape(match)):
         check_contains(range(4), must_contain=5, name="_input")
 
 
@@ -1039,19 +1039,19 @@ def test_validate_axes(name):
     ):
         validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
 
-    msg = "Axes has shape (3,) which is not allowed. Shape must be one of [(2, 3), (3, 3)]."
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = "Axes has shape (3,) which is not allowed. Shape must be one of [(2, 3), (3, 3)]."
+    with pytest.raises(ValueError, match=escape(match)):
         validate_axes([1, 0, 0])
 
-    msg = (
+    match = (
         'Incorrect number of axes arguments. Number of arguments must be either:\n'
         '\tOne arg (a single array with two or three vectors),'
         '\tTwo args (two vectors), or'
         '\tThree args (three vectors).'
     )
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=escape(match)):
         validate_axes()
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=escape(match)):
         validate_axes(0, 0, 0, 0)
 
 
@@ -1062,7 +1062,7 @@ def test_validate_axes_orthogonal(bias_index):
     axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
     axes_left[bias_index[0], bias_index[1]] = 0.1
 
-    msg = "Axes are not orthogonal."
+    match = "Axes are not orthogonal."
     axes = validate_axes(
         axes_right,
         must_be_orthogonal=False,
@@ -1070,7 +1070,7 @@ def test_validate_axes_orthogonal(bias_index):
         must_have_orientation='right',
     )
     assert np.array_equal(axes, axes_right)
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=match):
         validate_axes(axes_right, must_be_orthogonal=True)
 
     axes = validate_axes(
@@ -1080,7 +1080,7 @@ def test_validate_axes_orthogonal(bias_index):
         must_have_orientation='left',
     )
     assert np.array_equal(axes, axes_left)
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError, match=match):
         validate_axes(axes_left, must_be_orthogonal=True)
 
 
@@ -1108,15 +1108,15 @@ def test_cast_to_numpy(as_any, copy, dtype):
 def test_cast_to_numpy_raises():
     if sys.version_info < (3, 9) and sys.platform == 'linux':
         err = TypeError
-        msg = "Object arrays are not supported."
+        match = "Object arrays are not supported."
     else:
         err = ValueError
-        msg = "Array cannot be cast as <class 'numpy.ndarray'>."
-    with pytest.raises(err, match=msg):
+        match = "Array cannot be cast as <class 'numpy.ndarray'>."
+    with pytest.raises(err, match=match):
         _cast_to_numpy([[1], [2, 3]])
 
-    msg = "Object arrays are not supported."
-    with pytest.raises(TypeError, match=msg):
+    match = "Object arrays are not supported."
+    with pytest.raises(TypeError, match=match):
         _cast_to_numpy(list)
 
 
@@ -1124,11 +1124,11 @@ def test_cast_to_numpy_must_be_real():
     _ = _cast_to_numpy([0, 1], must_be_real=True)
     _ = _cast_to_numpy("abc", must_be_real=False)
 
-    msg = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
-    with pytest.raises(TypeError, match=msg):
+    match = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
+    with pytest.raises(TypeError, match=match):
         _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
-    msg = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
-    with pytest.raises(TypeError, match=msg):
+    match = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
+    with pytest.raises(TypeError, match=match):
         _ = _cast_to_numpy("abc", must_be_real=True)
 
 
@@ -1371,8 +1371,8 @@ def test_array_wrapper_ragged_array(ragged_array):
     with pytest.raises(ValueError, match='inhomogeneous shape'):
         np.array(ragged_array)
 
-    msg = 'The following array is not valid:\n\t['
-    with pytest.raises(ValueError, match=escape(msg)):
+    match = 'The following array is not valid:\n\t['
+    with pytest.raises(ValueError, match=escape(match)):
         _ArrayLikeWrapper(ragged_array)
 
 
