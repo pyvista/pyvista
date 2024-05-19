@@ -13,53 +13,56 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 
 """
 
+# sphinx_gallery_thumbnail_number = 3
+
 ################################################################################
-# Compare Representations
-# -----------------------
-# Create image data with eight points and a discrete scalar data array.
+# Representations of 3D Volumes
+# ----------------------------
+# Create image data of a 3D volume with eight points and a discrete scalar data
+# array.
 
 import numpy as np
 
 import pyvista as pv
 
-data_array = [8, 7, 6, 5, 4, 3, 1, 0]
-points_image = pv.ImageData(dimensions=(2, 2, 2))
-points_image.point_data['Data'] = data_array
+data_array = [8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 1.0, 0.0]
+points_volume = pv.ImageData(dimensions=(2, 2, 2))
+points_volume.point_data['Data'] = data_array
 
 ################################################################################
-# If we plot the image, it is represented as a single cell with eight points,
+# If we plot the volume, it is represented as a single cell with eight points,
 # and the point data is interpolated to color the cell.
 
-points_image.plot(show_edges=True)
+points_volume.plot(show_edges=True)
 
 ################################################################################
-# However, in many applications (e.g. 3D medical images) the scalar data arrays
-# represent discretized samples at the center-points of voxels. As such, it may
-# be more appropriate to represent the data as eight cells instead of eight
-# points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
+# However, in many applications (e.g. 3D medical imaging) the scalar data arrays
+# represent discretized samples at the centers of voxels. As such, it may
+# be more appropriate to represent the data as eight voxel cells instead of
+# eight points. We can use :meth:`~pyvista.ImageDataFilters.points_to_cells` to
 # generate a cell-based representation.
 
-cells_image = points_image.points_to_cells()
+cells_volume = points_volume.points_to_cells()
 
 ################################################################################
-# Now, when we plot the image, we have a more appropriate representation with
+# Now, when we plot the volume, we have a more appropriate representation with
 # eight voxel cells, and the scalar data is no longer interpolated.
 
-cells_image.plot(show_edges=True)
+cells_volume.plot(show_edges=True)
 
 ################################################################################
-# Let's compare the two representations and plot them together.
+# Let's plot the two representations together for comparison.
 #
-# For visualization, we color the points image (inner mesh) and show the cells
-# image (outer mesh) as a wireframe. We also plot the cell centers in red. Note
+# For visualization, we color the points volume (inner mesh) and show the cells
+# volume (outer mesh) as a wireframe. We also plot the cell centers in red. Note
 # how the centers of the cells image correspond to the points of the points image.
 
-cell_centers = cells_image.cell_centers()
-cell_edges = cells_image.extract_all_edges()
+cell_centers = cells_volume.cell_centers()
+cell_edges = cells_volume.extract_all_edges()
 
 plot = pv.Plotter()
-plot.add_mesh(points_image, color=True, show_edges=True, opacity=0.7)
-plot.add_mesh(cell_edges, color='black')
+plot.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
+plot.add_mesh(cells_volume, style='wireframe', color='black', line_width=2)
 plot.add_points(
     cell_centers,
     render_points_as_spheres=True,
@@ -75,8 +78,8 @@ plot.show()
 # data, but not both), it is possible to move between representations without
 # loss of data.
 
-array_before = points_image.active_scalars
-array_after = points_image.points_to_cells().cells_to_points().active_scalars
+array_before = points_volume.active_scalars
+array_after = points_volume.points_to_cells().cells_to_points().active_scalars
 np.array_equal(array_before, array_after)
 
 ################################################################################
@@ -85,23 +88,24 @@ np.array_equal(array_before, array_after)
 # Use a point representation of the image when working with point-based
 # filters such as :meth:`~pyvista.ImageDataFilters.image_threshold`. If the
 # image only has cell data, use :meth:`~pyvista.ImageDataFilters.cells_to_points`
-# re-mesh the input first.
+# re-mesh the input first. Here, we reuse the point-based image defined earlier.
 #
-# Here, we reuse the points image defined earlier and apply the filter. For
-# context, we also show the input data array.
+# For context, we first show the input data array.
 
-points_image.point_data['Data']
-
-points_ithresh = points_image.image_threshold(2)
+points_volume.point_data['Data']
 
 ################################################################################
-# This filter returns binary point data as expected. Values above the threshold
-# of ``2`` are ones, and below the threshold are zeros.
+# Now apply the filter and print the result.
 
+points_ithresh = points_volume.image_threshold(2)
 points_ithresh.point_data['Data']
 
 ################################################################################
-# However, when we plot it the point values are interpolated as before.
+# The filter returns binary point data as expected. Values above the threshold
+# of ``2`` are ones, and below the threshold are zeros.
+#
+# However, when we plot it the point values are linearly interpolated. For
+# visualizing binary data, this interpolation is not desirable.
 
 points_ithresh.plot(show_edges=True)
 
@@ -114,42 +118,47 @@ points_ithresh_as_cells = points_ithresh.points_to_cells()
 points_ithresh_as_cells.plot(show_edges=True)
 
 ################################################################################
+# The binary data is now correctly represented as binary data.
+
+################################################################################
 # Cell Filters with Image Data
 # ----------------------------
 # Use a cell representation of the image when working with cell-based filters
 # such as :meth:`~pyvista.DataSetFilters.threshold`. If the image only has point
 # data, use :meth:`~pyvista.ImageDataFilters.points_to_cells` to re-mesh the
-# input first.
-#
-# Here, we reuse the cells image created earlier and apply the filter. For
-# context, we also show the input data array.
+# input first. Here, we reuse the cell-based image created earlier.
 
-cells_image.cell_data['Data']
+# For context, we first show the input data array.
 
-cells_thresh = cells_image.threshold(2)
+cells_volume.cell_data['Data']
+
+# Now apply the filter and print the result.
+
+cells_thresh = cells_volume.threshold(2)
+cells_thresh.cell_data['Data']
 
 ################################################################################
 # When the input is cell data, this filter returns six discrete values above
 # the threshold value of ``2`` as expected.
-
-cells_thresh.cell_data['Data']
+#
+# If we plot the result, the cells also produce the correct visualization.
 
 cells_thresh.plot(show_edges=True)
 
 ################################################################################
 # However, if we apply the same filter to a point-based representation of the
-# image, the filter returns an unexpected result.
+# image, the filter does not produce the desired result.
 
-points_thresh = points_image.threshold(2)
-
-################################################################################
-# In this case, the filter has no effect on the data array's values.
-
+points_thresh = points_volume.threshold(2)
 points_thresh.point_data['Data']
 
 ################################################################################
-# If we plot the output, the result is identical to the plot of the input points
-# image shown at the beginning of this example.
+# In this case, since the points image only has a single cell, the filter has no
+# effect on the data array's values. The thresholded values are the same as the
+# input values.
+#
+# Plotting the result confirms this. The plot is identical to the initial plot
+# of the point-based image shown at the beginning of this example.
 
 points_thresh.plot(show_edges=True)
 
@@ -164,8 +173,8 @@ points_thresh.plot(show_edges=True)
 # 16 pixels.
 
 data_array = np.linspace(0, 255, 16, dtype=np.uint8)[::-1]
-gray_points = pv.ImageData(dimensions=(4, 4, 1))
-gray_points.point_data['Data'] = data_array
+points_image = pv.ImageData(dimensions=(4, 4, 1))
+points_image.point_data['Data'] = data_array
 
 ################################################################################
 # Plot the image. As before, the plot does not appear correct since the point
@@ -180,12 +189,33 @@ plot_kwargs = dict(
     clim=[0, 255],
     show_edges=True,
 )
-gray_points.plot(**plot_kwargs)
+points_image.plot(**plot_kwargs)
 
 ################################################################################
 # To visualize the image correctly, we first use :meth:`~pyvista.ImageDataFilters.points_to_cells`
 # to get a cell-based representation of the image and plot the result. The plot
 # now correctly shows 16 pixel cells with discrete values.
 
-gray_cells = gray_points.points_to_cells()
-gray_cells.plot(**plot_kwargs)
+cells_image = points_image.points_to_cells()
+cells_image.plot(**plot_kwargs)
+
+################################################################################
+# Let's plot the two representations together for comparison.
+#
+# For visualization, we color the points image (inner mesh) and show the cells
+# image (outer mesh) as a wireframe. We also plot the cell centers in red. Note
+# how the centers of the cells image correspond to the points of the points image.
+
+cell_centers = cells_image.cell_centers()
+
+plot = pv.Plotter()
+plot.add_mesh(points_image, color=True, opacity=0.7)
+plot.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
+plot.add_points(
+    cell_centers,
+    render_points_as_spheres=True,
+    color='red',
+    point_size=20,
+)
+plot.view_xy()
+plot.show()

@@ -1240,13 +1240,15 @@ class ImageDataFilters(DataSetFilters):
             old_data = cell_data
             new_data = new_image.point_data
 
+        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
+        dims_mask = dims > 1  # Only operate on non-singleton dimensions
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
-            np.array(self.spacing) / 2,  # type: ignore[attr-defined]
+            (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
         )
         new_image.dimensions = dims_operator(
-            dims := np.array(self.dimensions),  # type: ignore[attr-defined]
-            dims > 1,  # Only operate on non-singleton dimensions
+            dims,
+            dims_mask,
         )
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
         new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
