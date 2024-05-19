@@ -3163,6 +3163,8 @@ def test_image_threshold_dtype(value_dtype, array_dtype):
     actual_array = thresh['Data']
     assert np.array_equal(actual_array, expected_array)
 
+    assert image['Data'].dtype == thresh['Data'].dtype
+
 
 def test_image_threshold_wrong_threshold_length():
     threshold = (10, 10, 10)  # tuple with too many values

@@ -416,7 +416,10 @@ class ImageDataFilters(DataSetFilters):
 
         # For some systems and/or versions of numpy, integer scalars won't threshold
         # correctly. Cast to float in these cases.
-        has_int_dtype = np.issubdtype(array_dtype := self.active_scalars.dtype, (int, np.integer))
+        has_int_dtype = np.issubdtype(
+            array_dtype := self.active_scalars.dtype,
+            int,
+        ) and array_dtype != np.dtype(np.uint8)
         cast_dtype = (
             has_int_dtype
             and int(np.__version__.split('.')[0]) < 2
@@ -459,6 +462,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         output = _get_output(alg)
         if cast_dtype:
+            self[scalars] = self[scalars].astype(array_dtype)
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
