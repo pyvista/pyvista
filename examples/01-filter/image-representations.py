@@ -92,9 +92,8 @@ np.array_equal(array_before, array_after)
 
 print(points_image.point_data['Data'])
 
-dims = (4, 4, 4)
-points_image = pv.ImageData(dimensions=dims)
-points_image['Data'] = range(4*4*4)[::-1]
+data_array = [8, 7, 6, 5, 4, 3, 1, 0]
+points_image = pv.ImageData(dimensions=(2, 2, 2))
 points_ithresh = points_image.image_threshold(2)
 
 ################################################################################
