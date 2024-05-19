@@ -433,7 +433,7 @@ def render_figures(
                     except RuntimeError:  # pragma no cover
                         # ignore closed, unrendered plotters
                         continue
-                    if force_static or (plotter.last_vtksz is None):
+                    if force_static or (plotter.last_vtksz is None) or True:  # noqa: SIM222
                         images.append(image_file)
                         continue
                     else:
