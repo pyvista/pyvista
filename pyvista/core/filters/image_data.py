@@ -412,7 +412,9 @@ class ImageDataFilters(DataSetFilters):
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
-        array_dtype = self.active_scalars.dtype
+        cast_dtype = np.issubdtype(array_dtype := self.active_scalars.dtype, (int, np.integer))
+        if cast_dtype:
+            self[scalars] = self[scalars].astype(float, casting='safe')
 
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
@@ -424,7 +426,7 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        threshold_val = np.atleast_1d(threshold).astype(array_dtype)
+        threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             raise ValueError(
                 f'Threshold must have one or two values, got {size}.',
@@ -446,7 +448,10 @@ class ImageDataFilters(DataSetFilters):
             alg.SetReplaceOut(False)
         # run the algorithm
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
-        return _get_output(alg)
+        output = _get_output(alg)
+        if cast_dtype:
+            output[scalars] = output[scalars].astype(array_dtype)
+        return output
 
     def fft(self, output_scalars_name=None, progress_bar=False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
