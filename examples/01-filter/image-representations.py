@@ -139,8 +139,8 @@ cells_thresh = cells_volume.threshold(2)
 cells_thresh.cell_data['Data']
 
 ################################################################################
-# When the input is cell data, this filter returns six discrete values above
-# the threshold value of ``2`` as expected.
+# When the input is cell data, this filter returns seven discrete values greater
+# than or equal to the threshold value of ``2`` as expected.
 #
 # If we plot the result, the cells also produce the correct visualization.
 
