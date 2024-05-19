@@ -1355,6 +1355,14 @@ def test_array_wrappers(arraylike_type, shape_in, dtype_in):
     assert repr(wrapped_wrapped) == f"{expected.wrapper.__name__}({wrapped_wrapped._array!r})"
 
 
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('array_in', [0, [0], (0,)])
+def test_array_builtin_wrapper_to_numpy(array_in, copy):
+    wrapped = _ArrayLikeWrapper(array_in).to_numpy(array_in, copy=copy)
+    assert isinstance(wrapped, np.ndarray)
+    assert wrapped is not array_in
+
+
 ragged_arrays = (
     [[1, 2, 3], [4, 5], [6, 7, 8, 9]],
     [np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7, 8, 9])],
