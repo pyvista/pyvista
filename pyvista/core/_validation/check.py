@@ -338,6 +338,12 @@ def check_integer(
 ):
     """Check if an array has integer or integer-like float values.
 
+    .. note::
+
+        This check does not require the input dtype to be integers,
+        i.e. floats are allowed. Use :func:`check_subdtype` instead
+        to check the dtype.
+
     Parameters
     ----------
     array : float | ArrayLike[float]

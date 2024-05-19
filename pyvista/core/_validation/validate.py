@@ -660,7 +660,7 @@ def validate_array(
     Validate an array to ensure it is numeric, has a specific shape,
     data-type, and/or has values that meet specific requirements such as
     being sorted, having integer values, or is finite. The array can
-    optionally be reshaped or broadcast, and the output type of
+    optionally be reshaped or broadcast, and the return type of
     the array can be explicitly set to standardize its representation.
 
     By default, this function is generic and returns an array with the
@@ -675,10 +675,9 @@ def validate_array(
     - Nested tuples: ``Tuple[Tuple[T]]`` -> ``Tuple[Tuple[T]]``
     - NumPy arrays: ``NDArray[T]`` -> ``NDArray[T]``
 
-    All other inputs may first be copied to a NumPy array for processing
-    internally. For ``range`` objects, NumPy protocol arrays (e.g.
-    ``pandas`` arrays), and other array-like inputs the returned array
-    is a NumPy array.
+    All other inputs (e.g. ``range`` objects) may first be copied to a
+    NumPy array for processing internally. NumPy protocol arrays (e.g.
+    ``pandas`` arrays) are not copied but are returned as a NumPy array.
 
     Optionally, use ``return_type`` and/or ``dtype_out`` for non-generic
     behavior to ensure the output array has a consistent type.
@@ -710,7 +709,6 @@ def validate_array(
     validate_data_range
         Specialized function for data ranges.
 
-
     Parameters
     ----------
     array : Number | Array
@@ -721,7 +719,7 @@ def validate_array(
     must_have_shape : ShapeLike | list[ShapeLike], optional
         :func:`Check <pyvista.core._validation.check.check_shape>`
         if the array has a specific shape. Specify a single shape
-        or a ``list`` of any allowable shapes. If an integer, the array must
+        or a list of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
@@ -778,6 +776,13 @@ def validate_array(
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
+        .. note::
+
+            This check does not require the input dtype to be integers,
+            i.e. floats are allowed. Set ``must_have_dtype=int`` if the
+            input is required to be integers or ``dtype_out=int`` to
+            cast the output to integers.
+
     must_be_nonnegative : bool, default: False
         :func:`Check <pyvista.core._validation.check.check_nonnegative>`
         if all elements of the array are nonnegative. Consider also
@@ -808,8 +813,8 @@ def validate_array(
 
         .. note::
 
-            Use infinity (``np.inf`` or ``float('inf')``) to check for open
-            intervals, e.g.:
+            Use infinity (``np.inf`` or ``float('inf')``) to specify an
+            unlimited bound, e.g.:
 
             * ``[-np.inf, upper]`` to check if values are less
               than (or equal to) ``upper``
@@ -830,7 +835,7 @@ def validate_array(
         Reshape the output array to a new shape with :func:`numpy.reshape`.
         The shape should be compatible with the original shape. If an
         integer, then the result will be a 1-D array of that length. One
-        shape dimension can be -1.
+        shape dimension can be ``-1``.
 
     broadcast_to : int | tuple[int, ...], optional
         Broadcast the array with :func:`numpy.broadcast_to` to a
@@ -890,10 +895,12 @@ def validate_array(
           Always ``True`` if ``dtype_out`` is ``None``.
 
         - ``same_type``: ``True`` if the validated array has the same type as the input.
-          Always ``True`` if ``return_type`` is ``None``.
+          Always ``True`` if ``return_type`` is ``None`` and the input array
+          is supported generically (i.e. is scalar, tuple, list, ndarray).
 
         - ``same_object``: ``True`` if the validated array is the same object as the input.
-          May be ``True`` or ``False`` based on a number of factors.
+          May be ``True`` or ``False`` depending on whether a copy is made.
+          See ``copy`` for details.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any of the
@@ -2075,7 +2082,8 @@ def validate_arrayN_unsigned(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
     This function is similar to :func:`~validate_array`, but is configured
     to only allow inputs with shape ``(N,)`` or which can be reshaped to
     ``(N,)``. The return type is fixed to always return a NumPy array with
-     an integer data type.
+     an integer data type, though an integer subtype may be specified
+     (e.g. ``np.unit8``).
 
     By default, the input is also checked to ensure the values are finite,
     non-negative, and have integer values.
