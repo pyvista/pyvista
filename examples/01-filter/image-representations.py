@@ -128,11 +128,12 @@ points_ithresh_as_cells.plot(show_edges=True)
 # such as :meth:`~pyvista.DataSetFilters.threshold`. If the image only has point
 # data, use :meth:`~pyvista.ImageDataFilters.points_to_cells` to re-mesh the
 # input first. Here, we reuse the cell-based image created earlier.
-
+#
 # For context, we first show the input data array.
 
 cells_volume.cell_data['Data']
 
+################################################################################
 # Now apply the filter and print the result.
 
 cells_thresh = cells_volume.threshold(2)
