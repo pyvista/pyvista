@@ -702,7 +702,7 @@ The tests can be executed with:
 
     pytest tests/core/typing
 
-When executed, a single instance of ``Mypy`` will statistically analyze all the
+When executed, a single instance of ``Mypy`` will statically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
 ``EXPECTED_TYPE``is defined by each test case.
 
