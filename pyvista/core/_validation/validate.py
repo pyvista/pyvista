@@ -23,6 +23,7 @@ from typing import (
     Literal,
     NamedTuple,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypedDict,
@@ -49,6 +50,7 @@ from pyvista.core._validation.check import (
     check_finite,
     check_integer,
     check_length,
+    check_ndim,
     check_nonnegative,
     check_range,
     check_real,
@@ -95,6 +97,7 @@ _ArrayReturnType = Union[_NumpyReturnType, _ListReturnType, _TupleReturnType]
 
 class _TypedKwargs(TypedDict, total=False):
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]]
+    must_have_ndim: Optional[int]
     must_have_dtype: Optional[_NumberUnion]
     must_have_length: Optional[Union[int, VectorLike[int]]]
     must_have_min_length: Optional[int]
@@ -634,6 +637,7 @@ def validate_array(
     /,
     *,
     must_have_shape: Optional[Union[_ShapeLike, List[_ShapeLike]]] = None,
+    must_have_ndim: Optional[Union[int, Sequence[int]]] = None,
     must_have_dtype: Optional[_NumberUnion] = None,
     must_have_length: Optional[Union[int, VectorLike[int]]] = None,
     must_have_min_length: Optional[int] = None,
@@ -724,6 +728,13 @@ def validate_array(
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
+
+    must_have_ndim : int | Sequence[int], optional
+        :func:`Check <pyvista.core._validation.check.check_ndim>` if
+        the array has the specified number of dimension(s). Specify a
+        single dimension or a sequence of allowable dimensions. If a
+        sequence, the array must have at least one of the specified
+        number of dimensions.
 
     must_have_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike], optional
         :func:`Check <pyvista.core._validation.check.check_subdtype>`
@@ -987,6 +998,8 @@ def validate_array(
     # Check shape
     if must_have_shape is not None:
         check_shape(wrapped(), shape=must_have_shape, name=name)
+    if must_have_ndim is not None:
+        check_ndim(wrapped(), ndim=must_have_ndim, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
     if do_reshape or do_broadcast:
@@ -1485,6 +1498,7 @@ def validate_number(  # type: ignore[misc]  # numpydoc ignore=PR01,PR02
         get_flags=get_flags,
         name=name,
         # These params are irrelevant for this function:
+        must_have_ndim=None,
         must_be_sorted=False,
         must_have_length=None,
         must_have_min_length=None,
@@ -1763,6 +1777,7 @@ def validate_arrayNx3(  # numpydoc ignore=PR01  # numpydoc ignore=PR01,PR02
         get_flags=get_flags,
         name=name,
         # This parameter is not available
+        must_have_ndim=None,
         broadcast_to=None,
     )
 
@@ -1968,6 +1983,7 @@ def validate_arrayN(  # numpydoc ignore=PR01,PR02
         get_flags=get_flags,
         name=name,
         # This parameter is not available
+        must_have_ndim=None,
         broadcast_to=None,
     )
 
@@ -2390,6 +2406,7 @@ def validate_array3(  # numpydoc ignore=PR01,PR02
         get_flags=get_flags,
         name=name,
         # These params are irrelevant for this function:
+        must_have_ndim=None,
         must_have_length=None,
         must_have_min_length=None,
         must_have_max_length=None,

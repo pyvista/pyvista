@@ -459,6 +459,7 @@ def test_validate_array(
     shape = np.array(array_in).shape
     dynamic_kwargs = dict(
         must_have_shape=shape,
+        must_have_ndim=np.ndim(array_in),
         must_have_dtype=np.number,
         must_have_length=range(np.array(array_in).size + 1),
         must_have_min_length=1,
@@ -1417,6 +1418,7 @@ def test_validate_array_specialized_kwargs(func, validate_array_kwargs):
     if func is validate_number:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('must_have_ndim')
         expected_kwargs.pop('reshape_to')
         expected_kwargs.pop('broadcast_to')
         expected_kwargs.pop('return_type')
@@ -1439,6 +1441,7 @@ def test_validate_array_specialized_kwargs(func, validate_array_kwargs):
     elif func is validate_array3:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('must_have_ndim')
         expected_kwargs.pop('reshape_to')
         expected_kwargs.pop('broadcast_to')
         expected_kwargs.pop('return_type')
@@ -1453,6 +1456,7 @@ def test_validate_array_specialized_kwargs(func, validate_array_kwargs):
     elif func is validate_data_range:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('must_have_ndim')
         expected_kwargs.pop('reshape_to')
         expected_kwargs.pop('broadcast_to')
         expected_kwargs.pop('return_type')
@@ -1467,6 +1471,7 @@ def test_validate_array_specialized_kwargs(func, validate_array_kwargs):
     elif func is validate_arrayNx3 or validate_arrayN or validate_arrayN_unsigned:
         # Remove unused kwargs
         expected_kwargs.pop('must_have_shape')
+        expected_kwargs.pop('must_have_ndim')
         expected_kwargs.pop('reshape_to')
         expected_kwargs.pop('broadcast_to')
         expected_kwargs.pop('return_type')

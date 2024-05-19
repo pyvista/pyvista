@@ -338,12 +338,6 @@ def check_integer(
 ):
     """Check if an array has integer or integer-like float values.
 
-    .. note::
-
-        This check does not require the input dtype to be integers,
-        i.e. floats are allowed. Use :func:`check_subdtype` instead
-        to check the dtype.
-
     Parameters
     ----------
     array : float | ArrayLike[float]
@@ -702,7 +696,8 @@ def check_ndim(
 ):
     """Check if an array has the specified number of dimensions.
 
-    A value of ``0`` is returned for scalar values.
+    .. note::
+        Scalar values have a dimension of ``0``.
 
     Parameters
     ----------
