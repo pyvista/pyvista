@@ -328,7 +328,7 @@ def test_legend_add_entry_exception():
     pl = pv.Plotter()
     legend_entries = np.array([1, 2])  # Not allowed type
 
-    with pytest.raises(ValueError, match="The object passed to the legend"):
+    with pytest.raises(TypeError, match="The object passed to the legend"):
         pl.add_legend(legend_entries)
     pl.show()
 

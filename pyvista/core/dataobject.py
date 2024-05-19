@@ -83,7 +83,7 @@ class DataObject:
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(
+            raise TypeError(
                 f'Reading file returned data of `{type(data).__name__}`, '
                 f'but `{type(self).__name__}` was expected.',
             )

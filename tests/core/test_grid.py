@@ -711,7 +711,7 @@ def test_instantiate_by_filename():
 
     # load the files into the wrong types
     for fname, wrong_type in fname_to_wrong_type.items():
-        with pytest.raises(ValueError):  # noqa: PT011
+        with pytest.raises(TypeError):
             data = wrong_type(fname)
 
 

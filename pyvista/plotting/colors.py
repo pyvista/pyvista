@@ -761,9 +761,9 @@ class Color:
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
             else:
-                raise ValueError(f"Unsupported color type: {type(color)}")
+                raise TypeError(f"Unsupported color type: {type(color)}")
             self._name = color_names.get(self.hex_rgb, None)
-        except ValueError as e:
+        except TypeError as e:
             raise ValueError(
                 "\n"
                 f"\tInvalid color input: ({color})\n"
@@ -1330,7 +1330,7 @@ def color_scheme_to_cycler(scheme):
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:
-            raise ValueError(f'Color scheme not understood: {scheme}')
+            raise TypeError(f'Color scheme not understood: {scheme}')
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))

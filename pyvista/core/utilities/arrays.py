@@ -379,7 +379,7 @@ def raise_not_matching(scalars, dataset):
         Raises a ValueError if the size of scalars does not the dataset.
     """
     if isinstance(dataset, _vtk.vtkTable):
-        raise ValueError(
+        raise ValueError(  # noqa: TRY004
             f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
         )
     raise ValueError(
