@@ -2,7 +2,7 @@
 .. _image_representations_example:
 
 Image Data Representations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 This example demonstrates how to use :meth:`~pyvista.ImageDataFilters.points_to_cells`
 and :meth:`~pyvista.ImageDataFilters.cells_to_points` to re-mesh :class:`~pyvista.ImageData`.
 
@@ -17,7 +17,7 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 
 ################################################################################
 # Representations of 3D Volumes
-# ----------------------------
+# -----------------------------
 # Create image data of a 3D volume with eight points and a discrete scalar data
 # array.
 
