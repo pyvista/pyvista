@@ -2731,14 +2731,18 @@ class ParticleReader(BaseReader):
 
     .. versionadded:: 0.44.0
 
+    Warnings
+    --------
+    If the byte order is not set correctly,
+    the reader will fail to read the file.
+
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> filename = examples.download_particles(load=False)
     >>> reader = pv.get_reader(filename)
-    >>> reader.reader.SetDataByteOrderToBigEndian()
-    >>> reader.reader.Update()
+    >>> reader.endian = "BigEndian"
     >>> filename.split("/")[-1]  # omit the path
     'Particles.raw'
     >>> mesh = reader.read()
@@ -2748,6 +2752,36 @@ class ParticleReader(BaseReader):
 
     _vtk_module_name = "vtkIOGeometry"
     _vtk_class_name = "vtkParticleReader"
+
+    @property
+    def endian(self) -> str:
+        """Get the byte order of the data.
+
+        Returns
+        -------
+        str
+            The byte order of the data. 'BigEndian' or 'LittleEndian'.
+
+        """
+        return self.reader.GetDataByteOrderAsString()
+
+    @endian.setter
+    def endian(self, endian: str):
+        """Set the byte order of the data.
+
+        Parameters
+        ----------
+        endian : str
+            The byte order of the data. 'BigEndian' or 'LittleEndian'.
+
+        """
+        if endian == 'BigEndian':
+            self.reader.SetDataByteOrderToBigEndian()
+        elif endian == 'LittleEndian':
+            self.reader.SetDataByteOrderToLittleEndian()
+        else:
+            raise ValueError(f"Invalid endian: {endian}.")
+        self.reader.Update()
 
 
 CLASS_READERS = {
