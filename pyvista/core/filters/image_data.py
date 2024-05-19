@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import collections.abc
+import platform
 from typing import TYPE_CHECKING, Literal, Optional, Union, cast
 
 import numpy as np
@@ -407,13 +408,28 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh.plot()
 
         """
-        alg = _vtk.vtkImageThreshold()
-        alg.SetInputDataObject(self)
         if scalars is None:
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
         else:
             field = self.get_array_association(scalars, preference=preference)
+
+        # For some systems and/or Numpy < 2.0, integer scalars won't threshold
+        # correctly. Cast to float in these cases.
+        has_int_dtype = np.issubdtype(
+            array_dtype := self.active_scalars.dtype,
+            int,
+        ) and array_dtype != np.dtype(np.uint8)
+        cast_dtype = (
+            has_int_dtype
+            and int(np.__version__.split('.')[0]) < 2
+            and platform.system() in ['Darwin', 'Linux']
+        )
+        if cast_dtype:
+            self[scalars] = self[scalars].astype(float, casting='safe')
+
+        alg = _vtk.vtkImageThreshold()
+        alg.SetInputDataObject(self)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -422,30 +438,33 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         # set the threshold(s) and mode
-        if isinstance(threshold, (np.ndarray, collections.abc.Sequence)):
-            if len(threshold) != 2:
-                raise ValueError(
-                    f'Threshold must be length one for a float value or two for min/max; not ({threshold}).',
-                )
-            alg.ThresholdBetween(threshold[0], threshold[1])
-        elif isinstance(threshold, collections.abc.Iterable):
-            raise TypeError('Threshold must either be a single scalar or a sequence.')
+        threshold_val = np.atleast_1d(threshold)
+        if (size := threshold_val.size) not in (1, 2):
+            raise ValueError(
+                f'Threshold must have one or two values, got {size}.',
+            )
+        if size == 2:
+            alg.ThresholdBetween(threshold_val[0], threshold_val[1])
         else:
-            alg.ThresholdByUpper(threshold)
+            alg.ThresholdByUpper(threshold_val[0])
         # set the replacement values / modes
         if in_value is not None:
             alg.SetReplaceIn(True)
-            alg.SetInValue(in_value)
+            alg.SetInValue(np.array(in_value).astype(array_dtype))
         else:
             alg.SetReplaceIn(False)
         if out_value is not None:
             alg.SetReplaceOut(True)
-            alg.SetOutValue(out_value)
+            alg.SetOutValue(np.array(out_value).astype(array_dtype))
         else:
             alg.SetReplaceOut(False)
         # run the algorithm
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
-        return _get_output(alg)
+        output = _get_output(alg)
+        if cast_dtype:
+            self[scalars] = self[scalars].astype(array_dtype)
+            output[scalars] = output[scalars].astype(array_dtype)
+        return output
 
     def fft(self, output_scalars_name=None, progress_bar=False):
         """Apply a fast Fourier transform (FFT) to the active scalars.

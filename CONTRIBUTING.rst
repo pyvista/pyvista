@@ -652,7 +652,7 @@ correct both statically and dynamically. This is mainly used to check complex an
 overloaded function signatures, such as the type hints for ``validate_array``
 or related functions.
 
-Individual test cases are written as a single line of python code with the format:
+Individual test cases are written as a single line of Python code with the format:
 
 .. code:: python
 
@@ -661,9 +661,9 @@ Individual test cases are written as a single line of python code with the forma
 where ``arg`` is any argument you want mypy to analyze, and ``"<T>"`` is the
 expected revealed type returned by ``Mypy``.
 
-For example, the ``validate_array`` function by default returns a list of floats
+For example, the ``validate_array`` function, by default, returns a list of floats
 when a list of floats is provided at the input. The type hint should reflect this.
-To test this, we can write a test case as for the function call ``validate_array([1.0])``
+To test this, we can write a test case for the function call ``validate_array([1.0])``
 as follows:
 
 .. code:: python
@@ -686,9 +686,9 @@ For this test case, the revealed type by ``Mypy`` is:
     "builtins.list[builtins.float]"
 
 Notice that the revealed type is fully qualified, i.e. includes ``builtins``. For
-brevity, the custom test suite omits this, and requires that only ``list`` be
-included in the expected type. Therefore, for this test case the ``EXPECTED_TYPE``
-type is ``"list[float]"``, not ``"builtins.list[builtins.float]"``. (Similarly the
+brevity, the custom test suite omits this and requires that only ``list`` be
+included in the expected type. Therefore, for this test case, the ``EXPECTED_TYPE``
+type is ``"list[float]"``, not ``"builtins.list[builtins.float]"``. (Similarly, the
 package name ``numpy`` should also be omitted for tests where a ``numpy.ndarray`` is
 expected.)
 
@@ -699,19 +699,20 @@ included in a single `.py` file. The test cases are all stored in
 The tests can be executed with:
 
 .. code:: python
+
     pytest tests/core/typing
 
-When executed, a single instance of ``Mypy`` will statically analyze all of the
+When executed, a single instance of ``Mypy`` will statistically analyze all the
 test cases. The actual revealed types by ``Mypy`` are compared against the
-``EXPECTED_TYPE`` defined by each test case.
+``EXPECTED_TYPE``is defined by each test case.
 
-In addition, the ``pyanalyze`` package is used to test the actual returned
-type at runtime matches the statically-revealed type. The
+In addition, the ``pyanalyze`` package tests the actual returned
+type at runtime to match the statically-revealed type. The
 `pyanalyze.runtime.get_compatibility_error <https://pyanalyze.readthedocs.io/en/latest/reference/runtime.html#pyanalyze.runtime.get_compatibility_error>`_
 method is used for this. If new typing test cases are added for a new
-validation function, the new function will need to be added to the list of
+validation function, the new function must be added to the list of
 imports in ``tests/core/typing/test_validation_typing.py`` so that the
-runtime test is able to call the function.
+runtime test can call the function.
 
 Building the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -32,7 +32,7 @@ from pyvista.core._typing_core._type_guards import (
 )
 from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
