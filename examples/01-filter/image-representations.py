@@ -25,7 +25,7 @@ import numpy as np
 
 import pyvista as pv
 
-data_array = [8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 1.0, 0.0]
+data_array = [8, 7, 6, 5, 4, 3, 2, 1]
 points_volume = pv.ImageData(dimensions=(2, 2, 2))
 points_volume.point_data['Data'] = data_array
 
