@@ -13,8 +13,6 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 
 """
 
-# sphinx_gallery_thumbnail_number = 3
-
 ################################################################################
 # Representations of 3D Volumes
 # -----------------------------
@@ -24,6 +22,9 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 import numpy as np
 
 import pyvista as pv
+
+# sphinx_gallery_thumbnail_number = 3
+
 
 data_array = [8, 7, 6, 5, 4, 3, 2, 1]
 points_volume = pv.ImageData(dimensions=(2, 2, 2))
@@ -53,8 +54,8 @@ cells_volume.plot(show_edges=True)
 ################################################################################
 # Let's plot the two representations together for comparison.
 #
-# For visualization, we color the points volume (inner mesh) and show the cells
-# volume (outer mesh) as a wireframe. We also plot the cell centers in red. Note
+# For visualization, we color the points volume (inner mesh) and only show the edges
+# of the cells volume (outer mesh). We also plot the cell centers in red. Note
 # how the centers of the cells image correspond to the points of the points image.
 
 cell_centers = cells_volume.cell_centers()
@@ -62,7 +63,7 @@ cell_edges = cells_volume.extract_all_edges()
 
 plot = pv.Plotter()
 plot.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
-plot.add_mesh(cells_volume, style='wireframe', color='black', line_width=2)
+plot.add_mesh(cell_edges, color='black', line_width=2)
 plot.add_points(
     cell_centers,
     render_points_as_spheres=True,
@@ -101,8 +102,8 @@ points_ithresh = points_volume.image_threshold(2)
 points_ithresh.point_data['Data']
 
 ################################################################################
-# The filter returns binary point data as expected. Values above the threshold
-# of ``2`` are ones, and below the threshold are zeros.
+# The filter returns binary point data as expected. Values equal to or greater
+# or than the threshold of ``2`` are ones, and less than the threshold are zeros.
 #
 # However, when we plot it the point values are linearly interpolated. For
 # visualizing binary data, this interpolation is not desirable.
@@ -118,7 +119,7 @@ points_ithresh_as_cells = points_ithresh.points_to_cells()
 points_ithresh_as_cells.plot(show_edges=True)
 
 ################################################################################
-# The binary data is now correctly represented as binary data.
+# The binary data is now correctly visualized as binary data.
 
 ################################################################################
 # Cell Filters with Image Data
