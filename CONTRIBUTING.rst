@@ -788,36 +788,53 @@ Documentation Image Regression Testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Image regression testing is performed on all published documentation images.
-Test all the images with:
+When the documentation is built, all generated images are automatically
+saved to
+    Build Image Directory: ``./doc/_build/html/_images``
+
+The regression testing compares these generated images to those stored in
+    Doc Image Cache: ``./tests/doc/doc_image_cache``
+
+To test all the images, run ``pytest`` with:
 
 .. code:: bash
 
    pytest tests/doc/tst_doc_images.py
 
-The test will:
+The tests must be executed explicitly with this command. The name of the test
+file is prefixed with ``tst``, and not ``test`` specifically to avoid being
+automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
+with ``test`` by default.) This is done since the tests require building the
+documentation, and are not a primary form of testing.
 
-   1. Collect all images from ``./doc/_build/html/_images``.
+When executed the tests will:
+
+   1. Collect all documentation images from the ``Build Image Directory``.
 
    1. Resize the images to a maximum of 400x400 pixels.
 
    1. Save a copy of the resized images to a flat directory in ``./_doc_debug_images``.
 
    1. Use `:func:pyvista.compare_images` to compare the build images in ``./_doc_debug_images``
-      to the cached images in ``./tests/doc/doc_image_cache``.
+      to the cached images in the ``Doc Image Cache``.
 
-To resolve any failed tests, either:
-
-   1. Update the cache by copying the image(s) from ``./_doc_debug_images``
-      to ``./tests/doc/doc_image_cache``.
-
-   1. Update the docstring example code to ensure its output matches the expected
-      output from the cache.
+If an image is missing from either the ``Build Image Directory`` or the
+``Doc Image Cache``, the tests will fail. If new plots are added to docstrings,
+they must also be added to the cache. If old plots are removed from docstrings,
+they must also be removed from the cache.
 
 .. note::
 
-   If the documentation is built as part of CI testing, an artifact with
-   the debug images is automatically generated and can be downloaded for debugging
-   or for adding new images for new or modified docstrings.
+    It is not necessary to build the documentation images locally in order
+    to add to or update the doc image cache. The documentation is automatically
+    built as part of CI testing, and an artifact with the debug images is
+    automatically generated. The artifact can be downloaded, and images from
+    the artifact may be copied and added to the cache.
+
+    The debug images saved with the artifact can also be used to "simulate"
+    building the documentation images locally. The images may simply be copied
+    to the local ``Build Image Directory``, and the tests can then be
+    executed locally for debugging.
 
 .. note::
 
@@ -826,7 +843,6 @@ To resolve any failed tests, either:
    primary source of testing. See `Documentation Testing`_ and
    `Notes Regarding Image Regression Testing`_ for testing methods which should
    be considered first.
-
 
 
 Contributing to the Documentation

@@ -27,8 +27,7 @@ class _TestCaseTuple(NamedTuple):
 def _get_file_paths(dir_: str, ext: str):
     """Get all paths of files with a specific extension inside a directory tree."""
     pattern = str(Path(dir_) / '**' / ('*.' + ext))
-    file_paths = glob.glob(pattern, recursive=True)  # noqa: PTH207
-    return file_paths
+    return glob.glob(pattern, recursive=True)  # noqa: PTH207
 
 
 def _flatten_path(path: str):
@@ -111,14 +110,22 @@ def test_docs(test_case):
     if docs_image_path is None or cached_image_path is None:
         if docs_image_path is None:
             exists = 'cache'
-            missing = 'docs'
+            missing = 'docs build'
+            exists_path = cached_image_path
+            missing_path = BUILD_IMAGE_DIR
         else:
-            exists = 'docs'
+            exists = 'docs build'
             missing = 'cache'
+            exists_path = BUILD_IMAGE_DIR
+            missing_path = BUILD_IMAGE_CACHE
+
         pytest.fail(
-            f"Test setup failed for test case:\n"
+            f"Test setup failed for test image:\n"
             f"\t{filename}\n"
-            f"The image exists in the {exists}, but is missing from the {missing}.",
+            f"The image exists in the {exists} directory:\n"
+            f"\t{exists_path}\n"
+            f"but is missing from the {missing} directory:\n"
+            f"\t{missing_path}\n",
         )
 
     docs_image = pv.read(docs_image_path)
