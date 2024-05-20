@@ -22,6 +22,10 @@ from pyvista import examples
 # than creating a PyVista mesh with your own NumPy arrays of vertice locations.
 
 
+# Seed the random number generator for generating data
+rng = np.random.default_rng(seed=0)
+
+
 # Define some helpers - ignore these and use your own data.
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
@@ -33,9 +37,6 @@ def generate_points(subset=0.02):
     )
     return dataset.points[ids]
 
-
-# Seed the random number generator for generating data
-rng = np.random.default_rng(seed=0)
 
 points = generate_points()
 # Print first 5 rows to prove its a numpy array (n_points by 3)
