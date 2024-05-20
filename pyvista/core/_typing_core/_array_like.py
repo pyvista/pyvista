@@ -29,7 +29,7 @@ import numpy as np
 import numpy.typing as npt
 
 # Define numeric types
-# TODO: remove # type: ignore once support for 3.8 is dropped
+# TODO: remove # type: ignore once support for Python3.8 is dropped
 _NumberUnion = Union[Type[np.floating], Type[np.integer], Type[np.bool_], Type[float], Type[int], Type[bool]]  # type: ignore[type-arg]
 NumberType = TypeVar(
     'NumberType',
