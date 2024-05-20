@@ -790,9 +790,11 @@ Documentation Image Regression Testing
 Image regression testing is performed on all published documentation images.
 When the documentation is built, all generated images are automatically
 saved to
+
     Build Image Directory: ``./doc/_build/html/_images``
 
 The regression testing compares these generated images to those stored in
+
     Doc Image Cache: ``./tests/doc/doc_image_cache``
 
 To test all the images, run ``pytest`` with:
