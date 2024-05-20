@@ -1088,17 +1088,20 @@ class ImageDataFilters(DataSetFilters):
         the output. The array's values are structured as follows:
 
         External boundary values
+
             Polygons between a foreground region and the background have the
             form ``[foreground, background]``.
 
             E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
 
         Internal boundary values
+
             Polygons between two connected foreground regions are sorted in ascending order.
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
         .. note::
+
             This filter requires VTK version ``9.3.0`` or greater.
 
         Parameters
@@ -1121,6 +1124,7 @@ class ImageDataFilters(DataSetFilters):
             shape depending on which inputs are selected.
 
             .. note::
+
                 Selecting inputs can affect whether a boundary polygon is considered to
                 be ``internal`` or ``external``. That is, an internal boundary becomes an
                 external boundary when only one of the two foreground regions on the
@@ -1138,6 +1142,7 @@ class ImageDataFilters(DataSetFilters):
             labels while also preserving sharp boundaries with non-selected outputs.
 
             .. note::
+
                 Selecting outputs does not affect whether a boundary polygon is
                 considered to be ``internal`` or ``external``. That is, an internal
                 boundary remains internal even if only one of the two foreground regions
@@ -1166,6 +1171,7 @@ class ImageDataFilters(DataSetFilters):
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
             point in the surface is smoothed as follows:
+
                 For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
                 is moved towards the average position of ``pj`` multiplied by the
                 ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
@@ -1182,6 +1188,7 @@ class ImageDataFilters(DataSetFilters):
             Maximum distance each point is allowed to move (in any direction) during
             smoothing. This distance may be scaled with ``smoothing_scale``. By default,
             the distance is computed dynamically from the image spacing as:
+
                 ``distance = norm(image_spacing) * smoothing_scale``.
 
         smoothing_scale : float, default: 1.0
