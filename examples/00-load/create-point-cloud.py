@@ -26,13 +26,16 @@ from pyvista import examples
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()
-    ids = np.random.default_rng().integers(
+    ids = rng.integers(
         low=0,
         high=dataset.n_points - 1,
         size=int(dataset.n_points * subset),
     )
     return dataset.points[ids]
 
+
+# Seed the random number generator for generating data
+rng = np.random.default_rng(seed=0)
 
 points = generate_points()
 # Print first 5 rows to prove its a numpy array (n_points by 3)
@@ -90,7 +93,7 @@ point_cloud.plot(render_points_as_spheres=True)
 # This time, we're going to create a totally new, random point cloud.
 
 # Create random XYZ points
-points = np.random.default_rng().random((100, 3))
+points = rng.random((100, 3))
 # Make PolyData
 point_cloud = pv.PolyData(points)
 
