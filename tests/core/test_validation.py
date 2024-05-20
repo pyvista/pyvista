@@ -464,7 +464,7 @@ def test_validate_array(
         must_have_length=range(np.array(array_in).size + 1),
         must_have_min_length=1,
         must_have_max_length=np.array(array_in).size,
-        must_be_sorted=True,
+        must_be_sorted=dict(ascending=True),
         must_be_real=True,
         must_be_finite=True,
         reshape_to=shape,
