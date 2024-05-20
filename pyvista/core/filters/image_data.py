@@ -410,6 +410,8 @@ class ImageDataFilters(DataSetFilters):
         >>> ithresh = uni.image_threshold(100)
         >>> ithresh.plot()
 
+        See :ref:`image_representations_example` for more examples using this filter.
+
         """
         if scalars is None:
             set_default_active_scalars(self)
@@ -1076,6 +1078,8 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have increased by half the spacing
         - The output N Cells equals the input N Points
 
+        See :ref:`image_representations_example` for more examples using this filter.
+
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
@@ -1189,6 +1193,8 @@ class ImageDataFilters(DataSetFilters):
         - The bounds have decreased by half the spacing
         - The output N Points equals the input N Cells
 
+        See :ref:`image_representations_example` for more examples using this filter.
+
         """
         if scalars is not None:
             field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
@@ -1253,13 +1259,15 @@ class ImageDataFilters(DataSetFilters):
             old_data = cell_data
             new_data = new_image.point_data
 
+        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
+        dims_mask = dims > 1  # Only operate on non-singleton dimensions
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
-            np.array(self.spacing) / 2,  # type: ignore[attr-defined]
+            (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
         )
         new_image.dimensions = dims_operator(
-            dims := np.array(self.dimensions),  # type: ignore[attr-defined]
-            dims > 1,  # Only operate on non-singleton dimensions
+            dims,
+            dims_mask,
         )
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
         new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
