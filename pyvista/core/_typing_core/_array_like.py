@@ -48,7 +48,7 @@ _NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)  # noqa:
 
 _T = TypeVar('_T')
 if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
-    # TODO: Remove this conditional block once support for 3.8 is dropped
+    # TODO: Remove this conditional block once support for Python3.8 is dropped
 
     # Numpy's type annotations use a customized generic alias type for
     # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
