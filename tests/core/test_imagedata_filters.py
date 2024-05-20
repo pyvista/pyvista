@@ -16,6 +16,11 @@ def test_contour_labeled_deprecated():
 
 
 @pytest.fixture()
+def logo():
+    return examples.load_logo()
+
+
+@pytest.fixture()
 def channels():
     # ImageData will cell data
     return examples.load_channels()
@@ -256,10 +261,7 @@ def test_points_to_cells(uniform_many_scalars, active_scalars, copy):
         cell_voxel_image.cell_data.keys(),
     ):
         shares_memory = np.shares_memory(point_voxel_image[array_in], cell_voxel_image[array_out])
-        if copy:
-            assert not shares_memory
-        else:
-            assert shares_memory
+        assert not shares_memory if copy else shares_memory
 
 
 @pytest.mark.parametrize('copy', [True, False])
@@ -288,10 +290,7 @@ def test_cells_to_points(uniform_many_scalars, active_scalars, copy):
         point_voxel_image.point_data.keys(),
     ):
         shares_memory = np.shares_memory(cell_voxel_image[array_in], point_voxel_image[array_out])
-        if copy:
-            assert not shares_memory
-        else:
-            assert shares_memory
+        assert not shares_memory if copy else shares_memory
 
 
 def test_points_to_cells_scalars(uniform):
@@ -316,6 +315,16 @@ def test_cells_to_points_scalars(uniform):
     )
     with pytest.raises(ValueError, match=match):
         uniform.cells_to_points('Spatial Point Data')
+
+
+def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+    assert uniform.dimensions == (10, 10, 10)
+    assert uniform.points_to_cells().dimensions == (11, 11, 11)
+    assert uniform.cells_to_points().dimensions == (9, 9, 9)
+
+    assert logo.dimensions == (1920, 718, 1)
+    assert logo.points_to_cells().dimensions == (1921, 719, 1)
+    assert logo.cells_to_points().dimensions == (1919, 717, 1)
 
 
 @pytest.fixture()
@@ -471,11 +480,6 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, -1, -1])
     else:
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
-
-
-@pytest.fixture()
-def logo():
-    return examples.load_logo()
 
 
 def test_pad_image_multi_component(single_point_image):

@@ -7949,3 +7949,42 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
 
 _dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.MR')
+
+
+def download_particles(load=True):  # pragma: no cover
+    """Download a particle dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_particles(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.reader.SetDataByteOrderToBigEndian()
+    >>> reader.reader.Update()
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Particles Dataset <particles_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_particles, load=load)
+
+
+_dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')

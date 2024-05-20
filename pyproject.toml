@@ -33,6 +33,7 @@ dependencies = [
     'pooch',
     'scooby>=0.5.1',
     'vtk',  # keep without version constraints
+    'typing-extensions',
 ]
 dynamic = ['version']
 
@@ -387,6 +388,7 @@ extend-select = [
     "TRIO",
     "TRY201",
     "TRY300",
+    "TRY302",
     "W",
     "YTT",
 ]

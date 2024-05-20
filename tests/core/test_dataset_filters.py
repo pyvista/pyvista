@@ -3133,13 +3133,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():

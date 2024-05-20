@@ -49,6 +49,7 @@ Reader Classes
     NRRDReader
     OBJReader
     OpenFOAMReader
+    ParticleReader
     PDBReader
     PLYReader
     PNGReader
