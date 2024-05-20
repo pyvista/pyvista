@@ -374,12 +374,7 @@ def check_integer(
     """
     wrapped = _ArrayLikeWrapper(array)
     if strict:
-        try:
-            check_subdtype(wrapped.dtype, np.integer)
-        except TypeError:
-            raise
-        else:
-            return
+        check_subdtype(wrapped.dtype, np.integer)
 
     is_integer: Union[bool, np.bool_]
     try:
@@ -421,10 +416,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "
     >>> _validation.check_nonnegative([1, 2, 3])
 
     """
-    try:
-        check_greater_than(array, 0, strict=False, name=name)
-    except ValueError:
-        raise
+    check_greater_than(array, 0, strict=False, name=name)
 
 
 def check_greater_than(
@@ -603,13 +595,11 @@ def check_range(
     """
     wrapped_rng = _ArrayLikeWrapper(rng)
     wrapped_arr = _ArrayLikeWrapper(array)
-    try:
-        check_shape(wrapped_rng(), 2, name="Range")
-        check_sorted(wrapped_rng(), name="Range")
-        check_greater_than(wrapped_arr(), wrapped_rng._array[0], strict=strict_lower, name=name)
-        check_less_than(wrapped_arr(), wrapped_rng._array[1], strict=strict_upper, name=name)
-    except ValueError:
-        raise
+
+    check_shape(wrapped_rng(), 2, name="Range")
+    check_sorted(wrapped_rng(), name="Range")
+    check_greater_than(wrapped_arr(), wrapped_rng._array[0], strict=strict_lower, name=name)
+    check_less_than(wrapped_arr(), wrapped_rng._array[1], strict=strict_upper, name=name)
 
 
 def check_shape(
@@ -871,10 +861,7 @@ def check_number(
     else:
         raise NotImplementedError  # pragma: no cover
 
-    try:
-        check_instance(num, valid_type, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(num, valid_type, allow_subclass=True, name=name)
 
 
 def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
@@ -912,10 +899,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     >>> _validation.check_string("eggs")
 
     """
-    try:
-        check_instance(obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
 def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object'):
@@ -949,10 +933,7 @@ def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object'):
     >>> _validation.check_sequence("A")
 
     """
-    try:
-        check_instance(obj, Sequence, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
 def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object'):
@@ -987,10 +968,7 @@ def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object'):
     >>> _validation.check_iterable(np.array((4, 5, 6)))
 
     """
-    try:
-        check_instance(obj, Iterable, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
 def check_instance(
@@ -1122,10 +1100,7 @@ def check_type(obj: Any, /, classinfo: Union[type, Tuple[type, ...]], *, name: s
     >>> _validation.check_type({'spam': "eggs"}, (dict, set))
 
     """
-    try:
-        check_instance(obj, classinfo, allow_subclass=False, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
 def check_iterable_items(
@@ -1180,19 +1155,15 @@ def check_iterable_items(
 
     """
     check_iterable(iterable_obj, name=name)
-    try:
-        any(
-            check_instance(
-                item,
-                item_type,
-                allow_subclass=allow_subclass,
-                name=f"All items of {name}",
-            )
-            for item in iterable_obj
+    any(
+        check_instance(
+            item,
+            item_type,
+            allow_subclass=allow_subclass,
+            name=f"All items of {name}",
         )
-
-    except TypeError:
-        raise
+        for item in iterable_obj
+    )
 
 
 def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input'):
@@ -1312,10 +1283,8 @@ def check_length(
         if allow_scalar:
             wrapped = _ArrayLikeWrapper(cast(Sequence[NumberType], [wrapped._array]))
         else:
-            try:
-                len(wrapped._array)
-            except TypeError:
-                raise
+            # Call len to raise error
+            len(wrapped._array)
 
     if must_be_1d:
         check_ndim(wrapped(), ndim=1)
