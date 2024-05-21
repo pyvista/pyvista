@@ -22,14 +22,11 @@ from pyvista import examples
 # than creating a PyVista mesh with your own NumPy arrays of vertice locations.
 
 
-# Seed the random number generator for generating data
-rng = np.random.default_rng(seed=0)
-
-
 # Define some helpers - ignore these and use your own data.
 def generate_points(subset=0.02):
     """A helper to make a 3D NumPy array of points (n_points by 3)"""
     dataset = examples.download_lidar()
+    rng = np.random.default_rng(seed=0)
     ids = rng.integers(
         low=0,
         high=dataset.n_points - 1,
@@ -94,7 +91,7 @@ point_cloud.plot(render_points_as_spheres=True)
 # This time, we're going to create a totally new, random point cloud.
 
 # Create random XYZ points
-points = rng.random((100, 3))
+points = np.random.default_rng(seed=1).random((100, 3))
 # Make PolyData
 point_cloud = pv.PolyData(points)
 
