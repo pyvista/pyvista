@@ -36,7 +36,7 @@ from pooch.utils import get_logger
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import VTKVersionError
+from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.core.utilities.fileio import get_ext, read, read_texture
 from pyvista.examples._dataset_loader import (
     _download_dataset,
@@ -5271,6 +5271,11 @@ def download_osmnx_graph(load=True):  # pragma: no cover
             Full example using this dataset.
 
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
+        PyVistaDeprecationWarning,
+    )
     try:
         import osmnx  # noqa: F401
     except ImportError:
