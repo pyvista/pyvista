@@ -38,18 +38,20 @@ def _flatten_path(path: str):
 
 def _preprocess_build_images(build_images_dir: str, output_dir: str):
     """Read png images from the build dir, resize them, and save to flat output dir."""
-    input_paths = _get_file_paths(build_images_dir, ext='png')
+    input_png = _get_file_paths(build_images_dir, ext='png')
+    input_gif = _get_file_paths(build_images_dir, ext='gif')
     output_paths = []
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    for input_path in input_paths:
+    for input_path in input_png + input_gif:
         # input image from the docs may come from a nested directory,
         # so we flatten the file's relative path
         output_file_name = _flatten_path(os.path.relpath(input_path, build_images_dir))
+        output_file_name = Path(output_file_name).with_suffix('.jpg')
         output_path = str(Path(output_dir) / output_file_name)
         output_paths.append(output_path)
 
         # Ensure image size is max 400x400 and save to output
-        im = Image.open(input_path)
+        im = Image.open(input_path).convert('RGB')
         im.thumbnail(size=(400, 400))
         im.save(output_path)
 
@@ -84,7 +86,7 @@ def _generate_test_cases():
     [add_to_dict(path, 'docs') for path in test_image_paths]
 
     # process cached images
-    cached_image_paths = _get_file_paths(BUILD_IMAGE_CACHE, ext='png')
+    cached_image_paths = _get_file_paths(BUILD_IMAGE_CACHE, ext='jpg')
     [add_to_dict(path, 'cached') for path in cached_image_paths]
 
     # flatten dict
