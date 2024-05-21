@@ -3,6 +3,7 @@
 import glob
 import os
 from pathlib import Path
+import shutil
 from typing import Dict, NamedTuple
 import warnings
 
@@ -15,6 +16,7 @@ ROOT_DIR = str(Path(__file__).parent.parent.parent)
 BUILD_DIR = str(Path(ROOT_DIR) / 'doc' / '_build')
 BUILD_IMAGE_DIR = str(Path(BUILD_DIR) / 'html' / '_images')
 DEBUG_IMAGE_DIR = str(Path(ROOT_DIR) / '_doc_debug_images')
+DEBUG_IMAGE_FAILED_DIR = str(Path(ROOT_DIR) / '_doc_debug_images_failed')
 BUILD_IMAGE_CACHE = str(Path(__file__).parent / 'doc_image_cache')
 
 
@@ -105,19 +107,38 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
+def _save_failed_test_image(source_path):
+    """Save test image from cache or build to the failed image dir."""
+    if Path(source_path).parent == Path(BUILD_IMAGE_CACHE):
+        dest_dirname = 'from_cache'
+    else:
+        dest_dirname = 'from_build'
+    Path(DEBUG_IMAGE_FAILED_DIR).mkdir(exist_ok=True)
+    dest_dir = Path(DEBUG_IMAGE_FAILED_DIR, dest_dirname)
+    dest_dir.mkdir(exist_ok=True)
+    dest_path = Path(dest_dir, Path(source_path).name)
+    shutil.copy(source_path, dest_path)
+
+
 def test_docs(test_case):
     filename, docs_image_path, cached_image_path = test_case
     if docs_image_path is None or cached_image_path is None:
         if docs_image_path is None:
+            assert cached_image_path is not None
+            source_path = cached_image_path
             exists = 'cache'
             missing = 'docs build'
             exists_path = cached_image_path
             missing_path = BUILD_IMAGE_DIR
         else:
+            assert docs_image_path is not None
+            source_path = docs_image_path
             exists = 'docs build'
             missing = 'cache'
             exists_path = BUILD_IMAGE_DIR
             missing_path = BUILD_IMAGE_CACHE
+
+        _save_failed_test_image(source_path)
 
         pytest.fail(
             f"Test setup failed for test image:\n"
@@ -135,6 +156,8 @@ def test_docs(test_case):
     allowed_error = 500.0
     allowed_warning = 200.0
     if error > allowed_error:
+        _save_failed_test_image(docs_image_path)
+        _save_failed_test_image(cached_image_path)
         pytest.fail(
             f"{filename} Exceeded image regression error of "
             f"{allowed_error} with an image error equal to: {error}",

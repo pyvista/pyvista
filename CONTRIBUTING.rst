@@ -809,34 +809,52 @@ automatically executed by ``pytest`` (``pytest`` collects all tests prefixed
 with ``test`` by default.) This is done since the tests require building the
 documentation, and are not a primary form of testing.
 
-When executed the tests will:
+When executed, the test will first pre-process the build images. The images are:
 
-   1. Collect all documentation images from the ``Build Image Directory``.
+1. Collected from the ``Build Image Directory``.
 
-   1. Resize the images to a maximum of 400x400 pixels.
+1. Resized to a maximum of 400x400 pixels.
 
-   1. Save a copy of the resized images to a flat directory in ``./_doc_debug_images``.
+1. Saved to a flat directory in ``./_doc_debug_images``.
 
-   1. Use `:func:pyvista.compare_images` to compare the build images in ``./_doc_debug_images``
-      to the cached images in the ``Doc Image Cache``.
+Next, the pre-processed images in ``./_doc_debug_images`` are compared to the
+cached images in the ``Doc Image Cache`` using :func:`pyvista.compare_images`.
 
-If an image is missing from either the ``Build Image Directory`` or the
-``Doc Image Cache``, the tests will fail. If new plots are added to docstrings,
-they must also be added to the cache. If old plots are removed from docstrings,
-they must also be removed from the cache.
+The tests can fail in three ways. To make it easy to review images for failed tests,
+copies of the images are made:
+
+#. If the comparison between the two images fails:
+
+    - The cache image is copied to ``./_doc_debug_images_failed/from_cache``
+    - The build image is copied to ``./_doc_debug_images_failed/from_build``
+
+#.  If an image is in the cache but missing from the build:
+
+    - The cache image is copied to  ``./_doc_debug_images_failed/from_cache``
+
+#.  If an image is in the build but missing from the cache:
+
+    - The build image is copied to  ``./_doc_debug_images_failed/from_build``
+
+To resolve failed tests, any images in ``from_build`` or ``from_cache``
+may be copied to or removed from the ``Doc Image Cache``. For example,
+if adding new docstring examples or plots, the test will initially fail,
+and the images in ``from_build`` may be added to the ``Doc Image Cache``.
+Similarly, if removing examples, the images in ``from_cache`` may be removed
+from the ``Doc Image Cache``.
 
 .. note::
 
     It is not necessary to build the documentation images locally in order
     to add to or update the doc image cache. The documentation is automatically
-    built as part of CI testing, and an artifact with the debug images is
-    automatically generated. The artifact can be downloaded, and images from
-    the artifact may be copied and added to the cache.
+    built as part of CI testing, and an artifact is generated for (1) all
+    pre-processed build images and (2) failed test cases. These artifacts may
+    simply be downloaded from GitHub for review.
 
     The debug images saved with the artifact can also be used to "simulate"
-    building the documentation images locally. The images may simply be copied
-    to the local ``Build Image Directory``, and the tests can then be
-    executed locally for debugging.
+    building the documentation images locally. If the images are copied to the
+    local ``Build Image Directory``, the tests can then be executed locally for
+    debugging as though the documentation has already been built.
 
 .. note::
 
