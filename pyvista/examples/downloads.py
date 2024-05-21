@@ -5276,6 +5276,8 @@ def download_osmnx_graph(load=True):  # pragma: no cover
         '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
         PyVistaDeprecationWarning,
     )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
     try:
         import osmnx  # noqa: F401
     except ImportError:
