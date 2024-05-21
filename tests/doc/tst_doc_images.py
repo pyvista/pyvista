@@ -37,7 +37,11 @@ def _flatten_path(path: str):
 
 
 def _preprocess_build_images(build_images_dir: str, output_dir: str):
-    """Read png images from the build dir, resize them, and save to flat output dir."""
+    """Read images from the build dir, resize them, and save to flat output dir.
+
+    All PNG and GIF files from the build included, and are saved as JPG.
+
+    """
     input_png = _get_file_paths(build_images_dir, ext='png')
     input_gif = _get_file_paths(build_images_dir, ext='gif')
     output_paths = []
