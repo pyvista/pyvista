@@ -97,7 +97,7 @@ jobs:
         run: pytest tests/doc/tst_doc_images.py
 
       - name: Upload Images for Failed Tests
-        if: ${{ always() && hashFiles('_doc_debug_images_failed/*.png') != '' }}
+        if: ${{ always() && hashFiles('_doc_debug_images_failed/**/*.png') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: doc-debug-images-failed
