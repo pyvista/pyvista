@@ -351,7 +351,7 @@ from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
 
-from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter, vtkSTLWriter
+from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter, vtkSTLWriter, vtkOBJWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
     vtkDataReader,
