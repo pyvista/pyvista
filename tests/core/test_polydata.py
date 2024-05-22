@@ -614,7 +614,13 @@ def test_save(sphere, extension, binary, tmpdir):
     else:
         with Path(filename).open() as f:
             fst = f.read(100).lower()
-            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst or 'pgeometry' in fst or '# generated' in fst
+            assert (
+                'ascii' in fst
+                or 'xml' in fst
+                or 'solid' in fst
+                or 'pgeometry' in fst
+                or '# generated' in fst
+            )
 
     if extension != '.geo':
         mesh = pv.PolyData(filename)
