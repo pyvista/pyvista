@@ -43,6 +43,9 @@ def _cell_bounds(points, bound_position=0.5):
     return np.concatenate([[points[0] - delta], points + delta])
 
 
+# Seed random number generator for reproducible plots
+rng = np.random.default_rng(seed=0)
+
 # First, create some dummy data
 
 # Approximate radius of the Earth
@@ -87,7 +90,7 @@ p.show()
 ###############################################################################
 # Visualize vectors in spherical coordinates
 # Vertical wind
-w_vec = np.random.default_rng(seed=0).random(u_vec.shape)
+w_vec = rng.random(u_vec.shape)
 
 wind_level = [RADIUS * 1.2]
 
