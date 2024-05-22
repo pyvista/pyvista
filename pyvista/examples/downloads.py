@@ -2291,7 +2291,7 @@ def _frog_tissue_load_func(files):
     from ._dataset_loader import _load_as_dataset_or_multiblock
 
     mesh = _load_as_dataset_or_multiblock(files)
-    root_dir = Path(pyvista.__file__).parent.parent
+    root_dir = Path(__file__).parent.parent.parent
     array = np.load(Path(root_dir / 'frog_tissue.npy'))
     mesh.set_active_scalars = array
     return mesh
