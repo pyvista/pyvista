@@ -2287,7 +2287,20 @@ def _frog_tissue_files_func():
     return frog_tissue_mhd, frog_tissue_zraw
 
 
-_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
+def _frog_tissue_load_func(files):
+    from ._dataset_loader import _load_as_dataset_or_multiblock
+
+    mesh = _load_as_dataset_or_multiblock(files)
+    root_dir = Path(pyvista.__file__).parent.parent
+    array = np.load(Path(root_dir / 'frog_tissue.npy'))
+    mesh.set_active_scalars = array
+    return mesh
+
+
+_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(
+    files_func=_frog_tissue_files_func,
+    load_func=_frog_tissue_load_func,
+)
 
 
 def download_chest(load=True):  # pragma: no cover
