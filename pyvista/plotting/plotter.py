@@ -5750,7 +5750,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>>
         >>> rng = np.random.default_rng(seed=0)
         >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
@@ -5803,7 +5802,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-
         >>> rng = np.random.default_rng(seed=0)
         >>> cent = rng.random((10, 3))
         >>> direction = rng.random((10, 3))
