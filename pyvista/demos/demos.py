@@ -34,11 +34,13 @@ def glyphs(grid_sz=3):
     >>> mesh.plot()
 
     """
+    # Seed rng for reproducible plots
+    rng = np.random.default_rng(seed=0)
+
     n = 10
     values = np.arange(n)  # values for scalars to look up glyphs by
 
     # taken from:
-    rng = np.random.default_rng(seed=0)
     params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
     geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
