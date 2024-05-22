@@ -5262,14 +5262,6 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`open_street_map_example`
-            Full example using this dataset.
-
     """
     # Deprecated on v0.44.0, estimated removal on v0.47.0
     warnings.warn(
