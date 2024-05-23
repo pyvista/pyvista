@@ -38,9 +38,6 @@ def generate_points(subset=0.02):
     return dataset.points[ids]
 
 
-# Seed the random number generator for generating data
-rng = np.random.default_rng(seed=0)
-
 points = generate_points()
 # Print first 5 rows to prove its a numpy array (n_points by 3)
 # Columns are (X Y Z)
