@@ -602,7 +602,7 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
-    filename = f'tmp{extension}'
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
     if binary:
