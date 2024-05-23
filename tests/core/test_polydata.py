@@ -602,7 +602,7 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
+    filename = f'tmp{extension}'
     sphere.save(filename, binary)
 
     if binary:
@@ -620,9 +620,10 @@ def test_save(sphere, extension, binary, tmpdir):
                 or 'solid' in fst
                 or 'pgeometry' in fst
                 or '# generated' in fst
+                or '#inventor' in fst
             )
 
-    if extension != '.geo':
+    if extension not in ('.geo', '.iv'):
         mesh = pv.PolyData(filename)
         assert mesh.faces.shape == sphere.faces.shape
         assert mesh.points.shape == sphere.points.shape
