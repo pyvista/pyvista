@@ -800,7 +800,7 @@ same random data is generated every time. This enables users to copy code
 in the documentation and generate the same results and plots locally.
 
 When using NumPy's random number generator (RNG) you should create an RNG at
-the beginning of your script and use this RNG in the rest of the script. Be 
+the beginning of your script and use this RNG in the rest of the script. Be
 sure to include a seed value. For example:
 
 .. code:: python
