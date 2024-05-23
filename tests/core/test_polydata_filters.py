@@ -11,7 +11,7 @@ def test_contour_banded_raise(sphere):
         sphere.contour_banded(5)
 
     sphere['data'] = sphere.points[:, 2]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.contour_banded(5, scalar_mode='foo')
 
     sphere.clear_data()
@@ -33,7 +33,11 @@ def test_contour_banded_points(sphere):
 
     rng = [-100, 100]
     out = sphere.contour_banded(
-        10, rng=rng, generate_contour_edges=False, scalar_mode='index', clipping=True
+        10,
+        rng=rng,
+        generate_contour_edges=False,
+        scalar_mode='index',
+        clipping=True,
     )
     assert out['data'].min() <= rng[0]
     assert out['data'].max() >= rng[1]
@@ -50,3 +54,10 @@ def test_boolean_intersect_edge_case():
 def test_identical_boolean(sphere):
     with pytest.raises(ValueError, match='identical points'):
         sphere.boolean_intersection(sphere.copy())
+
+
+def test_triangulate_contours():
+    poly = pv.Polygon(n_sides=4, fill=False)
+    filled = poly.triangulate_contours()
+    for cell in filled.cell:
+        assert cell.type == pv.CellType.TRIANGLE

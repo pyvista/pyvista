@@ -1,6 +1,6 @@
 """Wrap vtkActor module."""
 
-from typing import Optional
+from typing import ClassVar, List, Optional
 
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
@@ -76,7 +76,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions = ['_name']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -85,6 +85,8 @@ class Actor(Prop3D, _vtk.vtkActor):
             self.mapper = mapper
         if prop is None:
             self.prop = Property()
+        else:
+            self.prop = prop
         self._name = name
 
     @property
@@ -135,7 +137,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
-        return self.SetMapper(obj)
+        self.SetMapper(obj)
 
     @property
     def prop(self):  # numpydoc ignore=RT01
@@ -220,7 +222,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @pickable.setter
     def pickable(self, value):  # numpydoc ignore=GL08
-        return self.SetPickable(value)
+        self.SetPickable(value)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -243,7 +245,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     @visibility.setter
     def visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetVisibility(value)
+        self.SetVisibility(value)
 
     def plot(self, **kwargs):
         """Plot just the actor.

@@ -5,6 +5,7 @@ Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a StructuredGrid surface from NumPy arrays
+using :class:`pyvista.StructuredGrid`.
 """
 
 import numpy as np
@@ -68,8 +69,8 @@ def make_point_set():
     """Ignore the contents of this function. Just know that it returns an
     n by 3 numpy array of structured coordinates."""
     n, m = 29, 32
-    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
-    y = np.linspace(-200, 200, num=m) + np.random.uniform(-5, 5, size=m)
+    x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=m) + np.random.default_rng().uniform(-5, 5, size=m)
     xx, yy = np.meshgrid(x, y)
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))

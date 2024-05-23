@@ -1,6 +1,6 @@
 import itertools
 
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import pytest
 
@@ -27,7 +27,7 @@ except:
 
 @pytest.mark.parametrize("cmap", COLORMAPS)
 def test_get_cmap_safe(cmap):
-    assert isinstance(get_cmap_safe(cmap), matplotlib.colors.LinearSegmentedColormap)
+    assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
 def test_color():
@@ -88,10 +88,10 @@ def test_color():
     assert pv.Color(None, default_color=name) == i_rgba
     # Check invalid colors and opacities
     for invalid_color in invalid_colors:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             pv.Color(invalid_color)
     for invalid_opacity in invalid_opacities:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             pv.Color('b', invalid_opacity)
     # Check hex and name getters
     assert pv.Color(name).hex_rgba == f'#{h}'
@@ -110,7 +110,7 @@ def test_color():
     assert c[1:3] == f_rgba[1:3]
     with pytest.raises(TypeError):
         c[None]  # Invalid index type
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         c["invalid_name"]  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index

@@ -1,15 +1,20 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+
+from __future__ import annotations
+
 from collections.abc import Iterable
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array
 from .utilities.arrays import FieldAssociation, convert_array
 
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import ArrayLike, NumpyArray
 
-class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
+
+class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -45,20 +50,20 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Array, _vtk.vtkAbstractArray],
+        array: Union[ArrayLike[float], _vtk.vtkAbstractArray],
         dataset=None,
         association=FieldAssociation.NONE,
     ):
         """Allocate the array."""
-        if isinstance(array, Iterable):
-            obj = np.asarray(array).view(cls)
-        elif isinstance(array, _vtk.vtkAbstractArray):
+        if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
+        elif isinstance(array, Iterable):
+            obj = np.asarray(array).view(cls)
         else:
             raise TypeError(
                 f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray'
+                'Expected an Iterable or vtk.vtkAbstractArray',
             )
 
         obj.association = association
@@ -88,7 +93,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, np.ndarray], value):
+    def __setitem__(self, key: Union[int, NumpyArray[int]], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

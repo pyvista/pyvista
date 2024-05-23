@@ -1,11 +1,10 @@
-import os
-import os.path as op
+from pathlib import Path
 
 from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.utilities.sphinx_gallery import Scraper
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper, Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -37,13 +36,13 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     plotters[1].add_mesh(pv.Cone())
 
     src_dir = str(tmpdir)
-    out_dir = op.join(str(tmpdir), '_build', 'html')
+    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
     img_fnames = [
-        op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
+        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = op.join(src_dir, 'auto_examples', 'sg.py')
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
@@ -51,14 +50,14 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         target_file=target_file,
     )
 
-    os.makedirs(op.dirname(img_fnames[0]))
+    Path(img_fnames[0]).parent.mkdir(parents=True)
     for img_fname in img_fnames:
-        assert not os.path.isfile(img_fname)
+        assert not Path(img_fname).is_file()
 
-    os.makedirs(out_dir)
+    Path(out_dir).mkdir(parents=True)
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
-        assert os.path.isfile(img_fname)
+        assert Path(img_fname).is_file()
 
     # test that the plot has the camera position updated with a checksum when the Plotter has an app instance
     assert imread(img_fnames[0]).sum() != imread(img_fnames[1]).sum()
@@ -67,50 +66,56 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         plotter.close()
 
 
+@pytest.mark.parametrize('scraper_type', ['static', 'dynamic'])
 @pytest.mark.parametrize('n_win', [1, 2])
-def test_scraper(tmpdir, monkeypatch, n_win):
+def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
     pytest.importorskip('sphinx_gallery')
     monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
     plotter_gif = pv.Plotter()
 
-    scraper = Scraper()
-
-    # test stable repr
-    assert repr(scraper) == '<Scraper object>'
+    # Initialize scraper and check stable representation
+    if scraper_type == 'static':
+        scraper = Scraper()
+        assert repr(scraper) == '<Scraper object>'
+    elif scraper_type == 'dynamic':
+        scraper = DynamicScraper()
+        assert repr(scraper) == '<DynamicScraper object>'
+    else:
+        raise ValueError(f'Invalid scraper type: {scraper}')
 
     src_dir = str(tmpdir)
-    out_dir = op.join(str(tmpdir), '_build', 'html')
+    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
     img_fnames = [
-        op.join(src_dir, 'auto_examples', 'images', f'sg_img_{n}.png') for n in range(n_win)
+        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
     ]
 
     # create and save GIF to tmpdir
-    gif_path = op.abspath(tmpdir + 'sg_img_0.gif')
+    gif_path = str(Path(tmpdir + 'sg_img_0.gif').resolve())
     plotter_gif.open_gif(gif_path)
     plotter_gif.write_frame()
     plotter_gif.close()
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = op.join(src_dir, 'auto_examples', 'sg.py')
-    block = None
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
+    block = ("empty_block", "", 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
-        example_globals=dict(a=1),
+        example_globals=dict(a=1, PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT=True),
         target_file=target_file,
     )
 
-    os.makedirs(op.dirname(img_fnames[0]))
+    Path(img_fnames[0]).parent.mkdir(parents=True)
     for img_fname in img_fnames:
-        assert not os.path.isfile(img_fname)
+        assert not Path(img_fname).is_file()
 
     # add gif to list after checking other filenames are empty
     img_fnames.append(gif_path)
-    os.makedirs(out_dir)
+    Path(out_dir).mkdir(parents=True)
     scraper(block, block_vars, gallery_conf)
     for img_fname in img_fnames:
-        assert os.path.isfile(img_fname)
+        assert Path(img_fname).is_file()
     for plotter in plotters:
         plotter.close()
 
@@ -121,19 +126,19 @@ def test_scraper_raise(tmpdir):
     plotter = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
-    out_dir = op.join(str(tmpdir), '_build', 'html')
-    img_fname = op.join(src_dir, 'auto_examples', 'images', 'sg_img.png')
+    out_dir = str(Path(tmpdir) / '_build' / 'html')
+    img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = op.join(src_dir, 'auto_examples', 'sg.py')
+    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
     block = None
     block_vars = dict(
         image_path_iterator=(img for img in [img_fname]),
         example_globals=dict(a=1),
         target_file=target_file,
     )
-    os.makedirs(op.dirname(img_fname))
-    assert not os.path.isfile(img_fname)
-    os.makedirs(out_dir)
+    Path(img_fname).parent.mkdir(parents=True)
+    assert not Path(img_fname).is_file()
+    Path(out_dir).mkdir(parents=True)
 
     with pytest.raises(RuntimeError, match="pyvista.BUILDING_GALLERY"):
         scraper(block, block_vars, gallery_conf)

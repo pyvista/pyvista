@@ -6,7 +6,7 @@ is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
 from trame.ui.vuetify2 import VAppLayout
-from trame.widgets import html, vuetify as vuetify
+from trame.widgets import html, vuetify
 from trame_client.ui.core import AbstractLayout
 
 from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
@@ -127,6 +127,7 @@ class Viewer(BaseViewer):
             server.state.change(self.GRID)(self.on_grid_visiblity_change)
             server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
             server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
             button(
@@ -188,6 +189,11 @@ class Viewer(BaseViewer):
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center',
             ):
+                checkbox(
+                    model=(self.PARALLEL, False),
+                    icons=('mdi-camera-off', 'mdi-camera-switch'),
+                    tooltip=f"Toggle parallel projection ({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
+                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
@@ -258,7 +264,7 @@ class Viewer(BaseViewer):
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
             raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
             )
         if mode != 'trame':
             default_server_rendering = mode == 'server'
@@ -266,6 +272,7 @@ class Viewer(BaseViewer):
         with vuetify.VContainer(
             fluid=True,
             classes='pa-0 fill-height',
+            style='position: relative',
             trame_server=self.server,
         ) as container:
             server = container.server
@@ -283,7 +290,7 @@ class Viewer(BaseViewer):
                 with vuetify.VCard(
                     style='position: absolute; top: 20px; left: 20px; z-index: 1; height: 36px;',
                     classes=(f"{{ 'rounded-circle': !{self.SHOW_UI} }}",),
-                ):
+                ) as self.menu:
                     with vuetify.VRow(classes='pa-0 ma-0'):
                         button(
                             click=f'{self.SHOW_UI}=!{self.SHOW_UI}',
@@ -317,5 +324,7 @@ class Viewer(BaseViewer):
                 view = PyVistaLocalView(self.plotter, **kwargs)
 
             self._html_views.add(view)
+            if add_menu:
+                view.menu = self.menu
 
         return view

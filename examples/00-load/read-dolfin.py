@@ -4,10 +4,12 @@ Read FEniCS/Dolfin Meshes
 
 PyVista leverages `meshio`_ to read many mesh formats not natively supported
 by VTK including the `FEniCS/Dolfin`_ XML format.
+This example uses :func:`pyvista.read`.
 
 .. _meshio: https://github.com/nschloe/meshio
 .. _FEniCS/Dolfin: https://fenicsproject.org
 """
+
 import pyvista as pv
 from pyvista import examples
 

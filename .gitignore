@@ -69,11 +69,8 @@ doc/source/api/plotting/charts/pen_line_styles.rst
 doc/source/api/plotting/charts/plot_color_schemes.rst
 doc/source/api/plotting/charts/scatter_marker_styles.rst
 doc/source/api/utilities/colors.rst
+doc/source/api/examples/dataset-gallery
 **/grid.vtu
-
-# flask examples
-examples_flask/dynamic_image/static
-examples_flask/static_image/static
 
 # hypothesis
 .hypothesis

@@ -5,10 +5,35 @@ updates:
     insecure-external-code-execution: allow
     schedule:
       interval: "monthly"
+    groups:
+      trame:
+        patterns:
+          - "trame"
+          - "trame-*"
+      sphinx:
+        patterns:
+          - "*sphinx*"
+          - "pypandoc"
+      pytest:
+        patterns:
+          - "pytest"
+          - "pytest-*"
     labels:
       - "maintenance"
       - "dependencies"
   - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      artifacts:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
+    labels:
+      - "maintenance"
+      - "dependencies"
+  - package-ecosystem: "devcontainers"
     directory: "/"
     schedule:
       interval: "monthly"

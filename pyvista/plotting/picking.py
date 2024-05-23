@@ -1,4 +1,5 @@
 """Module managing picking events."""
+
 from functools import partial, wraps
 from typing import Tuple, cast
 import warnings
@@ -121,6 +122,7 @@ class PointPickingElementHandler:
         ds = self.picker.GetDataSet()
         if ds is not None:
             return pyvista.wrap(ds)
+        return None
 
     def get_cell(self, picked_point):
         """Get the picked cell of the picked mesh.
@@ -140,7 +142,7 @@ class PointPickingElementHandler:
         # cell_id = self.picker.GetCellId()
         cell_id = mesh.find_containing_cell(picked_point)  # more accurate
         if cell_id < 0:
-            return  # TODO: this happens but shouldn't
+            return None  # TODO: this happens but shouldn't  # pragma: no cover
         cell = mesh.extract_cells(cell_id)
         cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
@@ -161,7 +163,7 @@ class PointPickingElementHandler:
         """
         cell = self.get_cell(picked_point).get_cell(0)
         if cell.n_faces > 1:
-            for i, face in enumerate(cell.faces):
+            for face in cell.faces:
                 contains = face.cast_to_unstructured_grid().find_containing_cell(picked_point)
                 if contains > -1:
                     break
@@ -169,7 +171,7 @@ class PointPickingElementHandler:
                 # this shouldn't happen
                 raise RuntimeError('Trouble aligning point with face.')
             face = face.cast_to_unstructured_grid()
-            face.field_data['vtkOriginalFaceIds'] = np.array([i])
+            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
             face.field_data['vtkOriginalFaceIds'] = np.array([0])
@@ -361,7 +363,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
             raise PyVistaPickingError(
-                'Picking is already enabled, please disable previous picking with `disable_picking()`.'
+                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
             )
 
     def enable_point_picking(
@@ -465,7 +467,8 @@ class PickingInterface:  # numpydoc ignore=PR01
         self._validate_picker_not_in_use()
         if 'use_mesh' in kwargs:
             warnings.warn(
-                '`use_mesh` is deprecated. See `use_picker` instead.', PyVistaDeprecationWarning
+                '`use_mesh` is deprecated. See `use_picker` instead.',
+                PyVistaDeprecationWarning,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -505,7 +508,10 @@ class PickingInterface:  # numpydoc ignore=PR01
                         _poked_context_callback(self_(), callback, self.picked_point, picker)
                     elif use_mesh:  # Lower priority
                         _poked_context_callback(
-                            self_(), callback, picker.GetDataSet(), picker.GetPointId()
+                            self_(),
+                            callback,
+                            picker.GetDataSet(),
+                            picker.GetPointId(),
                         )
                     else:
                         _poked_context_callback(self_(), callback, self.picked_point)
@@ -521,13 +527,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                if left_clicking:
-                    show_message = "Left-click"
-                else:
-                    show_message = "Right-click"
+                show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick under the mouse'
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_point_picking_message'
+                str(show_message),
+                font_size=font_size,
+                name='_point_picking_message',
             )
 
     def enable_rectangle_picking(
@@ -639,7 +644,9 @@ class PickingInterface:  # numpydoc ignore=PR01
             if show_message is True:
                 show_message = "Press R to toggle selection tool"
             self._picking_text = self.add_text(
-                str(show_message), font_size=font_size, name='_rectangle_picking_message'
+                str(show_message),
+                font_size=font_size,
+                name='_rectangle_picking_message',
             )
 
         if start:
@@ -847,7 +854,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
             raise ValueError(
-                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}'
+                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
             )
 
         self_ = weakref.ref(self)
@@ -1033,10 +1040,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         # add on-screen message about point-selection
         if show_message:
             if show_message is True:
-                if left_clicking:
-                    show_message = "Left-click"
-                else:
-                    show_message = "Right-click"
+                show_message = 'Left-click' if left_clicking else 'Right-click'
                 show_message += ' or press P to pick single dataset under the mouse pointer'
 
         self.enable_surface_point_picking(
@@ -1145,9 +1149,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.Update()
                     picked.append(pyvista.wrap(extract.GetOutput()))
 
-            if picked.n_blocks == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif picked.n_blocks == 1:
                 self_()._picked_cell = picked[0]
@@ -1268,14 +1270,15 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
-                        actor.GetProperty(), 'GetRepresentation'
+                        actor.GetProperty(),
+                        'GetRepresentation',
                     ):
                         continue
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results."
+                            "Display representations other than `surface` will result in incorrect results.",
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
@@ -1288,9 +1291,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
                 selection.UnRegister(selection)
 
-            if len(picked) == 0:
-                self_()._picked_cell = None
-            elif picked.combine().n_cells < 1:
+            if len(picked) == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None
             elif len(picked) == 1:
                 self_()._picked_cell = picked[0]
@@ -1727,8 +1728,7 @@ class PickingHelper(PickingMethods):
 
         def make_line_cells(n_points):  # numpydoc ignore=GL08
             cells = np.arange(0, n_points, dtype=np.int_)
-            cells = np.insert(cells, 0, n_points)
-            return cells
+            return np.insert(cells, 0, n_points)
 
         the_points = []
 

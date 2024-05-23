@@ -1,9 +1,11 @@
 """Image regression module."""
+
 from typing import Optional, cast
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
@@ -66,7 +68,7 @@ def wrap_image_array(arr):
     return wrap_img
 
 
-def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> np.ndarray:
+def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]:
     """Run a ``vtkWindowToImageFilter`` and get output as array.
 
     Parameters
@@ -214,13 +216,13 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             if img.render_window is None:
                 raise RuntimeError(
-                    'Unable to extract image from Plotter as it has already been closed.'
+                    'Unable to extract image from Plotter as it has already been closed.',
                 )
             return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
             raise TypeError(
                 f'Unsupported data type {type(img)}.  Should be '
-                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData',
             )
 
     im1 = remove_alpha(to_img(im1))

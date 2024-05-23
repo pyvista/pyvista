@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from IPython.display import IFrame
 import numpy as np
@@ -31,7 +31,7 @@ try:
         PyVistaRemoteView,
         _BasePyVistaView,
     )
-except:  # noqa: E722
+except:
     has_trame = False
 
 # skip all tests if VTK<9.1.0
@@ -343,13 +343,13 @@ def test_trame_int64():
     assert isinstance(widget, Widget)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_trame_export_html(tmpdir):
     filename = str(tmpdir.join('tmp.html'))
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Wavelet())
     plotter.export_html(filename)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
 
 def test_export_single(tmpdir, skip_check_gc):
@@ -360,7 +360,7 @@ def test_export_single(tmpdir, skip_check_gc):
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_multi(tmpdir, skip_check_gc):
@@ -377,7 +377,7 @@ def test_export_multi(tmpdir, skip_check_gc):
     plotter.add_mesh(multi)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_texture(tmpdir, skip_check_gc):
@@ -389,18 +389,18 @@ def test_export_texture(tmpdir, skip_check_gc):
     plotter.add_mesh(data, texture=texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
-    data = pv.PolyData(np.random.rand(100, 3))
+    data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_color(tmpdir, skip_check_gc):
@@ -411,7 +411,7 @@ def test_export_color(tmpdir, skip_check_gc):
     plotter.add_mesh(data, color='yellow')
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_embeddable_widget(skip_check_gc):

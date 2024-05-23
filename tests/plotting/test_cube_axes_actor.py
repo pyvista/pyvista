@@ -1,4 +1,5 @@
 """Test the CubeAxesActor wrapping."""
+
 import numpy as np
 import pytest
 
@@ -6,12 +7,11 @@ import pyvista as pv
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):
+def skip_check_gc(skip_check_gc):  # noqa: PT004
     """A large number of tests here fail gc."""
-    pass
 
 
-@pytest.fixture
+@pytest.fixture()
 def cube_axes_actor():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
@@ -50,7 +50,7 @@ def test_labels(cube_axes_actor):
     # standard format
     cube_axes_actor.z_label_format = '%.1f'
     assert len(cube_axes_actor.z_labels) == 5
-    assert all([len(label) < 5 for label in cube_axes_actor.z_labels])
+    assert all(len(label) < 5 for label in cube_axes_actor.z_labels)
 
 
 def test_tick_location(cube_axes_actor):

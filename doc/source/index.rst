@@ -130,7 +130,8 @@ the points directly.
     import numpy as np
     import pyvista
 
-    point_cloud = np.random.random((100, 3))
+    rng = np.random.default_rng(seed=0)
+    point_cloud = rng.random((100, 3))
     pdata = pyvista.PolyData(point_cloud)
     pdata['orig_sphere'] = np.arange(100)
 
@@ -211,13 +212,13 @@ documentation is to join the translation team on Transifex.
 
 There is a `pyvista translation page`_ for pyvista (main) documentation.
 
-1. Login to transifex_ service.
-2. Go to `pyvista translation page`_.
-3. Click ``Request language`` and fill form.
-4. Wait acceptance by transifex pyvista translation maintainers.
-5. (After acceptance) Translate on transifex.
-6. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
-7. Translation is backed up in `pyvista-doc-translations`_.
+#. Login to transifex_ service.
+#. Go to `pyvista translation page`_.
+#. Click ``Request language`` and fill form.
+#. Wait acceptance by transifex pyvista translation maintainers.
+#. (After acceptance) Translate on transifex.
+#. We can host the translated document in `GitHub Pages`_ by creating `GitHub repository`_.
+#. Translation is backed up in `pyvista-doc-translations`_.
 
 Details can be found here: https://help.transifex.com/en/
 

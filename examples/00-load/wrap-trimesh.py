@@ -26,7 +26,7 @@ import numpy as np
 
 import pyvista as pv
 
-points = np.random.random((30, 3))
+points = np.random.default_rng().random((30, 3))
 cloud = pv.wrap(points)
 pv.plot(
     cloud,

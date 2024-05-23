@@ -82,9 +82,10 @@ def _system_supports_plotting():
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate(timeout=10)
-        return proc.returncode == 0
     except (OSError, TimeoutExpired):
         return False
+    else:  # pragma: no cover
+        return proc.returncode == 0
 
 
 def system_supports_plotting():
@@ -276,6 +277,7 @@ def create_axes_orientation_box(
     label_color=None,
     labels_off=False,
     opacity=0.5,
+    show_text_edges=False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -332,6 +334,9 @@ def create_axes_orientation_box(
     opacity : float, optional
         Opacity in the range of ``[0, 1]`` of the orientation box.
 
+    show_text_edges : bool, optional
+        Enable or disable drawing the vector text edges.
+
     Returns
     -------
     vtk.vtkAnnotatedCubeActor
@@ -380,9 +385,10 @@ def create_axes_orientation_box(
         axes_actor.SetZPlusFaceText(f"+{zlabel}")
         axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
-    axes_actor.SetTextEdgesVisibility(False)
+    axes_actor.SetTextEdgesVisibility(show_text_edges)
+    # https://github.com/pyvista/pyvista/pull/5382
     # axes_actor.GetTextEdgesProperty().SetColor(edge_color.float_rgb)
-    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetXMinusFaceProperty().SetColor(x_color.float_rgb)
     axes_actor.GetYPlusFaceProperty().SetColor(y_color.float_rgb)
@@ -391,7 +397,7 @@ def create_axes_orientation_box(
     axes_actor.GetZMinusFaceProperty().SetColor(z_color.float_rgb)
 
     axes_actor.GetCubeProperty().SetOpacity(opacity)
-    # axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
+    axes_actor.GetCubeProperty().SetEdgeColor(edge_color.float_rgb)
     axes_actor.GetCubeProperty().SetEdgeVisibility(True)
     axes_actor.GetCubeProperty().BackfaceCullingOn()
     if opacity < 1.0:
@@ -490,7 +496,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-        ``'sigmoid_1-10'``, and ``foreground``. Append an ``'_r'`` to any
+        ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
         of those names (except ``foreground``) to reverse that mapping.
         The mapping can also be a custom user-defined array/list of values
         that will be interpolated across the ``n_color`` range.
@@ -553,6 +559,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
         'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
@@ -567,7 +575,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -599,7 +607,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
@@ -661,9 +669,9 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib
+    import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False

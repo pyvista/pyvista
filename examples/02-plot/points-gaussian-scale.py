@@ -21,12 +21,12 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # torus.
 
 N_SPHERES = 10_000
-theta = np.random.uniform(0, 2 * np.pi, N_SPHERES)
-phi = np.random.uniform(0, 2 * np.pi, N_SPHERES)
+theta = np.random.default_rng().uniform(0, 2 * np.pi, N_SPHERES)
+phi = np.random.default_rng().uniform(0, 2 * np.pi, N_SPHERES)
 torus_radius = 1
 tube_radius = 0.3
 radius = torus_radius + tube_radius * np.cos(phi)
-rad = np.random.random(N_SPHERES) * 0.01
+rad = np.random.default_rng().random(N_SPHERES) * 0.01
 
 pos = np.zeros((N_SPHERES, 3))
 pos[:, 0] = radius * np.cos(theta)

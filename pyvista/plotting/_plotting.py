@@ -1,25 +1,16 @@
 """These are private methods we keep out of plotting.py to simplify the module."""
+
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from .colors import Color
 from .opts import InterpolationType
 from .tools import opacity_transfer_function
-
-USE_SCALAR_BAR_ARGS = """
-"stitle" is a deprecated keyword argument and will be removed in a future
-release.
-
-Use ``scalar_bar_args`` instead.  For example:
-
-scalar_bar_args={'title': 'Scalar Bar Title'}
-"""
 
 
 def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_angle, preference):
@@ -80,25 +71,26 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
-        if use_points:
-            indices_array = 'vtkOriginalPointIds'
-        else:
-            indices_array = 'vtkOriginalCellIds'
+        indices_array = 'vtkOriginalPointIds' if use_points else 'vtkOriginalCellIds'
 
-    if split_sharp_edges:
-        mesh = mesh.compute_normals(
-            cell_normals=False,
-            split_vertices=True,
-            feature_angle=feature_angle,
-        )
-        if is_polydata:
-            if has_scalars and use_points:
-                # we must track the original IDs with our own array from compute_normals
-                indices_array = 'pyvistaOriginalPointIds'
-    else:
-        # consider checking if mesh contains active normals
-        # if mesh.point_data.active_normals is None:
-        mesh.compute_normals(cell_normals=False, inplace=True)
+    try:
+        if split_sharp_edges:
+            mesh = mesh.compute_normals(
+                cell_normals=False,
+                split_vertices=True,
+                feature_angle=feature_angle,
+            )
+            if is_polydata:
+                if has_scalars and use_points:
+                    # we must track the original IDs with our own array from compute_normals
+                    indices_array = 'pyvistaOriginalPointIds'
+        elif mesh.point_data.active_normals is None:
+            mesh.compute_normals(cell_normals=False, inplace=True)
+    except TypeError as e:
+        if "Normals cannot be computed" in repr(e):
+            pass
+        else:
+            raise
 
     if has_scalars and indices_array is not None:
         ind = mesh[indices_array]
@@ -166,7 +158,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number of elements."
+                    "Opacity array and scalars array must have the same number of elements.",
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
@@ -230,10 +222,7 @@ def _common_arg_parser(
         _default = theme.show_scalar_bar or scalar_bar_args
         show_scalar_bar = False if rgb else _default
     # Avoid mutating input
-    if scalar_bar_args is None:
-        scalar_bar_args = {'n_colors': n_colors}
-    else:
-        scalar_bar_args = scalar_bar_args.copy()
+    scalar_bar_args = {'n_colors': n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
 
     # theme based parameters
     if split_sharp_edges is None:
@@ -246,10 +235,7 @@ def _common_arg_parser(
             render_points_as_spheres = theme.render_points_as_spheres
 
     if smooth_shading is None:
-        if pbr:
-            smooth_shading = True
-        else:
-            smooth_shading = theme.smooth_shading
+        smooth_shading = True if pbr else theme.smooth_shading
 
     if name is None:
         name = f'{type(dataset).__name__}({dataset.memory_address})'
@@ -276,15 +262,9 @@ def _common_arg_parser(
     else:
         interpolation = theme.lighting_params.interpolation
 
-    # account for legacy behavior
-    if 'stitle' in kwargs:  # pragma: no cover
-        # Deprecated on v0.37.0, estimated removal on v0.40.0
-        warnings.warn(USE_SCALAR_BAR_ARGS, PyVistaDeprecationWarning)
-        scalar_bar_args.setdefault('title', kwargs.pop('stitle'))
-
     if "scalar" in kwargs:
         raise TypeError(
-            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?"
+            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?",
         )
 
     assert_empty_kwargs(**kwargs)

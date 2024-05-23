@@ -6,7 +6,8 @@ import pytest
 import pyvista as pv
 
 skip_lesser_9_2_2 = pytest.mark.skipif(
-    pv.vtk_version_info <= (9, 2, 2), reason='Requires VTK>=9.2.2'
+    pv.vtk_version_info <= (9, 2, 2),
+    reason='Requires VTK>=9.2.2',
 )
 
 
@@ -14,7 +15,7 @@ skip_lesser_9_2_2 = pytest.mark.skipif(
 def test_clean_points():
     """Test on a set of points."""
     n_unique_points = 100
-    u_points = np.random.random((n_unique_points, 3))
+    u_points = np.random.default_rng().random((n_unique_points, 3))
     points = np.vstack([u_points] * 2)
 
     grid = pv.PolyData(points).cast_to_unstructured_grid()
@@ -32,7 +33,7 @@ def test_clean_points():
     assert not (cleaned.point_data['data'] == 0.5).any()
 
     # verify tolerance
-    u_points = np.random.random((n_unique_points, 3))
+    u_points = np.random.default_rng().random((n_unique_points, 3))
     u_points_shift = u_points.copy()
     u_points_shift[:, 2] += 1e-4
     points = np.vstack((u_points, u_points_shift))

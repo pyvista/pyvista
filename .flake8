@@ -1,5 +1,5 @@
 [flake8]
-exclude = .git,__pycache__,build,dist,doc/examples,doc/_build
+exclude = .git,__pycache__,build,dist,doc/examples,doc/_build, tests/core/typing
 ignore =
     # whitespace before ':'
     E203,
@@ -20,4 +20,6 @@ ignore =
     # bare excepts (temporary)
     B001, E722
     # we already check black
-    BLK100
+    BLK100,
+    # let black auto-format statements on one line
+    E701, E702, E704

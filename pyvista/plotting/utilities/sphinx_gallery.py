@@ -1,6 +1,8 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
+from pathlib import Path
 import shutil
+from typing import Iterator, List
 
 import pyvista
 
@@ -26,7 +28,9 @@ def _get_sg_image_scraper():
 
 
 def html_rst(
-    figure_list, sources_dir, fig_titles='', srcsetpaths=None
+    figure_list,
+    sources_dir,
+    srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
@@ -74,6 +78,58 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> List[str]:
+    """Generate images from the current plotters.
+
+    The file names are taken from the ``image_path_iterator`` iterator.
+
+    A gif will be created if a plotter has a ``_gif_filename`` attribute.
+    Otherwise, depending on the value of ``dynamic``, either a ``.png`` static image
+    or a ``.vtksz`` file will be created.
+
+    Parameters
+    ----------
+    image_path_iterator : Iterator[str]
+        An iterator that yields the path to the next image to be saved.
+
+    dynamic : bool, default: False
+        Whether to save a static ``.png`` image or a ``.vtksz`` (interactive)
+        file.
+
+    Returns
+    -------
+    list[str]
+        A list of the names of the images that were created.
+    """
+    image_names = []
+    figures = pyvista.plotting.plotter._ALL_PLOTTERS
+    for plotter in figures.values():
+        _process_events_before_scraping(plotter)
+        fname = next(image_path_iterator)
+        # Make sure the extension is "png"
+        path = Path(fname)
+        fname_withoutextension = str(path.parent / path.stem)
+        fname = fname_withoutextension + ".png"
+
+        if hasattr(plotter, "_gif_filename"):
+            # move gif to fname
+            fname = fname[:-3] + "gif"
+            shutil.move(plotter._gif_filename, fname)
+            image_names.append(fname)
+        else:
+            plotter.screenshot(fname)
+            if not dynamic or plotter.last_vtksz is None:
+                image_names.append(fname)
+            else:  # pragma: no cover
+                fname = fname[:-3] + "vtksz"
+                with Path(fname).open("wb") as f:
+                    f.write(plotter.last_vtksz)
+                    image_names.append(fname)
+
+    pyvista.close_all()  # close and clear all plotters
+    return image_names
+
+
 class Scraper:
     """
     Save ``pyvista.Plotter`` objects.
@@ -102,20 +158,8 @@ class Scraper:
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
-        image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = pyvista.plotting.plotter._ALL_PLOTTERS
-        for plotter in figures.values():
-            _process_events_before_scraping(plotter)
-            fname = next(image_path_iterator)
-            if hasattr(plotter, "_gif_filename"):
-                # move gif to fname
-                fname = fname[:-3] + "gif"
-                shutil.move(plotter._gif_filename, fname)
-            else:
-                plotter.screenshot(fname)
-            image_names.append(fname)
-        pyvista.close_all()  # close and clear all plotters
+        image_names = generate_images(image_path_iterator, dynamic=False)
         return figure_rst(image_names, gallery_conf["src_dir"])
 
 
@@ -155,33 +199,24 @@ class DynamicScraper:  # pragma: no cover
         if not pyvista.BUILDING_GALLERY:
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
-        image_names = list()
-        image_path_iterator = block_vars["image_path_iterator"]
-        figures = pyvista.plotting.plotter._ALL_PLOTTERS
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT", False
+            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT",
+            False,
         )
         # override with block specific value if it exists
         if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):
             force_static = True
         elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split('\n'):
             force_static = False
-        for plotter in figures.values():
-            _process_events_before_scraping(plotter)
-            fname = next(image_path_iterator)
-            if hasattr(plotter, '_gif_filename'):
-                fname = fname[:-3] + "gif"
-                shutil.move(plotter._gif_filename, fname)
-                image_names.append(fname)
-            else:
-                plotter.screenshot(fname)  # produce PNG for thumbnail
-                if force_static or plotter.last_vtksz is None:
-                    image_names.append(fname)
-                else:
-                    fname = fname[:-3] + "vtksz"
-                    with open(fname, "wb") as f:
-                        f.write(plotter.last_vtksz)
-                        image_names.append(fname)
-        pyvista.close_all()  # close and clear all plotters
+
+        if force_static is None:
+            # Just in case force_static is None at this point
+            force_static = False
+
+        dynamic = not force_static
+
+        image_path_iterator = block_vars["image_path_iterator"]
+        image_names = generate_images(image_path_iterator, dynamic=dynamic)
+
         return html_rst(image_names, gallery_conf["src_dir"])

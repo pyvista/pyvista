@@ -1,39 +1,10 @@
 """Module managing errors."""
-from collections import namedtuple
+
 import re
 import subprocess
 import sys
-import warnings
 
 import scooby
-from vtkmodules.vtkCommonCore import vtkVersion
-
-
-def VTKVersionInfo():
-    """Return the vtk version as a namedtuple.
-
-    Returns
-    -------
-    collections.namedtuple
-        Version information as a named tuple.
-
-    """
-    version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
-
-    try:
-        ver = vtkVersion()
-        major = ver.GetVTKMajorVersion()
-        minor = ver.GetVTKMinorVersion()
-        micro = ver.GetVTKBuildVersion()
-    except AttributeError:  # pragma: no cover
-        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
-        major, minor, micro = (4, 0, 0)
-
-    return version_info(major, minor, micro)
-
-
-vtk_version_info = VTKVersionInfo()
-
 
 _cmd = """\
 import pyvista; \
@@ -50,8 +21,7 @@ def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
     proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
-    gpu_info = '' if proc.returncode else proc.stdout.decode()
-    return gpu_info
+    return '' if proc.returncode else proc.stdout.decode()
 
 
 class GPUInfo:

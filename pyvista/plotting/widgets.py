@@ -1,7 +1,9 @@
 """Module dedicated to widgets."""
 
+from __future__ import annotations
+
 import pathlib
-from typing import Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -23,6 +25,9 @@ from .utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
 
 
 def _parse_interaction_event(interaction_event):
@@ -50,13 +55,13 @@ def _parse_interaction_event(interaction_event):
     elif isinstance(interaction_event, str):
         raise ValueError(
             "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given."
+            f"'end', or 'always'. {interaction_event} was given.",
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
             "Expected type for `interaction_event` is either a str "
             "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given."
+            f" ({type(interaction_event)}) was given.",
         )
     return interaction_event
 
@@ -87,6 +92,7 @@ class WidgetHelper:
         self.button_widgets = []
         self.distance_widgets = []
         self.logo_widgets = []
+        self.camera3d_widgets = []
 
     def add_box_widget(
         self,
@@ -199,18 +205,14 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                if use_planes:
-                    args = [planes]
-                else:
-                    args = [the_box]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
-            return
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -227,6 +229,8 @@ class WidgetHelper:
 
     def clear_box_widgets(self):
         """Remove all of the box widgets."""
+        for box_widget in self.box_widgets:
+            box_widget.Off()
         self.box_widgets.clear()
 
     def add_mesh_clip_box(
@@ -317,7 +321,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -391,6 +395,7 @@ class WidgetHelper:
         test_callback=True,
         normal_rotation=True,
         interaction_event='end',
+        outline_opacity=None,
     ):
         """Add a plane widget to the scene.
 
@@ -466,6 +471,12 @@ class WidgetHelper:
             .. versionchanged:: 0.38.0
                Now accepts either strings and ``vtk.vtkCommand.EventIds``.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkImplicitPlaneWidget or vtk.vtkPlaneWidget
@@ -524,7 +535,6 @@ class WidgetHelper:
                     try_callback(callback, normal, origin, widget)
                 else:
                     try_callback(callback, normal, origin)
-            return
 
         if implicit:
             plane_widget = _vtk.vtkImplicitPlaneWidget()
@@ -548,6 +558,9 @@ class WidgetHelper:
 
             if not normal_rotation:
                 plane_widget.GetNormalProperty().SetOpacity(0)
+
+            if outline_opacity is not None:
+                plane_widget.GetOutlineProperty().SetOpacity(float(outline_opacity))
 
         else:
             # Position of the small plane
@@ -615,6 +628,8 @@ class WidgetHelper:
 
     def clear_plane_widgets(self):
         """Remove all of the plane widgets."""
+        for plane_widget in self.plane_widgets:
+            plane_widget.Off()
         self.plane_widgets.clear()
 
     def add_mesh_clip_plane(
@@ -633,6 +648,7 @@ class WidgetHelper:
         crinkle=False,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a mesh using a plane widget.
@@ -704,6 +720,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_mesh` to control how the mesh is
@@ -732,7 +754,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -786,6 +808,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         if crinkle:
@@ -807,6 +830,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event='end',
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Clip a volume using a plane widget.
@@ -865,6 +889,12 @@ class WidgetHelper:
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
 
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
+
         **kwargs : dict, optional
             All additional keyword arguments are passed to
             :func:`Plotter.add_volume` to control how the volume is
@@ -883,7 +913,7 @@ class WidgetHelper:
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.'
+                'from `Plotter.add_volume`.',
             )
         else:
             assert_empty_kwargs(**kwargs)
@@ -909,6 +939,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
         widget.GetPlane(plane)
         volume.mapper.AddClippingPlane(plane)
@@ -930,6 +961,7 @@ class WidgetHelper:
         normal_rotation=True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
+        outline_opacity=None,
         **kwargs,
     ):
         """Slice a mesh using a plane widget.
@@ -988,6 +1020,12 @@ class WidgetHelper:
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
+
+        outline_opacity : bool or float, optional
+            Set the visible of outline. Only valid when using
+            an implicit plane. Either a bool or float.
+
+            .. versionadded:: 0.44.0
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1054,6 +1092,7 @@ class WidgetHelper:
             origin=origin,
             normal_rotation=normal_rotation,
             interaction_event=interaction_event,
+            outline_opacity=outline_opacity,
         )
 
         return self.add_mesh(alg, **kwargs)
@@ -1252,6 +1291,8 @@ class WidgetHelper:
 
     def clear_line_widgets(self):
         """Remove all of the line widgets."""
+        for line_widget in self.line_widgets:
+            line_widget.Off()
         self.line_widgets.clear()
 
     def add_text_slider_widget(
@@ -1319,7 +1360,7 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
             )
         n_states = len(data)
         if n_states == 0:
@@ -1336,7 +1377,6 @@ class WidgetHelper:
                     idx = n_states - 1
                 if callable(callback):
                     try_callback(callback, data[idx])
-            return
 
         slider_widget = self.add_slider_widget(
             callback=_the_callback,
@@ -1525,7 +1565,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1549,7 +1589,6 @@ class WidgetHelper:
                     try_callback(callback, value, widget)
                 else:
                     try_callback(callback, value)
-            return
 
         slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(self.iren.interactor)
@@ -1569,6 +1608,8 @@ class WidgetHelper:
 
     def clear_slider_widgets(self):
         """Remove all of the slider widgets."""
+        for slider_widget in self.slider_widgets:
+            slider_widget.Off()
         self.slider_widgets.clear()
 
     def add_mesh_threshold(
@@ -1697,7 +1738,11 @@ class WidgetHelper:
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
@@ -1842,7 +1887,7 @@ class WidgetHelper:
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
             )
 
         rng = mesh.get_data_range(scalars)
@@ -1985,7 +2030,6 @@ class WidgetHelper:
                     try_callback(callback, polyline, widget)
                 else:
                     try_callback(callback, polyline)
-            return
 
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(color.float_rgb)
@@ -2012,6 +2056,8 @@ class WidgetHelper:
 
     def clear_spline_widgets(self):
         """Remove all of the spline widgets."""
+        for spline_widget in self.spline_widgets:
+            spline_widget.Off()
         self.spline_widgets.clear()
 
     def add_mesh_slice_spline(
@@ -2211,7 +2257,6 @@ class WidgetHelper:
             b = representation.GetPoint2Representation().GetWorldPosition()
             if callable(callback):
                 try_callback(callback, a, b, compute(a, b))
-            return
 
         widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, place_point)
 
@@ -2221,6 +2266,8 @@ class WidgetHelper:
 
     def clear_measure_widgets(self):
         """Remove all of the measurement widgets."""
+        for distance_widget in self.distance_widgets:
+            distance_widget.Off()
         self.distance_widgets.clear()
 
     def add_sphere_widget(
@@ -2325,23 +2372,16 @@ class WidgetHelper:
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
-                if num > 1:
-                    args = [point, index]
-                else:
-                    args = [point]
+                args = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
-            return
 
         if indices is None:
-            indices = [x for x in range(num)]
+            indices = list(range(num))
 
         for i in range(num):
-            if center.ndim > 1:
-                loc = center[i]
-            else:
-                loc = center
+            loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":
@@ -2371,6 +2411,8 @@ class WidgetHelper:
 
     def clear_sphere_widgets(self):
         """Remove all of the sphere widgets."""
+        for sphere_widget in self.sphere_widgets:
+            sphere_widget.Off()
         self.sphere_widgets.clear()
 
     def add_affine_transform_widget(
@@ -2543,9 +2585,9 @@ class WidgetHelper:
             button = pyvista.ImageData(dimensions=dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
             arr[1 : dims[0] - 1, 1 : dims[1] - 1] = color2  # apply color2
-            arr[
-                border_size : dims[0] - border_size, border_size : dims[1] - border_size
-            ] = color3  # apply color3
+            arr[border_size : dims[0] - border_size, border_size : dims[1] - border_size] = (
+                color3  # apply color3
+            )
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
@@ -2627,17 +2669,21 @@ class WidgetHelper:
 
     def clear_camera_widgets(self):
         """Remove all of the camera widgets."""
+        for camera_widget in self.camera_widgets:
+            camera_widget.Off()
         self.camera_widgets.clear()
 
     def clear_button_widgets(self):
         """Remove all of the button widgets."""
+        for button_widget in self.button_widgets:
+            button_widget.Off()
         self.button_widgets.clear()
 
     def add_logo_widget(
         self,
         logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], np.ndarray] = (0.2, 0.2),
+        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
+        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
@@ -2696,7 +2742,7 @@ class WidgetHelper:
         representation.SetPosition2(size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
-        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
         widget.On()
         self.logo_widgets.append(widget)
@@ -2704,7 +2750,58 @@ class WidgetHelper:
 
     def clear_logo_widgets(self):
         """Remove all of the logo widgets."""
+        for logo_widget in self.logo_widgets:
+            logo_widget.Off()
         self.logo_widgets.clear()
+
+    def add_camera3d_widget(self):
+        """Add a camera3d widget allow to move the camera.
+
+        .. note::
+           This widget requires ``vtk>=9.3.0``.
+
+        Returns
+        -------
+        vtkCamera3DWidget
+            The camera3d widget.
+
+        Examples
+        --------
+        Add a camera3d widget to the scene.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> _ = plotter.add_mesh(sphere, show_edges=True)
+        >>> plotter.subplot(0, 1)
+        >>> _ = plotter.add_mesh(sphere, show_edges=True)
+        >>> _ = plotter.add_camera3d_widget()
+        >>> plotter.show(cpos=plotter.camera_position)
+
+        """
+        try:
+            from vtkmodules.vtkInteractionWidgets import (
+                vtkCamera3DRepresentation,
+                vtkCamera3DWidget,
+            )
+        except ImportError:  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
+        representation = vtkCamera3DRepresentation()
+        representation.SetCamera(self.renderer.GetActiveCamera())
+        widget = vtkCamera3DWidget()
+        widget.SetInteractor(self.iren.interactor)
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.camera3d_widgets.append(widget)
+        return widget
+
+    def clear_camera3d_widgets(self):
+        """Remove all of the camera3d widgets."""
+        for camera3d_widget in self.camera3d_widgets:
+            camera3d_widget.Off()
+        self.camera3d_widgets.clear()
 
     def close(self):
         """Close the widgets."""
@@ -2718,3 +2815,4 @@ class WidgetHelper:
         self.clear_camera_widgets()
         self.clear_measure_widgets()
         self.clear_logo_widgets()
+        self.clear_camera3d_widgets()

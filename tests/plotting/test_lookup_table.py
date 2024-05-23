@@ -6,12 +6,12 @@ import pyvista as pv
 from pyvista import Color, LookupTable
 
 
-@pytest.fixture
+@pytest.fixture()
 def lut():
     return LookupTable()
 
 
-@pytest.fixture
+@pytest.fixture()
 def lut_w_cmap():
     return LookupTable('viridis')
 
@@ -242,3 +242,10 @@ def test_custom_opacity(lut, skip_check_gc):
 
     with pytest.raises(ValueError, match='between 0 and 1'):
         lut.apply_opacity(-0.1)
+
+
+@pytest.mark.parametrize('clamping', [True, False])
+def test_to_opacity_tf(lut, clamping):
+    tf = lut.to_opacity_tf(clamping=clamping)
+    assert isinstance(tf, vtk.vtkPiecewiseFunction)
+    assert tf.GetClamping() == int(clamping)

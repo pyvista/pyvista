@@ -1,11 +1,13 @@
 """An internal module for wrapping the use of mappers."""
+
+from __future__ import annotations
+
 import sys
-from typing import Optional, Union, cast
+from typing import TYPE_CHECKING, Optional, Tuple, Union, cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import (
     FieldAssociation,
     convert_array,
@@ -20,6 +22,9 @@ from .colors import Color, get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
 from .utilities.algorithms import set_algorithm_input
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike
 
 
 @abstract_class
@@ -39,7 +44,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
-            'interpolate_before_map', self._theme.interpolate_before_map
+            'interpolate_before_map',
+            self._theme.interpolate_before_map,
         )
 
     @property
@@ -56,7 +62,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         """
         return self.GetBounds()
 
-    def copy(self) -> '_BaseMapper':
+    def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
 
         Returns
@@ -80,7 +86,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return new_mapper
 
     @property
-    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
+    def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the scalar range.
 
         Examples
@@ -116,7 +122,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.SetScalarRange(*clim)
 
     @property
-    def lookup_table(self) -> 'pyvista.LookupTable':  # numpydoc ignore=RT01
+    def lookup_table(self) -> pyvista.LookupTable:  # numpydoc ignore=RT01
         """Return or set the lookup table.
 
         Examples
@@ -297,7 +303,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
     def scalar_map_mode(self, scalar_mode: Union[str, FieldAssociation]):  # numpydoc ignore=GL08
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
-        scalar_mode = scalar_mode.lower()  # type: ignore
+        scalar_mode = scalar_mode.lower()
         if scalar_mode == 'default':
             self.SetScalarModeToDefault()
         elif scalar_mode == 'point':
@@ -313,7 +319,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         else:
             raise ValueError(
                 f'Invalid `scalar_map_mode` "{scalar_mode}". Should be either '
-                '"default", "point", "cell", "point_field", "cell_field" or "field".'
+                '"default", "point", "cell", "point_field", "cell_field" or "field".',
             )
 
     @property
@@ -351,7 +357,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @scalar_visibility.setter
     def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetScalarVisibility(value)
+        self.SetScalarVisibility(value)
 
     def update(self):
         """Update this mapper."""
@@ -387,8 +393,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     def __init__(
         self,
-        dataset: Optional['pyvista.DataSet'] = None,
-        theme: Optional['pyvista.themes.Theme'] = None,
+        dataset: Optional[pyvista.DataSet] = None,
+        theme: Optional[pyvista.themes.Theme] = None,
     ):
         """Initialize this class."""
         super().__init__(theme=theme)
@@ -396,13 +402,14 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.dataset = dataset
 
     @property
-    def dataset(self) -> Optional['pyvista.core.dataset.DataSet']:  # numpydoc ignore=RT01
+    def dataset(self) -> Optional[pyvista.core.dataset.DataSet]:  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         return cast(Optional[pyvista.DataSet], wrap(self.GetInputAsDataSet()))
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self,
+        obj: Union[pyvista.core.dataset.DataSet, _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
@@ -615,7 +622,8 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             scalars_name = '__custom_rgba'
 
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(
-            cmap, pyvista.LookupTable
+            cmap,
+            pyvista.LookupTable,
         ):
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
@@ -657,13 +665,13 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
                 else:
                     raise ValueError(
                         'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}'
+                        f'dimensionality of the scalars array: {scalars.shape[1]}',
                     )
             else:
                 scalars = scalars.ravel()
 
         if scalars.dtype == np.bool_:
-            scalars = scalars.astype(np.float_)
+            scalars = scalars.astype(np.float64)
 
         # Set scalars range
         if clim is None:
@@ -685,10 +693,7 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             self.lookup_table.scalar_range = self.scalar_range
             # Set default map
             if cmap is None:
-                if self._theme is None:
-                    cmap = pyvista.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
+                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             # have to add the attribute to pass it onward to some classes
             if isinstance(cmap, str):
@@ -745,6 +750,67 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         """Colormap assigned to this mapper."""
         return self._cmap
 
+    @property
+    def resolve(self) -> str:
+        """Set or return the global flag to avoid z-buffer resolution.
+
+        A global flag that controls whether the coincident topology
+        (e.g., a line on top of a polygon) is shifted to avoid
+        z-buffer resolution (and hence rendering problems).
+
+        If not off, there are two methods to choose from.
+        `polygon_offset` uses graphics systems calls to shift polygons,
+        lines, and points from each other.
+        `shift_zbuffer` is a legacy method that is used to remap the z-buffer
+        to distinguish vertices, lines, and polygons,
+        but does not always produce acceptable results.
+        You should only use the polygon_offset method (or none) at this point.
+
+        Returns
+        -------
+        str
+            Global flag to avoid z-buffer resolution.
+            Must be either `off`, `polygon_offset` or `shift_zbuffer`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+
+        >>> mesh = examples.download_tri_quadratic_hexahedron()
+        >>> surface_sep = mesh.separate_cells().extract_surface(
+        ...     nonlinear_subdivision=4
+        ... )
+        >>> edges = surface_sep.extract_feature_edges()
+        >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
+
+        >>> plotter = pv.Plotter()
+        >>> _ = plotter.add_mesh(
+        ...     surface, smooth_shading=True, split_sharp_edges=True
+        ... )
+        >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
+        >>> actor.mapper.resolve = "polygon_offset"
+        >>> plotter.show()
+
+        """
+        vtk_to_pv = {
+            _vtk.VTK_RESOLVE_OFF: 'off',
+            _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
+            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
+        }
+        return vtk_to_pv[self.GetResolveCoincidentTopology()]
+
+    @resolve.setter
+    def resolve(self, resolve):  # numpydoc ignore=GL08
+        if resolve == 'off':
+            self.SetResolveCoincidentTopologyToOff()
+        elif resolve == 'polygon_offset':
+            self.SetResolveCoincidentTopologyToPolygonOffset()
+        elif resolve == 'shift_zbuffer':
+            self.SetResolveCoincidentTopologyToShiftZBuffer()
+        else:
+            raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
+
     def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
 
@@ -774,13 +840,10 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
             raise ValueError(
                 f"Opacity array size ({opacity.size}) does not equal "
                 f"the number of points ({self.dataset.n_points}) or the "
-                f"number of cells ({self.dataset.n_cells})."
+                f"number of cells ({self.dataset.n_cells}).",
             )
 
-        if self._theme is not None:
-            default_color = self._theme.color
-        else:
-            default_color = pyvista.global_theme.color
+        default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
 
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
@@ -841,7 +904,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @emissive.setter
     def emissive(self, value: bool):  # numpydoc ignore=GL08
-        return self.SetEmissive(value)
+        self.SetEmissive(value)
 
     @property
     def scale_factor(self) -> float:  # numpydoc ignore=RT01
@@ -855,7 +918,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
 
     @scale_factor.setter
     def scale_factor(self, value: float):  # numpydoc ignore=GL08
-        return self.SetScaleFactor(value)
+        self.SetScaleFactor(value)
 
     @property
     def scale_array(self) -> str:  # numpydoc ignore=RT01
@@ -900,11 +963,11 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             available_arrays = ", ".join(self.dataset.point_data.keys())
             raise KeyError(
                 f'Point array "{name}" does not exist. '
-                f'Available point arrays are: {available_arrays}'
+                f'Available point arrays are: {available_arrays}',
             )
 
         self.scale_factor = 1.0
-        return self.SetScaleArray(name)
+        self.SetScaleArray(name)
 
     def use_circular_splat(self, opacity: float = 1.0):
         """Set the fragment shader code to create a circular splat.
@@ -928,7 +991,7 @@ class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
             f"  float scale = ({opacity} - dist);\n"
             "  ambientColor *= scale;\n"
             "  diffuseColor *= scale;\n"
-            "}\n"
+            "}\n",
         )
         # maintain consistency with the default style
         self.scale_factor *= 1.5
@@ -969,7 +1032,7 @@ class _BaseVolumeMapper(_BaseMapper):
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
-        return None
+        return
 
     @interpolate_before_map.setter
     def interpolate_before_map(self, *args):  # numpydoc ignore=GL08
@@ -983,7 +1046,8 @@ class _BaseVolumeMapper(_BaseMapper):
 
     @dataset.setter
     def dataset(
-        self, obj: Union['pyvista.core.dataset.DataSet', _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput]
+        self,
+        obj: Union[pyvista.core.dataset.DataSet, _vtk.vtkAlgorithm, _vtk.vtkAlgorithmOutput],
     ):
         set_algorithm_input(self, obj)
 
@@ -996,7 +1060,7 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = lut
 
     @property
-    def scalar_range(self) -> tuple:  # numpydoc ignore=RT01
+    def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the scalar range."""
         return self._scalar_range
 
@@ -1024,20 +1088,10 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        if value == 0:
-            return 'composite'
-        elif value == 1:
-            return 'maximum'
-        elif value == 2:
-            return 'minimum'
-        elif value == 3:
-            return 'average'
-        elif value == 4:
-            return 'additive'
-
-        raise NotImplementedError(
-            f'Unsupported blend mode return value {value}'
-        )  # pragma: no cover
+        mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
+        if mode is None:  # pragma: no cover
+            raise NotImplementedError(f'Unsupported blend mode return value {value}')
+        return mode
 
     @blend_mode.setter
     def blend_mode(self, value: Union[str, int]):  # numpydoc ignore=GL08
@@ -1059,7 +1113,7 @@ class _BaseVolumeMapper(_BaseMapper):
                 raise ValueError(
                     f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
-                    '"composite", "minimum" or "maximum".'
+                    '"composite", "minimum" or "maximum".',
                 )
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
@@ -1071,30 +1125,21 @@ class _BaseVolumeMapper(_BaseMapper):
 class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
-    pass
-
 
 class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
-
-    pass
 
 
 class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
-    pass
-
 
 class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
-    pass
-
 
 class UnstructuredGridVolumeRayCastMapper(
-    _vtk.vtkUnstructuredGridVolumeRayCastMapper, _BaseVolumeMapper
+    _vtk.vtkUnstructuredGridVolumeRayCastMapper,
+    _BaseVolumeMapper,
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
-
-    pass
