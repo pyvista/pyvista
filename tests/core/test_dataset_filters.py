@@ -3983,7 +3983,7 @@ KEEP_CELLS_INVERT = NamedFilter(
 REMOVE_POINTS_ANY = NamedFilter(
     name='remove_points_any',
     filter=functools.partial(
-        pv.DataSetFilters.remove_points_new_API,
+        pv.DataSetFilters.remove_points,
         invert=False,
         mode='any',
     ),
@@ -3996,7 +3996,7 @@ KEEP_POINTS_INVERT_ALL = NamedFilter(
 REMOVE_POINTS_ALL = NamedFilter(
     name='remove_points_all',
     filter=functools.partial(
-        pv.DataSetFilters.remove_points_new_API,
+        pv.DataSetFilters.remove_points,
         invert=False,
         mode='all',
     ),
@@ -4009,7 +4009,7 @@ KEEP_POINTS_INVERT_ANY = NamedFilter(
 
 REMOVE_POINTS_INVERT_ALL = NamedFilter(
     name='remove_points_invert_all',
-    filter=functools.partial(pv.DataSetFilters.remove_points_new_API, invert=True, mode='all'),
+    filter=functools.partial(pv.DataSetFilters.remove_points, invert=True, mode='all'),
 )
 KEEP_POINTS_ANY = NamedFilter(
     name='keep_points_any',
@@ -4018,7 +4018,7 @@ KEEP_POINTS_ANY = NamedFilter(
 
 REMOVE_POINTS_INVERT_ANY = NamedFilter(
     name='remove_points_invert_any',
-    filter=functools.partial(pv.DataSetFilters.remove_points_new_API, invert=True, mode='any'),
+    filter=functools.partial(pv.DataSetFilters.remove_points, invert=True, mode='any'),
 )
 KEEP_POINTS_ALL = NamedFilter(
     name='keep_points_all',
@@ -4139,3 +4139,6 @@ def test_remove_cells_keep_cells_invalid(hexbeam, filter_under_test):
     match = 'Boolean array size must match the number of cells (40)'
     with pytest.raises(ValueError, match=re.escape(match)):
         filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
+
+
+def test_remove_points_all_triangles(): ...

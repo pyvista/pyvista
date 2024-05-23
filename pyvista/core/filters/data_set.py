@@ -5246,7 +5246,7 @@ class DataSetFilters:
             pass_point_ids=pass_point_ids,
         )
 
-    def remove_points_new_API(  # numpydoc ignore=PR01,RT01
+    def remove_points(  # numpydoc ignore=PR01,RT01
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
@@ -5255,6 +5255,7 @@ class DataSetFilters:
         invert=False,
         pass_cell_ids=False,
         pass_point_ids=False,
+        keep_scalars=True,
     ):
         """Remove points."""
         invert = not invert

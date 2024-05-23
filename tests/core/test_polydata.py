@@ -11,7 +11,12 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import (
+    CellSizeError,
+    NotAllTrianglesError,
+    PyVistaDeprecationWarning,
+    PyVistaFutureWarning,
+)
 
 radius = 0.5
 
@@ -895,7 +900,7 @@ def test_volume(sphere_dense):
 
 
 REMOVE_POINTS = pv.PolyDataFilters.remove_points
-NEW_REMOVE_POINTS = pv.DataSetFilters.remove_points_new_API
+NEW_REMOVE_POINTS = pv.DataSetFilters.remove_points
 
 
 @pytest.mark.parametrize('filter_under_test', [REMOVE_POINTS, NEW_REMOVE_POINTS])
@@ -912,7 +917,7 @@ def test_remove_points_any(filter_under_test, sphere):
         )
         ind = sphere_mod['original_point_ids']
     else:
-        sphere_mod, ind = filter_under_test(sphere, remove_mask, inplace=False, mode='any')
+        sphere_mod, ind = filter_under_test(sphere, ind=remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
@@ -923,23 +928,34 @@ def test_remove_points_all(sphere, filter_under_test):
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
     remove = sphere.faces[1:4]
 
-    filter_under_test(sphere_copy, remove, inplace=True, mode='all')
+    filter_under_test(sphere_copy, ind=remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
     assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
 
 
 def test_remove_points_fail(sphere, plane):
-    # not triangles:
-    with pytest.raises(NotAllTrianglesError):
-        plane.remove_points([0])
-
     # invalid bool mask size
     with pytest.raises(ValueError):  # noqa: PT011
-        sphere.remove_points(np.ones(10, np.bool_))
+        sphere.remove_points(ind=np.ones(10, np.bool_))
 
     # invalid mask type
     with pytest.raises(TypeError):
-        sphere.remove_points([0.0])
+        sphere.remove_points(ind=[0.0])
+
+
+def test_remove_points_deprecated(sphere):
+    match = "\nThe current implementation of 'remove_points' is deprecated and will change in the future.\n"
+    "The filter will no longer return a tuple and will return a dataset instead. Use the keyword\n"
+    "'ind' explicitly instead of 'remove' to suppress this warning, e.g. \n"
+    "\treplace: remove_points(remove=...)\n"
+    "\twith:    remove_points(ind=...)\n"
+    "Or use the new filter directly with:\n"
+    "\tpyvista.DataSetFilters.remove_points(mesh, ...)"
+    with pytest.raises(PyVistaDeprecationWarning, match=match):
+        sphere.remove_points([0])
+
+    # Test warning suppressed by using 'ind' parameter
+    sphere.remove_points(ind=[0])
 
 
 def test_vertice_cells_on_read(tmpdir):

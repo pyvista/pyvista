@@ -10,6 +10,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import (
     MissingDataError,
     NotAllTrianglesError,
+    PyVistaDeprecationWarning,
     PyVistaFutureWarning,
     VTKVersionError,
 )
@@ -2511,10 +2512,30 @@ class PolyDataFilters(DataSetFilters):
 
         return plotter.show()
 
-    def remove_points(self, remove, mode='any', keep_scalars=True, inplace=False):
+    def remove_points(self, remove=None, mode='any', keep_scalars=True, inplace=False, **kwargs):
         """Rebuild a mesh by removing points.
 
-        Only valid for all-triangle meshes.
+        .. versionchanged:: 0.44.0
+
+            This filter previously only worked on all-triangle meshes. It has been
+            generalized to operate on any mesh. The filter :meth:`pyvista.DataSetFilters.remove_points`
+            is called on inputs that are not all triangles.
+
+        .. deprecated:: 0.44.0
+
+            This implementation of ``remove_points`` is deprecated and will be replaced
+            with :meth:`pyvista.DataSetFilters.remove_points` in the future. Note that
+            the new filter returns a dataset instead of a tuple.
+
+            Use the keyword ``ind`` explicitly instead of ``remove`` to suppress this
+            warning and continue using the current implementation, e.g.
+
+                replace: ``remove_points(remove=...)``
+                with: ``remove_points(ind=...)``
+
+            Or use the new filter directly with:
+
+                ``pyvista.DataSetFilters.remove_points(mesh, ...)``
 
         Parameters
         ----------
@@ -2534,6 +2555,9 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, default: False
             Updates mesh in-place.
 
+        **kwargs
+            Keyword arguments used for deprecation.
+
         Returns
         -------
         pyvista.PolyData
@@ -2548,10 +2572,36 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere, ridx = sphere.remove_points(range(100, 250))
+        >>> reduced_sphere, ridx = sphere.remove_points(ind=range(100, 250))
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
+        ind = kwargs.pop('ind', None)
+        assert_empty_kwargs(**kwargs)
+        if not self.is_all_triangles:
+            return pyvista.DataSetFilters.remove_points(
+                self,
+                ind=remove,
+                mode=mode,
+                keep_scalars=True,
+                inplace=inplace,
+            )
+        else:
+            if ind is None:
+                # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
+                warnings.warn(
+                    "\nThe current implementation of 'remove_points' is deprecated and will change in the future.\n"
+                    "The filter will no longer return a tuple and will return a dataset instead. Use the keyword\n"
+                    "'ind' explicitly instead of 'remove' to suppress this warning, e.g. \n"
+                    "\treplace: remove_points(remove=...)\n"
+                    "\twith:    remove_points(ind=...)\n"
+                    "Or use the new filter directly with:\n"
+                    "\tpyvista.DataSetFilters.remove_points(mesh, ...)",
+                    PyVistaDeprecationWarning,
+                )
+            else:
+                remove = ind
+
         remove = np.asarray(remove)
 
         # np.asarray will eat anything, so we have to weed out bogus inputs
@@ -2565,9 +2615,6 @@ class PolyDataFilters(DataSetFilters):
         else:
             remove_mask = np.zeros(self.n_points, np.bool_)
             remove_mask[remove] = True
-
-        if not self.is_all_triangles:
-            raise NotAllTrianglesError
 
         f = self.faces.reshape(-1, 4)[:, 1:]
         vmask = remove_mask.take(f)
