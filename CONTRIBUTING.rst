@@ -321,6 +321,9 @@ Note the following:
 * The examples section references the "full example" in the gallery if it
   exists.
 
+In addition, docstring examples which make use of randomly-generated data
+should be reproducible. See `Generating Random Data`_ for details.
+
 These standards will be enforced using ``pre-commit`` using
 ``numpydoc-validate``, with errors being reported as:
 
@@ -878,6 +881,27 @@ Documentation for PyVista is generated from three sources:
 General usage and API descriptions should be placed within ``doc/api`` and
 the docstrings. Full gallery examples should be placed in ``examples``.
 
+
+Generating Random Data
+^^^^^^^^^^^^^^^^^^^^^^
+All documentation should be reproducible. In particular, any documentation
+or examples which use random data should be properly seeded so that the
+same random data is generated every time. This enables users to copy code
+in the documentation and generate the same results and plots locally.
+
+When using NumPy's random number generator (RNG) you should create an RNG at
+the beginning of your script and use this RNG in the rest of the script. Be
+sure to include a seed value. For example:
+
+.. code:: python
+
+    import numpy as np
+
+    rng = np.random.default_rng(seed=0)
+    rng.random()  # generate a floating point number between 0 and 1
+
+See Scientific Python's `Best Practices for Using NumPy's Random Number Generators
+<https://blog.scientific-python.org/numpy/numpy-rng/>`_ for details.
 
 Adding a New Example
 ^^^^^^^^^^^^^^^^^^^^

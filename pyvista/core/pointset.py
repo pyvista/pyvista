@@ -589,6 +589,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> from pyvista import examples
     >>> import pyvista as pv
 
+    Seed random number generator for reproducible plots
+    >>> rng = np.random.default_rng(seed=0)
+
     Create an empty mesh.
 
     >>> mesh = pv.PolyData()
@@ -636,7 +639,6 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
-    >>> rng = np.random.default_rng(seed=0)
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(
@@ -701,6 +703,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Type[_vtk.vtkSTLWriter],
                 Type[_vtk.vtkPolyDataWriter],
                 Type[_vtk.vtkHoudiniPolyDataWriter],
+                Type[_vtk.vtkOBJWriter],
             ],
         ]
     ] = {
@@ -709,6 +712,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.stl': _vtk.vtkSTLWriter,
         '.vtk': _vtk.vtkPolyDataWriter,
         '.geo': _vtk.vtkHoudiniPolyDataWriter,
+        '.obj': _vtk.vtkOBJWriter,
     }
 
     def __init__(
@@ -1371,7 +1375,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``).
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
+            ``'.obj'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
