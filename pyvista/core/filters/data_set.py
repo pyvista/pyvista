@@ -5145,6 +5145,287 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
+    def remove_cells(  # numpydoc ignore=PR01,PR02,PR07,PR10
+        self,
+        ind: Union[VectorLike[bool], VectorLike[int]],
+        inplace=False,
+        unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
+        invert=False,
+        pass_cell_ids=False,
+        pass_point_ids=False,
+    ):
+        """Remove cells.
+
+        Parameters
+        ----------
+        ind : VectorLike[int] | VectorLike[bool]
+            Cell indices to be removed.  The array can also be a
+            boolean array of the same size as the number of cells.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        unused_points: 'keep' | 'remove' | 'vertex', default: 'keep'
+
+
+        invert : bool, default: False
+            Invert the cell indices. Indices *not* specified by ``ind``
+            are removed.
+
+        pass_cell_ids : bool, default: False
+            Include a cell array ``'original_cell_ids'`` with the output
+            that holds the cell index of the original cell that produced
+            each output cell. The default is ``False`` to conserve memory.
+
+        pass_point_ids : bool, default: False
+            Include a point array ``'original_point_ids'`` with the output
+            that holds the cell index of the original cell that produced
+            each output cell. The default is ``False`` to conserve memory.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Same type as the input, but with the specified cells
+            removed.
+
+        Examples
+        --------
+        Remove 20 cells from an unstructured grid.
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> hex_mesh = pv.read(examples.hexbeamfile)
+        >>> removed = hex_mesh.remove_cells(range(10, 20))
+        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+        """
+        return self._remove_cells_internal_method(
+            ind=ind,
+            unused_points=unused_points,
+            inplace=inplace,
+            invert=invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+        )
+
+    def extract_cells_new_API(  # numpydoc ignore=PR01,RT01
+        self,
+        ind: Union[VectorLike[bool], VectorLike[int]],
+        inplace=False,
+        unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
+        invert=False,
+        pass_cell_ids=False,
+        pass_point_ids=False,
+    ):
+        """Extract cells."""
+        invert = not invert
+        return self._remove_cells_internal_method(
+            ind=ind,
+            unused_points=unused_points,
+            inplace=inplace,
+            invert=invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+        )
+
+    def extract_points_new_API(  # numpydoc ignore=PR01,PR02,RT01
+        self,
+        ind: Union[VectorLike[bool], VectorLike[int]],
+        mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
+        inplace=False,
+        invert=False,
+        pass_cell_ids=False,
+        pass_point_ids=False,
+    ):
+        """Extract points."""
+        return self._extract_points_internal_method(
+            mode=mode,
+            ind=ind,
+            inplace=inplace,
+            invert=invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+        )
+
+    def remove_points_new_API(  # numpydoc ignore=PR01,RT01
+        self,
+        ind: Union[VectorLike[bool], VectorLike[int]],
+        mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
+        *,
+        inplace=False,
+        invert=False,
+        pass_cell_ids=False,
+        pass_point_ids=False,
+    ):
+        """Remove points."""
+        invert = not invert
+        mode = 'all' if mode == 'any' else 'any' if mode == 'all' else mode
+        return self._extract_points_internal_method(
+            mode=mode,
+            ind=ind,
+            inplace=inplace,
+            invert=invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+        )
+
+    def _extract_points_internal_method(
+        self,
+        mode: Literal['any', 'all', 'vertex', 'exact'],
+        *,
+        ind,
+        inplace,
+        invert,
+        pass_cell_ids,
+        pass_point_ids,
+    ):
+        """
+        Keep points.
+
+        Parameters
+        ----------
+        mode : str, default: "any"
+            Selection criteria for removing cells.
+
+            -   ``'any'``: Remove cells if any point ids referenced by the cell are
+                specified as part of ``ind``. Points that are no longer referenced by
+                cells are also removed. This may result in more points removed than
+                specified.
+
+            -   ``'all'``:  Remove cells if all point ids referenced by the cell are
+                specified as part of ``ind``. This may result in fewer points removed
+                than specified.
+
+            -   ``'exact'``:  Only the points specified exactly by ``ind`` are removed.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
+
+            -   ``'vertex'``:  Only the points specified exactly by ``ind`` are removed.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
+
+
+        ind
+        inplace
+        invert
+        pass_cell_ids
+        pass_point_ids
+
+        Returns
+        -------
+        pyvista.DataSet
+        """
+        VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
+        VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
+
+        def as_input_type(output_):
+            if not isinstance(self, pyvista.UnstructuredGrid):
+                return self.extract_cells_new_API(output_[VTK_ORIGINAL_CELL_IDS])
+            return output_
+
+        def _extract_points(var_kwargs):
+            return as_input_type(self.extract_points(ind, invert=invert, **var_kwargs))
+
+        any_kwargs = dict(adjacent_cells=True)
+        all_kwargs = dict(adjacent_cells=False)
+        vertex_kwargs = dict(include_cells=False)
+        if mode == 'any':
+            output = _extract_points(any_kwargs)
+
+        elif mode == 'all':
+            output = _extract_points(all_kwargs)
+
+        elif mode == 'vertex':
+            output = _extract_points(vertex_kwargs)
+
+        elif mode == 'exact':
+            output_all = _extract_points(all_kwargs)
+            output_vertex = _extract_points(vertex_kwargs)
+            isolated_vertex = set(output_vertex[VTK_ORIGINAL_POINT_IDS]) - set(
+                output_all[VTK_ORIGINAL_POINT_IDS],
+            )
+            output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
+
+            output = output_all + output_vertex
+        else:
+            modes = ['all', 'any', 'exact', 'vertex']
+            raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
+
+        if pass_cell_ids and VTK_ORIGINAL_CELL_IDS in output.cell_data.keys():
+            output.rename_array(VTK_ORIGINAL_CELL_IDS, 'original_cell_ids')
+        if pass_point_ids and VTK_ORIGINAL_POINT_IDS in output.point_data.keys():
+            output.rename_array(VTK_ORIGINAL_POINT_IDS, 'original_point_ids')
+
+        if inplace:
+            self.copy_from(output)  # type: ignore[attr-defined]
+            return self
+        return output
+
+    def _remove_cells_internal_method(
+        self,
+        *,
+        ind,
+        inplace,
+        unused_points,
+        invert,
+        pass_cell_ids,
+        pass_point_ids,
+    ):
+        target = self if inplace else self.copy()
+        n_cells, n_points = target.n_cells, target.n_points
+        DUPLICATE = _vtk.vtkDataSetAttributes.DUPLICATECELL
+
+        if isinstance(ind, np.ndarray):
+            if ind.dtype == np.bool_ and ind.size != n_cells:
+                raise ValueError(
+                    f'Boolean array size must match the number of cells ({n_cells})',
+                )
+        else:
+            ind = np.asarray(ind)
+
+        if invert:
+            ghost_cells = np.ones(n_cells, np.uint8) * DUPLICATE
+            ghost_cells[ind] = 0
+        else:
+            ghost_cells = np.zeros(n_cells, np.uint8)
+            ghost_cells[ind] = DUPLICATE
+
+        if pass_cell_ids or unused_points in ['remove', 'vertex']:
+            target.cell_data['original_cell_ids'] = range(n_cells)
+        if pass_point_ids:
+            target.point_data['original_point_ids'] = range(n_points)
+
+        GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
+        target.cell_data[GHOST_ARRAY_NAME] = ghost_cells
+        target.RemoveGhostCells()
+        if GHOST_ARRAY_NAME in target.cell_data.keys():
+            del target.cell_data[GHOST_ARRAY_NAME]
+
+        def _remove_unused_points(dataset):
+            dataset_to_clean = (
+                dataset if is_poly_or_unstructured else dataset.cast_to_unstructured_grid()
+            )
+            cleaned = dataset_to_clean._remove_unused_points()
+            if is_poly_or_unstructured:
+                return cleaned
+            # Use keep_points to re-cast back to input type
+            return dataset.extract_points_new_API(cleaned['original_point_ids'])
+
+        is_poly_or_unstructured = isinstance(target, (pyvista.UnstructuredGrid, pyvista.PolyData))
+        if unused_points == 'keep':
+            return target
+        elif unused_points == 'remove':
+            return _remove_unused_points(self)
+        elif unused_points == 'vertex':
+            return target.extract_points_new_API(np.ones(n_points, dtype=bool), mode='exact')
+        else:
+            options = ['keep', 'remove', 'vertex']
+            raise ValueError(
+                f'Unused points must be one of {options}, got {unused_points} instead.',
+            )
+            return None
+
     def split_values(
         self,
         values: Optional[

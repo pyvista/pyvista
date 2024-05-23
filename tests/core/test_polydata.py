@@ -894,8 +894,8 @@ def test_volume(sphere_dense):
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
-REMOVE_POINTS = pv.core.PolyDataFilters.remove_points
-NEW_REMOVE_POINTS = pv.core.pointset._PointSet.new_remove_points
+REMOVE_POINTS = pv.PolyDataFilters.remove_points
+NEW_REMOVE_POINTS = pv.DataSetFilters.remove_points_new_API
 
 
 @pytest.mark.parametrize('filter_under_test', [REMOVE_POINTS, NEW_REMOVE_POINTS])
