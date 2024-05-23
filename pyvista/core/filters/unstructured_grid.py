@@ -151,3 +151,10 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetAveragePointData(average_point_data)
         _update_alg(alg, progress_bar, 'Cleaning Unstructured Grid')
         return _get_output(alg)
+
+    def _remove_unused_points(self):
+        alg = _vtk.vtkRemoveUnusedPoints()
+        alg.SetInputDataObject(self)
+        alg.GenerateOriginalPointIdsOff()
+        _update_alg(alg, progress_bar=True, message='Removing Unused Points')
+        return _get_output(alg)

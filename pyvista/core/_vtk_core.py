@@ -250,6 +250,7 @@ from vtkmodules.vtkFiltersCore import (
     vtkPolyDataNormals,
     vtkProbeFilter,
     vtkQuadricDecimation,
+    vtkRemoveUnusedPoints,
     vtkResampleWithDataSet,
     vtkSmoothPolyDataFilter,
     vtkStripper,

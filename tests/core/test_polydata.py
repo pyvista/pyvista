@@ -894,19 +894,36 @@ def test_volume(sphere_dense):
     assert np.isclose(sphere_dense.volume, ideal_volume, rtol=1e-3)
 
 
-def test_remove_points_any(sphere):
+REMOVE_POINTS = pv.core.PolyDataFilters.remove_points
+NEW_REMOVE_POINTS = pv.core.pointset._PointSet.new_remove_points
+
+
+@pytest.mark.parametrize('filter_under_test', [REMOVE_POINTS, NEW_REMOVE_POINTS])
+def test_remove_points_any(filter_under_test, sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
-    sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
+    if filter_under_test is NEW_REMOVE_POINTS:
+        sphere_mod = filter_under_test(
+            sphere,
+            remove_mask,
+            inplace=False,
+            mode='any',
+            pass_point_ids=True,
+        )
+        ind = sphere_mod['original_point_ids']
+    else:
+        sphere_mod, ind = filter_under_test(sphere, remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
-def test_remove_points_all(sphere):
+@pytest.mark.parametrize('filter_under_test', [REMOVE_POINTS, NEW_REMOVE_POINTS])
+def test_remove_points_all(sphere, filter_under_test):
     sphere_copy = sphere.copy()
     sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
     remove = sphere.faces[1:4]
-    sphere_copy.remove_points(remove, inplace=True, mode='all')
+
+    filter_under_test(sphere_copy, remove, inplace=True, mode='all')
     assert sphere_copy.n_points == sphere.n_points
     assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
 

@@ -5049,7 +5049,14 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(self, ind, adjacent_cells=True, include_cells=True, progress_bar=False):
+    def extract_points(
+        self,
+        ind,
+        adjacent_cells=True,
+        include_cells=True,
+        progress_bar=False,
+        invert=False,
+    ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -5068,6 +5075,10 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        invert : bool, default: False
+            Invert the indices. Extract all points *except* for
+            those specified by ``ind``.
 
         See Also
         --------
@@ -5091,7 +5102,22 @@ class DataSetFilters:
         >>> extracted.plot()
 
         """
-        ind = np.array(ind)
+        n_points = self.n_points
+        ind = np.asarray(ind)
+        if isinstance(ind, np.ndarray):
+            if ind.dtype == np.bool_ and ind.size != n_points:
+                raise ValueError(
+                    f'Boolean array size must match the number of points ({n_points})',
+                )
+
+        if invert:
+            if np.issubdtype(ind.dtype, np.bool_):
+                ind = np.invert(ind)
+            else:
+                ones = np.ones(n_points, dtype=np.bool_)
+                ones[ind] = 0
+                ind = ones
+
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
