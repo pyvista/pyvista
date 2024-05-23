@@ -275,7 +275,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(seed=0)
     >>> points = rng.random((10, 3))
     >>> pset = pv.PointSet(points)
 
@@ -589,6 +589,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> from pyvista import examples
     >>> import pyvista as pv
 
+    Seed random number generator for reproducible plots
+    >>> rng = np.random.default_rng(seed=0)
+
     Create an empty mesh.
 
     >>> mesh = pv.PolyData()
@@ -636,10 +639,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
-    >>> points = np.random.default_rng().random((n_points, 3))
-    >>> lines = np.random.default_rng().integers(
-    ...     low=0, high=n_points, size=(n_lines, 2)
-    ... )
+    >>> points = rng.random((n_points, 3))
+    >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(
     ...     points, lines=pv.CellArray.from_regular_cells(lines)
     ... )
@@ -652,13 +653,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     the ``strips`` cell array.
 
     >>> n_strips = 4
-    >>> n_verts_per_strip = np.random.default_rng().integers(
-    ...     low=3, high=7, size=n_strips
-    ... )
+    >>> n_verts_per_strip = rng.integers(low=3, high=7, size=n_strips)
     >>> n_points = 10 * sum(n_verts_per_strip)
-    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> points = rng.random((n_points, 3))
     >>> strips = [
-    ...     np.random.default_rng().integers(low=0, high=n_points, size=nv)
+    ...     rng.integers(low=0, high=n_points, size=nv)
     ...     for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
@@ -853,7 +852,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.random.default_rng().random((5, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
