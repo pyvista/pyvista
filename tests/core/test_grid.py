@@ -2,7 +2,7 @@ import functools
 import pathlib
 from pathlib import Path
 import re
-from typing import Callable, List, Tuple
+from typing import Callable, List, NamedTuple, Tuple
 import weakref
 
 import numpy as np
@@ -1105,83 +1105,97 @@ def test_gaussian_smooth(uniform):
     assert not np.all(uniform.active_scalars == values)
 
 
+class NamedFilter(NamedTuple):
+    name: str
+    filter: functools.partial
+
+
 # These two filters should produce exactly the same result
-REMOVE_CELLS = (
-    functools.partial(pv.core.pointset._PointSet.remove_cells, invert=False),
-    'remove_cells',
+REMOVE_CELLS = NamedFilter(
+    name='remove_cells',
+    filter=functools.partial(pv.core.pointset._PointSet.remove_cells, invert=False),
 )
-REMOVE_CELLS_INVERT = (
-    functools.partial(pv.core.pointset._PointSet.remove_cells, invert=True),
-    'remove_cells_invert',
+REMOVE_CELLS_INVERT = NamedFilter(
+    name='remove_cells_invert',
+    filter=functools.partial(pv.core.pointset._PointSet.remove_cells, invert=True),
 )
-KEEP_CELLS = (
-    functools.partial(pv.core.pointset._PointSet.keep_cells, invert=False),
-    'keep_cells',
+KEEP_CELLS = NamedFilter(
+    name='keep_cells',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_cells, invert=False),
 )
-KEEP_CELLS_INVERT = (
-    functools.partial(pv.core.pointset._PointSet.keep_cells, invert=True),
-    'keep_cells_invert',
-)
-
-REMOVE_POINTS_ANY = (
-    functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=False, mode='any'),
-    'remove_points_any',
-)
-KEEP_POINTS_INVERT_ALL = (
-    functools.partial(pv.core.pointset._PointSet.keep_points, invert=True, mode='all'),
-    'keep_points_invert_all',
+KEEP_CELLS_INVERT = NamedFilter(
+    name='keep_cells_invert',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_cells, invert=True),
 )
 
-REMOVE_POINTS_ALL = (
-    functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=False, mode='all'),
-    'remove_points_all',
+REMOVE_POINTS_ANY = NamedFilter(
+    name='remove_points_any',
+    filter=functools.partial(
+        pv.core.pointset._PointSet.new_remove_points,
+        invert=False,
+        mode='any',
+    ),
 )
-KEEP_POINTS_INVERT_ANY = (
-    functools.partial(pv.core.pointset._PointSet.keep_points, invert=True, mode='any'),
-    'keep_points_invert_any',
-)
-
-
-REMOVE_POINTS_INVERT_ALL = (
-    functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=True, mode='all'),
-    'remove_points_invert_all',
-)
-KEEP_POINTS_ANY = (
-    functools.partial(pv.core.pointset._PointSet.keep_points, mode='any'),
-    'keep_points_any',
+KEEP_POINTS_INVERT_ALL = NamedFilter(
+    name='keep_points_invert_all',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_points, invert=True, mode='all'),
 )
 
-REMOVE_POINTS_INVERT_ANY = (
-    functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=True, mode='any'),
-    'remove_points_invert_all',
+REMOVE_POINTS_ALL = NamedFilter(
+    name='remove_points_all',
+    filter=functools.partial(
+        pv.core.pointset._PointSet.new_remove_points,
+        invert=False,
+        mode='all',
+    ),
 )
-KEEP_POINTS_ALL = (
-    functools.partial(pv.core.pointset._PointSet.keep_points, mode='all'),
-    'keep_points_all',
+KEEP_POINTS_INVERT_ANY = NamedFilter(
+    name='keep_points_invert_any',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_points, invert=True, mode='any'),
 )
 
 
-def paramaterize_filter(param_name, filters: List[Tuple[Callable, str]]):
-    callable_ = [f[0] for f in filters]
-    ids = [f[1] for f in filters]
-    return pytest.mark.parametrize(param_name, callable_, ids=ids)
+REMOVE_POINTS_INVERT_ALL = NamedFilter(
+    name='remove_points_invert_all',
+    filter=functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=True, mode='all'),
+)
+KEEP_POINTS_ANY = NamedFilter(
+    name='keep_points_any',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_points, mode='any'),
+)
+
+REMOVE_POINTS_INVERT_ANY = NamedFilter(
+    name='remove_points_invert_all',
+    filter=functools.partial(pv.core.pointset._PointSet.new_remove_points, invert=True, mode='any'),
+)
+KEEP_POINTS_ALL = NamedFilter(
+    name='keep_points_all',
+    filter=functools.partial(pv.core.pointset._PointSet.keep_points, mode='all'),
+)
 
 
-@paramaterize_filter('filter_under_test', [REMOVE_CELLS, KEEP_CELLS_INVERT])
+def parametrize_filter(param_name, named_filters: List[NamedFilter]):
+    """Parametrize test using named filters."""
+    ids = [f.name for f in named_filters]
+    filters = [f.filter for f in named_filters]
+    return pytest.mark.parametrize(param_name, filters, ids=ids)
+
+
+@parametrize_filter('filter_under_test', [REMOVE_CELLS, KEEP_CELLS_INVERT])
 @pytest.mark.parametrize('ind', [(1, 2), range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells_keep_cells_invert(ind, hexbeam, filter_under_test):
     filtered = filter_under_test(hexbeam, ind)
     assert filtered.n_cells == hexbeam.n_cells - len(np.array(ind))
 
 
-@paramaterize_filter('filter_under_test', [KEEP_CELLS, REMOVE_CELLS_INVERT])
+@parametrize_filter('filter_under_test', [KEEP_CELLS, REMOVE_CELLS_INVERT])
 @pytest.mark.parametrize('ind', [(1, 2), range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_keep_cells_remove_cells_invert(ind, hexbeam, filter_under_test):
     filtered = filter_under_test(hexbeam, ind)
     assert filtered.n_cells == len(np.array(ind))
 
 
-@paramaterize_filter('filter_under_test', [KEEP_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
+@parametrize_filter('filter_under_test', [KEEP_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
 @pytest.mark.parametrize('ind', [[True] * len(HEXBEAM_POINTS_BOOL), HEXBEAM_POINTS_BOOL])
 def test_remove_points_keep_points_bool_ind(ind, hexbeam, filter_under_test):
     # Test complete mesh is returned
@@ -1192,7 +1206,7 @@ def test_remove_points_keep_points_bool_ind(ind, hexbeam, filter_under_test):
     assert np.array_equal(filtered.cells, hexbeam.cells)
 
 
-@paramaterize_filter('filter_under_test', [KEEP_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
+@parametrize_filter('filter_under_test', [KEEP_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
 def test_keep_points_any_remove_points_all(hexbeam, filter_under_test):
     # Test single point
     ind = [0]
@@ -1201,7 +1215,7 @@ def test_keep_points_any_remove_points_all(hexbeam, filter_under_test):
     assert filtered.n_points == 8
 
 
-@paramaterize_filter('filter_under_test', [KEEP_POINTS_ALL, REMOVE_POINTS_INVERT_ANY])
+@parametrize_filter('filter_under_test', [KEEP_POINTS_ALL, REMOVE_POINTS_INVERT_ANY])
 def test_keep_points_all_remove_points_any(hexbeam, filter_under_test):
     # Test single point
     ind = [0]
@@ -1216,7 +1230,7 @@ def test_keep_points_all_remove_points_any(hexbeam, filter_under_test):
     assert filtered.n_points == 8
 
 
-@paramaterize_filter(
+@parametrize_filter(
     'filter_under_test',
     [REMOVE_CELLS, KEEP_CELLS_INVERT, REMOVE_POINTS_ANY, KEEP_POINTS_INVERT_ALL],
 )
@@ -1225,7 +1239,7 @@ def test_remove_cells_array_names(hexbeam, filter_under_test):
     assert hexbeam.array_names == filtered.array_names
 
 
-@paramaterize_filter(
+@parametrize_filter(
     'filter_under_test',
     [REMOVE_CELLS, KEEP_CELLS_INVERT, REMOVE_POINTS_ANY, KEEP_POINTS_INVERT_ALL],
 )
@@ -1245,7 +1259,7 @@ def test_remove_cells_keep_cells_pass_cell_ids(hexbeam, filter_under_test):
 
 
 @pytest.mark.parametrize('inplace', [True, False])
-@paramaterize_filter(
+@parametrize_filter(
     'filter_under_test',
     [REMOVE_CELLS, KEEP_CELLS_INVERT, REMOVE_POINTS_ANY, KEEP_POINTS_INVERT_ALL],
 )
@@ -1261,14 +1275,14 @@ def test_remove_cells_keep_cells_inplace(inplace, hexbeam, filter_under_test):
         assert filtered.n_cells < input_mesh.n_cells
 
 
-@paramaterize_filter('filter_under_test', [REMOVE_POINTS_ANY, KEEP_POINTS_ANY])
+@parametrize_filter('filter_under_test', [REMOVE_POINTS_ANY, KEEP_POINTS_ANY])
 def test_remove_points_keep_pointsinvalid(hexbeam, filter_under_test):
     match = 'Boolean array size must match the number of points (99)'
     with pytest.raises(ValueError, match=re.escape(match)):
         filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
 
 
-@paramaterize_filter('filter_under_test', [REMOVE_CELLS, KEEP_CELLS_INVERT])
+@parametrize_filter('filter_under_test', [REMOVE_CELLS, KEEP_CELLS_INVERT])
 def test_remove_cells_keep_cells_invalid(hexbeam, filter_under_test):
     match = 'Boolean array size must match the number of cells (40)'
     with pytest.raises(ValueError, match=re.escape(match)):
