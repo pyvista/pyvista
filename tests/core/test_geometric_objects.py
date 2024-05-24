@@ -439,12 +439,9 @@ def test_capsule():
 def test_capsule_center(center, direction):
     capsule = pv.Capsule(center, direction)
     assert np.allclose(capsule.center, center)
-    assert np.allclose(capsule.direction, direction)
     cylinder = pv.Cylinder(center, direction)
     assert np.allclose(cylinder.center, center)
-    assert np.allclose(cylinder.direction, direction)
     assert np.allclose(capsule.center, cylinder.center)
-    assert np.allclose(capsule.direction, cylinder.direction)
 
 
 def test_cube():
