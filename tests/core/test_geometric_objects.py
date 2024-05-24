@@ -410,9 +410,10 @@ def test_capsule():
     assert np.any(capsule.faces)
 
 
+# https://github.com/pyvista/pyvista/pull/6119
 @pytest.mark.paramatrize('center', [(4, 5, 6), (1, 1, 1)])
 @pytest.mark.paramatrize('direction', [(0, 1, -1), (1, 1, 0)])
-def test_capsule_center_corresponds_with_cylinder_center(center, direction):
+def test_capsule_center(center, direction):
     capsule = pv.Capsule(center, direction)
     assert np.allclose(capsule.center, center)
     cylinder = pv.Cylinder(center, direction)
