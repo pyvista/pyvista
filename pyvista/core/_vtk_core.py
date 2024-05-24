@@ -253,7 +253,6 @@ from vtkmodules.vtkFiltersCore import (
     vtkPolyDataNormals,
     vtkProbeFilter,
     vtkQuadricDecimation,
-    vtkRemoveUnusedPoints,
     vtkResampleWithDataSet,
     vtkSmoothPolyDataFilter,
     vtkStripper,
@@ -447,6 +446,7 @@ with contextlib.suppress(ImportError):
 
 # 9.1+ imports
 with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersCore import vtkRemoveUnusedPoints
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
 

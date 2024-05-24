@@ -153,7 +153,13 @@ class UnstructuredGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def _remove_unused_points(self):
-        alg = _vtk.vtkRemoveUnusedPoints()
+        try:
+            from vtkmodules.vtkFiltersCore import vtkRemoveUnusedPoints
+        except ImportError:  # pragma no cover
+            raise VTKVersionError(
+                "UnstructuredGrid remove_unused_points requires VTK >= 9.1",
+            ) from None
+        alg = vtkRemoveUnusedPoints()
         alg.SetInputDataObject(self)
         alg.GenerateOriginalPointIdsOff()
         _update_alg(alg, progress_bar=True, message='Removing Unused Points')
