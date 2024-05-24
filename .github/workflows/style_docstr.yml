@@ -65,6 +65,5 @@ jobs:
           level: error
           filter_mode: nofilter
           fail_on_error: true
-          version: 2.29.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
