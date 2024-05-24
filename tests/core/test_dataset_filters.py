@@ -4087,7 +4087,12 @@ def test_keep_points_all_remove_points_any(hexbeam, filter_under_test):
 def test_remove_cells_array_names(hexbeam, filter_under_test):
     filtered = filter_under_test(hexbeam, 0)
     assert filtered is not hexbeam
-    assert hexbeam.array_names == filtered.array_names
+    expected = [
+        *hexbeam.array_names,
+        _vtk_core.VTK_ORIGINAL_POINT_IDS,
+        _vtk_core.VTK_ORIGINAL_CELL_IDS,
+    ]
+    assert expected == filtered.array_names
 
 
 @parametrize_filter(

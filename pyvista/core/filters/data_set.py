@@ -5037,8 +5037,8 @@ class DataSetFilters:
         mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
         *,
         invert=False,
-        pass_point_ids=False,
-        pass_cell_ids=False,
+        pass_point_ids=True,
+        pass_cell_ids=True,
         inplace=False,
         progress_bar=False,
         **kwargs,
@@ -5284,8 +5284,8 @@ class DataSetFilters:
         inplace=False,
         unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
         invert=False,
-        pass_cell_ids=False,
-        pass_point_ids=False,
+        pass_cell_ids=True,
+        pass_point_ids=True,
     ):
         """Remove cells.
 
@@ -5346,8 +5346,8 @@ class DataSetFilters:
         inplace=False,
         unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
         invert=False,
-        pass_cell_ids=False,
-        pass_point_ids=False,
+        pass_cell_ids=True,
+        pass_point_ids=True,
     ):
         """Extract cells."""
         invert = not invert
@@ -5367,8 +5367,8 @@ class DataSetFilters:
         *,
         inplace=False,
         invert=False,
-        pass_cell_ids=False,
-        pass_point_ids=False,
+        pass_cell_ids=True,
+        pass_point_ids=True,
         keep_scalars=True,
         progress_bar=False,
     ):
