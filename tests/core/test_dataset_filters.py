@@ -2639,11 +2639,9 @@ def test_extract_values_component_values_split_unique(
 @pytest.mark.parametrize('pass_point_ids', [True, False])
 @pytest.mark.parametrize('pass_cell_ids', [True, False])
 def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
-    POINT_IDS = 'original_point_ids'
-    CELL_IDS = 'original_cell_ids'
     extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
-    assert extracted.point_data.keys() == ['labels', POINT_IDS]
-    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+    assert extracted.point_data.keys() == ['labels', _vtk_core.VTK_ORIGINAL_POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', _vtk_core.VTK_ORIGINAL_CELL_IDS]
 
     extracted = grid4x4.extract_values(
         ranges=grid4x4.get_data_range(),
@@ -2651,9 +2649,9 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         pass_cell_ids=pass_cell_ids,
     )
     if pass_cell_ids:
-        assert CELL_IDS in extracted.cell_data
+        assert _vtk_core.VTK_ORIGINAL_CELL_IDS in extracted.cell_data
     if pass_point_ids:
-        assert POINT_IDS in extracted.point_data
+        assert _vtk_core.VTK_ORIGINAL_POINT_IDS in extracted.point_data
 
     extracted = grid4x4.extract_values(
         ranges=grid4x4.get_data_range(preference='point'),
@@ -4100,15 +4098,15 @@ def test_remove_cells_keep_cells_pass_cell_ids(hexbeam, filter_under_test):
     ind = 0
     filtered = filter_under_test(hexbeam, ind, pass_cell_ids=True)
     assert filtered.n_cells == hexbeam.n_cells - 1
-    assert 'original_cell_ids' in filtered.cell_data.keys()
-    assert ind not in filtered['original_cell_ids']
+    assert _vtk_core.VTK_ORIGINAL_CELL_IDS in filtered.cell_data.keys()
+    assert ind not in filtered[_vtk_core.VTK_ORIGINAL_CELL_IDS]
 
     ind = 0
     filtered = filter_under_test(hexbeam, ind, pass_point_ids=True)
     assert filtered.n_cells == hexbeam.n_cells - 1
     assert filtered.n_points < hexbeam.n_points
-    assert 'original_point_ids' in filtered.point_data.keys()
-    assert ind not in filtered['original_point_ids']
+    assert _vtk_core.VTK_ORIGINAL_POINT_IDS in filtered.point_data.keys()
+    assert ind not in filtered[_vtk_core.VTK_ORIGINAL_POINT_IDS]
 
 
 @pytest.mark.parametrize('inplace', [True, False])

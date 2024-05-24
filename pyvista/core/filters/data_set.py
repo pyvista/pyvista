@@ -5153,8 +5153,6 @@ class DataSetFilters:
         pass_point_ids,
         progress_bar,
     ):
-        VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
-        VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
 
         def as_input_type(output_):
             if isinstance(self, pyvista.PolyData):
@@ -5164,7 +5162,7 @@ class DataSetFilters:
                         poly = pyvista.PolyData(output_.points)
                         poly.copy_attributes(output_)
                     else:
-                        poly = self.extract_cells_new_API(output_[VTK_ORIGINAL_CELL_IDS])
+                        poly = self.extract_cells_new_API(output_[_vtk.VTK_ORIGINAL_CELL_IDS])
                 elif output_.n_points > 0:
                     poly = pyvista.PolyData()
                     poly.points = output_.points
@@ -5175,7 +5173,7 @@ class DataSetFilters:
 
                 return poly
 
-                # return self.extract_cells(output_[VTK_ORIGINAL_CELL_IDS]).remove_cells()
+                # return self.extract_cells(output_[_vtk.VTK_ORIGINAL_CELL_IDS]).remove_cells()
             return output_
 
         def _extract_points_by_mode(mode_):
@@ -5196,8 +5194,8 @@ class DataSetFilters:
         elif mode == 'exact':
             output_all = _extract_points_by_mode('all')
             output_vertex = _extract_points_by_mode('vertex')
-            isolated_vertex = set(output_vertex[VTK_ORIGINAL_POINT_IDS]) - set(
-                output_all[VTK_ORIGINAL_POINT_IDS],
+            isolated_vertex = set(output_vertex[_vtk.VTK_ORIGINAL_POINT_IDS]) - set(
+                output_all[_vtk.VTK_ORIGINAL_POINT_IDS],
             )
             output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
 
@@ -5207,24 +5205,22 @@ class DataSetFilters:
             raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
 
         # Process output arrays
-        if VTK_ORIGINAL_CELL_IDS in output.cell_data.keys():
-            (
-                output.rename_array(VTK_ORIGINAL_CELL_IDS, 'original_cell_ids')
-                if pass_cell_ids
-                else output.cell_data.remove(VTK_ORIGINAL_CELL_IDS)
-            )
-        if VTK_ORIGINAL_POINT_IDS in output.point_data.keys():
-            (
-                output.rename_array(VTK_ORIGINAL_POINT_IDS, 'original_point_ids')
-                if pass_point_ids
-                else output.point_data.remove(VTK_ORIGINAL_POINT_IDS)
-            )
+        (
+            output.cell_data.remove(_vtk.VTK_ORIGINAL_CELL_IDS)
+            if not pass_cell_ids and _vtk.VTK_ORIGINAL_CELL_IDS in output.cell_data.keys()
+            else None
+        )
+        (
+            output.point_data.remove(_vtk.VTK_ORIGINAL_POINT_IDS)
+            if not pass_point_ids and _vtk.VTK_ORIGINAL_POINT_IDS in output.point_data.keys()
+            else None
+        )
 
         # The point ids will also be added to the input, make sure we remove them
-        if VTK_ORIGINAL_CELL_IDS in self.cell_data.keys():  # type: ignore[attr-defined]
-            self.cell_data.remove(VTK_ORIGINAL_CELL_IDS)  # type: ignore[attr-defined]
-        if VTK_ORIGINAL_POINT_IDS in self.point_data.keys():  # type: ignore[attr-defined]
-            self.point_data.remove(VTK_ORIGINAL_POINT_IDS)  # type: ignore[attr-defined]
+        if _vtk.VTK_ORIGINAL_CELL_IDS in self.cell_data.keys():  # type: ignore[attr-defined]
+            self.cell_data.remove(_vtk.VTK_ORIGINAL_CELL_IDS)  # type: ignore[attr-defined]
+        if _vtk.VTK_ORIGINAL_POINT_IDS in self.point_data.keys():  # type: ignore[attr-defined]
+            self.point_data.remove(_vtk.VTK_ORIGINAL_POINT_IDS)  # type: ignore[attr-defined]
 
         if inplace:
             try:
@@ -5310,12 +5306,12 @@ class DataSetFilters:
             are removed.
 
         pass_cell_ids : bool, default: False
-            Include a cell array ``'original_cell_ids'`` with the output
+            Include a cell array ``'vtkOriginalCellIds'`` with the output
             that holds the cell index of the original cell that produced
             each output cell. The default is ``False`` to conserve memory.
 
         pass_point_ids : bool, default: False
-            Include a point array ``'original_point_ids'`` with the output
+            Include a point array ``'vtkOriginalPointIds'`` with the output
             that holds the point index of the original point that produced
             each output cell. The default is ``False`` to conserve memory.
 
@@ -5424,9 +5420,9 @@ class DataSetFilters:
             ghost_cells[ind] = DUPLICATE
 
         if pass_cell_ids or unused_points in ['remove', 'vertex']:
-            target.cell_data['original_cell_ids'] = range(n_cells)
+            target.cell_data[_vtk.VTK_ORIGINAL_CELL_IDS] = range(n_cells)
         if pass_point_ids:
-            target.point_data['original_point_ids'] = range(n_points)
+            target.point_data[_vtk.VTK_ORIGINAL_POINT_IDS] = range(n_points)
 
         GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
         target.cell_data[GHOST_ARRAY_NAME] = ghost_cells
@@ -5442,7 +5438,7 @@ class DataSetFilters:
             if is_poly_or_unstructured:
                 return cleaned
             # Use keep_points to re-cast back to input type
-            return dataset.extract_points_new_API(cleaned['original_point_ids'])
+            return dataset.extract_points_new_API(cleaned[_vtk.VTK_ORIGINAL_POINT_IDS])
 
         if unused_points == 'keep':
             return target

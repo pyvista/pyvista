@@ -15,6 +15,9 @@ import contextlib
 from typing import NamedTuple
 import warnings
 
+VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
+VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
+
 from vtkmodules.vtkCommonCore import vtkVersion
 from vtkmodules.vtkImagingSources import (
     vtkImageEllipsoidSource,

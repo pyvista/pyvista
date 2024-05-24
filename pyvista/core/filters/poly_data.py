@@ -2572,7 +2572,9 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> reduced_sphere, ridx = sphere.remove_points(ind=range(100, 250))
+        >>> reduced_sphere, ridx = sphere.remove_points(
+        ...     ind=range(100, 250)
+        ... )
         >>> reduced_sphere.plot(show_edges=True, line_width=3)
 
         """
