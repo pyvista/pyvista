@@ -1561,6 +1561,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
+        alg.MergingOff()
         if extent is not None:
             alg.SetExtent(extent)
             alg.SetExtentClipping(True)
@@ -4909,7 +4910,7 @@ class DataSetFilters:
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
         >>> mesh.plot_over_circular_arc_normal(
         ...     center, polar=polar, angle=angle
-        ... )  # doctest:+SKIP
+        ... )
 
         """
         # Sample on circular arc
@@ -4955,7 +4956,17 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, invert=False, progress_bar=False):
+    def extract_cells(
+        self,
+        ind,
+        invert=False,
+        progress_bar=False,
+        pass_point_ids=True,
+        pass_cell_ids=True,
+        # return_type: Optional[Union[pyvista.UnstructuredGrid, pyvista.PolyData, Literal['auto']]] = None ,
+        as_unstructured_grid=True,
+        inplace=False,
+    ):
         """Return a subset of the grid.
 
         Parameters
@@ -4968,6 +4979,22 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+        as_unstructured_grid : 'auto', PolyData, UnstructuredGrid,
+            Return an unstructured grid.
+
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy
+            is returned. A copy is always returned if the input type is
+            not ``pyvista.PolyData`` or ``pyvista.UnstructuredGrid``.
 
         See Also
         --------
@@ -4994,9 +5021,12 @@ class DataSetFilters:
         >>> pl.show()
 
         """
-        if invert:
-            _, ind = numpy_to_idarr(ind, return_ind=True)
-            ind = [i for i in range(self.n_cells) if i not in ind]
+        ind = _validate_extraction_indices(
+            ind=ind,
+            n_items=self.n_cells,
+            field='cells',
+            invert=invert,
+        )
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
@@ -5012,15 +5042,34 @@ class DataSetFilters:
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
         _update_alg(extract_sel, progress_bar, 'Extracting Cells')
-        subgrid = _get_output(extract_sel)
+        output = _get_output(extract_sel)
 
         # extracts only in float32
-        if subgrid.n_points:
+        if output.n_points:
             if self.points.dtype != np.dtype('float32'):
-                ind = subgrid.point_data['vtkOriginalPointIds']
-                subgrid.points = self.points[ind]
+                ind = output.point_data['vtkOriginalPointIds']
+                output.points = self.points[ind]
 
-        return subgrid
+        if not as_unstructured_grid and isinstance(self, pyvista.PolyData):
+            # TODO: Make sure this does not overwrite the ids from the
+            # cell extraction
+            output = output.extract_geometry()
+
+        # Process output arrays
+        output._remove_original_ids(pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
+
+        # The ids will also be added to the input, make sure we remove them
+        self._remove_original_ids(pass_point_ids=False, pass_cell_ids=False)
+
+        if inplace:
+            try:
+                self.copy_from(output)
+            except TypeError:
+                return output
+            else:
+                return self
+
+        return output
 
     #        adjacent_cells : bool, default: True
     #             If ``True``, extract the cells that contain at least one of
@@ -5157,12 +5206,8 @@ class DataSetFilters:
         def as_input_type(output_):
             if isinstance(self, pyvista.PolyData):
                 if output_.n_cells > 0:
-                    if mode == 'vertex':
-                        # Cast vertex cells to polydata
-                        poly = pyvista.PolyData(output_.points)
-                        poly.copy_attributes(output_)
-                    else:
-                        poly = self.extract_cells_new_API(output_[_vtk.VTK_ORIGINAL_CELL_IDS])
+                    poly = output_.extract_geometry()
+                    # self.extract_cells_new_API(output_[_vtk.VTK_ORIGINAL_CELL_IDS])
                 elif output_.n_points > 0:
                     poly = pyvista.PolyData()
                     poly.points = output_.points
@@ -5186,9 +5231,6 @@ class DataSetFilters:
                 ),
             )
 
-        # any_kwargs = dict(adjacent_cells=True)
-        # all_kwargs = dict(adjacent_cells=False)
-        # vertex_kwargs = dict(include_cells=False)
         if mode in ['any', 'all', 'vertex']:
             output = _extract_points_by_mode(mode)
         elif mode == 'exact':
@@ -5205,22 +5247,10 @@ class DataSetFilters:
             raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
 
         # Process output arrays
-        (
-            output.cell_data.remove(_vtk.VTK_ORIGINAL_CELL_IDS)
-            if not pass_cell_ids and _vtk.VTK_ORIGINAL_CELL_IDS in output.cell_data.keys()
-            else None
-        )
-        (
-            output.point_data.remove(_vtk.VTK_ORIGINAL_POINT_IDS)
-            if not pass_point_ids and _vtk.VTK_ORIGINAL_POINT_IDS in output.point_data.keys()
-            else None
-        )
+        output._remove_original_ids(pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
-        # The point ids will also be added to the input, make sure we remove them
-        if _vtk.VTK_ORIGINAL_CELL_IDS in self.cell_data.keys():  # type: ignore[attr-defined]
-            self.cell_data.remove(_vtk.VTK_ORIGINAL_CELL_IDS)  # type: ignore[attr-defined]
-        if _vtk.VTK_ORIGINAL_POINT_IDS in self.point_data.keys():  # type: ignore[attr-defined]
-            self.point_data.remove(_vtk.VTK_ORIGINAL_POINT_IDS)  # type: ignore[attr-defined]
+        # The ids will also be added to the input, make sure we remove them
+        self._remove_original_ids(pass_point_ids=False, pass_cell_ids=False)
 
         if inplace:
             try:
@@ -5232,21 +5262,12 @@ class DataSetFilters:
         return output
 
     def _extract_points_main_method(self, *, ind, invert, mode, progress_bar):
-        n_points = self.n_points
-        ind = np.asarray(ind)
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != n_points:
-                raise ValueError(
-                    f'Boolean array size must match the number of points ({n_points})',
-                )
-
-        if invert:
-            if np.issubdtype(ind.dtype, np.bool_):
-                ind = np.invert(ind)
-            else:
-                ones = np.ones(n_points, dtype=np.bool_)
-                ones[ind] = 0
-                ind = ones
+        ind = _validate_extraction_indices(
+            ind=ind,
+            n_items=self.n_points,
+            field='points',
+            invert=invert,
+        )
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
@@ -5331,11 +5352,11 @@ class DataSetFilters:
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
-        return self._remove_cells_internal_method(
+        return self.extract_cells(
             ind=ind,
-            unused_points=unused_points,
+            # unused_points=unused_points,
             inplace=inplace,
-            invert=invert,
+            invert=not invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
         )
@@ -6141,14 +6162,10 @@ class DataSetFilters:
             output = self.extract_cells(
                 id_mask,
                 progress_bar=progress_bar,
+                as_unstructured_grid=False,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
             )
-
-        # TODO: use pass_point_ids args directly with extract_points
-        # # Process output arrays
-        # if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
-        #     output.point_data.remove(POINT_IDS)
-        # if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
-        #     output.cell_data.remove(CELL_IDS)
 
         return output
 
@@ -7671,6 +7688,18 @@ class DataSetFilters:
 
             return result
 
+    def _remove_original_ids(self, pass_point_ids: bool, pass_cell_ids: bool):
+        (
+            self.cell_data.remove(_vtk.VTK_ORIGINAL_CELL_IDS)  # type: ignore[attr-defined]
+            if not pass_cell_ids and _vtk.VTK_ORIGINAL_CELL_IDS in self.cell_data.keys()  # type: ignore[attr-defined]
+            else None
+        )
+        (
+            self.point_data.remove(_vtk.VTK_ORIGINAL_POINT_IDS)  # type: ignore[attr-defined]
+            if not pass_point_ids and _vtk.VTK_ORIGINAL_POINT_IDS in self.point_data.keys()  # type: ignore[attr-defined]
+            else None
+        )
+
 
 def _set_threshold_limit(alg, value, method, invert):
     """Set vtkThreshold limits and function.
@@ -7724,3 +7753,27 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+
+def _validate_extraction_indices(
+    *,
+    ind,
+    n_items: int,
+    field: Literal['points', 'cells'],
+    invert: bool,
+):
+    ind = np.asarray(ind)
+    if isinstance(ind, np.ndarray):
+        if ind.dtype == np.bool_ and ind.size != n_items:
+            raise ValueError(
+                f'Boolean array size must match the number of {field} ({n_items})',
+            )
+
+    if invert:
+        if np.issubdtype(ind.dtype, np.bool_):
+            ind = np.invert(ind)
+        else:
+            ones = np.ones(n_items, dtype=np.bool_)
+            ones[ind] = 0
+            ind = ones
+    return ind

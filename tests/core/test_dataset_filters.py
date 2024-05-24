@@ -2177,6 +2177,15 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)
 
 
+def test_extract_points_same_input_output(grid4x4):
+    points_in = grid4x4.points.copy()
+    faces_in = grid4x4.faces.copy()
+
+    extracted = grid4x4.extract_points(np.ones(grid4x4.n_points, dtype=bool))
+    assert np.array_equal(extracted.points, points_in)
+    assert np.array_equal(extracted.faces, faces_in)
+
+
 @pytest.mark.parametrize(
     'dataset_filter',
     [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],

@@ -11,6 +11,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import (
     CellSizeError,
     NotAllTrianglesError,
@@ -915,7 +916,7 @@ def test_remove_points_any(filter_under_test, sphere):
             mode='any',
             pass_point_ids=True,
         )
-        ind = sphere_mod['original_point_ids']
+        ind = sphere_mod[_vtk.VTK_ORIGINAL_POINT_IDS]
     else:
         sphere_mod, ind = filter_under_test(sphere, ind=remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
