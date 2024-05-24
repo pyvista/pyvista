@@ -304,6 +304,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     # If inplace, set the points
     if inplace:
         points[:] = points_2
+        return None
     else:
         # otherwise return the new points
         return points_2

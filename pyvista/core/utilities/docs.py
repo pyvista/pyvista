@@ -1,5 +1,7 @@
 """Supporting functions for documentation build."""
 
+from __future__ import annotations
+
 import inspect
 import os
 import os.path as op
@@ -82,10 +84,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
     except Exception:  # pragma: no cover
         lineno = None
 
-    if lineno and not edit:
-        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
-    else:
-        linespec = ""
+    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
 
     if 'dev' in pyvista.__version__:
         kind = 'main'
@@ -98,7 +97,11 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
 
 
 def pv_html_page_context(
-    app, pagename: str, templatename: str, context, doctree
+    app,
+    pagename: str,
+    templatename: str,
+    context,
+    doctree,
 ) -> None:  # pragma: no cover
     """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
 

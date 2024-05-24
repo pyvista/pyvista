@@ -75,6 +75,6 @@ split_cells.point_data['Point Cell Data'] = np.hstack(
         np.linspace(0, 12, 8),  # cell 1
         np.linspace(0, 16, 8),  # cell 2
         np.linspace(0, 20, 8),  # cell 3
-    )
+    ),
 )
 split_cells.plot(scalars='Point Cell Data')

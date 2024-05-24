@@ -2,6 +2,8 @@
 
 # flake8: noqa: F401
 
+import contextlib
+
 from .arrays import (
     FieldAssociation,
     array_from_vtkmatrix,
@@ -101,11 +103,16 @@ from .geometric_sources import (
     SuperquadricSource,
     Text3DSource,
 )
+from .image_sources import (
+    ImageEllipsoidSource,
+    ImageGaussianSource,
+    ImageMandelbrotSource,
+    ImageNoiseSource,
+    ImageSinusoidSource,
+)
 
-try:
+with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
-except ImportError:  # pragma: no cover
-    pass
 
 from .helpers import axis_rotation, generate_plane, is_inside_bounds, is_pyvista_dataset, wrap
 from .misc import (
@@ -171,7 +178,11 @@ from .reader import (
     DICOMReader,
     EnSightReader,
     FacetReader,
+    FLUENTCFFReader,
     FluentReader,
+    GambitReader,
+    GaussianCubeReader,
+    GESignaReader,
     GIFReader,
     GLTFReader,
     HDFReader,
@@ -179,11 +190,14 @@ from .reader import (
     JPEGReader,
     MetaImageReader,
     MFIXReader,
+    MINCImageReader,
     MultiBlockPlot3DReader,
     NIFTIReader,
     NRRDReader,
     OBJReader,
     OpenFOAMReader,
+    ParticleReader,
+    PDBReader,
     Plot3DFunctionEnum,
     Plot3DMetaReader,
     PLYReader,
@@ -205,6 +219,7 @@ from .reader import (
     XdmfReader,
     XMLImageDataReader,
     XMLMultiBlockDataReader,
+    XMLPartitionedDataSetReader,
     XMLPImageDataReader,
     XMLPolyDataReader,
     XMLPRectilinearGridReader,

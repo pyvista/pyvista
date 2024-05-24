@@ -38,7 +38,8 @@ def test_sphere():
 
 
 @pytest.mark.parametrize(
-    'expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+    'expected',
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
 )
 def test_sphere_direction_points(expected):
     # from south pole to north pole
@@ -103,14 +104,20 @@ def test_solid_sphere_hollow():
 def test_solid_sphere_generic():
     sphere = pv.SolidSphere(radius_resolution=5, theta_resolution=11, phi_resolution=13)
     sphere_seq = pv.SolidSphereGeneric(
-        radius=np.linspace(0, 0.5, 5), theta=np.linspace(0, 360, 11), phi=np.linspace(0, 180, 13)
+        radius=np.linspace(0, 0.5, 5),
+        theta=np.linspace(0, 360, 11),
+        phi=np.linspace(0, 180, 13),
     )
     assert sphere == sphere_seq
 
 
 def test_solid_sphere_theta_start_end():
     sphere = pv.SolidSphere(
-        start_theta=0, end_theta=180, radius_resolution=5, theta_resolution=100, phi_resolution=100
+        start_theta=0,
+        end_theta=180,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
     )
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
@@ -124,7 +131,11 @@ def test_solid_sphere_theta_start_end():
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 2, rel=1e-3)
 
     sphere = pv.SolidSphere(
-        start_theta=90, end_theta=120, radius_resolution=5, theta_resolution=100, phi_resolution=100
+        start_theta=90,
+        end_theta=120,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
     )
     assert sphere.volume == pytest.approx(4.0 / 3.0 * np.pi * 0.5**3 / 12, rel=1e-3)
 
@@ -133,7 +144,11 @@ def test_solid_sphere_phi_start_end():
     exp_sphere_volume = 4.0 / 3.0 * np.pi * 0.5**3
 
     sphere = pv.SolidSphere(
-        start_phi=0, end_phi=90, radius_resolution=5, theta_resolution=100, phi_resolution=100
+        start_phi=0,
+        end_phi=90,
+        radius_resolution=5,
+        theta_resolution=100,
+        phi_resolution=100,
     )
     assert sphere.volume == pytest.approx(exp_sphere_volume / 2, rel=1e-3)
 
@@ -188,7 +203,8 @@ def test_solid_sphere_resolution_errors():
     with pytest.raises(ValueError, match="maximum phi cannot be > 180"):
         pv.SolidSphere(end_phi=190)
     with pytest.raises(
-        ValueError, match=re.escape("max theta and min theta must be within 2 * np.pi")
+        ValueError,
+        match=re.escape("max theta and min theta must be within 2 * np.pi"),
     ):
         pv.SolidSphere(end_theta=2.1 * np.pi, radians=True)
     with pytest.raises(ValueError, match="maximum phi cannot be > np.pi"):
@@ -299,13 +315,19 @@ def test_solid_sphere_tol_angle(radians):
     assert solid_sphere.points[2, 2] > 0.0
 
     solid_sphere = pv.SolidSphere(
-        start_phi=1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
+        start_phi=1e-3,
+        radius_resolution=2,
+        radians=radians,
+        tol_angle=1e-2,
     )
     # Positive axis point is there, but it is now slightly offset.
     assert np.allclose(solid_sphere.points[1, :], [0.0, 0.0, 0.5], atol=1e-3)
     # Negative axis point is there
     solid_sphere = pv.SolidSphere(
-        end_phi=max_phi - 1e-3, radius_resolution=2, radians=radians, tol_angle=1e-2
+        end_phi=max_phi - 1e-3,
+        radius_resolution=2,
+        radians=radians,
+        tol_angle=1e-2,
     )
     assert np.allclose(solid_sphere.points[2, :], [0.0, 0.0, -0.5], atol=1e-3)
 
@@ -325,7 +347,8 @@ def test_plane():
 
 
 @pytest.mark.parametrize(
-    'expected', [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+    'expected',
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
 )
 def test_plane_direction(expected):
     surf = pv.Plane(direction=expected)
@@ -626,7 +649,8 @@ def test_rectangle(points):
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pv.core.utilities.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc, pointd])
+        trans,
+        np.array([pointa, pointb, pointc, pointd]),
     )
 
     # Test all possible orders of the points
@@ -645,7 +669,8 @@ def test_rectangle_not_orthognal_entries():
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pv.core.utilities.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc])
+        trans,
+        np.array([pointa, pointb, pointc]),
     )
 
     with pytest.raises(ValueError, match="The three points should defined orthogonal vectors"):
@@ -660,11 +685,13 @@ def test_rectangle_two_identical_points():
     # Do a rotation to be in full 3D space with floating point coordinates
     trans = pv.core.utilities.transformations.axis_angle_rotation([1, 1, 1], 30)
     rotated = pv.core.utilities.transformations.apply_transformation_to_points(
-        trans, np.array([pointa, pointb, pointc])
+        trans,
+        np.array([pointa, pointb, pointc]),
     )
 
     with pytest.raises(
-        ValueError, match="Unable to build a rectangle with less than three different points"
+        ValueError,
+        match="Unable to build a rectangle with less than three different points",
     ):
         pv.Rectangle(rotated)
 

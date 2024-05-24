@@ -18,7 +18,8 @@ except ModuleNotFoundError:
 
 
 pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
+    platform.system() == 'Darwin',
+    reason='MacOS testing on Azure fails when downloading',
 )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
@@ -576,7 +577,8 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 1.0
 
     with pytest.raises(
-        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+        ValueError,
+        match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
     ):
         reader.set_active_time_value(1000)
 
@@ -638,7 +640,8 @@ def test_openfoamreader_read_data_time_point():
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+    pv.vtk_version_info > (9, 3),
+    reason="polyhedra decomposition was removed after 9.3",
 )
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
@@ -989,3 +992,113 @@ def test_xdmf_reader():
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.",
+)
+def test_xmlpartitioneddatasetreader(tmpdir):
+    tmpfile = tmpdir.join("temp.vtpd")
+    partitions = pv.PartitionedDataSet(
+        [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
+    )
+    partitions.save(tmpfile.strpath)
+    new_partitions = pv.read(tmpfile.strpath)
+    assert isinstance(new_partitions, pv.PartitionedDataSet)
+    assert len(new_partitions) == len(partitions)
+    for i, new_partition in enumerate(new_partitions):
+        assert isinstance(new_partition, pv.ImageData)
+        assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3, 0),
+    reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
+)
+def test_fluentcffreader():
+    filename = examples.download_room_cff(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.FLUENTCFFReader)
+    assert reader.path == filename
+
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_gambitreader():
+    filename = examples.download_prism(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GambitReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
+def test_gaussian_cubes_reader():
+    filename = examples.download_m4_total_density(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GaussianCubeReader)
+    assert reader.path == filename
+
+    hb_scale = 1.1
+    b_scale = 10.0
+    reader.hb_scale = hb_scale
+    reader.b_scale = b_scale
+    assert reader.hb_scale == hb_scale
+    assert reader.b_scale == b_scale
+
+    grid = reader.read(grid=True)
+    assert isinstance(grid, pv.ImageData)
+    assert all([grid.n_points, grid.n_cells])
+
+    poly = reader.read(grid=False)
+    assert isinstance(poly, pv.PolyData)
+    assert all([poly.n_points, poly.n_cells])
+
+
+def test_gesignareader():
+    filename = examples.download_e07733s002i009(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GESignaReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+)
+def test_pdbreader():
+    filename = examples.download_caffeine(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.PDBReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_particle_reader():
+    filename = examples.download_particles(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ParticleReader)
+    assert reader.path == filename
+
+    reader.endian = "BigEndian"
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+    reader.endian = "LittleEndian"
+
+    with pytest.raises(ValueError, match="Invalid endian:"):
+        reader.endian = "InvalidEndian"

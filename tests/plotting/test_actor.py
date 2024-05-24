@@ -8,7 +8,8 @@ import pyvista as pv
 from pyvista import examples
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -138,7 +139,7 @@ def test_actor_rotate_z(actor):
 
 
 def test_actor_orientation(actor):
-    actor.orientation == (0, 0, 0)
+    assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)

@@ -6,9 +6,10 @@ ci:
 
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.3.0
+    rev: 24.4.2
     hooks:
       - id: black
+        exclude: tests/core/typing
 
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
@@ -28,6 +29,7 @@ repos:
       - id: flake8
         additional_dependencies:
           ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
+        exclude: tests/core/typing
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
@@ -62,7 +64,7 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: mypy
         args:
@@ -74,7 +76,7 @@ repos:
             --enable-error-code,
             ignore-without-code,
           ]
-        exclude: ^(doc/|tests/|examples/|pyvista/ext/|examples_trame/)
+        exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
             "mypy-extensions==1.0.0",
@@ -90,7 +92,7 @@ repos:
         args: [--py38-plus, --keep-runtime-typing]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-merge-conflict
       - id: debug-statements
@@ -105,19 +107,20 @@ repos:
       - id: mixed-line-ending
       - id: file-contents-sorter
         verbose: true
-        files: ^(\.dockerignore)$
+        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.1
+    rev: 0.28.2
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.4.3
     hooks:
       - id: ruff
         args: [--fix]
+        exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0

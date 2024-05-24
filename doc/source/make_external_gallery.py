@@ -13,8 +13,7 @@ def format_icon(title, link, image):
 
       .. image:: ../images/external-examples/{}
 """
-    content = body.format(title, link, image)
-    return content
+    return body.format(title, link, image)
 
 
 class Example:
@@ -205,6 +204,16 @@ articles = dict(
         link="https://github.com/AngelFP/VisualPIC",
         image="visualpic.png",
     ),
+    pyelastica=Example(
+        title="PyElastica",
+        link="https://github.com/GazzolaLab/PyElastica",
+        image="pyelastica.gif",
+    ),
+    comet_fenicsx=Example(
+        title="Numerical Tours of Computational Mechanics with FEniCSx",
+        link="https://bleyerj.github.io/comet-fenicsx",
+        image="comet_fenicsx.png",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
@@ -243,7 +252,7 @@ glad to add it.
 .. grid:: 3
    :gutter: 1
 
-"""
+""",
         )
         # Reverse to put the latest items at the top
         for example in list(articles.values())[::-1]:
@@ -257,7 +266,7 @@ glad to add it.
     <div class="sphx-glr-clear"></div>
 
 
-"""
+""",
         )
         new_fid.seek(0)
         new_text = new_fid.read()
@@ -272,5 +281,3 @@ glad to add it.
     if new_text != existing:
         with Path(path).open("w", encoding="utf-8") as fid:
             fid.write(new_text)
-
-    return

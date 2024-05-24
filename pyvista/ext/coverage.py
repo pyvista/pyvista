@@ -66,7 +66,7 @@ class CoverageBuilder(Builder):
     name = 'coverage'
     epilog = __(
         'Testing of coverage in the sources finished, look at the '
-        'results in %(outdir)s' + path.sep + 'python.txt.'
+        'results in %(outdir)s' + path.sep + 'python.txt.',
     )
 
     def init(self) -> None:
@@ -86,16 +86,20 @@ class CoverageBuilder(Builder):
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
-            'coverage_ignore_modules', self.config.coverage_ignore_modules
+            'coverage_ignore_modules',
+            self.config.coverage_ignore_modules,
         )
         self.cls_ignorexps = compile_regex_list(
-            'coverage_ignore_classes', self.config.coverage_ignore_classes
+            'coverage_ignore_classes',
+            self.config.coverage_ignore_classes,
         )
         self.fun_ignorexps = compile_regex_list(
-            'coverage_ignore_functions', self.config.coverage_ignore_functions
+            'coverage_ignore_functions',
+            self.config.coverage_ignore_functions,
         )
         self.py_ignorexps = compile_regex_list(
-            'coverage_ignore_pyobjects', self.config.coverage_ignore_pyobjects
+            'coverage_ignore_pyobjects',
+            self.config.coverage_ignore_pyobjects,
         )
         self.add_modules = self.config.coverage_additional_modules
 
@@ -146,7 +150,10 @@ class CoverageBuilder(Builder):
                     if self.config.coverage_show_missing_items:
                         if self.app.quiet or self.app.warningiserror:
                             logger.warning(
-                                __('undocumented c api: %s [%s] in file %s'), name, typ, filename
+                                __('undocumented c api: %s [%s] in file %s'),
+                                name,
+                                typ,
+                                filename,
                             )
                         else:
                             logger.info(
@@ -155,15 +162,12 @@ class CoverageBuilder(Builder):
                                 + 'api       '
                                 + '%-30s' % (name + " [%9s]" % typ)
                                 + red(' - in file ')
-                                + filename
+                                + filename,
                             )
                 op.write('\n')
 
     def ignore_pyobj(self, full_name: str) -> bool:
-        for exp in self.py_ignorexps:
-            if exp.search(full_name):
-                return True
-        return False
+        return any(exp.search(full_name) for exp in self.py_ignorexps)
 
     def build_py_coverage(self) -> None:
         objects = self.env.domaindata['py']['objects']
@@ -292,7 +296,9 @@ class CoverageBuilder(Builder):
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
                                     logger.warning(
-                                        __('undocumented python function: %s :: %s'), name, func
+                                        __('undocumented python function: %s :: %s'),
+                                        name,
+                                        func,
                                     )
                             else:
                                 for func in undoc['funcs']:
@@ -302,7 +308,7 @@ class CoverageBuilder(Builder):
                                         + 'function  '
                                         + '%-30s' % func
                                         + red(' - in module ')
-                                        + name
+                                        + name,
                                     )
                         op.write('\n')
                     if undoc['classes']:
@@ -324,7 +330,7 @@ class CoverageBuilder(Builder):
                                             + 'class     '
                                             + '%-30s' % class_name
                                             + red(' - in module ')
-                                            + name
+                                            + name,
                                         )
                             else:
                                 op.write(' * %s -- missing methods:\n\n' % class_name)
@@ -333,10 +339,7 @@ class CoverageBuilder(Builder):
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
                                             logger.warning(
-                                                __(
-                                                    'undocumented python method:'
-                                                    + ' %s :: %s :: %s'
-                                                ),
+                                                __('undocumented python method: %s :: %s :: %s'),
                                                 name,
                                                 class_name,
                                                 meth,
@@ -349,7 +352,7 @@ class CoverageBuilder(Builder):
                                                 + 'method    '
                                                 + '%-30s' % (class_name + '.' + meth)
                                                 + red(' - in module ')
-                                                + name
+                                                + name,
                                             )
                         op.write('\n')
 
