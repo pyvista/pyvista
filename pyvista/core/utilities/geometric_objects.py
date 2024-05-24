@@ -131,8 +131,6 @@ def Capsule(
         algo.capsule_cap = True
     else:
         algo = CapsuleSource(
-            center=center,
-            direction=direction,
             radius=radius,
             cylinder_length=cylinder_length,
             theta_resolution=resolution,
