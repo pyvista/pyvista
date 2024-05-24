@@ -2658,37 +2658,6 @@ class DataSetFilters:
                 raise ValueError('IDs must be positive integer values.')
             return np.unique(ids)
 
-        def _post_process_extract_values(before_extraction, extracted):
-            # Output is UnstructuredGrid, so apply vtkRemovePolyData
-            # to input to cast the output as PolyData type instead
-            has_cells = extracted.n_cells != 0
-            if isinstance(before_extraction, pyvista.PolyData):
-                all_ids = set(range(before_extraction.n_cells))
-
-                ids_to_keep = set()
-                if has_cells:
-                    ids_to_keep |= set(extracted['vtkOriginalCellIds'])
-                ids_to_remove = list(all_ids - ids_to_keep)
-                if len(ids_to_remove) != 0:
-                    if pyvista.vtk_version_info < (9, 1, 0):
-                        raise VTKVersionError(
-                            '`connectivity` with PolyData requires vtk>=9.1.0',
-                        )  # pragma: no cover
-                    remove = _vtk.vtkRemovePolyData()
-                    remove.SetInputData(before_extraction)
-                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
-                    _update_alg(remove, progress_bar, "Removing Cells.")
-                    extracted = _get_output(remove)
-                    extracted.clean(
-                        point_merging=False,
-                        inplace=True,
-                        progress_bar=progress_bar,
-                    )  # remove unused points
-            if has_cells:
-                extracted.point_data.remove('vtkOriginalPointIds')
-                extracted.cell_data.remove('vtkOriginalCellIds')
-            return extracted
-
         # Store active scalars info to restore later if needed
         active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
 
@@ -2733,12 +2702,15 @@ class DataSetFilters:
                     # Use extract_values to ensure that cells with at least one
                     # point within the range are kept (this is consistent
                     # with how the filter operates for other modes)
-                    extracted = DataSetFilters.extract_values(
+                    input_mesh = DataSetFilters.extract_values(
                         input_mesh,
                         ranges=scalar_range,
                         progress_bar=progress_bar,
+                        pass_cell_ids=False,
+                        pass_point_ids=False,
                     )
-                    input_mesh = _post_process_extract_values(input_mesh, extracted)
+
+                    # input_mesh = _post_process_extract_values(input_mesh, extracted)
 
         alg = _vtk.vtkConnectivityFilter()
         alg.SetInputDataObject(input_mesh)
@@ -2827,12 +2799,13 @@ class DataSetFilters:
         elif extraction_mode == 'specified':
             # All regions were initially extracted, so extract only the
             # specified regions
-            extracted = DataSetFilters.extract_values(
+            output = DataSetFilters.extract_values(
                 output,
                 values=region_ids,
                 progress_bar=progress_bar,
+                pass_cell_ids=False,
+                pass_point_ids=False,
             )
-            output = _post_process_extract_values(output, extracted)
 
             if label_regions:
                 # Extracted regions may not be contiguous and zero-based
@@ -5049,36 +5022,83 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(
+    #        adjacent_cells : bool, default: True
+    #             If ``True``, extract the cells that contain at least one of
+    #             the extracted points. If ``False``, extract the cells that
+    #             contain exclusively points from the extracted points list.
+    #             Has no effect if ``include_cells`` is ``False``.
+    #
+    #         include_cells : bool, default: True
+    #             Specifies if the cells shall be returned or not.
+
+    def extract_points(  # numpydoc ignore=PR02
         self,
-        ind,
-        adjacent_cells=True,
-        include_cells=True,
-        progress_bar=False,
+        ind: Union[VectorLike[bool], VectorLike[int]],
+        mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
+        *,
         invert=False,
+        pass_point_ids=False,
+        pass_cell_ids=False,
+        inplace=False,
+        progress_bar=False,
+        **kwargs,
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
+
+        .. deprecated:: 0.44.0
+
+            adjacent_cells
+            include_cells
 
         Parameters
         ----------
         ind : sequence[int]
             Sequence of point indices to be extracted.
 
-        adjacent_cells : bool, default: True
-            If ``True``, extract the cells that contain at least one of
-            the extracted points. If ``False``, extract the cells that
-            contain exclusively points from the extracted points list.
-            Has no effect if ``include_cells`` is ``False``.
+        mode : str, default: "any"
+            Selection criteria for removing cells.
 
-        include_cells : bool, default: True
-            Specifies if the cells shall be returned or not.
+            -   ``'any'``: Remove cells if any point ids referenced by the cell are
+                specified as part of ``ind``. Points that are no longer referenced by
+                cells are also removed. This may result in more points removed than
+                specified.
 
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
+            -   ``'all'``:  Remove cells if all point ids referenced by the cell are
+                specified as part of ``ind``. This may result in fewer points removed
+                than specified.
+
+            -   ``'exact'``:  Only the points specified exactly by ``ind`` are removed.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
+
+            -   ``'vertex'``:  Only the points specified exactly by ``ind`` are removed.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
 
         invert : bool, default: False
             Invert the indices. Extract all points *except* for
             those specified by ``ind``.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy
+            is returned. A copy is always returned if the input type is
+            not ``pyvista.PolyData`` or ``pyvista.UnstructuredGrid``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        **kwargs
+            Keyword arguments used for deprecation.
 
         See Also
         --------
@@ -5102,6 +5122,120 @@ class DataSetFilters:
         >>> extracted.plot()
 
         """
+        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
+        adjacent_cells = kwargs.pop('adjacent_cells', None)
+        include_cells = kwargs.pop('include_cells', None)
+        assert_empty_kwargs(**kwargs)
+        if adjacent_cells is not None or include_cells is not None:
+            # Set defaults
+            adjacent_cells = True if adjacent_cells is None else adjacent_cells
+            include_cells = True if include_cells is None else include_cells
+            mode = 'vertex' if not include_cells else 'any' if adjacent_cells else 'all'
+
+        return self._extract_points_internal_method(
+            mode=mode,
+            ind=ind,
+            inplace=inplace,
+            invert=invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+            progress_bar=progress_bar,
+        )
+
+    def _extract_points_internal_method(
+        self,
+        mode: Literal['any', 'all', 'vertex', 'exact'],
+        *,
+        ind,
+        inplace,
+        invert,
+        pass_cell_ids,
+        pass_point_ids,
+        progress_bar,
+    ):
+        VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
+        VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
+
+        def as_input_type(output_):
+            if isinstance(self, pyvista.PolyData):
+                if output_.n_cells > 0:
+                    if mode == 'vertex':
+                        # Cast vertex cells to polydata
+                        poly = pyvista.PolyData(output_.points)
+                        poly.copy_attributes(output_)
+                    else:
+                        poly = self.extract_cells_new_API(output_[VTK_ORIGINAL_CELL_IDS])
+                elif output_.n_points > 0:
+                    poly = pyvista.PolyData()
+                    poly.points = output_.points
+                    poly.copy_attributes(output_)
+                else:
+                    poly = pyvista.PolyData()
+                    poly.copy_attributes(output_)
+
+                return poly
+
+                # return self.extract_cells(output_[VTK_ORIGINAL_CELL_IDS]).remove_cells()
+            return output_
+
+        def _extract_points_by_mode(mode_):
+            return as_input_type(
+                self._extract_points_main_method(
+                    ind=ind,
+                    invert=invert,
+                    mode=mode_,
+                    progress_bar=progress_bar,
+                ),
+            )
+
+        # any_kwargs = dict(adjacent_cells=True)
+        # all_kwargs = dict(adjacent_cells=False)
+        # vertex_kwargs = dict(include_cells=False)
+        if mode in ['any', 'all', 'vertex']:
+            output = _extract_points_by_mode(mode)
+        elif mode == 'exact':
+            output_all = _extract_points_by_mode('all')
+            output_vertex = _extract_points_by_mode('vertex')
+            isolated_vertex = set(output_vertex[VTK_ORIGINAL_POINT_IDS]) - set(
+                output_all[VTK_ORIGINAL_POINT_IDS],
+            )
+            output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
+
+            output = output_all + output_vertex
+        else:
+            modes = ['all', 'any', 'exact', 'vertex']
+            raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
+
+        # Process output arrays
+        if VTK_ORIGINAL_CELL_IDS in output.cell_data.keys():
+            (
+                output.rename_array(VTK_ORIGINAL_CELL_IDS, 'original_cell_ids')
+                if pass_cell_ids
+                else output.cell_data.remove(VTK_ORIGINAL_CELL_IDS)
+            )
+        if VTK_ORIGINAL_POINT_IDS in output.point_data.keys():
+            (
+                output.rename_array(VTK_ORIGINAL_POINT_IDS, 'original_point_ids')
+                if pass_point_ids
+                else output.point_data.remove(VTK_ORIGINAL_POINT_IDS)
+            )
+
+        # The point ids will also be added to the input, make sure we remove them
+        if VTK_ORIGINAL_CELL_IDS in self.cell_data.keys():  # type: ignore[attr-defined]
+            self.cell_data.remove(VTK_ORIGINAL_CELL_IDS)  # type: ignore[attr-defined]
+        if VTK_ORIGINAL_POINT_IDS in self.point_data.keys():  # type: ignore[attr-defined]
+            self.point_data.remove(VTK_ORIGINAL_POINT_IDS)  # type: ignore[attr-defined]
+
+        if inplace:
+            try:
+                self.copy_from(output)  # type: ignore[attr-defined]
+            except TypeError:
+                return output
+            else:
+                return self
+        return output
+
+    def _extract_points_main_method(self, *, ind, invert, mode, progress_bar):
         n_points = self.n_points
         ind = np.asarray(ind)
         if isinstance(ind, np.ndarray):
@@ -5122,9 +5256,10 @@ class DataSetFilters:
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
-        if not include_cells:
-            adjacent_cells = True
-        if not adjacent_cells:
+
+        if mode != 'any':
+            # Need to discard any points which only partially define cells
+
             # Build array of point indices to be removed.
             ind_rem = np.ones(self.n_points, dtype='bool')
             ind_rem[ind] = False
@@ -5132,7 +5267,9 @@ class DataSetFilters:
             # Invert selection
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
-        if include_cells:
+
+        if mode != 'vertex':
+            # Include containing cells at output
             selectionNode.GetProperties().Set(_vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
         selection = _vtk.vtkSelection()
@@ -5179,7 +5316,7 @@ class DataSetFilters:
 
         pass_point_ids : bool, default: False
             Include a point array ``'original_point_ids'`` with the output
-            that holds the cell index of the original cell that produced
+            that holds the point index of the original point that produced
             each output cell. The default is ``False`` to conserve memory.
 
         Returns
@@ -5227,25 +5364,6 @@ class DataSetFilters:
             pass_point_ids=pass_point_ids,
         )
 
-    def extract_points_new_API(  # numpydoc ignore=PR01,PR02,RT01
-        self,
-        ind: Union[VectorLike[bool], VectorLike[int]],
-        mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
-        inplace=False,
-        invert=False,
-        pass_cell_ids=False,
-        pass_point_ids=False,
-    ):
-        """Extract points."""
-        return self._extract_points_internal_method(
-            mode=mode,
-            ind=ind,
-            inplace=inplace,
-            invert=invert,
-            pass_cell_ids=pass_cell_ids,
-            pass_point_ids=pass_point_ids,
-        )
-
     def remove_points(  # numpydoc ignore=PR01,RT01
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
@@ -5256,6 +5374,7 @@ class DataSetFilters:
         pass_cell_ids=False,
         pass_point_ids=False,
         keep_scalars=True,
+        progress_bar=False,
     ):
         """Remove points."""
         invert = not invert
@@ -5267,101 +5386,8 @@ class DataSetFilters:
             invert=invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
+            progress_bar=progress_bar,
         )
-
-    def _extract_points_internal_method(
-        self,
-        mode: Literal['any', 'all', 'vertex', 'exact'],
-        *,
-        ind,
-        inplace,
-        invert,
-        pass_cell_ids,
-        pass_point_ids,
-    ):
-        """
-        Keep points.
-
-        Parameters
-        ----------
-        mode : str, default: "any"
-            Selection criteria for removing cells.
-
-            -   ``'any'``: Remove cells if any point ids referenced by the cell are
-                specified as part of ``ind``. Points that are no longer referenced by
-                cells are also removed. This may result in more points removed than
-                specified.
-
-            -   ``'all'``:  Remove cells if all point ids referenced by the cell are
-                specified as part of ``ind``. This may result in fewer points removed
-                than specified.
-
-            -   ``'exact'``:  Only the points specified exactly by ``ind`` are removed.
-                This is similar to ``'any'``, except un-referenced points are kept and
-                are returned as separate VERTEX cells. The number of points removed
-                exactly matched the number of specified points.
-
-            -   ``'vertex'``:  Only the points specified exactly by ``ind`` are removed.
-                This is similar to ``'any'``, except un-referenced points are kept and
-                are returned as separate VERTEX cells. The number of points removed
-                exactly matched the number of specified points.
-
-
-        ind
-        inplace
-        invert
-        pass_cell_ids
-        pass_point_ids
-
-        Returns
-        -------
-        pyvista.DataSet
-        """
-        VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
-        VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
-
-        def as_input_type(output_):
-            if not isinstance(self, pyvista.UnstructuredGrid):
-                return self.extract_cells_new_API(output_[VTK_ORIGINAL_CELL_IDS])
-            return output_
-
-        def _extract_points(var_kwargs):
-            return as_input_type(self.extract_points(ind, invert=invert, **var_kwargs))
-
-        any_kwargs = dict(adjacent_cells=True)
-        all_kwargs = dict(adjacent_cells=False)
-        vertex_kwargs = dict(include_cells=False)
-        if mode == 'any':
-            output = _extract_points(any_kwargs)
-
-        elif mode == 'all':
-            output = _extract_points(all_kwargs)
-
-        elif mode == 'vertex':
-            output = _extract_points(vertex_kwargs)
-
-        elif mode == 'exact':
-            output_all = _extract_points(all_kwargs)
-            output_vertex = _extract_points(vertex_kwargs)
-            isolated_vertex = set(output_vertex[VTK_ORIGINAL_POINT_IDS]) - set(
-                output_all[VTK_ORIGINAL_POINT_IDS],
-            )
-            output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
-
-            output = output_all + output_vertex
-        else:
-            modes = ['all', 'any', 'exact', 'vertex']
-            raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
-
-        if pass_cell_ids and VTK_ORIGINAL_CELL_IDS in output.cell_data.keys():
-            output.rename_array(VTK_ORIGINAL_CELL_IDS, 'original_cell_ids')
-        if pass_point_ids and VTK_ORIGINAL_POINT_IDS in output.point_data.keys():
-            output.rename_array(VTK_ORIGINAL_POINT_IDS, 'original_point_ids')
-
-        if inplace:
-            self.copy_from(output)  # type: ignore[attr-defined]
-            return self
-        return output
 
     def _remove_cells_internal_method(
         self,
@@ -5373,7 +5399,12 @@ class DataSetFilters:
         pass_cell_ids,
         pass_point_ids,
     ):
-        target = self if inplace else self.copy()
+        is_poly_or_unstructured = isinstance(self, (pyvista.UnstructuredGrid, pyvista.PolyData))
+        if is_poly_or_unstructured:
+            target = self if inplace else self.copy()
+        else:
+            target = self.cast_to_unstructured_grid()
+
         n_cells, n_points = target.n_cells, target.n_points
         DUPLICATE = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
@@ -5413,7 +5444,6 @@ class DataSetFilters:
             # Use keep_points to re-cast back to input type
             return dataset.extract_points_new_API(cleaned['original_point_ids'])
 
-        is_poly_or_unstructured = isinstance(target, (pyvista.UnstructuredGrid, pyvista.PolyData))
         if unused_points == 'keep':
             return target
         elif unused_points == 'remove':
@@ -6108,6 +6138,8 @@ class DataSetFilters:
                 adjacent_cells=adjacent_cells,
                 include_cells=include_cells,
                 progress_bar=progress_bar,
+                pass_point_ids=pass_point_ids,
+                pass_cell_ids=pass_cell_ids,
             )
         else:
             output = self.extract_cells(
@@ -6115,11 +6147,12 @@ class DataSetFilters:
                 progress_bar=progress_bar,
             )
 
-        # Process output arrays
-        if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
-            output.point_data.remove(POINT_IDS)
-        if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
-            output.cell_data.remove(CELL_IDS)
+        # TODO: use pass_point_ids args directly with extract_points
+        # # Process output arrays
+        # if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
+        #     output.point_data.remove(POINT_IDS)
+        # if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
+        #     output.cell_data.remove(CELL_IDS)
 
         return output
 

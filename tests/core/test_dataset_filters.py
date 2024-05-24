@@ -2119,8 +2119,8 @@ def extracted_with_adjacent_False(grid4x4):
     expected_point_ids = [0, 1, 4, 5]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [4, 0, 1, 3, 2]
-    celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2134,8 +2134,8 @@ def extracted_with_adjacent_True(grid4x4):
     expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
-    celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2149,8 +2149,8 @@ def extracted_with_include_cells_False(grid4x4):
     expected_point_ids = [0, 1, 4, 5]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
-    celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, verts=expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2174,7 +2174,7 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     assert sub_surf_adj.n_points == 9
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert sub_surf_adj.n_cells == 4
-    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)
 
 
 @pytest.mark.parametrize(
@@ -2189,7 +2189,7 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
     assert sub_surf.n_points == 4
     assert np.array_equal(sub_surf.points, expected_surf.points)
     assert sub_surf.n_cells == 1
-    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf.faces, expected_surf.faces)
 
 
 @pytest.mark.parametrize(
@@ -2211,8 +2211,8 @@ def test_extract_points_include_cells_False(
         progress_bar=True,
     )
     assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
-    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
-    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+    assert np.array_equal(sub_surf_nocells.faces, expected_surf.faces)
+    assert np.array_equal(sub_surf_nocells.verts, expected_surf.verts)
 
 
 def test_extract_points_default(extracted_with_adjacent_True):
@@ -2221,7 +2221,7 @@ def test_extract_points_default(extracted_with_adjacent_True):
     sub_surf_adj = input_surf.extract_points(input_point_ids)
 
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
-    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)
 
 
 @pytest.mark.parametrize('preference', ['point', 'cell'])
@@ -2248,7 +2248,7 @@ def test_extract_values_preference(
         sub_surf = func(input_cell_ids)
 
     assert np.array_equal(sub_surf.points, expected_surf.points)
-    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf.faces, expected_surf.faces)
 
 
 def extract_values_values():
@@ -2280,7 +2280,7 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
         assert extracted.n_arrays == 0
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
-        assert np.array_equal(extracted.cells, grid4x4.faces)
+        assert np.array_equal(extracted.faces, grid4x4.faces)
 
 
 def test_extract_values_open_intervals(grid4x4):
@@ -2436,7 +2436,7 @@ def test_split_values_extract_values_component(
     multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
     assert isinstance(multiblock, pv.MultiBlock)
     assert multiblock.n_blocks == expected_n_blocks
-    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
+    assert all(isinstance(block, pv.PolyData) for block in multiblock)
 
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
@@ -2639,8 +2639,8 @@ def test_extract_values_component_values_split_unique(
 @pytest.mark.parametrize('pass_point_ids', [True, False])
 @pytest.mark.parametrize('pass_cell_ids', [True, False])
 def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
-    POINT_IDS = 'vtkOriginalPointIds'
-    CELL_IDS = 'vtkOriginalCellIds'
+    POINT_IDS = 'original_point_ids'
+    CELL_IDS = 'original_cell_ids'
     extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
     assert extracted.point_data.keys() == ['labels', POINT_IDS]
     assert extracted.cell_data.keys() == ['labels', CELL_IDS]
@@ -3990,7 +3990,7 @@ REMOVE_POINTS_ANY = NamedFilter(
 )
 KEEP_POINTS_INVERT_ALL = NamedFilter(
     name='keep_points_invert_all',
-    filter=functools.partial(pv.DataSetFilters.extract_points_new_API, invert=True, mode='all'),
+    filter=functools.partial(pv.DataSetFilters.extract_points, invert=True, mode='all'),
 )
 
 REMOVE_POINTS_ALL = NamedFilter(
@@ -4003,7 +4003,7 @@ REMOVE_POINTS_ALL = NamedFilter(
 )
 KEEP_POINTS_INVERT_ANY = NamedFilter(
     name='keep_points_invert_any',
-    filter=functools.partial(pv.DataSetFilters.extract_points_new_API, invert=True, mode='any'),
+    filter=functools.partial(pv.DataSetFilters.extract_points, invert=True, mode='any'),
 )
 
 
@@ -4013,7 +4013,7 @@ REMOVE_POINTS_INVERT_ALL = NamedFilter(
 )
 KEEP_POINTS_ANY = NamedFilter(
     name='keep_points_any',
-    filter=functools.partial(pv.DataSetFilters.extract_points_new_API, mode='any'),
+    filter=functools.partial(pv.DataSetFilters.extract_points, mode='any'),
 )
 
 REMOVE_POINTS_INVERT_ANY = NamedFilter(
@@ -4022,7 +4022,7 @@ REMOVE_POINTS_INVERT_ANY = NamedFilter(
 )
 KEEP_POINTS_ALL = NamedFilter(
     name='keep_points_all',
-    filter=functools.partial(pv.DataSetFilters.extract_points_new_API, mode='all'),
+    filter=functools.partial(pv.DataSetFilters.extract_points, mode='all'),
 )
 
 
@@ -4088,6 +4088,7 @@ def test_keep_points_all_remove_points_any(hexbeam, filter_under_test):
 )
 def test_remove_cells_array_names(hexbeam, filter_under_test):
     filtered = filter_under_test(hexbeam, 0)
+    assert filtered is not hexbeam
     assert hexbeam.array_names == filtered.array_names
 
 
@@ -4139,6 +4140,3 @@ def test_remove_cells_keep_cells_invalid(hexbeam, filter_under_test):
     match = 'Boolean array size must match the number of cells (40)'
     with pytest.raises(ValueError, match=re.escape(match)):
         filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
-
-
-def test_remove_points_all_triangles(): ...
