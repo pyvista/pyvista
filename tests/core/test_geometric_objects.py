@@ -409,6 +409,13 @@ def test_capsule():
     assert np.any(capsule.points)
     assert np.any(capsule.faces)
 
+def test_capsule_center_corresponds_with_cylinder_center():
+    center = (1, 1, 1)
+    direction = (1, 1, 0)
+    capsule = pv.Capsule(center, direction)
+    cylinder = pv.Cylinder(center, direction)
+    assert np.allclose(capsule.center, cylinder.center)
+
 
 def test_cube():
     cube = pv.Cube()
