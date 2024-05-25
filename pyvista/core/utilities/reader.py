@@ -2787,7 +2787,7 @@ class ParticleReader(BaseReader):
 
 
 class ProStarReader(BaseReader):
-    """ProStarReader for .vrt files.
+    """ProStarReader for .vrt files. Reads geometry in proSTAR (STARCD) file format.
 
     .. versionadded:: 0.44.0
 
