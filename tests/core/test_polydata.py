@@ -620,9 +620,10 @@ def test_save(sphere, extension, binary, tmpdir):
                 or 'solid' in fst
                 or 'pgeometry' in fst
                 or '# generated' in fst
+                or '#inventor' in fst
             )
 
-    if extension != '.geo':
+    if extension not in ('.geo', '.iv'):
         mesh = pv.PolyData(filename)
         assert mesh.faces.shape == sphere.faces.shape
         assert mesh.points.shape == sphere.points.shape

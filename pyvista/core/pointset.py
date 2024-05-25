@@ -704,6 +704,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Type[_vtk.vtkPolyDataWriter],
                 Type[_vtk.vtkHoudiniPolyDataWriter],
                 Type[_vtk.vtkOBJWriter],
+                Type[_vtk.vtkIVWriter],
             ],
         ]
     ] = {
@@ -713,6 +714,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.vtk': _vtk.vtkPolyDataWriter,
         '.geo': _vtk.vtkHoudiniPolyDataWriter,
         '.obj': _vtk.vtkOBJWriter,
+        '.iv': _vtk.vtkIVWriter,
     }
 
     def __init__(
@@ -1376,7 +1378,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
             types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
-            ``'.obj'``).
+            ``'.obj'``, ``'.iv'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
