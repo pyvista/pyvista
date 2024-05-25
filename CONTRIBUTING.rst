@@ -814,11 +814,11 @@ documentation, and are not a primary form of testing.
 
 When executed, the test will first pre-process the build images. The images are:
 
-1. Collected from the ``Build Image Directory``.
+#. Collected from the ``Build Image Directory``.
 
-1. Resized to a maximum of 400x400 pixels.
+#. Resized to a maximum of 400x400 pixels.
 
-1. Saved to a flat directory as JPEG images in ``./_doc_debug_images``.
+#. Saved to a flat directory as JPEG images in ``./_doc_debug_images``.
 
 Next, the pre-processed images in ``./_doc_debug_images`` are compared to the
 cached images in the ``Doc Image Cache`` using :func:`pyvista.compare_images`.
