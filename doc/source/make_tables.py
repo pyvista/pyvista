@@ -406,7 +406,8 @@ class ColorTable(DocTable):
 
 def _get_doc(func: Callable[[], Any]) -> Optional[str]:
     """Return the first line of the callable's docstring."""
-    return doc.splitlines()[0] if (doc := func.__doc__) else None
+    doc = func.__doc__
+    return doc.splitlines()[0] if (doc) else None
 
 
 def _get_fullname(typ: Type[Any]) -> str:
@@ -1173,8 +1174,10 @@ class DatasetPropsGenerator:
         if not isinstance(loader, _Downloadable):
             return None
         # Collect url names and links as sequences
-        names = [name] if isinstance(name := loader.source_name, str) else name
-        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
+        name = loader.source_name
+        names = [name] if isinstance(name, str) else name
+        url = loader.source_url_blob
+        urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {}
