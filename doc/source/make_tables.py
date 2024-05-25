@@ -407,7 +407,7 @@ class ColorTable(DocTable):
 def _get_doc(func: Callable[[], Any]) -> Optional[str]:
     """Return the first line of the callable's docstring."""
     doc = func.__doc__
-    return doc.splitlines()[0] if (doc) else None
+    return doc.splitlines()[0] if doc else None
 
 
 def _get_fullname(typ: Type[Any]) -> str:

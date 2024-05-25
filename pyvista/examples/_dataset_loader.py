@@ -83,7 +83,7 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
         """
         path = self.path
         paths = [path] if isinstance(path, str) else path
-        return sum([1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in paths])
+        return sum(1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in paths)
 
     @property
     def unique_extension(self) -> Union[str, Tuple[str, ...]]:
