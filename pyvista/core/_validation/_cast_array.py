@@ -103,10 +103,11 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
             if copy:
                 out = out.copy()
         else:
-            out = np.array(arr, dtype=dtype, copy=copy)
+            # handle copy flag manually because numpy>=2.0 raises if np.array(..., copy=False) must copy
+            out = np.array(arr, dtype=dtype) if copy else np.asarray(arr, dtype=dtype)
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
+    if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
         raise TypeError("Object arrays are not supported.")

@@ -874,7 +874,7 @@ class LookupTable(_vtk.vtkLookupTable):
     def values(self, new_values):  # numpydoc ignore=GL08
         self._values_manual = True
         self._cmap = None
-        new_values = np.array(new_values, copy=False).astype(np.uint8, copy=False)
+        new_values = np.asarray(new_values).astype(np.uint8, copy=False)
         self.SetTable(_vtk.numpy_to_vtk(new_values))
 
     @property
