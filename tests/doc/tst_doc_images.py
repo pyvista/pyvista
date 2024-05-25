@@ -231,11 +231,7 @@ def _check_compare_warn(filename, error_, allowed_warning=200.0):
 
 
 def _is_false_positive(test_name, docs_image):
-    """Check if the test is flaky and compare against other images.
-
-    Return True if flaky and false positive (test should pass)
-    Return False if flaky and not false positive (test should fail)
-    """
+    """Compare against other image in the flaky image dir."""
     paths = _get_file_paths(str(Path(FLAKY_IMAGE_DIR, test_name)), 'jpg')
     for path in paths:
         error = pv.compare_images(docs_image, pv.read(path))
