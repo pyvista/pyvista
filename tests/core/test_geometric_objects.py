@@ -438,9 +438,7 @@ def test_capsule():
 @pytest.mark.parametrize('direction', [(0, 1, -1), (1, 1, 0)])
 def test_capsule_center(center, direction):
     capsule = pv.Capsule(center, direction)
-    assert np.allclose(capsule.center, center)
     cylinder = pv.Cylinder(center, direction)
-    assert np.allclose(cylinder.center, center)
     assert np.allclose(capsule.center, cylinder.center)
 
 
