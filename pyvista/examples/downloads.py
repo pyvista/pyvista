@@ -8017,7 +8017,7 @@ def download_prostar_grid(load=True):  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    return _download_dataset(_dataset_prostar, load=load)
+    return _download_dataset(_dataset_prostar_grid, load=load)
 
 
-_dataset_prostar = _SingleFileDownloadableDatasetLoader('prostar.vrt')
+_dataset_prostar_grid = _SingleFileDownloadableDatasetLoader('prostar.vrt')
