@@ -140,7 +140,7 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
     +----------------+---------------------------------------------+
-    | ``.vrt`        | :class:`pyvista.ProStarReader`              |
+    | ``.vrt``       | :class:`pyvista.ProStarReader`              |
     +----------------+---------------------------------------------+
     | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
     +----------------+---------------------------------------------+
