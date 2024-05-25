@@ -818,13 +818,13 @@ When executed, the test will first pre-process the build images. The images are:
 
 1. Resized to a maximum of 400x400 pixels.
 
-1. Saved to a flat directory in ``./_doc_debug_images``.
+1. Saved to a flat directory as JPEG images in ``./_doc_debug_images``.
 
 Next, the pre-processed images in ``./_doc_debug_images`` are compared to the
 cached images in the ``Doc Image Cache`` using :func:`pyvista.compare_images`.
 
 The tests can fail in three ways. To make it easy to review images for failed tests,
-copies of the images are made:
+copies of the images are made as follows:
 
 #. If the comparison between the two images fails:
 
@@ -845,6 +845,16 @@ if adding new docstring examples or plots, the test will initially fail,
 and the images in ``from_build`` may be added to the ``Doc Image Cache``.
 Similarly, if removing examples, the images in ``from_cache`` may be removed
 from the ``Doc Image Cache``.
+
+If a test is flaky, e.g. the build sometimes generates different images
+for the same plot, the multiple versions of the image may be saved to the
+flaky test directory ``./tests/doc/flaky_tests``. A folder with the same
+name as the test image should be created, and all versions of the image
+should be stored in this directory. The test will first compare the
+build image to the cached image in ``Doc Image Cache`` as normal. If that
+comparison fails, the build image is then compared to all images in the
+flaky test directory. The test is successful if one of the comparisons
+is successful.
 
 .. note::
 
