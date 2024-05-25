@@ -2797,7 +2797,7 @@ class ProStarReader(BaseReader):
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_prostar_grid(load=False)
+    >>> filename = examples.download_prostar(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
