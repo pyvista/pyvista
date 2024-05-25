@@ -8020,9 +8020,6 @@ def download_prostar(load=True):  # pragma: no cover
     return _download_dataset(_dataset_prostar, load=load)
 
 
-_dataset_prostar = _SingleFileDownloadableDatasetLoader('prostar.vrt')
-
-
 def _prostar_files_func():  # pragma: no cover
     # Multiple files needed for read, but only one gets loaded
     prostar_cel = _DownloadableFile('prostar.cel')
