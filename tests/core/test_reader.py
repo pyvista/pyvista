@@ -1105,7 +1105,7 @@ def test_particle_reader():
 
 
 def test_prostar_reader():
-    filename = examples.download_prostar_grid(load=False)
+    filename = examples.download_prostar(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.ProStarReader)
     assert reader.path == filename
