@@ -543,8 +543,7 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
-    return grid
+    return pyvista.ExplicitStructuredGrid(dimensions, corners)
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)
@@ -693,8 +692,8 @@ def load_logo():
     Examples
     --------
     >>> from pyvista import examples
-    >>> logo = examples.load_logo()
-    >>> logo.plot()
+    >>> image = examples.load_logo()
+    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
 

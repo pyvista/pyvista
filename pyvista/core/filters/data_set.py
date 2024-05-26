@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import collections.abc
 import contextlib
-from typing import TYPE_CHECKING, Iterable, Literal, Optional, Sequence, Union, cast
+import functools
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -33,7 +34,7 @@ from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import MatrixLike, NumpyArray, VectorLike
 
 
 @abstract_class
@@ -72,8 +73,10 @@ class DataSetFilters:
             a = _get_output(alg, oport=0)
             b = _get_output(alg, oport=1)
             if crinkle:
-                a = self.extract_cells(np.unique(a.cell_data['cell_ids']))
-                b = self.extract_cells(np.unique(b.cell_data['cell_ids']))
+                set_a = set(a.cell_data['cell_ids'])
+                set_b = set(b.cell_data['cell_ids']) - set_a
+                a = self.extract_cells(list(set_a))
+                b = self.extract_cells(list(set_b))
             return a, b
         clipped = _get_output(alg)
         if crinkle:
@@ -665,7 +668,7 @@ class DataSetFilters:
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        result = DataSetFilters._clip_with_function(
+        return DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -673,7 +676,6 @@ class DataSetFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        return result
 
     def slice_implicit(
         self,
@@ -2733,7 +2735,7 @@ class DataSetFilters:
                     # with how the filter operates for other modes)
                     extracted = DataSetFilters.extract_values(
                         input_mesh,
-                        [scalar_range],
+                        ranges=scalar_range,
                         progress_bar=progress_bar,
                     )
                     input_mesh = _post_process_extract_values(input_mesh, extracted)
@@ -2872,9 +2874,10 @@ class DataSetFilters:
         if inplace:
             try:
                 self.copy_from(output, deep=False)  # type: ignore[attr-defined]
-                return self
             except:
                 pass
+            else:
+                return self
         return output
 
     def extract_largest(self, inplace=False, progress_bar=False):
@@ -3159,8 +3162,6 @@ class DataSetFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
-        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
-
         Parameters
         ----------
         pass_cell_data : bool, default: False
@@ -3174,6 +3175,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        point_data_to_cell_data
+            Similar transformation applied to point data.
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
 
         Examples
         --------
@@ -3245,8 +3253,6 @@ class DataSetFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
-        See also: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
-
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -3260,6 +3266,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        cell_data_to_point_data
+            Similar transformation applied to cell data.
+        :meth:`~pyvista.ImageDataFilters.points_to_cells`
+            Re-mesh :class:`~pyvista.ImageData` to a cells-based representation.
 
         Examples
         --------
@@ -3522,101 +3535,6 @@ class DataSetFilters:
             bools = np.zeros(out.n_points, dtype=np.uint8)
         out['SelectedPoints'] = bools
         return out
-
-    def probe(
-        self,
-        points,
-        tolerance=None,
-        pass_cell_data=True,
-        pass_point_data=True,
-        categorical=False,
-        progress_bar=False,
-        locator=None,
-    ):
-        """Sample data values at specified point locations.
-
-        .. deprecated:: 0.41.0
-           `probe` will be removed in a future version. Use
-           :func:`pyvista.DataSetFilters.sample` instead.
-           If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
-
-        This uses :class:`vtkProbeFilter`.
-
-        Parameters
-        ----------
-        points : pyvista.DataSet
-            The points to probe values on to. This should be a PyVista mesh
-            or something :func:`wrap` can handle.
-
-        tolerance : float, optional
-            Tolerance used to compute whether a point in the source is
-            in a cell of the input.  If not given, tolerance is
-            automatically generated.
-
-        pass_cell_data : bool, default: True
-            Preserve source mesh's original cell data arrays.
-
-        pass_point_data : bool, default: True
-            Preserve source mesh's original point data arrays.
-
-        categorical : bool, default: False
-            Control whether the source point data is to be treated as
-            categorical. If the data is categorical, then the resultant data
-            will be determined by a nearest neighbor interpolation scheme.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        locator : vtkAbstractCellLocator, optional
-            Prototype cell locator to perform the ``FindCell()``
-            operation.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset containing the probed data.
-
-        Examples
-        --------
-        Probe the active scalars in ``grid`` at the points in ``mesh``.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-        >>> grid = examples.load_uniform()
-        >>> result = grid.probe(mesh)  # doctest:+SKIP
-        >>> 'Spatial Point Data' in result.point_data  # doctest:+SKIP
-        True
-
-        """
-        # deprecated in v0.41.0
-        # remove in v0.44.0
-        warnings.warn(
-            """probe filter is deprecated and will be removed in a future version.
-            Use sample filter instead.
-            If using `mesh1.probe(mesh2)`, use `mesh2.sample(mesh1)`.
-            """,
-            PyVistaDeprecationWarning,
-        )
-
-        if not pyvista.is_pyvista_dataset(points):
-            points = wrap(points)
-        alg = _vtk.vtkProbeFilter()
-        alg.SetInputData(points)
-        alg.SetSourceData(self)
-        alg.SetPassCellArrays(pass_cell_data)
-        alg.SetPassPointArrays(pass_point_data)
-        alg.SetCategoricalData(categorical)
-
-        if tolerance is not None:
-            alg.SetComputeTolerance(False)
-            alg.SetTolerance(tolerance)
-
-        if locator:
-            alg.SetCellLocatorPrototype(locator)
-
-        _update_alg(alg, progress_bar, 'Sampling Data Values at Specified Point Locations')
-        return _get_output(alg)
 
     def sample(
         self,
@@ -4480,8 +4398,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
-        return sampled_line
+        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_line(
         self,
@@ -4640,12 +4557,7 @@ class DataSetFilters:
         """
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
-        sampled_multiple_lines = multiple_lines.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_multiple_lines
+        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(
         self,
@@ -4724,12 +4636,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        sampled_circular_arc = circular_arc.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_circular_arc
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc_normal(
         self,
@@ -5184,6 +5091,7 @@ class DataSetFilters:
         >>> extracted.plot()
 
         """
+        ind = np.array(ind)
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
@@ -5211,44 +5119,221 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
-    def extract_values(
+    def split_values(
         self,
-        values: Optional[Iterable[Union[float, Sequence[float]]]] = None,
+        values: Optional[
+            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
+        ] = None,
         *,
+        ranges: Optional[
+            Union[
+                VectorLike[float],
+                MatrixLike[float],
+                Dict[str, VectorLike[float]],
+                Dict[Tuple[float, float], str],
+            ]
+        ] = None,
         scalars: Optional[str] = None,
         preference: Literal['point', 'cell'] = 'point',
+        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
+        **kwargs,
+    ):
+        """Split mesh into separate sub-meshes using point or cell data.
+
+        By default, this filter generates a separate mesh for each unique value in the
+        data array and combines them as blocks in a :class:`~pyvista.MultiBlock`
+        dataset. Optionally, specific values and/or ranges of values may be specified to
+        control which values to split from the input.
+
+        This filter is a convenience method for :meth:`~pyvista.DataSetFilter.extract_values`
+        with ``split`` set to ``True`` by default. Refer to that filter's documentation
+        for more details.
+
+        .. versionadded:: 0.44
+
+        Parameters
+        ----------
+        values : number | array_like | dict, optional
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
+            with numeric entries. For ``dict`` inputs, either its keys or values may be
+            numeric, and the other field must be strings. The numeric field is used as
+            the input for this parameter, and if ``split`` is ``True``, the string field
+            is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
+
+            .. note::
+                When extracting multi-component values with ``component_mode=multi``,
+                each value is specified as a multi-component scalar. In this case,
+                ``values`` can be a single vector or an array of row vectors.
+
+        ranges : array_like | dict, optional
+            Range(s) of values to extract. Can be a single range (i.e. a sequence of
+            two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
+            dictionary with range entries. Any combination of ``values`` and ``ranges``
+            may be specified together. The endpoints of the ranges are included in the
+            extraction. Ranges cannot be set when ``component_mode=multi``.
+
+            For ``dict`` inputs, either its keys or values may be numeric, and the other
+            field must be strings. The numeric field is used as the input for this
+            parameter, and if ``split`` is ``True``, the string field is used to set the
+            block names of the returned :class:`~pyvista.MultiBlock`.
+
+            .. note::
+                Use ``+/-`` infinity to specify an unlimited bound, e.g.:
+
+                - ``[0, float('inf')]`` to extract values greater than or equal to zero.
+                - ``[float('-inf'), 0]`` to extract values less than or equal to zero.
+
+        scalars : str, optional
+            Name of scalars to extract with. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When ``scalars`` is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        component_mode : int | 'any' | 'all' | 'multi', default: 'all'
+            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Has no effect when the scalars have a single component. Must be one of:
+
+            - number: specify the component number as a 0-indexed integer. The selected
+              component must have the specified value(s).
+            - ``'any'``: any single component can have the specified value(s).
+            - ``'all'``: all individual components must have the specified values(s).
+            - ``'multi'``: the entire multi-component item must have the specified value.
+
+        **kwargs : dict, optional
+            Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
+
+        See Also
+        --------
+        extract_values, split_bodies, partition
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite of split meshes with :class:`pyvista.UnstructuredGrid` blocks.
+
+        Examples
+        --------
+        Load image with labeled regions.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> image = examples.load_channels()
+        >>> np.unique(image.active_scalars)
+        pyvista_ndarray([0, 1, 2, 3, 4])
+
+        Split the image into its separate regions. Here, we also remove the first
+        region for visualization.
+
+        >>> multiblock = image.split_values()
+        >>> _ = multiblock.pop(0)  # Remove first region
+
+        Plot the regions.
+
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_composite(multiblock, multi_colors=True)
+        >>> _ = plot.show_grid()
+        >>> plot.show()
+
+        Note that the block names are generic by default.
+
+        >>> multiblock.keys()
+        ['Block-01', 'Block-02', 'Block-03', 'Block-04']
+
+        To name the output blocks, use a dictionary as input instead.
+
+        Here, we also explicitly omit the region with ``0`` values from the input
+        instead of removing it from the output.
+
+        >>> labels = dict(region1=1, region2=2, region3=3, region4=4)
+        >>>
+        >>> multiblock = image.split_values(labels)
+        >>> multiblock.keys()
+        ['region1', 'region2', 'region3', 'region4']
+
+        Plot the regions as separate meshes using the labels instead of plotting
+        the MultiBlock directly.
+
+        Clear scalar data so we can color each mesh using a single color
+        >>> _ = [block.clear_data() for block in multiblock]
+        >>>
+        >>> plot = pv.Plotter()
+        >>> plot.set_color_cycler('default')
+        >>> _ = [
+        ...     plot.add_mesh(block, label=label)
+        ...     for block, label in zip(multiblock, labels)
+        ... ]
+        >>> _ = plot.add_legend()
+        >>> plot.show()
+
+        """
+        if values is None and ranges is None:
+            values = '_unique'  # type: ignore[assignment]
+        return self.extract_values(
+            values=values,
+            ranges=ranges,
+            scalars=scalars,
+            preference=preference,
+            component_mode=component_mode,
+            split=True,
+            **kwargs,
+        )
+
+    def extract_values(
+        self,
+        values: Optional[
+            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
+        ] = None,
+        *,
+        ranges: Optional[
+            Union[
+                VectorLike[float],
+                MatrixLike[float],
+                Dict[str, VectorLike[float]],
+                Dict[Tuple[float, float], str],
+            ]
+        ] = None,
+        scalars: Optional[str] = None,
+        preference: Literal['point', 'cell'] = 'point',
+        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
-        include_cells: bool = True,
-        keep_original_ids: bool = True,
+        include_cells: Optional[bool] = None,
         split: bool = False,
+        pass_point_ids: bool = True,
+        pass_cell_ids: bool = True,
         progress_bar: bool = False,
     ):
         """Return a subset of the mesh based on the value(s) of point or cell data.
 
-        Points and cells may be extracted with a single value, multiple values, a
-        range of values, or any mix of values and ranges. This enables threshold-like
+        Points and cells may be extracted with a single value, multiple values, a range
+        of values, or any mix of values and ranges. This enables threshold-like
         filtering of data in a discontinuous manner to extract a single label or groups
-        of labels from categorical data, or to extract multiple regions of continuous
-        data.
+        of labels from categorical data, or to extract multiple regions from continuous
+        data. Extracted values may optionally be split into separate meshes.
 
         This filter operates on point data and cell data distinctly:
 
-        -   If extracting values from point data, all cells with at least one point
-            with the specified value(s) are returned. Optionally, set ``adjacent_cells``
-            to ``False`` to only extract points from cells where all points in the cell
-            strictly have the specified value(s). In these cases, a point is only included
-            in the output if that point is part of an extracted cell.
+        **Point data**
+
+            All cells with at least one point with the specified value(s) are returned.
+            Optionally, set ``adjacent_cells`` to ``False`` to only extract points from
+            cells where all points in the cell strictly have the specified value(s).
+            In these cases, a point is only included in the output if that point is part
+            of an extracted cell.
 
             Alternatively, set ``include_cells`` to ``False`` to exclude cells from
             the operation completely and extract all points with a specified value.
 
-        -   If extracting values from cell data, only the cells (and their points)
-            with the specified values(s) are included in the output.
+        **Cell Data**
 
-        Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called
-        to extract points for point data, and :meth:`~pyvista.DataSetFilters.extract_cells`
-        is called to extract cells for cell data.
+            Only the cells (and their points) with the specified values(s) are included
+            in the output.
+
+        Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called to extract
+        points for point data, and :meth:`~pyvista.DataSetFilters.extract_cells` is
+        called to extract cells for cell data.
 
         By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
         and ``'vtkOriginalCellIds'``. These arrays can be used to link the filtered
@@ -5258,103 +5343,137 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : iterable[float | sequence[float, float]], optional
-            Iterable of point values to be extracted. Each item of the iterable may be
-            a single number or a sequence of two numbers defining a range of values
-            in the form ``[lower, upper]``. Multiple single-number entries and/or
-            multiple ranges may be specified. If no values are specified, each unique
-            value in the data is extracted independently and returned as a
-            :class:`~pyvista.MultiBlock` dataset (i.e. ``split`` will be set to ``True``).
+        values : number | array_like | dict, optional
+            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
+            with numeric entries. For ``dict`` inputs, either its keys or values may be
+            numeric, and the other field must be strings. The numeric field is used as
+            the input for this parameter, and if ``split`` is ``True``, the string field
+            is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                Use ``+/-`` infinity when specifying range values for open
-                intervals, e.g.:
+                When extracting multi-component values with ``component_mode=multi``,
+                each value is specified as a multi-component scalar. In this case,
+                ``values`` can be a single vector or an array of row vectors.
 
-                -   ``[0, float('inf')]`` to extract all values greater than
-                    or equal to zero
-                -   ``[float('-inf'), 0]`` to extract all values less than
-                    or equal to zero.
+        ranges : array_like | dict, optional
+            Range(s) of values to extract. Can be a single range (i.e. a sequence of
+            two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
+            dictionary with range entries. Any combination of ``values`` and ``ranges``
+            may be specified together. The endpoints of the ranges are included in the
+            extraction. Ranges cannot be set when ``component_mode=multi``.
+
+            For ``dict`` inputs, either its keys or values may be numeric, and the other
+            field must be strings. The numeric field is used as the input for this
+            parameter, and if ``split`` is ``True``, the string field is used to set the
+            block names of the returned :class:`~pyvista.MultiBlock`.
+
+            .. note::
+                Use ``+/-`` infinity to specify an unlimited bound, e.g.:
+
+                - ``[0, float('inf')]`` to extract values greater than or equal to zero.
+                - ``[float('-inf'), 0]`` to extract values less than or equal to zero.
 
         scalars : str, optional
-            Name of scalars to extract points with. Defaults to currently
-            active scalars.
+            Name of scalars to extract with. Defaults to currently active scalars.
 
         preference : str, default: 'point'
-            When ``scalars`` is specified, this is the preferred array
-            type to search for in the dataset.  Must be either
-            ``'point'`` or ``'cell'``.
+            When ``scalars`` is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        component_mode : int | 'any' | 'all' | 'multi', default: 'all'
+            Specify the component(s) to use when ``scalars`` is a multi-component array.
+            Has no effect when the scalars have a single component. Must be one of:
+
+            - number: specify the component number as a 0-indexed integer. The selected
+              component must have the specified value(s).
+            - ``'any'``: any single component can have the specified value(s).
+            - ``'all'``: all individual components must have the specified values(s).
+            - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
-            Invert the extraction values. If ``True`` extract the points (with
-            cells) which do *not* have the specified values.
+            Invert the extraction values. If ``True`` extract the points (with cells)
+            which do *not* have the specified values.
 
         adjacent_cells : bool, default: True
-            If ``True``, include cells (and their points) that contain
-            at least one of the extracted points. If ``False``, only
-            include cells which contain exclusively points from the
-            extracted points list. Has no effect if ``include_cells``
-            is ``False``. Has no effect when extracting values from
+            If ``True``, include cells (and their points) that contain at least one of
+            the extracted points. If ``False``, only include cells that contain
+            exclusively points from the extracted points list. Has no effect if
+            ``include_cells`` is ``False``. Has no effect when extracting values from
             cell data.
 
-        include_cells : bool, default: True
-            Specifies if the cells shall be returned or not. If ``False``,
-            all cells in the output will be vertex cells, one for each point.
-            Has no effect when extracting values from cell data.
+        include_cells : bool, default: None
+            Specify if cells shall be used for extraction or not. If ``False``, points
+            with the specified values are extracted regardless of their cell
+            connectivity, and all cells at the output will be vertex cells (one for each
+            point.) Has no effect when extracting values from cell data.
 
-        keep_original_ids : bool, default: True
-            If ``True``, two arrays ``'vtkOriginalPointIds'`` and ``'vtkOriginalCellIds'``
-            are included with the output. Otherwise, these arrays are cleared
-            from the output.
+            By default, this value is ``True`` if the input has at least one cell and
+            ``False`` otherwise.
 
         split : bool, default: False
-            If ``True``, each item in the ``values`` input is extracted
-            independently and a :class:`~pyvista.MultiBlock` is returned
-            with each extraction stored as a separate mesh. The number
-            of blocks returned equals the number of input values, i.e.
-            ``n_blocks == len(values)``
+            If ``True``, each value in ``values`` and each range in ``range`` is
+            extracted independently and returned as a :class:`~pyvista.MultiBlock`.
+            The number of blocks returned equals the number of input values and ranges.
+            The blocks may be named if a dictionary is used as input. See ``values``
+            and ``ranges`` for details.
 
             .. note::
-                Output blocks may contain empty meshes if any specified ``values``
-                do not exist in the mesh. This can impact plotting since empty meshes
-                cannot be plotted by default. Use :meth:`pyvista.MultiBlock.clean` on
-                the output to remove empty meshes, or set ``pv.global_theme.allow_empty_mesh = True``
-                to enable plotting empty meshes.
+                Output blocks may contain empty meshes if no values meet the extraction
+                criteria. This can impact plotting since empty meshes cannot be plotted
+                by default. Use :meth:`pyvista.MultiBlock.clean` on the output to remove
+                empty meshes, or set ``pv.global_theme.allow_empty_mesh = True`` to
+                enable plotting empty meshes.
 
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         See Also
         --------
-        extract_points, extract_cells, split_bodies, threshold, partition
+        split_values, extract_points, extract_cells, threshold, partition
 
         Returns
         -------
         pyvista.UnstructuredGrid or pyvista.MultiBlock
-            Extracted mesh or a composite of extracted meshes depending on
-            ``values`` and ``split``.
+            An extracted mesh or a composite of extracted meshes, depending on ``split``.
 
         Examples
         --------
-        Extract a single value from a grid's point data. Note that since
-        adjacent cells are included by default, points with values outside
-        the specified value of ``0`` are included.
+        Extract a single value from a grid's point data.
 
-        >>> import pyvista as pv
         >>> import numpy as np
+        >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
-        >>> extracted = mesh.extract_values([0])
+        >>> extracted = mesh.extract_values(0)
+
+        Plot extracted values. Since adjacent cells are included by default, points with
+        values other than ``0`` are included in the output.
+
+        >>> extracted.get_data_range()
+        (0.0, 81.0)
         >>> extracted.plot()
 
-        Extract two discontinuous ranges of values from a grid's point data.
-        Use ``+/-`` infinity to extract all values of ``100`` or less, and all values
-        of ``600`` or more.
+        Set ``include_cells=False`` to only extract points. The output scalars now
+        strictly contain zeros.
 
-        >>> mesh = examples.load_uniform()
-        >>> extracted = mesh.extract_values(
-        ...     [[-np.inf, 100], [600, np.inf]]
-        ... )
+        >>> extracted = mesh.extract_values(0, include_cells=False)
+        >>> extracted.get_data_range()
+        (0.0, 0.0)
+        >>> extracted.plot(render_points_as_spheres=True, point_size=100)
+
+        Use ``ranges`` to extract values from a grid's point data in range.
+
+        Here, we use ``+/-`` infinity to extract all values of ``100`` or less.
+
+        >>> extracted = mesh.extract_values(ranges=[-np.inf, 100])
         >>> extracted.plot()
 
         Extract every third cell value from cell data.
@@ -5373,75 +5492,293 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(mesh.extract_all_edges())
         >>> pl.show()
 
-        Extract different parts of the mesh and split the result.
+        Any combination of values and ranges may be specified.
+
+        E.g. extract a single value and two ranges, and split the result into separate
+        blocks of a MultiBlock.
 
         >>> extracted = mesh.extract_values(
-        ...     [[0, 10], 19, [25, 40]], split=True
+        ...     values=18, ranges=[[0, 8], [29, 40]], split=True
         ... )
+        >>> extracted
+        MultiBlock (...)
+          N Blocks    3
+          X Bounds    0.000, 1.000
+          Y Bounds    0.000, 1.000
+          Z Bounds    0.000, 5.000
         >>> extracted.plot(multi_colors=True)
 
-        """
-        # Get the scalar array to use for extraction
-        try:
-            if scalars is None:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-                _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-            array = get_array(self, scalars, preference=preference, err=True)
-        except MissingDataError:
-            raise ValueError(
-                'No point data or cell data found. Scalar data is required to use this filter.',
-            )
-        except KeyError:
-            raise ValueError(
-                f'Array name \'{scalars}\' is not valid and does not exist with this dataset.',
-            )
-        array = cast(np.ndarray, array)  # type: ignore[type-arg]
-        association = get_array_association(self, scalars, preference=preference)
+        Extract values from multi-component scalars.
 
-        # Validate input values
-        if values is None:
-            values = np.unique(array).tolist()
-            split = True
-        if not isinstance(values, collections.abc.Iterable):
-            raise TypeError(f'Values must be iterable, got {type(values)}.')
-        values = list(values)
-        for i, val in enumerate(values):
-            if isinstance(val, (int, np.integer, float, np.floating)):
-                continue
+        First, create a point cloud with a 3-component RGB color array.
+
+        >>> rng = np.random.default_rng(seed=1)
+        >>> points = rng.random((30, 3))
+        >>> colors = rng.random((30, 3))
+        >>> point_cloud = pv.PointSet(points)
+        >>> point_cloud['colors'] = colors
+        >>> plot_kwargs = dict(
+        ...     render_points_as_spheres=True, point_size=50, rgb=True
+        ... )
+        >>> point_cloud.plot(**plot_kwargs)
+
+        Extract values from a single component.
+
+        E.g. extract points with a strong red component (i.e. > 0.8).
+
+        >>> extracted = point_cloud.extract_values(
+        ...     ranges=[0.8, 1.0], component_mode=0
+        ... )
+        >>> extracted.plot(**plot_kwargs)
+
+        Extract values from all components.
+
+        E.g. extract points where all RGB components are dark (i.e. < 0.5).
+
+        >>> extracted = point_cloud.extract_values(
+        ...     ranges=[0.0, 0.5], component_mode='all'
+        ... )
+        >>> extracted.plot(**plot_kwargs)
+
+        Extract specific multi-component values.
+
+        E.g. round the scalars to create binary RGB components, and extract only green
+        and blue components.
+
+        >>> point_cloud['colors'] = np.round(point_cloud['colors'])
+        >>> green = [0, 1, 0]
+        >>> blue = [0, 0, 1]
+        >>>
+        >>> extracted = point_cloud.extract_values(
+        ...     values=[blue, green],
+        ...     component_mode='multi',
+        ... )
+        >>> extracted.plot(**plot_kwargs)
+
+        Use the original IDs returned by the extraction to modify the original point
+        cloud.
+
+        For example, change the color of the blue and green points to yellow.
+
+        >>> point_ids = extracted['vtkOriginalPointIds']
+        >>> yellow = [1, 1, 0]
+        >>> point_cloud['colors'][point_ids] = yellow
+        >>> point_cloud.plot(**plot_kwargs)
+
+        """
+
+        def _validate_scalar_array(scalars_, preference_):
+            # Get the scalar array and field association to use for extraction
+            try:
+                if scalars_ is None:
+                    set_default_active_scalars(self)
+                    _, scalars_ = self.active_scalars_info
+                array_ = get_array(self, scalars_, preference=preference_, err=True)
+            except MissingDataError:
+                raise ValueError(
+                    'No point data or cell data found. Scalar data is required to use this filter.',
+                )
+            except KeyError:
+                raise ValueError(
+                    f'Array name \'{scalars_}\' is not valid and does not exist with this dataset.',
+                )
+            association_ = get_array_association(self, scalars_, preference=preference_)
+            return array_, association_
+
+        def _validate_component_mode(array_, component_mode_):
+            # Validate component mode and return logic function
+            num_components = 1 if array_.ndim == 1 else array_.shape[1]
+            if isinstance(component_mode_, (int, np.integer)) or component_mode_ in ['0', '1', '2']:
+                component_mode_ = int(component_mode_)
+                if component_mode_ > num_components - 1 or component_mode_ < 0:
+                    raise ValueError(
+                        f"Invalid component index '{component_mode_}' specified for scalars with {num_components} component(s). Value must be one of: {tuple(range(num_components))}.",
+                    )
+                array_ = array_[:, component_mode_] if num_components > 1 else array_
+                component_logic_function = None
+            elif isinstance(component_mode_, str) and component_mode_ in ['any', 'all', 'multi']:
+                if array_.ndim == 1:
+                    component_logic_function = None
+                elif component_mode_ == 'any':
+                    component_logic_function = functools.partial(np.any, axis=1)
+                elif component_mode_ in ['all', 'multi']:
+                    component_logic_function = functools.partial(np.all, axis=1)
+            else:
+                raise ValueError(
+                    f"Invalid component '{component_mode_}'. Must be an integer, 'any', 'all', or 'multi'.",
+                )
+            return array_, num_components, component_logic_function
+
+        def _get_inputs_from_dict(input_):
+            # Get extraction values from dict if applicable.
+            # If dict, also validate names/labels mapped to the values
+            if not isinstance(input_, dict):
+                return None, input_
+            else:
+                dict_keys, dict_values = list(input_.keys()), list(input_.values())
+                if all(isinstance(key, str) for key in dict_keys):
+                    return dict_keys, dict_values
+                elif all(isinstance(val, str) for val in dict_values):
+                    return dict_values, dict_keys
+                else:
+                    raise TypeError(
+                        "Invalid dict mapping. The dict's keys or values must contain strings.",
+                    )
+
+        def _validate_values_and_ranges(array_, values_, ranges_, num_components_, component_mode_):
+            # Make sure we have input values to extract
+            is_multi_mode = component_mode_ == 'multi'
+            if values_ is None:
+                if ranges_ is None:
+                    raise TypeError(
+                        'No ranges or values were specified. At least one must be specified.',
+                    )
+                elif is_multi_mode:
+                    raise TypeError(
+                        f"Ranges cannot be extracted using component mode '{component_mode_}'. Expected {None}, got {ranges_}.",
+                    )
             elif (
-                len(seq := list(val)) == 2
-                and all(isinstance(item, (int, np.integer, float, np.floating)) for item in seq)
-                and seq[0] <= seq[1]
-            ):
-                values[i] = seq
-                continue
-            raise ValueError(
-                f'Invalid value {val}. Value must be number or a sequence of two numbers representing a [lower, upper] range.',
-            )
+                isinstance(values_, str) and values_ == '_unique'
+            ):  # Private flag used by `split_values` to use unique values
+                axis = 0 if is_multi_mode else None
+                values_ = np.unique(array_, axis=axis)
+
+            # Validate values
+            if values_ is not None:
+                if is_multi_mode:
+                    values_ = np.atleast_2d(values_)
+                    if values_.ndim > 2:
+                        raise ValueError(
+                            f'Component values cannot be more than 2 dimensions. Got {values_.ndim}.',
+                        )
+                    if not values_.shape[1] == num_components_:
+                        raise ValueError(
+                            f'Num components in values array ({values_.shape[1]}) must match num components in data array ({num_components_}).',
+                        )
+                else:
+                    values_ = np.atleast_1d(values_)
+                    if values_.ndim > 1:
+                        raise ValueError(
+                            f'Values must be one-dimensional. Got {values_.ndim}d values.',
+                        )
+                if not (
+                    np.issubdtype(dtype := values_.dtype, np.floating)
+                    or np.issubdtype(dtype, np.integer)
+                ):
+                    raise TypeError('Values must be numeric.')
+
+            # Validate ranges
+            if ranges_ is not None:
+                ranges_ = np.atleast_2d(ranges_)
+                if (ndim := ranges_.ndim) > 2:
+                    raise ValueError(f'Ranges must be 2 dimensional. Got {ndim}.')
+                if not (
+                    np.issubdtype(dtype := ranges_.dtype, np.floating)
+                    or np.issubdtype(dtype, np.integer)
+                ):
+                    raise TypeError('Ranges must be numeric.')
+                is_valid_range = ranges_[:, 0] <= ranges_[:, 1]
+                not_valid = np.invert(is_valid_range)
+                if np.any(not_valid):
+                    invalid_ranges = ranges_[not_valid]
+                    raise ValueError(
+                        f'Invalid range {invalid_ranges[0]} specified. Lower value cannot be greater than upper value.',
+                    )
+            return values_, ranges_
+
+        # Return empty mesh if input is empty mesh
+        if self.n_points == 0:  # type: ignore[attr-defined]
+            return self.copy()  # type: ignore[attr-defined]
+
+        array, association = _validate_scalar_array(scalars, preference)
+        array, num_components, component_logic = _validate_component_mode(array, component_mode)
+        value_names, values = _get_inputs_from_dict(values)
+        range_names, ranges = _get_inputs_from_dict(ranges)
+        valid_values, valid_ranges = _validate_values_and_ranges(
+            array,
+            values,
+            ranges,
+            num_components,
+            component_mode,
+        )
+
+        # Set default for include cells
+        if include_cells is None:
+            include_cells = self.n_cells > 0  # type: ignore[attr-defined]
+
+        kwargs = dict(
+            array=array,
+            association=association,
+            component_logic=component_logic,
+            invert=invert,
+            adjacent_cells=adjacent_cells,
+            include_cells=include_cells,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+        )
 
         if split:
-            return pyvista.MultiBlock(
-                [
-                    self.extract_values(
-                        [val],
-                        scalars=scalars,
-                        preference=preference,
-                        invert=invert,
-                        adjacent_cells=adjacent_cells,
-                        include_cells=include_cells,
-                        keep_original_ids=keep_original_ids,
-                        split=False,
-                        progress_bar=progress_bar,
-                    )
-                    for val in values
-                ],
-            )
+            multi = pyvista.MultiBlock()
+            # Split values and ranges separately and combine into single multiblock
+            if values is not None:
+                value_names = value_names if value_names else [None] * len(valid_values)
+                for (
+                    name,
+                    val,
+                ) in zip(value_names, valid_values):
+                    multi.append(self._extract_values(values=[val], **kwargs), name)
+            if ranges is not None:
+                range_names = range_names if range_names else [None] * len(valid_ranges)
+                for (
+                    name,
+                    rng,
+                ) in zip(range_names, valid_ranges):
+                    multi.append(self._extract_values(ranges=[rng], **kwargs), name)
+            return multi
+
+        return DataSetFilters._extract_values(
+            self,
+            values=valid_values,
+            ranges=valid_ranges,
+            **kwargs,
+        )
+
+    def _extract_values(
+        self,
+        values=None,
+        ranges=None,
+        *,
+        array,
+        association,
+        component_logic,
+        invert,
+        adjacent_cells,
+        include_cells,
+        progress_bar,
+        pass_point_ids,
+        pass_cell_ids,
+    ):
+        """Extract values using validated input.
+
+        Internal method for extract_values filter to avoid repeated calls to input
+        validation methods.
+        """
+
+        def _update_id_mask(logic_):
+            """Apply component logic and update the id mask."""
+            logic_ = component_logic(logic_) if component_logic else logic_
+            id_mask[logic_] = True
 
         # Determine which ids to keep
-        id_mask = np.zeros_like(array, dtype=np.bool_)
-        for val in values:
-            if isinstance(val, Sequence):
-                lower, upper = val
+        id_mask = np.zeros((len(array),), dtype=np.bool_)
+        if values is not None:
+            for val in values:
+                logic = array == val
+                _update_id_mask(logic)
+
+        if ranges is not None:
+            for lower, upper in ranges:
                 finite_lower, finite_upper = np.isfinite(lower), np.isfinite(upper)
                 if finite_lower and finite_upper:
                     logic = np.logical_and(array >= lower, array <= upper)
@@ -5452,34 +5789,30 @@ class DataSetFilters:
                 else:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
-            else:
-                logic = array == val
-            id_mask[logic] = not invert
+                _update_id_mask(logic)
 
-        # Extract cell or point ids
-        if association == FieldAssociation.CELL:
-            output = self.extract_cells(
-                id_mask,
-                progress_bar=progress_bar,
-            )
-        else:
+        id_mask = np.invert(id_mask) if invert else id_mask
+
+        # Extract point or cell ids
+        if association == FieldAssociation.POINT:
             output = self.extract_points(
                 id_mask,
                 adjacent_cells=adjacent_cells,
                 include_cells=include_cells,
                 progress_bar=progress_bar,
             )
-        if not keep_original_ids:
-            (
-                output.cell_data.remove(orig_cell_ids)
-                if (orig_cell_ids := 'vtkOriginalCellIds') in output.cell_data.keys()
-                else None
+        else:
+            output = self.extract_cells(
+                id_mask,
+                progress_bar=progress_bar,
             )
-            (
-                output.point_data.remove(orig_cell_ids)
-                if (orig_cell_ids := 'vtkOriginalPointIds') in output.point_data.keys()
-                else None
-            )
+
+        # Process output arrays
+        if (POINT_IDS := 'vtkOriginalPointIds') in output.point_data and not pass_point_ids:
+            output.point_data.remove(POINT_IDS)
+        if (CELL_IDS := 'vtkOriginalCellIds') in output.cell_data and not pass_cell_ids:
+            output.cell_data.remove(CELL_IDS)
+
         return output
 
     def extract_surface(
@@ -6228,8 +6561,7 @@ class DataSetFilters:
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def transform(
         self: _vtk.vtkDataSet,
@@ -6945,9 +7277,7 @@ class DataSetFilters:
         default_output_scalars = "packed_labels"
         if output_scalars is None:
             output_scalars = default_output_scalars
-        elif isinstance(output_scalars, str):
-            output_scalars = output_scalars
-        else:
+        if not isinstance(output_scalars, str):
             raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
 
         # Do packing
