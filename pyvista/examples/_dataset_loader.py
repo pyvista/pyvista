@@ -81,8 +81,9 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
 
         If a path is a folder, the number of files contained in the folder is returned.
         """
-        path = [path] if isinstance(path := self.path, str) else path
-        return sum([1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in path])
+        path = self.path
+        paths = [path] if isinstance(path, str) else path
+        return sum(1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in paths)
 
     @property
     def unique_extension(self) -> Union[str, Tuple[str, ...]]:
@@ -152,8 +153,10 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
         This is the full URL used to download the data directly.
         """
-        name_iter = [name] if isinstance(name := self.source_name, str) else name
-        base_url_iter = [url] if isinstance(url := self.base_url, str) else url
+        name = self.source_name
+        name_iter = [name] if isinstance(name, str) else name
+        url = self.base_url
+        base_url_iter = [url] if isinstance(url, str) else url
         url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
@@ -165,7 +168,8 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         a human to open on a browser.
         """
         # Make single urls iterable and replace 'raw' with 'blob'
-        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
+        url_raw = self.source_url_raw
+        url_iter = [url_raw] if isinstance(url_raw, str) else url_raw
         url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
         return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
 
