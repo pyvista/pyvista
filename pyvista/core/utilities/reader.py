@@ -140,6 +140,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
     +----------------+---------------------------------------------+
+    | ``.vrt``       | :class:`pyvista.ProStarReader`              |
+    +----------------+---------------------------------------------+
     | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
     +----------------+---------------------------------------------+
     | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
@@ -2784,6 +2786,28 @@ class ParticleReader(BaseReader):
         self.reader.Update()
 
 
+class ProStarReader(BaseReader):
+    """ProStarReader for .vrt files.
+
+    Reads geometry in proSTAR (STARCD) file format.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prostar(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkProStarReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2837,6 +2861,7 @@ CLASS_READERS = {
     '.tif': TIFFReader,
     '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
+    '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
     '.vtm': XMLMultiBlockDataReader,
