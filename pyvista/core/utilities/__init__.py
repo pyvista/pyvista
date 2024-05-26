@@ -205,6 +205,7 @@ from .reader import (
     PNMReader,
     PointCellDataSelection,
     POpenFOAMReader,
+    ProStarReader,
     PTSReader,
     PVDDataSet,
     PVDReader,
