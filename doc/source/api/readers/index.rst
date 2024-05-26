@@ -58,6 +58,7 @@ Reader Classes
     PTSReader
     PVDReader
     Plot3DMetaReader
+    ProStarReader
     SLCReader
     STLReader
     SegYReader
