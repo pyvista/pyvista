@@ -72,8 +72,7 @@ def get_angle(v1, v2):
     float
         Angle between vectors in degrees.
     """
-    theta = np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
-    return theta
+    return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
 def ray_plane_intersection(start_point, direction, plane_point, normal):

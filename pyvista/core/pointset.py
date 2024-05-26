@@ -275,7 +275,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(seed=0)
     >>> points = rng.random((10, 3))
     >>> pset = pv.PointSet(points)
 
@@ -589,6 +589,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> from pyvista import examples
     >>> import pyvista as pv
 
+    Seed random number generator for reproducible plots
+    >>> rng = np.random.default_rng(seed=0)
+
     Create an empty mesh.
 
     >>> mesh = pv.PolyData()
@@ -636,10 +639,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
-    >>> points = np.random.default_rng().random((n_points, 3))
-    >>> lines = np.random.default_rng().integers(
-    ...     low=0, high=n_points, size=(n_lines, 2)
-    ... )
+    >>> points = rng.random((n_points, 3))
+    >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(
     ...     points, lines=pv.CellArray.from_regular_cells(lines)
     ... )
@@ -652,13 +653,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     the ``strips`` cell array.
 
     >>> n_strips = 4
-    >>> n_verts_per_strip = np.random.default_rng().integers(
-    ...     low=3, high=7, size=n_strips
-    ... )
+    >>> n_verts_per_strip = rng.integers(low=3, high=7, size=n_strips)
     >>> n_points = 10 * sum(n_verts_per_strip)
-    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> points = rng.random((n_points, 3))
     >>> strips = [
-    ...     np.random.default_rng().integers(low=0, high=n_points, size=nv)
+    ...     rng.integers(low=0, high=n_points, size=nv)
     ...     for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
@@ -703,6 +702,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Type[_vtk.vtkXMLPolyDataWriter],
                 Type[_vtk.vtkSTLWriter],
                 Type[_vtk.vtkPolyDataWriter],
+                Type[_vtk.vtkHoudiniPolyDataWriter],
+                Type[_vtk.vtkOBJWriter],
+                Type[_vtk.vtkIVWriter],
             ],
         ]
     ] = {
@@ -710,6 +712,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
         '.vtk': _vtk.vtkPolyDataWriter,
+        '.geo': _vtk.vtkHoudiniPolyDataWriter,
+        '.obj': _vtk.vtkOBJWriter,
+        '.iv': _vtk.vtkIVWriter,
     }
 
     def __init__(
@@ -849,7 +854,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.random.default_rng().random((5, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
@@ -1371,7 +1377,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.stl'``, ``'.vtk``).
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
+            ``'.obj'``, ``'.iv'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
@@ -1496,10 +1503,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active point normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1510,19 +1516,18 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.point_normals  # doctest:+SKIP
-        pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
-                         [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
-                         [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
+        >>> sphere.point_normals
+        pyvista_ndarray([[ 0.        ,  0.        ,  1.        ],
+                         [ 0.        ,  0.        , -1.        ],
+                         [ 0.10811902,  0.        ,  0.99413794],
                          ...,
-                         [-3.11940581e-01, -6.81432486e-02,  9.47654784e-01],
-                         [-2.09880397e-01, -4.65070531e-02,  9.76620376e-01],
-                         [-1.15582108e-01, -2.80492082e-02,  9.92901802e-01]],
-                        dtype=float32)
+                         [ 0.31232402, -0.06638652, -0.9476532 ],
+                         [ 0.21027282, -0.04469487, -0.97662055],
+                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
         """
-        if 'Normals' in self.point_data:
-            normals = self.point_data['Normals']
+        if self.point_data.active_normals is not None:
+            normals = self.point_data.active_normals
         else:
             normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
@@ -1531,10 +1536,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active cell normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1545,18 +1549,18 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.cell_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.cell_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
-        if 'Normals' in self.cell_data:
-            normals = self.cell_data['Normals']
+        if self.cell_data.active_normals is not None:
+            normals = self.cell_data.active_normals
         else:
             normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals
@@ -1576,14 +1580,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.face_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.face_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.9631693 ],
+                         [ 0.1617585 , -0.0170015 , -0.9866839 ],
+                         [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         return self.cell_normals

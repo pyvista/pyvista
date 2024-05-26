@@ -169,7 +169,7 @@ class BaseViewer:
         """
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
-            for _, actor in renderer.actors.items():
+            for actor in renderer.actors.values():
                 if isinstance(actor, pyvista.Actor):
                     actor.prop.show_edges = value
         self.update()

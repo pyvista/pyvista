@@ -406,7 +406,8 @@ class ColorTable(DocTable):
 
 def _get_doc(func: Callable[[], Any]) -> Optional[str]:
     """Return the first line of the callable's docstring."""
-    return doc.splitlines()[0] if (doc := func.__doc__) else None
+    doc = func.__doc__
+    return doc.splitlines()[0] if doc else None
 
 
 def _get_fullname(typ: Type[Any]) -> str:
@@ -922,8 +923,7 @@ class DatasetCard:
             elif isinstance(badge, _BaseDatasetBadge):
                 raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
         all_badges = module_badges + datatype_badges + special_badges + category_badges
-        rst = ' '.join([badge.generate() for badge in all_badges])
-        return rst
+        return ' '.join([badge.generate() for badge in all_badges])
 
     @staticmethod
     def _generate_celltype_badges(badges: List[_BaseDatasetBadge]):
@@ -961,8 +961,7 @@ class DatasetCard:
         assert template is not None
         assert indent_level is not None
         formatted = template.format(*args)
-        indented = _indent_multi_line_string(formatted, indent_level=indent_level)
-        return indented
+        return _indent_multi_line_string(formatted, indent_level=indent_level)
 
     @classmethod
     def _generate_field_grid(cls, field_name, field_values):
@@ -1022,22 +1021,20 @@ class DatasetCard:
     @classmethod
     def _create_image_block(cls, img_path):
         """Generate rst block for the dataset image."""
-        block = cls._format_and_indent_from_template(
+        return cls._format_and_indent_from_template(
             img_path,
             template=cls.image_template,
             indent_level=cls.GRID_ITEM_INDENT_LEVEL,
         )
-        return block
 
     @classmethod
     def _create_info_block(cls, func_ref, func_doc):
-        block = cls._format_and_indent_from_template(
+        return cls._format_and_indent_from_template(
             func_ref,
             func_doc,
             template=cls.dataset_info_template,
             indent_level=cls.GRID_ITEM_INDENT_LEVEL,
         )
-        return block
 
     @classmethod
     def _create_dataset_props_block(
@@ -1061,11 +1058,10 @@ class DatasetCard:
             ('Spacing', spacing),
             ('N Arrays', n_arrays),
         ]
-        dataset_fields_block = cls._generate_field_block(
+        return cls._generate_field_block(
             dataset_fields,
             indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
         )
-        return dataset_fields_block
 
     @classmethod
     def _create_file_props_block(cls, loader, file_size, num_files, file_ext, reader_type):
@@ -1076,11 +1072,10 @@ class DatasetCard:
                 ('File Ext', file_ext),
                 ('Reader', reader_type),
             ]
-            file_info_fields_block = DatasetCard._generate_field_block(
+            return DatasetCard._generate_field_block(
                 file_info_fields,
                 indent_level=cls.GRID_ITEM_FIELDS_INDENT_LEVEL,
             )
-            return file_info_fields_block
         file_info_fields = "``Not Applicable.``\n\n``Dataset is not loaded from file.``"
         return _indent_multi_line_string(
             file_info_fields,
@@ -1092,12 +1087,11 @@ class DatasetCard:
         if datasource_links:
             # indent links one level from the dropdown directive in template
             datasource_links = _indent_multi_line_string(datasource_links, indent_level=1)
-            footer_block = cls._format_and_indent_from_template(
+            return cls._format_and_indent_from_template(
                 datasource_links,
                 template=cls.footer_template,
                 indent_level=cls.HEADER_FOOTER_INDENT_LEVEL,
             )
-            return footer_block
         # Return empty footer content
         return ''
 
@@ -1127,8 +1121,7 @@ class DatasetPropsGenerator:
         if file_ext:
             file_ext = loader.unique_extension
             file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
-            file_ext = '\n'.join(['``\'' + ext + '\'``' for ext in file_ext])
-            return file_ext
+            return '\n'.join(['``\'' + ext + '\'``' for ext in file_ext])
         return None
 
     @staticmethod
@@ -1150,14 +1143,13 @@ class DatasetPropsGenerator:
     @staticmethod
     def generate_dataset_type(loader: _DatasetLoader):
         """Format dataset type(s) with doc references to dataset class(es)."""
-        dataset_type = (
+        return (
             repr(loader.unique_dataset_type)
             .replace('<class \'', ':class:`~')
             .replace('\'>', '`')
             .replace('(', '')
             .replace(')', '')
         ).replace(', ', '\n')
-        return dataset_type
 
     @staticmethod
     def _generate_dataset_repr(loader: _DatasetLoader, indent_level: int) -> str:
@@ -1182,8 +1174,10 @@ class DatasetPropsGenerator:
         if not isinstance(loader, _Downloadable):
             return None
         # Collect url names and links as sequences
-        names = [name] if isinstance(name := loader.source_name, str) else name
-        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
+        name = loader.source_name
+        names = [name] if isinstance(name, str) else name
+        url = loader.source_url_blob
+        urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {}
@@ -1219,6 +1213,7 @@ class DatasetPropsGenerator:
         dimensions = DatasetPropsGenerator._try_getattr(loader.dataset, 'dimensions')
         if dimensions:
             return ', '.join([DatasetPropsGenerator._generate_number(dim) for dim in dimensions])
+        return None
 
     @staticmethod
     def generate_spacing(loader):
@@ -1232,6 +1227,7 @@ class DatasetPropsGenerator:
                     [DatasetPropsGenerator._generate_number(num, fmt='exp') for num in spacing],
                 )
             return ', '.join(spacing_maybe)
+        return None
 
     @staticmethod
     def generate_n_arrays(loader):

@@ -821,11 +821,10 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         """
 
         def gen_coords(i):  # numpydoc ignore=GL08
-            coords = (
+            return (
                 np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
                 + self.origin[i]
             )
-            return coords
 
         xcoords = gen_coords(0)
         ycoords = gen_coords(1)

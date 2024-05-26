@@ -1774,7 +1774,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[int]:  # numpydoc ignore=RT01
+    def center(self) -> List[float]:  # numpydoc ignore=RT01
         """Return the center of the bounding box.
 
         Returns
@@ -2977,6 +2977,7 @@ class DataSet(DataSetFilters, DataObject):
                 return cell.get_edge(i).GetPointIds()
             elif connections == "faces":
                 return cell.get_face(i).GetPointIds()
+            return None  # pragma: no cover
 
         neighbors = set()
         for i in iterators[connections]:
