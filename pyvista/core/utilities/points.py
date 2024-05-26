@@ -861,7 +861,7 @@ def fit_plane_to_points(
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> rng = np.random.default_rng(3)
+    >>> rng = np.random.default_rng(seed=0)
     >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>

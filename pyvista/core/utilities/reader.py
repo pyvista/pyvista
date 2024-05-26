@@ -140,6 +140,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.tri``       | :class:`pyvista.BinaryMarchingCubesReader`  |
     +----------------+---------------------------------------------+
+    | ``.vrt``       | :class:`pyvista.ProStarReader`              |
+    +----------------+---------------------------------------------+
     | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
     +----------------+---------------------------------------------+
     | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
@@ -2726,6 +2728,86 @@ class GESignaReader(BaseReader):
     _vtk_class_name = "vtkGESignaReader"
 
 
+class ParticleReader(BaseReader):
+    """ParticleReader for .raw files.
+
+    .. versionadded:: 0.44.0
+
+    Warnings
+    --------
+    If the byte order is not set correctly,
+    the reader will fail to read the file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_particles(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.endian = "BigEndian"
+    >>> filename.split("/")[-1]  # omit the path
+    'Particles.raw'
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkParticleReader"
+
+    @property
+    def endian(self) -> str:
+        """Get the byte order of the data.
+
+        Returns
+        -------
+        str
+            The byte order of the data. 'BigEndian' or 'LittleEndian'.
+
+        """
+        return self.reader.GetDataByteOrderAsString()
+
+    @endian.setter
+    def endian(self, endian: str):
+        """Set the byte order of the data.
+
+        Parameters
+        ----------
+        endian : str
+            The byte order of the data. 'BigEndian' or 'LittleEndian'.
+
+        """
+        if endian == 'BigEndian':
+            self.reader.SetDataByteOrderToBigEndian()
+        elif endian == 'LittleEndian':
+            self.reader.SetDataByteOrderToLittleEndian()
+        else:
+            raise ValueError(f"Invalid endian: {endian}.")
+        self.reader.Update()
+
+
+class ProStarReader(BaseReader):
+    """ProStarReader for .vrt files.
+
+    Reads geometry in proSTAR (STARCD) file format.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_prostar(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOGeometry"
+    _vtk_class_name = "vtkProStarReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2770,6 +2852,7 @@ CLASS_READERS = {
     '.pvtk': VTKPDataSetReader,
     '.pvtr': XMLPRectilinearGridReader,
     '.pvtu': XMLPUnstructuredGridReader,
+    '.raw': ParticleReader,
     '.res': MFIXReader,
     '.segy': SegYReader,
     '.sgy': SegYReader,
@@ -2778,6 +2861,7 @@ CLASS_READERS = {
     '.tif': TIFFReader,
     '.tiff': TIFFReader,
     '.tri': BinaryMarchingCubesReader,
+    '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
     '.vtm': XMLMultiBlockDataReader,

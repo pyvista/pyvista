@@ -9,6 +9,7 @@ repos:
     rev: 24.4.2
     hooks:
       - id: black
+        exclude: tests/core/typing
 
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
@@ -28,6 +29,7 @@ repos:
       - id: flake8
         additional_dependencies:
           ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
+        exclude: tests/core/typing
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
@@ -118,6 +120,7 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
+        exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0

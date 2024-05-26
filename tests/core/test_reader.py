@@ -1086,3 +1086,29 @@ def test_pdbreader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_particle_reader():
+    filename = examples.download_particles(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ParticleReader)
+    assert reader.path == filename
+
+    reader.endian = "BigEndian"
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+    reader.endian = "LittleEndian"
+
+    with pytest.raises(ValueError, match="Invalid endian:"):
+        reader.endian = "InvalidEndian"
+
+
+def test_prostar_reader():
+    filename = examples.download_prostar(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ProStarReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

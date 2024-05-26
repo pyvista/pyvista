@@ -3163,8 +3163,6 @@ class DataSetFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
-        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
-
         Parameters
         ----------
         pass_cell_data : bool, default: False
@@ -3178,6 +3176,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        point_data_to_cell_data
+            Similar transformation applied to point data.
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
 
         Examples
         --------
@@ -3249,8 +3254,6 @@ class DataSetFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
-        See also: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
-
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -3264,6 +3267,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        cell_data_to_point_data
+            Similar transformation applied to cell data.
+        :meth:`~pyvista.ImageDataFilters.points_to_cells`
+            Re-mesh :class:`~pyvista.ImageData` to a cells-based representation.
 
         Examples
         --------
