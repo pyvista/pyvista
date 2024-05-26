@@ -1,8 +1,8 @@
-from vtkmodules.vtkCommonDataModel import vtkMolecule
+import pyvista as pv
 
 
 def test_molecule():
-    mol = vtkMolecule()
+    mol = pv.Molecule()
     assert mol.GetNumberOfAtoms() == 0
     assert mol.GetNumberOfBonds() == 0
     h1 = mol.AppendAtom(1, 0.0, 0.0, -0.5)

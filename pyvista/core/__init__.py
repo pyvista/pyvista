@@ -31,6 +31,7 @@ from .filters import (
     UnstructuredGridFilters,
 )
 from .grid import Grid, ImageData, RectilinearGrid
+from .molecule import Molecule
 from .objects import Table
 from .partitioned import PartitionedDataSet
 from .pointset import (

@@ -186,6 +186,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkImageData,
     vtkImplicitFunction,
     vtkIterativeClosestPointTransform,
+    vtkMolecule,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
     vtkPartitionedDataSet,
