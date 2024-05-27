@@ -301,6 +301,38 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
                 pdata.point_data[key] = value
         return pdata
 
+    def cast_to_unstructured_grid(self, deep=True) -> pyvista.UnstructuredGrid:
+        """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
+
+        Parameters
+        ----------
+        deep : bool, deep: True
+            Whether to copy the input points, or to create an UnstructuredGrid
+            without copying them.  Setting ``deep=True`` ensures that the input
+            points can be modified without affecting the returned mesh.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset cast into a :class:`pyvista.UnstructuredGrid`.
+
+        Examples
+        --------
+        Cast a :class:`pyvista.PointSet` to a
+        :class:`pyvista.UnstructuredGrid`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cloud_dark_matter()
+        >>> type(mesh)
+        <class 'pyvista.core.pointset.PointSet'>
+        >>> grid = mesh.cast_to_unstructured_grid()
+        >>> type(grid)
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
+
+        """
+        return self.cast_to_polydata(deep=deep).cast_to_unstructured_grid()
+
     @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):
         """Cast to PolyData and plot."""

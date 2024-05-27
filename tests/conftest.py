@@ -120,6 +120,18 @@ def datasets():
 
 
 @pytest.fixture()
+def datasets_incl_pointset():
+    return [
+        examples.load_uniform(),  # ImageData
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.load_hexbeam(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+        pyvista.PointSet(np.array(range(30)).reshape((10, 3))),  # PointSet
+    ]
+
+
+@pytest.fixture()
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))

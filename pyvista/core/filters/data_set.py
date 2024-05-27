@@ -4963,8 +4963,7 @@ class DataSetFilters:
         progress_bar=False,
         pass_point_ids=True,
         pass_cell_ids=True,
-        # return_type: Optional[Union[pyvista.UnstructuredGrid, pyvista.PolyData, Literal['auto']]] = None ,
-        as_unstructured_grid=True,
+        match_input_type: bool = False,
         inplace=False,
     ):
         """Return a subset of the grid.
@@ -4988,8 +4987,12 @@ class DataSetFilters:
             Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
             the extracted cells correspond to.
 
-        as_unstructured_grid : 'auto', PolyData, UnstructuredGrid,
-            Return an unstructured grid.
+        match_input_type : bool, default: False
+            If ``False`` (default), the returned mesh is a :class:`~pyvista.UnstructuredGrid`.
+            If ``True``, :class:`~pyvista.PolyData` is returned for ``PolyData`` inputs
+            and :class:`~pyvista.PointSet` is returned for ``PointSet`` inputs. For all
+            other input types, this parameter has no effect and a
+            :class:`~pyvista.UnstructuredGrid` is always returned.
 
         inplace : bool, default: False
             If ``True`` the mesh is updated in-place, otherwise a copy
@@ -5021,9 +5024,17 @@ class DataSetFilters:
         >>> pl.show()
 
         """
+        if match_input_type is None:
+            # warnings.warn('\nThis filter returns an UnstructuredGrid by default. This behavior will change'
+            #               '\nin a future version, and return PolyData for PolyData inputs'
+            #               "\nSet `match_input_type=pv.UnstructuredGrid` to maintain the old behavior, or"
+            #               "\nset `match_input_type='auto'` for the new behavior. See documentation for details.",
+            #               PyVistaDeprecationWarning)
+            match_input_type = pyvista.UnstructuredGrid
+
         ind = _validate_extraction_indices(
             ind=ind,
-            n_items=self.n_cells,
+            n_items=self.n_cells,  # type: ignore[attr-defined]
             field='cells',
             invert=invert,
         )
@@ -5047,13 +5058,14 @@ class DataSetFilters:
         # extracts only in float32
         if output.n_points:
             if self.points.dtype != np.dtype('float32'):
-                ind = output.point_data['vtkOriginalPointIds']
+                ind = output.point_data[_vtk.VTK_ORIGINAL_POINT_IDS]
                 output.points = self.points[ind]
 
-        if not as_unstructured_grid and isinstance(self, pyvista.PolyData):
-            # TODO: Make sure this does not overwrite the ids from the
-            # cell extraction
-            output = output.extract_geometry()
+        output = _set_alg_output_mesh_type(
+            alg_input=self,
+            alg_output=output,
+            match_input_type=match_input_type,
+        )
 
         # Process output arrays
         output._remove_original_ids(pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
@@ -5063,7 +5075,7 @@ class DataSetFilters:
 
         if inplace:
             try:
-                self.copy_from(output)
+                self.copy_from(output)  # type: ignore[attr-defined]
             except TypeError:
                 return output
             else:
@@ -5090,6 +5102,7 @@ class DataSetFilters:
         pass_cell_ids=True,
         inplace=False,
         progress_bar=False,
+        match_input_type: bool = True,
         **kwargs,
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
@@ -5146,6 +5159,13 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        match_input_type : bool, default: False
+            If ``False`` (default), the returned mesh is a :class:`~pyvista.UnstructuredGrid`.
+            If ``True``, :class:`~pyvista.PolyData` is returned for ``PolyData`` inputs
+            and :class:`~pyvista.PointSet` is returned for ``PointSet`` inputs. For all
+            other input types, this parameter has no effect and a
+            :class:`~pyvista.UnstructuredGrid` is always returned.
+
         **kwargs
             Keyword arguments used for deprecation.
 
@@ -5188,6 +5208,7 @@ class DataSetFilters:
             invert=invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
+            match_input_type=match_input_type,
             progress_bar=progress_bar,
         )
 
@@ -5200,35 +5221,16 @@ class DataSetFilters:
         invert,
         pass_cell_ids,
         pass_point_ids,
+        match_input_type,
         progress_bar,
     ):
 
-        def as_input_type(output_):
-            if isinstance(self, pyvista.PolyData):
-                if output_.n_cells > 0:
-                    poly = output_.extract_geometry()
-                    # self.extract_cells_new_API(output_[_vtk.VTK_ORIGINAL_CELL_IDS])
-                elif output_.n_points > 0:
-                    poly = pyvista.PolyData()
-                    poly.points = output_.points
-                    poly.copy_attributes(output_)
-                else:
-                    poly = pyvista.PolyData()
-                    poly.copy_attributes(output_)
-
-                return poly
-
-                # return self.extract_cells(output_[_vtk.VTK_ORIGINAL_CELL_IDS]).remove_cells()
-            return output_
-
         def _extract_points_by_mode(mode_):
-            return as_input_type(
-                self._extract_points_main_method(
-                    ind=ind,
-                    invert=invert,
-                    mode=mode_,
-                    progress_bar=progress_bar,
-                ),
+            return self._extract_points_main_method(
+                ind=ind,
+                invert=invert,
+                mode=mode_,
+                progress_bar=progress_bar,
             )
 
         if mode in ['any', 'all', 'vertex']:
@@ -5246,6 +5248,11 @@ class DataSetFilters:
             modes = ['all', 'any', 'exact', 'vertex']
             raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
 
+        output = _set_alg_output_mesh_type(
+            alg_input=self,
+            alg_output=output,
+            match_input_type=match_input_type,
+        )
         # Process output arrays
         output._remove_original_ids(pass_point_ids=pass_point_ids, pass_cell_ids=pass_cell_ids)
 
@@ -5307,6 +5314,7 @@ class DataSetFilters:
         invert=False,
         pass_cell_ids=True,
         pass_point_ids=True,
+        match_input_type: bool = True,
     ):
         """Remove cells.
 
@@ -5319,8 +5327,8 @@ class DataSetFilters:
         inplace : bool, default: False
             Whether to update the mesh in-place.
 
-        unused_points: 'keep' | 'remove' | 'vertex', default: 'keep'
-
+        unused_points : 'keep' | 'remove' | 'vertex', default: 'keep'
+            What to do with unused points.
 
         invert : bool, default: False
             Invert the cell indices. Indices *not* specified by ``ind``
@@ -5359,27 +5367,28 @@ class DataSetFilters:
             invert=not invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
+            match_input_type=match_input_type,
         )
 
-    def extract_cells_new_API(  # numpydoc ignore=PR01,RT01
-        self,
-        ind: Union[VectorLike[bool], VectorLike[int]],
-        inplace=False,
-        unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
-        invert=False,
-        pass_cell_ids=True,
-        pass_point_ids=True,
-    ):
-        """Extract cells."""
-        invert = not invert
-        return self._remove_cells_internal_method(
-            ind=ind,
-            unused_points=unused_points,
-            inplace=inplace,
-            invert=invert,
-            pass_cell_ids=pass_cell_ids,
-            pass_point_ids=pass_point_ids,
-        )
+    # def extract_cells_new_API(  # numpydoc ignore=PR01,RT01
+    #     self,
+    #     ind: Union[VectorLike[bool], VectorLike[int]],
+    #     inplace=False,
+    #     unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
+    #     invert=False,
+    #     pass_cell_ids=True,
+    #     pass_point_ids=True,
+    # ):
+    #     """Extract cells."""
+    #     invert = not invert
+    #     return self._remove_cells_internal_method(
+    #         ind=ind,
+    #         unused_points=unused_points,
+    #         inplace=inplace,
+    #         invert=invert,
+    #         pass_cell_ids=pass_cell_ids,
+    #         pass_point_ids=pass_point_ids,
+    #     )
 
     def remove_points(  # numpydoc ignore=PR01,RT01
         self,
@@ -5391,6 +5400,7 @@ class DataSetFilters:
         pass_cell_ids=True,
         pass_point_ids=True,
         keep_scalars=True,
+        match_input_type: bool = True,
         progress_bar=False,
     ):
         """Remove points."""
@@ -5403,6 +5413,7 @@ class DataSetFilters:
             invert=invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
+            match_input_type=match_input_type,
             progress_bar=progress_bar,
         )
 
@@ -6157,12 +6168,13 @@ class DataSetFilters:
                 progress_bar=progress_bar,
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
+                match_input_type=True,
             )
         else:
             output = self.extract_cells(
                 id_mask,
                 progress_bar=progress_bar,
-                as_unstructured_grid=False,
+                match_input_type=True,
                 pass_point_ids=pass_point_ids,
                 pass_cell_ids=pass_cell_ids,
             )
@@ -7755,6 +7767,16 @@ def _set_threshold_limit(alg, value, method, invert):
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
 
 
+def _set_alg_output_mesh_type(*, alg_input, alg_output, match_input_type):
+    if match_input_type and isinstance(alg_input, pyvista.PolyData):
+        # TODO: Make sure this does not overwrite the ids from the
+        #   cell extraction
+        alg_output = alg_output.extract_geometry()
+    elif not match_input_type and isinstance(alg_input, pyvista.PointSet):
+        alg_output = alg_output.cast_to_unstructured_grid()
+    return alg_output
+
+
 def _validate_extraction_indices(
     *,
     ind,
@@ -7763,12 +7785,14 @@ def _validate_extraction_indices(
     invert: bool,
 ):
     ind = np.asarray(ind)
-    if isinstance(ind, np.ndarray):
-        if ind.dtype == np.bool_ and ind.size != n_items:
-            raise ValueError(
-                f'Boolean array size must match the number of {field} ({n_items})',
-            )
-
+    if ind.dtype == np.bool_ and ind.size != n_items:
+        raise ValueError(
+            f'Boolean array size must match the number of {field} ({n_items}).',
+        )
+    elif (max_ind := np.max(ind)) >= n_items:
+        raise IndexError(
+            f'Invalid indices. Index {max_ind} is out of bounds for a mesh with {n_items} {field}.',
+        )
     if invert:
         if np.issubdtype(ind.dtype, np.bool_):
             ind = np.invert(ind)
