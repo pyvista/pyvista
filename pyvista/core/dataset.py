@@ -157,7 +157,7 @@ class DataSet(DataSetFilters, DataObject):
         return super().__getattribute__(item)
 
     @property
-    def active_scalars_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -216,7 +216,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active vector's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -271,7 +271,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_tensors_info(self) -> ActiveArrayInfo:
         """Return the active tensor's field and name: [field, name].
 
         Returns
@@ -283,7 +283,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_tensors_info
 
     @property
-    def active_vectors(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array.
 
         Returns
@@ -322,7 +322,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self) -> Optional[NumpyArray[float]]:  # numpydoc ignore=RT01
+    def active_tensors(self) -> Optional[NumpyArray[float]]:
         """Return the active tensors array.
 
         Returns
@@ -343,7 +343,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors_name(self) -> str:  # numpydoc ignore=RT01
+    def active_tensors_name(self) -> str:
         """Return the name of the active tensor array.
 
         Returns
@@ -367,7 +367,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self) -> str:  # numpydoc ignore=RT01
+    def active_vectors_name(self) -> str:
         """Return the name of the active vectors array.
 
         Returns
@@ -403,7 +403,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore[explicit-override, override]
-    def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
+    def active_scalars_name(self) -> str:
         """Return the name of the active scalars.
 
         Returns
@@ -438,7 +438,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_scalars(name)
 
     @property
-    def points(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
+    def points(self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
         Returns
@@ -538,7 +538,7 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> Optional[pyvista.PolyData]:  # numpydoc ignore=RT01
+    def arrows(self) -> Optional[pyvista.PolyData]:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -576,7 +576,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def active_t_coords(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points.
 
         Returns
@@ -798,7 +798,7 @@ class DataSet(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array.
 
         Returns
@@ -819,7 +819,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_normals(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return the active normals as an array.
 
         Returns
@@ -1514,7 +1514,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_tensors_info = ido.active_tensors_info
 
     @property
-    def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def point_data(self) -> DataSetAttributes:
         """Return point data as DataSetAttributes.
 
         Returns
@@ -1607,7 +1607,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_field_data()
 
     @property
-    def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def cell_data(self) -> DataSetAttributes:
         """Return cell data as DataSetAttributes.
 
         Returns
@@ -1656,7 +1656,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     @property
-    def n_points(self) -> int:  # numpydoc ignore=RT01
+    def n_points(self) -> int:
         """Return the number of points in the entire dataset.
 
         Returns
@@ -1678,7 +1678,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def n_cells(self) -> int:  # numpydoc ignore=RT01
+    def n_cells(self) -> int:
         """Return the number of cells in the entire dataset.
 
         Returns
@@ -1705,7 +1705,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self) -> int:  # pragma: no cover  # numpydoc ignore=RT01
+    def number_of_points(self) -> int:  # pragma: no cover
         """Return the number of points.
 
         Returns
@@ -1717,7 +1717,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self) -> int:  # pragma: no cover  # numpydoc ignore=RT01
+    def number_of_cells(self) -> int:  # pragma: no cover
         """Return the number of cells.
 
         Returns
@@ -1729,7 +1729,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsLike:
         """Return the bounding box of this dataset.
 
         Returns
@@ -1751,7 +1751,7 @@ class DataSet(DataSetFilters, DataObject):
         return cast(BoundsLike, self.GetBounds())
 
     @property
-    def length(self) -> float:  # numpydoc ignore=RT01
+    def length(self) -> float:
         """Return the length of the diagonal of the bounding box.
 
         Returns
@@ -1774,7 +1774,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[float]:  # numpydoc ignore=RT01
+    def center(self) -> List[float]:
         """Return the center of the bounding box.
 
         Returns
@@ -1795,7 +1795,7 @@ class DataSet(DataSetFilters, DataObject):
         return list(self.GetCenter())
 
     @property
-    def volume(self) -> float:  # numpydoc ignore=RT01
+    def volume(self) -> float:
         """Return the mesh volume.
 
         This will return 0 for meshes with 2D cells.
@@ -1833,7 +1833,7 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum()
 
     @property
-    def area(self) -> float:  # numpydoc ignore=RT01
+    def area(self) -> float:
         """Return the mesh area if 2D.
 
         This will return 0 for meshes with 3D cells.
@@ -2036,7 +2036,7 @@ class DataSet(DataSetFilters, DataObject):
         return
 
     @property
-    def n_arrays(self) -> int:  # numpydoc ignore=RT01
+    def n_arrays(self) -> int:
         """Return the number of arrays present in the dataset.
 
         Returns
@@ -2051,7 +2051,7 @@ class DataSet(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self) -> List[str]:  # numpydoc ignore=RT01
+    def array_names(self) -> List[str]:
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -2811,7 +2811,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> Iterator[pyvista.Cell]:  # numpydoc ignore=RT01
+    def cell(self) -> Iterator[pyvista.Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -3383,7 +3383,7 @@ class DataSet(DataSetFilters, DataObject):
         return in_cell
 
     @property
-    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points.
 
         Returns
