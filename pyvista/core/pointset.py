@@ -111,6 +111,47 @@ class _PointSet(DataSet):
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
 
+    # def remove_cells(
+    #         self,
+    #         ind: Union[VectorLike[bool], VectorLike[int]],
+    #         inplace=False,
+    # ) -> _PointSet:
+    #     """Remove cells.
+    #     Parameters
+    #     ----------
+    #     ind : VectorLike[int] | VectorLike[bool]
+    #         Cell indices to be removed.  The array can also be a
+    #         boolean array of the same size as the number of cells.
+    #     inplace : bool, default: False
+    #         Whether to update the mesh in-place.
+    #     Returns
+    #     -------
+    #     pyvista.DataSet
+    #         Same type as the input, but with the specified cells
+    #         removed.
+    #     Examples
+    #     --------
+    #     Remove 20 cells from an unstructured grid.
+    #     >>> from pyvista import examples
+    #     >>> import pyvista as pv
+    #     >>> hex_mesh = pv.read(examples.hexbeamfile)
+    #     >>> removed = hex_mesh.remove_cells(range(10, 20))
+    #     >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+    #     """
+    #     if isinstance(ind, np.ndarray):
+    #         if ind.dtype == np.bool_ and ind.size != self.n_cells:
+    #             raise ValueError(
+    #                 f'Boolean array size must match the number of cells ({self.n_cells})',
+    #             )
+    #     ghost_cells = np.zeros(self.n_cells, np.uint8)
+    #     ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
+    #
+    #     target = self if inplace else self.copy()
+    #
+    #     target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+    #     target.RemoveGhostCells()
+    #     return target
+
     def points_to_double(self) -> _PointSet:
         """Convert the points datatype to double precision.
 

@@ -4198,9 +4198,9 @@ def test_remove_cells_extract_cells_pass_cell_ids(hexbeam, filter_under_test):
 @pytest.mark.parametrize('inplace', [True, False])
 @parametrize_filter(
     'filter_under_test',
-    [REMOVE_CELLS, EXTRACT_CELLS_INVERT, REMOVE_POINTS_ANY, EXTRACT_POINTS_INVERT_ALL],
+    [EXTRACT_CELLS_INVERT, EXTRACT_POINTS_INVERT_ALL],
 )
-def test_remove_cells_extract_cells_inplace(
+def test_exract_cells_extract_points_match_input_type_inplace(
     inplace,
     datasets_incl_pointset,
     filter_under_test,
@@ -4259,3 +4259,59 @@ def test_remove_cells_extract_cells_invalid(hexbeam, filter_under_test):
     match = 'Boolean array size must match the number of cells (40)'
     with pytest.raises(ValueError, match=re.escape(match)):
         filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
+
+
+@pytest.fixture()
+def simple_poly():
+    p1 = [1, 1, 1]
+    p2 = [2, 2, 2]
+    p3 = [3, 3, 3]
+    cell = [3, 0, 1, 2]
+    return pv.PolyData([p1, p2, p3], cell)
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=True, include_cells=True),
+        dict(adjacent_cells=True, include_cells=None),
+        dict(mode='any'),
+    ],
+)
+def test_extract_points_mode_any(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 3
+    assert out.n_cells == 1
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=False, include_cells=True),
+        dict(adjacent_cells=False, include_cells=None),
+        dict(mode='all'),
+    ],
+)
+def test_extract_points_mode_all(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 0
+    assert out.n_cells == 0
+
+    out = simple_poly.extract_points([0, 1, 2], **kwargs)
+    assert out.n_points == 3
+    assert out.n_cells == 1
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=True, include_cells=False),
+        dict(adjacent_cells=False, include_cells=False),
+        dict(mode='vertex'),
+    ],
+)
+def test_extract_points_mode_vertex(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 1
+    assert out.n_cells == 1
+    assert np.array_equal(out.points[0], simple_poly.points[0])

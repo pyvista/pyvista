@@ -5215,6 +5215,8 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
+        # return self._extract_points_main_method(ind=ind, invert=invert, mode=mode, progress_bar=False)
+
     def _extract_points_internal_method(
         self,
         mode: Literal['any', 'all', 'vertex', 'exact'],
@@ -5238,18 +5240,20 @@ class DataSetFilters:
 
         if mode in ['any', 'all', 'vertex']:
             output = _extract_points_by_mode(mode)
-        elif mode == 'exact':
-            output_all = _extract_points_by_mode('all')
-            output_vertex = _extract_points_by_mode('vertex')
-            isolated_vertex = set(output_vertex[_vtk.VTK_ORIGINAL_POINT_IDS]) - set(
-                output_all[_vtk.VTK_ORIGINAL_POINT_IDS],
-            )
-            output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
-
-            output = output_all + output_vertex
         else:
-            modes = ['all', 'any', 'exact', 'vertex']
-            raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
+            raise NotImplementedError
+        # elif mode == 'exact':
+        #     output_all = _extract_points_by_mode('all')
+        #     output_vertex = _extract_points_by_mode('vertex')
+        #     isolated_vertex = set(output_vertex[_vtk.VTK_ORIGINAL_POINT_IDS]) - set(
+        #         output_all[_vtk.VTK_ORIGINAL_POINT_IDS],
+        #     )
+        #     output_vertex.extract_cells_new_API(isolated_vertex, inplace=True)
+        #
+        #     output = output_all + output_vertex
+        # else:
+        #     modes = ['all', 'any', 'exact', 'vertex']
+        #     raise ValueError(f'Mode must be one of {modes}, got {mode} instead.')
 
         output = _set_alg_output_mesh_type(
             alg_input=self,
@@ -5284,7 +5288,7 @@ class DataSetFilters:
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
 
-        if mode != 'any':
+        if mode == 'all':
             # Need to discard any points which only partially define cells
 
             # Build array of point indices to be removed.
@@ -5317,7 +5321,6 @@ class DataSetFilters:
         invert=False,
         pass_cell_ids=True,
         pass_point_ids=True,
-        match_input_type: bool = False,
     ):
         """Remove cells.
 
@@ -5370,7 +5373,7 @@ class DataSetFilters:
             invert=not invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
-            match_input_type=match_input_type,
+            match_input_type=True,
         )
 
     # def extract_cells_new_API(  # numpydoc ignore=PR01,RT01
@@ -5403,7 +5406,6 @@ class DataSetFilters:
         pass_cell_ids=True,
         pass_point_ids=True,
         keep_scalars=True,
-        match_input_type: bool = False,
         progress_bar=False,
     ):
         """Remove points."""
@@ -5416,7 +5418,7 @@ class DataSetFilters:
             invert=invert,
             pass_cell_ids=pass_cell_ids,
             pass_point_ids=pass_point_ids,
-            match_input_type=match_input_type,
+            match_input_type=True,
             progress_bar=progress_bar,
         )
 

@@ -13,6 +13,7 @@ from pyvista.core.errors import AmbiguousDataError, CellSizeError, MissingDataEr
 test_path = str(Path(__file__).resolve().parent)
 
 # must be manually set until pytest adds parametrize with fixture feature
+HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
 STRUCTGRID_CELLS_BOOL = np.ones(729, dtype=bool)  # struct_grid.n_cells == 729
 STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 1000
 
@@ -1098,6 +1099,26 @@ def test_gaussian_smooth(uniform):
     assert uniform.active_scalars_name == active
     assert uniform.active_scalars.shape == values.shape
     assert not np.all(uniform.active_scalars == values)
+
+
+# @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+# def test_remove_cells(ind, hexbeam):
+#     grid_copy = hexbeam.remove_cells(ind)
+#     assert grid_copy.n_cells < hexbeam.n_cells
+#
+#
+# @pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+# def test_remove_cells_not_inplace(ind, hexbeam):
+#     grid_copy = hexbeam.copy()  # copy to protect
+#     grid_w_removed = grid_copy.remove_cells(ind)
+#     assert grid_w_removed.n_cells < hexbeam.n_cells
+#     assert grid_copy.n_cells == hexbeam.n_cells
+#
+#
+# def test_remove_cells_invalid(hexbeam):
+#     grid_copy = hexbeam.copy()
+#     with pytest.raises(ValueError):
+#         grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
