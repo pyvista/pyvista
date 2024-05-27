@@ -2158,7 +2158,10 @@ def extracted_with_include_cells_False(grid4x4):
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
@@ -2181,14 +2184,17 @@ def test_extract_points_same_input_output(grid4x4):
     points_in = grid4x4.points.copy()
     faces_in = grid4x4.faces.copy()
 
-    extracted = grid4x4.extract_points(np.ones(grid4x4.n_points, dtype=bool))
+    extracted = grid4x4.extract_points(np.ones(grid4x4.n_points, dtype=bool), match_input_type=True)
     assert np.array_equal(extracted.points, points_in)
     assert np.array_equal(extracted.faces, faces_in)
 
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
@@ -2203,7 +2209,10 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_include_cells_False(
     dataset_filter,
@@ -2227,7 +2236,7 @@ def test_extract_points_include_cells_False(
 def test_extract_points_default(extracted_with_adjacent_True):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
     # test adjacent_cells=True and include_cells=True by default
-    sub_surf_adj = input_surf.extract_points(input_point_ids)
+    sub_surf_adj = input_surf.extract_points(input_point_ids, match_input_type=True)
 
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)

@@ -5102,7 +5102,7 @@ class DataSetFilters:
         pass_cell_ids=True,
         inplace=False,
         progress_bar=False,
-        match_input_type: bool = True,
+        match_input_type: bool = False,
         **kwargs,
     ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
@@ -5314,7 +5314,7 @@ class DataSetFilters:
         invert=False,
         pass_cell_ids=True,
         pass_point_ids=True,
-        match_input_type: bool = True,
+        match_input_type: bool = False,
     ):
         """Remove cells.
 
