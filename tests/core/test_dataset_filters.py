@@ -2059,8 +2059,9 @@ def test_slice_along_line():
         model.slice_along_line(one_cell, progress_bar=True)
 
 
-def extract_points_invalid(sphere):
-    with pytest.raises(ValueError):  # noqa: PT011
+def test_extract_points_invalid(sphere):
+    match = 'Indices must be a boolean mask or an integer array.'
+    with pytest.raises(TypeError, match=match):
         sphere.extract_points('invalid')
 
     with pytest.raises(TypeError):

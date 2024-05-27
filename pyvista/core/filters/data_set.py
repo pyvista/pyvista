@@ -7785,14 +7785,19 @@ def _validate_extraction_indices(
     invert: bool,
 ):
     ind = np.asarray(ind)
-    if ind.dtype == np.bool_ and ind.size != n_items:
-        raise ValueError(
-            f'Boolean array size must match the number of {field} ({n_items}).',
-        )
-    elif (max_ind := np.max(ind)) >= n_items:
-        raise IndexError(
-            f'Invalid indices. Index {max_ind} is out of bounds for a mesh with {n_items} {field}.',
-        )
+    if np.issubdtype(ind.dtype, np.bool_):
+        if ind.size != n_items:
+            raise ValueError(
+                f'Boolean array size must match the number of {field} ({n_items}).',
+            )
+    elif np.issubdtype(ind.dtype, np.integer):
+        if (max_ind := np.max(ind)) >= n_items:
+            raise IndexError(
+                f'Invalid indices. Index {max_ind} is out of bounds for a mesh with {n_items} {field}.',
+            )
+    else:
+        raise TypeError('Indices must be a boolean mask or an integer array.')
+
     if invert:
         if np.issubdtype(ind.dtype, np.bool_):
             ind = np.invert(ind)
