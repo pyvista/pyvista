@@ -1416,7 +1416,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(cast(VectorLike[float], point), 'point')
+        check_valid_vector(point, 'point')
         t = transformations.reflection((0, 0, 1), point=point)
         return self.transform(
             t,
@@ -1479,7 +1479,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         check_valid_vector(normal, 'normal')
-        check_valid_vector(cast(VectorLike[float], point), 'point')
+        check_valid_vector(point, 'point')
         t = transformations.reflection(normal, point=point)
         return self.transform(
             t,
