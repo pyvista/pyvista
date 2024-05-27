@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
+import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
@@ -3974,79 +3975,137 @@ HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
 HEXBEAM_POINTS_BOOL = np.ones(99, dtype=bool)  # matches hexbeam.n_points == 99
 
 
-class NamedFilter(NamedTuple):
-    name: str
-    filter: functools.partial
+class DatasetPartialFilter:
+    """Class for dynamically applying a partially defined filter to a dataset.
+
+    This class performs a similar function to `functools.partial`. However, unlike
+    `functools.partial`, which requires a fully bound callable as a first argument, to
+    create the partial function, this class instead allows creating a partial function
+    using a method name (as string) instead of the actual callable.
+
+    This allows for the callable argument to the partial function to be the resolved
+    dynamically at runtime instead of being defined statically. This ensures that the
+    actual method/filter used by the dataset for testing is resolved correctly by the
+    MRO, e.g. for DataSet subclasses which overload or redefine filters. E.g. for
+    PointSet objects, we want `PointSet.some_filter` to be called instead calling
+    `DataSetFilters.some_filter`.
+
+    Examples
+    --------
+    Instead of creating a partial function with a static function like this:
+        partial = functools.partial(pyvista.DataSetFilters.extract_points, *partial_args, **partial_kwargs)
+
+    We use the filter name instead:
+        partial = DatasetPartialFilter('extract_points', *partial_args, **partial_kwargs)
+
+    Later, we call the method on a dataset. The actual callable used to define the
+    partial function is resolved at runtime. Just like functools.partial, we can
+    optionally add additional args or kwargs:
+        DatasetPartialFilter(dataset, *more_args, **more_kwargs)
+
+    """
+
+    def __init__(self, filter_name: str, *partial_args, **partial_kwargs):
+
+        assert isinstance(filter_name, str)
+        self.filter_name = filter_name
+        self._partial_args = partial_args
+        self._partial_kwargs = partial_kwargs
+
+    def __call__(self, dataset: pyvista.DataSet, *args, **kwargs):
+        """Call partially defined method on a dataset.
+
+        e.g. Add filter and call it with additional args:
+            DatasetPartialFilter(dataset, *args, **kwargs)
+        """
+        assert isinstance(dataset, pyvista.DataSet)
+        # Create partial function with dynamically-resolved method
+        self._dataset = dataset
+        func = getattr(dataset, self.filter_name)
+        partial_func = functools.partial(func, *self._partial_args, **self._partial_kwargs)
+
+        # Call the partial function with new args
+        return partial_func(*args, **kwargs)
 
 
-# These two filters should produce exactly the same result
-REMOVE_CELLS = NamedFilter(
-    name='remove_cells',
-    filter=functools.partial(pv.DataSetFilters.remove_cells, invert=False),
+class FilterTestCase(NamedTuple):
+    test_name: str
+    partial_filter: DatasetPartialFilter
+
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_CELLS = FilterTestCase(
+    test_name='remove_cells',
+    partial_filter=DatasetPartialFilter('remove_cells', invert=False),
 )
-REMOVE_CELLS_INVERT = NamedFilter(
-    name='remove_cells_invert',
-    filter=functools.partial(pv.DataSetFilters.remove_cells, invert=True),
-)
-EXTRACT_CELLS = NamedFilter(
-    name='extract_cells',
-    filter=functools.partial(pv.DataSetFilters.extract_cells, invert=False),
-)
-EXTRACT_CELLS_INVERT = NamedFilter(
-    name='extract_cells_invert',
-    filter=functools.partial(pv.DataSetFilters.extract_cells, invert=True),
+REMOVE_CELLS_INVERT = FilterTestCase(
+    test_name='remove_cells_invert',
+    partial_filter=DatasetPartialFilter('remove_cells', invert=True),
 )
 
-REMOVE_POINTS_ANY = NamedFilter(
-    name='remove_points_any',
-    filter=functools.partial(
-        pv.DataSetFilters.remove_points,
+# Define filter pairs which should produce exactly the same result
+EXTRACT_CELLS = FilterTestCase(
+    test_name='extract_cells',
+    partial_filter=DatasetPartialFilter('extract_cells', invert=False),
+)
+EXTRACT_CELLS_INVERT = FilterTestCase(
+    test_name='extract_cells_invert',
+    partial_filter=DatasetPartialFilter('extract_cells', invert=True),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_ANY = FilterTestCase(
+    test_name='remove_points_any',
+    partial_filter=DatasetPartialFilter(
+        'remove_points',
         invert=False,
         mode='any',
     ),
 )
-EXTRACT_POINTS_INVERT_ALL = NamedFilter(
-    name='extract_points_invert_all',
-    filter=functools.partial(pv.DataSetFilters.extract_points, invert=True, mode='all'),
+EXTRACT_POINTS_INVERT_ALL = FilterTestCase(
+    test_name='extract_points_invert_all',
+    partial_filter=DatasetPartialFilter('extract_points', invert=True, mode='all'),
 )
 
-REMOVE_POINTS_ALL = NamedFilter(
-    name='remove_points_all',
-    filter=functools.partial(
-        pv.DataSetFilters.remove_points,
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_ALL = FilterTestCase(
+    test_name='remove_points_all',
+    partial_filter=DatasetPartialFilter(
+        'remove_points',
         invert=False,
         mode='all',
     ),
 )
-EXTRACT_POINTS_INVERT_ANY = NamedFilter(
-    name='extract_points_invert_any',
-    filter=functools.partial(pv.DataSetFilters.extract_points, invert=True, mode='any'),
+EXTRACT_POINTS_INVERT_ANY = FilterTestCase(
+    test_name='extract_points_invert_any',
+    partial_filter=DatasetPartialFilter('extract_points', invert=True, mode='any'),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_INVERT_ALL = FilterTestCase(
+    test_name='remove_points_invert_all',
+    partial_filter=DatasetPartialFilter('remove_points', invert=True, mode='all'),
+)
+EXTRACT_POINTS_ANY = FilterTestCase(
+    test_name='extract_points_any',
+    partial_filter=DatasetPartialFilter('extract_points', mode='any'),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_INVERT_ANY = FilterTestCase(
+    test_name='remove_points_invert_any',
+    partial_filter=DatasetPartialFilter('remove_points', invert=True, mode='any'),
+)
+EXTRACT_POINTS_ALL = FilterTestCase(
+    test_name='extract_points_all',
+    partial_filter=DatasetPartialFilter('extract_points', mode='all'),
 )
 
 
-REMOVE_POINTS_INVERT_ALL = NamedFilter(
-    name='remove_points_invert_all',
-    filter=functools.partial(pv.DataSetFilters.remove_points, invert=True, mode='all'),
-)
-EXTRACT_POINTS_ANY = NamedFilter(
-    name='extract_points_any',
-    filter=functools.partial(pv.DataSetFilters.extract_points, mode='any'),
-)
-
-REMOVE_POINTS_INVERT_ANY = NamedFilter(
-    name='remove_points_invert_any',
-    filter=functools.partial(pv.DataSetFilters.remove_points, invert=True, mode='any'),
-)
-EXTRACT_POINTS_ALL = NamedFilter(
-    name='extract_points_all',
-    filter=functools.partial(pv.DataSetFilters.extract_points, mode='all'),
-)
-
-
-def parametrize_filter(param_name, named_filters: List[NamedFilter]):
+def parametrize_filter(param_name, named_filters: List[FilterTestCase]):
     """Parametrize test using named filters."""
-    ids = [f.name for f in named_filters]
-    filters = [f.filter for f in named_filters]
+    ids = [f.test_name for f in named_filters]
+    filters = [f.partial_filter for f in named_filters]
     return pytest.mark.parametrize(param_name, filters, ids=ids)
 
 
@@ -4148,7 +4207,7 @@ def test_remove_cells_extract_cells_inplace(
     match_input_type,
     dataset_index,
 ):
-    _is_cell_filter = 'cell' in filter_under_test.func.__name__
+    _is_cell_filter = 'cell' in filter_under_test.filter_name
     dataset = datasets_incl_pointset[dataset_index]
     unfiltered = dataset.copy()  # copy to protect
 
@@ -4157,8 +4216,9 @@ def test_remove_cells_extract_cells_inplace(
 
     # Test error raised when no cells to extract
     if _is_cell_filter and isinstance(dataset, pv.PointSet):
-        match = 'Invalid indices. Index 0 is out of bounds for a mesh with 0 cells.'
-        with pytest.raises(IndexError, match=match):
+        # match = 'Invalid indices. Index 0 is out of bounds for a mesh with 0 cells.'
+        match = 'Cell operations are not supported. PointSets contain no cells.'
+        with pytest.raises(pv.PointSetCellOperationError, match=match):
             filter_under_test(*args, **kwargs)
         return
     filtered = filter_under_test(*args, **kwargs)

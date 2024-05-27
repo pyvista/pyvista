@@ -5024,13 +5024,16 @@ class DataSetFilters:
         >>> pl.show()
 
         """
+        # TODO: Set `match_input_type=None` by default in signature and raise deprecation warning
         if match_input_type is None:
-            # warnings.warn('\nThis filter returns an UnstructuredGrid by default. This behavior will change'
-            #               '\nin a future version, and return PolyData for PolyData inputs'
-            #               "\nSet `match_input_type=pv.UnstructuredGrid` to maintain the old behavior, or"
-            #               "\nset `match_input_type='auto'` for the new behavior. See documentation for details.",
-            #               PyVistaDeprecationWarning)
-            match_input_type = pyvista.UnstructuredGrid
+            warnings.warn(
+                '\nThis filter returns an UnstructuredGrid by default. This behavior will change'
+                '\nin a future version, and return PolyData for PolyData inputs'
+                "\nSet `match_input_type=pv.UnstructuredGrid` to maintain the old behavior, or"
+                "\nset `match_input_type='auto'` for the new behavior. See documentation for details.",
+                PyVistaDeprecationWarning,
+            )
+            match_input_type = False
 
         ind = _validate_extraction_indices(
             ind=ind,
@@ -5400,7 +5403,7 @@ class DataSetFilters:
         pass_cell_ids=True,
         pass_point_ids=True,
         keep_scalars=True,
-        match_input_type: bool = True,
+        match_input_type: bool = False,
         progress_bar=False,
     ):
         """Remove points."""
