@@ -4132,6 +4132,7 @@ def test_remove_cells_extract_cells_pass_cell_ids(hexbeam, filter_under_test):
     assert ind not in filtered[_vtk_core.VTK_ORIGINAL_POINT_IDS]
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 @pytest.mark.parametrize('dataset_index', list(range(6)))
 @pytest.mark.parametrize('match_input_type', [True, False])
 @pytest.mark.parametrize('inplace', [True, False])
