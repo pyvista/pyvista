@@ -58,6 +58,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.cgns``      | :class:`pyvista.CGNSReader`                 |
     +----------------+---------------------------------------------+
+    | ``.cml``       | :class:`pyvista.CMLMoleculeReader`          |
+    +----------------+---------------------------------------------+
     | ``.cube``      | :class:`pyvista.GaussianCubeReader`         |
     +----------------+---------------------------------------------+
     | ``.dat``       | :class:`pyvista.TecplotReader`              |
@@ -2808,12 +2810,35 @@ class ProStarReader(BaseReader):
     _vtk_class_name = "vtkProStarReader"
 
 
+class CMLMoleculeReader(BaseReader):
+    """CMLMoleculeReader for .cml files.
+
+    Reads chemistry molecule in Chemical Markup Language (CML) file format.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_porphyrin(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = "vtkIOChemistry"
+    _vtk_class_name = "vtkCMLMoleculeReader"
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
     '.cas': FluentReader,
     '.case': EnSightReader,
     '.cgns': CGNSReader,
+    '.cml': CMLMoleculeReader,
     '.cube': GaussianCubeReader,
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
