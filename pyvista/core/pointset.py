@@ -442,6 +442,10 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
+    def extract_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
     def point_is_inside_cell(self, *args, **kwargs):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
