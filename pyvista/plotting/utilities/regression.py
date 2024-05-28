@@ -1,14 +1,18 @@
 """Image regression module."""
 
-from typing import Optional, cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 
 def remove_alpha(img):

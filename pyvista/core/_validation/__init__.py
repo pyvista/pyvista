@@ -1,5 +1,7 @@
 """Input _validation functions."""
 
+from __future__ import annotations
+
 from pyvista.core._validation.check import (  # noqa: F401
     check_contains,
     check_finite,

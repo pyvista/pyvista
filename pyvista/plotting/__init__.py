@@ -1,6 +1,7 @@
 """Plotting routines."""
 
 # flake8: noqa: F401
+from __future__ import annotations
 
 from pyvista import MAX_N_COLOR_BARS
 from pyvista._plot import plot

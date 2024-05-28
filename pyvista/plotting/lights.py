@@ -1,6 +1,9 @@
 """Module containing pyvista implementation of vtk.vtkLight."""
 
+from __future__ import annotations
+
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -13,8 +16,10 @@ except ImportError:  # pragma: no cover
 
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
-from ._typing import ColorLike
 from .colors import Color
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 
 class LightType(IntEnum):

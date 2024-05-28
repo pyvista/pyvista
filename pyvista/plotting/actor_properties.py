@@ -1,9 +1,13 @@
 """Module containing pyvista implementation of vtkProperty."""
 
-from typing import Tuple
+from __future__ import annotations
 
-from . import _vtk
+from typing import TYPE_CHECKING, Tuple
+
 from .opts import InterpolationType, RepresentationType
+
+if TYPE_CHECKING:
+    from . import _vtk
 
 
 class ActorProperties:

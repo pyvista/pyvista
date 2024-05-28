@@ -23,6 +23,8 @@ A user-defined Foo class is defined that extends the functionality of
 
 """
 
+from __future__ import annotations
+
 from .composite import MultiBlock
 from .grid import ImageData, RectilinearGrid
 from .objects import Table

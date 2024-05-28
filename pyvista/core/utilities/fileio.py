@@ -1,5 +1,7 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
 import warnings

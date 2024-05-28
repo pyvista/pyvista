@@ -10,6 +10,7 @@ raise an ImportError if the user does not have libGL installed.
 """
 
 # flake8: noqa: F401
+from __future__ import annotations
 
 try:
     # Necessary for displaying charts, otherwise crashes on rendering

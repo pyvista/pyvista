@@ -6,9 +6,10 @@ import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
-    from trimesh import Trimesh
     from meshio import Mesh
+    from trimesh import Trimesh
+
+    from pyvista.core._typing_core import NumpyArray
 
 import numpy as np
 

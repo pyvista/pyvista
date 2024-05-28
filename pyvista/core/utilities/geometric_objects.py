@@ -19,6 +19,8 @@ as well as some pure-python helpers.
 
 """
 
+from __future__ import annotations
+
 import contextlib
 from itertools import product
 
