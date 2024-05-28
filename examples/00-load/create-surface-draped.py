@@ -29,6 +29,7 @@ have are technically shifted up and we have some NaN filler above the surface
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
 """
+from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numpy as np

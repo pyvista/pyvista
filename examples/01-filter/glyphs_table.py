@@ -7,6 +7,7 @@ Table of Glyphs
 ``vtk`` supports tables of glyphs from which glyphs are looked
 up. This example demonstrates this functionality.
 """
+from __future__ import annotations
 
 import numpy as np
 

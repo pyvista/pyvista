@@ -9,6 +9,7 @@ using the ``extract_surface`` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 

@@ -17,6 +17,7 @@ follows a given topographic surface. In this example, it is important to note
 that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
 """
+from __future__ import annotations
 
 import numpy as np
 

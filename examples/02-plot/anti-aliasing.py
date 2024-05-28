@@ -31,6 +31,7 @@ should consider FXAA.
 
 
 """
+from __future__ import annotations
 
 import pyvista as pv
 

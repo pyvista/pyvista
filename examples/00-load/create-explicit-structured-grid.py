@@ -8,6 +8,7 @@ Create an explicit structured grid from NumPy arrays using
 :class:`pyvista.ExplicitStructuredGrid`.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

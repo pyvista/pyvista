@@ -7,6 +7,7 @@ This example demonstrates how to measure distance between two points.
 :func:`add_measurement_widget() <pyvista.Plotter.add_measurement_widget>`.
 
 """
+from __future__ import annotations
 
 import pyvista as pv
 

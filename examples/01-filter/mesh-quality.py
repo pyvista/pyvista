@@ -10,6 +10,7 @@ Here we will use the :func:`pyvista.DataSetFilters.compute_cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 """
+from __future__ import annotations
 
 from pyvista import examples
 

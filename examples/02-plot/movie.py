@@ -11,6 +11,7 @@ Create an animated MP4 movie of a rendering scene.
     rendered on a sphinx gallery example.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

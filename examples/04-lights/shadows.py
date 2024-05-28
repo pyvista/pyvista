@@ -6,6 +6,7 @@ Shadows
 
 Demonstrate the usage of lights and shadows in PyVista.
 """
+from __future__ import annotations
 
 import numpy as np
 

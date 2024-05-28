@@ -9,6 +9,7 @@ This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 :ref:`openfoam_example` for a full example using this reader.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

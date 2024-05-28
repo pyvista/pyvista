@@ -9,6 +9,7 @@ This example uses :func:`pyvista.read`.
 .. _meshio: https://github.com/nschloe/meshio
 .. _FEniCS/Dolfin: https://fenicsproject.org
 """
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples

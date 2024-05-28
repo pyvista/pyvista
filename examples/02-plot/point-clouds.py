@@ -7,6 +7,7 @@ This example shows you how to plot point clouds using PyVista using both the
 ``'points'`` and ``'points_gaussian'`` styles.
 
 """
+from __future__ import annotations
 
 import numpy as np
 
