@@ -15,7 +15,7 @@ from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 from . import _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 

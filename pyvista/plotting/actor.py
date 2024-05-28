@@ -11,7 +11,7 @@ from . import _vtk
 from ._property import Property
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .mapper import _BaseMapper
 
 

@@ -5,12 +5,6 @@ from __future__ import annotations
 import collections
 from typing import TYPE_CHECKING, Optional, Union, cast
 
-if TYPE_CHECKING:  # pragma: no cover
-    from meshio import Mesh
-    from trimesh import Trimesh
-
-    from pyvista.core._typing_core import NumpyArray
-
 import numpy as np
 
 import pyvista
@@ -18,6 +12,12 @@ from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
 from .fileio import from_meshio, is_meshio_mesh
+
+if TYPE_CHECKING:  # pragma: no cover
+    from meshio import Mesh
+    from trimesh import Trimesh
+
+    from pyvista.core._typing_core import NumpyArray
 
 
 def wrap(

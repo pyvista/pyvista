@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Tuple
 
 from .opts import InterpolationType, RepresentationType
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from . import _vtk
 
 
