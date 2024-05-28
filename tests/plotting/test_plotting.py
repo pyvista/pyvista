@@ -16,7 +16,7 @@ import platform
 import re
 import time
 from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
 from PIL import Image
@@ -34,6 +34,9 @@ from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, ItemsView
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -4144,10 +4147,10 @@ def test_create_axes_orientation_box():
     plotter.show()
 
 
-_TypeType = TypeVar('_TypeType', bound=Type)
+_TypeType = TypeVar('_TypeType', bound=type)
 
 
-def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
     """Get all members of a specified type which are defined locally inside a module."""
 
     def is_local(obj):
@@ -4161,7 +4164,7 @@ def _get_module_functions(module: ModuleType):
     return _get_module_members(module, typ=FunctionType)
 
 
-def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
+def _get_default_kwargs(call: Callable) -> dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
     # Get default value for positional or keyword args
@@ -4197,7 +4200,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param

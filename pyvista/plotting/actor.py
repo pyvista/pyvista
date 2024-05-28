@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, List, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
@@ -80,7 +80,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_name']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -346,7 +346,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> Optional[pyvista.Property]:  # numpydoc ignore=RT01
+    def backface_prop(self) -> pyvista.Property | None:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property

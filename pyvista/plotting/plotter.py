@@ -18,7 +18,7 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 import uuid
 import warnings
 import weakref
@@ -1919,7 +1919,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_scale = value
 
     @contextmanager
-    def image_scale_context(self, scale: Optional[int] = None):
+    def image_scale_context(self, scale: int | None = None):
         """Set the image scale in an isolated context.
 
         Parameters
@@ -7111,7 +7111,7 @@ class Plotter(BasePlotter):
 #
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+_ALL_PLOTTERS: dict[str, BasePlotter] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover

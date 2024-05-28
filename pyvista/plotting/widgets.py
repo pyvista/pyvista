@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -27,6 +27,8 @@ from .utilities.algorithms import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core._array_like import NumpyArray
 
 
@@ -2681,9 +2683,9 @@ class WidgetHelper:
 
     def add_logo_widget(
         self,
-        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
+        logo: pyvista.ImageData | str | pathlib.Path | None = None,
+        position: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.75, 0.8),
+        size: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.

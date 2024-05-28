@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Sequence
 import contextlib
 from functools import wraps
 import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 import warnings
 
 import numpy as np
@@ -64,7 +65,7 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS: ClassVar[Dict[str, Type[_vtk.vtkSimplePointsWriter]]] = {
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {
         ".xyz": _vtk.vtkSimplePointsWriter,
     }
 
@@ -113,7 +114,7 @@ class _PointSet(DataSet):
 
     def remove_cells(
         self,
-        ind: Union[VectorLike[bool], VectorLike[int]],
+        ind: VectorLike[bool] | VectorLike[int],
         inplace=False,
     ) -> _PointSet:
         """Remove cells.
@@ -695,17 +696,19 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
     _WRITERS: ClassVar[
-        Dict[
+        dict[
             str,
-            Union[
-                Type[_vtk.vtkPLYWriter],
-                Type[_vtk.vtkXMLPolyDataWriter],
-                Type[_vtk.vtkSTLWriter],
-                Type[_vtk.vtkPolyDataWriter],
-                Type[_vtk.vtkHoudiniPolyDataWriter],
-                Type[_vtk.vtkOBJWriter],
-                Type[_vtk.vtkIVWriter],
-            ],
+            (
+                type[
+                    _vtk.vtkPLYWriter
+                    | _vtk.vtkXMLPolyDataWriter
+                    | _vtk.vtkSTLWriter
+                    | _vtk.vtkPolyDataWriter
+                    | _vtk.vtkHoudiniPolyDataWriter
+                    | _vtk.vtkOBJWriter
+                    | _vtk.vtkIVWriter
+                ]
+            ),
         ]
     ] = {
         '.ply': _vtk.vtkPLYWriter,
@@ -719,18 +722,18 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __init__(
         self,
-        var_inp: Union[_vtk.vtkPolyData, str, pathlib.Path, MatrixLike[float], None] = None,
-        faces: Optional[CellArrayLike] = None,
-        n_faces: Optional[int] = None,
-        lines: Optional[CellArrayLike] = None,
-        n_lines: Optional[int] = None,
-        strips: Optional[CellArrayLike] = None,
-        n_strips: Optional[int] = None,
+        var_inp: _vtk.vtkPolyData | str | pathlib.Path | MatrixLike[float] | None = None,
+        faces: CellArrayLike | None = None,
+        n_faces: int | None = None,
+        lines: CellArrayLike | None = None,
+        n_lines: int | None = None,
+        strips: CellArrayLike | None = None,
+        n_strips: int | None = None,
         deep: bool = False,
-        force_ext: Optional[str] = None,
-        force_float: Optional[bool] = True,
-        verts: Optional[CellArrayLike] = None,
-        n_verts: Optional[int] = None,
+        force_ext: str | None = None,
+        force_float: bool | None = True,
+        verts: CellArrayLike | None = None,
+        n_verts: int | None = None,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -1071,7 +1074,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return cls(points, faces=CellArray.from_regular_cells(faces, deep=deep))
 
     @property
-    def irregular_faces(self) -> Tuple[NumpyArray[int], ...]:  # numpydoc ignore=RT01
+    def irregular_faces(self) -> tuple[NumpyArray[int], ...]:  # numpydoc ignore=RT01
         """Return a tuple of face arrays.
 
         Returns
@@ -1754,9 +1757,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
     """
 
     _WRITERS: ClassVar[
-        Dict[
+        dict[
             str,
-            Union[Type[_vtk.vtkXMLUnstructuredGridWriter], Type[_vtk.vtkUnstructuredGridWriter]],
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
     ] = {
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
@@ -1999,7 +2002,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def cells_dict(self) -> Dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -2369,7 +2372,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """
 
     _WRITERS: ClassVar[
-        Dict[str, Union[Type[_vtk.vtkStructuredGridWriter], Type[_vtk.vtkXMLStructuredGridWriter]]]
+        dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
     ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
@@ -2609,7 +2612,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())
         return self
 
-    def hide_points(self, ind: Union[VectorLike[bool], VectorLike[int]]) -> None:
+    def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
 
         Hides points by setting the ghost_points array to ``HIDDEN_CELL``.
@@ -2708,9 +2711,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     """
 
     _WRITERS: ClassVar[
-        Dict[
+        dict[
             str,
-            Union[Type[_vtk.vtkXMLUnstructuredGridWriter], Type[_vtk.vtkUnstructuredGridWriter]],
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
     ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
@@ -2844,9 +2847,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     def save(
         self,
-        filename: Union[pathlib.Path, str],
+        filename: pathlib.Path | str,
         binary: bool = True,
-        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+        texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this VTK object to file.
 
@@ -2976,7 +2979,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             grid.show_cells(inplace=True)
             return grid
 
-    def _dimensions(self) -> Tuple[int, int, int]:
+    def _dimensions(self) -> tuple[int, int, int]:
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
@@ -2985,7 +2988,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the topological dimensions of the grid.
 
         Returns
@@ -3038,7 +3041,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords: ArrayLike[int]) -> Union[int, NumpyArray[int], None]:
+    def cell_id(self, coords: ArrayLike[int]) -> int | NumpyArray[int] | None:
         """Return the cell ID.
 
         Parameters
@@ -3086,8 +3089,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     def cell_coords(
         self,
-        ind: Union[int, VectorLike[int]],
-    ) -> Union[None, Tuple[int], MatrixLike[int]]:
+        ind: int | VectorLike[int],
+    ) -> None | tuple[int] | MatrixLike[int]:
         """Return the cell structured coordinates.
 
         Parameters
@@ -3130,7 +3133,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return coords
         return None
 
-    def neighbors(self, ind: Union[int, VectorLike[int]], rel: str = 'connectivity') -> List[int]:
+    def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
 
         Parameters

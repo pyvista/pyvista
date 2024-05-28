@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 import pyvista
 from pyvista import vtk_version_info
 from pyvista.core.utilities.misc import _check_range, no_new_attr
@@ -836,7 +834,7 @@ class Property(_vtk.vtkProperty):
         return InterpolationType.from_any(self.GetInterpolation())
 
     @interpolation.setter
-    def interpolation(self, value: Union[str, int, InterpolationType]):  # numpydoc ignore=GL08
+    def interpolation(self, value: str | int | InterpolationType):  # numpydoc ignore=GL08
         value = InterpolationType.from_any(value).value
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()

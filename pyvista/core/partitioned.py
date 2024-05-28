@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import collections.abc
-from typing import Iterable, Optional, Union, overload
+from typing import TYPE_CHECKING, overload
 
 from . import _vtk_core as _vtk
 from .dataset import DataObject, DataSet
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset, wrap
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc.MutableSequence):  # type: ignore[type-arg]
@@ -60,7 +63,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
                 self.SetPartition(i, wrap(partition))
 
     @overload
-    def __getitem__(self, index: int) -> Optional[DataSet]:  # noqa: D105
+    def __getitem__(self, index: int) -> DataSet | None:  # noqa: D105
         ...  # pragma: no cover
 
     @overload
@@ -79,16 +82,16 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
             return wrap(self.GetPartition(index))
 
     @overload
-    def __setitem__(self, index: int, data: Optional[DataSet]):  # noqa: D105
+    def __setitem__(self, index: int, data: DataSet | None):  # noqa: D105
         ...  # pragma: no cover
 
     @overload
-    def __setitem__(self, index: slice, data: Iterable[Optional[DataSet]]):  # noqa: D105
+    def __setitem__(self, index: slice, data: Iterable[DataSet | None]):  # noqa: D105
         ...  # pragma: no cover
 
     def __setitem__(
         self,
-        index: Union[int, slice],
+        index: int | slice,
         data,
     ):
         """Set a partition with a VTK data object."""
@@ -102,7 +105,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
                 index = self.n_partitions + index
             self.SetPartition(index, data)
 
-    def __delitem__(self, index: Union[int, slice]) -> None:
+    def __delitem__(self, index: int | slice) -> None:
         """Remove a partition at the specified index are not supported."""
         raise PartitionedDataSetsNotSupported
 
@@ -111,7 +114,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc
         self._iter_n = 0
         return self
 
-    def __next__(self) -> Optional[DataSet]:
+    def __next__(self) -> DataSet | None:
         """Get the next partition from the iterator."""
         if self._iter_n < self.n_partitions:
             result = self[self._iter_n]

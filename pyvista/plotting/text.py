@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import pyvista
 from pyvista.core.utilities.misc import _check_range, no_new_attr
@@ -15,6 +15,8 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
     from ._typing import ColorLike
 
 

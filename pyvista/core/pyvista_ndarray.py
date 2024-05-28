@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -50,7 +50,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     def __new__(
         cls,
-        array: Union[ArrayLike[float], _vtk.vtkAbstractArray],
+        array: ArrayLike[float] | _vtk.vtkAbstractArray,
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -93,7 +93,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, NumpyArray[int]], value):
+    def __setitem__(self, key: int | NumpyArray[int], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

@@ -6,7 +6,7 @@ from abc import abstractmethod
 from collections import UserDict
 import collections.abc
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict
 
 import numpy as np
 
@@ -41,7 +41,7 @@ class DataObject:
 
     """
 
-    _WRITERS: ClassVar[Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]]] = {}
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -79,7 +79,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: Union[str, Path], **kwargs):
+    def _from_file(self, filename: str | Path, **kwargs):
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
@@ -95,9 +95,9 @@ class DataObject:
 
     def save(
         self,
-        filename: Union[Path, str],
+        filename: Path | str,
         binary: bool = True,
-        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+        texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
 
@@ -563,7 +563,7 @@ class DataObject:
     @user_dict.setter
     def user_dict(
         self,
-        dict_: Union[Dict[str, _JSONValueType], UserDict],  # type: ignore[type-arg]
+        dict_: dict[str, _JSONValueType] | UserDict,  # type: ignore[type-arg]
     ):  # numpydoc ignore=GL08
 
         # Setting None removes the field data array

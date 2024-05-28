@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import Tuple, cast
+from typing import cast
 import warnings
 import weakref
 
@@ -77,7 +77,7 @@ class RectangleSelection:
         return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
 
     @property
-    def viewport(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
+    def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the selected viewport coordinates.
 
         Coordinates are given as: ``(x0, y0, x1, y1)``

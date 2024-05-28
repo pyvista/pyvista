@@ -5,7 +5,7 @@ from __future__ import annotations
 import collections.abc
 import os
 import sys
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -13,6 +13,9 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from .helpers import wrap
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def voxelize(mesh, density=None, check_surface=True):

@@ -110,11 +110,14 @@ import re
 import shutil
 import textwrap
 import traceback
-from typing import Callable, ClassVar, Dict
+from typing import TYPE_CHECKING, ClassVar
 
 from docutils.parsers.rst import Directive, directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
@@ -156,7 +159,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec: ClassVar[Dict[str, Callable]] = {
+    option_spec: ClassVar[dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,

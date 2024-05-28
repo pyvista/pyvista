@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from itertools import count, islice
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -43,7 +43,7 @@ def numpy_to_idarr(
     ind: MatrixLike[int],
     deep: bool = False,
     return_ind: bool = False,
-) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters

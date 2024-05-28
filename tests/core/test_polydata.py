@@ -4,7 +4,6 @@ from math import pi
 import pathlib
 from pathlib import Path
 import re
-from typing import Dict, List
 from unittest.mock import patch
 import warnings
 
@@ -220,9 +219,9 @@ def test_lines_on_init(lines_is_cell_array):
 
 def _assert_verts_equal(
     mesh: pv.PolyData,
-    verts: List[int],
+    verts: list[int],
     n_verts: int,
-    cell_types: Dict[int, pv.CellType],
+    cell_types: dict[int, pv.CellType],
 ):
     assert np.array_equal(mesh.verts, verts)
     assert mesh.n_verts == n_verts

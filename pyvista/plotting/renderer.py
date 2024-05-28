@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import collections.abc
+from collections.abc import Sequence
 import contextlib
 from functools import partial, wraps
-from typing import ClassVar, Dict, Sequence, cast
+from typing import ClassVar, cast
 import warnings
 
 import numpy as np
@@ -250,7 +251,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
-    CAMERA_STR_ATTR_MAP: ClassVar[Dict[str, str]] = {
+    CAMERA_STR_ATTR_MAP: ClassVar[dict[str, str]] = {
         'xy': 'view_xy',
         'xz': 'view_xz',
         'yz': 'view_yz',

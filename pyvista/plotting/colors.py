@@ -170,7 +170,6 @@ tab:cyan
 from __future__ import annotations
 
 import inspect
-from typing import Optional, Tuple, Union
 
 from cycler import Cycler, cycler
 
@@ -729,10 +728,10 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[ColorLike] = None,
-        opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[ColorLike] = None,
-        default_opacity: Union[float, str] = 255,
+        color: ColorLike | None = None,
+        opacity: float | str | None = None,
+        default_color: ColorLike | None = None,
+        default_opacity: float | str = 255,
     ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
@@ -810,7 +809,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: Union[float, np.floating[Any], str],
+        val: float | np.floating[Any] | str,
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
@@ -897,7 +896,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
+    def int_rgba(self) -> tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -923,7 +922,7 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def int_rgb(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -949,7 +948,7 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
+    def float_rgba(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -975,7 +974,7 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -1055,7 +1054,7 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
         Returns

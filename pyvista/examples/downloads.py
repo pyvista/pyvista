@@ -26,7 +26,6 @@ import logging
 import os
 from pathlib import Path, PureWindowsPath
 import shutil
-from typing import Union
 import warnings
 
 import numpy as np
@@ -5924,7 +5923,7 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> pyvista.ImageData | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)

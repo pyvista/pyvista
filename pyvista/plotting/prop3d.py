@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -27,7 +27,7 @@ class Prop3D(_vtk.vtkProp3D):
         super().__init__()
 
     @property
-    def scale(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set entity scale.
 
         Examples
@@ -50,7 +50,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetScale(value)
 
     @property
-    def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity position.
 
         Examples
@@ -168,7 +168,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity orientation.
 
         Orientation is defined as the rotation from the global axes in degrees
@@ -215,7 +215,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, value: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -237,7 +237,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples
@@ -308,7 +308,7 @@ class Prop3D(_vtk.vtkProp3D):
     @user_matrix.setter
     def user_matrix(
         self,
-        value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]],
+        value: _vtk.vtkMatrix4x4 | NumpyArray[float],
     ):  # numpydoc ignore=GL08
         if isinstance(value, np.ndarray):
             if value.shape != (4, 4):

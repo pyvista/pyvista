@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, Trimesh, Mesh]],
-) -> Optional[Union[pyvista.DataSet, pyvista.pyvista_ndarray]]:
+    dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
+) -> pyvista.DataSet | pyvista.pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:

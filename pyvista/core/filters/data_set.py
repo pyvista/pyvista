@@ -5,7 +5,7 @@ from __future__ import annotations
 import collections.abc
 import contextlib
 import functools
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Literal
 import warnings
 
 import matplotlib.pyplot as plt
@@ -34,6 +34,8 @@ from pyvista.core.utilities.helpers import generate_plane, wrap
 from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import MatrixLike, NumpyArray, VectorLike
 
 
@@ -1516,7 +1518,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(self, extent: Sequence[float] | None = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -5121,21 +5123,19 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: Optional[
-            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
-        ] = None,
+        values: None | (
+            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
+        ) = None,
         *,
-        ranges: Optional[
-            Union[
-                VectorLike[float],
-                MatrixLike[float],
-                Dict[str, VectorLike[float]],
-                Dict[Tuple[float, float], str],
-            ]
-        ] = None,
-        scalars: Optional[str] = None,
+        ranges: None | (
+            VectorLike[float]
+            | MatrixLike[float]
+            | dict[str, VectorLike[float]]
+            | dict[tuple[float, float], str]
+        ) = None,
+        scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
+        component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         **kwargs,
     ):
         """Split mesh into separate sub-meshes using point or cell data.
@@ -5282,24 +5282,22 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: Optional[
-            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
-        ] = None,
+        values: None | (
+            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
+        ) = None,
         *,
-        ranges: Optional[
-            Union[
-                VectorLike[float],
-                MatrixLike[float],
-                Dict[str, VectorLike[float]],
-                Dict[Tuple[float, float], str],
-            ]
-        ] = None,
-        scalars: Optional[str] = None,
+        ranges: None | (
+            VectorLike[float]
+            | MatrixLike[float]
+            | dict[str, VectorLike[float]]
+            | dict[tuple[float, float], str]
+        ) = None,
+        scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
+        component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
-        include_cells: Optional[bool] = None,
+        include_cells: bool | None = None,
         split: bool = False,
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
@@ -6565,7 +6563,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, NumpyArray[float]],
+        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
