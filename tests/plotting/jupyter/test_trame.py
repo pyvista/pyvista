@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from IPython.display import IFrame
 import numpy as np
@@ -349,7 +349,7 @@ def test_trame_export_html(tmpdir):
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Wavelet())
     plotter.export_html(filename)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
 
 def test_export_single(tmpdir, skip_check_gc):
@@ -360,7 +360,7 @@ def test_export_single(tmpdir, skip_check_gc):
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_multi(tmpdir, skip_check_gc):
@@ -377,7 +377,7 @@ def test_export_multi(tmpdir, skip_check_gc):
     plotter.add_mesh(multi)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_texture(tmpdir, skip_check_gc):
@@ -389,7 +389,7 @@ def test_export_texture(tmpdir, skip_check_gc):
     plotter.add_mesh(data, texture=texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_verts(tmpdir, skip_check_gc):
@@ -400,7 +400,7 @@ def test_export_verts(tmpdir, skip_check_gc):
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_color(tmpdir, skip_check_gc):
@@ -411,7 +411,7 @@ def test_export_color(tmpdir, skip_check_gc):
     plotter.add_mesh(data, color='yellow')
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_embeddable_widget(skip_check_gc):

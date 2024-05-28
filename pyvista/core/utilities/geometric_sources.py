@@ -6,18 +6,20 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -64,7 +66,7 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         surf.points += np.array(center, dtype=surf.points.dtype)
 
 
-if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVersion() <= 2:
+if _vtk.vtk_version_info < (9, 3):
 
     @no_new_attr
     class CapsuleSource(_vtk.vtkCapsuleSource):
@@ -103,7 +105,7 @@ if _vtk.vtkVersion.GetVTKMajorVersion() == 9 and _vtk.vtkVersion.GetVTKMinorVers
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        _new_attr_exceptions = ['_direction']
+        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
 
         def __init__(
             self,
@@ -330,7 +332,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive."
+                "Both radius and angle cannot be specified. They are mutually exclusive.",
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -571,7 +573,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
 
     def __init__(
         self,
@@ -774,10 +776,12 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         List of points defining a broken line.
     """
 
-    _new_attr_exceptions = ['points']
+    _new_attr_exceptions: ClassVar[List[str]] = ['points']
 
-    def __init__(self, points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+    def __init__(self, points=None):
         """Initialize the multiple lines source class."""
+        if points is None:
+            points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         super().__init__()
         self.points = points
 
@@ -860,7 +864,7 @@ class Text3DSource(vtkVectorText):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         '_center',
         '_height',
         '_width',
@@ -927,7 +931,7 @@ class Text3DSource(vtkVectorText):
             else:
                 raise AttributeError(
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}'
+                    f'{self.__class__.__name__}',
                 )
 
     def __del__(self):
@@ -1141,6 +1145,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
+
         .. versionadded:: 0.44.0
 
     Examples
@@ -1152,7 +1157,7 @@ class CubeSource(_vtk.vtkCubeSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
@@ -1186,7 +1191,7 @@ class CubeSource(_vtk.vtkCubeSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)
@@ -1302,11 +1307,10 @@ class CubeSource(_vtk.vtkCubeSource):
             It must be either 'float32' or 'float64'.
         """
         precision = self.GetOutputPointsPrecision()
-        point_dtype = {
+        return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
         }[precision]
-        return point_dtype
 
     @point_dtype.setter
     def point_dtype(self, point_dtype: str):
@@ -1332,6 +1336,7 @@ class CubeSource(_vtk.vtkCubeSource):
         self.SetOutputPointsPrecision(precision)
 
 
+@no_new_attr
 class DiscSource(_vtk.vtkDiskSource):
     """Disc source algorithm class.
 
@@ -1363,7 +1368,7 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions = ["center"]
+    _new_attr_exceptions: ClassVar[List[str]] = ["center"]
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -1404,7 +1409,7 @@ class DiscSource(_vtk.vtkDiskSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1508,6 +1513,7 @@ class DiscSource(_vtk.vtkDiskSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class LineSource(_vtk.vtkLineSource):
     """Create a line.
 
@@ -1734,7 +1740,7 @@ class SphereSource(_vtk.vtkSphereSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1904,6 +1910,7 @@ class SphereSource(_vtk.vtkSphereSource):
         return wrap(self.GetOutput())
 
 
+@no_new_attr
 class PolygonSource(_vtk.vtkRegularPolygonSource):
     """Polygon source algorithm class.
 
@@ -1937,7 +1944,12 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
     """
 
     def __init__(
-        self, center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True
+        self,
+        center=(0.0, 0.0, 0.0),
+        radius=1.0,
+        normal=(0.0, 0.0, 1.0),
+        n_sides=6,
+        fill=True,
     ):
         """Initialize the polygon source class."""
         super().__init__()
@@ -2100,7 +2112,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions = ['_kinds']
+    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
@@ -2430,7 +2442,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     """
 
-    _new_attr_exceptions = [
+    _new_attr_exceptions: ClassVar[List[str]] = [
         "bounds",
         "_bounds",
     ]
@@ -2451,7 +2463,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)'
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self._bounds = bounds
         self.SetBounds(bounds)

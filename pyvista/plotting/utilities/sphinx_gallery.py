@@ -1,6 +1,6 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
-import os
+from pathlib import Path
 import shutil
 from typing import Iterator, List
 
@@ -28,7 +28,9 @@ def _get_sg_image_scraper():
 
 
 def html_rst(
-    figure_list, sources_dir, srcsetpaths=None
+    figure_list,
+    sources_dir,
+    srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
     from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
@@ -105,7 +107,8 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
         _process_events_before_scraping(plotter)
         fname = next(image_path_iterator)
         # Make sure the extension is "png"
-        fname_withoutextension, _ = os.path.splitext(fname)
+        path = Path(fname)
+        fname_withoutextension = str(path.parent / path.stem)
         fname = fname_withoutextension + ".png"
 
         if hasattr(plotter, "_gif_filename"):
@@ -119,7 +122,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
                 image_names.append(fname)
             else:  # pragma: no cover
                 fname = fname[:-3] + "vtksz"
-                with open(fname, "wb") as f:
+                with Path(fname).open("wb") as f:
                     f.write(plotter.last_vtksz)
                     image_names.append(fname)
 
@@ -198,7 +201,8 @@ class DynamicScraper:  # pragma: no cover
 
         # read global option  if it exists
         force_static = block_vars['example_globals'].get(
-            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT", False
+            "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT",
+            False,
         )
         # override with block specific value if it exists
         if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):
@@ -210,7 +214,7 @@ class DynamicScraper:  # pragma: no cover
             # Just in case force_static is None at this point
             force_static = False
 
-        dynamic = False if force_static else True
+        dynamic = not force_static
 
         image_path_iterator = block_vars["image_path_iterator"]
         image_names = generate_images(image_path_iterator, dynamic=dynamic)

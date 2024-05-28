@@ -1,12 +1,13 @@
 """Module dedicated to widgets."""
 
+from __future__ import annotations
+
 import pathlib
-from typing import Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -24,6 +25,9 @@ from .utilities.algorithms import (
     pointset_to_polydata_algorithm,
     set_algorithm_input,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
 
 
 def _parse_interaction_event(interaction_event):
@@ -51,13 +55,13 @@ def _parse_interaction_event(interaction_event):
     elif isinstance(interaction_event, str):
         raise ValueError(
             "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given."
+            f"'end', or 'always'. {interaction_event} was given.",
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
             "Expected type for `interaction_event` is either a str "
             "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given."
+            f" ({type(interaction_event)}) was given.",
         )
     return interaction_event
 
@@ -201,18 +205,14 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                if use_planes:
-                    args = [planes]
-                else:
-                    args = [the_box]
+                args = [planes] if use_planes else [the_box]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
-            return
 
         box_widget = _vtk.vtkBoxWidget()
         box_widget.GetOutlineProperty().SetColor(
-            Color(color, default_color=pyvista.global_theme.font.color).float_rgb
+            Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
         )
         box_widget.SetInteractor(self.iren.interactor)
         box_widget.SetCurrentRenderer(self.renderer)
@@ -321,7 +321,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -535,7 +535,6 @@ class WidgetHelper:
                     try_callback(callback, normal, origin, widget)
                 else:
                     try_callback(callback, normal, origin)
-            return
 
         if implicit:
             plane_widget = _vtk.vtkImplicitPlaneWidget()
@@ -755,7 +754,7 @@ class WidgetHelper:
         from pyvista.core.filters import _get_output  # avoids circular import
 
         mesh, algo = algorithm_to_mesh_handler(
-            add_ids_algorithm(mesh, point_ids=False, cell_ids=True)
+            add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
         name = kwargs.get('name', mesh.memory_address)
@@ -914,7 +913,7 @@ class WidgetHelper:
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
                 'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
-                'from `Plotter.add_volume`.'
+                'from `Plotter.add_volume`.',
             )
         else:
             assert_empty_kwargs(**kwargs)
@@ -1361,7 +1360,7 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead"
+                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
             )
         n_states = len(data)
         if n_states == 0:
@@ -1378,7 +1377,6 @@ class WidgetHelper:
                     idx = n_states - 1
                 if callable(callback):
                     try_callback(callback, data[idx])
-            return
 
         slider_widget = self.add_slider_widget(
             callback=_the_callback,
@@ -1567,7 +1565,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given."
+                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1591,7 +1589,6 @@ class WidgetHelper:
                     try_callback(callback, value, widget)
                 else:
                     try_callback(callback, value)
-            return
 
         slider_widget = _vtk.vtkSliderWidget()
         slider_widget.SetInteractor(self.iren.interactor)
@@ -1741,7 +1738,11 @@ class WidgetHelper:
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
         alg.SetInputArrayToProcess(
-            0, 0, 0, field.value, scalars
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
         alg.SetAllScalars(all_scalars)
@@ -1886,7 +1887,7 @@ class WidgetHelper:
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
-                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.'
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
             )
 
         rng = mesh.get_data_range(scalars)
@@ -2029,7 +2030,6 @@ class WidgetHelper:
                     try_callback(callback, polyline, widget)
                 else:
                     try_callback(callback, polyline)
-            return
 
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(color.float_rgb)
@@ -2257,7 +2257,6 @@ class WidgetHelper:
             b = representation.GetPoint2Representation().GetWorldPosition()
             if callable(callback):
                 try_callback(callback, a, b, compute(a, b))
-            return
 
         widget.AddObserver(_vtk.vtkCommand.EndInteractionEvent, place_point)
 
@@ -2373,23 +2372,16 @@ class WidgetHelper:
             point = widget.GetCenter()
             index = widget.WIDGET_INDEX
             if callable(callback):
-                if num > 1:
-                    args = [point, index]
-                else:
-                    args = [point]
+                args = [point, index] if num > 1 else [point]
                 if pass_widget:
                     args.append(widget)
                 try_callback(callback, *args)
-            return
 
         if indices is None:
             indices = list(range(num))
 
         for i in range(num):
-            if center.ndim > 1:
-                loc = center[i]
-            else:
-                loc = center
+            loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
             if style in "wireframe":
@@ -2750,7 +2742,7 @@ class WidgetHelper:
         representation.SetPosition2(size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
-        widget.SetInteractor(self.iren.interactor)  # type: ignore
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
         widget.On()
         self.logo_widgets.append(widget)

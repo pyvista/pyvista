@@ -5,6 +5,8 @@ Plot Truss-like FEA Solution with Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plot connections between points in 3D as cylinders, colored by scalars.
+Lines are created in a :class:`pyvista.PolyData` and then rendered as
+cylinders.
 
 
 """
@@ -43,7 +45,7 @@ edges = np.array(
         [2, 5],
         [5, 6],
         [2, 6],
-    ]
+    ],
 )
 
 # We must "pad" the edges to indicate to vtk how many points per edge

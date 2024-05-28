@@ -13,7 +13,8 @@ from pyvista.core.errors import (
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -100,6 +101,7 @@ def test_cast_to_polydata(pointset, deep):
     pointset.point_data[key] = data
 
     pdata = pointset.cast_to_polydata(deep)
+    assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
@@ -116,7 +118,8 @@ def test_filters_return_pointset(sphere):
 
 
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"), [(False, np.int64), (True, np.float32)]
+    ("force_float", "expected_data_type"),
+    [(False, np.int64), (True, np.float32)],
 )
 def test_pointset_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], np.int64)

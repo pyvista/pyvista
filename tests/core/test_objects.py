@@ -99,8 +99,6 @@ def test_table_init(tmpdir):
     with pytest.raises(TypeError):
         pv.Table("foo")
 
-    return
-
 
 def test_table_row_arrays():
     nr, nc = 50, 3
@@ -151,8 +149,6 @@ def test_table_row_arrays():
 
     del table[table.keys()[0]]
     assert table.n_arrays == n - 2
-
-    return
 
 
 def test_table_row_np_bool():

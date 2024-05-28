@@ -88,3 +88,15 @@ def test_copy(dataset_mapper, sphere):
 
     map_cp.scalar_range = (5, 10)
     assert map_cp.scalar_range != dataset_mapper.scalar_range
+
+
+@pytest.mark.parametrize('resolve', ["polygon_offset", "shift_zbuffer", "off"])
+def test_resolve(dataset_mapper, resolve):
+    dataset_mapper.resolve = resolve
+    assert dataset_mapper.resolve == resolve
+
+
+def test_invalid_resolve(dataset_mapper):
+    match = 'Resolve must be either "off", "polygon_offset" or "shift_zbuffer"'
+    with pytest.raises(ValueError, match=match):
+        dataset_mapper.resolve = "invalid"

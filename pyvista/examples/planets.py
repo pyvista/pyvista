@@ -74,10 +74,11 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -114,10 +115,11 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -154,10 +156,11 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -194,10 +197,11 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
@@ -234,10 +238,11 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -274,10 +279,11 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -314,10 +320,11 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -354,10 +361,11 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
@@ -438,10 +446,11 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -478,10 +487,11 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -518,10 +528,11 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> pl.show()
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def download_sun_surface(texture=False, load=True):  # pragma: no cover

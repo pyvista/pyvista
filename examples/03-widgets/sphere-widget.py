@@ -39,7 +39,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -79,7 +79,7 @@ surf.points = np.array(
         [-10, -10, -10],
         [10, 10, -10],
         [-10, 10, 0],
-    ]
+    ],
 )
 surf.faces = np.array([3, 0, 1, 2])
 
@@ -119,12 +119,11 @@ def get_colors(n):
     """A helper function to get n colors"""
     from itertools import cycle
 
-    import matplotlib
+    import matplotlib as mpl
 
-    cycler = matplotlib.rcParams['axes.prop_cycle']
+    cycler = mpl.rcParams['axes.prop_cycle']
     colors = cycle(cycler)
-    colors = [next(colors)['color'] for i in range(n)]
-    return colors
+    return [next(colors)['color'] for i in range(n)]
 
 
 # Create a grid to interpolate to
@@ -150,7 +149,6 @@ def update_surface(point, i):
     tp = np.vstack((points, boundaries))
     zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic')
     surf.points[:, -1] = zz.ravel(order='F')
-    return
 
 
 # Get a list of unique colors for each widget

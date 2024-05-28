@@ -152,7 +152,11 @@ pl.add_slider_widget(
     tube_width=0.003,
 )
 pl.add_slider_widget(
-    set_max_alpha, (0, 1), value=lut.alpha_range[1], interaction_event='always', tube_width=0.0
+    set_max_alpha,
+    (0, 1),
+    value=lut.alpha_range[1],
+    interaction_event='always',
+    tube_width=0.0,
 )
 
 pl.show()
@@ -200,10 +204,7 @@ def make_double_slider(attr, idx):
         if attr == 'scalar_range':
             actor.mapper.scalar_range = getattr(lut, attr)
 
-    if attr == 'scalar_range':
-        rng = scalars_rng
-    else:
-        rng = (0, 1)
+    rng = scalars_rng if attr == 'scalar_range' else (0, 1)
 
     # create two overlapping slider bars by hiding the tube of the second
     pl.add_slider_widget(

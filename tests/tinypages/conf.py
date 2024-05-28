@@ -1,11 +1,11 @@
 import datetime
-import os
+from pathlib import Path
 import re
 import sys
 
 import pyvista
 
-sys.path.append(os.path.join(os.path.dirname(__file__)))
+sys.path.append(str(Path(__file__).parent))
 
 # -- General configuration ------------------------------------------------
 
@@ -13,8 +13,8 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 root_doc = 'index'
 project = 'tinypages'
-year = datetime.date.today().year
-copyright = f"2021-{year}, PyVista developers"
+year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+copyright = f"2021-{year}, PyVista developers"  # noqa: A001
 version = '0.1'
 release = '0.1'
 exclude_patterns = ['_build']
