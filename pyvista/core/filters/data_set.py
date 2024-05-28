@@ -5396,19 +5396,92 @@ class DataSetFilters:
     #         pass_point_ids=pass_point_ids,
     #     )
 
-    def remove_points(  # numpydoc ignore=PR01,RT01
+    def remove_points(
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
         *,
-        inplace=False,
         invert=False,
-        pass_cell_ids=True,
         pass_point_ids=True,
+        pass_cell_ids=True,
         keep_scalars=True,
+        inplace=False,
         progress_bar=False,
     ):
-        """Remove points."""
+        """Remove points (and their cells) from a mesh.
+
+        Parameters
+        ----------
+        ind : sequence[int]
+            Sequence of point indices to be extracted.
+
+        mode : str, default: "any"
+            Selection criteria for removing cells.
+
+            -   ``'any'``: Remove cells if any point ids referenced by the cell are
+               specified as part of ``ind``. Points that are no longer referenced by
+               cells are also removed. This may result in more points removed than
+               specified.
+
+            -   ``'all'``:  Remove cells if all point ids referenced by the cell are
+               specified as part of ``ind``. This may result in fewer points removed
+               than specified.
+
+            -   ``'exact'``:  Only the points specified exactly by ``ind`` are removed.
+               This is similar to ``'any'``, except un-referenced points are kept and
+               are returned as separate VERTEX cells. The number of points removed
+               exactly matched the number of specified points.
+
+            -   ``'vertex'``:  Only the points specified exactly by ``ind`` are removed.
+               This is similar to ``'any'``, except un-referenced points are kept and
+               are returned as separate VERTEX cells. The number of points removed
+               exactly matched the number of specified points.
+
+        invert : bool, default: False
+            Invert the indices. Extract all points *except* for
+            those specified by ``ind``.
+
+        pass_point_ids : bool, default: True
+            Add a point array ``'vtkOriginalPointIds'`` that identifies the original
+            points the extracted points correspond to.
+
+        pass_cell_ids : bool, default: True
+            Add a cell array ``'vtkOriginalCellIds'`` that identifies the original cells
+            the extracted cells correspond to.
+
+        keep_scalars : bool, default: True
+            Pass point and cell data arrays from the input to the new mesh.
+
+        inplace : bool, default: False
+            If ``True`` the mesh is updated in-place, otherwise a copy
+            is returned. A copy is always returned if the input type is
+            not ``pyvista.PolyData`` or ``pyvista.UnstructuredGrid``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        See Also
+        --------
+        extract_cells, extract_values
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Subselected grid.
+
+        Examples
+        --------
+        Extract all the points of a sphere with a Z coordinate greater than 0
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> extracted = sphere.extract_points(
+        ...     sphere.points[:, 2] > 0, include_cells=False
+        ... )
+        >>> extracted.clear_data()  # clear for plotting
+        >>> extracted.plot()
+
+        """
         invert = not invert
         mode = 'all' if mode == 'any' else 'any' if mode == 'all' else mode
         return self._extract_points_internal_method(
