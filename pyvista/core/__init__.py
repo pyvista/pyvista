@@ -32,7 +32,7 @@ from .filters import (
 )
 from .grid import Grid, ImageData, RectilinearGrid
 from .objects import Table
-from .partitioned import PartitionedDataSet
+from .partitioned import PartitionedDataSet, PartitionedDataSetCollection
 from .pointset import (
     ExplicitStructuredGrid,
     PointGrid,
