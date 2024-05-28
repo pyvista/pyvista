@@ -109,14 +109,14 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return super().__array_wrap__(out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
