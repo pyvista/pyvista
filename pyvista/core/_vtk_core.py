@@ -355,6 +355,7 @@ from vtkmodules.vtkIOGeometry import (
     vtkHoudiniPolyDataWriter,
     vtkIVWriter,
     vtkOBJWriter,
+    vtkProStarReader,
     vtkSTLWriter,
 )
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader

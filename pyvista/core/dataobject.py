@@ -415,7 +415,7 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -612,7 +612,7 @@ class DataObject:
         field_data.VTKObject.Modified()
 
     @property
-    def memory_address(self) -> str:  # numpydoc ignore=RT01
+    def memory_address(self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -631,7 +631,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
