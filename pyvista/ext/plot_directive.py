@@ -328,12 +328,12 @@ class ImageFile:
         self.extension = Path(basename).suffix[1:]
 
     @property
-    def filename(self):  # numpydoc ignore=RT01
+    def filename(self):
         """Return the filename of this image."""
         return str(Path(self.dirname) / self.basename)
 
     @property
-    def stem(self):  # numpydoc ignore=RT01
+    def stem(self):
         """Return the basename without the suffix."""
         return Path(self.basename).stem
 
