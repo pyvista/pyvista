@@ -6,14 +6,18 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
-from typing import Dict
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict
 import warnings
 
 from trame.app import get_server
 
-from .base_viewer import BaseViewer
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
+
+if TYPE_CHECKING:
+    from .base_viewer import BaseViewer
 
 _VIEWERS: Dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'

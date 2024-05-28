@@ -1,5 +1,7 @@
 """Test the images generated from building the documentation."""
 
+from __future__ import annotations
+
 import glob
 import os
 from pathlib import Path

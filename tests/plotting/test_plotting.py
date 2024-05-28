@@ -5,6 +5,8 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 """
 
+from __future__ import annotations
+
 import inspect
 import io
 import os
@@ -16,8 +18,8 @@ import time
 from types import FunctionType, ModuleType
 from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 

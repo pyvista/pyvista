@@ -5,6 +5,8 @@ All other tests requiring rendering should to in
 
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 

@@ -100,6 +100,8 @@ These options can be set by defining global variables of the same name in
 
 """
 
+from __future__ import annotations
+
 import doctest
 import os
 from os.path import relpath

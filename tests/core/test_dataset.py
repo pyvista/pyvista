@@ -1,7 +1,10 @@
 """Tests for pyvista.core.dataset."""
 
+from __future__ import annotations
+
 import multiprocessing
 import pickle
+from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import array_shapes, arrays
@@ -13,7 +16,6 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
 from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
 from pyvista.examples import (
     load_airplane,
@@ -24,6 +26,9 @@ from pyvista.examples import (
     load_tetbeam,
     load_uniform,
 )
+
+if TYPE_CHECKING:
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 

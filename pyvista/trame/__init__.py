@@ -1,5 +1,7 @@
 """Trame interface for PyVista."""
 
+from __future__ import annotations
+
 import logging
 
 logging.getLogger('trame.app').disabled = True

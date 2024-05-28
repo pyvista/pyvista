@@ -1,5 +1,7 @@
 """Contains 3ds examples."""
 
+from __future__ import annotations
+
 from .downloads import download_file
 
 
