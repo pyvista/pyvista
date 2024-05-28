@@ -1,6 +1,12 @@
+import pytest
+
 import pyvista as pv
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader",
+)
 def test_molecule():
     mol = pv.Molecule()
     assert mol.n_atoms == 0
