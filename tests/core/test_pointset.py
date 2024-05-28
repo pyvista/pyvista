@@ -101,6 +101,7 @@ def test_cast_to_polydata(pointset, deep):
     pointset.point_data[key] = data
 
     pdata = pointset.cast_to_polydata(deep)
+    assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
