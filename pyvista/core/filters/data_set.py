@@ -1516,7 +1516,12 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(
+        self,
+        extent: Optional[Sequence[float]] = None,
+        progress_bar=False,
+        point_merging=True,
+    ):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1533,6 +1538,9 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        point_merging : bool, default: True
+            Enable point merging.
 
         Returns
         -------
@@ -1561,7 +1569,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
-        alg.MergingOff()
+        alg.SetMerging(point_merging)
         if extent is not None:
             alg.SetExtent(extent)
             alg.SetExtentClipping(True)
@@ -5095,7 +5103,7 @@ class DataSetFilters:
     #         include_cells : bool, default: True
     #             Specifies if the cells shall be returned or not.
 
-    def extract_points(  # numpydoc ignore=PR02
+    def extract_points(
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         mode: Literal['any', 'all', 'vertex', 'exact'] = 'any',
@@ -5108,12 +5116,13 @@ class DataSetFilters:
         match_input_type: bool = False,
         **kwargs,
     ):
-        """Return a subset of the grid (with cells) that contains any of the given point indices.
+        """Extract points (with cells) from a mesh.
+
+        Add more info here.
 
         .. deprecated:: 0.44.0
 
-            adjacent_cells
-            include_cells
+            Parameters adjacent_cells and include_cells are deprecated.
 
         Parameters
         ----------
@@ -5313,7 +5322,7 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
-    def remove_cells(  # numpydoc ignore=PR01,PR02,PR07,PR10
+    def remove_cells(
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
         inplace=False,
