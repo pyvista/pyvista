@@ -19,6 +19,7 @@ to get an understanding of how the pump bracket responds to different modes of
 vibration.
 
 """
+
 from __future__ import annotations
 
 import numpy as np

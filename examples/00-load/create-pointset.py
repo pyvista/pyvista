@@ -13,6 +13,7 @@ This example shows the performance improvement when clipping using the
 :func:`pyvista.DataSetFilters.clip` filter on a :class:`pyvista.PointSet`.
 
 """
+
 from __future__ import annotations
 
 import time

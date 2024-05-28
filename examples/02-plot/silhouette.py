@@ -7,6 +7,7 @@ Silhouette Highlight
 Extract a subset of the edges of a polygonal mesh to generate an outline
 (silhouette) of a mesh.
 """
+
 from __future__ import annotations
 
 import pyvista

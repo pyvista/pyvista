@@ -16,6 +16,7 @@ This example was inspired by `Image denoising by FFT
 <https://scipy-lectures.org/intro/scipy/auto_examples/solutions/plot_fft_image_denoise.html>`_.
 
 """
+
 from __future__ import annotations
 
 import numpy as np

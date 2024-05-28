@@ -8,6 +8,7 @@ Create a :class:`pyvista.PolyData` object from a point cloud of vertices and
 scalar arrays for those points.
 
 """
+
 from __future__ import annotations
 
 import numpy as np
