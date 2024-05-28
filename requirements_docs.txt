@@ -15,7 +15,7 @@ osmnx==1.9.3
 pydata-sphinx-theme==0.15.2
 pypandoc==1.13
 pytest-sphinx==0.6.3
-scipy==1.13.0
+scipy==1.13.1
 sphinx==7.3.7
 sphinx-autobuild==2024.4.16
 sphinx-copybutton==0.5.2
@@ -29,4 +29,4 @@ sympy==1.12
 trame==3.6.0
 trame-vtk==2.8.8
 trame-vuetify==2.5.0
-trimesh==4.3.2
+trimesh==4.4.0
