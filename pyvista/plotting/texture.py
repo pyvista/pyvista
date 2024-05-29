@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 from typing import Tuple
 from typing import Union
 import warnings
@@ -10,12 +11,14 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.dataset import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 from . import _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 
 class Texture(_vtk.vtkTexture, DataObject):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import multiprocessing
 import pickle
+from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
 from hypothesis import assume
@@ -22,7 +23,6 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.examples import load_airplane
@@ -32,6 +32,9 @@ from pyvista.examples import load_rectilinear
 from pyvista.examples import load_structured
 from pyvista.examples import load_tetbeam
 from pyvista.examples import load_uniform
+
+if TYPE_CHECKING:
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 

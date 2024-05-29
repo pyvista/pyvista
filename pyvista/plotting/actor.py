@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import List
 from typing import Optional
@@ -11,8 +12,10 @@ from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
-from .mapper import _BaseMapper
 from .prop3d import Prop3D
+
+if TYPE_CHECKING:
+    from .mapper import _BaseMapper
 
 
 @no_new_attr

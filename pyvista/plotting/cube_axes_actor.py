@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import List
 from typing import Tuple
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import BoundsLike
 
 
 def make_axis_labels(vmin, vmax, n, fmt):

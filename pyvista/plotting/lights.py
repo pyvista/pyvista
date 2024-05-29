@@ -16,10 +16,14 @@ except ImportError:  # pragma: no cover
     from vtk import vtkLightActor
     from vtk import vtkMatrix4x4
 
+from typing import TYPE_CHECKING
+
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
-from ._typing import ColorLike
 from .colors import Color
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 
 class LightType(IntEnum):

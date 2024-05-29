@@ -8,11 +8,14 @@ See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived
 from __future__ import annotations
 
 import io
+from typing import TYPE_CHECKING
 
 from trame.app import get_server
-from trame_client.ui.core import AbstractLayout
 
 import pyvista
+
+if TYPE_CHECKING:
+    from trame_client.ui.core import AbstractLayout
 
 
 class BaseViewer:

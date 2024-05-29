@@ -21,6 +21,7 @@ from pathlib import Path
 import pickle
 import re
 from typing import IO
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import List
@@ -29,12 +30,14 @@ from typing import Set
 from typing import Tuple
 
 import sphinx
-from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.locale import __
 from sphinx.util import logging
 from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
 

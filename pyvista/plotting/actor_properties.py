@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Tuple
 
-from . import _vtk
 from .opts import InterpolationType
 from .opts import RepresentationType
+
+if TYPE_CHECKING:
+    from . import _vtk
 
 
 class ActorProperties:
