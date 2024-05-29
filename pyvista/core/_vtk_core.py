@@ -351,6 +351,19 @@ from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
 
+from vtkmodules.vtkImagingCore import (
+    vtkExtractVOI,
+    vtkImageConstantPad,
+    vtkImageDifference,
+    vtkImageExtractComponents,
+    vtkImageFlip,
+    vtkImageMirrorPad,
+    vtkImageThreshold,
+    vtkImageWrapPad,
+    vtkRTAnalyticSource,
+)
+from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
+from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
 from vtkmodules.vtkIOGeometry import (
     vtkHoudiniPolyDataWriter,
     vtkIVWriter,
@@ -397,19 +410,6 @@ from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridWriter,
     vtkXMLWriter,
 )
-from vtkmodules.vtkImagingCore import (
-    vtkExtractVOI,
-    vtkImageConstantPad,
-    vtkImageDifference,
-    vtkImageExtractComponents,
-    vtkImageFlip,
-    vtkImageMirrorPad,
-    vtkImageThreshold,
-    vtkImageWrapPad,
-    vtkRTAnalyticSource,
-)
-from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
-from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
