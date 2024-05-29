@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 from pyvista.core import _vtk_core as _vtk
 
 from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
+
+try:
+    from typing import TypeAlias
+except ImportError:
+    from typing import TypeAlias
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
@@ -17,35 +20,37 @@ from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
 #
 # Long or complex type aliases (e.g. a union of 4 or more base types) should
 # always be added to the dictionary and documented
-Number = Union[int, float]
+Number: TypeAlias = int | float
 
-VectorLike = _ArrayLike1D[NumberType]
+VectorLike: TypeAlias = _ArrayLike1D[NumberType]
 VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
 
 Includes sequences and numpy arrays.
 """
 
-MatrixLike = _ArrayLike2D[NumberType]
+MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
 MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
 
 Includes singly-nested sequences and numpy arrays.
 """
 
-ArrayLike = _ArrayLike[NumberType]
+ArrayLike: TypeAlias = _ArrayLike[NumberType]
 ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
 
-TransformLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
+TransformLike: TypeAlias = (
+    MatrixLike[float] | _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
+)
 TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
 
-BoundsLike = tuple[Number, Number, Number, Number, Number, Number]
+BoundsLike: TypeAlias = tuple[Number, Number, Number, Number, Number, Number]
 BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
 
 Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
 """
 
-CellsLike = Union[MatrixLike[int], VectorLike[int]]
+CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
 
-CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
+CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
