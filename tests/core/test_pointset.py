@@ -111,6 +111,19 @@ def test_cast_to_polydata(pointset, deep):
         assert np.allclose(pdata.point_data[key], pointset.point_data[key])
 
 
+def test_cast_to_unstructured_grid(pointset):
+    data = np.linspace(0, 1, pointset.n_points)
+    key = 'key'
+    pointset.point_data[key] = data
+
+    pdata = pointset.cast_to_unstructured_grid()
+    assert isinstance(pdata, pv.UnstructuredGrid)
+    assert key in pdata.point_data
+    assert np.allclose(pdata.point_data[key], pointset.point_data[key])
+    pdata.point_data[key][:] = 0
+    assert not np.allclose(pdata.point_data[key], pointset.point_data[key])
+
+
 def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
