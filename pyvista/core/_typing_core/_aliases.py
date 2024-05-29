@@ -2,57 +2,56 @@
 
 from __future__ import annotations
 
-from typing import Tuple as Tuple  # noqa: PLC0414
+from typing import TYPE_CHECKING
 
-from pyvista.core import _vtk_core as _vtk
+if TYPE_CHECKING:
 
-from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
-
-try:
     from typing import TypeAlias
-except ImportError:
-    from typing_extensions import TypeAlias as TypeAlias
 
-# NOTE:
-# Type aliases are automatically expanded in the documentation.
-# To document an alias as-is without expansion, the alias should be:
-#   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
-#   (2) added to /doc/core/typing.rst
-#   (3) added to the "numpydoc_validation" excludes in pyproject.toml
-#
-# Long or complex type aliases (e.g. a union of 4 or more base types) should
-# always be added to the dictionary and documented
-Number: TypeAlias = int | float
+    from pyvista.core import _vtk_core as _vtk
 
-VectorLike: TypeAlias = _ArrayLike1D[NumberType]
-VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
+    from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
 
-Includes sequences and numpy arrays.
-"""
+    # NOTE:
+    # Type aliases are automatically expanded in the documentation.
+    # To document an alias as-is without expansion, the alias should be:
+    #   (1) added to the "autodoc_type_aliases" dictionary in /doc/source/conf.py
+    #   (2) added to /doc/core/typing.rst
+    #   (3) added to the "numpydoc_validation" excludes in pyproject.toml
+    #
+    # Long or complex type aliases (e.g. a union of 4 or more base types) should
+    # always be added to the dictionary and documented
+    Number: TypeAlias = int | float
 
-MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
-MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
+    VectorLike: TypeAlias = _ArrayLike1D[NumberType]
+    VectorLike.__doc__ = """One-dimensional array-like object with numerical values.
 
-Includes singly-nested sequences and numpy arrays.
-"""
+    Includes sequences and numpy arrays.
+    """
 
-ArrayLike: TypeAlias = _ArrayLike[NumberType]
-ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
+    MatrixLike: TypeAlias = _ArrayLike2D[NumberType]
+    MatrixLike.__doc__ = """Two-dimensional array-like object with numerical values.
 
-Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
-"""
+    Includes singly-nested sequences and numpy arrays.
+    """
 
-TransformLike: TypeAlias = (
-    MatrixLike[float] | _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
-)
-TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
+    ArrayLike: TypeAlias = _ArrayLike[NumberType]
+    ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
-BoundsLike: TypeAlias = Tuple[Number, Number, Number, Number, Number, Number]
-BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
+    Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
+    """
 
-Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
-"""
+    TransformLike: TypeAlias = (
+        MatrixLike[float] | _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4 | _vtk.vtkTransform
+    )
+    TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
 
-CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
+    BoundsLike: TypeAlias = tuple[Number, Number, Number, Number, Number, Number]
+    BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
 
-CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray
+    Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
+    """
+
+    CellsLike: TypeAlias = MatrixLike[int] | VectorLike[int]
+
+    CellArrayLike: TypeAlias = CellsLike | _vtk.vtkCellArray

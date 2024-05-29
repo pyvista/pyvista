@@ -23,49 +23,51 @@ Some key differences include:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import TypeVar, Union
+from typing import TYPE_CHECKING, TypeVar, Union
 
-import numpy as np
-import numpy.typing as npt
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-# Create alias of npt.NDArray bound to numeric types only
-NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
-NumberType.__doc__ = """Type variable for numeric data types."""
-NumpyArray = npt.NDArray[NumberType]
+    import numpy as np
+    import numpy.typing as npt
 
-# Define generic nested sequence
-_T = TypeVar('_T')
-_FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-]
+    # Create alias of npt.NDArray bound to numeric types only
+    NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
+    NumberType.__doc__ = """Type variable for numeric data types."""
+    NumpyArray = npt.NDArray[NumberType]
 
-_ArrayLike = Union[
-    NumpyArray[NumberType],
-    _FiniteNestedSequence[NumberType],
-    _FiniteNestedSequence[NumpyArray[NumberType]],
-]
+    # Define generic nested sequence
+    _T = TypeVar('_T')
+    _FiniteNestedSequence = Union[  # Note: scalar types are excluded
+        Sequence[_T],
+        Sequence[Sequence[_T]],
+        Sequence[Sequence[Sequence[_T]]],
+        Sequence[Sequence[Sequence[Sequence[_T]]]],
+    ]
 
-_ArrayLike1D = Union[
-    NumpyArray[NumberType],
-    Sequence[NumberType],
-    Sequence[NumpyArray[NumberType]],
-]
-_ArrayLike2D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[NumberType]],
-    Sequence[Sequence[NumpyArray[NumberType]]],
-]
-_ArrayLike3D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[NumberType]]],
-    Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
-]
-_ArrayLike4D = Union[
-    NumpyArray[NumberType],
-    Sequence[Sequence[Sequence[Sequence[NumberType]]]],
-    Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
-]
+    _ArrayLike = Union[
+        NumpyArray[NumberType],
+        _FiniteNestedSequence[NumberType],
+        _FiniteNestedSequence[NumpyArray[NumberType]],
+    ]
+
+    _ArrayLike1D = Union[
+        NumpyArray[NumberType],
+        Sequence[NumberType],
+        Sequence[NumpyArray[NumberType]],
+    ]
+    _ArrayLike2D = Union[
+        NumpyArray[NumberType],
+        Sequence[Sequence[NumberType]],
+        Sequence[Sequence[NumpyArray[NumberType]]],
+    ]
+    _ArrayLike3D = Union[
+        NumpyArray[NumberType],
+        Sequence[Sequence[Sequence[NumberType]]],
+        Sequence[Sequence[Sequence[NumpyArray[NumberType]]]],
+    ]
+    _ArrayLike4D = Union[
+        NumpyArray[NumberType],
+        Sequence[Sequence[Sequence[Sequence[NumberType]]]],
+        Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
+    ]
