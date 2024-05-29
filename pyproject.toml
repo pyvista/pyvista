@@ -411,3 +411,4 @@ allow-dict-calls-with-keyword-arguments = true
 force-sort-within-sections = true
 # Combines "as" imports on the same line
 combine-as-imports = true
+required-imports = ["from __future__ import annotations"]
