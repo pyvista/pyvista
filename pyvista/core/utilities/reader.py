@@ -334,7 +334,7 @@ class BaseReader:
         self._progress_bar = False
 
     @property
-    def reader(self):  # numpydoc ignore=RT01
+    def reader(self):
         """Return the vtk Reader object.
 
         Returns
@@ -348,7 +348,7 @@ class BaseReader:
         return self._reader
 
     @property
-    def path(self) -> str:  # numpydoc ignore=RT01
+    def path(self) -> str:
         """Return or set the filename or directory of the reader.
 
         Examples
@@ -617,7 +617,7 @@ class TimeReader(ABC):
 
     @property
     @abstractmethod
-    def number_time_points(self):  # numpydoc ignore=RT01
+    def number_time_points(self):
         """Return number of time points or iterations available to read.
 
         Returns
@@ -642,7 +642,7 @@ class TimeReader(ABC):
         """
 
     @property
-    def time_values(self):  # numpydoc ignore=RT01
+    def time_values(self):
         """All time or iteration values.
 
         Returns
@@ -654,7 +654,7 @@ class TimeReader(ABC):
 
     @property
     @abstractmethod
-    def active_time_value(self):  # numpydoc ignore=RT01
+    def active_time_value(self):
         """Active time or iteration value.
 
         Returns
@@ -854,14 +854,14 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         self._active_time_set = 0
 
     @property
-    def number_time_points(self):  # noqa: D102  # numpydoc ignore=RT01
+    def number_time_points(self):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetSize()
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeSets().GetItem(self.active_time_set).GetValue(time_point)
 
     @property
-    def active_time_value(self):  # noqa: D102  # numpydoc ignore=RT01
+    def active_time_value(self):  # noqa: D102
         return self.reader.GetTimeValue()
 
     def set_active_time_value(self, time_value):  # noqa: D102
@@ -921,14 +921,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.enable_all_patch_arrays()
 
     @property
-    def number_time_points(self):  # noqa: D102  # numpydoc ignore=RT01
+    def number_time_points(self):  # noqa: D102
         return self.reader.GetTimeValues().GetNumberOfValues()
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader.GetTimeValues().GetValue(time_point)
 
     @property
-    def active_time_value(self):  # noqa: D102  # numpydoc ignore=RT01
+    def active_time_value(self):  # noqa: D102
         try:
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
@@ -948,7 +948,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
-    def decompose_polyhedra(self):  # numpydoc ignore=RT01
+    def decompose_polyhedra(self):
         """Whether polyhedra are to be decomposed when read.
 
         .. warning::
@@ -968,7 +968,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetDecomposePolyhedra(value)
 
     @property
-    def skip_zero_time(self):  # numpydoc ignore=RT01
+    def skip_zero_time(self):
         """Indicate whether or not to ignore the '/0' time directory.
 
         Returns
@@ -996,7 +996,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetRefresh()
 
     @property
-    def cell_to_point_creation(self):  # numpydoc ignore=RT01
+    def cell_to_point_creation(self):
         """Whether cell data is translated to point data when read.
 
         Returns
@@ -1027,7 +1027,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.SetCreateCellToPoint(value)
 
     @property
-    def number_patch_arrays(self):  # numpydoc ignore=RT01
+    def number_patch_arrays(self):
         """Return number of patch arrays in dataset.
 
         Returns
@@ -1047,7 +1047,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return self.reader.GetNumberOfPatchArrays()
 
     @property
-    def patch_array_names(self):  # numpydoc ignore=RT01
+    def patch_array_names(self):
         """Names of patch arrays in a list.
 
         Returns
@@ -1167,7 +1167,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.DisableAllPatchArrays()
 
     @property
-    def all_patch_arrays_status(self):  # numpydoc ignore=RT01
+    def all_patch_arrays_status(self):
         """Status of reading all patch arrays.
 
         Returns
@@ -1202,7 +1202,7 @@ class POpenFOAMReader(OpenFOAMReader):
     _vtk_class_name = ''
 
     @property
-    def case_type(self):  # numpydoc ignore=RT01
+    def case_type(self):
         """Indicate whether decomposed mesh or reconstructed mesh should be read.
 
         Returns
@@ -1507,7 +1507,7 @@ class MultiBlockPlot3DReader(BaseReader):
             self.reader.AddFileName(q_filename)
 
     @property
-    def auto_detect_format(self):  # numpydoc ignore=RT01
+    def auto_detect_format(self):
         """Whether to try to automatically detect format such as byte order, etc."""
         return bool(self.reader.GetAutoDetectFormat())
 
@@ -1563,7 +1563,7 @@ class MultiBlockPlot3DReader(BaseReader):
         self.reader.RemoveAllFunctions()
 
     @property
-    def preserve_intermediate_functions(self):  # numpydoc ignore=RT01
+    def preserve_intermediate_functions(self):
         """When ``True`` (default), intermediate computed quantities will be preserved.
 
         For example, if ``VelocityMagnitude`` is enabled, but not ``Velocity``, the reader still needs to compute
@@ -1579,7 +1579,7 @@ class MultiBlockPlot3DReader(BaseReader):
         self.reader.SetPreserveIntermediateFunctions(val)
 
     @property
-    def gamma(self):  # numpydoc ignore=RT01
+    def gamma(self):
         """Ratio of specific heats."""
         return self.reader.GetGamma()
 
@@ -1588,7 +1588,7 @@ class MultiBlockPlot3DReader(BaseReader):
         self.reader.SetGamma(val)
 
     @property
-    def r_gas_constant(self):  # numpydoc ignore=RT01
+    def r_gas_constant(self):
         """Gas constant."""
         return self.reader.GetR()
 
@@ -1644,7 +1644,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         self.load_boundary_patch = True
 
     @property
-    def distribute_blocks(self) -> bool:  # numpydoc ignore=RT01
+    def distribute_blocks(self) -> bool:
         """Distribute each block in each zone across ranks.
 
         To make the reader disregard the piece request and read all blocks in the
@@ -1691,7 +1691,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetBaseArrayStatus(name))
 
     @property
-    def base_array_names(self):  # numpydoc ignore=RT01
+    def base_array_names(self):
         """Return the list of all base array names.
 
         Returns
@@ -1702,7 +1702,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return [self.reader.GetBaseArrayName(i) for i in range(self.number_base_arrays)]
 
     @property
-    def number_base_arrays(self) -> int:  # numpydoc ignore=RT01
+    def number_base_arrays(self) -> int:
         """Return the number of base arrays.
 
         Returns
@@ -1763,7 +1763,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:  # numpydoc ignore=RT01
+    def family_array_names(self) -> List[str]:
         """Return the list of all family array names.
 
         Returns
@@ -1774,7 +1774,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return [self.reader.GetFamilyArrayName(i) for i in range(self.number_family_arrays)]
 
     @property
-    def number_family_arrays(self) -> int:  # numpydoc ignore=RT01
+    def number_family_arrays(self) -> int:
         """Return the number of face arrays.
 
         Returns
@@ -1817,7 +1817,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         self._reader.DisableAllFamilies()
 
     @property
-    def unsteady_pattern(self) -> bool:  # numpydoc ignore=RT01
+    def unsteady_pattern(self) -> bool:
         """Return or set using an unsteady pattern.
 
         When set to ``True`` (default is ``False``), the reader will try to
@@ -1845,7 +1845,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         self._reader.SetUseUnsteadyPattern(bool(enabled))
 
     @property
-    def vector_3d(self) -> bool:  # numpydoc ignore=RT01
+    def vector_3d(self) -> bool:
         """Return or set adding an empty dimension to vectors in case of 2D solutions.
 
         Examples
@@ -1868,7 +1868,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         self._reader.SetUse3DVector(bool(enabled))
 
     @property
-    def load_boundary_patch(self) -> bool:  # numpydoc ignore=RT01
+    def load_boundary_patch(self) -> bool:
         """Return or set loading boundary patches.
 
         Notes
@@ -2003,7 +2003,7 @@ class PVDReader(BaseReader, TimeReader):
     _class_reader = _PVDReader
 
     @property
-    def active_readers(self):  # numpydoc ignore=RT01
+    def active_readers(self):
         """Return the active readers.
 
         Returns
@@ -2014,7 +2014,7 @@ class PVDReader(BaseReader, TimeReader):
         return self.reader._active_readers
 
     @property
-    def datasets(self):  # numpydoc ignore=RT01
+    def datasets(self):
         """Return all datasets.
 
         Returns
@@ -2025,7 +2025,7 @@ class PVDReader(BaseReader, TimeReader):
         return self.reader._datasets
 
     @property
-    def active_datasets(self):  # numpydoc ignore=RT01
+    def active_datasets(self):
         """Return all active datasets.
 
         Returns
@@ -2036,18 +2036,18 @@ class PVDReader(BaseReader, TimeReader):
         return self.reader._active_datasets
 
     @property
-    def time_values(self):  # noqa: D102  # numpydoc ignore=RT01
+    def time_values(self):  # noqa: D102
         return self.reader._time_values
 
     @property
-    def number_time_points(self):  # noqa: D102  # numpydoc ignore=RT01
+    def number_time_points(self):  # noqa: D102
         return len(self.reader._time_values)
 
     def time_point_value(self, time_point):  # noqa: D102
         return self.reader._time_values[time_point]
 
     @property
-    def active_time_value(self):  # noqa: D102  # numpydoc ignore=RT01
+    def active_time_value(self):  # noqa: D102
         # all active datasets have the same time
         return self.reader._active_datasets[0].time
 
@@ -2480,7 +2480,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_class_name = "vtkXdmfReader"
 
     @property
-    def number_grids(self):  # numpydoc ignore=RT01
+    def number_grids(self):
         """Return the number of grids that can be read by the reader.
 
         Returns
