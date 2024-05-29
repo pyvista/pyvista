@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==1.2.7
 sympy==1.12
-trame==3.6.0
+trame==3.6.1
 trame-vtk==2.8.8
 trame-vuetify==2.5.0
 trimesh==4.4.0
