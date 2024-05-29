@@ -1229,7 +1229,7 @@ def test_empty_regular_faces():
 
 
 def test_regular_faces_mutable():
-    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    points = [[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
     faces = [[0, 1, 2]]
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3

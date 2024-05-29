@@ -1029,7 +1029,7 @@ def test_glyph_color_mode(sphere, color_mode):
 
 def test_glyph_raises(sphere):
     with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
-        sphere.glyph(color_mode="foo")
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
