@@ -4,6 +4,7 @@ Label Points
 
 Use string arrays in a point set to label points
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Module managing picking events."""
+
 from __future__ import annotations
 
 from functools import partial
@@ -70,7 +71,7 @@ class RectangleSelection:
         return self._frustum
 
     @property
-    def frustum_mesh(self) -> 'pyvista.PolyData':  # numpydoc ignore=RT01
+    def frustum_mesh(self) -> pyvista.PolyData:  # numpydoc ignore=RT01
         """Get the frustum as a PyVista mesh."""
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()

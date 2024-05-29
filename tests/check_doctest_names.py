@@ -41,6 +41,7 @@ done to find the rare name mistake in our examples.
 If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
 """
+
 from __future__ import annotations
 
 from argparse import ArgumentParser

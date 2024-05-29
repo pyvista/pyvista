@@ -1,4 +1,5 @@
 """Module containing the wrapping of CubeAxesActor."""
+
 from __future__ import annotations
 
 from typing import List
@@ -293,12 +294,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pyvista.Camera':  # numpydoc ignore=RT01
+    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: 'pyvista.Camera'):  # numpydoc ignore=GL08
+    def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
         self.SetCamera(camera)
 
     @property

@@ -1,4 +1,5 @@
 """Contains glTF examples."""
+
 from __future__ import annotations
 
 import pooch

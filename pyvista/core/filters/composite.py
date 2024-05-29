@@ -1,4 +1,5 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
+
 from __future__ import annotations
 
 import numpy as np

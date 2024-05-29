@@ -1,4 +1,5 @@
 """Utilities for using pyvista with sphinx-gallery."""
+
 from __future__ import annotations
 
 from pathlib import Path

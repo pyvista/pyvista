@@ -9,6 +9,7 @@ Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f4
 and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
+
 from __future__ import annotations
 
 import pyvista as pv

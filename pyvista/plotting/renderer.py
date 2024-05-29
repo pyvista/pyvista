@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtkRenderer."""
+
 from __future__ import annotations
 
 import collections.abc

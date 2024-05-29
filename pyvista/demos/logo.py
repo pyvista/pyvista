@@ -13,6 +13,7 @@ plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos
           off_screen=True)
 
 """
+
 from __future__ import annotations
 
 import os

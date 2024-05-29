@@ -12,6 +12,7 @@ Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.
 
 """
+
 from __future__ import annotations
 
 import numpy as np

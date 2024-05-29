@@ -6,6 +6,7 @@ Enable these tests with:
 pytest --test_downloads
 
 """
+
 from __future__ import annotations
 
 import os

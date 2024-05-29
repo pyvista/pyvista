@@ -22,6 +22,7 @@ A user-defined Foo class is defined that extends the functionality of
 >>> pv._wrappers = default_wrappers  # reset back to default
 
 """
+
 from __future__ import annotations
 
 from .composite import MultiBlock

@@ -1,4 +1,5 @@
 """Module implementing point transformations and their matrices."""
+
 from __future__ import annotations
 
 import numpy as np

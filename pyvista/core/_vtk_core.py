@@ -7,6 +7,7 @@ package, which lets us only have to import from select modules and not
 the entire library.
 
 """
+
 from __future__ import annotations
 
 from collections import namedtuple

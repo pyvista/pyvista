@@ -20,6 +20,7 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
+
 from __future__ import annotations
 
 from typing import Sequence

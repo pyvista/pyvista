@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtk.vtkLight."""
+
 from __future__ import annotations
 
 from enum import IntEnum

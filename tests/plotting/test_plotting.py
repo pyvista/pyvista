@@ -4,6 +4,7 @@ This test module tests any functionality that requires plotting.
 See the image regression notes in doc/extras/developer_notes.rst
 
 """
+
 from __future__ import annotations
 
 import inspect

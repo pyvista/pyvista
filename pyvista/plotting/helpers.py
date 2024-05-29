@@ -1,4 +1,5 @@
 """This module contains some convenience helper functions."""
+
 from __future__ import annotations
 
 from typing import Tuple

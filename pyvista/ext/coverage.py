@@ -10,6 +10,7 @@ Modified slightly for ``pyvista``.
 :license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
 
 """
+
 from __future__ import annotations
 
 import glob

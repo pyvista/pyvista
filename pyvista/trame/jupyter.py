@@ -1,4 +1,5 @@
 """Trame utilities for running in Jupyter."""
+
 from __future__ import annotations
 
 import asyncio

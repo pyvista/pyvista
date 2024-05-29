@@ -1,4 +1,5 @@
 """Plotting errors."""
+
 from __future__ import annotations
 
 CAMERA_ERROR_MESSAGE = """Invalid camera description

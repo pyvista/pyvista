@@ -9,6 +9,7 @@ This example demonstrates how to pick meshes using
 This allows you to pick points on the surface of a mesh.
 
 """
+
 from __future__ import annotations
 
 import pyvista as pv

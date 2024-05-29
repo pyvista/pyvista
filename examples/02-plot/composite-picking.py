@@ -8,6 +8,7 @@ Demonstrate how to pick individual blocks of a :class:`pyvista.MultiBlock`
 using :func:`pyvista.Plotter.enable_block_picking`.
 
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Type aliases for type hints."""
+
 from __future__ import annotations
 
 from ._aliases import ArrayLike  # noqa: F401

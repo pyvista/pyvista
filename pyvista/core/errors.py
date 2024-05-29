@@ -1,4 +1,5 @@
 """PyVista specific errors."""
+
 from __future__ import annotations
 
 

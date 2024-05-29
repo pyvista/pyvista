@@ -1,4 +1,5 @@
 """Contains a variety of cells to serve as examples."""
+
 from __future__ import annotations
 
 import pyvista

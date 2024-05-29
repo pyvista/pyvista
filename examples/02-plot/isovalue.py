@@ -6,6 +6,7 @@ Moving Isovalue
 
 Make an animation of an isovalue through a volumetric dataset
 """
+
 from __future__ import annotations
 
 import numpy as np

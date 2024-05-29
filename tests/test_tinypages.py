@@ -1,4 +1,5 @@
 """Tests for tinypages build using sphinx extensions."""
+
 from __future__ import annotations
 
 import os

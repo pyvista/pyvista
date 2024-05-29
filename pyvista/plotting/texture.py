@@ -1,4 +1,5 @@
 """This module provides a wrapper for vtk.vtkTexture."""
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -262,7 +263,7 @@ class Texture(_vtk.vtkTexture, DataObject):
     def repeat(self, flag: bool):  # numpydoc ignore=GL08
         self.SetRepeat(flag)
 
-    def flip_x(self) -> 'Texture':
+    def flip_x(self) -> Texture:
         """Flip the texture in the x direction.
 
         Returns
@@ -280,7 +281,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         return Texture(self.to_image()._flip_uniform(0))
 
-    def flip_y(self) -> 'Texture':
+    def flip_y(self) -> Texture:
         """Flip the texture in the y direction.
 
         Returns
@@ -341,7 +342,7 @@ class Texture(_vtk.vtkTexture, DataObject):
             list(self.dimensions)[::-1] + [self.n_components],
         )[::-1]
 
-    def rotate_cw(self) -> 'Texture':
+    def rotate_cw(self) -> Texture:
         """Rotate this texture 90 degrees clockwise.
 
         Returns
@@ -359,7 +360,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         return Texture(np.rot90(self.to_array()))
 
-    def rotate_ccw(self) -> 'Texture':
+    def rotate_ccw(self) -> Texture:
         """Rotate this texture 90 degrees counter-clockwise.
 
         Returns
@@ -518,7 +519,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         pl.show(**kwargs)
 
     @property
-    def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
+    def wrap(self) -> Texture.WrapType:  # numpydoc ignore=RT01
         """Return or set the Wrap mode for the texture coordinates.
 
         Wrap mode for the texture coordinates valid values are:
@@ -589,7 +590,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
-    def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08
+    def wrap(self, value: Union[Texture.WrapType, int]):  # numpydoc ignore=GL08
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -597,7 +598,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         self.SetWrap(value)
 
-    def to_grayscale(self) -> 'Texture':
+    def to_grayscale(self) -> Texture:
         """Convert this texture as a single component (grayscale) texture.
 
         Returns

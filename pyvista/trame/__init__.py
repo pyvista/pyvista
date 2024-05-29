@@ -1,4 +1,5 @@
 """Trame interface for PyVista."""
+
 from __future__ import annotations
 
 import logging

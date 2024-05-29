@@ -14,6 +14,7 @@ sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
+
 from __future__ import annotations
 
 import numpy as np

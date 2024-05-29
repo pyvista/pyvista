@@ -6,6 +6,7 @@ This example demonstrates how to plot spheres using the ``'points_gaussian'``
 style and scale them by a dynamic radius.
 
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -99,6 +99,7 @@ These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
 """
+
 from __future__ import annotations
 
 import doctest
