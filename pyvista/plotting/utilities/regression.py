@@ -1,6 +1,8 @@
 """Image regression module."""
+from __future__ import annotations
 
-from typing import Optional, cast
+from typing import Optional
+from typing import cast
 
 import numpy as np
 
@@ -199,7 +201,10 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData, Plotter, read, wrap
+    from pyvista import ImageData
+    from pyvista import Plotter
+    from pyvista import read
+    from pyvista import wrap
 
     def to_img(img):  # numpydoc ignore=GL08
         if isinstance(img, ImageData):  # pragma: no cover

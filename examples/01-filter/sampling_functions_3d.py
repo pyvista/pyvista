@@ -8,6 +8,7 @@ Video games like Minecraft use Perlin noise to create terrain.  Here,
 we create a voxelized mesh similar to a Minecraft "cave".
 
 """
+from __future__ import annotations
 
 import pyvista as pv
 

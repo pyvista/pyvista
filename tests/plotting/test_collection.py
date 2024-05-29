@@ -1,4 +1,5 @@
 """This module contains any tests which cause memory leaks."""
+from __future__ import annotations
 
 import gc
 import weakref

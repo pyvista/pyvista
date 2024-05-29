@@ -99,6 +99,7 @@ These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
 """
+from __future__ import annotations
 
 import doctest
 import os
@@ -108,9 +109,12 @@ import re
 import shutil
 import textwrap
 import traceback
-from typing import Callable, ClassVar, Dict
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
 
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import Directive
+from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 

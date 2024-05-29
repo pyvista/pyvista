@@ -1,4 +1,5 @@
 """Close all plotters to help control memory usage for our doctests."""
+from __future__ import annotations
 
 import pytest
 

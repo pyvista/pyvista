@@ -7,6 +7,7 @@ Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

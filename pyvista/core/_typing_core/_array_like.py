@@ -20,8 +20,11 @@ Some key differences include:
   TypeVar is bound to a subset of numeric types only.
 
 """
+from __future__ import annotations
 
-from typing import Sequence, TypeVar, Union
+from typing import Sequence
+from typing import TypeVar
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt

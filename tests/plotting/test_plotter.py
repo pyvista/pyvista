@@ -4,6 +4,7 @@ All other tests requiring rendering should to in
 ./plotting/test_plotting.py
 
 """
+from __future__ import annotations
 
 import os
 from pathlib import Path
@@ -13,7 +14,8 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl

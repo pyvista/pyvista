@@ -1,10 +1,13 @@
 """Module containing useful plotting tools."""
+from __future__ import annotations
 
 from enum import Enum
 import os
 import platform
 import subprocess
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import TimeoutExpired
 import sys
 
 import numpy as np

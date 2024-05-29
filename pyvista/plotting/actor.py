@@ -1,6 +1,9 @@
 """Wrap vtkActor module."""
+from __future__ import annotations
 
-from typing import ClassVar, List, Optional
+from typing import ClassVar
+from typing import List
+from typing import Optional
 
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr

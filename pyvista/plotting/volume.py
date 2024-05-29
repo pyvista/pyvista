@@ -1,4 +1,5 @@
 """PyVista volume module."""
+from __future__ import annotations
 
 from . import _vtk
 from ._property import Property

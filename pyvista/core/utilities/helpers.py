@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
     from meshio import Mesh
@@ -17,7 +20,8 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
-from .fileio import from_meshio, is_meshio_mesh
+from .fileio import from_meshio
+from .fileio import is_meshio_mesh
 
 
 def wrap(

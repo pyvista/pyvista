@@ -15,6 +15,8 @@ mesh:
 """
 
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 

@@ -3,6 +3,7 @@
 This is a full-fledged example on building your own user interface
 with client-side rendering.
 """
+from __future__ import annotations
 
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout

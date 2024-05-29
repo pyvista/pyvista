@@ -1,4 +1,5 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
+from __future__ import annotations
 
 import numpy as np
 

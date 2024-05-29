@@ -1,4 +1,5 @@
 """Demos to show off the functionality of PyVista."""
+from __future__ import annotations
 
 import time
 

@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from functools import wraps
 import pathlib
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import Union
 
 import numpy as np
 
@@ -12,8 +19,11 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
-from .filters import ImageDataFilters, RectilinearGridFilters, _get_output
-from .utilities.arrays import convert_array, raise_has_duplicates
+from .filters import ImageDataFilters
+from .filters import RectilinearGridFilters
+from .filters import _get_output
+from .utilities.arrays import convert_array
+from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover

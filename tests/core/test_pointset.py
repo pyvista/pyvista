@@ -1,15 +1,14 @@
 """Test pyvista.PointSet"""
+from __future__ import annotations
 
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import (
-    PointSetCellOperationError,
-    PointSetDimensionReductionError,
-    PointSetNotSupported,
-)
+from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetDimensionReductionError
+from pyvista.core.errors import PointSetNotSupported
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(

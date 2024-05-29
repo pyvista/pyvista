@@ -1,7 +1,10 @@
 """Module managing picking events."""
+from __future__ import annotations
 
-from functools import partial, wraps
-from typing import Tuple, cast
+from functools import partial
+from functools import wraps
+from typing import Tuple
+from typing import cast
 import warnings
 import weakref
 
@@ -14,7 +17,8 @@ from pyvista.core.utilities.misc import try_callback
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
-from .opts import ElementType, PickerType
+from .opts import ElementType
+from .opts import PickerType
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',

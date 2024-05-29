@@ -21,6 +21,7 @@ classes are nearly always used for particular types of DataSets.
     instantiated.  See examples below.
 
 """
+from __future__ import annotations
 
 import numpy as np
 import vtk

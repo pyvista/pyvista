@@ -1,4 +1,5 @@
 """A helper script to generate the external examples gallery."""
+from __future__ import annotations
 
 from io import StringIO
 from pathlib import Path

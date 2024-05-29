@@ -9,6 +9,7 @@ Extract the coordinates of the centers of all cells or faces in a mesh.
 Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
 
 """
+from __future__ import annotations
 
 import pyvista as pv
 

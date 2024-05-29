@@ -1,7 +1,9 @@
 """Contains a variety of cells to serve as examples."""
+from __future__ import annotations
 
 import pyvista
-from pyvista import CellType, UnstructuredGrid
+from pyvista import CellType
+from pyvista import UnstructuredGrid
 
 
 def plot_cell(grid, cpos=None, **kwargs):

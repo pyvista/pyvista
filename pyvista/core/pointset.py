@@ -9,7 +9,16 @@ import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import cast
 import warnings
 
 import numpy as np
@@ -17,38 +26,37 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .cell import (
-    CellArray,
-    _get_connectivity_array,
-    _get_irregular_cells,
-    _get_offset_array,
-    _get_regular_cells,
-)
+from .cell import CellArray
+from .cell import _get_connectivity_array
+from .cell import _get_irregular_cells
+from .cell import _get_offset_array
+from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import (
-    CellSizeError,
-    PointSetCellOperationError,
-    PointSetDimensionReductionError,
-    PointSetNotSupported,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
-from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from .errors import CellSizeError
+from .errors import PointSetCellOperationError
+from .errors import PointSetDimensionReductionError
+from .errors import PointSetNotSupported
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import PolyDataFilters
+from .filters import StructuredGridFilters
+from .filters import UnstructuredGridFilters
+from .filters import _get_output
+from .utilities.cells import create_mixed_cells
+from .utilities.cells import get_mixed_cells
+from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ._typing_core import (
-        ArrayLike,
-        BoundsLike,
-        CellArrayLike,
-        MatrixLike,
-        NumpyArray,
-        VectorLike,
-    )
+    from ._typing_core import ArrayLike
+    from ._typing_core import BoundsLike
+    from ._typing_core import CellArrayLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '

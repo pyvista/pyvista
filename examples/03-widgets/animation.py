@@ -9,6 +9,7 @@ A timer is used to move a sphere across a scene.
 
 Inspired by `VTK Animation Examples <https://examples.vtk.org/site/Python/Utilities/Animation/>`_.
 """
+from __future__ import annotations
 
 import pyvista as pv
 

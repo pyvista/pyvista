@@ -6,6 +6,7 @@ Slicing
 
 Extract thin planar slices from a volume.
 """
+from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numpy as np

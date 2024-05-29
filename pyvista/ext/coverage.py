@@ -10,6 +10,7 @@ Modified slightly for ``pyvista``.
 :license: See `Sphinx license <https://github.com/sphinx-doc/sphinx>`_.
 
 """
+from __future__ import annotations
 
 import glob
 from importlib import import_module
@@ -18,7 +19,13 @@ from os import path
 from pathlib import Path
 import pickle
 import re
-from typing import IO, Any, Dict, List, Pattern, Set, Tuple
+from typing import IO
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Pattern
+from typing import Set
+from typing import Tuple
 
 import sphinx
 from sphinx.application import Sphinx

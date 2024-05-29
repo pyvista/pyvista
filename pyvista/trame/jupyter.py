@@ -1,16 +1,15 @@
 """Trame utilities for running in Jupyter."""
+from __future__ import annotations
 
 import asyncio
 import logging
 import os
 import warnings
 
-from trame.widgets import (
-    html as html_widgets,
-    vtk as vtk_widgets,
-    vuetify as vuetify2_widgets,
-    vuetify3 as vuetify3_widgets,
-)
+from trame.widgets import html as html_widgets
+from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vuetify as vuetify2_widgets
+from trame.widgets import vuetify3 as vuetify3_widgets
 
 try:
     from ipywidgets.widgets import HTML
@@ -19,8 +18,10 @@ except ImportError:
 
 
 import pyvista
-from pyvista.trame.ui import UI_TITLE, get_viewer
-from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
+from pyvista.trame.ui import UI_TITLE
+from pyvista.trame.ui import get_viewer
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR
+from pyvista.trame.views import get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 

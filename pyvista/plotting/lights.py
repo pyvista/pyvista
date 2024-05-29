@@ -1,4 +1,5 @@
 """Module containing pyvista implementation of vtk.vtkLight."""
+from __future__ import annotations
 
 from enum import IntEnum
 
@@ -7,9 +8,12 @@ import numpy as np
 # imports here rather than in _vtk to avoid circular imports
 try:
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
-    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
+    from vtkmodules.vtkRenderingCore import vtkLight
+    from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
+    from vtk import vtkLight
+    from vtk import vtkLightActor
+    from vtk import vtkMatrix4x4
 
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 

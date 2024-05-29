@@ -3,6 +3,7 @@
 This example demonstrates how to use ``plotter_ui`` to add a PyVista
 ``Plotter`` to a UI with scene controls and standard UI features.
 """
+from __future__ import annotations
 
 import matplotlib.pyplot as plt
 from trame.app import get_server

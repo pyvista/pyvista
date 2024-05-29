@@ -9,6 +9,7 @@ The :class:`pyvista.LookupTable` can be used to have fine-tuned control over
 the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
 """
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples

@@ -7,6 +7,7 @@ Colormap Choices
 Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values.
 """
+from __future__ import annotations
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt

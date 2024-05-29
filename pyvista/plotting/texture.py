@@ -1,7 +1,9 @@
 """This module provides a wrapper for vtk.vtkTexture."""
+from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Tuple, Union
+from typing import Tuple
+from typing import Union
 import warnings
 
 import numpy as np

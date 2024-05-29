@@ -7,6 +7,7 @@ Reflect Meshes
 This example reflects a mesh across a plane.
 
 """
+from __future__ import annotations
 
 import pyvista
 from pyvista import examples

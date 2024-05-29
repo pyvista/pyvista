@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageSequence
+from PIL import Image
+from PIL import ImageSequence
 import pytest
 
 import pyvista as pv

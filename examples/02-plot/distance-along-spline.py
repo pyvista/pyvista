@@ -10,6 +10,7 @@ spline.
 This is an extension of the :ref:`create_spline_example`.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

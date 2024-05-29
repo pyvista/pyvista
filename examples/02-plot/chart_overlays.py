@@ -14,6 +14,7 @@ interaction with another chart (if clicked on top of it) or re-enable
 interaction with the 3D scene.
 
 """
+from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numpy as np

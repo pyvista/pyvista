@@ -14,6 +14,7 @@ For additional details, please reference the following:
 
 First, define the ray triangle intersection method.
 """
+from __future__ import annotations
 
 import numpy as np
 

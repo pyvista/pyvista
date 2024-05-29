@@ -21,6 +21,7 @@ pipeline when adding data to the scene through methods like
 This example will walk through using a few ``vtkAlgorithm`` filters directly
 and passing them to PyVista for dynamic visualization.
 """
+from __future__ import annotations
 
 import vtk
 

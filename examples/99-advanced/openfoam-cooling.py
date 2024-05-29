@@ -13,6 +13,7 @@ post processed according to this `README.md
 <https://github.com/pyvista/vtk-data/blob/master/Data/fvm/cooling_electronics/README.md>`_.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

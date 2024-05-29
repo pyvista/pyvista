@@ -1,4 +1,5 @@
 """Test render window interactor"""
+from __future__ import annotations
 
 import time
 

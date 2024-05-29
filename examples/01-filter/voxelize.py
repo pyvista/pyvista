@@ -10,6 +10,7 @@ This example also demonstrates how to compute an implicit distance from a
 bounding :class:`pyvista.PolyData` surface.
 
 """
+from __future__ import annotations
 
 import numpy as np
 

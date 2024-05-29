@@ -38,18 +38,27 @@ import json
 import os
 import pathlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
 import warnings
 
 import pyvista  # noqa: TCH001
 from pyvista.core.utilities.misc import _check_range
 
-from .colors import Color, get_cmap_safe, get_cycler
+from .colors import Color
+from .colors import get_cmap_safe
+from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import Number, VectorLike
+    from pyvista.core._typing_core import Number
+    from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
 

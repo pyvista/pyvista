@@ -10,6 +10,8 @@ how a user can customize scalar bars.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
