@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Tuple as Tuple  # noqa: PLC0414
+
 from pyvista.core import _vtk_core as _vtk
 
 from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
@@ -45,7 +47,7 @@ TransformLike: TypeAlias = (
 )
 TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
 
-BoundsLike: TypeAlias = tuple[Number, Number, Number, Number, Number, Number]
+BoundsLike: TypeAlias = Tuple[Number, Number, Number, Number, Number, Number]
 BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
 
 Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
