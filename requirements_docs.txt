@@ -19,9 +19,9 @@ scipy==1.13.1
 sphinx==7.3.7
 sphinx-autobuild==2024.4.16
 sphinx-copybutton==0.5.2
-sphinx-design==0.5.0
+sphinx-design==0.6.0
 sphinx-gallery==0.16.0
-sphinx-notfound-page==1.0.0
+sphinx-notfound-page==1.0.2
 sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==1.2.7
