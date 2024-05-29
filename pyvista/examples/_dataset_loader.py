@@ -37,6 +37,7 @@ import functools
 import os
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Generic,
     Protocol,
@@ -48,8 +49,13 @@ from typing import (
 )
 
 import pyvista as pv
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
+
+    DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
+    DatasetType = type[Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]]
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
@@ -57,9 +63,6 @@ from pyvista.core.utilities.fileio import get_ext
 # Any properties with these typevars should have a one-to-one mapping for all files
 _FilePropStrType_co = TypeVar('_FilePropStrType_co', str, tuple[str, ...], covariant=True)
 _FilePropIntType_co = TypeVar('_FilePropIntType_co', int, tuple[int, ...], covariant=True)
-
-DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetType = Union[type[pv.DataSet], type[pv.Texture], type[NumpyArray[Any]], type[pv.MultiBlock]]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):

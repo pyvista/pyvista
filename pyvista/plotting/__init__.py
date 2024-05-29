@@ -8,7 +8,6 @@ from pyvista._plot import plot
 
 from . import _vtk
 from ._property import Property
-from ._typing import Chart, ColorLike
 from .actor import Actor
 from .actor_properties import ActorProperties
 from .axes import Axes
