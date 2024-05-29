@@ -11,7 +11,7 @@ from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
 try:
     from typing import TypeAlias
 except ImportError:
-    from typing import TypeAlias
+    from typing_extensions import TypeAlias as TypeAlias
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.
