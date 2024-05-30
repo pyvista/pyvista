@@ -93,7 +93,7 @@ def test_decimate_polylines_inplace(poly_circle):
     assert poly_circle.n_points >= 14
     assert poly_circle.n_points <= 16
 
-    
+
 def test_triangulate_contours():
     poly = pv.Polygon(n_sides=4, fill=False)
     filled = poly.triangulate_contours()
