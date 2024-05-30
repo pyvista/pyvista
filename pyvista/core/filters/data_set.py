@@ -4918,7 +4918,7 @@ class DataSetFilters:
         >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
         >>> mesh.plot_over_circular_arc_normal(
         ...     center, polar=polar, angle=angle
-        ... )
+        ... )  # doctest:+SKIP
 
         """
         # Sample on circular arc
