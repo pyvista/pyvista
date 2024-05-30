@@ -7791,7 +7791,7 @@ def _validate_extraction_indices(
             )
     elif np.issubdtype(ind.dtype, np.integer):
         if (max_ind := np.max(ind)) >= n_items:
-            raise IndexError(
+            warnings.warn(
                 f'Invalid indices. Index {max_ind} is out of bounds for a mesh with {n_items} {field}.',
             )
     else:

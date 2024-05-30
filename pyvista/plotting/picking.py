@@ -1284,6 +1284,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     smesh = smesh.copy()
                     smesh["original_cell_ids"] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
+                    if np.max(cids) >= tri_smesh.n_cells:
+                        warnings.warn(f'Invalid cell ids:\n{cids}')
                     cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
                     picked.append(smesh.extract_cells(cids_to_get))
 
