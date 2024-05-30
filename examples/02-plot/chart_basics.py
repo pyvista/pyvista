@@ -151,7 +151,7 @@ import matplotlib.pyplot as plt
 
 # First, create the matplotlib figure
 f, ax = plt.subplots(
-    tight_layout=True
+    tight_layout=True,
 )  # Tight layout to keep axis labels visible on smaller figures
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]

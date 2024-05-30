@@ -1,5 +1,7 @@
 """This module contains the Property class."""
 
+from __future__ import annotations
+
 from typing import Union
 
 import pyvista
@@ -309,7 +311,7 @@ class Property(_vtk.vtkProperty):
                 f'Invalid style "{new_style}".  Must be one of the following:\n'
                 '\t"surface"\n'
                 '\t"wireframe"\n'
-                '\t"points"\n'
+                '\t"points"\n',
             )
 
     @property
@@ -1053,7 +1055,7 @@ class Property(_vtk.vtkProperty):
             self.BackfaceCullingOff()
         else:
             raise ValueError(
-                f'Invalid culling "{value}". Should be either:\n' '"back", "front", or "None"'
+                f'Invalid culling "{value}". Should be either:\n"back", "front", or "None"',
             )
 
     @property
@@ -1230,7 +1232,7 @@ class Property(_vtk.vtkProperty):
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
-    def copy(self) -> 'Property':
+    def copy(self) -> Property:
         """Create a deep copy of this property.
 
         Returns

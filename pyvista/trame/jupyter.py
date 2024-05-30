@@ -147,7 +147,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
 
     wslink_backend : str, optional
-        The the wslink backend that the server should use
+        The wslink backend that the server should use
         ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
 
     **kwargs : dict, optional
@@ -228,7 +228,12 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+    server,
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
@@ -446,7 +451,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-"""
+""",
         )
 
     async def launch_it():  # numpydoc ignore=GL08

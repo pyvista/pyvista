@@ -33,7 +33,11 @@ def test_contour_banded_points(sphere):
 
     rng = [-100, 100]
     out = sphere.contour_banded(
-        10, rng=rng, generate_contour_edges=False, scalar_mode='index', clipping=True
+        10,
+        rng=rng,
+        generate_contour_edges=False,
+        scalar_mode='index',
+        clipping=True,
     )
     assert out['data'].min() <= rng[0]
     assert out['data'].max() >= rng[1]
@@ -88,3 +92,10 @@ def test_decimate_polylines_inplace(poly_circle):
     # Allow some leeway for approximtely 50%
     assert poly_circle.n_points >= 14
     assert poly_circle.n_points <= 16
+
+
+def test_triangulate_contours():
+    poly = pv.Polygon(n_sides=4, fill=False)
+    filled = poly.triangulate_contours()
+    for cell in filled.cell:
+        assert cell.type == pv.CellType.TRIANGLE
