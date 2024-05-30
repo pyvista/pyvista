@@ -1,6 +1,6 @@
-"""Input _validation functions."""
+"""Input validation functions."""
 
-from pyvista.core._validation.check import (  # noqa: F401
+from .check import (  # noqa: F401
     check_contains,
     check_finite,
     check_greater_than,
@@ -21,11 +21,11 @@ from pyvista.core._validation.check import (  # noqa: F401
     check_subdtype,
     check_type,
 )
-from pyvista.core._validation.validate import (  # noqa: F401
+from .validate import (  # noqa: F401
     validate_array,
     validate_array3,
     validate_arrayN,
-    validate_arrayN_uintlike,
+    validate_arrayN_unsigned,
     validate_arrayNx3,
     validate_axes,
     validate_data_range,
