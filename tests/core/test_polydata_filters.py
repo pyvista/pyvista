@@ -59,11 +59,9 @@ def poly_circle():
 
 
 def test_decimate_polylines(poly_circle):
-
     assert poly_circle.n_points == 30
 
     decimated = poly_circle.decimate_polylines(0.5)
-
     # Allow some leeway for approximtely 50%
     assert decimated.n_points >= 14
     assert decimated.n_points <= 16
