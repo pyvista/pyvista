@@ -7987,3 +7987,44 @@ def download_particles(load=True):  # pragma: no cover
 
 
 _dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')
+
+
+def download_prostar(load=True):  # pragma: no cover
+    """Download a prostar dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_prostar()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Prostar Dataset <prostar_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_prostar, load=load)
+
+
+def _prostar_files_func():  # pragma: no cover
+    # Multiple files needed for read, but only one gets loaded
+    prostar_cel = _DownloadableFile('prostar.cel')
+    prostar_vrt = _SingleFileDownloadableDatasetLoader('prostar.vrt')
+    return prostar_vrt, prostar_cel
+
+
+_dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
