@@ -1,5 +1,7 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
 import warnings
@@ -414,7 +416,8 @@ def from_meshio(mesh):
 
     """
     try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
+        from meshio.vtk._vtk import meshio_to_vtk_type
+        from meshio.vtk._vtk import vtk_type_to_numnodes
     except ImportError:  # pragma: no cover
         from meshio._vtk_common import meshio_to_vtk_type
         from meshio.vtk._vtk_42 import vtk_type_to_numnodes

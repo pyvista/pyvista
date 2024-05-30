@@ -6,7 +6,8 @@ import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict, Optional
+from typing import Dict
+from typing import Optional
 
 
 def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:

@@ -10,6 +10,7 @@ Decimate a mesh
 
 # sphinx_gallery_thumbnail_number = 4
 import numpy as np
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import ClassVar, List, Sequence
+from typing import ClassVar
+from typing import List
+from typing import Sequence
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr

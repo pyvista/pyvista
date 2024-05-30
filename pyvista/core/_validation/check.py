@@ -12,9 +12,13 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
+from collections.abc import Sequence
 from numbers import Number
-from typing import Tuple, Union, get_args, get_origin
+from typing import Tuple
+from typing import Union
+from typing import get_args
+from typing import get_origin
 
 import numpy as np
 
