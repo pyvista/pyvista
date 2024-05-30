@@ -1125,6 +1125,8 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Reduce the number of lines in a polyline mesh.
 
+        .. versionadded:: 0.44.0
+
         Parameters
         ----------
         reduction : float
