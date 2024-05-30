@@ -1,4 +1,5 @@
 """Contains the pyvista.Molecule class."""
+
 from __future__ import annotations
 
 from . import _vtk_core as _vtk
