@@ -211,51 +211,48 @@ from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
 from vtkmodules.vtkCommonMath import vtkMatrix3x3
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkFiltersCore import (
-    VTK_BEST_FITTING_PLANE,
-    vtkAppendArcLength,
-    vtkAppendFilter,
-    vtkAppendPolyData,
-    vtkCellCenters,
-    vtkCellDataToPointData,
-    vtkCenterOfMass,
-    vtkCleanPolyData,
-    vtkClipPolyData,
-    vtkConnectivityFilter,
-    vtkContourFilter,
-    vtkCutter,
-    vtkDecimatePolylineFilter,
-    vtkDecimatePro,
-    vtkDelaunay2D,
-    vtkDelaunay3D,
-    vtkElevationFilter,
-    vtkExplicitStructuredGridToUnstructuredGrid,
-    vtkFeatureEdges,
-    vtkFlyingEdges3D,
-    vtkGlyph3D,
-    vtkImplicitPolyDataDistance,
-    vtkMarchingCubes,
-    vtkMassProperties,
-    vtkPointDataToCellData,
-    vtkPolyDataNormals,
-    vtkProbeFilter,
-    vtkQuadricDecimation,
-    vtkResampleWithDataSet,
-    vtkSmoothPolyDataFilter,
-    vtkStripper,
-    vtkThreshold,
-    vtkTriangleFilter,
-    vtkTubeFilter,
-    vtkUnstructuredGridToExplicitStructuredGrid,
-    vtkWindowedSincPolyDataFilter,
-)
-from vtkmodules.vtkFiltersExtraction import (
-    vtkExtractCellsByType,
-    vtkExtractGeometry,
-    vtkExtractGrid,
-    vtkExtractSelection,
-)
-from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
+from vtkmodules.vtkFiltersCore import VTK_BEST_FITTING_PLANE
+from vtkmodules.vtkFiltersCore import vtkAppendArcLength
+from vtkmodules.vtkFiltersCore import vtkAppendFilter
+from vtkmodules.vtkFiltersCore import vtkAppendPolyData
+from vtkmodules.vtkFiltersCore import vtkCellCenters
+from vtkmodules.vtkFiltersCore import vtkCellDataToPointData
+from vtkmodules.vtkFiltersCore import vtkCenterOfMass
+from vtkmodules.vtkFiltersCore import vtkCleanPolyData
+from vtkmodules.vtkFiltersCore import vtkClipPolyData
+from vtkmodules.vtkFiltersCore import vtkConnectivityFilter
+from vtkmodules.vtkFiltersCore import vtkContourFilter
+from vtkmodules.vtkFiltersCore import vtkCutter
+from vtkmodules.vtkFiltersCore import vtkDecimatePolylineFilter
+from vtkmodules.vtkFiltersCore import vtkDecimatePro
+from vtkmodules.vtkFiltersCore import vtkDelaunay2D
+from vtkmodules.vtkFiltersCore import vtkDelaunay3D
+from vtkmodules.vtkFiltersCore import vtkElevationFilter
+from vtkmodules.vtkFiltersCore import vtkExplicitStructuredGridToUnstructuredGrid
+from vtkmodules.vtkFiltersCore import vtkFeatureEdges
+from vtkmodules.vtkFiltersCore import vtkFlyingEdges3D
+from vtkmodules.vtkFiltersCore import vtkGlyph3D
+from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance
+from vtkmodules.vtkFiltersCore import vtkMarchingCubes
+from vtkmodules.vtkFiltersCore import vtkMassProperties
+from vtkmodules.vtkFiltersCore import vtkPointDataToCellData
+from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
+from vtkmodules.vtkFiltersCore import vtkProbeFilter
+from vtkmodules.vtkFiltersCore import vtkQuadricDecimation
+from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet
+from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter
+from vtkmodules.vtkFiltersCore import vtkStripper
+from vtkmodules.vtkFiltersCore import vtkThreshold
+from vtkmodules.vtkFiltersCore import vtkTriangleFilter
+from vtkmodules.vtkFiltersCore import vtkTubeFilter
+from vtkmodules.vtkFiltersCore import vtkUnstructuredGridToExplicitStructuredGrid
+from vtkmodules.vtkFiltersCore import vtkWindowedSincPolyDataFilter
+from vtkmodules.vtkFiltersExtraction import vtkExtractCellsByType
+from vtkmodules.vtkFiltersExtraction import vtkExtractGeometry
+from vtkmodules.vtkFiltersExtraction import vtkExtractGrid
+from vtkmodules.vtkFiltersExtraction import vtkExtractSelection
+from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D
+from vtkmodules.vtkFiltersFlowPaths import vtkStreamTracer
 
 with contextlib.suppress(ImportError):  # Introduced VTK v9.1.0
     from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData
