@@ -6198,6 +6198,10 @@ class DataSetFilters:
         - ``'volume'``
         - ``'warpage'``
 
+        Notes
+        -----
+        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
+
         Parameters
         ----------
         quality_measure : str, default: 'scaled_jacobian'
