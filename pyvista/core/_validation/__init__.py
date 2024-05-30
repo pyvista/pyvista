@@ -1,4 +1,5 @@
 """Input validation functions."""
+
 from __future__ import annotations
 
 from .check import check_contains  # noqa: F401
