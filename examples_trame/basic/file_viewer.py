@@ -1,3 +1,4 @@
+from pathlib import Path
 import tempfile
 
 from trame.app import get_server
@@ -35,10 +36,10 @@ def handle(file_exchange, **kwargs):
 
         if file.content:
             print(file.info)
-            bytes = file.content
+            bytes_ = file.content
             with tempfile.NamedTemporaryFile(suffix=file.name) as path:
-                with open(path.name, 'wb') as f:
-                    f.write(bytes)
+                with Path(path.name).open('wb') as f:
+                    f.write(bytes_)
                 ds = pv.read(path.name)
             pl.add_mesh(ds, name=file.name)
             pl.reset_camera()
@@ -67,12 +68,17 @@ with SinglePageLayout(server) as layout:
             style="max-width: 300px;",
         )
         vuetify3.VProgressLinear(
-            indeterminate=True, absolute=True, bottom=True, active=("trame__busy",)
+            indeterminate=True,
+            absolute=True,
+            bottom=True,
+            active=("trame__busy",),
         )
 
     with layout.content:
         with vuetify3.VContainer(
-            fluid=True, classes="pa-0 fill-height", style="position: relative;"
+            fluid=True,
+            classes="pa-0 fill-height",
+            style="position: relative;",
         ):
             # Use PyVista UI template for Plotters
             view = plotter_ui(pl)

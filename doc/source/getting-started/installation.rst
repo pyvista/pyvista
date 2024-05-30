@@ -281,7 +281,7 @@ related packages:
     conda create --name vtk_env python=3.9
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista trame
+    pip install jupyter pyvista[jupyter] trame
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599

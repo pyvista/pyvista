@@ -54,7 +54,7 @@ def vtk_points(points, deep=True, force_float=False):
                 'Points is not a float type. This can cause issues when '
                 'transforming or applying filters. Casting to '
                 '``np.float32``. Disable this by passing '
-                '``force_float=False``.'
+                '``force_float=False``.',
             )
             points = points.astype(np.float32)
 
@@ -68,7 +68,7 @@ def vtk_points(points, deep=True, force_float=False):
     if points.shape[1] != 3:
         raise ValueError(
             'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)'
+            f'Shape is {points.shape} and should be (X, 3)',
         )
 
     # use the underlying vtk data if present to avoid memory leaks
@@ -214,7 +214,8 @@ def fit_plane_to_points(points, return_meta=False):
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> cloud = np.random.default_rng().random((10, 3))
+    >>> rng = np.random.default_rng(seed=0)
+    >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane
@@ -432,7 +433,7 @@ def vector_poly_data(orig, vec):
 
     npts = orig.shape[0]
     vcells = pyvista.core.cell.CellArray.from_regular_cells(
-        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1))
+        np.arange(npts, dtype=pyvista.ID_TYPE).reshape((npts, 1)),
     )
 
     # Create vtkPolyData object

@@ -10,6 +10,8 @@ A ``check`` function typically:
 
 """
 
+from __future__ import annotations
+
 from collections.abc import Iterable, Sequence
 from numbers import Number
 from typing import Tuple, Union, get_args, get_origin
@@ -186,7 +188,7 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
         arr = arr.flatten()
         axis = -1
     else:
-        if not axis == -1:
+        if axis != -1:
             # Validate axis
             check_number(axis, name="Axis")
             check_integer(axis, name="Axis")
@@ -218,11 +220,8 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
     else:  # not ascending and strict
         is_sorted = np.all(arr[first] > arr[second])
     if not is_sorted:
-        if arr.size <= 4:
-            # Show the array's elements in error msg if array is small
-            msg_body = f"{arr}"
-        else:
-            msg_body = f"with {arr.size} elements"
+        # Show the array's elements in error msg if array is small
+        msg_body = f"{arr}" if arr.size <= 4 else f"with {arr.size} elements"
         order = "ascending" if ascending else "descending"
         strict = "strict " if strict else ""
         raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
@@ -298,10 +297,7 @@ def check_integer(arr, /, *, strict=False, name="Array"):
     """
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     if strict:
-        try:
-            check_subdtype(arr, np.integer)
-        except TypeError:
-            raise
+        check_subdtype(arr, np.integer)
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
@@ -335,10 +331,7 @@ def check_nonnegative(arr, /, *, name="Array"):
     >>> _validation.check_nonnegative([1, 2, 3])
 
     """
-    try:
-        check_greater_than(arr, 0, strict=False, name=name)
-    except ValueError:
-        raise
+    check_greater_than(arr, 0, strict=False, name=name)
 
 
 def check_greater_than(arr, /, value, *, strict=True, name="Array"):
@@ -487,11 +480,8 @@ def check_range(arr, /, rng, *, strict_lower=False, strict_upper=False, name="Ar
     check_sorted(rng, name="Range")
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    try:
-        check_greater_than(arr, rng[0], strict=strict_lower, name=name)
-        check_less_than(arr, rng[1], strict=strict_upper, name=name)
-    except ValueError:
-        raise
+    check_greater_than(arr, rng[0], strict=strict_lower, name=name)
+    check_less_than(arr, rng[1], strict=strict_upper, name=name)
 
 
 def check_shape(
@@ -549,10 +539,7 @@ def check_shape(
     def _shape_is_allowed(a, b):
         # a: array's actual shape
         # b: allowed shape (may have -1)
-        if len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)):
-            return True
-        else:
-            return False
+        return bool(len(a) == len(b) and all(map(lambda x, y: True if x == y else y == -1, a, b)))
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
 
@@ -608,10 +595,7 @@ def check_number(num, /, *, name='Object'):
     >>> _validation.check_number(1 + 2j)
 
     """
-    try:
-        check_instance(num, Number, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(num, Number, allow_subclass=True, name=name)
 
 
 def check_string(obj, /, *, allow_subclass=True, name='Object'):
@@ -649,10 +633,7 @@ def check_string(obj, /, *, allow_subclass=True, name='Object'):
     >>> _validation.check_string("eggs")
 
     """
-    try:
-        check_instance(obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
 def check_sequence(obj, /, *, name='Object'):
@@ -686,10 +667,7 @@ def check_sequence(obj, /, *, name='Object'):
     >>> _validation.check_sequence("A")
 
     """
-    try:
-        check_instance(obj, Sequence, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
 def check_iterable(obj, /, *, name='Object'):
@@ -724,10 +702,7 @@ def check_iterable(obj, /, *, name='Object'):
     >>> _validation.check_iterable(np.array((4, 5, 6)))
 
     """
-    try:
-        check_instance(obj, Iterable, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
 def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
@@ -782,10 +757,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         classinfo = get_args(classinfo)
 
     # Count num classes
-    if isinstance(classinfo, tuple):
-        num_classes = len(classinfo)
-    else:
-        num_classes = 1
+    num_classes = len(classinfo) if isinstance(classinfo, tuple) else 1
 
     # Check if is instance
     is_instance = isinstance(obj, classinfo)
@@ -851,10 +823,7 @@ def check_type(obj, /, classinfo, *, name='Object'):
     >>> _validation.check_type({'spam': "eggs"}, (dict, set))
 
     """
-    try:
-        check_instance(obj, classinfo, allow_subclass=False, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
 def check_iterable_items(
@@ -909,16 +878,15 @@ def check_iterable_items(
 
     """
     check_iterable(iterable_obj, name=name)
-    try:
-        any(
-            check_instance(
-                item, item_type, allow_subclass=allow_subclass, name=f"All items of {name}"
-            )
-            for item in iterable_obj
+    any(
+        check_instance(
+            item,
+            item_type,
+            allow_subclass=allow_subclass,
+            name=f"All items of {name}",
         )
-
-    except TypeError:
-        raise
+        for item in iterable_obj
+    )
 
 
 def check_contains(*, item, container, name='Input'):
@@ -954,11 +922,8 @@ def check_contains(*, item, container, name='Input'):
 
     """
     if item not in container:
-        if isinstance(container, (list, tuple)):
-            qualifier = "one of"
-        else:
-            qualifier = "in"
-        msg = f"{name} '{item}' is not valid. {name} must be " f"{qualifier}: \n\t{container}"
+        qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
+        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
@@ -1052,7 +1017,7 @@ def check_length(
         if len(arr) not in exact_length:
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
     # Validate min/max length
@@ -1071,13 +1036,13 @@ def check_length(
         if len(arr) < min_length:
             raise ValueError(
                 f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
     if max_length is not None:
         if len(arr) > max_length:
             raise ValueError(
                 f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead."
+                f"Got length {len(arr)} instead.",
             )
 
 

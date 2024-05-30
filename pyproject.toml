@@ -33,6 +33,7 @@ dependencies = [
     'pooch',
     'scooby>=0.5.1',
     'vtk',  # keep without version constraints
+    'typing-extensions',
 ]
 dynamic = ['version']
 
@@ -163,6 +164,7 @@ disallow_any_generics = true
 pretty = true
 show_error_context = true
 warn_unused_ignores = true
+warn_redundant_casts = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
@@ -209,6 +211,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.ExplicitStructuredGrid$',
     '\.Grid$',
     '\.MultiBlock$',
+    '\.PartitionedDataSet$',
     '\.PointGrid$',
     '\.PointSet$',
     '\.PolyDataFilters$',
@@ -305,6 +308,10 @@ target-version = 'py39'
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
+    # https://github.com/pyvista/pyvista/pull/6030
+    "B028",
+    # https://github.com/pyvista/pyvista/pull/6022
+    "B904",
     # whitespace before ':'
     "E203",
     # line break before binary operator
@@ -328,24 +335,72 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/6037
+    "PERF203",
+    # https://github.com/pyvista/pyvista/pull/5877
+    "SIM102",
+    # https://github.com/pyvista/pyvista/pull/5888
+    "SIM117",
+    # https://github.com/pyvista/pyvista/pull/5837
+    "SIM118",
+    # https://github.com/pyvista/pyvista/pull/5911
+    "RET505",
+    "RET506",
+    "RET507",
 ]
 fixable = ["ALL"]
 unfixable = []
 extend-select = [
-    "B007",
-    "B010",
+    "A",
+    "AIR",
+    "ASYNC",
+    "B",
     "C4",
+    "COM",
+    "DJ",
+    "DTZ",
+    "E",
     "F",
+    "FA",
     "FLY",
+    "ICN",
+    "INT",
+    "ISC",
+    "LOG",
     "NPY",
-    "PGH004",
+    "PERF",
+    "PGH",
     "PIE",
+    "PLC",
+    "PLR0402",
+    "PLR1711",
+    "PLR1714",
+    "PLW0127",
     "PT",
+    "PTH",
+    "PYI",
+    "Q",
+    "RET",
     "RSE",
-    "RUF005",
-    "RUF010",
-    "RUF100",
+    "RUF",
+    "SIM",
+    "T10",
+    "TCH",
+    "TRIO",
+    "TRY201",
+    "TRY300",
+    "TRY302",
+    "W",
+    "YTT",
 ]
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
+
+[tool.ruff.lint.per-file-ignores]
+"examples/**" = [
+    # https://github.com/pyvista/pyvista/pull/6014
+    "B015",
+    # https://github.com/pyvista/pyvista/pull/6019
+    "B018",
+]

@@ -154,7 +154,12 @@ def test_text3d_source():
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
-        string=string, center=center, height=height, width=width, depth=depth, normal=normal
+        string=string,
+        center=center,
+        height=height,
+        width=width,
+        depth=depth,
+        normal=normal,
     )
     out = src.output
     bnds = out.bounds
@@ -304,10 +309,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     assert points_before is points_after
 
     # Test setting a new value sets modified flag but does not change output
-    if name == "string":
-        new_value = value + value
-    else:
-        new_value = np.array(value) * 2
+    new_value = value + value if name == 'string' else np.array(value) * 2
     points_before = text3d_source_with_text._output.GetPoints()
     setattr(text3d_source_with_text, name, new_value)
     points_after = text3d_source_with_text._output.GetPoints()

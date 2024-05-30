@@ -121,7 +121,12 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -189,7 +194,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )
 
     def update_image(self, *args, **kwargs):  # pragma: no cover
@@ -230,7 +235,12 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -258,5 +268,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )

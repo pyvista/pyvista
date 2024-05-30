@@ -8,12 +8,21 @@ the entire library.
 
 """
 
-# flake8: noqa: F401
-
 from collections import namedtuple
+
+# flake8: noqa: F401
+import contextlib
+from typing import NamedTuple
 import warnings
 
 from vtkmodules.vtkCommonCore import vtkVersion
+from vtkmodules.vtkImagingSources import (
+    vtkImageEllipsoidSource,
+    vtkImageGaussianSource,
+    vtkImageMandelbrotSource,
+    vtkImageNoiseSource,
+    vtkImageSinusoidSource,
+)
 
 # vtkExtractEdges moved from vtkFiltersExtraction to vtkFiltersCore in
 # VTK commit d9981b9aeb93b42d1371c6e295d76bfdc18430bd
@@ -179,6 +188,7 @@ from vtkmodules.vtkCommonDataModel import (
     vtkIterativeClosestPointTransform,
     vtkMultiBlockDataSet,
     vtkNonMergingPointLocator,
+    vtkPartitionedDataSet,
     vtkPerlinNoise,
     vtkPiecewiseFunction,
     vtkPlane,
@@ -201,10 +211,8 @@ from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
 )
 
-try:  # Introduced prior to VTK 9.2
+with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.2
     from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
-except ImportError:  # pragma: no cover
-    pass
 
 from vtkmodules.vtkCommonExecutionModel import (
     vtkAlgorithm,
@@ -260,15 +268,15 @@ from vtkmodules.vtkFiltersExtraction import (
 )
 from vtkmodules.vtkFiltersFlowPaths import vtkEvenlySpacedStreamlines2D, vtkStreamTracer
 
-try:  # Introduced VTK v9.1.0
+with contextlib.suppress(ImportError):  # Introduced VTK v9.1.0
     from vtkmodules.vtkFiltersGeneral import vtkRemovePolyData
-except ImportError:  # pragma: no cover
-    pass
+
 from vtkmodules.vtkFiltersGeneral import (
     vtkAxes,
     vtkBooleanOperationPolyDataFilter,
     vtkBoxClipDataSet,
     vtkClipClosedSurface,
+    vtkContourTriangulator,
     vtkCursor3D,
     vtkCurvatures,
     vtkDataSetTriangleFilter,
@@ -311,11 +319,10 @@ from vtkmodules.vtkFiltersModeling import (
 )
 from vtkmodules.vtkFiltersParallel import vtkIntegrateAttributes
 
-try:
-    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
-except ImportError:  # pragma: no cover
+with contextlib.suppress(ImportError):
     # `vtkmodules.vtkFiltersParallelDIY2` is unavailable in some versions of `vtk` from conda-forge
-    pass
+    from vtkmodules.vtkFiltersParallelDIY2 import vtkRedistributeDataSetFilter
+
 from vtkmodules.vtkFiltersPoints import vtkGaussianKernel, vtkPointInterpolator
 from vtkmodules.vtkFiltersSources import (
     vtkArcSource,
@@ -342,11 +349,16 @@ from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane, vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality, vtkCellSizeFilter
 
-try:
+with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
-except ImportError:  # pragma: no cover
-    pass
-from vtkmodules.vtkIOGeometry import vtkSTLWriter
+
+from vtkmodules.vtkIOGeometry import (
+    vtkHoudiniPolyDataWriter,
+    vtkIVWriter,
+    vtkOBJWriter,
+    vtkProStarReader,
+    vtkSTLWriter,
+)
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import (
     vtkDataReader,
@@ -369,6 +381,7 @@ from vtkmodules.vtkIOXML import (
     vtkXMLImageDataWriter,
     vtkXMLMultiBlockDataReader,
     vtkXMLMultiBlockDataWriter,
+    vtkXMLPartitionedDataSetReader,
     vtkXMLPImageDataReader,
     vtkXMLPolyDataReader,
     vtkXMLPolyDataWriter,
@@ -387,19 +400,20 @@ from vtkmodules.vtkIOXML import (
 )
 from vtkmodules.vtkImagingCore import (
     vtkExtractVOI,
+    vtkImageConstantPad,
     vtkImageDifference,
     vtkImageExtractComponents,
     vtkImageFlip,
+    vtkImageMirrorPad,
     vtkImageThreshold,
+    vtkImageWrapPad,
     vtkRTAnalyticSource,
 )
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth, vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction, vtkSurfaceReconstructionFilter
 
-try:
+with contextlib.suppress(ImportError):
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
-except ImportError:  # pragma: no cover
-    pass
 
 try:
     from vtkmodules.vtkPythonContext2D import vtkPythonItem
@@ -424,21 +438,27 @@ from vtkmodules.vtkImagingFourier import (
 )
 
 # 9.1+ imports
-try:
+with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersPoints import vtkConvertToPointCloud
-except ImportError:  # pragma: no cover
-    pass
 
-try:  # Introduced prior to VTK 9.3
+with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.3
     from vtkmodules.vtkRenderingCore import vtkViewport
-except ImportError:  # pragma: no cover
-    pass
 
 # 9.3+ imports
-try:
+with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersCore import vtkPackLabels, vtkSurfaceNets3D
-except ImportError:  # pragma: no cover
-    pass
+
+# 9.1+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
+
+
+class VersionInfo(NamedTuple):
+    """Version information as a named tuple."""
+
+    major: int
+    minor: int
+    micro: int
 
 
 def VTKVersionInfo():
@@ -446,12 +466,10 @@ def VTKVersionInfo():
 
     Returns
     -------
-    collections.namedtuple
+    VersionInfo
         Version information as a named tuple.
 
     """
-    version_info = namedtuple('VTKVersionInfo', ['major', 'minor', 'micro'])
-
     try:
         ver = vtkVersion()
         major = ver.GetVTKMajorVersion()
@@ -461,7 +479,7 @@ def VTKVersionInfo():
         warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
         major, minor, micro = (4, 0, 0)
 
-    return version_info(major, minor, micro)
+    return VersionInfo(major, minor, micro)
 
 
 vtk_version_info = VTKVersionInfo()

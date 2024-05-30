@@ -4,6 +4,8 @@ The data objects does not have any sort of spatial reference.
 
 """
 
+from __future__ import annotations
+
 from typing import Optional, Tuple
 
 import numpy as np
@@ -77,7 +79,7 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):  # numpydoc ignore=RT01
+    def n_rows(self):
         """Return the number of rows.
 
         Returns
@@ -101,7 +103,7 @@ class Table(_vtk.vtkTable, DataObject):
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):  # numpydoc ignore=RT01
+    def n_columns(self):
         """Return the number of columns.
 
         Returns
@@ -113,7 +115,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):  # numpydoc ignore=RT01
+    def n_arrays(self):
         """Return the number of columns.
 
         Alias for: ``n_columns``.
@@ -143,7 +145,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):  # numpydoc ignore=RT01
+    def row_arrays(self):
         """Return the all row arrays.
 
         Returns
@@ -153,7 +155,9 @@ class Table(_vtk.vtkTable, DataObject):
 
         """
         return DataSetAttributes(
-            vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW
+            vtkobject=self.GetRowData(),
+            dataset=self,
+            association=FieldAssociation.ROW,
         )
 
     def keys(self):
@@ -295,10 +299,7 @@ class Table(_vtk.vtkTable, DataObject):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if arr.ndim > 1:
-                    ncomp = arr.shape[1]
-                else:
-                    ncomp = 1
+                ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(key, arr.dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
@@ -339,11 +340,13 @@ class Table(_vtk.vtkTable, DataObject):
     def save(self, *args, **kwargs):  # pragma: no cover
         """Save the table."""
         raise NotImplementedError(
-            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods."
+            "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
         )
 
     def get_data_range(
-        self, arr: Optional[str] = None, preference: str = 'row'
+        self,
+        arr: Optional[str] = None,
+        preference: str = 'row',
     ) -> Tuple[float, float]:
         """Get the min and max of a named array.
 

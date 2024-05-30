@@ -2,14 +2,16 @@ import datetime
 import faulthandler
 import locale
 import os
+from pathlib import Path
 import sys
+from typing import Dict
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 faulthandler.enable()
 
-sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
 
@@ -35,9 +37,9 @@ pyvista.global_theme.font.title_size = 22
 pyvista.global_theme.return_cpos = False
 pyvista.set_jupyter_backend(None)
 # Save figures in specified directory
-pyvista.FIGURE_PATH = os.path.join(os.path.abspath("./images/"), "auto-generated/")
-if not os.path.exists(pyvista.FIGURE_PATH):
-    os.makedirs(pyvista.FIGURE_PATH)
+pyvista.FIGURE_PATH = str(Path("./images/").resolve() / "auto-generated/")
+if not Path(pyvista.FIGURE_PATH).exists():
+    Path(pyvista.FIGURE_PATH).mkdir()
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
@@ -62,7 +64,7 @@ warnings.filterwarnings(
 numfig = False
 html_logo = "./_static/pyvista_logo_sm.png"
 
-sys.path.append(os.path.abspath("./_ext"))
+sys.path.append(str(Path("./_ext").resolve()))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -269,7 +271,7 @@ autosummary_context = {
     # Methods that should be skipped when generating the docs
     # __init__ should be documented in the class docstring
     # override is a VTK method
-    "skipmethods": ["__init__", "override"]
+    "skipmethods": ["__init__", "override"],
 }
 
 # The suffix(es) of source filenames.
@@ -281,8 +283,8 @@ root_doc = "index"
 
 # General information about the project.
 project = "PyVista"
-year = datetime.date.today().year
-copyright = f"2017-{year}, The PyVista Developers"
+year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
+copyright = f"2017-{year}, The PyVista Developers"  # noqa: A001
 author = "Alex Kaszynski and Bane Sullivan"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -383,6 +385,8 @@ sphinx_gallery_conf = {
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
+
+suppress_warnings = ["config.cache"]
 
 import re
 
@@ -518,7 +522,7 @@ htmlhelp_basename = "pyvistadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
+latex_elements: Dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
