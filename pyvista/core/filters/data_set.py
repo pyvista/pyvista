@@ -5385,26 +5385,6 @@ class DataSetFilters:
             match_input_type=True,
         )
 
-    # def extract_cells_new_API(  # numpydoc ignore=PR01,RT01
-    #     self,
-    #     ind: Union[VectorLike[bool], VectorLike[int]],
-    #     inplace=False,
-    #     unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
-    #     invert=False,
-    #     pass_cell_ids=True,
-    #     pass_point_ids=True,
-    # ):
-    #     """Extract cells."""
-    #     invert = not invert
-    #     return self._remove_cells_internal_method(
-    #         ind=ind,
-    #         unused_points=unused_points,
-    #         inplace=inplace,
-    #         invert=invert,
-    #         pass_cell_ids=pass_cell_ids,
-    #         pass_point_ids=pass_point_ids,
-    #     )
-
     def remove_points(
         self,
         ind: Union[VectorLike[bool], VectorLike[int]],
@@ -5503,74 +5483,6 @@ class DataSetFilters:
             match_input_type=True,
             progress_bar=progress_bar,
         )
-
-    def _remove_cells_internal_method(
-        self,
-        *,
-        ind,
-        inplace,
-        unused_points,
-        invert,
-        pass_cell_ids,
-        pass_point_ids,
-    ):
-        is_poly_or_unstructured = isinstance(self, (pyvista.UnstructuredGrid, pyvista.PolyData))
-        if is_poly_or_unstructured:
-            target = self if inplace else self.copy()
-        else:
-            target = self.cast_to_unstructured_grid()
-
-        n_cells, n_points = target.n_cells, target.n_points
-        DUPLICATE = _vtk.vtkDataSetAttributes.DUPLICATECELL
-
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({n_cells})',
-                )
-        else:
-            ind = np.asarray(ind)
-
-        if invert:
-            ghost_cells = np.ones(n_cells, np.uint8) * DUPLICATE
-            ghost_cells[ind] = 0
-        else:
-            ghost_cells = np.zeros(n_cells, np.uint8)
-            ghost_cells[ind] = DUPLICATE
-
-        if pass_cell_ids or unused_points in ['remove', 'vertex']:
-            target.cell_data[_vtk.VTK_ORIGINAL_CELL_IDS] = range(n_cells)
-        if pass_point_ids:
-            target.point_data[_vtk.VTK_ORIGINAL_POINT_IDS] = range(n_points)
-
-        GHOST_ARRAY_NAME = _vtk.vtkDataSetAttributes.GhostArrayName()
-        target.cell_data[GHOST_ARRAY_NAME] = ghost_cells
-        target.RemoveGhostCells()
-        if GHOST_ARRAY_NAME in target.cell_data.keys():
-            del target.cell_data[GHOST_ARRAY_NAME]
-
-        def _remove_unused_points(dataset):
-            dataset_to_clean = (
-                dataset if is_poly_or_unstructured else dataset.cast_to_unstructured_grid()
-            )
-            cleaned = dataset_to_clean._remove_unused_points()
-            if is_poly_or_unstructured:
-                return cleaned
-            # Use keep_points to re-cast back to input type
-            return dataset.extract_points_new_API(cleaned[_vtk.VTK_ORIGINAL_POINT_IDS])
-
-        if unused_points == 'keep':
-            return target
-        elif unused_points == 'remove':
-            return _remove_unused_points(self)
-        elif unused_points == 'vertex':
-            return target.extract_points_new_API(np.ones(n_points, dtype=bool), mode='exact')
-        else:
-            options = ['keep', 'remove', 'vertex']
-            raise ValueError(
-                f'Unused points must be one of {options}, got {unused_points} instead.',
-            )
-            return None
 
     def split_values(
         self,
