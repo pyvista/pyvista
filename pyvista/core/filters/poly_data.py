@@ -1074,6 +1074,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate
+            Another option for triangular meshes.
+        decimate_polylines
+            For use with polylines.
+
         Examples
         --------
         Decimate a sphere.  First plot the sphere.
@@ -1151,6 +1158,13 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Decimated mesh.
+
+        See Also
+        --------
+        decimate
+            For use with triangular meshes.
+        decimate_pro
+            Another option for triangular meshes.
 
         Examples
         --------
@@ -1618,6 +1632,13 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Decimated mesh.
+
+        See Also
+        --------
+        decimate_pro
+            Another option for triangular meshes.
+        decimate_polylines
+            For use with polylines.
 
         Notes
         -----
