@@ -1,14 +1,20 @@
 """Module containing the wrapping of CubeAxesActor."""
 
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Tuple
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import BoundsLike
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
@@ -291,12 +297,12 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.SetTitleOffset(offset)
 
     @property
-    def camera(self) -> 'pyvista.Camera':  # numpydoc ignore=RT01
+    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
         """Return or set the camera that performs scaling and translation."""
         return self.GetCamera()
 
     @camera.setter
-    def camera(self, camera: 'pyvista.Camera'):  # numpydoc ignore=GL08
+    def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
         self.SetCamera(camera)
 
     @property

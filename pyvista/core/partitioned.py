@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import collections.abc
-from typing import Iterable, Optional, Union, overload
+from typing import Iterable
+from typing import Optional
+from typing import Union
+from typing import overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject, DataSet
+from .dataset import DataObject
+from .dataset import DataSet
 from .errors import PartitionedDataSetsNotSupported
-from .utilities.helpers import is_pyvista_dataset, wrap
+from .utilities.helpers import is_pyvista_dataset
+from .utilities.helpers import wrap
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc.MutableSequence):  # type: ignore[type-arg]

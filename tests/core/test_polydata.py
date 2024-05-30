@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from math import pi
 import pathlib
 from pathlib import Path
 import re
-from typing import Dict, List
+from typing import Dict
+from typing import List
 from unittest.mock import patch
 import warnings
 
@@ -12,12 +15,10 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import (
-    CellSizeError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    PyVistaFutureWarning,
-)
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
 

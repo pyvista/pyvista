@@ -1,31 +1,43 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
-from functools import partial, wraps
-from typing import ClassVar, Dict, Sequence, cast
+from functools import partial
+from functools import wraps
+from typing import ClassVar
+from typing import Dict
+from typing import Sequence
+from typing import cast
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, vtk_version_info
+from pyvista import MAX_N_COLOR_BARS
+from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .render_passes import RenderPasses
-from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from .utilities.gl_checks import check_depth_peeling, uses_egl
+from .tools import create_axes_marker
+from .tools import create_axes_orientation_box
+from .tools import parse_font_family
+from .utilities.gl_checks import check_depth_peeling
+from .utilities.gl_checks import uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',

@@ -12,6 +12,8 @@ Create an animated MP4 movie of a rendering scene.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

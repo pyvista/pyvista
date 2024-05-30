@@ -1,5 +1,7 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 
+from __future__ import annotations
+
 import collections.abc
 import warnings
 
@@ -7,25 +9,24 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    PyVistaFutureWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaFutureWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtk_id_list_to_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 
 @abstract_class

@@ -3,28 +3,32 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.arrays import get_array, get_array_association
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
-from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
-from .utilities.algorithms import (
-    add_ids_algorithm,
-    algorithm_to_mesh_handler,
-    crinkle_algorithm,
-    outline_algorithm,
-    pointset_to_polydata_algorithm,
-    set_algorithm_input,
-)
+from .utilities.algorithms import add_ids_algorithm
+from .utilities.algorithms import algorithm_to_mesh_handler
+from .utilities.algorithms import crinkle_algorithm
+from .utilities.algorithms import outline_algorithm
+from .utilities.algorithms import pointset_to_polydata_algorithm
+from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._array_like import NumpyArray
@@ -2780,10 +2784,8 @@ class WidgetHelper:
 
         """
         try:
-            from vtkmodules.vtkInteractionWidgets import (
-                vtkCamera3DRepresentation,
-                vtkCamera3DWidget,
-            )
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 

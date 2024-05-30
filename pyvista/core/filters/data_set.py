@@ -5,7 +5,13 @@ from __future__ import annotations
 import collections.abc
 import contextlib
 import functools
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Literal
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -13,28 +19,29 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import (
-    AmbiguousDataError,
-    MissingDataError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import transformations
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike, NumpyArray, VectorLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -6555,6 +6562,10 @@ class DataSetFilters:
         - ``'taper'``
         - ``'volume'``
         - ``'warpage'``
+
+        Notes
+        -----
+        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
 
         Parameters
         ----------

@@ -7,6 +7,8 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
+from __future__ import annotations
+
 from matplotlib.cm import get_cmap
 import numpy as np
 
