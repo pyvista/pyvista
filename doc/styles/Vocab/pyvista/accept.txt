@@ -116,7 +116,6 @@ imageio
 img
 initializer
 ipygany
-isort
 itkwidgets
 jupyter
 kubernetes

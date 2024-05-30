@@ -6,7 +6,8 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 
@@ -15,7 +16,9 @@ import pyvista
 from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
-from .utilities.arrays import FieldAssociation, get_array, row_array
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import get_array
+from .utilities.arrays import row_array
 
 
 class Table(_vtk.vtkTable, DataObject):

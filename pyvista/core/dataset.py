@@ -5,21 +5,19 @@ from __future__ import annotations
 import collections.abc
 from copy import deepcopy
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any
+from typing import Callable
+from typing import Generator
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Literal
+from typing import NamedTuple
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
+from typing import cast
 import warnings
 
 import numpy as np
@@ -27,23 +25,28 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, MatrixLike, Number, NumpyArray, VectorLike
+from ._typing_core import BoundsLike
+from ._typing_core import MatrixLike
+from ._typing_core import Number
+from ._typing_core import NumpyArray
+from ._typing_core import VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning, VTKVersionError
-from .filters import DataSetFilters, _get_output
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import DataSetFilters
+from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
-from .utilities.arrays import (
-    FieldAssociation,
-    _coerce_pointslike_arg,
-    get_array,
-    get_array_association,
-    raise_not_matching,
-    vtk_id_list_to_array,
-)
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import get_array
+from .utilities.arrays import get_array_association
+from .utilities.arrays import raise_not_matching
+from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
-from .utilities.misc import abstract_class, check_valid_vector
+from .utilities.misc import abstract_class
+from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 
 # vector array names

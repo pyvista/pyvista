@@ -5,45 +5,43 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum, auto
+from enum import StrEnum
+from enum import auto
 import inspect
 import io
 import os
 from pathlib import Path
 import re
 import textwrap
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-    final,
-)
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import final
 
 import numpy as np
 
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples._dataset_loader import (
-    DatasetObject,
-    _DatasetLoader,
-    _Downloadable,
-    _MultiFilePropsProtocol,
-    _SingleFilePropsProtocol,
-)
+from pyvista.examples._dataset_loader import DatasetObject
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
+from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
 
 if TYPE_CHECKING:
-    from types import FunctionType, ModuleType
+    from types import FunctionType
+    from types import ModuleType
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
