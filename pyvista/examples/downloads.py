@@ -8030,37 +8030,3 @@ def _prostar_files_func():  # pragma: no cover
 
 
 _dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
-
-
-def download_porphyrin(load=True):  # pragma: no cover
-    """Download a porphyrin molecule.
-
-    .. versionadded:: 0.44.0
-
-    Parameters
-    ----------
-    load : bool, default: True
-        Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
-
-    Returns
-    -------
-    pyvista.Molecule | str
-        DataSet or filename depending on ``load``.
-
-    Examples
-    --------
-    >>> from pyvista import examples
-    >>> molecule = examples.download_porphyrin()
-    >>> molecule.plot()
-
-    .. seealso::
-
-       :ref:`Porphyrin Dataset <porphyrin_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-    """
-    return _download_dataset(_dataset_porphyrin, load=load)
-
-
-_dataset_porphyrin = _SingleFileDownloadableDatasetLoader('porphyrin.cml')
