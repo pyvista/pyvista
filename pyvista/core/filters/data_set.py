@@ -1516,65 +1516,65 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(
-        self,
-        extent: Optional[Sequence[float]] = None,
-        progress_bar=False,
-        point_merging=True,
-    ):
-        """Extract the outer surface of a volume or structured grid dataset.
-
-        This will extract all 0D, 1D, and 2D cells producing the
-        boundary faces of the dataset.
-
-        .. note::
-            This tends to be less efficient than :func:`extract_surface`.
-
-        Parameters
-        ----------
-        extent : sequence[float], optional
-            Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
-            clip data.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        point_merging : bool, default: True
-            Enable point merging.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Surface of the dataset.
-
-        Examples
-        --------
-        Extract the surface of a sample unstructured grid.
-
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.extract_geometry()
-        PolyData (...)
-          N Cells:    88
-          N Points:   90
-          N Strips:   0
-          X Bounds:   0.000e+00, 1.000e+00
-          Y Bounds:   0.000e+00, 1.000e+00
-          Z Bounds:   0.000e+00, 5.000e+00
-          N Arrays:   3
-
-        See :ref:`surface_smoothing_example` for more examples using this filter.
-
-        """
-        alg = _vtk.vtkGeometryFilter()
-        alg.SetInputDataObject(self)
-        alg.SetMerging(point_merging)
-        if extent is not None:
-            alg.SetExtent(extent)
-            alg.SetExtentClipping(True)
-        _update_alg(alg, progress_bar, 'Extracting Geometry')
-        return _get_output(alg)
+    # def extract_geometry(
+    #     self,
+    #     extent: Optional[Sequence[float]] = None,
+    #     progress_bar=False,
+    #     point_merging=True,
+    # ):
+    #     """Extract the outer surface of a volume or structured grid dataset.
+    #
+    #     This will extract all 0D, 1D, and 2D cells producing the
+    #     boundary faces of the dataset.
+    #
+    #     .. note::
+    #         This tends to be less efficient than :func:`extract_surface`.
+    #
+    #     Parameters
+    #     ----------
+    #     extent : sequence[float], optional
+    #         Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
+    #         clip data.
+    #
+    #     progress_bar : bool, default: False
+    #         Display a progress bar to indicate progress.
+    #
+    #     point_merging : bool, default: True
+    #         Enable point merging.
+    #
+    #     Returns
+    #     -------
+    #     pyvista.PolyData
+    #         Surface of the dataset.
+    #
+    #     Examples
+    #     --------
+    #     Extract the surface of a sample unstructured grid.
+    #
+    #     >>> import pyvista as pv
+    #     >>> from pyvista import examples
+    #     >>> hex_beam = pv.read(examples.hexbeamfile)
+    #     >>> hex_beam.extract_geometry()
+    #     PolyData (...)
+    #       N Cells:    88
+    #       N Points:   90
+    #       N Strips:   0
+    #       X Bounds:   0.000e+00, 1.000e+00
+    #       Y Bounds:   0.000e+00, 1.000e+00
+    #       Z Bounds:   0.000e+00, 5.000e+00
+    #       N Arrays:   3
+    #
+    #     See :ref:`surface_smoothing_example` for more examples using this filter.
+    #
+    #     """
+    #     alg = _vtk.vtkGeometryFilter()
+    #     alg.SetInputDataObject(self)
+    #     alg.SetMerging(point_merging)
+    #     if extent is not None:
+    #         alg.SetExtent(extent)
+    #         alg.SetExtentClipping(True)
+    #     _update_alg(alg, progress_bar, 'Extracting Geometry')
+    #     return _get_output(alg)
 
     def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
         """Extract all the internal/external edges of the dataset as PolyData.
@@ -4707,129 +4707,129 @@ class DataSetFilters:
         )
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
-    def plot_over_circular_arc(
-        self,
-        pointa,
-        pointb,
-        center,
-        resolution=None,
-        scalars=None,
-        title=None,
-        ylabel=None,
-        figsize=None,
-        figure=True,
-        show=True,
-        tolerance=None,
-        fname=None,
-        progress_bar=False,
-    ):
-        """Sample a dataset along a circular arc and plot it.
-
-        Plot the variables of interest in 2D where the X-axis is
-        distance from Point A and the Y-axis is the variable of
-        interest. Note that this filter returns ``None``.
-
-        Parameters
-        ----------
-        pointa : sequence[float]
-            Location in ``[x, y, z]``.
-
-        pointb : sequence[float]
-            Location in ``[x, y, z]``.
-
-        center : sequence[float]
-            Location in ``[x, y, z]``.
-
-        resolution : int, optional
-            Number of pieces to divide the circular arc into. Defaults
-            to number of cells in the input mesh. Must be a positive
-            integer.
-
-        scalars : str, optional
-            The string name of the variable in the input dataset to
-            probe. The active scalar is used by default.
-
-        title : str, optional
-            The string title of the ``matplotlib`` figure.
-
-        ylabel : str, optional
-            The string label of the Y-axis. Defaults to the variable name.
-
-        figsize : tuple(int), optional
-            The size of the new figure.
-
-        figure : bool, default: True
-            Flag on whether or not to create a new figure.
-
-        show : bool, default: True
-            Shows the ``matplotlib`` figure when ``True``.
-
-        tolerance : float, optional
-            Tolerance used to compute whether a point in the source is
-            in a cell of the input.  If not given, tolerance is
-            automatically generated.
-
-        fname : str, optional
-            Save the figure this file name when set.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Examples
-        --------
-        Sample a dataset along a high resolution circular arc and plot.
-
-        >>> from pyvista import examples
-        >>> mesh = examples.load_uniform()
-        >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-        >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-        >>> mesh.plot_over_circular_arc(
-        ...     a, b, center, resolution=1000, show=False
-        ... )  # doctest:+SKIP
-
-        """
-        # Sample on circular arc
-        sampled = DataSetFilters.sample_over_circular_arc(
-            self,
-            pointa,
-            pointb,
-            center,
-            resolution,
-            tolerance,
-            progress_bar=progress_bar,
-        )
-
-        # Get variable of interest
-        if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
-        values = sampled.get_array(scalars)
-        distance = sampled['Distance']
-
-        # create the matplotlib figure
-        if figure:
-            plt.figure(figsize=figsize)
-        # Plot it in 2D
-        if values.ndim > 1:
-            for i in range(values.shape[1]):
-                plt.plot(distance, values[:, i], label=f'Component {i}')
-            plt.legend()
-        else:
-            plt.plot(distance, values)
-        plt.xlabel('Distance')
-        if ylabel is None:
-            plt.ylabel(scalars)
-        else:
-            plt.ylabel(ylabel)
-        if title is None:
-            plt.title(f'{scalars} Profile')
-        else:
-            plt.title(title)
-        if fname:
-            plt.savefig(fname)
-        if show:  # pragma: no cover
-            plt.show()
+    # def plot_over_circular_arc(
+    #     self,
+    #     pointa,
+    #     pointb,
+    #     center,
+    #     resolution=None,
+    #     scalars=None,
+    #     title=None,
+    #     ylabel=None,
+    #     figsize=None,
+    #     figure=True,
+    #     show=True,
+    #     tolerance=None,
+    #     fname=None,
+    #     progress_bar=False,
+    # ):
+    #     """Sample a dataset along a circular arc and plot it.
+    #
+    #     Plot the variables of interest in 2D where the X-axis is
+    #     distance from Point A and the Y-axis is the variable of
+    #     interest. Note that this filter returns ``None``.
+    #
+    #     Parameters
+    #     ----------
+    #     pointa : sequence[float]
+    #         Location in ``[x, y, z]``.
+    #
+    #     pointb : sequence[float]
+    #         Location in ``[x, y, z]``.
+    #
+    #     center : sequence[float]
+    #         Location in ``[x, y, z]``.
+    #
+    #     resolution : int, optional
+    #         Number of pieces to divide the circular arc into. Defaults
+    #         to number of cells in the input mesh. Must be a positive
+    #         integer.
+    #
+    #     scalars : str, optional
+    #         The string name of the variable in the input dataset to
+    #         probe. The active scalar is used by default.
+    #
+    #     title : str, optional
+    #         The string title of the ``matplotlib`` figure.
+    #
+    #     ylabel : str, optional
+    #         The string label of the Y-axis. Defaults to the variable name.
+    #
+    #     figsize : tuple(int), optional
+    #         The size of the new figure.
+    #
+    #     figure : bool, default: True
+    #         Flag on whether or not to create a new figure.
+    #
+    #     show : bool, default: True
+    #         Shows the ``matplotlib`` figure when ``True``.
+    #
+    #     tolerance : float, optional
+    #         Tolerance used to compute whether a point in the source is
+    #         in a cell of the input.  If not given, tolerance is
+    #         automatically generated.
+    #
+    #     fname : str, optional
+    #         Save the figure this file name when set.
+    #
+    #     progress_bar : bool, default: False
+    #         Display a progress bar to indicate progress.
+    #
+    #     Examples
+    #     --------
+    #     Sample a dataset along a high resolution circular arc and plot.
+    #
+    #     >>> from pyvista import examples
+    #     >>> mesh = examples.load_uniform()
+    #     >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
+    #     >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
+    #     >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    #     >>> mesh.plot_over_circular_arc(
+    #     ...     a, b, center, resolution=1000, show=False
+    #     ... )  # doctest:+SKIP
+    #
+    #     """
+    #     # Sample on circular arc
+    #     sampled = DataSetFilters.sample_over_circular_arc(
+    #         self,
+    #         pointa,
+    #         pointb,
+    #         center,
+    #         resolution,
+    #         tolerance,
+    #         progress_bar=progress_bar,
+    #     )
+    #
+    #     # Get variable of interest
+    #     if scalars is None:
+    #         set_default_active_scalars(self)
+    #         field, scalars = self.active_scalars_info
+    #     values = sampled.get_array(scalars)
+    #     distance = sampled['Distance']
+    #
+    #     # create the matplotlib figure
+    #     if figure:
+    #         plt.figure(figsize=figsize)
+    #     # Plot it in 2D
+    #     if values.ndim > 1:
+    #         for i in range(values.shape[1]):
+    #             plt.plot(distance, values[:, i], label=f'Component {i}')
+    #         plt.legend()
+    #     else:
+    #         plt.plot(distance, values)
+    #     plt.xlabel('Distance')
+    #     if ylabel is None:
+    #         plt.ylabel(scalars)
+    #     else:
+    #         plt.ylabel(ylabel)
+    #     if title is None:
+    #         plt.title(f'{scalars} Profile')
+    #     else:
+    #         plt.title(title)
+    #     if fname:
+    #         plt.savefig(fname)
+    #     if show:  # pragma: no cover
+    #         plt.show()
 
     def plot_over_circular_arc_normal(
         self,
