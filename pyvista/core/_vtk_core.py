@@ -46,167 +46,6 @@ from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
 from vtkmodules.util.numpy_support import vtk_to_numpy
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
-from vtkmodules.vtkCommonComputationalGeometry import (
-    vtkKochanekSpline,
-    vtkParametricBohemianDome,
-    vtkParametricBour,
-    vtkParametricBoy,
-    vtkParametricCatalanMinimal,
-    vtkParametricConicSpiral,
-    vtkParametricCrossCap,
-    vtkParametricDini,
-    vtkParametricEllipsoid,
-    vtkParametricEnneper,
-    vtkParametricFigure8Klein,
-    vtkParametricFunction,
-    vtkParametricHenneberg,
-    vtkParametricKlein,
-    vtkParametricKuen,
-    vtkParametricMobius,
-    vtkParametricPluckerConoid,
-    vtkParametricPseudosphere,
-    vtkParametricRandomHills,
-    vtkParametricRoman,
-    vtkParametricSpline,
-    vtkParametricSuperEllipsoid,
-    vtkParametricSuperToroid,
-    vtkParametricTorus,
-)
-from vtkmodules.vtkCommonCore import (
-    VTK_ARIAL,
-    VTK_COURIER,
-    VTK_FONT_FILE,
-    VTK_TIMES,
-    VTK_UNSIGNED_CHAR,
-    buffer_shared,
-    mutable,
-    reference,
-    vtkAbstractArray,
-    vtkBitArray,
-    vtkCharArray,
-    vtkCommand,
-    vtkDataArray,
-    vtkDoubleArray,
-    vtkFileOutputWindow,
-    vtkFloatArray,
-    vtkIdList,
-    vtkIdTypeArray,
-    vtkLogger,
-    vtkLookupTable,
-    vtkOutputWindow,
-    vtkPoints,
-    vtkSignedCharArray,
-    vtkStringArray,
-    vtkStringOutputWindow,
-    vtkTypeInt32Array,
-    vtkTypeInt64Array,
-    vtkTypeUInt32Array,
-    vtkUnsignedCharArray,
-    vtkWeakReference,
-)
-from vtkmodules.vtkCommonDataModel import (
-    VTK_BEZIER_CURVE,
-    VTK_BEZIER_HEXAHEDRON,
-    VTK_BEZIER_PYRAMID,
-    VTK_BEZIER_QUADRILATERAL,
-    VTK_BEZIER_TETRAHEDRON,
-    VTK_BEZIER_TRIANGLE,
-    VTK_BEZIER_WEDGE,
-    VTK_BIQUADRATIC_QUAD,
-    VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
-    VTK_BIQUADRATIC_QUADRATIC_WEDGE,
-    VTK_BIQUADRATIC_TRIANGLE,
-    VTK_CONVEX_POINT_SET,
-    VTK_CUBIC_LINE,
-    VTK_EMPTY_CELL,
-    VTK_HEXAGONAL_PRISM,
-    VTK_HEXAHEDRON,
-    VTK_HIGHER_ORDER_EDGE,
-    VTK_HIGHER_ORDER_HEXAHEDRON,
-    VTK_HIGHER_ORDER_POLYGON,
-    VTK_HIGHER_ORDER_PYRAMID,
-    VTK_HIGHER_ORDER_QUAD,
-    VTK_HIGHER_ORDER_TETRAHEDRON,
-    VTK_HIGHER_ORDER_TRIANGLE,
-    VTK_HIGHER_ORDER_WEDGE,
-    VTK_LAGRANGE_CURVE,
-    VTK_LAGRANGE_HEXAHEDRON,
-    VTK_LAGRANGE_PYRAMID,
-    VTK_LAGRANGE_QUADRILATERAL,
-    VTK_LAGRANGE_TETRAHEDRON,
-    VTK_LAGRANGE_TRIANGLE,
-    VTK_LAGRANGE_WEDGE,
-    VTK_LINE,
-    VTK_PARAMETRIC_CURVE,
-    VTK_PARAMETRIC_HEX_REGION,
-    VTK_PARAMETRIC_QUAD_SURFACE,
-    VTK_PARAMETRIC_SURFACE,
-    VTK_PARAMETRIC_TETRA_REGION,
-    VTK_PARAMETRIC_TRI_SURFACE,
-    VTK_PENTAGONAL_PRISM,
-    VTK_PIXEL,
-    VTK_POLY_LINE,
-    VTK_POLY_VERTEX,
-    VTK_POLYGON,
-    VTK_POLYHEDRON,
-    VTK_PYRAMID,
-    VTK_QUAD,
-    VTK_QUADRATIC_EDGE,
-    VTK_QUADRATIC_HEXAHEDRON,
-    VTK_QUADRATIC_LINEAR_QUAD,
-    VTK_QUADRATIC_LINEAR_WEDGE,
-    VTK_QUADRATIC_POLYGON,
-    VTK_QUADRATIC_PYRAMID,
-    VTK_QUADRATIC_QUAD,
-    VTK_QUADRATIC_TETRA,
-    VTK_QUADRATIC_TRIANGLE,
-    VTK_QUADRATIC_WEDGE,
-    VTK_TETRA,
-    VTK_TRIANGLE,
-    VTK_TRIANGLE_STRIP,
-    VTK_TRIQUADRATIC_HEXAHEDRON,
-    VTK_VERTEX,
-    VTK_VOXEL,
-    VTK_WEDGE,
-    vtkCell,
-    vtkCellArray,
-    vtkCellLocator,
-    vtkColor3ub,
-    vtkCompositeDataSet,
-    vtkDataObject,
-    vtkDataSet,
-    vtkDataSetAttributes,
-    vtkExplicitStructuredGrid,
-    vtkFieldData,
-    vtkGenericCell,
-    vtkImageData,
-    vtkImplicitFunction,
-    vtkIterativeClosestPointTransform,
-    vtkMolecule,
-    vtkMultiBlockDataSet,
-    vtkNonMergingPointLocator,
-    vtkPartitionedDataSet,
-    vtkPerlinNoise,
-    vtkPiecewiseFunction,
-    vtkPlane,
-    vtkPlaneCollection,
-    vtkPlanes,
-    vtkPointLocator,
-    vtkPointSet,
-    vtkPolyData,
-    vtkPolyLine,
-    vtkPolyPlane,
-    vtkPyramid,
-    vtkRectf,
-    vtkRectilinearGrid,
-    vtkSelection,
-    vtkSelectionNode,
-    vtkStaticCellLocator,
-    vtkStaticPointLocator,
-    vtkStructuredGrid,
-    vtkTable,
-    vtkUnstructuredGrid,
-)
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBohemianDome
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBour
@@ -338,6 +177,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import vtkIterativeClosestPointTransform
+from vtkmodules.vtkCommonDataModel import vtkMolecule
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
@@ -493,14 +333,6 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
 
-from vtkmodules.vtkIOChemistry import vtkCMLMoleculeReader
-from vtkmodules.vtkIOGeometry import (
-    vtkHoudiniPolyDataWriter,
-    vtkIVWriter,
-    vtkOBJWriter,
-    vtkProStarReader,
-    vtkSTLWriter,
-)
 from vtkmodules.vtkImagingCore import vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference
@@ -514,6 +346,7 @@ from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import vtkSurfaceReconstructionFilter
+from vtkmodules.vtkIOChemistry import vtkCMLMoleculeReader
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter
