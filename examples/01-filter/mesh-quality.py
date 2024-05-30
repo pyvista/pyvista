@@ -11,6 +11,8 @@ to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 """
 
+from __future__ import annotations
+
 from pyvista import examples
 
 mesh = examples.download_cow().triangulate().decimate(0.7)

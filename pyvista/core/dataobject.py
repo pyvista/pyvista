@@ -6,7 +6,14 @@ from abc import abstractmethod
 from collections import UserDict
 import collections.abc
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import ClassVar
+from typing import DefaultDict
+from typing import Dict
+from typing import Optional
+from typing import Type
+from typing import Union
 
 import numpy as np
 
@@ -15,8 +22,11 @@ import pyvista
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities.arrays import FieldAssociation, _JSONValueType, _SerializedDictArray
-from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _JSONValueType
+from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import read
+from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
@@ -245,7 +255,8 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import HTML, display as _display
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
                 return None

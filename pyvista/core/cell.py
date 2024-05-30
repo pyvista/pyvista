@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, cast
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import cast
 import warnings
 
 import numpy as np
@@ -12,11 +17,15 @@ import pyvista
 from . import _vtk_core as _vtk
 from .celltype import CellType
 from .dataset import DataObject
-from .errors import CellSizeError, PyVistaDeprecationWarning
+from .errors import CellSizeError
+from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ._typing_core import CellsLike, MatrixLike, NumpyArray, VectorLike
+    from ._typing_core import CellsLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 
 def _get_vtk_id_type():

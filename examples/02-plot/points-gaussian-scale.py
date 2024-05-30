@@ -7,6 +7,8 @@ style and scale them by a dynamic radius.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

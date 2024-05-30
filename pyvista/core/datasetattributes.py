@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import contextlib
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 import warnings
 
 import numpy as np
@@ -12,12 +19,16 @@ import numpy as np
 from . import _vtk_core as _vtk
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import convert_array
+from .utilities.arrays import copy_vtk_array
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike, MatrixLike, NumpyArray
+    from ._typing_core import ArrayLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
