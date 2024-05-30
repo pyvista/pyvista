@@ -11,10 +11,8 @@ import importlib
 import os
 import pathlib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import List
-from typing import Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -26,6 +24,9 @@ from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
 
@@ -224,7 +225,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable[[Any], Any]]] = []
+        self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -1520,7 +1521,7 @@ class MultiBlockPlot3DReader(BaseReader):
     def auto_detect_format(self, value):  # numpydoc ignore=GL08
         self.reader.SetAutoDetectFormat(value)
 
-    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def add_function(self, value: int | Plot3DFunctionEnum):
         """Specify additional functions to compute.
 
         The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
@@ -1549,7 +1550,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.AddFunction(value)
 
-    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def remove_function(self, value: int | Plot3DFunctionEnum):
         """Remove one function from list of functions to compute.
 
         For details on the types of accepted values, see :meth:``add_function``.
@@ -1768,7 +1769,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:
+    def family_array_names(self) -> list[str]:
         """Return the list of all family array names.
 
         Returns

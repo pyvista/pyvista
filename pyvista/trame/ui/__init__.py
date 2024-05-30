@@ -9,7 +9,6 @@ applications.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Dict
 import warnings
 
 from trame.app import get_server
@@ -20,7 +19,7 @@ from .vuetify3 import Viewer as Vue3Viewer
 if TYPE_CHECKING:
     from .base_viewer import BaseViewer
 
-_VIEWERS: Dict[str, BaseViewer] = {}
+_VIEWERS: dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 

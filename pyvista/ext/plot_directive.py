@@ -110,9 +110,8 @@ import re
 import shutil
 import textwrap
 import traceback
-from typing import Callable
+from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Dict
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
@@ -122,6 +121,9 @@ import jinja2  # Sphinx dependency.
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
@@ -159,7 +161,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec: ClassVar[Dict[str, Callable]] = {
+    option_spec: ClassVar[dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,

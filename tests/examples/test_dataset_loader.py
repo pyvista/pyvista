@@ -8,11 +8,8 @@ from pathlib import Path
 import shutil
 from types import FunctionType
 from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Tuple
 
 import numpy as np
 import pytest
@@ -31,20 +28,23 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 @dataclass
 class DatasetLoaderTestCase:
     dataset_name: str
-    dataset_function: Tuple[str, FunctionType]
-    dataset_loader: Tuple[str, _DatasetLoader]
+    dataset_function: tuple[str, FunctionType]
+    dataset_loader: tuple[str, _DatasetLoader]
 
 
 def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
-) -> List[DatasetLoaderTestCase]:
+) -> list[DatasetLoaderTestCase]:
     """Generate test cases by module with all dataset functions and their respective file loaders."""
 
-    test_cases_dict: Dict = {}
+    test_cases_dict: dict = {}
 
     def add_to_dict(func: str, dataset_function: Callable[[], Any]):
         # Function for stuffing example functions into a dict.
@@ -92,7 +92,7 @@ def _generate_dataset_loader_test_cases_from_module(
     [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
 
     # Flatten dict
-    test_cases_list: List[DatasetLoaderTestCase] = []
+    test_cases_list: list[DatasetLoaderTestCase] = []
     for name, content in sorted(test_cases_dict.items()):
         dataset_function = content.setdefault('dataset_function', None)
         dataset_loader = content.setdefault('dataset_loader', None)

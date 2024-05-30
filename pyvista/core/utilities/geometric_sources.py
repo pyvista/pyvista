@@ -8,11 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -27,6 +22,8 @@ from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -116,7 +113,7 @@ if _vtk.vtk_version_info < (9, 3):
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
+        _new_attr_exceptions: ClassVar[list[str]] = ['_direction']
 
         def __init__(
             self,
@@ -584,7 +581,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_center', '_direction']
 
     def __init__(
         self,
@@ -787,7 +784,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         List of points defining a broken line.
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['points']
+    _new_attr_exceptions: ClassVar[list[str]] = ['points']
 
     def __init__(self, points=None):
         """Initialize the multiple lines source class."""
@@ -808,7 +805,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[MatrixLike[float], VectorLike[float]]):
+    def points(self, points: MatrixLike[float] | VectorLike[float]):
         """Set the list of points defining a broken line.
 
         Parameters
@@ -875,7 +872,7 @@ class Text3DSource(vtkVectorText):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
+    _new_attr_exceptions: ClassVar[list[str]] = [
         '_center',
         '_height',
         '_width',
@@ -977,7 +974,7 @@ class Text3DSource(vtkVectorText):
         self._process_empty_string = value
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the center of the text.
 
         The center is defined as the middle of the axis-aligned bounding box
@@ -990,7 +987,7 @@ class Text3DSource(vtkVectorText):
         self._center = float(center[0]), float(center[1]), float(center[2])
 
     @property
-    def normal(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the normal direction of the text.
 
         The normal direction is parallel to the :attr:`depth` of the text, and
@@ -1168,7 +1165,7 @@ class CubeSource(_vtk.vtkCubeSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
+    _new_attr_exceptions: ClassVar[list[str]] = [
         "bounds",
         "_bounds",
     ]
@@ -1379,7 +1376,7 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> source.output.plot(show_edges=True, line_width=5)
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ["center"]
+    _new_attr_exceptions: ClassVar[list[str]] = ["center"]
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -2123,12 +2120,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
-        self._kinds: Dict[str, int] = {
+        self._kinds: dict[str, int] = {
             'tetrahedron': 0,
             'cube': 1,
             'octahedron': 2,
@@ -2453,7 +2450,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
+    _new_attr_exceptions: ClassVar[list[str]] = [
         "bounds",
         "_bounds",
     ]

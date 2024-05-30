@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import collections
-from typing import Sequence
-from typing import Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -12,6 +11,9 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @abstract_class
@@ -21,7 +23,7 @@ class RectilinearGridFilters:
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: Union[Sequence[int], bool] = False,
+        mixed: Sequence[int] | bool = False,
         pass_cell_ids: bool = True,
         pass_data: bool = True,
         progress_bar: bool = False,
