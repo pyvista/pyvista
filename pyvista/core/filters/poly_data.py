@@ -1177,7 +1177,7 @@ class PolyDataFilters(DataSetFilters):
         Decimate more points.
 
         >>> decimate_more = circle_polyline.decimate_polylines(0.75)
-        >>> decimate_more
+        >>> decimate_more.n_points
         6
 
         Compare decimated polylines.
