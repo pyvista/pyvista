@@ -1990,18 +1990,6 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def _remove_unused_points(self):
-        return self.clean(
-            point_merging=False,
-            tolerance=None,
-            lines_to_points=False,
-            polys_to_lines=False,
-            strips_to_polys=False,
-            inplace=False,
-            absolute=False,
-            progress_bar=False,
-        )
-
     def geodesic(
         self,
         start_vertex,
