@@ -11,7 +11,11 @@ if TYPE_CHECKING:
 
 
 class Molecule(_vtk.vtkMolecule):
-    """Class describing a molecule."""
+    """Class describing a molecule.
+
+    .. versionadded:: 0.44.0
+
+    """
 
     def __init__(self):
         super().__init__()
