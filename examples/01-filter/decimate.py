@@ -9,6 +9,8 @@ Decimate a mesh
 """
 
 # sphinx_gallery_thumbnail_number = 4
+import numpy as np
+
 import pyvista as pv
 from pyvista import examples
 
@@ -65,3 +67,69 @@ pl.camera_position = cpos
 pl.reset_camera()
 pl.link_views()
 pl.show()
+
+###############################################################################
+# Decimate Polyline Mesh
+# ----------------------
+
+# Generate a fairly slow spiral polyline mesh.
+
+n_points = 100
+n_rotations = 5
+phi = np.linspace(0, 2 * np.pi * n_rotations, n_points)
+ratio = 1.1
+r = ratio ** (phi)
+
+points = np.zeros((n_points, 3))
+points[:, 0] = r * np.cos(phi)
+points[:, 1] = r * np.sin(phi)
+
+spiral = pv.PolyData(points, lines=np.append([n_points], np.arange(n_points)))
+
+###############################################################################
+# Construct a reusable plotting function for future use.
+
+
+def compare_decimation(spiral, decimated):
+    pl = pv.Plotter()
+    pl.add_mesh(spiral, line_width=5, color='r', label='Original')
+    pl.add_mesh(decimated, line_width=3, color='k', label='Decimated')
+    pl.view_xy()
+    pl.add_legend(face="line", size=(0.25, 0.25))
+    pl.show(screenshot="tmp.png")
+
+
+###############################################################################
+# Decimate using :func:`pyvista.PolyDataFilters.decimate_polylines` filter by
+# target of 50%.
+
+decimated = spiral.decimate_polylines(0.5)
+print(f"Original # of points:  {spiral.n_points}")
+print(f"Decimated # of points: {decimated.n_points}")
+
+###############################################################################
+# The decimation looks OK at this level of reduction.
+
+compare_decimation(spiral, decimated)
+
+###############################################################################
+# Using a larger level of reduction, 80%, leads to a much coarser level of
+# representation. The structure of the inner part of the spiral is completely
+# lost.
+
+decimated = spiral.decimate_polylines(0.8)
+print(f"Original # of points:  {spiral.n_points}")
+print(f"Decimated # of points: {decimated.n_points}")
+
+compare_decimation(spiral, decimated)
+
+###############################################################################
+# To avoid errors of quickly changing features, use the ``maximum_error``
+# parameter. It is in units of fraction of the largest length of the
+# bounding box.  Note that it limits the level of reduction achieved.
+
+decimated = spiral.decimate_polylines(0.8, maximum_error=0.5)
+print(f"Original # of points:  {spiral.n_points}")
+print(f"Decimated # of points: {decimated.n_points}")
+
+compare_decimation(spiral, decimated)

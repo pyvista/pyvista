@@ -50,3 +50,43 @@ def test_boolean_intersect_edge_case():
 def test_identical_boolean(sphere):
     with pytest.raises(ValueError, match='identical points'):
         sphere.boolean_intersection(sphere.copy())
+
+
+@pytest.fixture()
+def poly_circle():
+    circle = pv.Circle(resolution=30)
+    return pv.PolyData(circle.points, lines=[31, *list(range(30)), 0])
+
+
+def test_decimate_polylines(poly_circle):
+
+    assert poly_circle.n_points == 30
+
+    decimated = poly_circle.decimate_polylines(0.5)
+
+    # Allow some leeway for approximtely 50%
+    assert decimated.n_points >= 14
+    assert decimated.n_points <= 16
+
+    # low maximum error will prevent decimation.
+    # Since this is a regular shape, no decimation occurs at all with suitable choice
+    decimated = poly_circle.decimate_polylines(0.5, maximum_error=0.0001)
+    assert decimated.n_points == 30
+
+
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64']))
+def test_decimate_polylines_dtype(point_dtype, poly_circle):
+    decimated = poly_circle.decimate_polylines(0.5, point_dtype=point_dtype)
+    assert decimated.points.dtype == point_dtype
+
+
+def test_decimate_polylines_invalid_dtype(poly_circle):
+    with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+        poly_circle.decimate_polylines(0.5, point_dtype="invalid")
+
+
+def test_decimate_polylines_inplace(poly_circle):
+    poly_circle.decimate_polylines(0.5, inplace=True)
+    # Allow some leeway for approximtely 50%
+    assert poly_circle.n_points >= 14
+    assert poly_circle.n_points <= 16

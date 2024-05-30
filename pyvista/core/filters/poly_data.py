@@ -1115,6 +1115,114 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
+    def decimate_polylines(
+        self,
+        reduction,
+        maximum_error=10,
+        point_dtype='float32',
+        inplace=False,
+        progress_bar=False,
+    ):
+        """Reduce the number of lines in a polyline mesh.
+
+        Parameters
+        ----------
+        reduction : float
+            Reduction factor. A value of 0.9 will leave 10% of the
+            original number of vertices.
+
+        maximum_error : float, default: 1.0
+            Fraction of the maximum length of the input data bounding box
+            to limit reduction.  This might prevent the full reduction from
+            being achieved.
+
+        point_dtype : str, default: 'float32'
+            Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        Examples
+        --------
+        Generate a circle, builtin function returns a Polygon cell.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=30)
+
+        Convert to a Polyline. A polyline requires duplicating reference
+        to initial point to close the circle.
+
+        >>> circle_polyline = pv.PolyData(
+        ...     circle.points, lines=[31] + list(range(30)) + [0]
+        ... )
+        >>> circle_polyline.n_points
+        30
+
+        Decimate ~50% of points.
+
+        >>> decimate_some = circle_polyline.decimate_polylines(0.5)
+        >>> decimate_some.n_points
+        14
+
+        Decimate more points.
+
+        >>> decimate_more = circle_polyline.decimate_polylines(0.75)
+        >>> decimate_more
+        6
+
+        Compare decimated polylines.
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(
+        ...     circle_polyline, label='Circle', color='red', line_width=5
+        ... )
+        >>> pl.add_mesh(
+        ...     decimate_some,
+        ...     label='Decimated some',
+        ...     color='blue',
+        ...     line_width=5,
+        ... )
+        >>> pl.add_mesh(
+        ...     decimate_more,
+        ...     label='Decimated more',
+        ...     color='black',
+        ...     line_width=5,
+        ... )
+        >>> pl.view_xy()
+        >>> pl.add_legend(face="line", size=(0.25, 0.25))
+        >>> pl.show()
+
+        See :ref:`decimate_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkDecimatePolylineFilter()
+        alg.SetInputData(self)
+        alg.SetTargetReduction(reduction)
+        alg.SetMaximumError(maximum_error)
+        if point_dtype == "float32":
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.SINGLE_PRECISION)
+        elif point_dtype == "float64":
+            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
+        else:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)
+            return self
+
+        return mesh
+
     def tube(
         self,
         radius=None,

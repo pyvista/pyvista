@@ -227,6 +227,7 @@ from vtkmodules.vtkFiltersCore import (
     vtkConnectivityFilter,
     vtkContourFilter,
     vtkCutter,
+    vtkDecimatePolylineFilter,
     vtkDecimatePro,
     vtkDelaunay2D,
     vtkDelaunay3D,
