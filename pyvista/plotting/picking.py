@@ -1280,7 +1280,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         warnings.warn(
                             "Display representations other than `surface` will result in incorrect results.",
                         )
-                    smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                        smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
+                    else:
+                        smesh = pyvista.wrap(
+                            actor.GetMapper().GetPolyDataMapper().GetInputAsDataSet(),
+                        )
                     smesh = smesh.copy()
                     smesh["original_cell_ids"] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
