@@ -804,7 +804,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
 
     See Also
     --------
-    validate_arrayN_uintlike
+    validate_arrayN_unsigned
         Similar function for non-negative integer arrays.
 
     validate_array
@@ -844,7 +844,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -891,7 +891,7 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     >>> import numpy as np
     >>> from pyvista import _validation
-    >>> arr = _validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
+    >>> arr = _validation.validate_arrayN_unsigned((1.0, 2.0, 3.0, 4.0))
     >>> arr
     array([1, 2, 3, 4])
 
@@ -902,18 +902,18 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
-    >>> _validation.validate_arrayN_uintlike(42)
+    >>> _validation.validate_arrayN_unsigned(42)
     array([42])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
-    >>> _validation.validate_arrayN_uintlike([[1, 2]])
+    >>> _validation.validate_arrayN_unsigned([[1, 2]])
     array([1, 2])
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_uintlike(
+    >>> _validation.validate_arrayN_unsigned(
     ...     (1, 2, 3), must_be_in_range=[1, 3]
     ... )
     array([1, 2, 3])

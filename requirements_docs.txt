@@ -12,7 +12,7 @@ mypy==1.10.0
 mypy-extensions==1.0.0
 numpydoc==1.7.0
 osmnx==1.9.3
-pydata-sphinx-theme==0.15.2
+pydata-sphinx-theme==0.15.3
 pypandoc==1.13
 pytest-sphinx==0.6.3
 scipy==1.13.1
@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==1.2.7
 sympy==1.12
-trame==3.6.0
+trame==3.6.1
 trame-vtk==2.8.8
 trame-vuetify==2.5.0
 trimesh==4.4.0
