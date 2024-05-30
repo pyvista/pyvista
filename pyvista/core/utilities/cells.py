@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from collections import deque
-from itertools import count, islice
-from typing import TYPE_CHECKING, Tuple, Union
+from itertools import count
+from itertools import islice
+from typing import TYPE_CHECKING
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 
@@ -12,7 +15,8 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike, NumpyArray
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:

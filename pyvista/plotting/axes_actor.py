@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import Tuple, Union
+from typing import Tuple
+from typing import Union
 
 import pyvista
 

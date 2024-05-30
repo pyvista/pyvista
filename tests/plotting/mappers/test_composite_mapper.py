@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import pytest
 from vtkmodules.vtkCommonCore import vtkLookupTable
 
 import pyvista as pv
-from pyvista.plotting.composite_mapper import BlockAttributes, CompositePolyDataMapper
+from pyvista.plotting.composite_mapper import BlockAttributes
+from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
 
 @pytest.fixture()

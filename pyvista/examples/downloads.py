@@ -24,7 +24,8 @@ from __future__ import annotations
 import functools
 import logging
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+from pathlib import PureWindowsPath
 import shutil
 from typing import Union
 import warnings
@@ -36,17 +37,18 @@ from pooch.utils import get_logger
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
-from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.examples._dataset_loader import (
-    _download_dataset,
-    _DownloadableFile,
-    _load_and_merge,
-    _load_as_cubemap,
-    _load_as_multiblock,
-    _MultiFileDownloadableDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.fileio import get_ext
+from pyvista.core.utilities.fileio import read
+from pyvista.core.utilities.fileio import read_texture
+from pyvista.examples._dataset_loader import _download_dataset
+from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _load_and_merge
+from pyvista.examples._dataset_loader import _load_as_cubemap
+from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()

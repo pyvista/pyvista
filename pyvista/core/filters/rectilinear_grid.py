@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import collections
-from typing import Sequence, Union
+from typing import Sequence
+from typing import Union
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
 
 

@@ -1,10 +1,13 @@
 """Test the images generated from building the documentation."""
 
+from __future__ import annotations
+
 import glob
 import os
 from pathlib import Path
 import shutil
-from typing import Dict, NamedTuple
+from typing import Dict
+from typing import NamedTuple
 import warnings
 
 from PIL import Image
