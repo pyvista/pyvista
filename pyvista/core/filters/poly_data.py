@@ -1198,23 +1198,23 @@ class PolyDataFilters(DataSetFilters):
         Compare decimated polylines.
 
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     circle_polyline, label='Circle', color='red', line_width=5
         ... )
-        >>> pl.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     decimate_some,
         ...     label='Decimated some',
         ...     color='blue',
         ...     line_width=5,
         ... )
-        >>> pl.add_mesh(
+        >>> _ = pl.add_mesh(
         ...     decimate_more,
         ...     label='Decimated more',
         ...     color='black',
         ...     line_width=5,
         ... )
         >>> pl.view_xy()
-        >>> pl.add_legend(face="line", size=(0.25, 0.25))
+        >>> _ = pl.add_legend(face="line", size=(0.25, 0.25))
         >>> pl.show()
 
         See :ref:`decimate_example` for more examples using this filter.
