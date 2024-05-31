@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import shutil
+import sys
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
@@ -21,7 +22,12 @@ def is_path_relative_to(path, other):
 
     [1] https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to
     """
-    return path.is_relative_to(other)
+    if sys.version_info < (3, 9):  # noqa: UP036
+        path = str(path.resolve())
+        other = str(other.resolve())
+        return path.startswith(other)
+    else:  # pragma: no cover
+        return path.is_relative_to(other)
 
 
 class OfflineViewerDirective(Directive):
