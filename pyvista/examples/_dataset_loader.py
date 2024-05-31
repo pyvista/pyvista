@@ -603,7 +603,10 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         return self._load_func(self._file_objects)
 
 
-class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable[tuple[str, ...]]):
+class _MultiFileDownloadableDatasetLoader(
+    _MultiFileDatasetLoader,
+    _Downloadable[Tuple[str, ...]],  # noqa: UP006
+):
     """Wrap multiple files for downloading and loading."""
 
     @property
