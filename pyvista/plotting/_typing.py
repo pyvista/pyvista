@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Dict  # noqa: UP035
+from typing import Tuple  # noqa: UP035
 from typing import Union
 
 from pyvista.core._typing_core import BoundsLike  # noqa: F401
@@ -20,14 +22,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from .plotting.colors import Color
 
 ColorLike = Union[
-    tuple[int, int, int],
-    tuple[int, int, int, int],
-    tuple[float, float, float],
-    tuple[float, float, float, float],
+    Tuple[int, int, int],  # noqa: UP006
+    Tuple[int, int, int, int],  # noqa: UP006
+    Tuple[float, float, float],  # noqa: UP006
+    Tuple[float, float, float, float],  # noqa: UP006
     Sequence[int],
     Sequence[float],
     NumpyArray[float],
-    dict[str, Union[int, float, str]],
+    Dict[str, Union[int, float, str]],  # noqa: UP006
     str,
     "Color",
     _vtk.vtkColor3ub,
