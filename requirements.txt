@@ -4,7 +4,7 @@
 #  This is to prevent installing `vtk` from PyPI
 #  when using a custom variant like `vtk_osmesa`
 #  which we do in some of our CI jobs.
-matplotlib<3.9.1
+matplotlib<3.8.5
 numpy<1.27.0
 pillow<10.4.0
 pooch<1.9.0
