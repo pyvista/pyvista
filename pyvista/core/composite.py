@@ -57,7 +57,7 @@ class MultiBlock(
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from :class:`MutableSequence`.  Multiple nonconforming
+       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
 
     Parameters
@@ -889,7 +889,7 @@ class MultiBlock(
         ['sphere', 'cube']
 
         """
-        # Taken from implementation in MutableSequence
+        # Taken from implementation in collections.abc.MutableSequence
         names = self.keys()
         n = len(self)
         for i in range(n // 2):
