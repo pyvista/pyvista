@@ -41,7 +41,7 @@ from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import ItemsView
 

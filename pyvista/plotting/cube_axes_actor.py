@@ -11,7 +11,7 @@ from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
 
 

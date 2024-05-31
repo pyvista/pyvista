@@ -14,7 +14,7 @@ from trame.app import get_server
 
 import pyvista
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from trame_client.ui.core import AbstractLayout
 
 

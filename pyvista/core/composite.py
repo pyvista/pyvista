@@ -31,7 +31,7 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]

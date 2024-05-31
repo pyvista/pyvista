@@ -19,7 +19,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from trame_client.ui.core import AbstractLayout
 
 

@@ -12,7 +12,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
 

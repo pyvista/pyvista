@@ -10,7 +10,7 @@ from pyvista.core.utilities.misc import no_new_attr
 
 from .helpers import wrap
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
 

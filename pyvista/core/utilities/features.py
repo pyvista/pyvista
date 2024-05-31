@@ -14,7 +14,7 @@ from pyvista.core import _vtk_core as _vtk
 
 from .helpers import wrap
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
 

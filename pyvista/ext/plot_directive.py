@@ -122,7 +122,7 @@ import jinja2  # Sphinx dependency.
 # enable offscreen to hide figures when generating them.
 import pyvista
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
 pyvista.BUILDING_GALLERY = True

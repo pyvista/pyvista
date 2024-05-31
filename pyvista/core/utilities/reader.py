@@ -25,7 +25,7 @@ from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
