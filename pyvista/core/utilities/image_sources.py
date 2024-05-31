@@ -222,7 +222,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
 
 @no_new_attr
 class ImageNoiseSource(_vtk.vtkImageNoiseSource):
-    """Create an image filled with noise.
+    """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
 
