@@ -1,6 +1,6 @@
 """Jupyter notebook plotting module."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 import warnings

@@ -1,4 +1,4 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Viewer class for a Vue 2 client.
 
 This class, derived from `pyvista.trame.ui.base_viewer`,

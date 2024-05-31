@@ -1,4 +1,4 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame User Interface.
 
 This module builds a base UI for manipulating a PyVista Plotter.
