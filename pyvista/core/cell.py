@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Tuple  # noqa: UP035
 from typing import cast
 import warnings
 
@@ -523,7 +524,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(tuple[float, float, float], tuple(center))
+        return cast(Tuple[float, float, float], tuple(center))  # noqa: UP006
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

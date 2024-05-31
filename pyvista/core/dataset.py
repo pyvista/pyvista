@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import collections.abc
-from collections.abc import Callable
-from collections.abc import Generator
-from collections.abc import Iterable
-from collections.abc import Iterator
-from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import Sequence  # noqa: UP035
 from typing import cast
 import warnings
 
@@ -44,6 +41,12 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from collections.abc import Generator
+    from collections.abc import Iterable
+    from collections.abc import Iterator
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
