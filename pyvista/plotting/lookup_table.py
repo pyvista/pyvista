@@ -1116,7 +1116,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[Tuple[float, float, float], tuple[float, float, float, float]],  # noqa: UP006
+            Union[Tuple[float, float, float], Tuple[float, float, float, float]],  # noqa: UP006
             tuple(color),
         )
 
