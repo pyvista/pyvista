@@ -78,9 +78,9 @@ jobs:
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-          
+
       - name: Remove __future__ imports
-        run: reorder-python-imports --remove-import 'from __future__ import annotations' $(find . -name "*.py")
+        run: reorder-python-imports --remove-import 'from __future__ import annotations' $(find ./examples ./pyvista ./doc -name "*.py")
 
       - name: Build Documentation
         run: make -C doc html
