@@ -1,13 +1,28 @@
 """Type guards for checking array-like type definitions."""
 
+from __future__ import annotations
+
 from itertools import islice
-from typing import Any, Iterable, Sequence, Tuple, Type, cast
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Iterable
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import cast
+
+try:
+    from typing import TypeGuard
+except ImportError:
+    from typing_extensions import TypeGuard
 
 import numpy as np
-from typing_extensions import TypeGuard
 
-from ._aliases import _ArrayLikeOrScalar
-from ._array_like import NumberType, _PyNumberType
+from ._array_like import NumberType
+from ._array_like import _PyNumberType
+
+if TYPE_CHECKING:
+    from ._aliases import _ArrayLikeOrScalar
 
 
 def _is_Number(array: _ArrayLikeOrScalar[NumberType]) -> TypeGuard[NumberType]:

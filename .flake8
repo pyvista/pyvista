@@ -1,5 +1,5 @@
 [flake8]
-exclude = .git,__pycache__,build,dist,doc/examples,doc/_build, tests/core/typing
+exclude = .git,__pycache__,build,dist,doc/examples,doc/_build, tests/core/typing/validation_cases
 ignore =
     # whitespace before ':'
     E203,

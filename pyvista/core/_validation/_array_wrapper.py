@@ -6,31 +6,30 @@ from abc import abstractmethod
 from copy import deepcopy
 import itertools
 import reprlib
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    List,
-    Literal,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import Generic
+from typing import Iterable
+from typing import List
+from typing import Literal
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import cast
+from typing import overload
 
 import numpy as np
 
-from pyvista.core._typing_core._array_like import NumberType, _FiniteNestedList, _FiniteNestedTuple
-from pyvista.core._typing_core._type_guards import (
-    _is_NestedNumberSequence,
-    _is_Number,
-    _is_NumberSequence,
-)
-from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
+from pyvista.core._typing_core._array_like import NumberType
+from pyvista.core._typing_core._array_like import _FiniteNestedList
+from pyvista.core._typing_core._array_like import _FiniteNestedTuple
+from pyvista.core._typing_core._type_guards import _is_NestedNumberSequence
+from pyvista.core._typing_core._type_guards import _is_Number
+from pyvista.core._typing_core._type_guards import _is_NumberSequence
+from pyvista.core._validation._cast_array import _cast_to_numpy
+from pyvista.core._validation._cast_array import _cast_to_tuple
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
