@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
 import weakref
@@ -7,8 +9,11 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import CellType, examples
-from pyvista.core.errors import AmbiguousDataError, CellSizeError, MissingDataError
+from pyvista import CellType
+from pyvista import examples
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import MissingDataError
 
 test_path = str(Path(__file__).resolve().parent)
 

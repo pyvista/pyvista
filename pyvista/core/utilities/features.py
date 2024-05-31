@@ -1,5 +1,7 @@
 """Module containing geometry helper functions."""
 
+from __future__ import annotations
+
 import collections.abc
 import os
 import sys

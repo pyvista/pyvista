@@ -8,6 +8,8 @@ This example shows you how to plot point clouds using PyVista using both the
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

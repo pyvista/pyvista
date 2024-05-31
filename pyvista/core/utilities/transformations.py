@@ -1,10 +1,14 @@
 """Module implementing point transformations and their matrices."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pyvista.core._typing_core import TransformLike
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import TransformLike
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
@@ -283,7 +287,8 @@ def apply_transformation_to_points(transformation: TransformLike, points, inplac
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
 
     """
-    from .arrays import _coerce_pointslike_arg, _coerce_transformlike_arg
+    from .arrays import _coerce_pointslike_arg
+    from .arrays import _coerce_transformlike_arg
 
     transformation = _coerce_transformlike_arg(transformation)
     points, _ = _coerce_pointslike_arg(points)

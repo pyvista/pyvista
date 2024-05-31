@@ -1,5 +1,7 @@
 """Points related utilities."""
 
+from __future__ import annotations
+
 import random
 import warnings
 
@@ -10,10 +12,8 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.misc import check_valid_vector
-from pyvista.core.utilities.transformations import (
-    apply_transformation_to_points,
-    axes_rotation_matrix,
-)
+from pyvista.core.utilities.transformations import apply_transformation_to_points
+from pyvista.core.utilities.transformations import axes_rotation_matrix
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -751,13 +751,11 @@ def _svd_single(a):
     """
     # Import locally instead of at module level to avoid cluttering
     # the namespace with internal NumPy functions
-    from numpy.linalg.linalg import (
-        _assert_stacked_2d,
-        _makearray,
-        _raise_linalgerror_svd_nonconvergence,
-        _umath_linalg,
-        get_linalg_error_extobj,
-    )
+    from numpy.linalg.linalg import _assert_stacked_2d
+    from numpy.linalg.linalg import _makearray
+    from numpy.linalg.linalg import _raise_linalgerror_svd_nonconvergence
+    from numpy.linalg.linalg import _umath_linalg
+    from numpy.linalg.linalg import get_linalg_error_extobj
 
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)

@@ -11,6 +11,7 @@ Integrate a vector field to generate streamlines on a 2D surface.
 
 ###############################################################################
 # This example generates streamlines of flow around a cylinder in cross flow.
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples

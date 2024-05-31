@@ -14,6 +14,8 @@ This example shows the performance improvement when clipping using the
 
 """
 
+from __future__ import annotations
+
 import time
 
 import pyvista as pv

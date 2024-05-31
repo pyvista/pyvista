@@ -2,20 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
+from typing import Tuple
 
 import numpy as np
 
-from pyvista.core.utilities.arrays import (
-    _coerce_transformlike_arg,
-    array_from_vtkmatrix,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities.arrays import _coerce_transformlike_arg
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from . import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike, NumpyArray, TransformLike, VectorLike
+
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Prop3D(_vtk.vtkProp3D):

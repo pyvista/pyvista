@@ -1,9 +1,15 @@
 """PyVista volume module."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from . import _vtk
-from ._property import Property
-from .mapper import _BaseMapper
 from .prop3d import Prop3D
+
+if TYPE_CHECKING:
+    from ._property import Property
+    from .mapper import _BaseMapper
 
 
 class Volume(Prop3D, _vtk.vtkVolume):

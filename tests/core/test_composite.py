@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 import platform
 import weakref
@@ -7,7 +9,12 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, StructuredGrid, examples as ex
+from pyvista import ImageData
+from pyvista import MultiBlock
+from pyvista import PolyData
+from pyvista import RectilinearGrid
+from pyvista import StructuredGrid
+from pyvista import examples as ex
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
