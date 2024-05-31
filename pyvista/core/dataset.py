@@ -2060,7 +2060,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[str]
+        list[str]
             List of array names for the dataset.
 
         Examples
@@ -2860,7 +2860,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[int]
+        list[int]
             List of neighbor cells IDs for the ind-th cell.
 
         Warnings
@@ -2999,7 +2999,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[int]
+        list[int]
             List of neighbor points IDs for the ind-th point.
 
         See Also
@@ -3264,7 +3264,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        List[int]
+        listint]
             List of cell IDs using the ind-th point.
 
         Examples

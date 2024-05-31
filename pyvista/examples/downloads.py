@@ -5642,7 +5642,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData, str, or List[str]
+    pyvista.PolyData, str, or list[str]
         The example ParaView can DataSet or file path(s).
 
     Examples

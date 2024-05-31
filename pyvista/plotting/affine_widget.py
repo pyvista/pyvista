@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Tuple  # noqa: UP035
 from typing import cast
 
 import numpy as np
@@ -467,7 +468,7 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(tuple[float, float, float], tuple(self._origin))
+        return cast(Tuple[float, float, float], tuple(self._origin))  # noqa: UP006
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08

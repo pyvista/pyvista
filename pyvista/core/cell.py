@@ -336,7 +336,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        List[int]
+        list[int]
             The point IDs composing the cell.
 
         Examples
@@ -408,7 +408,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        List[Cell]
+        list[Cell]
             A list of edges composing the cell.
 
         Examples
@@ -429,7 +429,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        List[Cell]
+        list[Cell]
             A list of faces composing the cell.
 
         Examples
@@ -484,7 +484,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        Tuple[float, float, float, float, float, float]
+        tuple[float, float, float, float, float, float]
             The cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         Examples
@@ -505,7 +505,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
 
         Returns
         -------
-        Tuple[float, float, float]
+        tuple[float, float, float]
             The center of the cell.
 
         Examples

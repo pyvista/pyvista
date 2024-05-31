@@ -2205,7 +2205,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        callback : Callable[[Tuple[float, float, float], [Tuple[float, float, float], int], float]
+        callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as cartesian coordinate tuples

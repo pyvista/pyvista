@@ -55,7 +55,7 @@ class RectangleSelection:
     ----------
     frustum : _vtk.vtkPlanes
         Frustum that defines the selection.
-    viewport : Tuple[float, float, float, float]
+    viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
 
     """
