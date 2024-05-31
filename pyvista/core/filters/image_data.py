@@ -5,16 +5,23 @@ from __future__ import annotations
 import collections.abc
 import operator
 import platform
-from typing import TYPE_CHECKING, Literal, Optional, Union, cast
+from typing import TYPE_CHECKING
+from typing import Literal
+from typing import Optional
+from typing import Union
+from typing import cast
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import FieldAssociation, set_default_active_scalars
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 

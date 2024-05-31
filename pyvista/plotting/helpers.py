@@ -1,12 +1,17 @@
 """This module contains some convenience helper functions."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Tuple
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.helpers import is_pyvista_dataset
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 
 def plot_arrows(cent, direction, **kwargs):

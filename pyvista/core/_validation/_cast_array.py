@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import ArrayLike, NumpyArray
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-    from pyvista.core._typing_core._array_like import (
-        NumberType,
-        _FiniteNestedList,
-        _FiniteNestedTuple,
-    )
+    from pyvista.core._typing_core._array_like import NumberType
+    from pyvista.core._typing_core._array_like import _FiniteNestedList
+    from pyvista.core._typing_core._array_like import _FiniteNestedTuple
 
 
 def _cast_to_list(

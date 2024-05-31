@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
@@ -10,7 +11,10 @@ import importlib
 import os
 import pathlib
 from pathlib import Path
-from typing import Any, Callable, List, Union
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -18,7 +22,8 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 
-from .fileio import _get_ext_force, _process_filename
+from .fileio import _get_ext_force
+from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
@@ -2414,7 +2419,8 @@ class _GIFReader(BaseVTKReader):
 
     def Update(self):
         """Read the GIF and store internally to `_data_object`."""
-        from PIL import Image, ImageSequence
+        from PIL import Image
+        from PIL import ImageSequence
 
         img = Image.open(self._filename)
         self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))

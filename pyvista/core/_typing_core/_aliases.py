@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Tuple, Union
+from typing import Tuple
+from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
 
-from ._array_like import NumberType, _ArrayLike, _ArrayLike1D, _ArrayLike2D
+from ._array_like import NumberType
+from ._array_like import _ArrayLike
+from ._array_like import _ArrayLike1D
+from ._array_like import _ArrayLike2D
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.

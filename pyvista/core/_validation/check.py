@@ -12,34 +12,33 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+from collections.abc import Sequence
 import math
-from numbers import Number, Real
+from numbers import Number
+from numbers import Real
 import operator
 import reprlib
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-    get_args,
-    get_origin,
-)
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import List
+from typing import Literal
+from typing import Tuple
+from typing import Union
+from typing import cast
+from typing import get_args
+from typing import get_origin
 
 import numpy as np
 import numpy.typing as npt
 
-from pyvista.core._typing_core import ArrayLike, NumberType, NumpyArray, VectorLike
-from pyvista.core._validation._array_wrapper import (
-    _ArrayLikeWrapper,
-    _NestedSequenceWrapper,
-    _SequenceWrapper,
-)
+from pyvista.core._typing_core import ArrayLike
+from pyvista.core._typing_core import NumberType
+from pyvista.core._typing_core import NumpyArray
+from pyvista.core._typing_core import VectorLike
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
+from pyvista.core._validation._array_wrapper import _NestedSequenceWrapper
+from pyvista.core._validation._array_wrapper import _SequenceWrapper
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
@@ -1209,8 +1208,8 @@ def check_length(
     /,
     *,
     exact_length: Union[int, VectorLike[int], None] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
     must_be_1d: bool = False,
     allow_scalar: bool = False,
     name: str = "Array",

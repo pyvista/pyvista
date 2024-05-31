@@ -16,57 +16,54 @@ A ``validate`` function typically:
 from __future__ import annotations
 
 from itertools import product
-from typing import (
-    TYPE_CHECKING,
-    Dict,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypedDict,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import NamedTuple
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import TypedDict
+from typing import TypeVar
+from typing import Union
+from typing import cast
+from typing import overload
 
 import numpy as np
-from typing_extensions import Unpack
+
+try:
+    from typing import Unpack
+except ImportError:
+    from typing_extensions import Unpack
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core._array_like import (
-    _FiniteNestedList,
-    _FiniteNestedTuple,
-    _NumberType,
-    _NumberUnion,
-)
-from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper, _NumpyArrayWrapper
+from pyvista.core._typing_core._array_like import _FiniteNestedList
+from pyvista.core._typing_core._array_like import _FiniteNestedTuple
+from pyvista.core._typing_core._array_like import _NumberType
+from pyvista.core._typing_core._array_like import _NumberUnion
+from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
+from pyvista.core._validation._array_wrapper import _NumpyArrayWrapper
 from pyvista.core._validation._cast_array import _cast_to_numpy
-from pyvista.core._validation.check import (
-    check_contains,
-    check_finite,
-    check_integer,
-    check_length,
-    check_ndim,
-    check_nonnegative,
-    check_range,
-    check_real,
-    check_shape,
-    check_sorted,
-    check_subdtype,
-)
+from pyvista.core._validation.check import check_contains
+from pyvista.core._validation.check import check_finite
+from pyvista.core._validation.check import check_integer
+from pyvista.core._validation.check import check_length
+from pyvista.core._validation.check import check_ndim
+from pyvista.core._validation.check import check_nonnegative
+from pyvista.core._validation.check import check_range
+from pyvista.core._validation.check import check_real
+from pyvista.core._validation.check import check_shape
+from pyvista.core._validation.check import check_sorted
+from pyvista.core._validation.check import check_subdtype
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import (
-        MatrixLike,
-        NumberType,
-        NumpyArray,
-        TransformLike,
-        VectorLike,
-    )
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumberType
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
 

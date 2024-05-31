@@ -1,8 +1,11 @@
 """Tests for tinypages build using sphinx extensions."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from subprocess import PIPE, Popen
+from subprocess import PIPE
+from subprocess import Popen
 import sys
 
 import pytest

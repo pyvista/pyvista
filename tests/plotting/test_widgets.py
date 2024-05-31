@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
@@ -5,7 +7,9 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
-from pyvista.plotting.affine_widget import DARK_YELLOW, get_angle, ray_plane_intersection
+from pyvista.plotting.affine_widget import DARK_YELLOW
+from pyvista.plotting.affine_widget import get_angle
+from pyvista.plotting.affine_widget import ray_plane_intersection
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
