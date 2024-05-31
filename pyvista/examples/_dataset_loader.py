@@ -41,6 +41,7 @@ from typing import Any
 from typing import Generic
 from typing import Protocol
 from typing import Tuple  # noqa: UP035
+from typing import Type  # noqa: UP035
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -69,7 +70,12 @@ _FilePropIntType_co = TypeVar(
 )
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetType = Union[type[pv.DataSet], type[pv.Texture], type[NumpyArray[Any]], type[pv.MultiBlock]]
+DatasetType = Union[
+    Type[pv.DataSet],  # noqa: UP006
+    Type[pv.Texture],  # noqa: UP006
+    Type[NumpyArray[Any]],  # noqa: UP006
+    Type[pv.MultiBlock],  # noqa: UP006
+]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
