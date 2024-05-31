@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import enum
-from functools import cache
+from functools import lru_cache
 import importlib
 import sys
 import threading
@@ -167,7 +167,7 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise ValueError(f"{cls.__name__} has no value matching {value}")
 
 
-@cache
+@lru_cache(maxsize=None)  # noqa: UP033
 def has_module(module_name):
     """Return if a module can be imported.
 
