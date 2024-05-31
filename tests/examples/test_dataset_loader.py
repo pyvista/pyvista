@@ -1,29 +1,35 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+from __future__ import annotations
+
 from dataclasses import dataclass
 import inspect
 import os
 from pathlib import Path
 import shutil
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, List, Tuple
+from types import FunctionType
+from types import ModuleType
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.examples import downloads, examples
-from pyvista.examples._dataset_loader import (
-    _DatasetLoader,
-    _Downloadable,
-    _DownloadableFile,
-    _format_file_size,
-    _load_and_merge,
-    _load_as_cubemap,
-    _load_as_multiblock,
-    _MultiFileDownloadableDatasetLoader,
-    _SingleFileDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
+from pyvista.examples import downloads
+from pyvista.examples import examples
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _format_file_size
+from pyvista.examples._dataset_loader import _load_and_merge
+from pyvista.examples._dataset_loader import _load_as_cubemap
+from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 
 @dataclass

@@ -6,7 +6,14 @@ from abc import abstractmethod
 from collections import UserDict
 import collections.abc
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import ClassVar
+from typing import DefaultDict
+from typing import Dict
+from typing import Optional
+from typing import Type
+from typing import Union
 
 import numpy as np
 
@@ -15,8 +22,11 @@ import pyvista
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities.arrays import FieldAssociation, _JSONValueType, _SerializedDictArray
-from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _JSONValueType
+from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import read
+from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
@@ -245,7 +255,8 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import HTML, display as _display
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
                 return None
@@ -415,7 +426,7 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -612,7 +623,7 @@ class DataObject:
         field_data.VTKObject.Modified()
 
     @property
-    def memory_address(self) -> str:  # numpydoc ignore=RT01
+    def memory_address(self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -631,7 +642,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns

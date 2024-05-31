@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import Color, LookupTable
+from pyvista import Color
+from pyvista import LookupTable
 
 
 @pytest.fixture()

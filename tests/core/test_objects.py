@@ -2,6 +2,8 @@
 Tests for non-spatially referenced objects
 """
 
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk

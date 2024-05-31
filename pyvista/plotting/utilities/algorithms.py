@@ -1,5 +1,7 @@
 """Internal vtkAlgorithm support helpers."""
 
+from __future__ import annotations
+
 import traceback
 
 import numpy as np

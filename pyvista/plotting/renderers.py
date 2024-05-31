@@ -1,5 +1,7 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 
+from __future__ import annotations
+
 import collections
 from itertools import product
 from weakref import proxy
