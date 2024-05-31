@@ -238,7 +238,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         The maximum value for the generated noise.
 
     seed : int, optional
-        Seed value used by the random number generator.
+        Seed the random number generator with a value.
 
     Examples
     --------
@@ -271,7 +271,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         if maximum is not None:
             self.maximum = maximum
         if seed is not None:
-            _vtk.vtkMath.RandomSeed(seed)
+            self.seed(seed)
 
     @property
     def whole_extent(self) -> Sequence[int]:
@@ -340,27 +340,15 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         """
         self.SetMaximum(maximum)
 
-    @property
-    def seed(self) -> int:
-        """Get the current seed used by the random number generator.
-
-        Returns
-        -------
-        int
-          The current seed value used by the random number generator.
-        """
-        return _vtk.vtkMath.GetSeed()
-
-    @seed.setter
-    def seed(self, seed: int) -> None:
-        """Set the seed used by the random number generator.
+    def seed(self, value: int) -> None:
+        """Seed the random number generator with a value.
 
         Parameters
         ----------
-        seed : int
+        value : int
           The seed value for the random number generator to use.
         """
-        _vtk.vtkMath().RandomSeed(seed)
+        _vtk.vtkMath().RandomSeed(value)
 
     @property
     def output(self):

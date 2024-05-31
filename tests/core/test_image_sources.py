@@ -27,8 +27,10 @@ def test_image_ellip_soid_source():
 
 def test_image_noise_source():
     whole_extent = (-10, 10, -10, 10, -10, 10)
-    source = pv.ImageNoiseSource(whole_extent=whole_extent, minimum=0, maximum=255)
+    source = pv.ImageNoiseSource(whole_extent=whole_extent, minimum=0, maximum=255, seed=42)
     assert source.whole_extent == whole_extent
+    assert source.minimum == 0
+    assert source.maximum == 255
     whole_extent = (-5, 5, -5, 5, -5, 5)
     minimum = 100
     maximum = 200
