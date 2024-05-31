@@ -15,6 +15,7 @@ osmnx==1.9.3
 pydata-sphinx-theme==0.15.3
 pypandoc==1.13
 pytest-sphinx==0.6.3
+reorder-python-imports==3.12.0
 scipy==1.13.1
 sphinx==7.3.7
 sphinx-autobuild==2024.4.16
