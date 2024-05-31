@@ -23,7 +23,7 @@ Some key differences include:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Sequence  # noqa: UP035
 from typing import TypeVar
 from typing import Union
 
