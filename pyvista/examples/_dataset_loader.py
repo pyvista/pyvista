@@ -138,7 +138,9 @@ class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
     """Define file properties of a single file."""
 
 
-class _MultiFilePropsProtocol(_BaseFilePropsProtocol[tuple[str, ...], tuple[int, ...]]):
+class _MultiFilePropsProtocol(
+    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],  # noqa: UP006
+):
     """Define file properties of multiple files."""
 
 
