@@ -6,7 +6,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import MutableSequence
 from itertools import zip_longest
 import pathlib
 from typing import Any
@@ -42,7 +42,7 @@ class MultiBlock(
     _vtk.vtkMultiBlockDataSet,
     CompositeFilters,
     DataObject,
-    collections.abc.MutableSequence,  # type: ignore[type-arg]
+    MutableSequence,  # type: ignore[type-arg]
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -57,7 +57,7 @@ class MultiBlock(
 
     .. versionchanged:: 0.36.0
        ``MultiBlock`` adheres more closely to being list like, and inherits
-       from :class:`collections.abc.MutableSequence`.  Multiple nonconforming
+       from :class:`MutableSequence`.  Multiple nonconforming
        behaviors were removed or modified.
 
     Parameters
@@ -889,7 +889,7 @@ class MultiBlock(
         ['sphere', 'cube']
 
         """
-        # Taken from implementation in collections.abc.MutableSequence
+        # Taken from implementation in MutableSequence
         names = self.keys()
         n = len(self)
         for i in range(n // 2):
