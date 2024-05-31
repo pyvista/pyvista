@@ -113,7 +113,7 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --show-fixes]
         exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
