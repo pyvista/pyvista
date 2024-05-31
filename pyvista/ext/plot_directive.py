@@ -570,11 +570,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2,
-            "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base,
-                source_file_name,
-                err,
-            ),
+            f"Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}",
             line=lineno,
         )
         results = [(code, [])]

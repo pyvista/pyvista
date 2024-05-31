@@ -88,7 +88,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))
+        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))  # noqa: UP031
 
     blob_or_edit = 'edit' if edit else 'blob'
 
