@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Any
 from typing import Generic
 from typing import Protocol
+from typing import Tuple  # noqa: UP035
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -54,8 +55,18 @@ from pyvista.core.utilities.fileio import get_ext
 #   1. classes for single file inputs: T -> T
 #   2. classes for multi-file inputs: (T, ...) -> (T, ...)
 # Any properties with these typevars should have a one-to-one mapping for all files
-_FilePropStrType_co = TypeVar('_FilePropStrType_co', str, tuple[str, ...], covariant=True)
-_FilePropIntType_co = TypeVar('_FilePropIntType_co', int, tuple[int, ...], covariant=True)
+_FilePropStrType_co = TypeVar(
+    '_FilePropStrType_co',
+    str,
+    Tuple[str, ...],  # noqa: UP006
+    covariant=True,
+)
+_FilePropIntType_co = TypeVar(
+    '_FilePropIntType_co',
+    int,
+    Tuple[int, ...],  # noqa: UP006
+    covariant=True,
+)
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetType = Union[type[pv.DataSet], type[pv.Texture], type[NumpyArray[Any]], type[pv.MultiBlock]]
