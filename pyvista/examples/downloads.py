@@ -2282,27 +2282,15 @@ def download_frog_tissue(load=True):  # pragma: no cover
     return _download_dataset(_dataset_frog_tissue, load=load)
 
 
-def _frog_tissue_files_func():
-    # Multiple files needed for read, but only one gets loaded
-    frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
-    frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
-    return frog_tissue_mhd, frog_tissue_zraw
+# def _frog_tissue_files_func():
+#     # Multiple files needed for read, but only one gets loaded
+#     frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
+#     frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
+#     return frog_tissue_mhd, frog_tissue_zraw
 
+from .examples import dir_path
 
-def _frog_tissue_load_func(files):
-    from ._dataset_loader import _load_as_dataset_or_multiblock
-
-    mesh = _load_as_dataset_or_multiblock(files)
-    root_dir = Path(__file__).parent.parent.parent
-    array = np.load(Path(root_dir / 'frog_tissue.npy'))
-    mesh.set_active_scalars = array
-    return mesh
-
-
-_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(
-    files_func=_frog_tissue_files_func,
-    load_func=_frog_tissue_load_func,
-)
+_dataset_frog_tissue = _SingleFileDownloadableDatasetLoader(str(Path(dir_path) / 'frog_tissue.vti'))
 
 
 def download_chest(load=True):  # pragma: no cover
