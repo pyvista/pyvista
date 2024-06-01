@@ -713,10 +713,12 @@ def load_logo():
 _dataset_logo = _SingleFileDownloadableDatasetLoader(logofile)
 
 
-def load_frog_tissue():  # pragma: no cover
+def load_frog_tissue():
     """Load frog tissue dataset.
 
     This dataset contains tissue segmentation labels for the frog dataset.
+
+    .. versionadded:: 0.44.0
 
     Returns
     -------
