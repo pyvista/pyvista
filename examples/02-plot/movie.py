@@ -12,14 +12,18 @@ Create an animated MP4 movie of a rendering scene.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
 filename = "sphere-shrinking.mp4"
 
+# Create a sphere with random data. Seed the rng to make it reproducible.
+rng = np.random.default_rng(seed=0)
 mesh = pv.Sphere()
-mesh.cell_data["data"] = np.random.default_rng().random(mesh.n_cells)
+mesh.cell_data["data"] = rng.random(mesh.n_cells)
 
 plotter = pv.Plotter()
 # Open a movie file
@@ -37,10 +41,10 @@ plotter.write_frame()  # write initial data
 
 # Update scalars on each frame
 for i in range(100):
-    random_points = np.random.default_rng().random(mesh.points.shape)
+    random_points = rng.random(mesh.points.shape)
     mesh.points = random_points * 0.01 + mesh.points * 0.99
     mesh.points -= mesh.points.mean(0)
-    mesh.cell_data["data"] = np.random.default_rng().random(mesh.n_cells)
+    mesh.cell_data["data"] = rng.random(mesh.n_cells)
     plotter.add_text(f"Iteration: {i}", name='time-label')
     plotter.write_frame()  # Write this frame
 

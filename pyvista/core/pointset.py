@@ -9,7 +9,16 @@ import numbers
 import pathlib
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import cast
 import warnings
 
 import numpy as np
@@ -17,38 +26,37 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .cell import (
-    CellArray,
-    _get_connectivity_array,
-    _get_irregular_cells,
-    _get_offset_array,
-    _get_regular_cells,
-)
+from .cell import CellArray
+from .cell import _get_connectivity_array
+from .cell import _get_irregular_cells
+from .cell import _get_offset_array
+from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import (
-    CellSizeError,
-    PointSetCellOperationError,
-    PointSetDimensionReductionError,
-    PointSetNotSupported,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
-from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from .errors import CellSizeError
+from .errors import PointSetCellOperationError
+from .errors import PointSetDimensionReductionError
+from .errors import PointSetNotSupported
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import PolyDataFilters
+from .filters import StructuredGridFilters
+from .filters import UnstructuredGridFilters
+from .filters import _get_output
+from .utilities.cells import create_mixed_cells
+from .utilities.cells import get_mixed_cells
+from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ._typing_core import (
-        ArrayLike,
-        BoundsLike,
-        CellArrayLike,
-        MatrixLike,
-        NumpyArray,
-        VectorLike,
-    )
+    from ._typing_core import ArrayLike
+    from ._typing_core import BoundsLike
+    from ._typing_core import CellArrayLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -275,7 +283,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(seed=0)
     >>> points = rng.random((10, 3))
     >>> pset = pv.PointSet(points)
 
@@ -346,6 +354,33 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
             for key, value in self.point_data.items():
                 pdata.point_data[key] = value
         return pdata
+
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
+        """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
+
+        A deep copy of the points and point data is made.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset cast to a :class:`pyvista.UnstructuredGrid`.
+
+        Examples
+        --------
+        Cast a :class:`pyvista.PointSet` to a
+        :class:`pyvista.UnstructuredGrid`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cloud_dark_matter()
+        >>> type(mesh)
+        <class 'pyvista.core.pointset.PointSet'>
+        >>> grid = mesh.cast_to_unstructured_grid()
+        >>> type(grid)
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
+
+        """
+        return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):
@@ -589,6 +624,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> from pyvista import examples
     >>> import pyvista as pv
 
+    Seed random number generator for reproducible plots
+    >>> rng = np.random.default_rng(seed=0)
+
     Create an empty mesh.
 
     >>> mesh = pv.PolyData()
@@ -636,10 +674,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> n_points = 20
     >>> n_lines = n_points // 2
-    >>> points = np.random.default_rng().random((n_points, 3))
-    >>> lines = np.random.default_rng().integers(
-    ...     low=0, high=n_points, size=(n_lines, 2)
-    ... )
+    >>> points = rng.random((n_points, 3))
+    >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
     >>> mesh = pv.PolyData(
     ...     points, lines=pv.CellArray.from_regular_cells(lines)
     ... )
@@ -652,13 +688,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     the ``strips`` cell array.
 
     >>> n_strips = 4
-    >>> n_verts_per_strip = np.random.default_rng().integers(
-    ...     low=3, high=7, size=n_strips
-    ... )
+    >>> n_verts_per_strip = rng.integers(low=3, high=7, size=n_strips)
     >>> n_points = 10 * sum(n_verts_per_strip)
-    >>> points = np.random.default_rng().random((n_points, 3))
+    >>> points = rng.random((n_points, 3))
     >>> strips = [
-    ...     np.random.default_rng().integers(low=0, high=n_points, size=nv)
+    ...     rng.integers(low=0, high=n_points, size=nv)
     ...     for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
@@ -703,6 +737,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Type[_vtk.vtkXMLPolyDataWriter],
                 Type[_vtk.vtkSTLWriter],
                 Type[_vtk.vtkPolyDataWriter],
+                Type[_vtk.vtkHoudiniPolyDataWriter],
+                Type[_vtk.vtkOBJWriter],
+                Type[_vtk.vtkIVWriter],
             ],
         ]
     ] = {
@@ -710,6 +747,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
         '.vtk': _vtk.vtkPolyDataWriter,
+        '.geo': _vtk.vtkHoudiniPolyDataWriter,
+        '.obj': _vtk.vtkOBJWriter,
+        '.iv': _vtk.vtkIVWriter,
     }
 
     def __init__(
@@ -849,7 +889,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.random.default_rng().random((5, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
@@ -1371,7 +1412,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.stl'``, ``'.vtk``).
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
+            ``'.obj'``, ``'.iv'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
@@ -1496,10 +1538,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active point normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1520,8 +1561,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                          [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
         """
-        if 'Normals' in self.point_data:
-            normals = self.point_data['Normals']
+        if self.point_data.active_normals is not None:
+            normals = self.point_data.active_normals
         else:
             normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
@@ -1530,10 +1571,9 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active cell normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1554,8 +1594,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                          [ 0.16175848, -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
-        if 'Normals' in self.cell_data:
-            normals = self.cell_data['Normals']
+        if self.cell_data.active_normals is not None:
+            normals = self.cell_data.active_normals
         else:
             normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals

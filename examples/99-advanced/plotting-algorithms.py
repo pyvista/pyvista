@@ -22,6 +22,8 @@ This example will walk through using a few ``vtkAlgorithm`` filters directly
 and passing them to PyVista for dynamic visualization.
 """
 
+from __future__ import annotations
+
 import vtk
 
 import pyvista as pv

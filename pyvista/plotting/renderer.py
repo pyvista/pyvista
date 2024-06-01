@@ -1,25 +1,34 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
+from __future__ import annotations
+
 import collections.abc
 import contextlib
-from functools import partial, wraps
-from typing import ClassVar, Dict, Sequence, cast
+from functools import partial
+from functools import wraps
+from typing import ClassVar
+from typing import Dict
+from typing import Sequence
+from typing import cast
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, vtk_version_info
+from pyvista import MAX_N_COLOR_BARS
+from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
@@ -31,6 +40,11 @@ from .tools import (
     parse_font_family,
 )
 from .utilities.gl_checks import check_depth_peeling, uses_egl
+from .tools import create_axes_marker
+from .tools import create_axes_orientation_box
+from .tools import parse_font_family
+from .utilities.gl_checks import check_depth_peeling
+from .utilities.gl_checks import uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -2693,8 +2707,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
-        return cpos
+        return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
@@ -3811,6 +3824,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
+        scale=1.0,
     ):
         """Add ruler.
 
@@ -3881,6 +3895,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             tick line colors.
 
+        scale : float, default: 1.0
+            Scale factor for the ruler.
+
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkActor
@@ -3929,9 +3948,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
         if flip_range:
-            ruler.SetRange(distance, 0)
+            ruler.SetRange(distance * scale, 0)
         else:
-            ruler.SetRange(0, distance)
+            ruler.SetRange(0, distance * scale)
 
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)

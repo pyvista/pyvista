@@ -5,6 +5,8 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 """
 
+from __future__ import annotations
+
 import inspect
 import io
 import os
@@ -13,21 +15,30 @@ from pathlib import Path
 import platform
 import re
 import time
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from types import FunctionType
+from types import ModuleType
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import ItemsView
+from typing import Type
+from typing import TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.errors import InvalidCameraError
+from pyvista.plotting.errors import RenderWindowUnavailable
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -196,6 +207,18 @@ def test_import_3ds():
         pl.import_3ds('not a file')
 
     pl.import_3ds(filename)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj():
+    download_obj_file = examples.download_room_surface_mesh(load=False)
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj('not a file')
+
+    pl.import_obj(download_obj_file)
     pl.show()
 
 
@@ -2637,6 +2660,19 @@ def test_splitting():
         feature_angle=50,
         show_scalar_bar=False,
     )
+
+
+@pytest.mark.parametrize('smooth_shading', [True, False])
+@pytest.mark.parametrize('use_custom_normals', [True, False])
+def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
+    sphere = pv.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere.clear_data()
+
+    if use_custom_normals:
+        normals = [[0, 0, -1]] * sphere.n_points
+        sphere.point_data.active_normals = normals
+
+    sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
 
 
 @skip_mac_flaky

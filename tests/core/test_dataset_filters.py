@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import functools
 import itertools
 from pathlib import Path
 import platform
 import re
-from typing import Any, NamedTuple
-from unittest.mock import Mock, patch
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -13,7 +17,9 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import MissingDataError, NotAllTrianglesError, VTKVersionError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import VTKVersionError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -2509,14 +2515,14 @@ def point_cloud_colors_duplicates(point_cloud_colors):
     # Same fixture as point_cloud_colors but with double the points
     copied = point_cloud_colors.copy()
     copied.points += 0.5
-    point_cloud = point_cloud_colors + copied
-    return point_cloud
+    return point_cloud_colors + copied
 
 
 class ComponentModeTestCase(NamedTuple):
     values: Any
     component_mode: Any
     expected: Any
+    expected_invert: Any
 
 
 component_mode_test_cases = [
@@ -2524,42 +2530,63 @@ component_mode_test_cases = [
         values=0,
         component_mode=0,
         expected=[BLACK, GREEN, BLUE],
+        expected_invert=[WHITE, RED],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode=1,
         expected=[BLACK, RED, BLUE],
+        expected_invert=[WHITE, GREEN],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode=2,
         expected=[BLACK, RED, GREEN],
+        expected_invert=[WHITE, BLUE],
     ),
     ComponentModeTestCase(
         values=0,
         component_mode='any',
         expected=[BLACK, RED, GREEN, BLUE],
+        expected_invert=[WHITE],
     ),
     ComponentModeTestCase(
         values=1,
         component_mode='any',
         expected=[WHITE, RED, GREEN, BLUE],
+        expected_invert=[BLACK],
     ),
-    ComponentModeTestCase(values=0, component_mode='all', expected=[BLACK]),
-    ComponentModeTestCase(values=1, component_mode='all', expected=[WHITE]),
-    ComponentModeTestCase(values=BLACK, component_mode='multi', expected=[BLACK]),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='all',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='all',
+        expected=[WHITE],
+        expected_invert=[BLACK, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=BLACK,
+        component_mode='multi',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
     ComponentModeTestCase(
         values=[WHITE, RED],
         component_mode='multi',
         expected=[WHITE, RED],
+        expected_invert=[BLACK, GREEN, BLUE],
     ),
 ]
 
 
 @pytest.mark.parametrize('values_as_ranges', [True, False])
-@pytest.mark.parametrize('split', [True, False])
+@pytest.mark.parametrize(('split', 'invert'), [(True, False), (False, True), (False, False)])
 @pytest.mark.parametrize(
-    ('values', 'component_mode', 'expected'),
+    ('values', 'component_mode', 'expected', 'expected_invert'),
     component_mode_test_cases,
 )
 @pytest.mark.needs_vtk_version(9, 1, 0)
@@ -2568,6 +2595,8 @@ def test_extract_values_component_mode(
     values,
     component_mode,
     expected,
+    expected_invert,
+    invert,
     split,
     values_as_ranges,
 ):
@@ -2582,12 +2611,13 @@ def test_extract_values_component_mode(
         **values_kwarg,
         component_mode=component_mode,
         split=split,
+        invert=invert,
     )
     single_mesh = extracted.combine() if split else extracted
     actual_points = single_mesh.points
     actual_colors = single_mesh['colors']
-    assert np.array_equal(actual_points, expected)
-    assert np.array_equal(actual_colors, expected)
+    assert np.array_equal(actual_points, expected_invert if invert else expected)
+    assert np.array_equal(actual_colors, expected_invert if invert else expected)
 
 
 @pytest.mark.parametrize(
@@ -2632,7 +2662,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         assert POINT_IDS in extracted.point_data
 
     extracted = grid4x4.extract_values(
-        0,
+        ranges=grid4x4.get_data_range(preference='point'),
         invert=True,
         pass_point_ids=pass_point_ids,
         pass_cell_ids=pass_cell_ids,
@@ -2640,7 +2670,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
     if pass_cell_ids:
         assert extracted.cell_data.keys() == []
     if pass_point_ids:
-        assert extracted.cell_data.keys() == []
+        assert extracted.point_data.keys() == []
 
 
 def test_extract_values_empty():
@@ -3108,13 +3138,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():

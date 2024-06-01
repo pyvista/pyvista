@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Optional, Union, cast
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
-    from trimesh import Trimesh
     from meshio import Mesh
+    from trimesh import Trimesh
+
+    from pyvista.core._typing_core import NumpyArray
 
 import numpy as np
 
@@ -16,7 +20,8 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
-from .fileio import from_meshio, is_meshio_mesh
+from .fileio import from_meshio
+from .fileio import is_meshio_mesh
 
 
 def wrap(
@@ -144,7 +149,7 @@ def wrap(
             return pyvista._wrappers[key](dataset)
         except KeyError:
             raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
-        return
+        return None  # pragma: no cover
 
     # wrap meshio
     if is_meshio_mesh(dataset):

@@ -5,7 +5,13 @@ from __future__ import annotations
 import collections.abc
 import contextlib
 import functools
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Literal
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 import warnings
 
 import matplotlib.pyplot as plt
@@ -13,28 +19,29 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import (
-    AmbiguousDataError,
-    MissingDataError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import transformations
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike, NumpyArray, VectorLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -668,7 +675,7 @@ class DataSetFilters:
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        result = DataSetFilters._clip_with_function(
+        return DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -676,7 +683,6 @@ class DataSetFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        return result
 
     def slice_implicit(
         self,
@@ -3163,8 +3169,6 @@ class DataSetFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
-        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
-
         Parameters
         ----------
         pass_cell_data : bool, default: False
@@ -3178,6 +3182,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        point_data_to_cell_data
+            Similar transformation applied to point data.
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
 
         Examples
         --------
@@ -3249,8 +3260,6 @@ class DataSetFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
-        See also: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
-
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -3264,6 +3273,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        cell_data_to_point_data
+            Similar transformation applied to cell data.
+        :meth:`~pyvista.ImageDataFilters.points_to_cells`
+            Re-mesh :class:`~pyvista.ImageData` to a cells-based representation.
 
         Examples
         --------
@@ -4389,8 +4405,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
-        return sampled_line
+        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_line(
         self,
@@ -4549,12 +4564,7 @@ class DataSetFilters:
         """
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
-        sampled_multiple_lines = multiple_lines.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_multiple_lines
+        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(
         self,
@@ -4633,12 +4643,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        sampled_circular_arc = circular_arc.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_circular_arc
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc_normal(
         self,
@@ -5770,7 +5775,7 @@ class DataSetFilters:
         def _update_id_mask(logic_):
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = not invert
+            id_mask[logic_] = True
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=np.bool_)
@@ -5792,6 +5797,8 @@ class DataSetFilters:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
+
+        id_mask = np.invert(id_mask) if invert else id_mask
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
@@ -6191,6 +6198,10 @@ class DataSetFilters:
         - ``'volume'``
         - ``'warpage'``
 
+        Notes
+        -----
+        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
+
         Parameters
         ----------
         quality_measure : str, default: 'scaled_jacobian'
@@ -6561,8 +6572,7 @@ class DataSetFilters:
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def transform(
         self: _vtk.vtkDataSet,

@@ -10,6 +10,8 @@ Generate iso-lines or -surfaces for the scalars of a surface or volume.
 meshes can have 1D iso-lines of a scalar field extracted.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

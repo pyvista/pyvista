@@ -8,13 +8,16 @@ Examples
 
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
 import numpy as np
 
 import pyvista
-from pyvista.examples._dataset_loader import _DatasetLoader, _SingleFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
@@ -543,8 +546,7 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     corners = np.stack((xcorn, ycorn, zcorn))
     corners = corners.transpose()
 
-    grid = pyvista.ExplicitStructuredGrid(dimensions, corners)
-    return grid
+    return pyvista.ExplicitStructuredGrid(dimensions, corners)
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)
@@ -643,7 +645,9 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
     try:
         from sympy import lambdify
-        from sympy.abc import phi, r, theta
+        from sympy.abc import phi
+        from sympy.abc import r
+        from sympy.abc import theta
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
         raise ImportError(

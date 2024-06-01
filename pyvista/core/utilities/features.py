@@ -1,5 +1,7 @@
 """Module containing geometry helper functions."""
 
+from __future__ import annotations
+
 import collections.abc
 import os
 import sys
@@ -95,8 +97,7 @@ def voxelize(mesh, density=None, check_surface=True):
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
-    vox = ugrid.extract_points(mask)
-    return vox
+    return ugrid.extract_points(mask)
 
 
 def voxelize_volume(mesh, density=None, check_surface=True):
