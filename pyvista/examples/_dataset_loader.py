@@ -386,7 +386,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))
             else:
-                raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
+                pv.read(path)
 
 
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
