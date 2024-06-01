@@ -29,7 +29,7 @@ from pyvista import examples
 
 mesh = examples.load_channels()
 # define a categorical colormap
-cmap = plt.cm.get_cmap("viridis", 4)
+cmap = plt.get_cmap("viridis", 4)
 
 mesh.plot(cmap=cmap)
 

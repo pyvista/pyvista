@@ -25,8 +25,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's create a sample point cloud using :func:`numpy.random.random`.
 
-
-rng = np.random.default_rng()
+# Seed rng for reproducibility
+rng = np.random.default_rng(seed=0)
 points = rng.random((1000, 3))
 points
 
