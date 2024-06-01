@@ -33,15 +33,9 @@ from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .render_passes import RenderPasses
-from .tools import (
-    create_axes_marker,
-    create_axes_orientation_box,
-    create_north_arrow,
-    parse_font_family,
-)
-from .utilities.gl_checks import check_depth_peeling, uses_egl
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
+from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
