@@ -2203,6 +2203,9 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     .. deprecated:: 0.44.0
 
+        This example does not load correctly on some systems and has been deprecated.
+        Use :func:`~pyvista.examples.load_frog_tissue` instead.
+
     Parameters
     ----------
     load : bool, default: True
