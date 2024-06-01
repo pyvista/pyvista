@@ -19,7 +19,7 @@ def logo():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     mesh = label_map.contour_labeled()
@@ -32,7 +32,7 @@ def test_contour_labeled():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_smoothing():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract smooth surface for each label
     mesh = label_map.contour_labeled(smoothing=True)
@@ -45,7 +45,7 @@ def test_contour_labeled_with_smoothing():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_reduced_labels_count():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     mesh = label_map.contour_labeled(n_labels=2)
@@ -58,7 +58,7 @@ def test_contour_labeled_with_reduced_labels_count():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_triangle_output_mesh():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     mesh = label_map.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
@@ -70,7 +70,7 @@ def test_contour_labeled_with_triangle_output_mesh():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_boundary_output_style():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     mesh = label_map.contour_labeled(output_style='boundary')
@@ -82,7 +82,7 @@ def test_contour_labeled_with_boundary_output_style():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_invalid_output_mesh_type():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     with pytest.raises(ValueError):  # noqa: PT011
@@ -92,7 +92,7 @@ def test_contour_labeled_with_invalid_output_mesh_type():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_invalid_output_style():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Extract surface for each label
     with pytest.raises(NotImplementedError):
@@ -106,7 +106,7 @@ def test_contour_labeled_with_invalid_output_style():
 def test_contour_labeled_with_scalars():
     # Load a 3D label map (segmentation of a frog's tissue)
     # and create a new array with reduced number of labels
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
     label_map['labels'] = label_map['MetaImage'] // 2
 
     # Extract surface for each label
@@ -119,7 +119,7 @@ def test_contour_labeled_with_scalars():
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled_with_invalid_scalars():
     # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.download_frog_tissue()
+    label_map = examples.load_frog_tissue()
 
     # Nonexistent scalar key
     with pytest.raises(KeyError):

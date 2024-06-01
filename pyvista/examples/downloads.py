@@ -2201,6 +2201,8 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     This dataset contains tissue segmentation labels for the frog dataset.
 
+    .. deprecated:: 0.44.0
+
     Parameters
     ----------
     load : bool, default: True
@@ -2279,18 +2281,25 @@ def download_frog_tissue(load=True):  # pragma: no cover
             Browse other medical datasets.
 
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissue` instead.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
+
     return _download_dataset(_dataset_frog_tissue, load=load)
 
 
-# def _frog_tissue_files_func():
-#     # Multiple files needed for read, but only one gets loaded
-#     frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
-#     frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
-#     return frog_tissue_mhd, frog_tissue_zraw
+def _frog_tissue_files_func():
+    # Multiple files needed for read, but only one gets loaded
+    frog_tissue_zraw = _DownloadableFile('froggy/frogtissue.zraw')
+    frog_tissue_mhd = _SingleFileDownloadableDatasetLoader('froggy/frogtissue.mhd')
+    return frog_tissue_mhd, frog_tissue_zraw
 
-from .examples import dir_path
 
-_dataset_frog_tissue = _SingleFileDownloadableDatasetLoader(str(Path(dir_path) / 'frog_tissue.vti'))
+_dataset_frog_tissue = _MultiFileDownloadableDatasetLoader(_frog_tissue_files_func)
 
 
 def download_chest(load=True):  # pragma: no cover

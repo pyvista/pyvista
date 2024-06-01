@@ -276,8 +276,8 @@ def test_download_frog():
     assert data.n_cells
 
 
-def test_download_frog_tissue():
-    data = examples.download_frog_tissue()
+def test_load_frog_tissue():
+    data = examples.load_frog_tissue()
     assert data.n_cells
 
 

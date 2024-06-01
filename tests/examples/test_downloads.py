@@ -143,7 +143,7 @@ def test_local_file_cache(tmpdir):
         downloads.FETCHER.registry.pop(basename, None)
 
 
-def test_download_frog_tissue():
-    data = examples.download_frog_tissue()
+def test_load_frog_tissue():
+    data = examples.load_frog_tissue()
     assert data.n_cells
     assert data.get_data_range() == (0, 29)
