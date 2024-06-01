@@ -3450,9 +3450,13 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_kitchen()
-    >>> dataset.streamlines(n_points=5).plot()
+    >>> point_a = (0.08, 2.50, 0.71)
+    >>> point_b = (0.08, 4.50, 0.71)
+    >>> line = pv.Line(point_a, point_b, resolution=39)
+    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
 
     .. seealso::
 
