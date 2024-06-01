@@ -222,7 +222,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
 
 @no_new_attr
 class ImageNoiseSource(_vtk.vtkImageNoiseSource):
-    """Create a binary image of an ellipsoid class.
+    """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
 
@@ -237,6 +237,9 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     maximum : float
         The maximum value for the generated noise.
 
+    seed : int, optional
+        Seed the random number generator with a value.
+
     Examples
     --------
     Create an image of noise.
@@ -246,13 +249,20 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     minimum=0,
     ...     maximum=255,
+    ...     seed=0,
     ... )
     >>> source.output.plot(cpos="xy")
     """
 
     _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
 
-    def __init__(self, whole_extent=None, minimum=None, maximum=None) -> None:
+    def __init__(
+        self,
+        whole_extent=(0, 255, 0, 255, 0, 0),
+        minimum=0.0,
+        maximum=1.0,
+        seed=None,
+    ) -> None:
         super().__init__()
         if whole_extent is not None:
             self.whole_extent = whole_extent
@@ -260,6 +270,8 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
             self.minimum = minimum
         if maximum is not None:
             self.maximum = maximum
+        if seed is not None:
+            self.seed(seed)
 
     @property
     def whole_extent(self) -> Sequence[int]:
@@ -327,6 +339,16 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
           The maximum value for the generated noise.
         """
         self.SetMaximum(maximum)
+
+    def seed(self, value: int) -> None:
+        """Seed the random number generator with a value.
+
+        Parameters
+        ----------
+        value : int
+          The seed value for the random number generator to use.
+        """
+        _vtk.vtkMath().RandomSeed(value)
 
     @property
     def output(self):
