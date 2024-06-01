@@ -1,11 +1,6 @@
 <?xml version="1.0"?>
 <VTKFile type="ImageData" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
   <ImageData WholeExtent="0 499 0 469 0 135" Origin="0 0 0" Spacing="1 1 1.5" Direction="1 0 0 0 1 0 0 0 1">
-    <FieldData>
-      <Array type="String" Name="_PYVISTA_USER_DICT" NumberOfTuples="2" format="binary">
-        AQAAAACAAAAEAAAADAAAAA==eJyrZqhlAAAC6gD5
-      </Array>
-    </FieldData>
   <Piece Extent="0 499 0 469 0 135">
     <PointData Scalars="MetaImage">
       <DataArray type="UInt8" Name="MetaImage" format="binary" RangeMin="0" RangeMax="29">
