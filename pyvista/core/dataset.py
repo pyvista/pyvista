@@ -42,7 +42,7 @@ from .utilities.misc import abstract_class
 from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterable
