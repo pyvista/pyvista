@@ -502,7 +502,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     2. Multiple input files, but only one is read or loaded directly
        E.g.: loading a single dataset from a file format where data and metadata are
        stored in separate files, such as ``.raw`` and ``.mhd``.
-       See ``download_frog`` for a reference implementation.
+       See ``download_head`` for a reference implementation.
 
     3. Multiple input files, all of which make up part of the loaded dataset
        E.g.: loading six separate image files for cubemaps
