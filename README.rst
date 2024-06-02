@@ -16,6 +16,9 @@ PyVista is:
 
 .. _Visualization Toolkit: https://vtk.org
 
+.. image:: assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
+
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
 through NumPy and direct array access through a variety of methods and classes.
 This package provides a Pythonic, well-documented interface exposing
