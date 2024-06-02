@@ -25,7 +25,7 @@ sphinx-notfound-page==1.0.2
 sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==1.2.7
-sympy==1.12
+sympy==1.12.1
 trame==3.6.1
 trame-vtk==2.8.8
 trame-vuetify==2.5.0
