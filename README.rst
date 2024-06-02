@@ -8,9 +8,6 @@ PyVista
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
-.. image:: assets/pyvista_ipython_demo.gif
-   :alt: pyvista ipython demo
-
 PyVista is:
 
 * *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
@@ -18,6 +15,9 @@ PyVista is:
 * 3D plotting made simple and built for large/complex data geometries
 
 .. _Visualization Toolkit: https://vtk.org
+
+.. image:: assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
 
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
 through NumPy and direct array access through a variety of methods and classes.
