@@ -58,6 +58,7 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'osmnx_graph': None,
     'gpr_data_array': None,
     'sphere_vectors': None,
+    'frog_tissue': None,
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
@@ -1952,7 +1953,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
                 'embryo',
                 'foot_bones',
                 'frog',
-                'frog_tissue',
+                'frog_tissues',
                 'head',
                 'head_2',
                 'knee',
