@@ -1958,7 +1958,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
                 'embryo',
                 'foot_bones',
                 'frog',
-                'frog_tissue',
+                'frog_tissues',
                 'head',
                 'head_2',
                 'knee',

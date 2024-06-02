@@ -713,8 +713,8 @@ def load_logo():
 _dataset_logo = _SingleFileDownloadableDatasetLoader(logofile)
 
 
-def load_frog_tissue():
-    """Load frog tissue dataset.
+def load_frog_tissues():
+    """Load frog tissues dataset.
 
     This dataset contains tissue segmentation labels for the frog dataset.
 
@@ -732,7 +732,7 @@ def load_frog_tissue():
     >>> import numpy as np
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> data = examples.load_frog_tissue()
+    >>> data = examples.load_frog_tissues()
 
     Plot tissue labels as a volume
 
@@ -783,7 +783,7 @@ def load_frog_tissue():
 
     .. seealso::
 
-        :ref:`Frog Tissue Dataset <frog_tissue_dataset>`
+        :ref:`Frog Tissues Dataset <frog_tissues_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
         :ref:`Frog Dataset <frog_dataset>`

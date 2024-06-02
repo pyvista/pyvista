@@ -86,6 +86,6 @@ pl.show()
 # using :func:`contour_labeled() <pyvista.ImageDataFilters.contour_labeled>`.
 # Requires VTK version 9.3
 if pv.vtk_version_info >= (9, 3):
-    label_map = pv.examples.load_frog_tissue()
+    label_map = pv.examples.load_frog_tissues()
     mesh = label_map.contour_labeled(smoothing=True)
     mesh.plot(cmap="glasbey", cpos="yx", show_scalar_bar=False, clim=mesh.get_data_range())
