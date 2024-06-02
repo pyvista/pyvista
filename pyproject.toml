@@ -88,6 +88,7 @@ pyvista = [
     'rectilinear.vtk',
     'sphere.ply',
     'uniform.vtk',
+    'frog_tissues.vti',
 ]
 
 [tool.black]
