@@ -22,7 +22,7 @@ def is_path_relative_to(path, other):
 
     [1] https://docs.python.org/3/library/pathlib.html#pathlib.PurePath.is_relative_to
     """
-    if sys.version_info < (3, 9):  # noqa: UP036
+    if sys.version_info < (3, 9):
         path = str(path.resolve())
         other = str(other.resolve())
         return path.startswith(other)

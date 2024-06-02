@@ -40,8 +40,8 @@ from pathlib import Path
 from typing import Any
 from typing import Generic
 from typing import Protocol
-from typing import Tuple  # noqa: UP035
-from typing import Type  # noqa: UP035
+from typing import Tuple
+from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -59,22 +59,22 @@ from pyvista.core.utilities.fileio import get_ext
 _FilePropStrType_co = TypeVar(
     '_FilePropStrType_co',
     str,
-    Tuple[str, ...],  # noqa: UP006
+    Tuple[str, ...],
     covariant=True,
 )
 _FilePropIntType_co = TypeVar(
     '_FilePropIntType_co',
     int,
-    Tuple[int, ...],  # noqa: UP006
+    Tuple[int, ...],
     covariant=True,
 )
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetType = Union[
-    Type[pv.DataSet],  # noqa: UP006
-    Type[pv.Texture],  # noqa: UP006
-    Type[NumpyArray[Any]],  # noqa: UP006
-    Type[pv.MultiBlock],  # noqa: UP006
+    Type[pv.DataSet],
+    Type[pv.Texture],
+    Type[NumpyArray[Any]],
+    Type[pv.MultiBlock],
 ]
 
 
@@ -139,7 +139,7 @@ class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
 
 
 class _MultiFilePropsProtocol(
-    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],  # noqa: UP006
+    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],
 ):
     """Define file properties of multiple files."""
 
@@ -605,7 +605,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
 class _MultiFileDownloadableDatasetLoader(
     _MultiFileDatasetLoader,
-    _Downloadable[Tuple[str, ...]],  # noqa: UP006
+    _Downloadable[Tuple[str, ...]],
 ):
     """Wrap multiple files for downloading and loading."""
 

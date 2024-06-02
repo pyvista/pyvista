@@ -11,7 +11,7 @@ from itertools import zip_longest
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import List  # noqa: UP035
+from typing import List
 from typing import Union
 from typing import cast
 from typing import overload
@@ -194,7 +194,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(List[float], block.bounds) for block in self if block]  # noqa: UP006
+        all_bounds = [cast(List[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = np.array([0.0, 0.0, 0.0])
@@ -231,7 +231,7 @@ class MultiBlock(
 
         """
         # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)  # noqa: UP006
+        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
 
     @property
     def length(self) -> float:

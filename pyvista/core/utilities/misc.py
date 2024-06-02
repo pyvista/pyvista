@@ -167,7 +167,7 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise ValueError(f"{cls.__name__} has no value matching {value}")
 
 
-@lru_cache(maxsize=None)  # noqa: UP033
+@lru_cache(maxsize=None)
 def has_module(module_name):
     """Return if a module can be imported.
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Tuple  # noqa: UP035
+from typing import Tuple
 from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
@@ -44,7 +44,7 @@ Includes sequences, nested sequences, and numpy arrays. Scalar values are not in
 TransformLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
 TransformLike.__doc__ = """Array or vtk object representing a 3x3 or 4x4 matrix."""
 
-BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]  # noqa: UP006
+BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
 BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
 
 Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
