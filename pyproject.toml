@@ -296,7 +296,7 @@ exclude = [
 ]
 line-length = 100
 indent-width = 4
-target-version = 'py39'
+target-version = 'py38'
 
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
@@ -384,6 +384,7 @@ extend-select = [
     "TRY201",
     "TRY300",
     "TRY302",
+    "UP",
     "W",
     "YTT",
 ]
@@ -408,3 +409,7 @@ combine-as-imports = true
 required-imports = ["from __future__ import annotations"]
 # https://github.com/pyvista/pyvista/pull/5712
 force-single-line = true
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
