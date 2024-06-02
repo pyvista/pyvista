@@ -84,6 +84,7 @@ pl.show()
 #
 # Create labeled surfaces from 3D label maps (e.f. multi-label image segmentation)
 # using :func:`contour_labeled() <pyvista.ImageDataFilters.contour_labeled>`.
-label_map = pv.examples.load_frog_tissue()
-mesh = label_map.contour_labeled(smoothing=True)
-mesh.plot(cmap="glasbey", cpos="yx", show_scalar_bar=False, clim=mesh.get_data_range())
+if pv.vtk_version_info >= (9, 3):
+    label_map = pv.examples.load_frog_tissue()
+    mesh = label_map.contour_labeled(smoothing=True)
+    mesh.plot(cmap="glasbey", cpos="yx", show_scalar_bar=False, clim=mesh.get_data_range())
