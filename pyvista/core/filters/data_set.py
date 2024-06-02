@@ -7137,7 +7137,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> import numpy as np
-        >>> image_labels = examples.download_frog_tissue()
+        >>> image_labels = examples.load_frog_tissues()
 
         Show label info for first four labels
 
@@ -7244,7 +7244,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> import numpy as np
-        >>> image_labels = examples.download_frog_tissue()
+        >>> image_labels = examples.load_frog_tissues()
 
         Show range of labels
 
