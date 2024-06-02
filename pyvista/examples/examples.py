@@ -32,7 +32,7 @@ mapfile = str(Path(dir_path) / '2k_earth_daymap.jpg')
 channelsfile = str(Path(dir_path) / 'channels.vti')
 logofile = str(Path(dir_path) / 'pyvista_logo.png')
 nutfile = str(Path(dir_path) / 'nut.ply')
-frogtissuefile = str(Path(dir_path) / 'frog_tissue.vti')
+frogtissuesfile = str(Path(dir_path) / 'frog_tissues.vti')
 
 
 def load_ant():
@@ -792,7 +792,7 @@ def load_frog_tissues():
             Browse other medical datasets.
 
     """
-    return _dataset_frog_tissue.load()
+    return _dataset_frog_tissues.load()
 
 
-_dataset_frog_tissue = _SingleFileDownloadableDatasetLoader(frogtissuefile)
+_dataset_frog_tissues = _SingleFileDownloadableDatasetLoader(frogtissuesfile)
