@@ -8,6 +8,9 @@ PyVista
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
 
+.. image:: pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
+
 PyVista is:
 
 * *Pythonic VTK*: a high-level API to the `Visualization Toolkit`_ (VTK)
