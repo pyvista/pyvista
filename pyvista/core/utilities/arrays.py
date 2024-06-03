@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict
-import collections.abc
+from collections.abc import Sequence
 import enum
 from itertools import product
 import json
@@ -92,7 +92,7 @@ def _coerce_pointslike_arg(
         Whether the input was a single point in an array-like with shape ``(3,)``.
 
     """
-    if isinstance(points, collections.abc.Sequence):
+    if isinstance(points, Sequence):
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
