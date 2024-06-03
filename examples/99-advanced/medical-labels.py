@@ -10,6 +10,7 @@ Many of these steps are similar to those used to load the datasets
 :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
 """
+from __future__ import annotations
 
 import os
 from pathlib import Path
