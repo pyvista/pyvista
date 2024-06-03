@@ -5411,23 +5411,23 @@ class DataSetFilters:
             Selection criteria for removing cells.
 
             -   ``'any'``: Remove cells if any point ids referenced by the cell are
-               specified as part of ``ind``. Points that are no longer referenced by
-               cells are also removed. This may result in more points removed than
-               specified.
+                specified as part of ``ind``. Points that are no longer referenced by
+                cells are also removed. This may result in more points removed than
+                specified.
 
             -   ``'all'``:  Remove cells if all point ids referenced by the cell are
-               specified as part of ``ind``. This may result in fewer points removed
-               than specified.
+                specified as part of ``ind``. This may result in fewer points removed
+                than specified.
 
             -   ``'exact'``:  Only the points specified exactly by ``ind`` are removed.
-               This is similar to ``'any'``, except un-referenced points are kept and
-               are returned as separate VERTEX cells. The number of points removed
-               exactly matched the number of specified points.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
 
-            -   ``'vertex'``:  Only the points specified exactly by ``ind`` are removed.
-               This is similar to ``'any'``, except un-referenced points are kept and
-               are returned as separate VERTEX cells. The number of points removed
-               exactly matched the number of specified points.
+            -   `'vertex'``:  Only the points specified exactly by ``ind`` are removed.
+                This is similar to ``'any'``, except un-referenced points are kept and
+                are returned as separate VERTEX cells. The number of points removed
+                exactly matched the number of specified points.
 
         invert : bool, default: False
             Invert the indices. Extract all points *except* for
