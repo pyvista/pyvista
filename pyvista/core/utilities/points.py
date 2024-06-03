@@ -855,11 +855,12 @@ def fit_plane_to_points(
     --------
     Fit a plane to a random point cloud.
 
-    >>> import pyvista as pv
     >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
     >>>
     >>> # Create point cloud
-    >>> rng = np.random.default_rng(seed=0)
+    >>> rng = np.random.default_rng(seed=3)
     >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
@@ -895,8 +896,6 @@ def fit_plane_to_points(
 
     Fit a plane to a mesh.
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
     >>>
     >>> # Create mesh
     >>> mesh = examples.download_shark()
