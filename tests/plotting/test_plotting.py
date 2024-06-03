@@ -4488,13 +4488,7 @@ def test_direction_objects(direction_obj_test_case):
         return obj
 
     text_kwargs = dict(font_size=10)
-    axes_kwargs = dict(
-        viewport=(0, 0, 1.0, 1.0),
-        x_color='r',
-        y_color='g',
-        z_color='b',
-        properties={'ambient': 1},
-    )
+    axes_kwargs = dict(viewport=(0, 0, 1.0, 1.0))
 
     plot = pv.Plotter(shape=(2, 2))
 
