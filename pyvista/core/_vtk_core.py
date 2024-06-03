@@ -212,6 +212,7 @@ from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
 from vtkmodules.vtkCommonMath import vtkMatrix3x3
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkDomainsChemistry import vtkProteinRibbonFilter
 from vtkmodules.vtkFiltersCore import VTK_BEST_FITTING_PLANE
 from vtkmodules.vtkFiltersCore import vtkAppendArcLength
 from vtkmodules.vtkFiltersCore import vtkAppendFilter

@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import pyvista as pv
+from pyvista import examples
 from pyvista.core.errors import MissingDataError
 
 
@@ -63,3 +64,9 @@ def test_triangulate_contours():
     filled = poly.triangulate_contours()
     for cell in filled.cell:
         assert cell.type == pv.CellType.TRIANGLE
+
+
+def test_protein_ribbon():
+    tgqp = examples.download_3gqp()
+    ribbon = tgqp.protein_ribbon()
+    assert ribbon.n_cells
