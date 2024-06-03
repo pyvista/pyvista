@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import TransformLike
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
@@ -243,13 +249,14 @@ def reflection(normal, point=None):
     return augmented
 
 
-def apply_transformation_to_points(transformation, points, inplace=False):
-    """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
+def apply_transformation_to_points(transformation: TransformLike, points, inplace=False):
+    """Apply a transformation matrix to a set of points.
 
     Parameters
     ----------
-    transformation : np.ndarray
-        Transformation matrix of shape (3, 3) or (4, 4).
+    transformation : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
+        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
+        from a vtkTransform.
 
     points : np.ndarray
         Array of points to be transformed of shape (N, 3).
@@ -260,7 +267,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     Returns
     -------
     numpy.ndarray
-        Transformed points.
+        Transformed points if ``inplace`` is ``False``.
 
     Examples
     --------
@@ -280,24 +287,20 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     >>> assert np.all(np.isclose(points, scale_factor * points_orig))
 
     """
-    transformation_shape = transformation.shape
-    if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+    from .arrays import _coerce_pointslike_arg
+    from .arrays import _coerce_transformlike_arg
 
-    if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+    transformation = _coerce_transformlike_arg(transformation)
+    points, _ = _coerce_pointslike_arg(points)
 
-    if transformation_shape[0] == 4:
-        # Divide by scale factor when homogeneous
-        transformation /= transformation[3, 3]
+    # Divide by scale factor
+    transformation /= transformation[3, 3]
 
-        # Add the homogeneous coordinate
-        # `points_2` is a copy of the data, not a view
-        points_2 = np.empty((len(points), 4))
-        points_2[:, :-1] = points
-        points_2[:, -1] = 1
-    else:
-        points_2 = points
+    # Add the homogeneous coordinate
+    # `points_2` is a copy of the data, not a view
+    points_2 = np.empty((len(points), 4))
+    points_2[:, :-1] = points
+    points_2[:, -1] = 1
 
     # Paged matrix multiplication. For arrays with ndim > 2, matmul assumes
     # that the matrices to be multiplied lie in the last two dimensions.
@@ -310,3 +313,109 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     else:
         # otherwise return the new points
         return points_2
+
+
+def axes_rotation_matrix(
+    axes,
+    point_initial=(0, 0, 0),
+    point_final=(0, 0, 0),
+    return_inverse=False,
+):
+    """Return a 4x4 matrix to apply a rotation by axes vectors.
+
+    This function computes a transformation matrix which applies the
+    following transforms in sequence:
+        * translation from ``point_initial`` to the origin
+        * rotation specified by ``axes``
+        * translation from the origin to ``point_final``.
+
+    The transformation is useful for changing axes basis vectors, for
+    example.
+
+    Example use cases:
+        1. Set initial and final point as zero vectors to cause a
+        rotation about the origin.
+        2. Set initial and final point to the same value (e.g. the
+        origin of a local coordinate frame (defined in world coordinates)
+        to cause a localized rotation about the specified point.
+        3. Set initial point as the origin of a local coordinate frame
+        (defined in world coordinates) and final point as the zero vector
+        to align the frame with the XYZ axes at the origin.
+
+    Parameters
+    ----------
+    axes : Sequence[Sequence[int, float]] | np.ndarray
+        3x3 axes row vectors. Axes must be orthogonal but need not be
+        orthonormal since the vectors are normalized by default. Axes
+        vectors must form a right-handed coordinate frame.
+
+    point_initial : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        Starting point of the transformation.
+
+    point_final : Sequence[int, float] | np.ndarray, default: (0, 0, 0)
+        End point of the transformation.
+
+    return_inverse : bool, False
+        If ``True``, the inverse transform is also returned.
+
+    Returns
+    -------
+    numpy.ndarray
+        4x4 transformation matrix.
+
+    numpy.ndarray
+        4x4 inverse transformation matrix.
+
+    """
+    from pyvista.core.utilities import check_valid_vector  # avoid circular import
+
+    check_valid_vector(point_initial)
+    point_initial = np.asarray(point_initial)
+    check_valid_vector(point_final)
+    point_final = np.asarray(point_final)
+    if not isinstance(axes, (Sequence, np.ndarray)):
+        raise TypeError("Axes vectors must a sequence or numpy array.")
+    axes = np.asarray(axes)
+    is_3x3 = axes.ndim == 2 and axes.shape[0] == 3 and axes.shape[1] == 3
+    is_floats = np.issubdtype(axes.dtype, np.floating)
+    is_ints = np.issubdtype(axes.dtype, np.integer)
+    is_numeric = is_floats or is_ints
+    if not (is_3x3 and is_numeric):
+        raise ValueError("Axes vectors must be a 3x3 numeric array.")
+
+    # Axes must be linearly independent
+    rank = np.linalg.matrix_rank(axes)
+    if not rank == 3:
+        raise ValueError(f"Axes must be linearly independent with rank 3. Got rank {rank} instead.")
+
+    # Normalize
+    axes = axes @ np.diag(1 / np.linalg.norm(axes, axis=1))
+
+    # Axes must form a right-handed coordinate frame
+    if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
+        raise ValueError("Axes must form a right-handed coordinate frame.")
+
+    # Define transformations
+    translate_to_a = np.eye(4)
+    translate_to_a[:3, 3] = -point_initial
+
+    rotate = np.eye(4)
+    rotate[:3, :3] = axes
+
+    translate_to_b = np.eye(4)
+    translate_to_b[:3, 3] = point_final
+
+    transform = translate_to_b @ rotate @ translate_to_a
+
+    if return_inverse:
+        translate_to_a_inv = np.eye(4)
+        translate_to_a_inv[:3, 3] = point_initial
+
+        rotate_inv = rotate.T
+
+        translate_to_b_inv = np.eye(4)
+        translate_to_b_inv[:3, 3] = -point_final
+
+        inverse = translate_to_a_inv @ rotate_inv @ translate_to_b_inv
+        return transform, inverse
+    return transform

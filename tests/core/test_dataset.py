@@ -340,7 +340,7 @@ def test_translate_should_fail_bad_points_or_transform(grid):
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape != (4, 4))
+    assume(array.shape not in {(4, 4), (3, 3)})
     with pytest.raises(ValueError):  # noqa: PT011
         grid.transform(array)
 
@@ -830,8 +830,8 @@ def test_clear_data():
     assert grid.n_arrays == 0
 
 
-def test_scalars_dict_update():
-    mesh = examples.load_uniform()
+def test_scalars_dict_update(uniform):
+    mesh = uniform
     n = len(mesh.point_data)
     arrays = {
         'foo': np.arange(mesh.n_points),
@@ -844,7 +844,7 @@ def test_scalars_dict_update():
 
     # Test update from Table
     table = pv.Table(arrays)
-    mesh = examples.load_uniform()
+    mesh = uniform
     mesh.point_data.update(table)
     assert 'foo' in mesh.array_names
     assert 'rand' in mesh.array_names
@@ -1206,8 +1206,8 @@ def test_multiprocessing(datasets, pickle_format):
         assert re == dataset.n_points
 
 
-def test_rotations_should_match_by_a_360_degree_difference():
-    mesh = examples.load_airplane()
+def test_rotations_should_match_by_a_360_degree_difference(airplane):
+    mesh = airplane
 
     point = np.random.default_rng().random(3) - 0.5
     angle = (np.random.default_rng().random() - 0.5) * 360.0
@@ -1242,9 +1242,9 @@ def test_rotations_should_match_by_a_360_degree_difference():
     assert np.allclose(rot1.points, rot2.points)
 
 
-def test_rotate_x():
+def test_rotate_x(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
@@ -1253,9 +1253,9 @@ def test_rotate_x():
         out = mesh.rotate_x(30, point=[1, 3])
 
 
-def test_rotate_y():
+def test_rotate_y(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
@@ -1264,9 +1264,9 @@ def test_rotate_y():
         out = mesh.rotate_y(30, point=[1, 3])
 
 
-def test_rotate_z():
+def test_rotate_z(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.StructuredGrid)
     with pytest.raises(TypeError):
@@ -1275,15 +1275,27 @@ def test_rotate_z():
         out = mesh.rotate_z(30, point=[1, 3])
 
 
-def test_rotate_vector():
+def test_rotate_vector(uniform):
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate_vector([1, 1, 1], 33)
+    out = uniform.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
+
     with pytest.raises(ValueError):  # noqa: PT011
-        out = mesh.rotate_vector([1, 1], 33)
+        out = uniform.rotate_vector([1, 1], 33)
+
     with pytest.raises(TypeError):
-        out = mesh.rotate_vector(30, 33)
+        out = uniform.rotate_vector(30, 33)
+
+
+def test_rotate_axes(airplane):
+    axes = airplane.principal_axes
+    out = airplane.rotate_axes(
+        axes,
+        point=(0, 0, 0),
+        inplace=True,
+        transform_all_input_vectors=True,
+    )
+    assert np.any(out.points)
 
 
 def test_transform_integers():
@@ -1354,8 +1366,8 @@ def test_transform_integers_vtkbug_present():
     assert poly.points[-1, 1] != 0
 
 
-def test_scale():
-    mesh = examples.load_airplane()
+def test_scale(airplane, uniform):
+    mesh = airplane
 
     xyz = np.random.default_rng().random(3)
     scale1 = mesh.copy()
@@ -1373,52 +1385,52 @@ def test_scale():
     scale2.scale([xyz] * 3, inplace=True)
     assert np.allclose(scale1.points, scale2.points)
     # test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.scale(xyz)
     assert isinstance(out, pv.StructuredGrid)
 
 
-def test_flip_x():
-    mesh = examples.load_airplane()
+def test_flip_x(airplane, uniform):
+    mesh = airplane
     flip_x1 = mesh.copy()
     flip_x2 = mesh.copy()
     flip_x1.flip_x(point=(0, 0, 0), inplace=True)
     flip_x2.points[:, 0] *= -1.0
     assert np.allclose(flip_x1.points, flip_x2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.flip_x()
     assert isinstance(out, pv.StructuredGrid)
 
 
-def test_flip_y():
-    mesh = examples.load_airplane()
+def test_flip_y(airplane, uniform):
+    mesh = airplane
     flip_y1 = mesh.copy()
     flip_y2 = mesh.copy()
     flip_y1.flip_y(point=(0, 0, 0), inplace=True)
     flip_y2.points[:, 1] *= -1.0
     assert np.allclose(flip_y1.points, flip_y2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.flip_y()
     assert isinstance(out, pv.StructuredGrid)
 
 
-def test_flip_z():
-    mesh = examples.load_airplane()
+def test_flip_z(airplane, uniform):
+    mesh = airplane
     flip_z1 = mesh.copy()
     flip_z2 = mesh.copy()
     flip_z1.flip_z(point=(0, 0, 0), inplace=True)
     flip_z2.points[:, 2] *= -1.0
     assert np.allclose(flip_z1.points, flip_z2.points)
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.flip_z()
     assert isinstance(out, pv.StructuredGrid)
 
 
-def test_flip_normal():
-    mesh = examples.load_airplane()
+def test_flip_normal(airplane, uniform):
+    mesh = airplane
     flip_normal1 = mesh.copy()
     flip_normal2 = mesh.copy()
     flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
@@ -1438,7 +1450,7 @@ def test_flip_normal():
     assert np.allclose(flip_normal5.points, flip_normal6.points)
 
     # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
+    mesh = uniform
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
     assert isinstance(out, pv.StructuredGrid)
 
@@ -1578,6 +1590,46 @@ def test_volume_area():
     grid = pv.ImageData(dimensions=(5, 5, 5)).extract_surface()
     assert np.isclose(grid.volume, 64.0)
     assert np.isclose(grid.area, 96.0)
+
+
+@pytest.fixture()
+def datasets_asymmetric():
+    # similar to 'datasets' fixture but with examples that have points
+    # asymmetric
+    # points along its axes
+    return []
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.ImageData(dimensions=(3, 4, 5), spacing=(1, 2, 3)),  # ImageData
+        examples.load_rectilinear(),  # RectilinearGrid
+        examples.download_unstructured_grid(),  # UnstructuredGrid
+        examples.load_airplane(),  # PolyData
+        examples.load_structured(),  # StructuredGrid
+    ],
+)
+def test_principal_axes(dataset):
+    axes = dataset.principal_axes
+    assert np.any(axes)
+    assert not np.array_equal(axes, np.eye(3))
+
+
+@pytest.mark.parametrize(
+    'dataset',
+    [
+        pv.ImageData(),
+        pv.UnstructuredGrid(),
+        pv.StructuredGrid(),
+        pv.RectilinearGrid(),
+        pv.PolyData(),
+    ],
+)
+def test_principal_axes_empty(dataset):
+    axes = dataset.principal_axes
+    assert np.any(axes)
+    assert np.array_equal(axes, np.eye(3))
 
 
 # ------------------
