@@ -4,6 +4,8 @@ This example demonstrates how to use ``plotter_ui`` to add a PyVista
 ``Plotter`` to a UI with scene controls and standard UI features.
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout
@@ -15,7 +17,7 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "PyVista UI Template"

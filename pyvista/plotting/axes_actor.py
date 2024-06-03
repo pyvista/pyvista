@@ -1,39 +1,69 @@
 """Axes actor module."""
 
-from abc import ABC, abstractmethod
-from collections import namedtuple
+from __future__ import annotations
+
+from abc import ABC
+from abc import abstractmethod
 from functools import wraps
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import ClassVar
+from typing import NamedTuple
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 import warnings
 
 import numpy as np
 
 import pyvista as pv
-from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.geometric_sources import Text3DSource
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.plotting import _vtk
-from pyvista.plotting._property import Property, _check_range
+from pyvista.plotting._property import Property
+from pyvista.plotting._property import _check_range
 from pyvista.plotting.actor import Actor
-from pyvista.plotting.colors import Color, ColorLike
+from pyvista.plotting.colors import Color
 from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 from pyvista.plotting.prop3d import Prop3D
 
-AxesPropTuple = namedtuple(
-    'AxesPropTuple', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
-)
-AxisPartTuple = namedtuple('AxisPartTuple', ['shaft', 'tip'])
-Tuple3D = namedtuple('Tuple3D', ['x', 'y', 'z'])
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting._typing import ColorLike
 
 
-def _as_nested(obj: Sequence[Any]) -> Tuple3D:
+class _AxesPropTuple(NamedTuple):
+    x_shaft: Property
+    y_shaft: Property
+    z_shaft: Property
+    x_tip: Property
+    y_tip: Property
+    z_tip: Property
+
+
+class _AxisPartTuple(NamedTuple):
+    shaft: Actor
+    tip: Actor
+
+
+class _Tuple3D(NamedTuple):
+    x: Any
+    y: Any
+    z: Any
+
+
+def _as_nested(obj: Sequence[Any]) -> _Tuple3D:
     """Reshape length-6 shaft and tip sequence as a 3D tuple with nested shaft and tip items."""
-    return Tuple3D(
-        x=AxisPartTuple(shaft=obj[0], tip=obj[3]),
-        y=AxisPartTuple(shaft=obj[1], tip=obj[4]),
-        z=AxisPartTuple(shaft=obj[2], tip=obj[5]),
+    return _Tuple3D(
+        x=_AxisPartTuple(shaft=obj[0], tip=obj[3]),
+        y=_AxisPartTuple(shaft=obj[1], tip=obj[4]),
+        z=_AxisPartTuple(shaft=obj[2], tip=obj[5]),
     )
 
 
@@ -155,12 +185,12 @@ class _AxesActorBase(ABC, Prop3D):
 
         if auto_length_set:
             lengths_sum_to_one = all(
-                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length)
+                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length),
             )
             if shaft_length_set and tip_length_set and not lengths_sum_to_one:
                 raise ValueError(
                     "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
-                    "Set either `shaft_length` or `tip_length`, but not both."
+                    "Set either `shaft_length` or `tip_length`, but not both.",
                 )
             # Set property again, this time with auto-length enabled
             self.auto_length = True
@@ -219,55 +249,55 @@ class _AxesActorBase(ABC, Prop3D):
 
     @property
     @abstractmethod
-    def _label_actors(self) -> Tuple3D:
+    def _label_actors(self) -> _Tuple3D:
         """Return axes label actors."""
         ...
 
     @property
     @abstractmethod
-    def _label_color_getters(self) -> Tuple3D:
+    def _label_color_getters(self) -> _Tuple3D:
         """Return label color getter functions."""
         ...
 
     @property
     @abstractmethod
-    def _label_color_setters(self) -> Tuple3D:
+    def _label_color_setters(self) -> _Tuple3D:
         """Return label color setter functions."""
         ...
 
     @property
     @abstractmethod
-    def _label_text_setters(self) -> Tuple3D:
+    def _label_text_setters(self) -> _Tuple3D:
         """Return label text setter functions."""
         ...
 
     @property
     @abstractmethod
-    def _label_text_getters(self) -> Tuple3D:
+    def _label_text_getters(self) -> _Tuple3D:
         """Return label text getter functions."""
         ...
 
     @property
     @abstractmethod
-    def _shaft_color_getters(self) -> Tuple3D:
+    def _shaft_color_getters(self) -> _Tuple3D:
         """Return axes shaft color getter functions."""
         ...
 
     @property
     @abstractmethod
-    def _shaft_color_setters(self) -> Tuple3D:
+    def _shaft_color_setters(self) -> _Tuple3D:
         """Return axes shaft color setter functions."""
         ...
 
     @property
     @abstractmethod
-    def _tip_color_getters(self) -> Tuple3D:
+    def _tip_color_getters(self) -> _Tuple3D:
         """Return axes tip color getter functions."""
         ...
 
     @property
     @abstractmethod
-    def _tip_color_setters(self) -> Tuple3D:
+    def _tip_color_setters(self) -> _Tuple3D:
         """Return axes ip color setter functions."""
         ...
 
@@ -986,7 +1016,7 @@ class _AxesActorBase(ABC, Prop3D):
 
         Returns
         -------
-        AxesPropTuple
+        _AxesPropTuple
             Named tuple with the requested property value for the axes shafts and tips.
 
         Examples
@@ -1000,7 +1030,7 @@ class _AxesActorBase(ABC, Prop3D):
 
         """
         props = [getattr(prop, name) for prop in self._actor_properties]
-        return AxesPropTuple(*props)
+        return _AxesPropTuple(*props)
 
     def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: Union[str, int] = 'all'):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
@@ -1063,7 +1093,7 @@ class _AxesActorBase(ABC, Prop3D):
         self._set_axis_color(axis=2, color=color)
 
     def _get_axis_color(self, axis):
-        return AxisPartTuple(self._shaft_color_getters[axis](), self._tip_color_getters[axis]())
+        return _AxisPartTuple(self._shaft_color_getters[axis](), self._tip_color_getters[axis]())
 
     def _set_axis_color(self, axis, color):
         if color is None:
@@ -1104,7 +1134,7 @@ def _validate_color_sequence(color: Union[ColorLike, Sequence[ColorLike]], num_c
             f"Invalid color(s):\n"
             f"\t{color}\n"
             f"Input must be a single ColorLike color \n"
-            f"or a sequence of {num_colors} ColorLike colors."
+            f"or a sequence of {num_colors} ColorLike colors.",
         )
     return color
 
@@ -1596,9 +1626,9 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         self.shaft_width = _set_default(shaft_width, 2.0)
 
         # Set auto shaft type params
-        shaft_type_set = False if shaft_type is None else True
-        cylinder_params_set = False if shaft_radius is None and shaft_resolution is None else True
-        line_params_set = False if shaft_width is None else True
+        shaft_type_set = bool(shaft_type)
+        cylinder_params_set = bool(shaft_radius) or bool(shaft_resolution)
+        line_params_set = bool(shaft_width)
 
         self._auto_shaft_type = auto_shaft_type
         if auto_shaft_type:
@@ -1652,84 +1682,92 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return '\n'.join(attr)
 
     @property
-    def _actors(self) -> AxesPropTuple:
+    def _actors(self) -> _AxesPropTuple:
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
-        return AxesPropTuple(*(collection.GetItemAsObject(i) for i in range(6)))
+        return _AxesPropTuple(*(collection.GetItemAsObject(i) for i in range(6)))
 
     @property
-    def _actor_properties(self) -> AxesPropTuple:
-        return AxesPropTuple(*[actor.GetProperty() for actor in self._actors])
+    def _actor_properties(self) -> _AxesPropTuple:
+        return _AxesPropTuple(*[actor.GetProperty() for actor in self._actors])
 
     @property
-    def _actor_properties_nested(self) -> Tuple3D:
+    def _actor_properties_nested(self) -> _Tuple3D:
         return _as_nested(self._actor_properties)
 
     @property
-    def _actors_nested(self) -> Tuple3D:
+    def _actors_nested(self) -> _Tuple3D:
         return _as_nested(self._actors)
 
     @property
-    def _label_actors(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_actors(self) -> _Tuple3D:
+        return _Tuple3D(
             x=self.GetXAxisCaptionActor2D(),
             y=self.GetYAxisCaptionActor2D(),
             z=self.GetZAxisCaptionActor2D(),
         )
 
     @property
-    def _label_props(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_props(self) -> _Tuple3D:
+        return _Tuple3D(
             x=self._label_actors.x.GetCaptionTextProperty(),
             y=self._label_actors.y.GetCaptionTextProperty(),
             z=self._label_actors.z.GetCaptionTextProperty(),
         )
 
     @property
-    def _label_color_getters(self) -> Tuple3D:
+    def _label_color_getters(self) -> _Tuple3D:
         props = self._label_props
         colors = [prop.GetColor() for prop in props]
         opacities = [prop.GetOpacity() for prop in props]
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda: Color(colors[0], opacity=opacities[0]),
             y=lambda: Color(colors[1], opacity=opacities[1]),
             z=lambda: Color(colors[2], opacity=opacities[2]),
         )
 
     @property
-    def _label_color_setters(self) -> Tuple3D:
+    def _label_color_setters(self) -> _Tuple3D:
         props = self._label_props
 
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda c: props.x.SetColor(c.float_rgb) and props.x.SetOpacity(c.float_rgba[3]),
             y=lambda c: props.y.SetColor(c.float_rgb) and props.y.SetOpacity(c.float_rgba[3]),
             z=lambda c: props.z.SetColor(c.float_rgb) and props.z.SetOpacity(c.float_rgba[3]),
         )
 
     @property
-    def _label_text_setters(self) -> Tuple3D:
-        return Tuple3D(x=self.SetXAxisLabelText, y=self.SetYAxisLabelText, z=self.SetZAxisLabelText)
+    def _label_text_setters(self) -> _Tuple3D:
+        return _Tuple3D(
+            x=self.SetXAxisLabelText,
+            y=self.SetYAxisLabelText,
+            z=self.SetZAxisLabelText,
+        )
 
     @property
-    def _label_text_getters(self) -> Tuple3D:
-        return Tuple3D(x=self.GetXAxisLabelText, y=self.GetYAxisLabelText, z=self.GetZAxisLabelText)
+    def _label_text_getters(self) -> _Tuple3D:
+        return _Tuple3D(
+            x=self.GetXAxisLabelText,
+            y=self.GetYAxisLabelText,
+            z=self.GetZAxisLabelText,
+        )
 
     @property
-    def _shaft_color_getters(self) -> Tuple3D:
+    def _shaft_color_getters(self) -> _Tuple3D:
         props = self._actor_properties
         colors = [prop.GetColor() for prop in props]
         opacities = [prop.GetOpacity() for prop in props]
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda: Color(colors[0], opacity=opacities[0]),
             y=lambda: Color(colors[1], opacity=opacities[1]),
             z=lambda: Color(colors[2], opacity=opacities[2]),
         )
 
     @property
-    def _shaft_color_setters(self) -> Tuple3D:
+    def _shaft_color_setters(self) -> _Tuple3D:
         props = self._actor_properties
 
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda c: props.x_shaft.SetColor(c.float_rgb)
             and props.x_shaft.SetOpacity(c.float_rgba[3]),
             y=lambda c: props.y_shaft.SetColor(c.float_rgb)
@@ -1739,21 +1777,21 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         )
 
     @property
-    def _tip_color_getters(self) -> Tuple3D:
+    def _tip_color_getters(self) -> _Tuple3D:
         props = self._actor_properties
         colors = [prop.GetColor() for prop in props]
         opacities = [prop.GetOpacity() for prop in props]
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda: Color(colors[0], opacity=opacities[0]),
             y=lambda: Color(colors[1], opacity=opacities[1]),
             z=lambda: Color(colors[2], opacity=opacities[2]),
         )
 
     @property
-    def _tip_color_setters(self) -> Tuple3D:
+    def _tip_color_setters(self) -> _Tuple3D:
         props = self._actor_properties
 
-        return Tuple3D(
+        return _Tuple3D(
             x=lambda c: props.x_tip.SetColor(c.float_rgb)
             and props.x_tip.SetOpacity(c.float_rgba[3]),
             y=lambda c: props.y_tip.SetColor(c.float_rgb)
@@ -1838,17 +1876,17 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
             if self.shaft_type == 'line' and cylinder_params_set:
                 raise ValueError(
                     "Cannot set properties `shaft_radius` or `shaft_resolution` when shaft type is 'line'\n"
-                    "and `auto_shaft_type=True`. Only `shaft_width` can be set."
+                    "and `auto_shaft_type=True`. Only `shaft_width` can be set.",
                 )
             elif self.shaft_type == 'cylinder' and line_params_set:
                 raise ValueError(
                     "Cannot set `shaft_width` when type is 'cylinder' and `auto_shaft_type=True`.\n"
-                    "Only `shaft_radius` or `shaft_resolution` can be set."
+                    "Only `shaft_radius` or `shaft_resolution` can be set.",
                 )
         if cylinder_params_set and line_params_set:
             raise ValueError(
                 "Cannot set line properties (`shaft_width`) and cylinder properties (`shaft_radius`\n"
-                "or `shaft_resolution`) simultaneously when`auto_shaft_type=True`."
+                "or `shaft_resolution`) simultaneously when`auto_shaft_type=True`.",
             )
 
     @property
@@ -2836,7 +2874,8 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
         return xmin, xmax, ymin, ymax, zmin, zmax
 
     def _compute_scaled_implicit_matrix(
-        self, scale: Sequence[float] = (1.0, 1.0, 1.0)
+        self,
+        scale: Sequence[float] = (1.0, 1.0, 1.0),
     ) -> NumpyArray[float]:
         old_scale = self.GetScale()
         new_scale = old_scale[0] * scale[0], old_scale[1] * scale[1], old_scale[2] * scale[2]
@@ -2918,7 +2957,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
     """Axes actor created from a composite dataset."""
 
-    _new_attr_exceptions = (
+    _new_attr_exceptions: ClassVar[list[str]] = [
         '_AxesActorComposite__shaft_type',
         '_AxesActorComposite__tip_type',
         '_auto_length',
@@ -2949,7 +2988,7 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         'x_color',
         'y_color',
         'z_color',
-    )
+    ]
 
     def __init__(
         self,
@@ -2983,13 +3022,13 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         properties=None,
     ):
         # Init text label sources
-        self._label_sources = Tuple3D(
+        self._label_sources = _Tuple3D(
             x=Text3DSource(),
             y=Text3DSource(),
             z=Text3DSource(),
         )
         # Init text label sources
-        self._label_polydata = Tuple3D(
+        self._label_polydata = _Tuple3D(
             x=self._label_sources.x.output,
             y=self._label_sources.x.output,
             z=self._label_sources.x.output,
@@ -3006,12 +3045,12 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         self._datasets['y_label'] = self._label_sources.y.output
         self._datasets['z_label'] = self._label_sources.z.output
 
-        self._shaft_polydata = Tuple3D(
+        self._shaft_polydata = _Tuple3D(
             x=self._datasets['x_shaft'],
             y=self._datasets['y_shaft'],
             z=self._datasets['z_shaft'],
         )
-        self._tip_polydata = Tuple3D(
+        self._tip_polydata = _Tuple3D(
             x=self._datasets['x_tip'],
             y=self._datasets['y_tip'],
             z=self._datasets['z_tip'],
@@ -3063,64 +3102,64 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
     #     return self._label_actors
 
     @property
-    def _label_color_getters(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_color_getters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda: self.mapper.block_attr[7].color,
             y=lambda: self.mapper.block_attr[8].color,
             z=lambda: self.mapper.block_attr[9].color,
         )
 
     @property
-    def _label_color_setters(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_color_setters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda c: setattr(self.mapper.block_attr[7], 'color', c),
             y=lambda c: setattr(self.mapper.block_attr[8], 'color', c),
             z=lambda c: setattr(self.mapper.block_attr[9], 'color', c),
         )
 
     @property
-    def _label_text_setters(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_text_setters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda val: setattr(self._label_sources.x, 'string', val),
             y=lambda val: setattr(self._label_sources.y, 'string', val),
             z=lambda val: setattr(self._label_sources.z, 'string', val),
         )
 
     @property
-    def _label_text_getters(self) -> Tuple3D:
-        return Tuple3D(
+    def _label_text_getters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda: self._label_sources.x.string,
             y=lambda: self._label_sources.y.string,
             z=lambda: self._label_sources.z.string,
         )
 
     @property
-    def _shaft_color_getters(self) -> Tuple3D:
-        return Tuple3D(
+    def _shaft_color_getters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda: self.mapper.block_attr[1].color,
             y=lambda: self.mapper.block_attr[2].color,
             z=lambda: self.mapper.block_attr[3].color,
         )
 
     @property
-    def _shaft_color_setters(self) -> Tuple3D:
-        return Tuple3D(
+    def _shaft_color_setters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda c: setattr(self.mapper.block_attr[1], 'color', c),
             y=lambda c: setattr(self.mapper.block_attr[2], 'color', c),
             z=lambda c: setattr(self.mapper.block_attr[3], 'color', c),
         )
 
     @property
-    def _tip_color_getters(self) -> Tuple3D:
-        return Tuple3D(
+    def _tip_color_getters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda: self.mapper.block_attr[4].color,
             y=lambda: self.mapper.block_attr[5].color,
             z=lambda: self.mapper.block_attr[6].color,
         )
 
     @property
-    def _tip_color_setters(self) -> Tuple3D:
-        return Tuple3D(
+    def _tip_color_setters(self) -> _Tuple3D:
+        return _Tuple3D(
             x=lambda c: setattr(self.mapper.block_attr[4], 'color', c),
             y=lambda c: setattr(self.mapper.block_attr[5], 'color', c),
             z=lambda c: setattr(self.mapper.block_attr[6], 'color', c),
@@ -3244,7 +3283,8 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         if isinstance(geometry, str):
             name = geometry
             part = AxesActorComposite._make_default_part(
-                geometry, resolution=_set_default(resolution, 16)
+                geometry,
+                resolution=_set_default(resolution, 16),
             )
         elif isinstance(geometry, pv.DataSet):
             name = 'custom'
@@ -3261,7 +3301,7 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
-        part.points -= part.center  # type: ignore
+        part.points -= part.center  # type: ignore[misc]
 
         # Scale so bounding box edges have length one
         bnds = part.bounds
@@ -3273,15 +3313,17 @@ class AxesActorComposite(_AxesActorBase, Actor):  # numpydoc ignore=PR01
 
     @staticmethod
     def _make_axes_parts(
-        geometry: Union[str, pv.DataSet], resolution, right_handed=True
-    ) -> Tuple[str, Tuple3D]:
+        geometry: Union[str, pv.DataSet],
+        resolution,
+        right_handed=True,
+    ) -> Tuple[str, _Tuple3D]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesActorComposite._make_any_part(geometry, resolution)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         if not right_handed:
             part_z.points *= -1
-        return name, Tuple3D(part_x, part_y, part_z)
+        return name, _Tuple3D(part_x, part_y, part_z)
 
 
 def _set_default(val, default):

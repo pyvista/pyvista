@@ -1,12 +1,14 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
-import collections
-from typing import Sequence, Union
+from __future__ import annotations
+
+from collections.abc import Sequence
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
 
 
@@ -17,7 +19,7 @@ class RectilinearGridFilters:
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: Union[Sequence[int], bool] = False,
+        mixed: Sequence[int] | bool = False,
         pass_cell_ids: bool = True,
         pass_data: bool = True,
         progress_bar: bool = False,
@@ -93,23 +95,23 @@ class RectilinearGridFilters:
         if mixed is not False:
             if isinstance(mixed, str):
                 self.cell_data.active_scalars_name = mixed
-            elif isinstance(mixed, (np.ndarray, collections.abc.Sequence)):
-                self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore
+            elif isinstance(mixed, (np.ndarray, Sequence)):
+                self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
             elif not isinstance(mixed, bool):
                 raise TypeError('`mixed` must be either a sequence of ints or bool')
             alg.SetTetraPerCellTo5And12()
         else:
             if tetra_per_cell not in [5, 6, 12]:
                 raise ValueError(
-                    f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}'
+                    f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}',
                 )
 
             # Edge case causing a seg-fault where grid is flat in one dimension
             # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18650
-            if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore
+            if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore[attr-defined]
                 raise RuntimeError(
                     'Cannot split cells into 12 tetrahedrals when at least '
-                    f'one dimension is 1. Dimensions are {self.dimensions}.'  # type: ignore[attr-defined]
+                    f'one dimension is 1. Dimensions are {self.dimensions}.',  # type: ignore[attr-defined]
                 )
 
             alg.SetTetraPerCell(tetra_per_cell)
@@ -122,22 +124,23 @@ class RectilinearGridFilters:
             # algorithm stores original cell ids in active scalars
             # this does not preserve active scalars, but we need to
             # keep active scalars until they are renamed
-            for name in self.cell_data:  # type: ignore
+            for name in self.cell_data:  # type: ignore[attr-defined]
                 if name != out.cell_data.active_scalars_name:
-                    out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore
+                    out[name] = self.cell_data[name][out.cell_data.active_scalars]  # type: ignore[attr-defined]
 
-            for name in self.point_data:  # type: ignore
-                out[name] = self.point_data[name]  # type: ignore
+            for name in self.point_data:  # type: ignore[attr-defined]
+                out[name] = self.point_data[name]  # type: ignore[attr-defined]
 
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars
             out.cell_data.set_array(
-                out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds'
+                out.cell_data.pop(out.cell_data.active_scalars_name),
+                'vtkOriginalCellIds',
             )
 
         if pass_data:
             # Now reset active scalars in cast the original mesh had data with active scalars
-            association, name = self.active_scalars_info  # type: ignore
+            association, name = self.active_scalars_info  # type: ignore[attr-defined]
             out.set_active_scalars(name, preference=association)
 
         return out

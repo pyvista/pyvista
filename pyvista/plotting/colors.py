@@ -170,16 +170,21 @@ tab:cyan
 from __future__ import annotations
 
 import inspect
-from typing import Optional, Tuple, Union
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from cycler import Cycler, cycler
+from cycler import Cycler
+from cycler import cycler
 
 try:
-    from matplotlib import colormaps, colors
+    from matplotlib import colormaps
+    from matplotlib import colors
 except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from matplotlib.colors import ListedColormap
@@ -190,7 +195,9 @@ import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
-from ._typing import ColorLike
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -731,7 +738,7 @@ class Color:
         color: Optional[ColorLike] = None,
         opacity: Optional[Union[int, float, str]] = None,
         default_color: Optional[ColorLike] = None,
-        default_opacity: Union[int, float, str] = 255,
+        default_opacity: Union[float, str] = 255,
     ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
@@ -740,10 +747,7 @@ class Color:
 
         # Use default color if no color is provided
         if color is None:
-            if default_color is None:
-                color = pyvista.global_theme.color
-            else:
-                color = default_color
+            color = pyvista.global_theme.color if default_color is None else default_color
 
         try:
             if isinstance(color, Color):
@@ -773,7 +777,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -787,7 +791,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -812,7 +816,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: Union[int, np.integer[Any], float, np.floating[Any], str]
+        val: Union[float, np.floating[Any], str],
     ) -> int:
         """Convert the given color channel value to the integer representation.
 

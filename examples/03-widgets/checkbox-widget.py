@@ -13,6 +13,8 @@ See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 # sphinx_gallery_thumbnail_number = 2
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 

@@ -1,4 +1,6 @@
-from re import escape
+from __future__ import annotations
+
+import re
 
 import numpy as np
 import pytest
@@ -6,9 +8,11 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting.axes import Axes
-from pyvista.plotting.axes_actor import AxesActor, AxesActorComposite
+from pyvista.plotting.axes_actor import AxesActor
+from pyvista.plotting.axes_actor import AxesActorComposite
 from pyvista.plotting.tools import create_axes_marker
 
 
@@ -162,7 +166,7 @@ def test_axes_actor_deprecated_parameters(axes_actor):
             'z_axis_shaft_properties\n'
             'x_axis_tip_properties\n'
             'y_axis_tip_properties\n'
-            'z_axis_tip_properties\n'
+            'z_axis_tip_properties\n',
         )
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `tip_resolution` instead."):
@@ -202,22 +206,22 @@ def test_axes_actor_deprecated_parameters(axes_actor):
         assert axes_actor.z_axis_label == 'Axis Z'
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `x_shaft_prop` instead."):
-        axes_actor.x_axis_shaft_properties
+        _ = axes_actor.x_axis_shaft_properties
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `y_shaft_prop` instead."):
-        axes_actor.y_axis_shaft_properties
+        _ = axes_actor.y_axis_shaft_properties
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `z_shaft_prop` instead."):
-        axes_actor.z_axis_shaft_properties
+        _ = axes_actor.z_axis_shaft_properties
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `x_tip_prop` instead."):
-        axes_actor.x_axis_tip_properties
+        _ = axes_actor.x_axis_tip_properties
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `y_tip_prop` instead."):
-        axes_actor.y_axis_tip_properties
+        _ = axes_actor.y_axis_tip_properties
 
     with pytest.warns(PyVistaDeprecationWarning, match="Use `z_tip_prop` instead."):
-        axes_actor.z_axis_tip_properties
+        _ = axes_actor.z_axis_tip_properties
 
 
 def test_axes_actor_deprecated_enums(axes_actor):
@@ -551,8 +555,7 @@ def _compute_expected_bounds(axes_actor):
 
         props = vtk.vtkPropCollection()
         axes.GetActors(props)
-        for num in range(6):
-            actors.append(props.GetItemAsObject(num))
+        actors.extend([props.GetItemAsObject(num) for num in range(6)])
 
     # Transform actors and get their bounds
     # Half of the actors are reflected to give symmetric axes
@@ -560,10 +563,7 @@ def _compute_expected_bounds(axes_actor):
     matrix = axes_actor._concatenate_implicit_matrix_and_user_matrix()
     matrix_reflect = matrix @ np.diag((-1, -1, -1, 1))
     for i, actor in enumerate(actors):
-        if i < 6:
-            m = matrix
-        else:
-            m = matrix_reflect
+        m = matrix if i < 6 else matrix_reflect
         actor.SetUserMatrix(vtkmatrix_from_array(m))
         bounds.append(actor.GetBounds())
 
@@ -704,7 +704,7 @@ def test_axes_actor_enable_orientation(axes_actor, vtk_axes_actor, case):
     orientation = (10, 20, 30)
     position = (7, 8, 9)
     user_matrix = vtkmatrix_from_array(
-        [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2], [0, 0, 0, 1]]
+        [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2], [0, 0, 0, 1]],
     )
 
     # test each property separately and also all together
@@ -792,7 +792,7 @@ def test_axes_actor_deprecated_constructor():
 
     with pytest.warns(
         PyVistaDeprecationWarning,
-        match=escape("deprecated"),
+        match=re.escape("deprecated"),
     ):
         axes_actor = AxesActor(**old_args_modified)
     old_args_modified["properties"] = {"ambient": old_args_modified.pop("ambient")}
@@ -895,11 +895,11 @@ def test_axes_actor_set_get_prop(axes_actor, use_axis_num):
     assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
     msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=re.escape(msg)):
         axes_actor.set_prop('ambient', 0.0, part=2)
 
     msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=re.escape(msg)):
         axes_actor.set_prop('ambient', 0.0, axis='a')
 
 
@@ -1151,7 +1151,8 @@ def test_axes_actor_symmetric_bounds(axes_actor):
 
 
 @pytest.mark.parametrize(
-    'test_prop_other_prop', [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')]
+    'test_prop_other_prop',
+    [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')],
 )
 @pytest.mark.parametrize('decimals', list(range(8)))
 @pytest.mark.parametrize('auto_length', [True, False])
@@ -1163,7 +1164,7 @@ def test_axes_actor_auto_length(test_prop_other_prop, decimals, auto_length):
     other_prop_default = np.array(getattr(axes_actor, other_prop))
 
     # Initialize actor with a random length for test prop
-    random_length = np.round(np.random.random(), decimals=decimals)
+    random_length = np.round(np.random.default_rng().random(), decimals=decimals)
     var_kwargs = {}
     var_kwargs[test_prop] = random_length
     axes_actor = AxesActor(auto_length=auto_length, **var_kwargs)
@@ -1277,7 +1278,7 @@ def test_axes_actor_auto_shaft_type_raises():
         'or `shaft_resolution`) simultaneously when`auto_shaft_type=True`.'
     )
 
-    with pytest.raises(ValueError, match=escape(msg)):
+    with pytest.raises(ValueError, match=re.escape(msg)):
         AxesActor(shaft_resolution=1, shaft_width=5)
 
 

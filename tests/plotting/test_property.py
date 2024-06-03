@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 import pyvista as pv
@@ -221,15 +223,15 @@ def test_property_deprecated(prop):
     if pv._version.version_info >= (0, 47):
         raise RuntimeError(
             'Remove deprecated properties `interpolation_model` and '
-            '`representation`. Remove class `ActorProperties`.'
+            '`representation`. Remove class `ActorProperties`.',
         )
     with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
         prop.interpolation_model = InterpolationType.PHONG
     with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
-        prop.interpolation_model
+        _ = prop.interpolation_model
     with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
         prop.representation = 'points'
     with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
-        prop.representation
+        _ = prop.representation
     with pytest.raises(PyVistaDeprecationWarning, match="Use `pyvista.Property` instead."):
         ActorProperties(prop)

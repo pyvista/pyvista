@@ -9,6 +9,7 @@ using the ``extract_surface`` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 
@@ -53,11 +54,13 @@ quad_pts = np.array(
         (lin_pts[1] + lin_pts[5]) / 2,
         (lin_pts[2] + lin_pts[6]) / 2,
         (lin_pts[3] + lin_pts[7]) / 2,
-    ]
+    ],
 )
 
 # introduce a minor variation to the location of the mid-side points
-quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.3
+# seed the random numbers for reproducibility
+rng = np.random.default_rng(seed=0)
+quad_pts += rng.random(quad_pts.shape) * 0.3
 pts = np.vstack((lin_pts, quad_pts))
 
 # create the grid

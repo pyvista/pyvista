@@ -34,6 +34,20 @@ demonstrate features.
    >>> plotter = demos.orientation_plotter()
    >>> plotter.show()
 
+Dataset Gallery
+---------------
+Many of PyVista's datasets are showcased in the dataset gallery.
+You can browse the gallery to find a particular kind of dataset and
+view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/examples/dataset_gallery
+
+API Reference
+-------------
+
 .. currentmodule:: pyvista
 
 .. autosummary::
@@ -42,8 +56,12 @@ demonstrate features.
    examples.examples
    examples.downloads
    examples.planets
+   examples.vrml
+   examples.download_3ds
    demos.demos
 
+Usage Considerations
+--------------------
 .. warning::
    As you browse this repository and think about how you might use our 3D
    models and range datasets, please remember that several of these artifacts

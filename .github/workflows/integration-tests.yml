@@ -35,7 +35,7 @@ jobs:
       - run: git clone --depth=1 https://github.com/mne-tools/mne-python.git --branch main --single-branch
       - run: ./mne-python/tools/setup_xvfb.sh
       - name: Install MNE dependencies
-        run: pip install numpy scipy matplotlib nibabel PyQt6!=6.6.1,!=6.6.2 PyQt6-Qt6!=6.6.1,!=6.6.2 qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
+        run: pip install numpy scipy matplotlib nibabel "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0" qtpy ipympl pytest pytest-cov pytest-harvest pytest-timeout sphinx-gallery nbformat nbclient imageio imageio-ffmpeg
       - name: Install PyVista
         run: pip install -ve . # pyvista
       - name: Install PyVistaQt main
@@ -70,7 +70,7 @@ jobs:
         with:
           qt: true
           pyvista: false
-      - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt PyQt6!=6.6.1,!=6.6.2 PyQt6-Qt6!=6.6.1,!=6.6.2
+      - run: pip install -ve ./pyvistaqt -r ./pyvistaqt/requirements_test.txt "PyQt6-Qt6!=6.6.0,!=6.7.0" "PyQt6!=6.6.0"
       - run: pip install -ve .
       - run: pytest ./tests
         working-directory: pyvistaqt
@@ -107,3 +107,23 @@ jobs:
           python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
       - run: pytest
         working-directory: geovista
+
+  trame:
+    name: Trame
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install PyVista
+        run: pip install -ve .
+      - name: Install Trame examples
+        run: pip install -r examples_trame/requirements.txt
+      - run: |
+          pip install -r ../requirements_test.txt
+          pytest ./tests
+        working-directory: examples_trame

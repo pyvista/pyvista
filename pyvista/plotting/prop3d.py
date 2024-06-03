@@ -1,16 +1,22 @@
 """Prop3D module."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Tuple
 
 import numpy as np
 
-from pyvista.core._typing_core import BoundsLike, NumpyArray, TransformLike, VectorLike
-from pyvista.core.utilities.arrays import (
-    _coerce_transformlike_arg,
-    array_from_vtkmatrix,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities.arrays import _coerce_transformlike_arg
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Prop3D(_vtk.vtkProp3D):
@@ -57,7 +63,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @scale.setter
     def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        return self.SetScale(value)
+        self.SetScale(value)
 
     @property
     def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01

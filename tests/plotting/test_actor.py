@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 
 import numpy as np
@@ -8,7 +10,8 @@ import pyvista as pv
 from pyvista import examples
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -50,6 +53,16 @@ def test_actor_init_empty():
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
     assert "User matrix:                Set" in repr_
+
+
+def test_actor_from_argument():
+    mapper = pv.DataSetMapper()
+    prop = pv.Property()
+    name = 'Actor'
+    actor = pv.Actor(mapper=mapper, prop=prop, name=name)
+    assert actor.mapper is mapper
+    assert actor.prop is prop
+    assert actor.name == name
 
 
 def test_actor_from_plotter():

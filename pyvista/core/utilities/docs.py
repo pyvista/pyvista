@@ -1,10 +1,13 @@
 """Supporting functions for documentation build."""
 
+from __future__ import annotations
+
 import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict, Optional
+from typing import Dict
+from typing import Optional
 
 
 def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
@@ -74,23 +77,20 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
             return None
         return None
 
-    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))
-    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows
+    fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
+    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)
     except Exception:  # pragma: no cover
         lineno = None
 
-    if lineno and not edit:
-        linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
-    else:
-        linespec = ""
+    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
 
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))
+        kind = 'release/{}'.format('.'.join(pyvista.__version__.split('.')[:2]))
 
     blob_or_edit = 'edit' if edit else 'blob'
 
@@ -98,7 +98,11 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
 
 
 def pv_html_page_context(
-    app, pagename: str, templatename: str, context, doctree
+    app,
+    pagename: str,
+    templatename: str,
+    context,
+    doctree,
 ) -> None:  # pragma: no cover
     """Add a function that jinja can access for returning an "edit this page" link pointing to `main`.
 

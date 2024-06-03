@@ -5,12 +5,18 @@
     This class is deprecated. Use :class:`pyvista.Property` instead.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from typing import Tuple
 import warnings
 
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting import _vtk
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.opts import RepresentationType
+
+if TYPE_CHECKING:
+    from pyvista.plotting import _vtk
 
 
 class ActorProperties:
@@ -159,7 +165,7 @@ class ActorProperties:
     @representation.setter
     def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
         self.properties.SetRepresentation(
-            RepresentationType.from_any(value).value
+            RepresentationType.from_any(value).value,
         )  # pragma:no cover
 
     @property
