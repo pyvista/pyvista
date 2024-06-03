@@ -51,6 +51,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vtk-data
+          path: vtk-data
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -94,6 +95,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vtk-data
+          path: vtk-data
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -186,6 +188,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vtk-data
+          path: vtk-data
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -284,6 +287,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: vtk-data
+          path: vtk-data
 
       - name: Set up Python
         uses: actions/setup-python@v5
