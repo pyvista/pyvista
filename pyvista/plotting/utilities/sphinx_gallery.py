@@ -1,8 +1,11 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
+from __future__ import annotations
+
 from pathlib import Path
 import shutil
-from typing import Iterator, List
+from typing import Iterator
+from typing import List
 
 import pyvista
 
@@ -33,7 +36,8 @@ def html_rst(
     srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
+    from sphinx_gallery.scrapers import _get_srcset_st
+    from sphinx_gallery.scrapers import figure_rst
 
     if srcsetpaths is None:
         # this should never happen, but figure_rst is public, so

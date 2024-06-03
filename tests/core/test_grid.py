@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
 import weakref
@@ -7,13 +9,11 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import CellType, examples
-from pyvista.core.errors import (
-    AmbiguousDataError,
-    CellSizeError,
-    MissingDataError,
-    PyVistaDeprecationWarning,
-)
+from pyvista import CellType
+from pyvista import examples
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import MissingDataError
 
 test_path = str(Path(__file__).resolve().parent)
 
@@ -278,12 +278,12 @@ def test_cells_dict_variable_length():
 
     # Dynamic sizes cell types are currently unsupported
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.cells_dict
+        _ = grid.cells_dict
 
     grid.celltypes[:] = 255
     # Unknown cell types
     with pytest.raises(ValueError):  # noqa: PT011
-        grid.cells_dict
+        _ = grid.cells_dict
 
 
 def test_cells_dict_empty_grid():
@@ -854,32 +854,6 @@ def test_create_image_data_from_specs():
     with pytest.raises(ValueError, match="Spacing must be non-negative"):
         grid = pv.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
-    # all args (deprecated)
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match=r"Behavior of pyvista\.ImageData has changed",
-    ):
-        grid = pv.ImageData(dims, origin, spacing)
-        assert grid.dimensions == dims
-        assert grid.origin == origin
-        assert grid.spacing == spacing
-
-    # just dims (deprecated)
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match=r"Behavior of pyvista\.ImageData has changed",
-    ):
-        grid = pv.ImageData(dims)
-        assert grid.dimensions == dims
-
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match='`dims` argument is deprecated. Please use `dimensions`.',
-    ):
-        grid = pv.ImageData(dims=dims)
-    with pytest.raises(TypeError):
-        grid = pv.ImageData(dimensions=dims, dims=dims)
-
     # uniform grid from a uniform grid
     grid = pv.ImageData(dimensions=dims, spacing=spacing, origin=origin)
     grid_from_grid = pv.ImageData(grid)
@@ -891,12 +865,6 @@ def test_create_image_data_from_specs():
 
 
 def test_image_data_invald_args():
-    with pytest.warns(
-        PyVistaDeprecationWarning,
-        match=r"Behavior of pyvista\.ImageData has changed",
-    ):
-        pv.ImageData((1, 1, 1))
-
     with pytest.raises(TypeError):
         pv.ImageData(1)
 

@@ -1,11 +1,21 @@
 """Tests for pyvista.core.dataset."""
 
+from __future__ import annotations
+
 import multiprocessing
 import pickle
+from typing import TYPE_CHECKING
 
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis.extra.numpy import array_shapes, arrays
-from hypothesis.strategies import composite, floats, integers, one_of
+from hypothesis import HealthCheck
+from hypothesis import assume
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.extra.numpy import array_shapes
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import composite
+from hypothesis.strategies import floats
+from hypothesis.strategies import integers
+from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -13,17 +23,18 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
-from pyvista.examples import (
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
+
+if TYPE_CHECKING:
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -1191,8 +1202,8 @@ def test_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for res, dataset in zip(res, datasets):
-        assert res == dataset.n_points
+    for re, dataset in zip(res, datasets):
+        assert re == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():

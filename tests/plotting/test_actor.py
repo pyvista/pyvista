@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 
 import numpy as np
@@ -139,7 +141,7 @@ def test_actor_rotate_z(actor):
 
 
 def test_actor_orientation(actor):
-    actor.orientation == (0, 0, 0)
+    assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)

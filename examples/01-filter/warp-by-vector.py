@@ -10,6 +10,7 @@ This example applies the ``warp_by_vector`` filter to a sphere mesh that has
 
 ###############################################################################
 # We first compare the unwarped sphere to the warped sphere.
+from __future__ import annotations
 
 from itertools import product
 

@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-import collections.abc
 from copy import deepcopy
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any
+from typing import Callable
+from typing import Generator
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Literal
+from typing import NamedTuple
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
+from typing import cast
 import warnings
 
 import numpy as np
@@ -27,23 +24,28 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, MatrixLike, Number, NumpyArray, VectorLike
+from ._typing_core import BoundsLike
+from ._typing_core import MatrixLike
+from ._typing_core import Number
+from ._typing_core import NumpyArray
+from ._typing_core import VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning, VTKVersionError
-from .filters import DataSetFilters, _get_output
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import DataSetFilters
+from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
-from .utilities.arrays import (
-    FieldAssociation,
-    _coerce_pointslike_arg,
-    get_array,
-    get_array_association,
-    raise_not_matching,
-    vtk_id_list_to_array,
-)
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import get_array
+from .utilities.arrays import get_array_association
+from .utilities.arrays import raise_not_matching
+from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
-from .utilities.misc import abstract_class, check_valid_vector
+from .utilities.misc import abstract_class
+from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 
 # vector array names
@@ -157,7 +159,7 @@ class DataSet(DataSetFilters, DataObject):
         return super().__getattribute__(item)
 
     @property
-    def active_scalars_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_scalars_info(self) -> ActiveArrayInfo:
         """Return the active scalar's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -216,7 +218,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_vectors_info(self) -> ActiveArrayInfo:
         """Return the active vector's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -271,7 +273,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self) -> ActiveArrayInfo:  # numpydoc ignore=RT01
+    def active_tensors_info(self) -> ActiveArrayInfo:
         """Return the active tensor's field and name: [field, name].
 
         Returns
@@ -283,7 +285,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_tensors_info
 
     @property
-    def active_vectors(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_vectors(self) -> Optional[pyvista_ndarray]:
         """Return the active vectors array.
 
         Returns
@@ -322,7 +324,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self) -> Optional[NumpyArray[float]]:  # numpydoc ignore=RT01
+    def active_tensors(self) -> Optional[NumpyArray[float]]:
         """Return the active tensors array.
 
         Returns
@@ -343,7 +345,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors_name(self) -> str:  # numpydoc ignore=RT01
+    def active_tensors_name(self) -> str:
         """Return the name of the active tensor array.
 
         Returns
@@ -367,7 +369,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self) -> str:  # numpydoc ignore=RT01
+    def active_vectors_name(self) -> str:
         """Return the name of the active vectors array.
 
         Returns
@@ -403,7 +405,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore[explicit-override, override]
-    def active_scalars_name(self) -> str:  # numpydoc ignore=RT01
+    def active_scalars_name(self) -> str:
         """Return the name of the active scalars.
 
         Returns
@@ -438,7 +440,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_scalars(name)
 
     @property
-    def points(self) -> pyvista_ndarray:  # numpydoc ignore=RT01
+    def points(self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
         Returns
@@ -538,7 +540,7 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self) -> Optional[pyvista.PolyData]:  # numpydoc ignore=RT01
+    def arrows(self) -> Optional[pyvista.PolyData]:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -576,7 +578,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def active_t_coords(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points.
 
         Returns
@@ -798,7 +800,7 @@ class DataSet(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars as an array.
 
         Returns
@@ -819,7 +821,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_normals(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return the active normals as an array.
 
         Returns
@@ -1514,7 +1516,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_tensors_info = ido.active_tensors_info
 
     @property
-    def point_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def point_data(self) -> DataSetAttributes:
         """Return point data as DataSetAttributes.
 
         Returns
@@ -1607,7 +1609,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_field_data()
 
     @property
-    def cell_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def cell_data(self) -> DataSetAttributes:
         """Return cell data as DataSetAttributes.
 
         Returns
@@ -1656,7 +1658,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     @property
-    def n_points(self) -> int:  # numpydoc ignore=RT01
+    def n_points(self) -> int:
         """Return the number of points in the entire dataset.
 
         Returns
@@ -1678,7 +1680,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def n_cells(self) -> int:  # numpydoc ignore=RT01
+    def n_cells(self) -> int:
         """Return the number of cells in the entire dataset.
 
         Returns
@@ -1705,7 +1707,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self) -> int:  # pragma: no cover  # numpydoc ignore=RT01
+    def number_of_points(self) -> int:  # pragma: no cover
         """Return the number of points.
 
         Returns
@@ -1717,7 +1719,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self) -> int:  # pragma: no cover  # numpydoc ignore=RT01
+    def number_of_cells(self) -> int:  # pragma: no cover
         """Return the number of cells.
 
         Returns
@@ -1729,7 +1731,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsLike:
         """Return the bounding box of this dataset.
 
         Returns
@@ -1751,7 +1753,7 @@ class DataSet(DataSetFilters, DataObject):
         return cast(BoundsLike, self.GetBounds())
 
     @property
-    def length(self) -> float:  # numpydoc ignore=RT01
+    def length(self) -> float:
         """Return the length of the diagonal of the bounding box.
 
         Returns
@@ -1774,7 +1776,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> List[int]:  # numpydoc ignore=RT01
+    def center(self) -> List[float]:
         """Return the center of the bounding box.
 
         Returns
@@ -1795,7 +1797,7 @@ class DataSet(DataSetFilters, DataObject):
         return list(self.GetCenter())
 
     @property
-    def volume(self) -> float:  # numpydoc ignore=RT01
+    def volume(self) -> float:
         """Return the mesh volume.
 
         This will return 0 for meshes with 2D cells.
@@ -1833,7 +1835,7 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum()
 
     @property
-    def area(self) -> float:  # numpydoc ignore=RT01
+    def area(self) -> float:
         """Return the mesh area if 2D.
 
         This will return 0 for meshes with 3D cells.
@@ -1982,7 +1984,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __getitem__(self, index: Union[Iterable[Any], str]) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+        if isinstance(index, Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
@@ -2001,7 +2003,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self,
         name: str,
-        scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float],
+        scalars: Union[NumpyArray[float], Sequence[float], float],
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2036,7 +2038,7 @@ class DataSet(DataSetFilters, DataObject):
         return
 
     @property
-    def n_arrays(self) -> int:  # numpydoc ignore=RT01
+    def n_arrays(self) -> int:
         """Return the number of arrays present in the dataset.
 
         Returns
@@ -2051,7 +2053,7 @@ class DataSet(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self) -> List[str]:  # numpydoc ignore=RT01
+    def array_names(self) -> List[str]:
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -2357,7 +2359,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+        if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
@@ -2811,7 +2813,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self) -> Iterator[pyvista.Cell]:  # numpydoc ignore=RT01
+    def cell(self) -> Iterator[pyvista.Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2977,6 +2979,7 @@ class DataSet(DataSetFilters, DataObject):
                 return cell.get_edge(i).GetPointIds()
             elif connections == "faces":
                 return cell.get_face(i).GetPointIds()
+            return None  # pragma: no cover
 
         neighbors = set()
         for i in iterators[connections]:
@@ -3382,7 +3385,7 @@ class DataSet(DataSetFilters, DataObject):
         return in_cell
 
     @property
-    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates on the points.
 
         Returns

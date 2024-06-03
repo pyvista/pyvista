@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+import functools
 import itertools
 from pathlib import Path
 import platform
-from unittest.mock import Mock, patch
+import re
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -10,12 +17,9 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import VTKVersionError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -93,11 +97,16 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pv.UnstructuredGrid)
 
     # crinkle clip
-    clp = pv.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    mesh = pv.Wavelet()
+    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
-    clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
+    assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
 @skip_mac
@@ -1019,6 +1028,16 @@ def test_glyph_orient_and_scale():
     assert glyph4.bounds[1] == geom.bounds[1]
 
 
+@pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
+def test_glyph_color_mode(sphere, color_mode):
+    assert sphere.glyph(color_mode=color_mode)
+
+
+def test_glyph_raises(sphere):
+    with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
+        sphere.glyph(color_mode="foo")
+
+
 @pytest.fixture()
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
@@ -1610,30 +1629,6 @@ def test_sample_composite():
     assert "vtkGhostType" in result[0].point_data
 
 
-@pytest.mark.parametrize('use_points', [True, False])
-@pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, _vtk_core.vtkStaticCellLocator()])
-def test_probe(categorical, use_points, locator):
-    mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    data_to_probe = examples.load_uniform()
-    dataset = np.array(mesh.points) if use_points else mesh
-    with pytest.warns(PyVistaDeprecationWarning):
-        result = data_to_probe.probe(
-            dataset,
-            tolerance=1e-5,
-            categorical=categorical,
-            progress_bar=True,
-            locator=locator,
-        )
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-
-
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines(
@@ -2078,7 +2073,8 @@ def extract_points_invalid(sphere):
         sphere.extract_points(object)
 
 
-def test_extract_points():
+@pytest.fixture()
+def grid4x4():
     # mesh points (4x4 regular grid)
     vertices = np.array(
         [
@@ -2115,24 +2111,638 @@ def test_extract_points():
             [4, 10, 11, 15, 14],  # square
         ],
     )
-    # create pv object
     surf = pv.PolyData(vertices, faces)
+    surf.point_data['labels'] = range(surf.n_points)
+    surf.cell_data['labels'] = range(surf.n_cells)
+    return surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_False(grid4x4):
+    """Return expected output for adjacent_cells=False and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 3, 2]
+    celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_True(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 1, 3, 4]
+    expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
+    celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_include_cells_False(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=False"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 0, 0, 0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
+    celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+
     # extract sub-surface with adjacent cells
-    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=True)
+    sub_surf_adj = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
+        progress_bar=True,
+    )
+
+    assert sub_surf_adj.n_points == 9
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert sub_surf_adj.n_cells == 4
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
     # extract sub-surface without adjacent cells
-    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=True)
+    sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
+
+    assert sub_surf.n_points == 4
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert sub_surf.n_cells == 1
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_include_cells_False(
+    dataset_filter,
+    grid4x4,
+    extracted_with_include_cells_False,
+):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
     # extract sub-surface without cells
-    sub_surf_nocells = surf.extract_points(
-        np.array([0, 1, 4, 5]),
+    sub_surf_nocells = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
         include_cells=False,
         progress_bar=True,
     )
-    # check sub-surface size
-    assert sub_surf.n_points == 4
-    assert sub_surf.n_cells == 1
-    assert sub_surf_adj.n_points == 9
-    assert sub_surf_adj.n_cells == 4
-    assert sub_surf_nocells.cells[0] == 1
+    assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
+    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
+    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+
+
+def test_extract_points_default(extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+    # test adjacent_cells=True and include_cells=True by default
+    sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('adjacent_fixture', [True, False])
+def test_extract_values_preference(
+    preference,
+    adjacent_fixture,
+    extracted_with_adjacent_True,
+    extracted_with_adjacent_False,
+):
+    # test points are extracted with point data (with adjacent = False by default)
+    # test cells are extracted with cell data
+    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
+
+    func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
+    if preference == 'point':
+        sub_surf = func(input_point_ids)
+        if not adjacent_fixture:
+            pytest.xfail(
+                'Will not match expected output since adjacent is True by default for point data ',
+            )
+    else:
+        sub_surf = func(input_cell_ids)
+
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+def extract_values_values():
+    # Define values to extract all 16 points or all 9 cells of the 4x4 grid
+    point_values = [
+        range(16),
+        list(range(16)),
+        np.array(range(16)),
+    ]
+    cell_values = [
+        range(10),
+        list(range(10)),
+        np.array(range(10)),
+    ]
+
+    return list(zip(point_values, cell_values))
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('values', extract_values_values())
+def test_extract_values_input_values_and_invert(preference, values, invert, grid4x4):
+    # test extracting all points or cells
+    values = values[0] if preference == 'point' else values[1]
+    extracted = grid4x4.extract_values(values, preference=preference, invert=invert)
+    if invert:
+        assert extracted.n_points == 0
+        assert extracted.n_cells == 0
+        assert extracted.n_arrays == 0
+    else:
+        assert np.array_equal(extracted.points, grid4x4.points)
+        assert np.array_equal(extracted.cells, grid4x4.faces)
+
+
+def test_extract_values_open_intervals(grid4x4):
+    extracted = grid4x4.extract_values(ranges=[float('-inf'), float('inf')])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[0, np.inf])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[-np.inf, 16])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+
+SMALL_VOLUME = 1**3
+BIG_VOLUME = 2**3
+
+
+@pytest.fixture()
+def labeled_data():
+    bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
+    small_box = pv.Box(bounds=bounds)
+    big_box = pv.Box(bounds=bounds * 2)
+    labeled = (small_box + big_box).extract_geometry().connectivity()
+    assert isinstance(labeled, pv.PolyData)
+    assert labeled.array_names == ['RegionId', 'RegionId']
+    assert np.allclose(small_box.volume, SMALL_VOLUME)
+    assert np.allclose(big_box.volume, BIG_VOLUME)
+    return small_box, big_box, labeled
+
+
+def add_component_to_labeled_data(labeled_data, offset):
+    """Add second component to scalars by duplicating first component and adding offset."""
+    if offset is None:
+        return labeled_data
+    small_box, big_box, labeled_data = labeled_data
+
+    point_data = labeled_data.point_data['RegionId']
+    point_data = np.vstack([point_data, point_data + offset]).T
+    labeled_data.point_data['RegionId'] = point_data
+
+    cell_data = labeled_data.cell_data['RegionId']
+    cell_data = np.vstack([cell_data, cell_data + offset]).T
+    labeled_data.cell_data['RegionId'] = cell_data
+
+    return small_box, big_box, labeled_data
+
+
+class SplitComponentTestCase(NamedTuple):
+    component_offset: Any
+    component_mode: Any
+    expected_n_blocks: Any
+    expected_volume: Any
+
+
+split_component_test_cases = [
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='0',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='1',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=1,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='any',
+        expected_n_blocks=4,
+        expected_volume=[SMALL_VOLUME, SMALL_VOLUME, BIG_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='all',
+        expected_n_blocks=4,
+        expected_volume=[0, 0, 0, 0],
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ('component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'),
+    split_component_test_cases,
+)
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+def test_split_values_extract_values_component(
+    dataset_filter,
+    kwargs,
+    labeled_data,
+    component_offset,
+    component_mode,
+    expected_n_blocks,
+    expected_volume,
+):
+    # Add second component to fixture for test as needed
+    small_box, big_box, labeled_data = add_component_to_labeled_data(
+        labeled_data,
+        component_offset,
+    )
+    multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
+    assert isinstance(multiblock, pv.MultiBlock)
+    assert multiblock.n_blocks == expected_n_blocks
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
+
+    # Convert to polydata to test volume
+    multiblock = multiblock.as_polydata_blocks()
+    assert expected_n_blocks == len(expected_volume)
+    assert all(
+        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
+    )
+
+
+def test_extract_values_split_ranges_values(labeled_data):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(values=[0, 1], ranges=[[0, 0], [1, 1]], split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 4
+    extracted_value0 = extracted[0]
+    extracted_value1 = extracted[1]
+    extracted_range00 = extracted[2]
+    extracted_range11 = extracted[3]
+    assert extracted_value0 == extracted_range00
+    assert extracted_value1 == extracted_range11
+
+
+# Test cases with and/or without dict inputs
+# Include swapped [name, value] or [value, name] inputs
+values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
+values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
+values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
+    'val0',
+    'val1',
+]
+
+
+@pytest.mark.parametrize(
+    ('dict_inputs', 'block_names'),
+    [
+        values_nodict_ranges_dict,
+        values_dict_ranges_nodict,
+        values_dict_ranges_dict,
+        values_component_dict,
+    ],
+)
+def test_extract_values_dict_input(labeled_data, dict_inputs, block_names):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(**dict_inputs, split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 2
+    assert extracted.keys() == block_names
+
+
+BLACK = [0.0, 0.0, 0.0]
+WHITE = [1.0, 1.0, 1.0]
+RED = [1.0, 0.0, 0.0]
+GREEN = [0.0, 1.0, 0.0]
+BLUE = [0.0, 0.0, 1.0]
+COLORS_LIST = [BLACK, WHITE, RED, GREEN, BLUE]
+
+
+@pytest.fixture()
+def point_cloud_colors():
+    # Define point cloud where the points and rgb scalars are the same
+    array = COLORS_LIST
+    point_cloud = pv.PointSet(array)
+    point_cloud['colors'] = array
+    return point_cloud
+
+
+@pytest.fixture()
+def point_cloud_colors_duplicates(point_cloud_colors):
+    # Same fixture as point_cloud_colors but with double the points
+    copied = point_cloud_colors.copy()
+    copied.points += 0.5
+    return point_cloud_colors + copied
+
+
+class ComponentModeTestCase(NamedTuple):
+    values: Any
+    component_mode: Any
+    expected: Any
+    expected_invert: Any
+
+
+component_mode_test_cases = [
+    ComponentModeTestCase(
+        values=0,
+        component_mode=0,
+        expected=[BLACK, GREEN, BLUE],
+        expected_invert=[WHITE, RED],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=1,
+        expected=[BLACK, RED, BLUE],
+        expected_invert=[WHITE, GREEN],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=2,
+        expected=[BLACK, RED, GREEN],
+        expected_invert=[WHITE, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='any',
+        expected=[BLACK, RED, GREEN, BLUE],
+        expected_invert=[WHITE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='any',
+        expected=[WHITE, RED, GREEN, BLUE],
+        expected_invert=[BLACK],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='all',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='all',
+        expected=[WHITE],
+        expected_invert=[BLACK, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=BLACK,
+        component_mode='multi',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=[WHITE, RED],
+        component_mode='multi',
+        expected=[WHITE, RED],
+        expected_invert=[BLACK, GREEN, BLUE],
+    ),
+]
+
+
+@pytest.mark.parametrize('values_as_ranges', [True, False])
+@pytest.mark.parametrize(('split', 'invert'), [(True, False), (False, True), (False, False)])
+@pytest.mark.parametrize(
+    ('values', 'component_mode', 'expected', 'expected_invert'),
+    component_mode_test_cases,
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_mode(
+    point_cloud_colors,
+    values,
+    component_mode,
+    expected,
+    expected_invert,
+    invert,
+    split,
+    values_as_ranges,
+):
+    values_kwarg = dict(values=values)
+    if values_as_ranges:
+        # Get additional test coverage by converting single value inputs into a range
+        if component_mode == 'multi':
+            pytest.skip("Cannot use ranges with 'multi' mode.")
+        values_kwarg = dict(ranges=[values - 0.5, values + 0.5])
+
+    extracted = point_cloud_colors.extract_values(
+        **values_kwarg,
+        component_mode=component_mode,
+        split=split,
+        invert=invert,
+    )
+    single_mesh = extracted.combine() if split else extracted
+    actual_points = single_mesh.points
+    actual_colors = single_mesh['colors']
+    assert np.array_equal(actual_points, expected_invert if invert else expected)
+    assert np.array_equal(actual_colors, expected_invert if invert else expected)
+
+
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_values_split_unique(
+    point_cloud_colors_duplicates,
+    dataset_filter,
+    kwargs,
+):
+    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='multi', **kwargs)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == len(COLORS_LIST)
+    assert (
+        np.array_equal(block['colors'], [color, color])
+        for block, color in zip(extracted, COLORS_LIST)
+    )
+
+
+@pytest.mark.parametrize('pass_point_ids', [True, False])
+@pytest.mark.parametrize('pass_cell_ids', [True, False])
+def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
+    POINT_IDS = 'vtkOriginalPointIds'
+    CELL_IDS = 'vtkOriginalCellIds'
+    extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
+    assert extracted.point_data.keys() == ['labels', POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(),
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert CELL_IDS in extracted.cell_data
+    if pass_point_ids:
+        assert POINT_IDS in extracted.point_data
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(preference='point'),
+        invert=True,
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert extracted.cell_data.keys() == []
+    if pass_point_ids:
+        assert extracted.point_data.keys() == []
+
+
+def test_extract_values_empty():
+    assert pv.PolyData().extract_values()
+
+
+def test_extract_values_raises(grid4x4):
+    match = 'Values must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values('abc')
+
+    match = 'Values must be one-dimensional. Got 2d values.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values([[2, 3]])
+
+    match = 'Ranges must be 2 dimensional. Got 3.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(ranges=[[[0, 1]]])
+
+    match = 'Ranges must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values(ranges='abc')
+
+    match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'No ranges or values were specified. At least one must be specified.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values()
+
+    match = "Invalid dict mapping. The dict's keys or values must contain strings."
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values({0: 1})
+
+    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(0, scalars='invalid_scalars')
+
+    match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    grid = grid4x4.copy()
+    grid.clear_data()
+    with pytest.raises(ValueError, match=match):
+        grid.extract_values([0])
+
+    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=1)
+
+    match = "Invalid component index '-1' specified"
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode=-1)
+
+    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'multi'."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode='foo')
+
+    match = "Ranges cannot be extracted using component mode 'multi'. Expected None, got [0, 1]."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1], component_mode='multi')
+
+    match = "Component values cannot be more than 2 dimensions. Got 3."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(values=[[[0]]], component_mode='multi')
+
+    match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=2)
+
+    match = 'Num components in values array (2) must match num components in data array (1).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(values=[0, 1], component_mode='multi')
 
 
 def test_slice_along_line_composite(composite):
@@ -2528,13 +3138,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():

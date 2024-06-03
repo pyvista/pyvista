@@ -3,22 +3,26 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from typing import cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    convert_array,
-    convert_string_array,
-    raise_not_matching,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
+from pyvista.core.utilities.arrays import raise_not_matching
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import abstract_class, no_new_attr
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
-from .colors import Color, get_cmap_safe
+from .colors import Color
+from .colors import get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
 from .utilities.algorithms import set_algorithm_input

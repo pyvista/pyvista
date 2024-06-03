@@ -19,6 +19,8 @@ as well as some pure-python helpers.
 
 """
 
+from __future__ import annotations
+
 import contextlib
 from itertools import product
 
@@ -28,23 +30,21 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import (
-    ArrowSource,
-    BoxSource,
-    ConeSource,
-    CubeSource,
-    CylinderSource,
-    DiscSource,
-    LineSource,
-    MultipleLinesSource,
-    PlaneSource,
-    PlatonicSolidSource,
-    PolygonSource,
-    SphereSource,
-    SuperquadricSource,
-    Text3DSource,
-    translate,
-)
+from .geometric_sources import ArrowSource
+from .geometric_sources import BoxSource
+from .geometric_sources import ConeSource
+from .geometric_sources import CubeSource
+from .geometric_sources import CylinderSource
+from .geometric_sources import DiscSource
+from .geometric_sources import LineSource
+from .geometric_sources import MultipleLinesSource
+from .geometric_sources import PlaneSource
+from .geometric_sources import PlatonicSolidSource
+from .geometric_sources import PolygonSource
+from .geometric_sources import SphereSource
+from .geometric_sources import SuperquadricSource
+from .geometric_sources import Text3DSource
+from .geometric_sources import translate
 
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
@@ -130,8 +130,8 @@ def Capsule(
         algo.capsule_cap = True
     else:
         algo = CapsuleSource(
-            center=center,
-            direction=direction,
+            center=(0, 0, 0),
+            direction=(1, 0, 0),
             radius=radius,
             cylinder_length=cylinder_length,
             theta_resolution=resolution,
@@ -1692,7 +1692,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0 / resolution, 1.0 / resolution) * angle
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
     arc['Distance'] = radius * angles
     return arc
 

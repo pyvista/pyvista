@@ -23,6 +23,8 @@ smooth; this was proved in the paper by Bednorz and Bednorz.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

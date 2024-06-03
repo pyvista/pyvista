@@ -15,6 +15,8 @@ and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -151,8 +153,10 @@ pl.show()
 # Animate the variation of the cutoff frequency.
 
 
-def warp_low_pass_noise(cfreq, scalar_ptp=np.ptp(sampled['scalars'])):
+def warp_low_pass_noise(cfreq, scalar_ptp=None):
     """Process the sampled FFT and warp by scalars."""
+    if scalar_ptp is None:
+        scalar_ptp = np.ptp(sampled['scalars'])
     output = sampled_fft.low_pass(cfreq, cfreq, cfreq).rfft()
 
     # on the left: raw FFT magnitude

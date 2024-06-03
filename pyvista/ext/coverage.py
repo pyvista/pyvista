@@ -11,6 +11,8 @@ Modified slightly for ``pyvista``.
 
 """
 
+from __future__ import annotations
+
 import glob
 from importlib import import_module
 import inspect
@@ -18,15 +20,24 @@ from os import path
 from pathlib import Path
 import pickle
 import re
-from typing import IO, Any, Dict, List, Pattern, Set, Tuple
+from typing import IO
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Pattern
+from typing import Set
+from typing import Tuple
 
 import sphinx
-from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.locale import __
 from sphinx.util import logging
 from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +302,7 @@ class CoverageBuilder(Builder):
                     write_header(op, name)
                     if undoc['funcs']:
                         op.write('Functions:\n')
-                        op.writelines(' * %s\n' % x for x in undoc['funcs'])
+                        op.writelines(f' * {x}\n' for x in undoc['funcs'])
                         if self.config.coverage_show_missing_items:
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
@@ -315,7 +326,7 @@ class CoverageBuilder(Builder):
                         op.write('Classes:\n')
                         for class_name, methods in sorted(undoc['classes'].items()):
                             if not methods:
-                                op.write(' * %s\n' % class_name)
+                                op.write(f' * {class_name}\n')
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         logger.warning(
@@ -333,8 +344,8 @@ class CoverageBuilder(Builder):
                                             + name,
                                         )
                             else:
-                                op.write(' * %s -- missing methods:\n\n' % class_name)
-                                op.writelines('   - %s\n' % x for x in methods)
+                                op.write(f' * {class_name} -- missing methods:\n\n')
+                                op.writelines(f'   - {x}\n' for x in methods)
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
@@ -358,7 +369,7 @@ class CoverageBuilder(Builder):
 
             if failed:
                 write_header(op, 'Modules that failed to import')
-                op.writelines(' * %s -- %s\n' % x for x in failed)
+                op.writelines(' * {} -- {}\n'.format(*x) for x in failed)
 
     def finish(self) -> None:
         # dump the coverage data to a pickle file too

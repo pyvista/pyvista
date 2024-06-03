@@ -1,5 +1,7 @@
 """Core error utilities."""
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 import re
@@ -115,9 +117,10 @@ class Observer:
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
-            return kind, path, address, alert
         except:
             return '', '', '', message
+        else:
+            return kind, path, address, alert
 
     def log_message(self, kind, alert):
         """Parse different event types and passes them to logging."""

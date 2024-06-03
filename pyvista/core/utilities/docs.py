@@ -6,7 +6,8 @@ import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict, Optional
+from typing import Dict
+from typing import Optional
 
 
 def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
@@ -89,7 +90,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))
+        kind = 'release/{}'.format('.'.join(pyvista.__version__.split('.')[:2]))
 
     blob_or_edit = 'edit' if edit else 'blob'
 
