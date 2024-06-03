@@ -20,15 +20,37 @@ env:
   SHELLOPTS: "errexit:pipefail"
 
 jobs:
+  PrepareData:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: pyvista/vtk-data
+          path: vtk-data
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vtk-data
+          path: |
+            vtk-data
+
   macOS:
+    needs: PrepareData
     runs-on: macos-latest
     name: Mac OS Unit Testing
     strategy:
       matrix:
         python-version: ["3.9", "3.11"]
+    env:
+      PYVISTA_VTK_DATA: vtk-data
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vtk-data
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -55,6 +77,7 @@ jobs:
         run: pytest -v tests/plotting --fail_extra_image_cache
 
   LinuxConda:
+    needs: PrepareData
     runs-on: ubuntu-20.04
     if: false
     env:
@@ -62,9 +85,15 @@ jobs:
       conda_env: pyvista-vtk
       DISPLAY: ":99.0"
       PYVISTA_OFF_SCREEN: True
+      PYVISTA_VTK_DATA: vtk-data
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vtk-data
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -127,6 +156,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
+    needs: PrepareData
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
@@ -144,10 +174,18 @@ jobs:
             vtk-version: "9.2.6"
           - python-version: "3.12"
             vtk-version: "latest"
+    env:
+      PYVISTA_VTK_DATA: vtk-data
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vtk-data
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -230,15 +268,22 @@ jobs:
 
   windows:
     name: Windows Unit Testing
+    needs: PrepareData
     runs-on: windows-latest
     env:
       CI_WINDOWS: true
+      PYVISTA_VTK_DATA: vtk-data
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download a single artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vtk-data
 
       - name: Set up Python
         uses: actions/setup-python@v5
