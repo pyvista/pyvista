@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Sequence
 import warnings
 
 import numpy as np
@@ -2929,7 +2929,7 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(self.center) - np.array(normal) * self.length / 2.0
@@ -3279,10 +3279,7 @@ class PolyDataFilters(DataSetFilters):
                 PyVistaFutureWarning,
             )
 
-        if (
-            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
-            or len(rotation_axis) != 3
-        ):
+        if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:
             raise ValueError('Vector must be a length three vector')
 
         if resolution <= 0:
@@ -3377,7 +3374,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
-        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
+        if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
         extrusions = {"boundary_edges": 0, "all_edges": 1}
