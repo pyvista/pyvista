@@ -5,13 +5,22 @@ This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue3".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 3.
 """
-from trame.ui.vuetify3 import VAppLayout
-from trame.widgets import html, vuetify3 as vuetify
-from trame_client.ui.core import AbstractLayout
+from __future__ import annotations
 
-from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
+from typing import TYPE_CHECKING
+
+from trame.ui.vuetify3 import VAppLayout
+from trame.widgets import html
+from trame.widgets import vuetify3 as vuetify
+
+from pyvista.trame.views import PyVistaLocalView
+from pyvista.trame.views import PyVistaRemoteLocalView
+from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
+
+if TYPE_CHECKING:
+    from trame_client.ui.core import AbstractLayout
 
 
 def button(click, icon, tooltip):  # numpydoc ignore=PR01
@@ -135,6 +144,7 @@ class Viewer(BaseViewer):
             server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
             server.state.change(self.AXIS)(self.on_axis_visiblity_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
+            server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
             button(
                 click=self.reset_camera,
@@ -196,6 +206,11 @@ class Viewer(BaseViewer):
                 classes='pa-0 ma-0 align-center fill-height',
                 style="flex-wrap: nowrap; flex: unset",
             ):
+                checkbox(
+                    model=(self.PARALLEL, False),
+                    icons=('mdi-camera-off', 'mdi-camera-switch'),
+                    tooltip=f"Toggle parallel projection ({{{{ {self.PARALLEL} ? 'on' : 'off' }}}})",
+                )
 
                 def attach_screenshot():
                     return server.protocol.addAttachment(self.screenshot())
@@ -266,7 +281,7 @@ class Viewer(BaseViewer):
             mode = self.plotter._theme.trame.default_mode
         if mode not in self.VALID_UI_MODES:
             raise ValueError(
-                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}'
+                f'`{mode}` is not a valid mode choice. Use one of: {self.VALID_UI_MODES}',
             )
         if mode != 'trame':
             default_server_rendering = mode == 'server'
@@ -294,7 +309,8 @@ class Viewer(BaseViewer):
                     classes=(f"{{ 'rounded-circle': !{self.SHOW_UI} }}",),
                 ) as self.menu:
                     with vuetify.VRow(
-                        classes='pa-0 ma-0 align-center fill-height', style="flex-wrap: nowrap"
+                        classes='pa-0 ma-0 align-center fill-height',
+                        style="flex-wrap: nowrap",
                     ):
                         button(
                             click=f'{self.SHOW_UI}=!{self.SHOW_UI}',

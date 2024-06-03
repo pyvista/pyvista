@@ -1,10 +1,13 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -75,7 +78,9 @@ class CompositeFilters:
         for block in self:
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
                 block = CompositeFilters.combine(
-                    block, merge_points=merge_points, tolerance=tolerance
+                    block,
+                    merge_points=merge_points,
+                    tolerance=tolerance,
                 )
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
@@ -133,7 +138,9 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self, generate_faces=generate_faces, progress_bar=progress_bar
+                self,
+                generate_faces=generate_faces,
+                progress_bar=progress_bar,
             )
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
@@ -181,7 +188,7 @@ class CompositeFilters:
         if not self.is_all_polydata:
             raise RuntimeError(
                 'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`'
+                'datasets to PolyData with `as_polydata`',
             )
 
         # track original point indices

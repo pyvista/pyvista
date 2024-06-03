@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 import subprocess
 
@@ -25,6 +27,6 @@ THIS_PATH = Path(__file__).parent.absolute()
 )
 def test_serve(server_path):
     returncode = subprocess.run(
-        ["python", Path(THIS_PATH) / server_path, "--serve", "-t", "1"]
+        ["python", Path(THIS_PATH) / server_path, "--serve", "-t", "1"],
     ).returncode
     assert returncode == 0

@@ -1,10 +1,14 @@
 """Module containing useful plotting tools."""
 
+from __future__ import annotations
+
 from enum import Enum
 import os
 import platform
 import subprocess
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import TimeoutExpired
 import sys
 
 import numpy as np
@@ -82,9 +86,10 @@ def _system_supports_plotting():
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate(timeout=10)
-        return proc.returncode == 0
     except (OSError, TimeoutExpired):
         return False
+    else:  # pragma: no cover
+        return proc.returncode == 0
 
 
 def system_supports_plotting():
@@ -495,7 +500,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
     mapping : list(float) or str
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including ``'linear'``, ``'geom'``, ``'sigmoid'``,
-        ``'sigmoid_1-10'``, and ``foreground``. Append an ``'_r'`` to any
+        ``'sigmoid_1-10,15,20'``, and ``foreground``. Append an ``'_r'`` to any
         of those names (except ``foreground``) to reverse that mapping.
         The mapping can also be a custom user-defined array/list of values
         that will be interpolated across the ``n_color`` range.
@@ -558,6 +563,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
         'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
         'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
         'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
@@ -572,7 +579,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
         except KeyError:
             raise ValueError(
                 f'Opacity transfer function ({mapping}) unknown. '
-                f'Valid options: {list(transfer_func.keys())}'
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -604,7 +611,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements'
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
     raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
@@ -666,9 +673,9 @@ def check_matplotlib_vtk_compatibility():
         If the versions of VTK and Matplotlib cannot be checked.
 
     """
-    import matplotlib
+    import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, matplotlib.__version__.split('.')[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False

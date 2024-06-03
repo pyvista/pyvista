@@ -1,19 +1,20 @@
 """Test pyvista.PointSet"""
 
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import (
-    PointSetCellOperationError,
-    PointSetDimensionReductionError,
-    PointSetNotSupported,
-)
+from pyvista.core.errors import PointSetCellOperationError
+from pyvista.core.errors import PointSetDimensionReductionError
+from pyvista.core.errors import PointSetNotSupported
 
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 
 
@@ -100,6 +101,7 @@ def test_cast_to_polydata(pointset, deep):
     pointset.point_data[key] = data
 
     pdata = pointset.cast_to_polydata(deep)
+    assert isinstance(pdata, pv.PolyData)
     assert key in pdata.point_data
     assert np.allclose(pdata.point_data[key], pointset.point_data[key])
     pdata.point_data[key][:] = 0
@@ -109,6 +111,19 @@ def test_cast_to_polydata(pointset, deep):
         assert np.allclose(pdata.point_data[key], pointset.point_data[key])
 
 
+def test_cast_to_unstructured_grid(pointset):
+    data = np.linspace(0, 1, pointset.n_points)
+    key = 'key'
+    pointset.point_data[key] = data
+
+    pdata = pointset.cast_to_unstructured_grid()
+    assert isinstance(pdata, pv.UnstructuredGrid)
+    assert key in pdata.point_data
+    assert np.allclose(pdata.point_data[key], pointset.point_data[key])
+    pdata.point_data[key][:] = 0
+    assert not np.allclose(pdata.point_data[key], pointset.point_data[key])
+
+
 def test_filters_return_pointset(sphere):
     pointset = sphere.cast_to_pointset()
     clipped = pointset.clip()
@@ -116,7 +131,8 @@ def test_filters_return_pointset(sphere):
 
 
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"), [(False, np.int64), (True, np.float32)]
+    ("force_float", "expected_data_type"),
+    [(False, np.int64), (True, np.float32)],
 )
 def test_pointset_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], np.int64)

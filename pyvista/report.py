@@ -1,5 +1,7 @@
 """Module managing errors."""
 
+from __future__ import annotations
+
 import re
 import subprocess
 import sys
@@ -21,8 +23,7 @@ def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
     proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
-    gpu_info = '' if proc.returncode else proc.stdout.decode()
-    return gpu_info
+    return '' if proc.returncode else proc.stdout.decode()
 
 
 class GPUInfo:

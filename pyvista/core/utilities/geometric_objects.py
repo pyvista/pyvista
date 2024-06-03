@@ -19,6 +19,9 @@ as well as some pure-python helpers.
 
 """
 
+from __future__ import annotations
+
+import contextlib
 from itertools import product
 
 import numpy as np
@@ -27,28 +30,24 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import (
-    ArrowSource,
-    BoxSource,
-    ConeSource,
-    CubeSource,
-    CylinderSource,
-    DiscSource,
-    LineSource,
-    MultipleLinesSource,
-    PlaneSource,
-    PlatonicSolidSource,
-    PolygonSource,
-    SphereSource,
-    SuperquadricSource,
-    Text3DSource,
-    translate,
-)
+from .geometric_sources import ArrowSource
+from .geometric_sources import BoxSource
+from .geometric_sources import ConeSource
+from .geometric_sources import CubeSource
+from .geometric_sources import CylinderSource
+from .geometric_sources import DiscSource
+from .geometric_sources import LineSource
+from .geometric_sources import MultipleLinesSource
+from .geometric_sources import PlaneSource
+from .geometric_sources import PlatonicSolidSource
+from .geometric_sources import PolygonSource
+from .geometric_sources import SphereSource
+from .geometric_sources import SuperquadricSource
+from .geometric_sources import Text3DSource
+from .geometric_sources import translate
 
-try:
+with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
-except ImportError:  # pragma: no cover
-    pass
 
 from .helpers import wrap
 from .misc import check_valid_vector
@@ -131,8 +130,8 @@ def Capsule(
         algo.capsule_cap = True
     else:
         algo = CapsuleSource(
-            center=center,
-            direction=direction,
+            center=(0, 0, 0),
+            direction=(1, 0, 0),
             radius=radius,
             cylinder_length=cylinder_length,
             theta_resolution=resolution,
@@ -933,7 +932,7 @@ def SolidSphereGeneric(
                         npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
-                    ]
+                    ],
                 )
                 celltypes.append(pyvista.CellType.TETRA)
 
@@ -947,7 +946,7 @@ def SolidSphereGeneric(
                     _index(0, iphi + 1, itheta + 1),
                     _index(0, iphi + 1, itheta),
                     0,
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.PYRAMID)
 
@@ -967,7 +966,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, 0, itheta + 1),
                     _index(ir + 1, 0, itheta),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -985,7 +984,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, nphi - 1, itheta),
                     _index(ir + 1, nphi - 1, itheta + 1),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -1004,7 +1003,7 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi + 1, itheta),
                 _index(ir + 1, iphi + 1, itheta + 1),
                 _index(ir + 1, iphi, itheta + 1),
-            ]
+            ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
 
@@ -1105,7 +1104,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=None):
     """Create multiple lines.
 
     Parameters
@@ -1130,6 +1129,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
+    if points is None:
+        points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
     return MultipleLinesSource(points=points).output
 
 
@@ -1223,6 +1224,7 @@ def Cube(
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
+
         .. versionadded:: 0.44.0
 
     Returns
@@ -1690,7 +1692,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0 / resolution, 1.0 / resolution) * angle
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
     arc['Distance'] = radius * angles
     return arc
 

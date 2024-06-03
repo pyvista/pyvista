@@ -1,5 +1,7 @@
 """This module contains the VolumeProperty class."""
 
+from __future__ import annotations
+
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -109,7 +111,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         if opacity_unit_distance is not None:
             self.opacity_unit_distance = opacity_unit_distance
 
-    def apply_lookup_table(self, lookup_table: 'pyvista.LookupTable'):
+    def apply_lookup_table(self, lookup_table: pyvista.LookupTable):
         """Apply a lookup table to the volume property.
 
         Applies both the color and opacity of the lookup table as transfer
@@ -331,7 +333,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     def specular_power(self, value: float):  # numpydoc ignore=GL08
         self.SetSpecularPower(value)
 
-    def copy(self) -> 'VolumeProperty':
+    def copy(self) -> VolumeProperty:
         """Create a deep copy of this property.
 
         Returns

@@ -1,7 +1,9 @@
 """A helper script to generate the external examples gallery."""
 
+from __future__ import annotations
+
 from io import StringIO
-import os
+from pathlib import Path
 
 
 def format_icon(title, link, image):
@@ -13,8 +15,7 @@ def format_icon(title, link, image):
 
       .. image:: ../images/external-examples/{}
 """
-    content = body.format(title, link, image)
-    return content
+    return body.format(title, link, image)
 
 
 class Example:
@@ -195,6 +196,26 @@ articles = dict(
         link="https://github.com/cardinalgeo/drilldown",
         image="drilldown.jpg",
     ),
+    stpyvista=Example(
+        title="stpyvista",
+        link="https://github.com/edsaac/stpyvista",
+        image="stpyvista_intro_crop.gif",
+    ),
+    visualpic=Example(
+        title="VisualPIC",
+        link="https://github.com/AngelFP/VisualPIC",
+        image="visualpic.png",
+    ),
+    pyelastica=Example(
+        title="PyElastica",
+        link="https://github.com/GazzolaLab/PyElastica",
+        image="pyelastica.gif",
+    ),
+    comet_fenicsx=Example(
+        title="Numerical Tours of Computational Mechanics with FEniCSx",
+        link="https://bleyerj.github.io/comet-fenicsx",
+        image="comet_fenicsx.png",
+    ),
     # entry=Example(title="",
     #     link="",
     #     image=""),
@@ -233,7 +254,7 @@ glad to add it.
 .. grid:: 3
    :gutter: 1
 
-"""
+""",
         )
         # Reverse to put the latest items at the top
         for example in list(articles.values())[::-1]:
@@ -247,20 +268,18 @@ glad to add it.
     <div class="sphx-glr-clear"></div>
 
 
-"""
+""",
         )
         new_fid.seek(0)
         new_text = new_fid.read()
 
     # check if it's necessary to overwrite the table
     existing = ""
-    if os.path.exists(path):
-        with open(path) as existing_fid:
+    if Path(path).exists():
+        with Path(path).open() as existing_fid:
             existing = existing_fid.read()
 
     # write if different or does not exist
     if new_text != existing:
-        with open(path, "w", encoding="utf-8") as fid:
+        with Path(path).open("w", encoding="utf-8") as fid:
             fid.write(new_text)
-
-    return

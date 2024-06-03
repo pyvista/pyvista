@@ -7,6 +7,8 @@ Plotting Glyphs (Vectors or PolyData)
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4
@@ -49,7 +51,7 @@ vectors = np.vstack(
         np.sin(sphere.points[:, 0]),
         np.cos(sphere.points[:, 1]),
         np.cos(sphere.points[:, 2]),
-    )
+    ),
 ).T
 
 # add and scale

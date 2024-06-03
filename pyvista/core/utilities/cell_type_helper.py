@@ -1,5 +1,7 @@
 """Helper module to query vtk cell sizes upon importing."""
 
+from __future__ import annotations
+
 try:
     from vtkmodules import vtkCommonDataModel
 except:  # pragma: no cover
