@@ -1,5 +1,7 @@
 """Module containing pyvista implementation of vtk.vtkLight."""
 
+from __future__ import annotations
+
 from enum import IntEnum
 
 import numpy as np
@@ -7,13 +9,21 @@ import numpy as np
 # imports here rather than in _vtk to avoid circular imports
 try:
     from vtkmodules.vtkCommonMath import vtkMatrix4x4
-    from vtkmodules.vtkRenderingCore import vtkLight, vtkLightActor
+    from vtkmodules.vtkRenderingCore import vtkLight
+    from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight, vtkLightActor, vtkMatrix4x4
+    from vtk import vtkLight
+    from vtk import vtkLightActor
+    from vtk import vtkMatrix4x4
+
+from typing import TYPE_CHECKING
 
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
-from .colors import Color, ColorLike
+from .colors import Color
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 
 class LightType(IntEnum):
@@ -179,7 +189,7 @@ class Light(vtkLight):
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
             raise TypeError(
-                f'Parameter light_type must be int or str, not {type(light_type).__name__}.'
+                f'Parameter light_type must be int or str, not {type(light_type).__name__}.',
             )
         # LightType is an int subclass
 
@@ -803,7 +813,7 @@ class Light(vtkLight):
                 trans = vtkmatrix_from_array(matrix)
             except ValueError:
                 raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.'
+                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
                 ) from None
         self.SetTransformMatrix(trans)
 
@@ -865,7 +875,7 @@ class Light(vtkLight):
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
             raise TypeError(
-                f'Light type must be an integer subclass instance, got {ltype} instead.'
+                f'Light type must be an integer subclass instance, got {ltype} instead.',
             )
         self.SetLightType(ltype)
 
@@ -1139,7 +1149,7 @@ class Light(vtkLight):
         """
         if not isinstance(vtk_light, vtkLight):
             raise TypeError(
-                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.'
+                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.',
             )
 
         light = cls()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from types import GeneratorType
 
 import numpy as np
@@ -6,18 +8,17 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
-from pyvista import Cell, CellType
+from pyvista import Cell
+from pyvista import CellType
 from pyvista.core.utilities.cells import numpy_to_idarr
-from pyvista.examples import (
-    cells as example_cells,
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.examples import cells as example_cells
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
 
 grids = [
     load_hexbeam(),
@@ -173,9 +174,9 @@ def test_cell_type_is_inside_enum(cell):
     assert cell.type in CellType
 
 
-@pytest.mark.parametrize(("cell", "type"), zip(cells, types), ids=cell_ids)
-def test_cell_type(cell, type):
-    assert cell.type == type
+@pytest.mark.parametrize(("cell", "type_"), zip(cells, types), ids=cell_ids)
+def test_cell_type(cell, type_):
+    assert cell.type == type_
 
 
 @pytest.mark.parametrize("cell", cells, ids=cell_ids)
@@ -330,7 +331,8 @@ def test_cell_cast_to_unstructured_grid(cell):
 def test_cell_cast_to_polydata(cell):
     if cell.dimension == 3:
         with pytest.raises(
-            ValueError, match=f"3D cells cannot be cast to PolyData: got cell type {cell.type}"
+            ValueError,
+            match=f"3D cells cannot be cast to PolyData: got cell type {cell.type}",
         ):
             cell.cast_to_polydata()
     else:

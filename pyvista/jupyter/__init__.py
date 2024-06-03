@@ -1,6 +1,7 @@
 """Jupyter notebook plotting module."""
 
 # flake8: noqa: F401
+from __future__ import annotations
 
 import warnings
 
@@ -37,7 +38,7 @@ def _validate_jupyter_backend(backend):
         backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
         raise ValueError(
             f'Invalid Jupyter notebook plotting backend "{backend}".\n'
-            f'Use one of the following:\n{backend_list_str}'
+            f'Use one of the following:\n{backend_list_str}',
         )
 
     if backend in ['server', 'client', 'trame', 'html']:

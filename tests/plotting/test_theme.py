@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import pytest
@@ -6,7 +8,9 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import DarkTheme
+from pyvista.plotting.themes import Theme
+from pyvista.plotting.themes import _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -16,7 +20,8 @@ def default_theme():
 
 
 @pytest.mark.parametrize(
-    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
+    'parm',
+    [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -105,11 +110,11 @@ def test_invalid_color_str_single_char():
 
 def test_color_str():
     clr = colors.Color("k")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("black")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("white")
-    assert (1.0, 1.0, 1.0) == clr
+    assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
 
@@ -615,7 +620,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: PT011
+    with pytest.raises(Exception):  # noqa: B017, PT011
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available
@@ -641,3 +646,8 @@ def test_trame_config():
     trame_config.jupyter_extension_enabled = False
     assert not trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
+
+
+def test_box_axes(default_theme):
+    default_theme.axes.box = True
+    _ = pv.Sphere().plot(theme=default_theme)

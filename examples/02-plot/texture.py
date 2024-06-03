@@ -7,7 +7,9 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-from matplotlib.cm import get_cmap
+from __future__ import annotations
+
+from matplotlib.pyplot import get_cmap
 import numpy as np
 
 import pyvista as pv
@@ -220,7 +222,11 @@ mesh.plot(texture=tex)
 # the mesh that will be used as the globe. Note the `start_theta` for a slight
 # overlappig
 sphere = pv.Sphere(
-    radius=1, theta_resolution=120, phi_resolution=120, start_theta=270.001, end_theta=270
+    radius=1,
+    theta_resolution=120,
+    phi_resolution=120,
+    start_theta=270.001,
+    end_theta=270,
 )
 
 # Initialize the texture coordinates array

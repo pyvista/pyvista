@@ -8,6 +8,8 @@ Comparison of default, flat shading vs. smooth shading.
 """
 
 # sphinx_gallery_thumbnail_number = 4
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 
@@ -43,7 +45,10 @@ mesh.plot(smooth_shading=True, split_sharp_edges=True)
 
 # extract the feature edges exceeding 30 degrees
 edges = mesh.extract_feature_edges(
-    boundary_edges=False, non_manifold_edges=False, feature_angle=30, manifold_edges=False
+    boundary_edges=False,
+    non_manifold_edges=False,
+    feature_angle=30,
+    manifold_edges=False,
 )
 
 # plot both the edges and the smoothed mesh

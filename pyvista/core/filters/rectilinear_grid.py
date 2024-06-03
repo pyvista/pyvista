@@ -1,12 +1,14 @@
 """Filters module with the class to manage filters/algorithms for rectilinear grid datasets."""
 
-import collections
-from typing import Sequence, Union
+from __future__ import annotations
+
+from collections.abc import Sequence
 
 import numpy as np
 
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
 
 
@@ -17,7 +19,7 @@ class RectilinearGridFilters:
     def to_tetrahedra(
         self,
         tetra_per_cell: int = 5,
-        mixed: Union[Sequence[int], bool] = False,
+        mixed: Sequence[int] | bool = False,
         pass_cell_ids: bool = True,
         pass_data: bool = True,
         progress_bar: bool = False,
@@ -93,7 +95,7 @@ class RectilinearGridFilters:
         if mixed is not False:
             if isinstance(mixed, str):
                 self.cell_data.active_scalars_name = mixed
-            elif isinstance(mixed, (np.ndarray, collections.abc.Sequence)):
+            elif isinstance(mixed, (np.ndarray, Sequence)):
                 self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
             elif not isinstance(mixed, bool):
                 raise TypeError('`mixed` must be either a sequence of ints or bool')
@@ -101,7 +103,7 @@ class RectilinearGridFilters:
         else:
             if tetra_per_cell not in [5, 6, 12]:
                 raise ValueError(
-                    f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}'
+                    f'`tetra_per_cell` should be either 5, 6, or 12, not {tetra_per_cell}',
                 )
 
             # Edge case causing a seg-fault where grid is flat in one dimension
@@ -109,7 +111,7 @@ class RectilinearGridFilters:
             if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore[attr-defined]
                 raise RuntimeError(
                     'Cannot split cells into 12 tetrahedrals when at least '
-                    f'one dimension is 1. Dimensions are {self.dimensions}.'  # type: ignore[attr-defined]
+                    f'one dimension is 1. Dimensions are {self.dimensions}.',  # type: ignore[attr-defined]
                 )
 
             alg.SetTetraPerCell(tetra_per_cell)
@@ -132,7 +134,8 @@ class RectilinearGridFilters:
         if alg.GetRememberVoxelId():
             # original cell_ids are not named and are the active scalars
             out.cell_data.set_array(
-                out.cell_data.pop(out.cell_data.active_scalars_name), 'vtkOriginalCellIds'
+                out.cell_data.pop(out.cell_data.active_scalars_name),
+                'vtkOriginalCellIds',
             )
 
         if pass_data:

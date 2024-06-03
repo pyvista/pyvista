@@ -13,28 +13,38 @@ A ``validate`` function typically:
 
 """
 
+from __future__ import annotations
+
 import inspect
 from itertools import product
-from typing import Any, Dict, Literal, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Literal
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 
-from pyvista.core._typing_core._array_like import NumpyArray
-from pyvista.core._validation import (
-    check_contains,
-    check_finite,
-    check_integer,
-    check_length,
-    check_nonnegative,
-    check_range,
-    check_real,
-    check_shape,
-    check_sorted,
-    check_string,
-    check_subdtype,
-)
-from pyvista.core._validation._cast_array import _cast_to_numpy, _cast_to_tuple
-from pyvista.core._vtk_core import vtkMatrix3x3, vtkMatrix4x4, vtkTransform
+from pyvista.core._validation import check_contains
+from pyvista.core._validation import check_finite
+from pyvista.core._validation import check_integer
+from pyvista.core._validation import check_length
+from pyvista.core._validation import check_nonnegative
+from pyvista.core._validation import check_range
+from pyvista.core._validation import check_real
+from pyvista.core._validation import check_shape
+from pyvista.core._validation import check_sorted
+from pyvista.core._validation import check_string
+from pyvista.core._validation import check_subdtype
+from pyvista.core._validation._cast_array import _cast_to_numpy
+from pyvista.core._validation._cast_array import _cast_to_tuple
+from pyvista.core._vtk_core import vtkMatrix3x3
+from pyvista.core._vtk_core import vtkMatrix4x4
+from pyvista.core._vtk_core import vtkTransform
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core._array_like import NumpyArray
 
 
 def validate_array(
@@ -336,7 +346,11 @@ def validate_array(
 
 
 def validate_axes(
-    *axes, normalize=True, must_be_orthogonal=True, must_have_orientation='right', name="Axes"
+    *axes,
+    normalize=True,
+    must_be_orthogonal=True,
+    must_have_orientation='right',
+    name="Axes",
 ):
     """Validate 3D axes vectors.
 
@@ -407,7 +421,9 @@ def validate_axes(
     check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
         check_contains(
-            item=must_have_orientation, container=['right', 'left'], name=f"{name} orientation"
+            item=must_have_orientation,
+            container=['right', 'left'],
+            name=f"{name} orientation",
         )
     elif must_have_orientation is None and len(axes) == 2:
         raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
@@ -429,7 +445,8 @@ def validate_axes(
     check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
-        np.dot(axes_array[0], axes_array[2]), 1
+        np.dot(axes_array[0], axes_array[2]),
+        1,
     ):
         raise ValueError(f"{name} cannot be parallel.")
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
@@ -497,7 +514,10 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     else:
         try:
             valid_arr = validate_array(
-                transform, must_have_shape=[(3, 3), (4, 4)], must_be_finite=True, name=name
+                transform,
+                must_have_shape=[(3, 3), (4, 4)],
+                must_be_finite=True,
+                name=name,
             )
             if valid_arr.shape == (3, 3):
                 arr[:3, :3] = valid_arr
@@ -510,7 +530,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
                 '\tvtkMatrix3x3\n'
                 '\tvtkTransform\n'
                 '\t4x4 np.ndarray\n'
-                '\t3x3 np.ndarray\n'
+                '\t3x3 np.ndarray\n',
             )
 
     return arr
@@ -550,9 +570,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
-            raise TypeError(
-                'Input transform must be one of:\n' '\tvtkMatrix3x3\n' '\t3x3 np.ndarray\n'
-            )
+            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
     return arr
 
 
@@ -786,7 +804,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
 
     See Also
     --------
-    validate_arrayN_uintlike
+    validate_arrayN_unsigned
         Similar function for non-negative integer arrays.
 
     validate_array
@@ -826,7 +844,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -873,7 +891,7 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     >>> import numpy as np
     >>> from pyvista import _validation
-    >>> arr = _validation.validate_arrayN_uintlike((1.0, 2.0, 3.0, 4.0))
+    >>> arr = _validation.validate_arrayN_unsigned((1.0, 2.0, 3.0, 4.0))
     >>> arr
     array([1, 2, 3, 4])
 
@@ -884,18 +902,18 @@ def validate_arrayN_uintlike(arr, /, *, reshape=True, **kwargs):
 
     Scalar 0-dimensional values are automatically reshaped to be 1D.
 
-    >>> _validation.validate_arrayN_uintlike(42)
+    >>> _validation.validate_arrayN_unsigned(42)
     array([42])
 
     2D arrays where the first dimension is unity are automatically
     reshaped to be 1D.
 
-    >>> _validation.validate_arrayN_uintlike([[1, 2]])
+    >>> _validation.validate_arrayN_unsigned([[1, 2]])
     array([1, 2])
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_uintlike(
+    >>> _validation.validate_arrayN_unsigned(
     ...     (1, 2, 3), must_be_in_range=[1, 3]
     ... )
     array([1, 2, 3])

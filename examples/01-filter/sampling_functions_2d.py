@@ -16,6 +16,8 @@ effects for the motion picture industry.
 
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
 ###############################################################################

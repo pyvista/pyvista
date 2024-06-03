@@ -16,6 +16,8 @@ software.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
