@@ -73,7 +73,7 @@ pl.show()
 ###############################################################################
 # Decimate Polyline Mesh
 # ----------------------
-
+#
 # Generate a fairly slow spiral polyline mesh.
 
 n_points = 100
