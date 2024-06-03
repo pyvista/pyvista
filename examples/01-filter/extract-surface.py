@@ -58,7 +58,9 @@ quad_pts = np.array(
 )
 
 # introduce a minor variation to the location of the mid-side points
-quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.3
+# seed the random numbers for reproducibility
+rng = np.random.default_rng(seed=0)
+quad_pts += rng.random(quad_pts.shape) * 0.3
 pts = np.vstack((lin_pts, quad_pts))
 
 # create the grid
