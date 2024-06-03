@@ -1,10 +1,18 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
+from __future__ import annotations
+
 from functools import wraps
 import inspect
 import itertools
 import re
-from typing import ClassVar, Dict, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import Optional
+from typing import Sequence
+from typing import Type
+from typing import Union
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -15,8 +23,14 @@ import pyvista
 from pyvista import vtk_version_info
 
 from . import _vtk
-from ._typing import Chart
-from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
+from .colors import COLOR_SCHEMES
+from .colors import SCHEME_NAMES
+from .colors import Color
+from .colors import color_synonyms
+from .colors import hexcolors
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import Chart
 
 
 # region Some metaclass wrapping magic
@@ -1140,7 +1154,7 @@ class _Chart(DocSubs):
         """
         # edge race case
         if self._renderer is None:  # pragma: no cover
-            return
+            return None
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()

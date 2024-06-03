@@ -5,6 +5,8 @@ Label Points
 Use string arrays in a point set to label points
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -24,8 +26,9 @@ from pyvista import examples
 # This example will label the nodes of a mesh with a given array of string
 # labels for each of the nodes.
 
-# Make some random points
-poly = pv.PolyData(np.random.default_rng().random((10, 3)))
+# Make some random points. Seed the rng for reproducibility.
+rng = np.random.default_rng(seed=0)
+poly = pv.PolyData(rng.random((10, 3)))
 
 ###############################################################################
 # Add string labels to the point data - this associates a label with every

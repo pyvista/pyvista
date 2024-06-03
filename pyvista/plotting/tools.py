@@ -1,10 +1,14 @@
 """Module containing useful plotting tools."""
 
+from __future__ import annotations
+
 from enum import Enum
 import os
 import platform
 import subprocess
-from subprocess import PIPE, Popen, TimeoutExpired
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import TimeoutExpired
 import sys
 
 import numpy as np
@@ -82,9 +86,10 @@ def _system_supports_plotting():
     try:
         proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         proc.communicate(timeout=10)
-        return proc.returncode == 0
     except (OSError, TimeoutExpired):
         return False
+    else:  # pragma: no cover
+        return proc.returncode == 0
 
 
 def system_supports_plotting():

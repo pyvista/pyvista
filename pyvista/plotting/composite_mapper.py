@@ -1,5 +1,7 @@
 """Module containing composite data mapper."""
 
+from __future__ import annotations
+
 from itertools import cycle
 import sys
 from typing import Optional
@@ -9,11 +11,13 @@ import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
 
 from . import _vtk
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .mapper import _BaseMapper
 
 
@@ -567,7 +571,7 @@ class CompositePolyDataMapper(
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
+    def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -589,7 +593,7 @@ class CompositePolyDataMapper(
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
+    def dataset(self, obj: pyvista.MultiBlock):  # numpydoc ignore=GL08
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj

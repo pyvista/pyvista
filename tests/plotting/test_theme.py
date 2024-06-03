@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import pytest
@@ -6,7 +8,9 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
+from pyvista.plotting.themes import DarkTheme
+from pyvista.plotting.themes import Theme
+from pyvista.plotting.themes import _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
@@ -616,7 +620,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: PT011
+    with pytest.raises(Exception):  # noqa: B017, PT011
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available

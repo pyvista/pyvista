@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import faulthandler
 import locale
@@ -21,7 +23,8 @@ make_tables.make_all_tables()
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
@@ -283,7 +286,7 @@ root_doc = "index"
 
 # General information about the project.
 project = "PyVista"
-year = datetime.date.today().year
+year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
 copyright = f"2017-{year}, The PyVista Developers"  # noqa: A001
 author = "Alex Kaszynski and Bane Sullivan"
 
@@ -385,6 +388,8 @@ sphinx_gallery_conf = {
     "reset_modules": (reset_pyvista,),
     "reset_modules_order": "both",
 }
+
+suppress_warnings = ["config.cache"]
 
 import re
 

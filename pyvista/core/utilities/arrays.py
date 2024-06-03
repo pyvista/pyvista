@@ -1,18 +1,29 @@
 """Internal array utilities."""
 
+from __future__ import annotations
+
 from collections import UserDict
-import collections.abc
+from collections.abc import Sequence
 import enum
 from itertools import product
 import json
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import MatrixLike, NumpyArray, TransformLike, VectorLike
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class FieldAssociation(enum.Enum):
@@ -81,7 +92,7 @@ def _coerce_pointslike_arg(
         Whether the input was a single point in an array-like with shape ``(3,)``.
 
     """
-    if isinstance(points, collections.abc.Sequence):
+    if isinstance(points, Sequence):
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
@@ -206,7 +217,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
 
     """
     if arr is None:
-        return
+        return None
     if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
@@ -239,7 +250,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional['pyvista.ndarray']:
+def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -678,7 +689,7 @@ def vtkmatrix_from_array(array):
     return matrix
 
 
-def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
+def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -731,7 +742,7 @@ def set_default_active_vectors(mesh: 'pyvista.DataSet') -> None:
         )
 
 
-def set_default_active_scalars(mesh: 'pyvista.DataSet') -> None:
+def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.

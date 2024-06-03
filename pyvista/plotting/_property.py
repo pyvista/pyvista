@@ -1,10 +1,13 @@
 """This module contains the Property class."""
 
+from __future__ import annotations
+
 from typing import Union
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.misc import _check_range, no_new_attr
+from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from .colors import Color
@@ -1230,7 +1233,7 @@ class Property(_vtk.vtkProperty):
         pl.camera_position = 'xy'
         pl.show(before_close_callback=before_close_callback)
 
-    def copy(self) -> 'Property':
+    def copy(self) -> Property:
         """Create a deep copy of this property.
 
         Returns

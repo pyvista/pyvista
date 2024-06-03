@@ -8,6 +8,8 @@ Comparison of default, flat shading vs. smooth shading.
 """
 
 # sphinx_gallery_thumbnail_number = 4
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 

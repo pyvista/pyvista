@@ -4,7 +4,10 @@ The data objects does not have any sort of spatial reference.
 
 """
 
-from typing import Optional, Tuple
+from __future__ import annotations
+
+from typing import Optional
+from typing import Tuple
 
 import numpy as np
 
@@ -13,7 +16,9 @@ import pyvista
 from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
-from .utilities.arrays import FieldAssociation, get_array, row_array
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import get_array
+from .utilities.arrays import row_array
 
 
 class Table(_vtk.vtkTable, DataObject):
@@ -77,7 +82,7 @@ class Table(_vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):  # numpydoc ignore=RT01
+    def n_rows(self):
         """Return the number of rows.
 
         Returns
@@ -101,7 +106,7 @@ class Table(_vtk.vtkTable, DataObject):
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):  # numpydoc ignore=RT01
+    def n_columns(self):
         """Return the number of columns.
 
         Returns
@@ -113,7 +118,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):  # numpydoc ignore=RT01
+    def n_arrays(self):
         """Return the number of columns.
 
         Alias for: ``n_columns``.
@@ -143,7 +148,7 @@ class Table(_vtk.vtkTable, DataObject):
         return self.row_arrays.get_array(name)
 
     @property
-    def row_arrays(self):  # numpydoc ignore=RT01
+    def row_arrays(self):
         """Return the all row arrays.
 
         Returns

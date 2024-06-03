@@ -1,30 +1,31 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 
-import collections.abc
+from __future__ import annotations
+
+from collections.abc import Sequence
 import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaFutureWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaFutureWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtk_id_list_to_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 
 @abstract_class
@@ -343,8 +344,7 @@ class PolyDataFilters(DataSetFilters):
         so the in-place merge attempt will raise.
 
         """
-        merged = self.merge(dataset, inplace=True)
-        return merged
+        return self.merge(dataset, inplace=True)
 
     def append_polydata(
         self,
@@ -2297,13 +2297,15 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
 
         try:
-            import pyembree  # noqa: F401
-            import rtree  # noqa: F401
             import trimesh
+
+            if not trimesh.ray.has_embree:
+                raise ImportError
         except ImportError:
             raise ImportError(
-                "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
-                "\tconda install trimesh rtree pyembree",
+                "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
+                "\tconda install embree=2 trimesh pyembree\nOR\n"
+                "\tpip install trimesh embreex",
             )
 
         origins = np.asarray(origins)
@@ -2332,7 +2334,16 @@ class PolyDataFilters(DataSetFilters):
                 axis=1,
                 keepdims=True,
             )
-            second_points = origins_retry + unit_directions * self.length  # shape (n_retry, 3)
+
+            origin_to_centre_vectors = self.center - origins_retry  # shape (n_retry, 3)
+            origin_to_centre_lengths = np.linalg.norm(
+                origin_to_centre_vectors,
+                axis=-1,
+                keepdims=True,
+            )
+            second_points = origins_retry + unit_directions * (
+                origin_to_centre_lengths + self.length
+            )
 
             for id_r, origin, second_point in zip(retry_ray_indices, origins_retry, second_points):
                 locs, indices = self.ray_trace(origin, second_point, first_point=first_point)
@@ -2787,7 +2798,7 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(self.center) - np.array(normal) * self.length / 2.0
@@ -3137,10 +3148,7 @@ class PolyDataFilters(DataSetFilters):
                 PyVistaFutureWarning,
             )
 
-        if (
-            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
-            or len(rotation_axis) != 3
-        ):
+        if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:
             raise ValueError('Vector must be a length three vector')
 
         if resolution <= 0:
@@ -3235,7 +3243,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
-        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
+        if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
         extrusions = {"boundary_edges": 0, "all_edges": 1}
@@ -3774,5 +3782,74 @@ class PolyDataFilters(DataSetFilters):
         mc.SetInputConnection(alg.GetOutputPort())
         mc.SetValue(0, 0.0)
         _update_alg(mc, progress_bar, 'Reconstructing surface')
-        surf = wrap(mc.GetOutput())
-        return surf
+        return wrap(mc.GetOutput())
+
+    def triangulate_contours(self, display_errors=False, progress_bar=False):
+        """Triangulate and fill all 2D contours to create polygons.
+
+        .. versionadded:: 0.44.0
+
+        This filter will generate triangles to fill all of the 2D contours
+        in its input. The input to the filter is a set of lines (not polylines)
+        which when joined form loops. The contours may be concave, and may even
+        contain holes i.e. a contour may contain an internal contour that is
+        wound in the opposite direction (as compared to the outer polygon
+        normal) to indicate that it is a hole.
+
+        .. note::
+
+            This filter will assume that the input polygons lie in the same
+            plane and will not perform any projection or transformation of the
+            input data. You may need to project your data to a plane before
+            using this filter.
+
+        .. warning::
+
+            The triangulation of is done in O(n) time for simple convex inputs,
+            but for non-convex inputs the worst-case time is O(n^2*m^2) where n
+            is the number of points and m is the number of holes. The best
+            triangulation algorithms, in contrast, are O(n log n). The
+            resulting triangles may be quite narrow, the algorithm does not
+            attempt to produce high-quality triangles.
+
+        Parameters
+        ----------
+        display_errors : bool, default: False
+            Generate errors when the triangulation fails. Note that
+            triangulation failures are often minor, because they involve tiny
+            triangles that are too small to see.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Triangulated mesh with the filled contours.
+
+        Examples
+        --------
+        Create banded contour and fill.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> image = examples.download_st_helens()
+        >>> contours = image.contour([1302.3334, 1922.6666])
+        >>> filled = contours.triangulate_contours()
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> _ = pl.add_mesh(image, show_scalar_bar=False)
+        >>> _ = pl.add_mesh(contours, color='black')
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_mesh(contours, color='black')
+        >>> _ = pl.add_mesh(filled, color='red')
+        >>> pl.link_views()
+        >>> pl.view_xy()
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkContourTriangulator()
+        alg.SetInputDataObject(self)
+        alg.SetTriangulationErrorDisplay(display_errors)
+        _update_alg(alg, progress_bar, 'Triangulating Contours')
+        return _get_output(alg)

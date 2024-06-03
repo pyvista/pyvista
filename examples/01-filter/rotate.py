@@ -11,6 +11,8 @@ image. The camera location is the same in all four images.
 """
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
