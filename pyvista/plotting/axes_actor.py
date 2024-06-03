@@ -1999,7 +1999,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @_total_length.setter
     def _total_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetTotalLength(length)
+        self.SetTotalLength(length)  # type: ignore[arg-type]
 
     @property
     def _shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -2031,7 +2031,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @_shaft_length.setter
     def _shaft_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetNormalizedShaftLength(length)
+        self.SetNormalizedShaftLength(length)  # type: ignore[arg-type]
 
     @property
     def _tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -2062,7 +2062,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @_tip_length.setter
     def _tip_length(self, length: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetNormalizedTipLength(length)
+        self.SetNormalizedTipLength(length)  # type: ignore[arg-type]
 
     @property
     def _label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
