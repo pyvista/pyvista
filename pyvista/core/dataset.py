@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import collections
 from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING
@@ -48,8 +47,6 @@ from .utilities.points import principal_axes_vectors
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:
-    import collections.abc
-
     from ._typing_core import MatrixLike
     from ._typing_core import Number
     from ._typing_core import NumpyArray
@@ -2133,7 +2130,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self,
         name: str,
-        scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float],
+        scalars: Union[NumpyArray[float], Sequence[float], float],
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 

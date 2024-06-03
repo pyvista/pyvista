@@ -202,17 +202,20 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 # :class:`pyvista.ImageData` based on the probability of the electron being
 # at that coordinate.
 
+# Seed rng for reproducibility
+rng = np.random.default_rng(seed=0)
+
 # Generate the orbital and sample based on the square of the probability of an
 # electron being within a particular volume of space.
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0, zoom_fac=0.5)
 prob = np.abs(hydro_orbital['real_wf']) ** 2
 prob /= prob.sum()
-indices = np.random.default_rng().choice(hydro_orbital.n_points, 10000, p=prob)
+indices = rng.choice(hydro_orbital.n_points, 10000, p=prob)
 
 # add a small amount of noise to these coordinates to remove the "grid like"
 # structure present in the underlying ImageData
 points = hydro_orbital.points[indices]
-points += np.random.default_rng().random(points.shape) - 0.5
+points += rng.random(points.shape) - 0.5
 
 # Create a point cloud and add the phase as the active scalars
 point_cloud = pv.PolyData(points)

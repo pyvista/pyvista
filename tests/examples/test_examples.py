@@ -102,3 +102,9 @@ def test_load_hydrogen_orbital():
 def test_load_logo():
     mesh = examples.load_logo()
     assert mesh.n_points
+
+
+def test_load_frog_tissue():
+    data = examples.load_frog_tissues()
+    assert data.n_points
+    assert data.get_data_range() == (0, 29)
