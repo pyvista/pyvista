@@ -116,12 +116,15 @@ compare_decimation(spiral, decimated)
 
 ###############################################################################
 # Using a larger level of reduction, 80%, leads to a much coarser level of
-# representation. The structure of the inner part of the spiral is completely
-# lost.
+# representation.
 
 decimated = spiral.decimate_polylines(0.8)
 print(f"Original # of points:  {spiral.n_points}")
 print(f"Decimated # of points: {decimated.n_points}")
+
+###############################################################################
+# The structure of the inner part of the spiral is completely
+# lost.
 
 compare_decimation(spiral, decimated)
 
@@ -133,5 +136,8 @@ compare_decimation(spiral, decimated)
 decimated = spiral.decimate_polylines(0.8, maximum_error=0.5)
 print(f"Original # of points:  {spiral.n_points}")
 print(f"Decimated # of points: {decimated.n_points}")
+
+###############################################################################
+# The structure of the inner part of the spiral is captured adequately.
 
 compare_decimation(spiral, decimated)
