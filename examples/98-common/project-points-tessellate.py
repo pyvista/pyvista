@@ -23,7 +23,8 @@ import pyvista as pv
 # Create a point cloud and project it to a plane.
 
 num_points = 100
-point_cloud = np.random.default_rng().random((num_points, 3))
+rng = np.random.default_rng(seed=0)  # Seed rng for reproducibility
+point_cloud = rng.random((num_points, 3))
 
 # Define a plane
 origin = [0, 0, 0]

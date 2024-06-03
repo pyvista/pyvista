@@ -20,16 +20,19 @@ import pyvista as pv
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create 100 superellipsoids using :func:`pyvista.ParametricSuperEllipsoid`
 
+# Seed rng for reproducibility
+rng = np.random.default_rng(seed=0)
+
 
 def make_poly():
     """Create a superellipsoid in a random location."""
     poly = pv.ParametricSuperEllipsoid(
-        n1=np.random.default_rng().random(),
-        n2=np.random.default_rng().random() * 2,
+        n1=rng.random(),
+        n2=rng.random() * 2,
         u_res=50,
         v_res=50,
     )
-    poly.points += np.random.default_rng().random(3) * 20
+    poly.points += rng.random(3) * 20
     return poly
 
 

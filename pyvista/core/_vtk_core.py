@@ -93,6 +93,7 @@ from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
 from vtkmodules.vtkCommonCore import vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable
+from vtkmodules.vtkCommonCore import vtkMath
 from vtkmodules.vtkCommonCore import vtkOutputWindow
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonCore import vtkSignedCharArray
