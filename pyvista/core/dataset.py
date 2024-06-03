@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import collections.abc
 from copy import deepcopy
 from functools import partial
 from typing import Any
@@ -1985,7 +1984,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __getitem__(self, index: Union[Iterable[Any], str]) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+        if isinstance(index, Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
@@ -2004,7 +2003,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self,
         name: str,
-        scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float],
+        scalars: Union[NumpyArray[float], Sequence[float], float],
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2360,7 +2359,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+        if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
