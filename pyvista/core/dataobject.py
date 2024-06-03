@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections import UserDict
-import collections.abc
+from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import DefaultDict
 from typing import Dict
 from typing import Optional
 from typing import Type
@@ -58,10 +57,10 @@ class DataObject:
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_bitarray_names: defaultdict[Any, Any] = defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
