@@ -10,6 +10,8 @@ Generate iso-lines or -surfaces for the scalars of a surface or volume.
 meshes can have 1D iso-lines of a scalar field extracted.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -84,6 +86,6 @@ pl.show()
 # using :func:`~pyvista.ImageDataFilters.contour_labels`.
 # Requires VTK version 9.3
 if pv.vtk_version_info >= (9, 3):
-    label_map = pv.examples.download_frog_tissue()
+    label_map = pv.examples.load_frog_tissues()
     mesh = label_map.contour_labels()
-    mesh.plot(cmap="glasbey_warm", cpos="yx", categories=True)
+    mesh.plot(cmap="glasbey", cpos="yx", show_scalar_bar=False, clim=mesh.get_data_range())

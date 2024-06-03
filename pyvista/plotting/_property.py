@@ -6,7 +6,8 @@ from typing import Union
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.misc import _check_range, no_new_attr
+from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from .colors import Color

@@ -18,18 +18,11 @@ repos:
         files: '\.py$'
         exclude: pyvista/plotting/charts.py
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
   - repo: https://github.com/PyCQA/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
-        additional_dependencies:
-          ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
-        exclude: tests/core/typing
+        additional_dependencies: ["flake8-black==0.3.6", "flake8-quotes==3.3.2"]
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
@@ -73,6 +66,7 @@ repos:
             --pretty,
             --show-error-context,
             --warn-unused-ignores,
+            --warn-redundant-casts,
             --enable-error-code,
             ignore-without-code,
           ]
@@ -84,12 +78,6 @@ repos:
             "numpy>=1.21",
             "npt-promote==0.1",
           ]
-
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.2
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus, --keep-runtime-typing]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -119,7 +107,7 @@ repos:
     rev: v0.4.3
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --show-fixes]
         exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier

@@ -2,6 +2,8 @@
 memory leaks for all plotting tests
 """
 
+from __future__ import annotations
+
 import gc
 import inspect
 

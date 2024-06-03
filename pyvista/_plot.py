@@ -8,6 +8,8 @@ decouple the ``core`` and ``plotting`` APIs.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista

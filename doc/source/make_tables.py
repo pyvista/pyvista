@@ -5,45 +5,43 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum, auto
+from enum import StrEnum
+from enum import auto
 import inspect
 import io
 import os
 from pathlib import Path
 import re
 import textwrap
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ClassVar,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-    final,
-)
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
+from typing import final
 
 import numpy as np
 
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.examples._dataset_loader import (
-    DatasetObject,
-    _DatasetLoader,
-    _Downloadable,
-    _MultiFilePropsProtocol,
-    _SingleFilePropsProtocol,
-)
+from pyvista.examples._dataset_loader import DatasetObject
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
+from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
 
 if TYPE_CHECKING:
-    from types import FunctionType, ModuleType
+    from types import FunctionType
+    from types import ModuleType
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
@@ -66,6 +64,7 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'osmnx_graph': None,
     'gpr_data_array': None,
     'sphere_vectors': None,
+    'frog_tissue': None,
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
@@ -406,7 +405,8 @@ class ColorTable(DocTable):
 
 def _get_doc(func: Callable[[], Any]) -> Optional[str]:
     """Return the first line of the callable's docstring."""
-    return doc.splitlines()[0] if (doc := func.__doc__) else None
+    doc = func.__doc__
+    return doc.splitlines()[0] if doc else None
 
 
 def _get_fullname(typ: Type[Any]) -> str:
@@ -1173,8 +1173,10 @@ class DatasetPropsGenerator:
         if not isinstance(loader, _Downloadable):
             return None
         # Collect url names and links as sequences
-        names = [name] if isinstance(name := loader.source_name, str) else name
-        urls = [url] if isinstance(url := loader.source_url_blob, str) else url
+        name = loader.source_name
+        names = [name] if isinstance(name, str) else name
+        url = loader.source_url_blob
+        urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
         url_dict = {}
@@ -1957,7 +1959,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
                 'embryo',
                 'foot_bones',
                 'frog',
-                'frog_tissue',
+                'frog_tissues',
                 'head',
                 'head_2',
                 'knee',

@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import re
 
 import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista import PyVistaDeprecationWarning, examples
+from pyvista import PyVistaDeprecationWarning
+from pyvista import examples
 
 BOUNDARY_LABELS = 'boundary_labels'
 

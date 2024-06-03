@@ -5,6 +5,8 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 """
 
+from __future__ import annotations
+
 import inspect
 import io
 import os
@@ -13,26 +15,36 @@ from pathlib import Path
 import platform
 import re
 import time
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from types import FunctionType
+from types import ModuleType
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import ItemsView
+from typing import Type
+from typing import TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.errors import InvalidCameraError
+from pyvista.plotting.errors import RenderWindowUnavailable
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
-from tests.core.test_imagedata_filters import labeled_image, single_point_image  # noqa: F401
+from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
+from tests.core.test_imagedata_filters import single_point_image  # noqa: F401
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
