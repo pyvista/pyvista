@@ -29,6 +29,7 @@ repos:
     hooks:
       - id: codespell
         args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
+        exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/pycqa/pydocstyle
