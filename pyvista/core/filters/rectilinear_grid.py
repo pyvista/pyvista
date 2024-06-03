@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -10,9 +10,6 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.misc import abstract_class
-
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
 
 
 @abstract_class
