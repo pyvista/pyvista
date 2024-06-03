@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 from functools import partial
@@ -1722,7 +1722,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set axes ranges if input
         if axes_ranges is not None:
-            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+            if isinstance(axes_ranges, (Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
                 raise TypeError('Input axes_ranges must be a numeric sequence.')
@@ -2501,7 +2501,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
-        if isinstance(actor, collections.abc.Iterable):
+        if isinstance(actor, Iterable):
             success = False
             for a in actor:
                 rv = self.remove_actor(a, reset_camera=reset_camera, render=render)

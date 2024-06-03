@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
@@ -4690,7 +4690,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
             self.renderers[views].camera.is_set = False
-        elif isinstance(views, collections.abc.Iterable):
+        elif isinstance(views, Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
@@ -4767,7 +4767,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
+        if isinstance(mesh, (Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 from functools import wraps
@@ -1826,9 +1826,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:
-            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+            arg0_is_seq = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
@@ -2572,7 +2572,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, collections.abc.Iterable):
+            if isinstance(k, Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k

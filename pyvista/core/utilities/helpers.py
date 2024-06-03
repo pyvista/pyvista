@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import collections
+from collections import deque
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
 
@@ -284,16 +285,16 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
+    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
         point,
-        collections.deque,
+        deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')
-        point = collections.deque(point)
-        bounds = collections.deque(bounds)
+        point = deque(point)
+        bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
-    if not isinstance(point, collections.deque):
+    if not isinstance(point, deque):
         raise TypeError(f'Unknown input data type ({type(point)}).')
     if len(point) < 1:
         return True

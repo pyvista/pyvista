@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 import operator
 import platform
 from typing import TYPE_CHECKING
@@ -99,11 +99,11 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        if isinstance(radius_factor, collections.abc.Iterable):
+        if isinstance(radius_factor, Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
-        if isinstance(std_dev, collections.abc.Iterable):
+        if isinstance(std_dev, Iterable):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)

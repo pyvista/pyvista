@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
 
-class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, collections.abc.MutableSequence):  # type: ignore[type-arg]
+class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
     """Wrapper for the ``vtkPartitionedDataSet`` class.
 
     DataSet which composite dataset to encapsulates a dataset consisting of partitions.
