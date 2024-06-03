@@ -12,6 +12,7 @@ with the module names removed, e.g. `typing.Sequence` -> `Sequence`,
 `builtins.float` -> `float`, etc.
 
 """
+# flake8: noqa
 
 from collections import namedtuple
 import importlib
@@ -25,6 +26,7 @@ import numpy as np
 from numpy import bool_, dtype, integer, ndarray
 import pyanalyze
 import pytest
+
 
 from pyvista.core._validation._array_wrapper import _ArrayLikeWrapper
 from pyvista.core._validation.validate import (
