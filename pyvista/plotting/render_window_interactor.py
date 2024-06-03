@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
 from inspect import signature
@@ -93,7 +93,7 @@ class RenderWindowInteractor:
 
         # Map of observers to events
         self._observers = {}
-        self._key_press_event_callbacks = collections.defaultdict(list)
+        self._key_press_event_callbacks = defaultdict(list)
         self._click_event_callbacks = {
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ("LeftButtonPressEvent", "RightButtonPressEvent")
