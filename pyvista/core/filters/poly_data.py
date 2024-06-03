@@ -1128,7 +1128,6 @@ class PolyDataFilters(DataSetFilters):
         self,
         reduction,
         maximum_error=10,
-        point_dtype='float32',
         inplace=False,
         progress_bar=False,
     ):
@@ -1146,9 +1145,6 @@ class PolyDataFilters(DataSetFilters):
             Fraction of the maximum length of the input data bounding box
             to limit reduction.  This might prevent the full reduction from
             being achieved.
-
-        point_dtype : str, default: 'float32'
-            Set the desired output point types. It must be either 'float32' or 'float64'.
 
         inplace : bool, default: False
             Whether to update the mesh in-place.
@@ -1225,12 +1221,6 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetTargetReduction(reduction)
         alg.SetMaximumError(maximum_error)
-        if point_dtype == "float32":
-            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.SINGLE_PRECISION)
-        elif point_dtype == "float64":
-            alg.SetOutputPointsPrecision(_vtk.vtkAlgorithm.DOUBLE_PRECISION)
-        else:
-            raise ValueError("Point dtype must be either 'float32' or 'float64'")
 
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
