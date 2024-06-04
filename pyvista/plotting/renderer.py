@@ -1109,7 +1109,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
-            widget. See the parameters of :func:`pyvista.AxesActor`.
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -1127,12 +1127,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Examples
         --------
-        Show axes without labels and with thick axes shafts.
+        Show axes without labels and with thick lines.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
-        >>> _ = pl.add_axes(shaft_radius=0.05, labels_off=True)
+        >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
         Specify more parameters for the axes marker.
