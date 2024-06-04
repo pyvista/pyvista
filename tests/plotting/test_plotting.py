@@ -3911,8 +3911,8 @@ def test_axes_actor_properties():
     axes = pv.Axes()
     axes_actor = axes.axes_actor
 
-    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
+    axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    assert axes_actor.x_axis_shaft_properties.color == (1.0, 1.0, 1.0)
     axes_actor.y_axis_shaft_properties.metallic = 0.2
     assert axes_actor.y_axis_shaft_properties.metallic == 0.2
     axes_actor.z_axis_shaft_properties.roughness = 0.3
