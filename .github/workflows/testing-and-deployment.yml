@@ -56,7 +56,7 @@ jobs:
         run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir _debug_images
 
       - name: Upload Generated Images
-        if: ${{ always() && hashFiles('_debug_images/*.png') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ format('debug-images_macos_{0}', matrix.python-version) }}
@@ -134,7 +134,7 @@ jobs:
           pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir _debug_images
 
       - name: Upload Generated Images
-        if: ${{ always() && hashFiles('_debug_images/*.png') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 'debug-images_linux-conda'
@@ -234,7 +234,7 @@ jobs:
         run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir _debug_images
 
       - name: Upload Generated Images
-        if: ${{ always() && hashFiles('_debug_images/*.png') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ format('debug-images_linux_{0}_vtk-{1}', matrix.python-version, matrix.vtk-version) }}
@@ -320,7 +320,7 @@ jobs:
         run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir _debug_images
 
       - name: Upload Generated Images
-        if: ${{ always() && hashFiles('_debug_images/*.png') != '' }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ format('debug-images_windows_{0}', matrix.python-version) }}
