@@ -484,7 +484,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         float
-            Length of the diagional of the bounding box.
+            Length of the diagonal of the bounding box.
         """
         return pyvista.Box(self.bounds).length
 
@@ -997,6 +997,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkOrientationMarkerWidget
             Orientation marker widget.
 
+        See Also
+        --------
+        add_axes
+            Add an axes orientation widget.
+
         Examples
         --------
         Use an Arrow as the orientation widget.
@@ -1104,21 +1109,30 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
-            widget. See the parameters of :func:`pyvista.create_axes_marker`.
+            widget. See the parameters of :func:`pyvista.AxesActor`.
 
         Returns
         -------
-        vtk.vtkAxesActor
-            Axes actor.
+        AxesActor
+            Axes actor of the added widget.
+
+
+        See Also
+        --------
+        show_axes
+            Similar method which calls :func:`add_axes` without any parameters.
+
+        add_axes_at_origin
+            Add an :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
-        Show axes without labels and with thick lines.
+        Show axes without labels and with thick axes shafts.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
-        >>> _ = pl.add_axes(line_width=5, labels_off=True)
+        >>> _ = pl.add_axes(shaft_radius=0.05, labels_off=True)
         >>> pl.show()
 
         Specify more parameters for the axes marker.
@@ -1320,6 +1334,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def hide_axes(self):
         """Hide the axes orientation widget.
 
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1333,6 +1355,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def show_axes(self):
         """Show the axes orientation widget.
+
+        See Also
+        --------
+        add_axes
+            Similar method with additional options.
+
+        hide_axes
+            Hide the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
+        add_axes_at_origin
+            Add a :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
@@ -1350,7 +1386,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def axes_enabled(self):  # numpydoc ignore=RT01
-        """Return ``True`` when axes are enabled.
+        """Return ``True`` when the axes widget is enabled.
+
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        hide_axes
+            Hide the axes orientation widget.
 
         Examples
         --------
