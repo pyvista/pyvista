@@ -26,8 +26,8 @@ class AxesActor(_vtk.vtkAxesActor):
 
         The shaft and tip actor properties are now initialized as :class:`~pyvista.Property`
         objects. Previously, the :class:`~pyvista.ActorProperties` was used. This may
-        result in changes to how the axes are rendered since the default values for
-        `Property` object attributes are different.
+        result in changes to how the axes are rendered since the default (themed) values
+        for `Property` object attributes are different.
 
     Examples
     --------
@@ -86,11 +86,14 @@ class AxesActor(_vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
+        # Get references to the shaft and tip actors
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
         self._actors = [collection.GetItemAsObject(i) for i in range(6)]
+        # Init actor properties
         self._actor_properties = [Property() for _ in self._actors]
         [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._actor_properties)]
+        # Note: actors and props are index as (x-shaft, y-shaft, z-shaft, x-tip, y-tip, z-tip)
 
         self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
         self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
