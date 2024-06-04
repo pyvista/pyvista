@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkProperty.
 
-.. deprecated:: 0.43.0
+.. deprecated:: 0.44.0
 
     This class is deprecated. Use :class:`pyvista.Property` instead.
 """
@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING
 from typing import Tuple
 import warnings
 
+import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.plotting.opts import InterpolationType
-from pyvista.plotting.opts import RepresentationType
+
+from .opts import InterpolationType
+from .opts import RepresentationType
 
 if TYPE_CHECKING:
-    from pyvista.plotting import _vtk
+    from . import _vtk
 
 
 class ActorProperties:
@@ -36,17 +38,13 @@ class ActorProperties:
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> z_axes_prop = (
-    ...     axes.axes_actor.z_axis_shaft_properties
-    ... )  # doctest:+SKIP
-    >>> z_axes_prop.color = (1, 1, 0)  # doctest:+SKIP
-    >>> z_axes_prop.opacity = 0.5  # doctest:+SKIP
-    >>> axes.axes_actor.shaft_type = (
-    ...     axes.axes_actor.ShaftType.CYLINDER
-    ... )  # doctest:+SKIP
+    >>> z_axes_prop = axes.axes_actor.z_axis_shaft_properties
+    >>> z_axes_prop.color = (1, 1, 0)
+    >>> z_axes_prop.opacity = 0.5
+    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes.axes_actor)  # doctest:+SKIP
+    >>> _ = pl.add_actor(axes.axes_actor)
     >>> _ = pl.add_mesh(pv.Sphere())
     >>> pl.show()
 
@@ -56,10 +54,13 @@ class ActorProperties:
         super().__init__()
         self.properties = properties
 
+        # Deprecated on v0.44.0, estimated removal on v0.47.0
         warnings.warn(
             "Use of `ActorProperties` is deprecated. Use `pyvista.Property` instead.",
             PyVistaDeprecationWarning,
         )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated function')
 
     @property
     def color(self):  # numpydoc ignore=RT01
@@ -167,16 +168,3 @@ class ActorProperties:
         self.properties.SetRepresentation(
             RepresentationType.from_any(value).value,
         )  # pragma:no cover
-
-    @property
-    def ambient(self):  # numpydoc ignore=RT01
-        """Return or set the ambient lighting coefficient.
-
-        Value should be between 0 and 1.
-
-        """
-        return self.properties.GetAmbient()  # pragma:no cover
-
-    @ambient.setter
-    def ambient(self, ambient: float):  # numpydoc ignore=GL08
-        self.properties.SetAmbient(ambient)  # pragma:no cover

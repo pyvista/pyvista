@@ -22,6 +22,13 @@ class AxesActor(_vtk.vtkAxesActor):
     options, refer to `vtkAxesActor Details
     <https://vtk.org/doc/nightly/html/classvtkAxesActor.html#details>`_.
 
+    .. versionchanged:: 0.44.0
+
+        The shaft and tip actor properties are now initialized as :class:`~pyvista.Property`
+        objects. Previously, the :class:`~pyvista.ActorProperties` was used. This may
+        result in changes to how the axes are rendered since the default values for
+        `Property` object attributes are different.
+
     Examples
     --------
     Customize the axis shaft color and shape.
@@ -82,8 +89,8 @@ class AxesActor(_vtk.vtkAxesActor):
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
         self._actors = [collection.GetItemAsObject(i) for i in range(6)]
-        self._props = [Property() for _ in self._actors]
-        [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._props)]
+        self._actor_properties = [Property() for _ in self._actors]
+        [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._actor_properties)]
 
         self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
         self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
@@ -467,45 +474,81 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def x_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis shaft."""
-        return self._props[0]
+        """Return or set the properties of the X axis shaft.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[0]
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis shaft."""
-        return self._props[1]
+        """Return or set the properties of the Y axis shaft.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[1]
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis shaft."""
-        return self._props[2]
+        """Return or set the properties of the Z axis shaft.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[2]
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis tip."""
-        return self._props[3]
+        """Return or set the properties of the X axis tip.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[3]
 
     @x_axis_tip_properties.setter
     def x_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
-        self._props[3] = properties
+        self._actor_properties[3] = properties
         self._actors[3].SetProperty(properties)
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis tip."""
-        return self._props[4]
+        """Return or set the properties of the Y axis tip.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[4]
 
     @y_axis_tip_properties.setter
     def y_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
-        self._props[4] = properties
+        self._actor_properties[4] = properties
         self._actors[4].SetProperty(properties)
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis tip."""
-        return self._props[5]
+        """Return or set the properties of the Z axis tip.
+
+        .. versionchanged:: 0.44.0
+
+            A :class:`~pyvista.Property` object is now returned. Previously, a
+            :class:`~pyvista.ActorProperties` was returned.
+        """
+        return self._actor_properties[5]
 
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
-        self._props[5] = properties
+        self._actor_properties[5] = properties
         self._actors[5].SetProperty(properties)
