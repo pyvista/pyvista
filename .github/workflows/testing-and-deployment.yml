@@ -53,7 +53,14 @@ jobs:
         run: pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: pytest -v tests/plotting --fail_extra_image_cache
+        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir _debug_images
+
+      - name: Upload Images for Failed Tests
+        if: ${{ failure() && hashFiles('_debug_images/*.png') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-images
+          path: _debug_images
 
   LinuxConda:
     runs-on: ubuntu-20.04
@@ -124,7 +131,14 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html --fail_extra_image_cache
+          pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir _debug_images
+
+      - name: Upload Images for Failed Tests
+        if: ${{ failure() && hashFiles('_debug_images/*.png') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-images
+          path: _debug_images
 
   Linux:
     name: Linux Unit Testing
@@ -217,7 +231,14 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         continue-on-error: ${{ matrix.numpy-version == 'pre' }}
-        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
+        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir _debug_images
+
+      - name: Upload Images for Failed Tests
+        if: ${{ failure() && hashFiles('_debug_images/*.png') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-images
+          path: _debug_images
 
       - name: Software Report
         if: always()
@@ -296,4 +317,11 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir _debug_images
+
+      - name: Upload Images for Failed Tests
+        if: ${{ failure() && hashFiles('_debug_images/*.png') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-images
+          path: _debug_images
