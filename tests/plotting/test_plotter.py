@@ -547,3 +547,10 @@ def test_add_ruler_scale():
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
+
+
+@pytest.mark.parametrize('axes_enabled', [True, False])
+def test_axes_enabled(axes_enabled):
+    plotter = pv.Plotter()
+    plotter.axes_enabled = axes_enabled
+    assert plotter.axes_enabled is axes_enabled
