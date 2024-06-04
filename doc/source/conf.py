@@ -202,7 +202,9 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
-# linkcheck ignore entries
+# Warn if target links or references cannot be found
+nitpicky=True
+# Except ignore these entries
 nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
     (r'py:.*', '.*lookup_table_ndarray'),
