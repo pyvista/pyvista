@@ -137,7 +137,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: 'debug-images_linux-conda_python-latest_vtk-latest'
+          name: "debug-images_linux-conda_python-latest_vtk-latest"
           path: _debug_images
 
   Linux:
