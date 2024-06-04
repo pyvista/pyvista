@@ -1385,7 +1385,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def axes_enabled(self):  # numpydoc ignore=RT01
+    def axes_enabled(self):
         """Return ``True`` when the axes widget is enabled.
 
         See Also
