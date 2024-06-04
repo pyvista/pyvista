@@ -613,12 +613,13 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Get the default specular value and visualize it.
+        Get the default specular value and visualize it with Phong shading.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.specular
         0.0
+        >>> prop.interpolation = 'phong'
         >>> prop.plot()
 
         Visualize specular at ``0.5``.
@@ -649,28 +650,25 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Get the default specular power value and visualize it.v
+        Get the default specular power value and visualize it with ``specular = 1.0``
+        and Phong shading.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.specular_power
         100.0
-
+        >>> prop.specular = 1.0
+        >>> prop.interpolation = 'phong'
         >>> prop.plot()
 
-        Visualize specular power at ``0.0``.
+        Visualize specular power at ``50.0``.
 
-        >>> prop.specular_power = 0.0
+        >>> prop.specular_power = 50.0
         >>> prop.plot()
 
         Visualize specular power at ``10.0``.
 
         >>> prop.specular_power = 10.0
-        >>> prop.plot()
-
-        Visualize maximum specular power at ``128.0``.
-
-        >>> prop.specular_power = 128.0
         >>> prop.plot()
 
         """
@@ -751,7 +749,7 @@ class Property(_vtk.vtkProperty):
 
         Visualize roughness at ``0.1``.
 
-        >>> prop.roughness = 0.1
+        >>> prop.roughness = 0.0
         >>> prop.plot()
 
         Visualize roughness at ``1.0``.
@@ -857,7 +855,8 @@ class Property(_vtk.vtkProperty):
 
         Defaults to :attr:`pyvista.plotting.themes.Theme.render_lines_as_tubes`.
 
-        Requires :attr:`style` be set to ``'wireframe'``.
+        Requires lines in the scene, e.g. with :attr:`style` set to ``'wireframe'`` or
+        :attr:`show_edges` set to ``True``.
 
         Examples
         --------
@@ -867,8 +866,8 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.render_lines_as_tubes
         False
-        >>> prop.style = 'wireframe'
         >>> prop.line_width = 10
+        >>> prop.edge_color = 'yellow'
         >>> prop.plot()
 
         Visualize rendering lines as tubes.
@@ -1068,13 +1067,15 @@ class Property(_vtk.vtkProperty):
 
         Examples
         --------
-        Get the default specular color and visualize it with ``specular = 0.5``.
+        Get the default specular color and visualize it with ``specular = 0.5`` and
+        Phong shading.
 
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.specular_color
         Color(name='lightblue', hex='#add8e6ff', opacity=255)
         >>> prop.specular = 0.5
+        >>> prop.interpolation = 'phong'
         >>> prop.plot()
 
         Visualize red specular color.
@@ -1155,14 +1156,6 @@ class Property(_vtk.vtkProperty):
         >>> prop.anisotropy
         0.0
         >>> prop.interpolation = 'pbr'
-        >>> prop.plot()
-
-        Visualize anisotropy of ``0.5``.
-        >>> prop.anisotropy = 0.5
-        >>> prop.plot()
-
-        Visualize anisotropy of ``1.0``.
-        >>> prop.anisotropy = 1.0
         >>> prop.plot()
 
         """
