@@ -203,7 +203,7 @@ numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
 # Warn if target links or references cannot be found
-nitpicky=True
+nitpicky = True
 # Except ignore these entries
 nitpick_ignore_regex = [
     (r'py:.*', '.*ColorLike'),
