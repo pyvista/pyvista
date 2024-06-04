@@ -1327,6 +1327,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.show_axes``."""
         return self.renderer.show_axes(*args, **kwargs)
 
+    @wraps(Renderer.axes_enabled)
+    def axes_enabled(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.axes_enabled``."""
+        return self.renderer.axes_enabled(*args, **kwargs)
+
     @wraps(Renderer.update_bounds_axes)
     def update_bounds_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.update_bounds_axes``."""
