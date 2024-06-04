@@ -1404,6 +1404,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.renderer.axes_enabled
         False
 
+        Returns
+        -------
+        bool
+            Return ``True`` when the axes widget is enabled.
+
         """
         if hasattr(self, 'axes_widget'):
             return bool(self.axes_widget.GetEnabled())
