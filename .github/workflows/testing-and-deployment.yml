@@ -18,6 +18,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  PR_NUMBER: ${{ github.event.number }}
 
 jobs:
   macOS:
@@ -59,7 +60,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_macos_python-{0}_vtk-latest', matrix.python-version) }}
+          name: ${{ format('debug-images_PR-{0}_macos_python-{1}_vtk-latest', PR_NUMBER, matrix.python-version) }}
           path: _debug_images
 
   LinuxConda:
@@ -137,7 +138,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: "debug-images_linux-conda_python-latest_vtk-latest"
+          name: ${{ format('debug-images_PR-{0}_linux-conda_python-latest_vtk-latest', PR_NUMBER) }}
           path: _debug_images
 
   Linux:
@@ -237,7 +238,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_linux_python-{0}_vtk-{1}', matrix.python-version, matrix.vtk-version) }}
+          name: ${{ format('debug-images_PR-{0}_linux_python-{1}_vtk-{2}', PR_NUMBER, matrix.python-version, matrix.vtk-version) }}
           path: _debug_images
 
       - name: Software Report
@@ -323,5 +324,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_windows_python-{0}_vtk-latest', matrix.python-version) }}
+          name: ${{ format('debug-images_PR-{0}_windows_python-{1}_vtk-latest', PR_NUMBER, matrix.python-version) }}
           path: _debug_images
