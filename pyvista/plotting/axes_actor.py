@@ -10,7 +10,7 @@ from typing import Union
 import pyvista
 
 from . import _vtk
-from .actor_properties import ActorProperties
+from ._property import Property
 
 
 class AxesActor(_vtk.vtkAxesActor):
@@ -79,22 +79,28 @@ class AxesActor(_vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
+        collection = _vtk.vtkPropCollection()
+        self.GetActors(collection)
+        self._actors = [collection.GetItemAsObject(i) for i in range(6)]
+        self._props = [Property() for _ in self._actors]
+        [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._props)]
+
         self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
         self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
         self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
         self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.int_rgb
         self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
         self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
         self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.int_rgb
         self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
@@ -460,43 +466,46 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetZAxisLabelText(label)
 
     @property
-    def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def x_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the X axis shaft."""
-        return ActorProperties(self.GetXAxisShaftProperty())
+        return self._props[0]
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Y axis shaft."""
-        return ActorProperties(self.GetYAxisShaftProperty())
+        return self._props[1]
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Z axis shaft."""
-        return ActorProperties(self.GetZAxisShaftProperty())
+        return self._props[2]
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the X axis tip."""
-        return ActorProperties(self.GetXAxisTipProperty())
+        return self._props[3]
 
     @x_axis_tip_properties.setter
-    def x_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
-        self.x_axis_tip_properties = properties
+    def x_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
+        self._props[3] = properties
+        self._actors[3].SetProperty(properties)
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Y axis tip."""
-        return ActorProperties(self.GetYAxisTipProperty())
+        return self._props[4]
 
     @y_axis_tip_properties.setter
-    def y_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
-        self.y_axis_tip_properties = properties
+    def y_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
+        self._props[4] = properties
+        self._actors[4].SetProperty(properties)
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
         """Return or set the properties of the Z axis tip."""
-        return ActorProperties(self.GetZAxisTipProperty())
+        return self._props[5]
 
     @z_axis_tip_properties.setter
-    def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
-        self.z_axis_tip_properties = properties
+    def z_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
+        self._props[5] = properties
+        self._actors[5].SetProperty(properties)

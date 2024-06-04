@@ -92,6 +92,7 @@ from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper2D
 from vtkmodules.vtkRenderingCore import vtkProp3D
 from vtkmodules.vtkRenderingCore import vtkPropAssembly
+from vtkmodules.vtkRenderingCore import vtkPropCollection
 from vtkmodules.vtkRenderingCore import vtkProperty
 from vtkmodules.vtkRenderingCore import vtkPropPicker
 from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker
