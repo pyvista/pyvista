@@ -49,6 +49,7 @@ import warnings
 
 import pyvista  # noqa: TCH001
 from pyvista.core.utilities.misc import _check_range
+
 from .colors import Color
 from .colors import get_cmap_safe
 from .colors import get_cycler
@@ -58,6 +59,7 @@ from .tools import parse_font_family
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
+
     from ._typing import ColorLike
 
 
