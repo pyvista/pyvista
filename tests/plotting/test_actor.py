@@ -177,9 +177,12 @@ def test_actor_origin(actor):
 
 
 def test_actor_length(actor):
-    assert actor.length == 1.4142135623730951
-    actor.scale = 2
-    assert actor.length == 2.8284271247461903
+    initial_length = 2 ** 0.5  # sqrt(2)
+    scale_factor = 2
+
+    assert actor.length == initial_length
+    actor.scale = scale_factor
+    assert actor.length == initial_length * scale_factor
 
 
 def test_actor_unit_matrix(actor):
