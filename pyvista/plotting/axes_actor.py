@@ -476,9 +476,8 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetZAxisLabelText(label)
 
     @property
-<<<<<<< maint/unify_property
     def x_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis shaft.
+        """Return or set the properties of the x-axis shaft.
 
         .. versionchanged:: 0.44.0
 
@@ -489,7 +488,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis shaft.
+        """Return or set the properties of the y-axis shaft.
 
         .. versionchanged:: 0.44.0
 
@@ -500,7 +499,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis shaft.
+        """Return or set the properties of the z-axis shaft.
 
         .. versionchanged:: 0.44.0
 
@@ -511,7 +510,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis tip.
+        """Return or set the properties of the x-axis tip.
 
         .. versionchanged:: 0.44.0
 
@@ -519,26 +518,6 @@ class AxesActor(_vtk.vtkAxesActor):
             :class:`~pyvista.ActorProperties` was returned.
         """
         return self._actor_properties[3]
-=======
-    def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the x-axis shaft."""
-        return ActorProperties(self.GetXAxisShaftProperty())
-
-    @property
-    def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the y-axis shaft."""
-        return ActorProperties(self.GetYAxisShaftProperty())
-
-    @property
-    def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the z-axis shaft."""
-        return ActorProperties(self.GetZAxisShaftProperty())
-
-    @property
-    def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the x-axis tip."""
-        return ActorProperties(self.GetXAxisTipProperty())
->>>>>>> main
 
     @x_axis_tip_properties.setter
     def x_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
@@ -547,8 +526,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-<<<<<<< maint/unify_property
-        """Return or set the properties of the Y axis tip.
+        """Return or set the properties of the y-axis tip.
 
         .. versionchanged:: 0.44.0
 
@@ -556,10 +534,6 @@ class AxesActor(_vtk.vtkAxesActor):
             :class:`~pyvista.ActorProperties` was returned.
         """
         return self._actor_properties[4]
-=======
-        """Return or set the properties of the y-axis tip."""
-        return ActorProperties(self.GetYAxisTipProperty())
->>>>>>> main
 
     @y_axis_tip_properties.setter
     def y_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
@@ -568,8 +542,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-<<<<<<< maint/unify_property
-        """Return or set the properties of the Z axis tip.
+        """Return or set the properties of the z-axis tip.
 
         .. versionchanged:: 0.44.0
 
@@ -577,10 +550,6 @@ class AxesActor(_vtk.vtkAxesActor):
             :class:`~pyvista.ActorProperties` was returned.
         """
         return self._actor_properties[5]
-=======
-        """Return or set the properties of the z-axis tip."""
-        return ActorProperties(self.GetZAxisTipProperty())
->>>>>>> main
 
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: Property):  # numpydoc ignore=GL08
