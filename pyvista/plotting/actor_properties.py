@@ -33,7 +33,7 @@ class ActorProperties:
 
     Examples
     --------
-    Access the properties of the z axis shaft.
+    Access the properties of the z-axis shaft.
 
     >>> import pyvista as pv
 
