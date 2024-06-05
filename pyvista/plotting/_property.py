@@ -275,6 +275,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.style
         'Surface'
+
         >>> prop.plot()
 
         Visualize the wireframe style.
@@ -327,6 +328,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.color
         Color(name='lightblue', hex='#add8e6ff', opacity=255)
+
         >>> prop.plot()
 
         Visualize a red color.
@@ -364,6 +366,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.edge_color
         Color(name='black', hex='#000000ff', opacity=255)
+
         >>> prop.show_edges = True
         >>> prop.plot()
 
@@ -386,8 +389,8 @@ class Property(_vtk.vtkProperty):
 
         The opacity is applied to the surface uniformly.
 
-        Property has range ``[0.0, 1.0]``. A value of 1.0 is totally opaque
-        and 0.0 is completely transparent.
+        Property has range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque
+        and ``0.0``vis completely transparent.
 
         Examples
         --------
@@ -397,6 +400,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.opacity
         1.0
+
         >>> prop.plot()
 
         Visualize an opacity value of ``0.75``.
@@ -539,16 +543,17 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.ambient
         0.0
+
         >>> prop.plot()
 
-        Visualize ambient at ``0.5``.
+        Visualize ambient at ``0.25``.
 
-        >>> prop.ambient = 0.5
+        >>> prop.ambient = 0.25
         >>> prop.plot()
 
-        Visualize ambient at ``1.0``.
+        Visualize ambient at ``0.75``.
 
-        >>> prop.ambient = 1.0
+        >>> prop.ambient = 0.75
         >>> prop.plot()
 
         """
@@ -866,6 +871,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.render_lines_as_tubes
         False
+        >>> prop.show_edges = True
         >>> prop.line_width = 10
         >>> prop.edge_color = 'yellow'
         >>> prop.plot()
@@ -897,6 +903,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.line_width
         1.0
+
         >>> prop.show_edges = True
         >>> prop.plot()
 
@@ -978,6 +985,8 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.culling
         'none'
+
+
         >>> prop.plot()
 
         Visualize backface culling. This looks the same as the default culling
@@ -1042,6 +1051,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.ambient_color
         Color(name='lightblue', hex='#add8e6ff', opacity=255)
+
         >>> prop.ambient = 0.5
         >>> prop.plot()
 
@@ -1074,6 +1084,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.specular_color
         Color(name='lightblue', hex='#add8e6ff', opacity=255)
+
         >>> prop.specular = 0.5
         >>> prop.interpolation = 'phong'
         >>> prop.plot()
@@ -1110,6 +1121,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.ambient_color
         Color(name='lightblue', hex='#add8e6ff', opacity=255)
+
         >>> prop.diffuse = 0.5
         >>> prop.plot()
 
@@ -1155,7 +1167,8 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.anisotropy
         0.0
-        >>> prop.interpolation = 'pbr'
+
+        >>> prop.interpolation = 'pbr'  # required
         >>> prop.plot()
 
         """
