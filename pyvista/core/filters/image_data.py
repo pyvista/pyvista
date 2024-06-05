@@ -660,13 +660,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation
@@ -740,13 +740,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation

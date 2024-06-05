@@ -80,16 +80,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
-        """Rotate the entity about the x axis.
+        """Rotate the entity about the x-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the x axis in degrees.
+            Angle to rotate the entity about the x-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the x axis 45 degrees. Note how this does not
+        Rotate the actor about the x-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -111,16 +111,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateX(angle)
 
     def rotate_y(self, angle: float):
-        """Rotate the entity about the y axis.
+        """Rotate the entity about the y-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the y axis in degrees.
+            Angle to rotate the entity about the y-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the y axis 45 degrees. Note how this does not
+        Rotate the actor about the y-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -142,16 +142,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateY(angle)
 
     def rotate_z(self, angle: float):
-        """Rotate the entity about the z axis.
+        """Rotate the entity about the z-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the z axis in degrees.
+            Angle to rotate the entity about the z-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the Z axis 45 degrees. Note how this does not
+        Rotate the actor about the z-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -278,7 +278,7 @@ class Prop3D(_vtk.vtkProp3D):
         --------
         Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
         effectively translates the actor by one unit in the Z direction,
-        rotates the actor about the Z axis by approximately 45 degrees, and
+        rotates the actor about the z-axis by approximately 45 degrees, and
         shrinks the actor by a factor of 0.5.
 
         >>> import numpy as np
