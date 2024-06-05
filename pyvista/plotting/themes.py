@@ -801,22 +801,22 @@ class _AxesConfig(_ThemeConfig):
     >>> import pyvista as pv
     >>> pv.global_theme.axes.x_color
     Color(name='tomato', hex='#ff6347ff', opacity=255)
-    >>>
+
     >>> pv.global_theme.axes.y_color
     Color(name='seagreen', hex='#2e8b57ff', opacity=255)
-    >>>
+
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
-    >>>
+
     >>> pv.global_theme.axes.shaft_type
     'cylinder'
-    >>>
+
     >>> pv.global_theme.axes.tip_type
     'cone'
-    >>>
+
     >>> pv.global_theme.axes.box
     False
-    >>>
+   
     >>> pv.global_theme.axes.show
     True
 
@@ -871,7 +871,7 @@ class _AxesConfig(_ThemeConfig):
         Get the default x-axis color
 
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.x_color  # doctest: +SKIP
+        >>> pv.global_theme.axes.x_color
         Color(name='tomato', hex='#ff6347ff', opacity=255)
 
         Change the default color.
