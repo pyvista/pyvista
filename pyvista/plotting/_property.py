@@ -390,7 +390,7 @@ class Property(_vtk.vtkProperty):
         The opacity is applied to the surface uniformly.
 
         Property has range ``[0.0, 1.0]``. A value of ``1.0`` is totally opaque
-        and ``0.0``vis completely transparent.
+        and ``0.0`` is completely transparent.
 
         Examples
         --------
