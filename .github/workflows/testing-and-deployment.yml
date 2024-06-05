@@ -59,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github.job
+          name: ${{ github.job }}
           path: _debug_images
 
   LinuxConda:
@@ -137,7 +137,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github.job
+          name: ${{ github.job }}
           path: _debug_images
 
   Linux:
@@ -237,7 +237,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github.job
+          name: ${{ github.job }}
           path: _debug_images
 
       - name: Software Report
@@ -323,5 +323,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: github.job
+          name: ${{ github.job }}
           path: _debug_images
