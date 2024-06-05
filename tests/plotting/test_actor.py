@@ -156,6 +156,7 @@ def test_actor_orientation(actor):
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)
 
+
 def test_actor_rotation_order(actor):
     orientation = (10, 20, 30)
     dataset = pv.Cube()
