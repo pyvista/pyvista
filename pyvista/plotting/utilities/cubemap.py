@@ -131,7 +131,7 @@ def _cubemap_from_paths(image_paths):
         image = pyvista.read(fn)
         flip = _vtk.vtkImageFlip()
         flip.SetInputDataObject(image)
-        flip.SetFilteredAxis(1)  # flip y axis
+        flip.SetFilteredAxis(1)  # flip y-axis
         flip.Update()
         texture.SetInputDataObject(i, flip.GetOutput())
 

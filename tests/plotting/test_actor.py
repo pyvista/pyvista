@@ -135,7 +135,7 @@ def test_actor_position(actor):
     assert actor.position == position
 
 
-def test_actor_rotate(actor):
+def test_actor_rotate_x(actor):
     actor.rotate_x(90)
     assert np.allclose(actor.orientation, (90, 0, 0))
 
@@ -156,7 +156,9 @@ def test_actor_orientation(actor):
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)
 
-    # test rotation order
+
+def test_actor_rotation_order(actor):
+    orientation = (10, 20, 30)
     dataset = pv.Cube()
     dataset.rotate_y(orientation[1], inplace=True)
     dataset.rotate_x(orientation[0], inplace=True)
@@ -172,6 +174,15 @@ def test_actor_origin(actor):
     origin = (1, 2, 3)
     actor.origin = origin
     assert np.allclose(actor.origin, origin)
+
+
+def test_actor_length(actor):
+    initial_length = 2**0.5  # sqrt(2)
+    scale_factor = 2
+
+    assert actor.length == initial_length
+    actor.scale = scale_factor
+    assert actor.length == initial_length * scale_factor
 
 
 def test_actor_unit_matrix(actor):

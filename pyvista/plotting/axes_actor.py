@@ -2471,7 +2471,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the x-axis.
+        """Return or set the label for the x-axis.
 
         .. deprecated:: 0.43.0
 
@@ -2496,7 +2496,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def y_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the y-axis.
+        """Return or set the label for the y-axis.
 
         .. deprecated:: 0.43.0
 
@@ -2521,7 +2521,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def z_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the z-axis.
+        """Return or set the label for the z-axis.
 
         .. deprecated:: 0.43.0
 
@@ -2546,7 +2546,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the x-axis shaft.
+        """Return or set the properties of the x-axis shaft.
 
         .. deprecated:: 0.43.0
 
@@ -2562,7 +2562,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the y-axis shaft.
+        """Return or set the properties of the y-axis shaft.
 
         .. deprecated:: 0.43.0
 
@@ -2578,7 +2578,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the z-axis shaft.
+        """Return or set the properties of the z-axis shaft.
 
         .. deprecated:: 0.43.0
 
@@ -2594,7 +2594,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the x-axis tip.
+        """Return or set the properties of the x-axis tip.
 
         .. deprecated:: 0.43.0
 
@@ -2610,7 +2610,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the y-axis tip.
+        """Return or set the properties of the x-axis tip.
 
         .. deprecated:: 0.43.0
 
@@ -2626,7 +2626,7 @@ class AxesActor(_AxesActorBase, _vtk.vtkAxesActor):
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """:class:`~pyvista.ActorProperties` of the z-axis tip.
+        """Return or set the properties of the z-axis tip.
 
         .. deprecated:: 0.43.0
 

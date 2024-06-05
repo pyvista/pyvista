@@ -1158,22 +1158,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the labels.
 
         x_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes parameters.
+            Color used for the x-axis arrow.  Defaults to theme axes parameters.
 
         y_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes parameters.
+            Color used for the y-axis arrow.  Defaults to theme axes parameters.
 
         z_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes parameters.
+            Color used for the z-axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, default: "X"
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, default: "Y"
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, default: "Z"
-            Text used for the z axis.
+            Text used for the z-axis.
 
         labels_off : bool, default: false
             Enable or disable the text labels for the axes.
@@ -1322,33 +1322,33 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the edges.
 
         x_color : ColorLike, optional
-            Color of the x axis text.
+            Color of the x-axis text.
 
         y_color : ColorLike, optional
-            Color of the y axis text.
+            Color of the y-axis text.
 
         z_color : ColorLike, optional
-            Color of the z axis text.
+            Color of the z-axis text.
 
         xlabel : str, optional
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, optional
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, optional
-            Text used for the z axis.
+            Text used for the z-axis.
 
         x_face_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes
+            Color used for the x-axis arrow.  Defaults to theme axes
             parameters.
 
         y_face_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes
+            Color used for the y-axis arrow.  Defaults to theme axes
             parameters.
 
         z_face_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes
+            Color used for the z-axis arrow.  Defaults to theme axes
             parameters.
 
         label_color : ColorLike, optional
@@ -1555,13 +1555,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, default: True
-            Makes X axis visible.
+            Makes x-axis visible.
 
         show_yaxis : bool, default: True
-            Makes Y axis visible.
+            Makes y-axis visible.
 
         show_zaxis : bool, default: True
-            Makes Z axis visible.
+            Makes z-axis visible.
 
         show_xlabels : bool, default: True
             Shows X labels.
@@ -1599,22 +1599,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color='#FFFFFF'``
 
         xtitle : str, default: "X Axis"
-            Title of the X axis.  Default ``"X Axis"``.
+            Title of the x-axis.  Default ``"X Axis"``.
 
         ytitle : str, default: "Y Axis"
-            Title of the Y axis.  Default ``"Y Axis"``.
+            Title of the y-axis.  Default ``"Y Axis"``.
 
         ztitle : str, default: "Z Axis"
-            Title of the Z axis.  Default ``"Z Axis"``.
+            Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the X axis.
+            Number of labels for the x-axis.
 
         n_ylabels : int, default: 5
-            Number of labels for the Y axis.
+            Number of labels for the y-axis.
 
         n_zlabels : int, default: 5
-            Number of labels for the Z axis.
+            Number of labels for the z-axis.
 
         use_2d : bool, default: False
             This can be enabled for smoother plotting.
@@ -2475,7 +2475,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Examples
         --------
         Look from the top down by setting view up to ``[0, 1, 0]``.
-        Notice how the Y axis appears vertical.
+        Notice how the y-axis appears vertical.
 
         >>> from pyvista import demos
         >>> pl = demos.orientation_plotter()
@@ -2669,7 +2669,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True):
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and Z axis.
+        Scaling in performed independently on the X, Y and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::

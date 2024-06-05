@@ -29,12 +29,12 @@ class Prop3D(_vtk.vtkProp3D):
 
     ``Prop3D`` applies transformations in the following order:
 
-        1. Translate entity to its :attr:`~origin`.
-        2. Scale entity by the values in :attr:`~scale`.
-        3. Rotate entity using the values in :attr:`~orientation`. Internally, rotations are
+        #. Translate entity to its :attr:`~origin`.
+        #. Scale entity by the values in :attr:`~scale`.
+        #. Rotate entity using the values in :attr:`~orientation`. Internally, rotations are
            applied in the order :func:`~rotate_y`, then :func:`~rotate_x`, then :func:`~rotate_z`.
-        4. Translate entity away from its origin and to its :attr:`~position`.
-        5. Transform entity with :attr:`~user_matrix`.
+        #. Translate entity away from its origin and to its :attr:`~position`.
+        #. Transform entity with :attr:`~user_matrix`.
 
     """
 
