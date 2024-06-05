@@ -59,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_macos_python-{0}_vtk-latest', matrix.python-version) }}
+          name: github.job
           path: _debug_images
 
   LinuxConda:
@@ -137,7 +137,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: "debug-images_linux-conda_python-latest_vtk-latest"
+          name: github.job
           path: _debug_images
 
   Linux:
@@ -237,7 +237,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_linux_python-{0}_vtk-{1}_numpy-{2}', matrix.python-version, matrix.vtk-version, matrix.numpy-version) }}
+          name: github.job
           path: _debug_images
 
       - name: Software Report
@@ -323,5 +323,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('debug-images_windows_python-{0}_vtk-latest', matrix.python-version) }}
+          name: github.job
           path: _debug_images
