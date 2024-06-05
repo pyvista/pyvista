@@ -177,7 +177,7 @@ def test_actor_origin(actor):
 
 
 def test_actor_length(actor):
-    initial_length = 2 ** 0.5  # sqrt(2)
+    initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
     assert actor.length == initial_length
