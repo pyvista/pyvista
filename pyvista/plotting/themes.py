@@ -816,7 +816,7 @@ class _AxesConfig(_ThemeConfig):
 
     >>> pv.global_theme.axes.box
     False
-   
+
     >>> pv.global_theme.axes.show
     True
 
