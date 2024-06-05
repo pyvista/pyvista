@@ -480,7 +480,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
 
     ParametricEllipsoid generates an ellipsoid.  If all the radii are
     the same, we have a sphere.  An oblate spheroid occurs if RadiusX
-    = RadiusY > RadiusZ.  Here the Z-axis forms the symmetry axis. To
+    = RadiusY > RadiusZ.  Here the Z-axis forms the symmetry-axis. To
     a first approximation, this is the shape of the earth.  A prolate
     spheroid occurs if RadiusX = RadiusY < RadiusZ.
 
@@ -1123,7 +1123,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
         The scaling factor for the z-axis.
 
     n1 : float, default: 1
-        The "squareness" parameter in the z axis.
+        The "squareness" parameter in the z-axis.
 
     n2 : float, default: 1
         The "squareness" parameter in the x-y plane.

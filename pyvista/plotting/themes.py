@@ -798,7 +798,7 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x axis color to black.
+    Set the x-axis color to black.
 
     >>> import pyvista as pv
     >>> pv.global_theme.axes.x_color = 'black'
@@ -839,7 +839,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set x axis color.
+        """Return or set x-axis color.
 
         Examples
         --------
@@ -854,7 +854,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def y_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set y axis color.
+        """Return or set y-axis color.
 
         Examples
         --------
@@ -869,7 +869,7 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def z_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set z axis color.
+        """Return or set z-axis color.
 
         Examples
         --------
@@ -2876,7 +2876,7 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Set the x axis color to black.
+        Set the x-axis color to black.
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.x_color = 'black'

@@ -6,7 +6,7 @@ import numpy as np
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
-    r"""Return a 4x4 matrix for rotation about any axis by given angle.
+    r"""Return a 4x4 matrix for rotation about any-axis by given angle.
 
     Rotations around an axis that contains the origin can easily be
     computed using Rodrigues' rotation formula. The key quantity is
