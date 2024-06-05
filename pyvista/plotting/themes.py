@@ -798,16 +798,33 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x-axis color to black.
+    Show the default axes configuration values.
 
     >>> import pyvista as pv
+    >>> pv.global_theme.axes.x_color
+    Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+    >>> pv.global_theme.axes.y_color
+    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+    >>> pv.global_theme.axes.z_color
+    Color(name='blue', hex='#0000ffff', opacity=255)
+
+    >>> pv.global_theme.axes.box
+    False
+
+    >>> pv.global_theme.axes.show
+    True
+
+    Set the x-axis color to black.
+
     >>> pv.global_theme.axes.x_color = 'black'
 
-    Show axes by default.
+    Show the axes orientation widget by default.
 
     >>> pv.global_theme.axes.show = True
 
-    Use the ``vtk.vtkCubeAxesActor``.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
     >>> pv.global_theme.axes.box = True
 
@@ -843,7 +860,13 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default x-axis color
+
         >>> import pyvista as pv
+        >>> pv.global_theme.axes.x_color
+        Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+        Change the default color.
         >>> pv.global_theme.axes.x_color = 'red'
         """
         return self._x_color
@@ -858,8 +881,14 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default y-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.y_color = 'red'
+        >>> pv.global_theme.axes.y_color
+        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
 
@@ -873,8 +902,14 @@ class _AxesConfig(_ThemeConfig):
 
         Examples
         --------
+        Get the default z-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.z_color = 'red'
+        >>> pv.global_theme.axes.z_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color
 
@@ -884,7 +919,10 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use the ``vtk.vtkCubeAxesActor`` instead of the default ``vtk.vtkAxesActor``.
+        """Use a box axes orientation widget.
+
+        If ``True``, Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        instead of the :class:`pyvista.AxesActor` as the orientation widget for plots.
 
         Examples
         --------
@@ -2881,11 +2919,11 @@ class Theme(_ThemeConfig):
         >>> import pyvista as pv
         >>> pv.global_theme.axes.x_color = 'black'
 
-        Show axes by default.
+        Show the axes orientation widget by default.
 
         >>> pv.global_theme.axes.show = True
 
-        Use the ``vtk.vtkCubeAxesActor``.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
