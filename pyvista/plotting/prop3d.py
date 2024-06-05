@@ -254,7 +254,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
