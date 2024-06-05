@@ -147,22 +147,22 @@ def create_axes_marker(
         Color of the label text.
 
     x_color : ColorLike, optional
-        Color of the x axis text.
+        Color of the x-axis text.
 
     y_color : ColorLike, optional
-        Color of the y axis text.
+        Color of the y-axis text.
 
     z_color : ColorLike, optional
-        Color of the z axis text.
+        Color of the z-axis text.
 
     xlabel : str, default: "X"
-        Text used for the x axis.
+        Text used for the x-axis.
 
     ylabel : str, default: "Y"
-        Text used for the y axis.
+        Text used for the y-axis.
 
     zlabel : str, default: "Z"
-        Text used for the z axis.
+        Text used for the z-axis.
 
     labels_off : bool, default: False
         Enable or disable the text labels for the axes.
@@ -297,33 +297,33 @@ def create_axes_orientation_box(
         Color of the edges.
 
     x_color : ColorLike, optional
-        Color of the x axis text.
+        Color of the x-axis text.
 
     y_color : ColorLike, optional
-        Color of the y axis text.
+        Color of the y-axis text.
 
     z_color : ColorLike, optional
-        Color of the z axis text.
+        Color of the z-axis text.
 
     xlabel : str, optional
-        Text used for the x axis.
+        Text used for the x-axis.
 
     ylabel : str, optional
-        Text used for the y axis.
+        Text used for the y-axis.
 
     zlabel : str, optional
-        Text used for the z axis.
+        Text used for the z-axis.
 
     x_face_color : ColorLike, optional
-        Color used for the x axis arrow.  Defaults to theme axes
+        Color used for the x-axis arrow.  Defaults to theme axes
         parameters.
 
     y_face_color : ColorLike, optional
-        Color used for the y axis arrow.  Defaults to theme axes
+        Color used for the y-axis arrow.  Defaults to theme axes
         parameters.
 
     z_face_color : ColorLike, optional
-        Color used for the z axis arrow.  Defaults to theme axes
+        Color used for the z-axis arrow.  Defaults to theme axes
         parameters.
 
     color_box : bool, optional
