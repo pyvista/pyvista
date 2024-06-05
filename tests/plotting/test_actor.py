@@ -135,7 +135,7 @@ def test_actor_position(actor):
     assert actor.position == position
 
 
-def test_actor_rotate(actor):
+def test_actor_rotate_x(actor):
     actor.rotate_x(90)
     assert np.allclose(actor.orientation, (90, 0, 0))
 
@@ -156,7 +156,7 @@ def test_actor_orientation(actor):
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)
 
-    # test rotation order
+    def test_actor_rotation_order(actor):
     dataset = pv.Cube()
     dataset.rotate_y(orientation[1], inplace=True)
     dataset.rotate_x(orientation[0], inplace=True)
