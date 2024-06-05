@@ -1123,7 +1123,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
         The scaling factor for the z-axis.
 
     n1 : float, default: 1
-        The "squareness" parameter in the z axis.
+        The "squareness" parameter in the z-axis.
 
     n2 : float, default: 1
         The "squareness" parameter in the x-y plane.
