@@ -16,7 +16,7 @@ PyVista is:
 
 .. _Visualization Toolkit: https://vtk.org
 
-.. image:: assets/pyvista_ipython_demo.gif
+.. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
    :alt: pyvista ipython demo
 
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
