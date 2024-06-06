@@ -218,7 +218,7 @@ jobs:
         run: |
           pip uninstall numpy matplotlib -y
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
-          pip install --pre --no-deps numpy
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
         continue-on-error: ${{ matrix.numpy-version == 'pre' }}
