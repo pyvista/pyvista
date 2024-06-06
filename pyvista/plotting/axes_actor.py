@@ -402,7 +402,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the X axis.
+        """Return or set the label for the x-axis.
 
         Examples
         --------
@@ -421,7 +421,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def y_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Y axis.
+        """Return or set the label for the y-axis.
 
         Examples
         --------
@@ -440,7 +440,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def z_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Z axis.
+        """Return or set the label for the z-axis.
 
         Examples
         --------
@@ -459,22 +459,22 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis shaft."""
+        """Return or set the properties of the x-axis shaft."""
         return ActorProperties(self.GetXAxisShaftProperty())
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis shaft."""
+        """Return or set the properties of the y-axis shaft."""
         return ActorProperties(self.GetYAxisShaftProperty())
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis shaft."""
+        """Return or set the properties of the z-axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty())
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis tip."""
+        """Return or set the properties of the x-axis tip."""
         return ActorProperties(self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
@@ -483,7 +483,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis tip."""
+        """Return or set the properties of the y-axis tip."""
         return ActorProperties(self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
@@ -492,7 +492,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis tip."""
+        """Return or set the properties of the z-axis tip."""
         return ActorProperties(self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter
