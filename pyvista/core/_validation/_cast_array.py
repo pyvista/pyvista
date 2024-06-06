@@ -2,31 +2,49 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+
 import numpy as np
+import numpy.typing as npt
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+    from pyvista.core._typing_core._array_like import NumberType
+    from pyvista.core._typing_core._array_like import _FiniteNestedList
+    from pyvista.core._typing_core._array_like import _FiniteNestedTuple
 
 
-def _cast_to_list(arr):
+def _cast_to_list(
+    arr: _ArrayLikeOrScalar[NumberType],
+) -> Union[NumberType, _FiniteNestedList[NumberType]]:
     """Cast an array to a nested list.
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayLike[float]
         Array to cast.
 
     Returns
     -------
     list
         List or nested list array.
+
     """
     return _cast_to_numpy(arr).tolist()
 
 
-def _cast_to_tuple(arr):
+def _cast_to_tuple(
+    arr: ArrayLike[NumberType],
+) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
     """Cast an array to a nested tuple.
 
     Parameters
     ----------
-    arr : array_like
+    arr : ArrayLike[float]
         Array to cast.
 
     Returns
@@ -42,7 +60,17 @@ def _cast_to_tuple(arr):
     return _to_tuple(arr)
 
 
-def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=False):
+def _cast_to_numpy(
+    arr: _ArrayLikeOrScalar[NumberType],
+    /,
+    *,
+    as_any: bool = True,
+    dtype: Optional[npt.DTypeLike] = None,
+    copy: bool = False,
+    must_be_real=False,
+    allow_bool=True,
+    name: str = "Array",
+) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
     Object arrays are not allowed but the dtype is otherwise unchecked by default.
@@ -56,14 +84,14 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
 
     Parameters
     ----------
-    arr : array_like
+    arr : float | ArrayLike[float]
         Array to cast.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
         making a copy.
 
-    dtype : dtype_like, optional
+    dtype : npt.typing.DTypeLike, optional
         The data-type of the returned array.
 
     copy : bool, default: False
@@ -76,6 +104,19 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
     must_be_real : bool, default: True
         Raise a TypeError if the array does not have real numbers, i.e.
         its data type is not integer or floating.
+
+    allow_bool : bool, default: True
+        When ``must_be_real`` is ``True, allow boolean data types.
+
+        .. note::
+
+            The built-in :py:class:`bool` class is a subtype of :py:class:`int`, but
+            :class:`numpy.bool_` is not a subtype of :class:`numpy.integer` (more
+            generally, it's not a subtype of :class:`numpy.number`, either).
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any of the
+        validation checks fail.
 
     Raises
     ------
@@ -91,7 +132,9 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
         NumPy ndarray.
 
     """
-    # needed to support numpy <1.25
+    if hasattr(arr, '_array'):
+        return _cast_to_numpy(arr._array)
+        # needed to support numpy <1.25
     # needed to support vtk 9.0.3
     # check for removal when support for vtk 9.0.3 is removed
     try:
@@ -102,14 +145,21 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
-            if copy:
+            if copy and out is arr:
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
     except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
-        raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
+        raise ValueError(f"{name} cannot be cast as {np.ndarray}.") from e
+
+    allowed_dtypes = (
+        (np.floating, np.integer, np.bool_) if allow_bool else (np.floating, np.integer)
+    )
+    if must_be_real and not issubclass(out.dtype.type, allowed_dtypes):
+        allowed_dtype_names = tuple(np.dtype(typ).name for typ in allowed_dtypes)
+        raise TypeError(
+            f"{name} must have real numbers. Expected dtype to be one of {allowed_dtype_names}, got {out.dtype.type} instead.",
+        )
     elif out.dtype.name == 'object':
-        raise TypeError("Object arrays are not supported.")
+        raise TypeError(f"{name} is an object array. Object arrays are not supported.")
     return out

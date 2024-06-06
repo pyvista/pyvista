@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+from numbers import Real
 from re import escape
 import sys
 from typing import NamedTuple
@@ -22,6 +23,7 @@ from pyvista.core._validation import check_iterable
 from pyvista.core._validation import check_iterable_items
 from pyvista.core._validation import check_length
 from pyvista.core._validation import check_less_than
+from pyvista.core._validation import check_ndim
 from pyvista.core._validation import check_nonnegative
 from pyvista.core._validation import check_number
 from pyvista.core._validation import check_range
@@ -104,13 +106,13 @@ def test_check_subdtype():
     check_subdtype(int, np.integer)
     check_subdtype(np.dtype(int), np.integer)
     check_subdtype(np.array([1, 2, 3]), np.integer)
-    check_subdtype(np.array([1.0, 2, 3]), float)
+    check_subdtype([1.0, 2, 3], float)
     check_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
     check_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
-    match = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
-    with pytest.raises(TypeError, match=match):
+    match = "Input has incorrect dtype of dtype('int32'). The dtype must be a subtype of <class 'float'>."
+    with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1, 2, 3]).astype('int32'), float)
-    match = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
+    match = "Input has incorrect dtype of dtype('complex128'). The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
@@ -158,7 +160,7 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    match = "Data Range [1 0] must be sorted in ascending order."
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
     with pytest.raises(ValueError, match=escape(match)):
         validate_data_range((1, 0))
 
@@ -210,6 +212,21 @@ def test_check_shape():
     match = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
     with pytest.raises(ValueError, match=escape(match)):
         check_shape((1, 2, 3), [(), (4, 5)])
+
+
+def test_check_ndim():
+    check_ndim(0, 0)
+    check_ndim(np.array(0), 0)
+    check_ndim((1, 2, 3), range(2))
+    check_ndim([[1, 2, 3]], (0, 2))
+
+    match = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
+    with pytest.raises(ValueError, match=escape(match)):
+        check_ndim((1, 2, 3), 0, name="Input")
+
+    match = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
+    with pytest.raises(ValueError, match=escape(match)):
+        check_ndim((1, 2, 3), [4, 5])
 
 
 def test_validate_shape_value():
@@ -649,6 +666,7 @@ def test_check_real():
     check_real(1)
     check_real(-2.0)
     check_real(np.array(2.0, dtype="uint8"))
+    check_real(np.array(True, dtype=bool))
     match = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
@@ -664,11 +682,11 @@ def test_check_finite():
         check_finite(np.nan, name="_input")
 
 
-def test_check_integer():
+def test_check_integerlike():
     check_integer(1)
     check_integer([2, 3.0])
-    match = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
-    with pytest.raises(TypeError, match=match):
+    match = "Input has incorrect dtype of dtype('float64'). The dtype must be a subtype of <class 'numpy.integer'>."
+    with pytest.raises(TypeError, match=escape(match)):
         check_integer([2, 3.0], strict=True, name="_input")
     match = "_input must have integer-like values."
     with pytest.raises(ValueError, match=match):
@@ -703,13 +721,13 @@ def test_check_length():
     check_length((1,), exact_length=1, min_length=1, max_length=1, must_be_1d=True)
     check_length((1,), exact_length=[1, 2.0])
 
-    with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
+    with pytest.raises(ValueError, match="Exact length must have integer-like values."):
         check_length((1,), exact_length=(1, 2.4), name="_input")
 
-    match = '_input must have a length equal to any of: 1. Got length 2 instead.'
-    with pytest.raises(ValueError, match=match):
+    match = '_input must have a length equal to any of: (1,). Got length 2 instead.'
+    with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=1, name="_input")
-    match = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    match = '_input must have a length equal to any of: (3, 4). Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 
@@ -721,7 +739,7 @@ def test_check_length():
     with pytest.raises(ValueError, match=match):
         check_length((1,), min_length=2, name="_input")
 
-    match = "Range [4 2] must be sorted in ascending order."
+    match = 'Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(
             (
@@ -733,9 +751,12 @@ def test_check_length():
             max_length=2,
         )
 
-    match = "Shape must be -1."
+    match = 'Array has the incorrect number of dimensions. Got 2, expected 1.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
+    match = "object of type 'int' has no len()"
+    with pytest.raises(TypeError, match=escape(match)):
+        check_length(0, allow_scalar=False)
 
 
 def test_check_nonnegative():
@@ -750,7 +771,8 @@ def test_check_nonnegative():
 @pytest.mark.parametrize('axis', [None, -1, -2, -3, 0, 1, 2, 3])
 @pytest.mark.parametrize('ascending', [True, False])
 @pytest.mark.parametrize('strict', [True, False])
-def test_check_sorted(shape, axis, ascending, strict):
+@pytest.mark.parametrize('as_list', [True, False])
+def test_check_sorted(shape, axis, ascending, strict, as_list):
     def _check_sorted_params(arr):
         check_sorted(arr, axis=axis, strict=strict, ascending=ascending)
 
@@ -786,7 +808,12 @@ def test_check_sorted(shape, axis, ascending, strict):
             _check_sorted_params(arr_strict_ascending)
         return
 
-    if axis is None and arr_ascending.ndim > 1:
+    arr_ascending = arr_ascending.tolist() if as_list else arr_ascending
+    arr_strict_ascending = arr_strict_ascending.tolist() if as_list else arr_strict_ascending
+    arr_descending = arr_descending.tolist() if as_list else arr_descending
+    arr_strict_descending = arr_strict_descending.tolist() if as_list else arr_strict_descending
+
+    if axis is None and not as_list and arr_ascending.ndim > 1:
         # test that axis=None will flatten array and cause it not to be sorted for higher dimension arrays
         with pytest.raises(ValueError):  # noqa: PT011
             _check_sorted_params(arr_ascending)
@@ -819,6 +846,13 @@ def test_check_sorted(shape, axis, ascending, strict):
                 _check_sorted_params(a)
 
 
+def test_check_sorted_error_repr():
+    array = np.zeros(shape=(10, 10))
+    match = "Array with 100 elements must be sorted in strict ascending order. Got:\n    array([[0., 0... 0., 0., 0.]])"
+    with pytest.raises(ValueError, match=escape(match)):
+        check_sorted(array, ascending=True, strict=True)
+
+
 def test_check_iterable_items():
     check_iterable_items([1, 2, 3], int)
     check_iterable_items(("a", "b", "c"), str)
@@ -831,25 +865,59 @@ def test_check_iterable_items():
         check_iterable_items(["abc", 1], str, name="_input")
 
 
-def test_check_number():
-    check_number(1)
-    check_number(1 + 1j)
-    match = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
+@pytest.mark.parametrize('number', [1, 1.0, True, 1 + 1j])
+@pytest.mark.parametrize('definition', ['builtin', 'numpy'])
+@pytest.mark.parametrize('must_be_real', [True, False])
+def test_check_number(number, definition, must_be_real):
+    if definition == 'numpy':
+        number = np.array([number])[0]
+
+    if isinstance(number, np.bool_) or (not isinstance(number, Real) and must_be_real):
+        # Test bool types always raise an error
+        # Test complex types raise an error when `must_be_real` is True
+        with pytest.raises(TypeError):
+            check_number(number, must_be_real=must_be_real)
+    else:
+        # All other cases should succeed
+        check_number(number, must_be_real=must_be_real)
+
+    if definition == 'numpy':
+        # Test numpy types raise an error when definition is 'builtin'
+        if isinstance(number, float) or (isinstance(number, complex) and not must_be_real):
+            # np.float_ and np.complex_ subclass float and complex, respectively,
+            # so no error is raised
+            check_number(number, must_be_real=must_be_real, definition='builtin')
+        else:
+            with pytest.raises(TypeError):
+                check_number(number, must_be_real=must_be_real, definition='builtin')
+    elif definition == 'builtin':
+        # Test builtin types raise an error when definition is 'numpy'
+        with pytest.raises(TypeError):
+            check_number(number, must_be_real=must_be_real, definition='numpy')
+
+
+def test_check_number_raises():
+    match = (
+        "_input must be an instance of <class 'numbers.Real'>. Got <class 'numpy.ndarray'> instead."
+    )
     with pytest.raises(TypeError, match=match):
         check_number(np.array(0), name='_input')
     match = "Object must be"
     with pytest.raises(TypeError, match=match):
         check_number(np.array(0))
+    match = "Object must be"
+    with pytest.raises(TypeError, match=match):
+        check_number(1 + 1j, must_be_real=True)
 
 
 def test_check_contains():
-    check_contains(item="foo", container=["foo", "bar"])
+    check_contains(["foo", "bar"], must_contain="foo")
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item="foo", container=["cat", "bar"])
+        check_contains(["cat", "bar"], must_contain="foo")
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item=5, container=range(4), name="_input")
+        check_contains(range(4), must_contain=5, name="_input")
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])
@@ -965,7 +1033,7 @@ def test_cast_to_numpy_raises():
         match = "Object arrays are not supported."
     else:
         err = ValueError
-        match = "Input cannot be cast as <class 'numpy.ndarray'>."
+        match = "Array cannot be cast as <class 'numpy.ndarray'>."
     with pytest.raises(err, match=match):
         _cast_to_numpy([[1], [2, 3]])
 
@@ -978,11 +1046,11 @@ def test_cast_to_numpy_must_be_real():
     _ = _cast_to_numpy([0, 1], must_be_real=True)
     _ = _cast_to_numpy("abc", must_be_real=False)
 
-    match = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
-    with pytest.raises(TypeError, match=match):
+    match = "Array must have real numbers. Expected dtype to be one of ('float64', 'int64', 'bool'), got <class 'numpy.complex128'> instead."
+    with pytest.raises(TypeError, match=escape(match)):
         _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
-    match = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
-    with pytest.raises(TypeError, match=match):
+    match = "Array must have real numbers. Expected dtype to be one of ('float64', 'int64', 'bool'), got <class 'numpy.str_'> instead."
+    with pytest.raises(TypeError, match=escape(match)):
         _ = _cast_to_numpy("abc", must_be_real=True)
 
 
