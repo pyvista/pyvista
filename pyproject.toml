@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     'matplotlib>=3.0.1',
-    'numpy>=1.21.0,<2.0.0',  # minimum typing support
+    'numpy>=1.21.0',  # minimum typing support
     'pillow',
     'pooch',
     'scooby>=0.5.1',
