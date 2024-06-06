@@ -1258,7 +1258,7 @@ def check_length(
         len(array)  # type: ignore[arg-type]
 
     if must_be_1d:
-        check_ndim(sized_input, ndim=1)
+        check_ndim(sized_input, ndim=1)  # type: ignore[arg-type]
 
     array_len = len(sized_input)
 
