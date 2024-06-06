@@ -23,10 +23,6 @@ Some key differences include:
 
 from __future__ import annotations
 
-import sys
-import typing
-from typing import TYPE_CHECKING
-from typing import Any
 from typing import List
 from typing import Sequence
 from typing import Tuple
@@ -46,36 +42,7 @@ NumberType = TypeVar(
 )
 NumberType.__doc__ = """Type variable for numeric data types."""
 
-# Create a copy of the typevar
-_NumberType = TypeVar(  # noqa: PYI018
-    '_NumberType',
-    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
-)
-_PyNumberType = TypeVar('_PyNumberType', float, int, bool)  # noqa: PYI018
-_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)  # noqa: PYI018
-
-
-_T = TypeVar('_T')
-if not TYPE_CHECKING and sys.version_info < (3, 9, 0):
-    # TODO: Remove this conditional block once support for Python3.8 is dropped
-
-    # Numpy's type annotations use a customized generic alias type for
-    # python < 3.9.0 (defined in numpy.typing._generic_alias._GenericAlias)
-    # which makes it incompatible with built-in generic alias types, e.g.
-    # Sequence[NDArray[T]]. As a workaround, we define NDArray types using
-    # the private typing._GenericAlias type instead
-    np_dtype = typing._GenericAlias(np.dtype, NumberType)
-    _np_floating = typing._GenericAlias(np.floating, _T)
-    _np_integer = typing._GenericAlias(np.integer, _T)
-    np_dtype_floating = typing._GenericAlias(np.dtype, _np_floating[_T])
-    np_dtype_integer = typing._GenericAlias(np.dtype, _np_integer[_T])
-    NumpyArray = typing._GenericAlias(np.ndarray, (Any, np_dtype[NumberType]))
-else:
-    np_dtype = np.dtype[NumberType]
-    np_dtype_floating = np.dtype[np.floating[Any]]
-    np_dtype_integer = np.dtype[np.integer[Any]]
-    # Create alias of npt.NDArray bound to numeric types only
-    NumpyArray = npt.NDArray[NumberType]
+NumpyArray = npt.NDArray[NumberType]
 
 _FiniteNestedList = Union[
     List[NumberType],
