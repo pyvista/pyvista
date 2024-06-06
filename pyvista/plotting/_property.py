@@ -1209,6 +1209,8 @@ class Property(_vtk.vtkProperty):
 
         Property has range ``[0, 1]``.
 
+        .. versionadded:: 0.44.0
+
         Notes
         -----
         This attribute requires VTK v9.1.0 or newer.
@@ -1221,6 +1223,7 @@ class Property(_vtk.vtkProperty):
         >>> prop = pv.Property()
         >>> prop.anisotropy_rotation
         0.0
+
         >>> prop.interpolation = 'pbr'
         >>> prop.plot()
 
@@ -1280,6 +1283,8 @@ class Property(_vtk.vtkProperty):
         rendering'``.
 
         Value must be greater than 1.
+
+        .. versionadded:: 0.44.0
 
         Notes
         -----
@@ -1350,6 +1355,8 @@ class Property(_vtk.vtkProperty):
     @property
     def shading(self) -> bool:  # numpydoc ignore=RT01
         """Return or set the flag to activate the shading.
+
+        .. versionadded:: 0.44.0
 
         Examples
         --------

@@ -217,7 +217,7 @@ def test_property_shading(prop):
     assert prop.line_width == value
 
 
-def test_actor_properties__deprecated(prop):
+def test_actor_properties_deprecated(prop):
     if pv._version.version_info >= (0, 46):
         raise RuntimeError('Convert this deprecation warning to an error.')
     if pv._version.version_info >= (0, 47):

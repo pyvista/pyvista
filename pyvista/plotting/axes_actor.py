@@ -36,7 +36,7 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> axes.axes_actor.z_axis_shaft_properties.color = (0, 1, 1)
+    >>> axes.axes_actor.z_axis_shaft_properties.color = (0.0, 1.0, 1.0)
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
@@ -52,9 +52,9 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor = axes.axes_actor
     >>> axes.axes_actor.shaft_type = 0
 
-    >>> axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.y_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.z_axis_shaft_properties.color = (1, 1, 1)
+    >>> axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.y_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 1.0)
 
     >>> axes_actor.x_axis_label = 'U'
     >>> axes_actor.y_axis_label = 'V'
@@ -64,7 +64,7 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> _ = pl.add_mesh(pv.Cone())
     >>> _ = pl.add_orientation_widget(
     ...     axes_actor,
-    ...     viewport=(0, 0, 0.5, 0.5),
+    ...     viewport=(0.0, 0.0, 0.5, 0.5),
     ... )
     >>> pl.show()
 
@@ -87,13 +87,13 @@ class AxesActor(_vtk.vtkAxesActor):
         super().__init__()
 
         # Get references to the shaft and tip actors
+        # Note: actors and props are indexed as (x-shaft, y-shaft, z-shaft, x-tip, y-tip, z-tip)
         collection = _vtk.vtkPropCollection()
         self.GetActors(collection)
         self._actors = [collection.GetItemAsObject(i) for i in range(6)]
         # Init actor properties
         self._actor_properties = [Property() for _ in self._actors]
         [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._actor_properties)]
-        # Note: actors and props are index as (x-shaft, y-shaft, z-shaft, x-tip, y-tip, z-tip)
 
         self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
         self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
@@ -487,7 +487,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self._actor_properties[0]
 
     @property
-    def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def y_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the y-axis shaft.
 
         .. versionchanged:: 0.44.0
@@ -498,7 +498,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self._actor_properties[1]
 
     @property
-    def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
+    def z_axis_shaft_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the z-axis shaft.
 
         .. versionchanged:: 0.44.0
@@ -509,7 +509,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return self._actor_properties[2]
 
     @property
-    def x_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def x_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the x-axis tip.
 
         .. versionchanged:: 0.44.0
@@ -525,7 +525,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self._actors[3].SetProperty(properties)
 
     @property
-    def y_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def y_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the y-axis tip.
 
         .. versionchanged:: 0.44.0
@@ -541,7 +541,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self._actors[4].SetProperty(properties)
 
     @property
-    def z_axis_tip_properties(self):  # numpydoc ignore=RT01
+    def z_axis_tip_properties(self) -> Property:  # numpydoc ignore=RT01
         """Return or set the properties of the z-axis tip.
 
         .. versionchanged:: 0.44.0
