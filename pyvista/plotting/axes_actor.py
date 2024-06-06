@@ -104,7 +104,6 @@ class AxesActor(_vtk.vtkAxesActor):
         self.y_axis_tip_properties.color = pv.global_theme.axes.y_color.float_rgba
         self.y_axis_shaft_properties.opacity = pv.global_theme.axes.y_color.float_rgba[3]
         self.y_axis_tip_properties.opacity = pv.global_theme.axes.y_color.float_rgba[3]
-        self.y_axis_shaft_properties.lighting = pv.global_theme.lighting
 
         self.z_axis_shaft_properties.color = pv.global_theme.axes.z_color.float_rgba
         self.z_axis_tip_properties.color = pv.global_theme.axes.z_color.float_rgba
