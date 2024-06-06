@@ -26,7 +26,6 @@ from __future__ import annotations
 from typing import List
 from typing import Sequence
 from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 
@@ -34,8 +33,6 @@ import numpy as np
 import numpy.typing as npt
 
 # Define numeric types
-# TODO: remove # type: ignore once support for Python3.8 is dropped
-_NumberUnion = Union[Type[np.floating], Type[np.integer], Type[np.bool_], Type[float], Type[int], Type[bool]]  # type: ignore[type-arg]
 NumberType = TypeVar(
     'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
