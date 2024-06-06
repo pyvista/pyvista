@@ -18,24 +18,18 @@ repos:
         files: '\.py$'
         exclude: pyvista/plotting/charts.py
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
   - repo: https://github.com/PyCQA/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
-        additional_dependencies:
-          ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
-        exclude: tests/core/typing
+        additional_dependencies: ["flake8-black==0.3.6", "flake8-quotes==3.3.2"]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
+        exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/pycqa/pydocstyle
@@ -86,12 +80,6 @@ repos:
             "npt-promote==0.1",
           ]
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.2
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus, --keep-runtime-typing]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
@@ -112,15 +100,15 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.2
+    rev: 0.28.4
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.3
+    rev: v0.4.7
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --show-fixes]
         exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier

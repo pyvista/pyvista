@@ -35,24 +35,22 @@ from abc import abstractmethod
 import functools
 import os
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Protocol,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    final,
-    runtime_checkable,
-)
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import Protocol
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import cast
+from typing import final
+from typing import runtime_checkable
 
 import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
@@ -408,13 +406,11 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     ):
         _SingleFile.__init__(self, path)
 
-        from pyvista.examples.downloads import (
-            SOURCE,
-            USER_DATA_PATH,
-            _download_archive_file_or_folder,
-            download_file,
-            file_from_files,
-        )
+        from pyvista.examples.downloads import SOURCE
+        from pyvista.examples.downloads import USER_DATA_PATH
+        from pyvista.examples.downloads import _download_archive_file_or_folder
+        from pyvista.examples.downloads import download_file
+        from pyvista.examples.downloads import file_from_files
         from pyvista.examples.examples import dir_path
 
         if Path(path).is_absolute():
@@ -506,7 +502,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     2. Multiple input files, but only one is read or loaded directly
        E.g.: loading a single dataset from a file format where data and metadata are
        stored in separate files, such as ``.raw`` and ``.mhd``.
-       See ``download_frog`` for a reference implementation.
+       See ``download_head`` for a reference implementation.
 
     3. Multiple input files, all of which make up part of the loaded dataset
        E.g.: loading six separate image files for cubemaps

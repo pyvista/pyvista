@@ -5,6 +5,8 @@ anything that's beyond testing actual library code.
 
 """
 
+from __future__ import annotations
+
 
 def test_mpl_backend():
     """Check if the backend is correctly set for testing."""

@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import functools
 import itertools
 from pathlib import Path
 import platform
 import re
-from typing import Any, NamedTuple
-from unittest.mock import Mock, patch
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -13,7 +17,9 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import MissingDataError, NotAllTrianglesError, VTKVersionError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import VTKVersionError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 

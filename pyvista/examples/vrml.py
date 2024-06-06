@@ -1,5 +1,7 @@
 """Contains vrml examples."""
 
+from __future__ import annotations
+
 from .downloads import download_file
 
 

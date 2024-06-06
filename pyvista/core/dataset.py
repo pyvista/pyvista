@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-import collections.abc
 from copy import deepcopy
 from functools import partial
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any
+from typing import Callable
+from typing import Generator
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Literal
+from typing import NamedTuple
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
+from typing import cast
 import warnings
 
 import numpy as np
@@ -27,23 +24,28 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike, MatrixLike, Number, NumpyArray, VectorLike
+from ._typing_core import BoundsLike
+from ._typing_core import MatrixLike
+from ._typing_core import Number
+from ._typing_core import NumpyArray
+from ._typing_core import VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
-from .errors import PyVistaDeprecationWarning, VTKVersionError
-from .filters import DataSetFilters, _get_output
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import DataSetFilters
+from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities import transformations
-from .utilities.arrays import (
-    FieldAssociation,
-    _coerce_pointslike_arg,
-    get_array,
-    get_array_association,
-    raise_not_matching,
-    vtk_id_list_to_array,
-)
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _coerce_pointslike_arg
+from .utilities.arrays import get_array
+from .utilities.arrays import get_array_association
+from .utilities.arrays import raise_not_matching
+from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
-from .utilities.misc import abstract_class, check_valid_vector
+from .utilities.misc import abstract_class
+from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 
 # vector array names
@@ -1982,7 +1984,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __getitem__(self, index: Union[Iterable[Any], str]) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+        if isinstance(index, Iterable) and not isinstance(index, str):
             name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
@@ -2001,7 +2003,7 @@ class DataSet(DataSetFilters, DataObject):
     def __setitem__(
         self,
         name: str,
-        scalars: Union[NumpyArray[float], collections.abc.Sequence[float], float],
+        scalars: Union[NumpyArray[float], Sequence[float], float],
     ):  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
@@ -2357,7 +2359,7 @@ class DataSet(DataSetFilters, DataObject):
         pyvista_ndarray([-0.05218758,  0.49653167,  0.02706946], dtype=float32)
 
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+        if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")

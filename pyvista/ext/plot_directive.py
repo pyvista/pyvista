@@ -100,6 +100,8 @@ These options can be set by defining global variables of the same name in
 
 """
 
+from __future__ import annotations
+
 import doctest
 import os
 from os.path import relpath
@@ -108,9 +110,12 @@ import re
 import shutil
 import textwrap
 import traceback
-from typing import Callable, ClassVar, Dict
+from typing import Callable
+from typing import ClassVar
+from typing import Dict
 
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import Directive
+from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
@@ -563,11 +568,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2,
-            "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base,
-                source_file_name,
-                err,
-            ),
+            f"Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}",
             line=lineno,
         )
         results = [(code, [])]
