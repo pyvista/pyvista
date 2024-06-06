@@ -7,8 +7,6 @@ from enum import Enum
 from typing import Tuple
 from typing import Union
 
-import pyvista
-
 from . import _vtk
 from ._property import Property
 
@@ -94,24 +92,6 @@ class AxesActor(_vtk.vtkAxesActor):
         # Init actor properties
         self._actor_properties = [Property() for _ in self._actors]
         [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._actor_properties)]
-
-        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
-        self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
-
-        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
-        self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
-
-        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
-        self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
