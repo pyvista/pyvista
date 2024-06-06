@@ -1259,7 +1259,7 @@ class Property(_vtk.vtkProperty):
             "Use of `interpolation_model` is deprecated. Use `interpolation` instead.",
             PyVistaDeprecationWarning,
         )
-        return InterpolationType.from_any(self.GetInterpolation())
+        return InterpolationType.from_any(self.GetInterpolation())  # pragma: no cover
 
     @interpolation_model.setter
     def interpolation_model(self, model: InterpolationType):  # numpydoc ignore=GL08
@@ -1268,7 +1268,7 @@ class Property(_vtk.vtkProperty):
             "Use of `interpolation_model` is deprecated. Use `interpolation` instead.",
             PyVistaDeprecationWarning,
         )
-        self.SetInterpolation(model.value)
+        self.SetInterpolation(model.value)  # pragma: no cover
 
     @property
     def index_of_refraction(self):  # numpydoc ignore=RT01
@@ -1341,7 +1341,7 @@ class Property(_vtk.vtkProperty):
             "Use of `representation` is deprecated. Use `style` instead.",
             PyVistaDeprecationWarning,
         )
-        return RepresentationType.from_any(self.GetRepresentation())
+        return RepresentationType.from_any(self.GetRepresentation())  # pragma: no cover
 
     @representation.setter
     def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
@@ -1350,7 +1350,7 @@ class Property(_vtk.vtkProperty):
             "Use of `representation` is deprecated. Use `style` instead.",
             PyVistaDeprecationWarning,
         )
-        self.SetRepresentation(RepresentationType.from_any(value).value)
+        self.SetRepresentation(RepresentationType.from_any(value).value)  # pragma: no cover
 
     @property
     def shading(self) -> bool:  # numpydoc ignore=RT01

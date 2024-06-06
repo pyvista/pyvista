@@ -17,7 +17,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .opts import InterpolationType
 from .opts import RepresentationType
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from . import _vtk
 
 
