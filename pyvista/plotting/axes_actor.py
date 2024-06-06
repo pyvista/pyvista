@@ -92,14 +92,13 @@ class AxesActor(_vtk.vtkAxesActor):
         self.GetActors(collection)
         self._actors: list[_vtk.vtkActor] = [collection.GetItemAsObject(i) for i in range(6)]
         # Init actor properties
-        self._actor_properties: list[Property] = [Property() for _ in self._actors]
+        self._actor_properties: list[Property] = [Property(ambient=0.5) for _ in self._actors]
         [actor.SetProperty(prop) for actor, prop in zip(self._actors, self._actor_properties)]
 
         self.x_axis_shaft_properties.color = pv.global_theme.axes.x_color.float_rgba
         self.x_axis_tip_properties.color = pv.global_theme.axes.x_color.float_rgba
         self.x_axis_shaft_properties.opacity = pv.global_theme.axes.x_color.float_rgba[3]
         self.x_axis_tip_properties.opacity = pv.global_theme.axes.x_color.float_rgba[3]
-        self.x_axis_shaft_properties.lighting = pv.global_theme.lighting
 
         self.y_axis_shaft_properties.color = pv.global_theme.axes.y_color.float_rgba
         self.y_axis_tip_properties.color = pv.global_theme.axes.y_color.float_rgba
