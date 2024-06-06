@@ -39,7 +39,7 @@ class ActorProperties:
 
     >>> axes = pv.Axes()
     >>> z_axes_prop = axes.axes_actor.z_axis_shaft_properties
-    >>> z_axes_prop.color = (1, 1, 0)
+    >>> z_axes_prop.color = (1.0, 1.0, 0.0)
     >>> z_axes_prop.opacity = 0.5
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
 
