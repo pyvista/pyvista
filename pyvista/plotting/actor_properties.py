@@ -36,15 +36,10 @@ class ActorProperties:
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> z_axes_prop = (
-    ...     axes.axes_actor.z_axis_shaft_properties
-    ... )  # doctest:+SKIP
-    >>> z_axes_prop.color = (1, 1, 0)  # doctest:+SKIP
-    >>> z_axes_prop.opacity = 0.5  # doctest:+SKIP
-    >>> axes.axes_actor.shaft_type = (
-    ...     axes.axes_actor.ShaftType.CYLINDER
-    ... )  # doctest:+SKIP
-
+    >>> z_axes_prop = axes.axes_actor.z_axis_shaft_properties
+    >>> z_axes_prop.color = (1.0, 1.0, 0.0)
+    >>> z_axes_prop.opacity = 0.5
+    >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)  # doctest:+SKIP
     >>> _ = pl.add_mesh(pv.Sphere())
