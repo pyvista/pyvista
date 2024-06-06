@@ -165,6 +165,4 @@ class ActorProperties:  # pragma:no cover
 
     @representation.setter
     def representation(self, value: RepresentationType):  # numpydoc ignore=GL08
-        self.properties.SetRepresentation(
-            RepresentationType.from_any(value).value,
-        )
+        self.properties.SetRepresentation(RepresentationType.from_any(value).value)
