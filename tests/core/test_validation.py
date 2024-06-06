@@ -1046,11 +1046,12 @@ def test_cast_to_numpy_must_be_real():
     _ = _cast_to_numpy([0, 1], must_be_real=True)
     _ = _cast_to_numpy("abc", must_be_real=False)
 
-    match = "Array must have real numbers. Expected dtype to be one of ('float64', 'int64', 'bool'), got <class 'numpy.complex128'> instead."
-    with pytest.raises(TypeError, match=escape(match)):
+    # Regex allows int64 (macos, linux) or int32 (windows)
+    match = r"Array must have real numbers\. Expected dtype to be one of \('float64', 'int(?:32|64)', 'bool'\), got <class '{}'> instead\."
+    with pytest.raises(TypeError, match=match.format('numpy.complex128')):
         _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
-    match = "Array must have real numbers. Expected dtype to be one of ('float64', 'int64', 'bool'), got <class 'numpy.str_'> instead."
-    with pytest.raises(TypeError, match=escape(match)):
+
+    with pytest.raises(TypeError, match=match.format('numpy.str_')):
         _ = _cast_to_numpy("abc", must_be_real=True)
 
 
