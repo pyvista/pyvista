@@ -212,9 +212,10 @@ def test_property_index_of_refraction(prop):
 
 def test_property_shading(prop):
     assert isinstance(prop.shading, bool)
-    value = True
-    prop.line_width = value
-    assert prop.line_width == value
+    prop.shading = True
+    assert prop.shading is True
+    prop.shading = False
+    assert prop.shading is False
 
 
 def test_actor_properties_deprecated(prop):
