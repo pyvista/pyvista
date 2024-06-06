@@ -12,7 +12,6 @@ from .check import check_iterable
 from .check import check_iterable_items
 from .check import check_length
 from .check import check_less_than
-from .check import check_ndim
 from .check import check_nonnegative
 from .check import check_number
 from .check import check_range
