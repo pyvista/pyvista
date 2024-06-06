@@ -257,7 +257,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetOrientation(value)
 
     @property
-    def origin(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity origin.
 
         This is the point about which all rotations take place.
