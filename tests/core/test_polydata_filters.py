@@ -66,12 +66,13 @@ def poly_circle():
 
 def test_decimate_polylines(poly_circle):
     assert poly_circle.n_points == 30
-
     decimated = poly_circle.decimate_polylines(0.5)
     # Allow some leeway for approximtely 50%
     assert decimated.n_points >= 14
     assert decimated.n_points <= 16
 
+def test_decimate_polylines_maximum_error(poly_circle):
+    assert poly_circle.n_points == 30
     # low maximum error will prevent decimation.
     # Since this is a regular shape, no decimation occurs at all with suitable choice
     decimated = poly_circle.decimate_polylines(0.5, maximum_error=0.0001)
