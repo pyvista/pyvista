@@ -28,11 +28,12 @@ classifiers = [
 ]
 dependencies = [
     'matplotlib>=3.0.1',
-    'numpy>=1.21.0',  # minimum typing support
+    'numpy>=1.21.0,<2.0.0',  # minimum typing support
     'pillow',
     'pooch',
     'scooby>=0.5.1',
     'vtk',  # keep without version constraints
+    'typing-extensions',
 ]
 dynamic = ['version']
 
@@ -87,15 +88,8 @@ pyvista = [
     'rectilinear.vtk',
     'sphere.ply',
     'uniform.vtk',
+    'frog_tissues.vti',
 ]
-
-[tool.isort]
-profile = 'black'
-line_length = 100
-# Sort by name, don't cluster "from" vs "import"
-force_sort_within_sections = true
-# Combines "as" imports on the same line
-combine_as_imports = true
 
 [tool.black]
 line-length = 100
@@ -163,6 +157,7 @@ disallow_any_generics = true
 pretty = true
 show_error_context = true
 warn_unused_ignores = true
+warn_redundant_casts = true
 plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
@@ -301,7 +296,7 @@ exclude = [
 ]
 line-length = 100
 indent-width = 4
-target-version = 'py39'
+target-version = 'py38'
 
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
@@ -331,12 +326,18 @@ ignore = [
     # "BLK100",
     # 'from module import *' used; unable to detect undefined names
     "F403",
+    # https://github.com/pyvista/pyvista/pull/6037
+    "PERF203",
     # https://github.com/pyvista/pyvista/pull/5877
     "SIM102",
     # https://github.com/pyvista/pyvista/pull/5888
     "SIM117",
     # https://github.com/pyvista/pyvista/pull/5837
     "SIM118",
+    # https://github.com/pyvista/pyvista/pull/5911
+    "RET505",
+    "RET506",
+    "RET507",
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -353,23 +354,25 @@ extend-select = [
     "F",
     "FA",
     "FLY",
+    "I",
     "ICN",
     "INT",
     "ISC",
     "LOG",
     "NPY",
-    "PERF401",
+    "PERF",
     "PGH",
     "PIE",
     "PLC",
     "PLR0402",
     "PLR1711",
     "PLR1714",
+    "PLW0127",
     "PT",
     "PTH",
     "PYI",
     "Q",
-    "RET501",
+    "RET",
     "RSE",
     "RUF",
     "SIM",
@@ -377,6 +380,9 @@ extend-select = [
     "TCH",
     "TRIO",
     "TRY201",
+    "TRY300",
+    "TRY302",
+    "UP",
     "W",
     "YTT",
 ]
@@ -391,3 +397,17 @@ allow-dict-calls-with-keyword-arguments = true
     # https://github.com/pyvista/pyvista/pull/6019
     "B018",
 ]
+
+[tool.ruff.lint.isort]
+# Sort by name, don't cluster "from" vs "import"
+force-sort-within-sections = true
+# Combines "as" imports on the same line
+combine-as-imports = true
+# https://github.com/pyvista/pyvista/pull/5712
+required-imports = ["from __future__ import annotations"]
+# https://github.com/pyvista/pyvista/pull/5712
+force-single-line = true
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true

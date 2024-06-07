@@ -6,20 +6,31 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import List
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.utilities.misc import _check_range, _reciprocal, no_new_attr
+from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _reciprocal
+from pyvista.core.utilities.misc import no_new_attr
 
 from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike, MatrixLike, NumpyArray, VectorLike
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -1307,11 +1318,10 @@ class CubeSource(_vtk.vtkCubeSource):
             It must be either 'float32' or 'float64'.
         """
         precision = self.GetOutputPointsPrecision()
-        point_dtype = {
+        return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
         }[precision]
-        return point_dtype
 
     @point_dtype.setter
     def point_dtype(self, point_dtype: str):

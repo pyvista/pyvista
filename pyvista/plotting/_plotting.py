@@ -1,5 +1,7 @@
 """These are private methods we keep out of plotting.py to simplify the module."""
 
+from __future__ import annotations
+
 import warnings
 
 import numpy as np
@@ -84,9 +86,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
                 if has_scalars and use_points:
                     # we must track the original IDs with our own array from compute_normals
                     indices_array = 'pyvistaOriginalPointIds'
-        else:
-            # consider checking if mesh contains active normals
-            # if mesh.point_data.active_normals is None:
+        elif mesh.point_data.active_normals is None:
             mesh.compute_normals(cell_normals=False, inplace=True)
     except TypeError as e:
         if "Normals cannot be computed" in repr(e):

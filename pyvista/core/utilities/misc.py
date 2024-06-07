@@ -9,7 +9,10 @@ import importlib
 import sys
 import threading
 import traceback
-from typing import TYPE_CHECKING, Type, TypeVar, Union
+from typing import TYPE_CHECKING
+from typing import Type
+from typing import TypeVar
+from typing import Union
 import warnings
 
 import numpy as np

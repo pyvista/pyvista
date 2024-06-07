@@ -7,6 +7,8 @@ pytest --test_downloads
 
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import warnings
@@ -274,11 +276,6 @@ def test_download_cad_model():
 
 def test_download_frog():
     data = examples.download_frog()
-    assert data.n_cells
-
-
-def test_download_frog_tissue():
-    data = examples.download_frog_tissue()
     assert data.n_cells
 
 

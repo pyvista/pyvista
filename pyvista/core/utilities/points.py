@@ -1,5 +1,7 @@
 """Points related utilities."""
 
+from __future__ import annotations
+
 import warnings
 
 import numpy as np
@@ -215,7 +217,8 @@ def fit_plane_to_points(points, return_meta=False):
     >>> import numpy as np
     >>>
     >>> # Create point cloud
-    >>> cloud = np.random.default_rng().random((10, 3))
+    >>> rng = np.random.default_rng(seed=0)
+    >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane

@@ -24,7 +24,8 @@ from __future__ import annotations
 import functools
 import logging
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+from pathlib import PureWindowsPath
 import shutil
 from typing import Union
 import warnings
@@ -36,17 +37,18 @@ from pooch.utils import get_logger
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.examples._dataset_loader import (
-    _download_dataset,
-    _DownloadableFile,
-    _load_and_merge,
-    _load_as_cubemap,
-    _load_as_multiblock,
-    _MultiFileDownloadableDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
+from pyvista.core.utilities.fileio import get_ext
+from pyvista.core.utilities.fileio import read
+from pyvista.core.utilities.fileio import read_texture
+from pyvista.examples._dataset_loader import _download_dataset
+from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _load_and_merge
+from pyvista.examples._dataset_loader import _load_as_cubemap
+from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -2200,6 +2202,11 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     This dataset contains tissue segmentation labels for the frog dataset.
 
+    .. deprecated:: 0.44.0
+
+        This example does not load correctly on some systems and has been deprecated.
+        Use :func:`~pyvista.examples.load_frog_tissues` instead.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2210,62 +2217,6 @@ def download_frog_tissue(load=True):  # pragma: no cover
     -------
     pyvista.ImageData | str
         DataSet or filename depending on ``load``.
-
-    Examples
-    --------
-    Load data
-
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> data = examples.download_frog_tissue()
-
-    Plot tissue labels as a volume
-
-    First, define plotting parameters
-
-    >>> # Configure colors / color bar
-    >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
-    >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
-    >>> opacity_unit_distance = 1
-
-    Set plotting resolution to half the image's spacing
-
-    >>> res = np.array(data.spacing) / 2
-
-    Define rendering parameters
-
-    >>> mapper = 'gpu'
-    >>> shade = True
-    >>> ambient = 0.3
-    >>> diffuse = 0.6
-    >>> specular = 0.5
-    >>> specular_power = 40
-
-    Make and show plot
-
-    >>> p = pv.Plotter()
-    >>> _ = p.add_volume(
-    ...     data,
-    ...     clim=clim,
-    ...     ambient=ambient,
-    ...     shade=shade,
-    ...     diffuse=diffuse,
-    ...     specular=specular,
-    ...     specular_power=specular_power,
-    ...     mapper=mapper,
-    ...     opacity=opacity,
-    ...     opacity_unit_distance=opacity_unit_distance,
-    ...     categories=categories,
-    ...     cmap=cmap,
-    ...     resolution=res,
-    ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> p.show()
 
     .. seealso::
 
@@ -2278,6 +2229,14 @@ def download_frog_tissue(load=True):  # pragma: no cover
             Browse other medical datasets.
 
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
+
     return _download_dataset(_dataset_frog_tissue, load=load)
 
 
@@ -3449,9 +3408,13 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_kitchen()
-    >>> dataset.streamlines(n_points=5).plot()
+    >>> point_a = (0.08, 2.50, 0.71)
+    >>> point_b = (0.08, 4.50, 0.71)
+    >>> line = pv.Line(point_a, point_b, resolution=39)
+    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
 
     .. seealso::
 
@@ -3508,11 +3471,17 @@ __kitchen_split = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_tetra_dc_mesh():  # pragma: no cover
+def download_tetra_dc_mesh(load=True):  # pragma: no cover
     """Download two meshes defining an electrical inverse problem.
 
     This contains a high resolution forward modeled mesh and a coarse
     inverse modeled mesh.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -3532,8 +3501,7 @@ def download_tetra_dc_mesh():  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_tetra_dc_mesh)
+    return _download_dataset(_dataset_tetra_dc_mesh, load=load)
 
 
 def _tetra_dc_mesh_files_func():  # pragma: no cover
@@ -4161,8 +4129,14 @@ def download_vtk_logo(load=True):  # pragma: no cover
 _dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)
 
 
-def download_sky_box_cube_map():  # pragma: no cover
+def download_sky_box_cube_map(load=True):  # pragma: no cover
     """Download a skybox cube map texture.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -4194,8 +4168,7 @@ def download_sky_box_cube_map():  # pragma: no cover
             Example using this dataset.
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_sky_box_cube_map)
+    return _download_dataset(_dataset_sky_box_cube_map, load=load)
 
 
 def _sky_box_cube_map_files_func():
@@ -4216,7 +4189,7 @@ _dataset_sky_box_cube_map = _MultiFileDownloadableDatasetLoader(
 )
 
 
-def download_cubemap_park():  # pragma: no cover
+def download_cubemap_park(load=True):  # pragma: no cover
     """Download a cubemap of a park.
 
     Downloaded from http://www.humus.name/index.php?page=Textures
@@ -4226,6 +4199,12 @@ def download_cubemap_park():  # pragma: no cover
 
     This work is licensed under a Creative Commons Attribution 3.0 Unported
     License.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -4257,8 +4236,7 @@ def download_cubemap_park():  # pragma: no cover
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_cubemap_park)
+    return _download_dataset(_dataset_cubemap_park, load=load)
 
 
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
@@ -4268,7 +4246,7 @@ _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_cubemap_space_4k():  # pragma: no cover
+def download_cubemap_space_4k(load=True):  # pragma: no cover
     """Download the 4k space cubemap.
 
     This cubemap was generated by downloading the 4k image from: `Deep Star
@@ -4278,6 +4256,12 @@ def download_cubemap_space_4k():  # pragma: no cover
     See `vtk-data/cubemap_space
     <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_
     for more details.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -4312,8 +4296,7 @@ def download_cubemap_space_4k():  # pragma: no cover
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_cubemap_space_4k)
+    return _download_dataset(_dataset_cubemap_space_4k, load=load)
 
 
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
@@ -4323,7 +4306,7 @@ _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_cubemap_space_16k():  # pragma: no cover
+def download_cubemap_space_16k(load=True):  # pragma: no cover
     """Download the 16k space cubemap.
 
     This cubemap was generated by downloading the 16k image from: `Deep Star
@@ -4333,6 +4316,12 @@ def download_cubemap_space_16k():  # pragma: no cover
     See `vtk-data/cubemap_space
     <https://github.com/pyvista/vtk-data/tree/master/Data/cubemap_space#readme>`_ for
     more details.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -4373,8 +4362,7 @@ def download_cubemap_space_16k():  # pragma: no cover
         :ref:`Sky Box Cube Map Dataset <sky_box_cube_map_dataset>`
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_cubemap_space_16k)
+    return _download_dataset(_dataset_cubemap_space_16k, load=load)
 
 
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
@@ -5206,7 +5194,7 @@ _dataset_dual_sphere_animation = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_osmnx_graph():  # pragma: no cover
+def download_osmnx_graph(load=True):  # pragma: no cover
     """Load a simple street map from Open Street Map.
 
     Generated from:
@@ -5222,6 +5210,12 @@ def download_osmnx_graph():  # pragma: no cover
         ...     graph, open('osmnx_graph.p', 'wb')
         ... )  # doctest:+SKIP
 
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
     Returns
     -------
     networkx.classes.multidigraph.MultiDiGraph
@@ -5232,21 +5226,19 @@ def download_osmnx_graph():  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`open_street_map_example`
-            Full example using this dataset.
-
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
     try:
         import osmnx  # noqa: F401
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_osmnx_graph)
+    return _download_dataset(_dataset_osmnx_graph, load=load)
 
 
 def _osmnx_graph_read_func(filename):  # pragma: no cover
@@ -6926,10 +6918,16 @@ _dataset_sea_vase = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_dikhololo_night():  # pragma: no cover
+def download_dikhololo_night(load=True):  # pragma: no cover
     """Download and read the dikholo night hdr texture example.
 
     Files hosted at https://polyhaven.com/
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
 
     Returns
     -------
@@ -6953,8 +6951,7 @@ def download_dikhololo_night():  # pragma: no cover
             See this dataset in the Dataset Gallery for more info.
 
     """
-    # TODO: add `load` parameter
-    return _download_dataset(_dataset_dikhololo_night)
+    return _download_dataset(_dataset_dikhololo_night, load=load)
 
 
 def _dikhololo_night_load_func(texture):  # pragma: no cover
@@ -7676,6 +7673,58 @@ def _dataset_room_cff_files_func():
 _dataset_room_cff = _MultiFileDownloadableDatasetLoader(_dataset_room_cff_files_func)
 
 
+def download_m4_total_density(load=True):  # pragma: no cover
+    """Download a total density dataset of the chemistry.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+
+    >>> filename = examples.download_m4_total_density(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.hb_scale = 1.1
+    >>> reader.b_scale = 10.0
+
+    >>> grid = reader.read()
+    >>> poly = reader.read(grid=False)
+
+    Add the outline and volume to the plotter.
+
+    >>> pl = pv.Plotter()
+    >>> outline = pl.add_mesh(grid.outline(), color="black")
+    >>> volume = pl.add_volume(grid)
+
+    Add atoms and bonds to the plotter.
+
+    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere()), color="red")
+    >>> bonds = pl.add_mesh(poly.tube(), color="white")
+
+    >>> pl.show(cpos="zx")
+
+    .. seealso::
+
+        :ref:`M4 Total Density Dataset <m4_total_density_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_m4_total_density, load=load)
+
+
+_dataset_m4_total_density = _SingleFileDownloadableDatasetLoader('m4_TotalDensity.cube')
+
+
 def download_headsq(load=True):  # pragma: no cover
     """Download the headsq dataset.
 
@@ -7751,3 +7800,195 @@ def download_prism(load=True):  # pragma: no cover
 
 
 _dataset_prism = _SingleFileDownloadableDatasetLoader('prism.neu')
+
+
+def download_t3_grid_0(load=True):  # pragma: no cover
+    """Download a T3 grid 0 image.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_t3_grid_0()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`T3 Grid 0 Dataset <t3_grid_0_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_t3_grid_0, load=load)
+
+
+_dataset_t3_grid_0 = _SingleFileDownloadableDatasetLoader('t3_grid_0.mnc')
+
+
+def download_caffeine(load=True):  # pragma: no cover
+    """Download the caffeine molecule.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_caffeine(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> poly = reader.read()
+
+    Add atoms and bonds to the plotter.
+
+    >>> pl = pv.Plotter()
+    >>> atoms = pl.add_mesh(
+    ...     poly.glyph(geom=pv.Sphere(radius=0.1)), color="red"
+    ... )
+    >>> bonds = pl.add_mesh(poly.tube(radius=0.1), color="gray")
+    >>> pl.show(cpos="xy")
+
+    .. seealso::
+
+        :ref:`Caffeine Dataset <caffeine_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_caffeine, load=load)
+
+
+_dataset_caffeine = _SingleFileDownloadableDatasetLoader('caffeine.pdb')
+
+
+def download_e07733s002i009(load=True):  # paragma: no cover
+    """Download a e07733s002i009 image.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_e07733s002i009()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+    """
+    return _download_dataset(_dataset_e07733s002i009, load=load)
+
+
+_dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.MR')
+
+
+def download_particles(load=True):  # pragma: no cover
+    """Download a particle dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_particles(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.reader.SetDataByteOrderToBigEndian()
+    >>> reader.reader.Update()
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Particles Dataset <particles_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_particles, load=load)
+
+
+_dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')
+
+
+def download_prostar(load=True):  # pragma: no cover
+    """Download a prostar dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_prostar()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Prostar Dataset <prostar_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_prostar, load=load)
+
+
+def _prostar_files_func():  # pragma: no cover
+    # Multiple files needed for read, but only one gets loaded
+    prostar_cel = _DownloadableFile('prostar.cel')
+    prostar_vrt = _SingleFileDownloadableDatasetLoader('prostar.vrt')
+    return prostar_vrt, prostar_cel
+
+
+_dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)

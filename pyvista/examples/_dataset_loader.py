@@ -35,24 +35,22 @@ from abc import abstractmethod
 import functools
 import os
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Protocol,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    final,
-    runtime_checkable,
-)
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import Protocol
+from typing import Sequence
+from typing import Set
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import cast
+from typing import final
+from typing import runtime_checkable
 
 import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
@@ -81,8 +79,9 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
 
         If a path is a folder, the number of files contained in the folder is returned.
         """
-        path = [path] if isinstance(path := self.path, str) else path
-        return sum([1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in path])
+        path = self.path
+        paths = [path] if isinstance(path, str) else path
+        return sum(1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in paths)
 
     @property
     def unique_extension(self) -> Union[str, Tuple[str, ...]]:
@@ -152,8 +151,10 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
 
         This is the full URL used to download the data directly.
         """
-        name_iter = [name] if isinstance(name := self.source_name, str) else name
-        base_url_iter = [url] if isinstance(url := self.base_url, str) else url
+        name = self.source_name
+        name_iter = [name] if isinstance(name, str) else name
+        url = self.base_url
+        base_url_iter = [url] if isinstance(url, str) else url
         url_raw = [os.path.join(base_url, name) for base_url, name in zip(base_url_iter, name_iter)]
         return url_raw[0] if isinstance(name, str) else tuple(url_raw)
 
@@ -165,7 +166,8 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         a human to open on a browser.
         """
         # Make single urls iterable and replace 'raw' with 'blob'
-        url_iter = [url_raw] if isinstance(url_raw := self.source_url_raw, str) else url_raw
+        url_raw = self.source_url_raw
+        url_iter = [url_raw] if isinstance(url_raw, str) else url_raw
         url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
         return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
 
@@ -404,13 +406,11 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     ):
         _SingleFile.__init__(self, path)
 
-        from pyvista.examples.downloads import (
-            SOURCE,
-            USER_DATA_PATH,
-            _download_archive_file_or_folder,
-            download_file,
-            file_from_files,
-        )
+        from pyvista.examples.downloads import SOURCE
+        from pyvista.examples.downloads import USER_DATA_PATH
+        from pyvista.examples.downloads import _download_archive_file_or_folder
+        from pyvista.examples.downloads import download_file
+        from pyvista.examples.downloads import file_from_files
         from pyvista.examples.examples import dir_path
 
         if Path(path).is_absolute():
@@ -502,7 +502,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     2. Multiple input files, but only one is read or loaded directly
        E.g.: loading a single dataset from a file format where data and metadata are
        stored in separate files, such as ``.raw`` and ``.mhd``.
-       See ``download_frog`` for a reference implementation.
+       See ``download_head`` for a reference implementation.
 
     3. Multiple input files, all of which make up part of the loaded dataset
        E.g.: loading six separate image files for cubemaps

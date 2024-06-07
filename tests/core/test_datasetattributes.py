@@ -1,17 +1,26 @@
+from __future__ import annotations
+
 import os
 import platform
-from string import ascii_letters, digits, whitespace
+from string import ascii_letters
+from string import digits
+from string import whitespace
 import sys
 
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
 from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import integers, lists, text
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
+from hypothesis.strategies import text
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import FieldAssociation, convert_array
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = pytest.mark.skipif(
