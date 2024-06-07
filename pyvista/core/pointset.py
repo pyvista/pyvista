@@ -12,6 +12,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
 from typing import cast
 import warnings
 
@@ -117,8 +118,19 @@ class _PointSet(DataSet):
         self,
         ind: VectorLike[bool] | VectorLike[int],
         inplace=False,
-    ) -> _PointSet:
+        unused_points: Literal['keep', 'remove', 'vertex'] = 'keep',
+        invert=False,
+        pass_cell_ids=True,
+        pass_point_ids=True,
+    ):
         """Remove cells.
+
+        .. versionchanged:: 0.44.0
+
+            The internal implementation of this filter has changed. Previously, any
+            unused points (i.e. points no longer referenced by other cells) after cell
+            removal were kept and returned with the output. This filter no longer
+            returns unused points.
 
         Parameters
         ----------
@@ -129,6 +141,23 @@ class _PointSet(DataSet):
         inplace : bool, default: False
             Whether to update the mesh in-place.
 
+        unused_points : 'keep' | 'remove' | 'vertex', default: 'keep'
+            What to do with unused points.
+
+        invert : bool, default: False
+            Invert the cell indices. Indices *not* specified by ``ind``
+            are removed.
+
+        pass_cell_ids : bool, default: False
+            Include a cell array ``'vtkOriginalCellIds'`` with the output
+            that holds the cell index of the original cell that produced
+            each output cell. The default is ``False`` to conserve memory.
+
+        pass_point_ids : bool, default: False
+            Include a point array ``'vtkOriginalPointIds'`` with the output
+            that holds the point index of the original point that produced
+            each output cell. The default is ``False`` to conserve memory.
+
         Returns
         -------
         pyvista.DataSet
@@ -138,26 +167,21 @@ class _PointSet(DataSet):
         Examples
         --------
         Remove 20 cells from an unstructured grid.
-
         >>> from pyvista import examples
         >>> import pyvista as pv
         >>> hex_mesh = pv.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
-        if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool_ and ind.size != self.n_cells:
-                raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})',
-                )
-        ghost_cells = np.zeros(self.n_cells, np.uint8)
-        ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
-
-        target = self if inplace else self.copy()
-
-        target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
-        target.RemoveGhostCells()
-        return target
+        return self.extract_cells(
+            ind=ind,
+            # unused_points=unused_points,
+            inplace=inplace,
+            invert=not invert,
+            pass_cell_ids=pass_cell_ids,
+            pass_point_ids=pass_point_ids,
+            match_input_type=True,
+        )
 
     def points_to_double(self) -> _PointSet:
         """Convert the points datatype to double precision.
@@ -482,6 +506,10 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         raise PointSetCellOperationError
 
     def remove_cells(self, *args, **kwargs):
+        """Raise cell operations are not supported."""
+        raise PointSetCellOperationError
+
+    def extract_cells(self, *args, **kwargs):
         """Raise cell operations are not supported."""
         raise PointSetCellOperationError
 
@@ -2074,7 +2102,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     @property
     def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return a the vtk cell connectivity as a numpy array.
+        """Return the vtk cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
         padding.

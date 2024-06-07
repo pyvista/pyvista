@@ -17,6 +17,9 @@ import contextlib
 from typing import NamedTuple
 import warnings
 
+VTK_ORIGINAL_CELL_IDS = 'vtkOriginalCellIds'
+VTK_ORIGINAL_POINT_IDS = 'vtkOriginalPointIds'
+
 from vtkmodules.vtkCommonCore import vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource
@@ -425,6 +428,7 @@ with contextlib.suppress(ImportError):
 
 # 9.1+ imports
 with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersCore import vtkRemoveUnusedPoints
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
 
 

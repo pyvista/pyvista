@@ -6,6 +6,7 @@ from pathlib import Path
 import platform
 import re
 from typing import Any
+from typing import List
 from typing import NamedTuple
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -13,6 +14,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
@@ -2065,8 +2067,9 @@ def test_slice_along_line():
         model.slice_along_line(one_cell, progress_bar=True)
 
 
-def extract_points_invalid(sphere):
-    with pytest.raises(ValueError):  # noqa: PT011
+def test_extract_points_invalid(sphere):
+    match = 'Indices must be a boolean mask or an integer array.'
+    with pytest.raises(TypeError, match=match):
         sphere.extract_points('invalid')
 
     with pytest.raises(TypeError):
@@ -2125,8 +2128,8 @@ def extracted_with_adjacent_False(grid4x4):
     expected_point_ids = [0, 1, 4, 5]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [4, 0, 1, 3, 2]
-    celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2140,8 +2143,8 @@ def extracted_with_adjacent_True(grid4x4):
     expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
-    celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2155,8 +2158,8 @@ def extracted_with_include_cells_False(grid4x4):
     expected_point_ids = [0, 1, 4, 5]
     expected_verts = grid4x4.points[expected_point_ids, :]
     expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
-    celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
-    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    # celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
+    expected_surf = pv.PolyData(expected_verts, verts=expected_faces)
     expected_surf.point_data['labels'] = expected_point_ids
     expected_surf.cell_data['labels'] = expected_cell_ids
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
@@ -2164,7 +2167,10 @@ def extracted_with_include_cells_False(grid4x4):
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
@@ -2180,12 +2186,24 @@ def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjac
     assert sub_surf_adj.n_points == 9
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert sub_surf_adj.n_cells == 4
-    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)
+
+
+def test_extract_points_same_input_output(grid4x4):
+    points_in = grid4x4.points.copy()
+    faces_in = grid4x4.faces.copy()
+
+    extracted = grid4x4.extract_points(np.ones(grid4x4.n_points, dtype=bool), match_input_type=True)
+    assert np.array_equal(extracted.points, points_in)
+    assert np.array_equal(extracted.faces, faces_in)
 
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
@@ -2195,12 +2213,15 @@ def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adja
     assert sub_surf.n_points == 4
     assert np.array_equal(sub_surf.points, expected_surf.points)
     assert sub_surf.n_cells == 1
-    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf.faces, expected_surf.faces)
 
 
 @pytest.mark.parametrize(
     'dataset_filter',
-    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+    [
+        functools.partial(pv.DataSetFilters.extract_points, match_input_type=True),
+        pv.DataSetFilters.extract_values,
+    ],
 )
 def test_extract_points_include_cells_False(
     dataset_filter,
@@ -2217,17 +2238,17 @@ def test_extract_points_include_cells_False(
         progress_bar=True,
     )
     assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
-    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
-    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+    assert np.array_equal(sub_surf_nocells.faces, expected_surf.faces)
+    assert np.array_equal(sub_surf_nocells.verts, expected_surf.verts)
 
 
 def test_extract_points_default(extracted_with_adjacent_True):
     input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
     # test adjacent_cells=True and include_cells=True by default
-    sub_surf_adj = input_surf.extract_points(input_point_ids)
+    sub_surf_adj = input_surf.extract_points(input_point_ids, match_input_type=True)
 
     assert np.array_equal(sub_surf_adj.points, expected_surf.points)
-    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf_adj.faces, expected_surf.faces)
 
 
 @pytest.mark.parametrize('preference', ['point', 'cell'])
@@ -2254,7 +2275,7 @@ def test_extract_values_preference(
         sub_surf = func(input_cell_ids)
 
     assert np.array_equal(sub_surf.points, expected_surf.points)
-    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+    assert np.array_equal(sub_surf.faces, expected_surf.faces)
 
 
 def extract_values_values():
@@ -2286,7 +2307,7 @@ def test_extract_values_input_values_and_invert(preference, values, invert, grid
         assert extracted.n_arrays == 0
     else:
         assert np.array_equal(extracted.points, grid4x4.points)
-        assert np.array_equal(extracted.cells, grid4x4.faces)
+        assert np.array_equal(extracted.faces, grid4x4.faces)
 
 
 def test_extract_values_open_intervals(grid4x4):
@@ -2442,7 +2463,7 @@ def test_split_values_extract_values_component(
     multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
     assert isinstance(multiblock, pv.MultiBlock)
     assert multiblock.n_blocks == expected_n_blocks
-    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
+    assert all(isinstance(block, pv.PolyData) for block in multiblock)
 
     # Convert to polydata to test volume
     multiblock = multiblock.as_polydata_blocks()
@@ -2645,11 +2666,9 @@ def test_extract_values_component_values_split_unique(
 @pytest.mark.parametrize('pass_point_ids', [True, False])
 @pytest.mark.parametrize('pass_cell_ids', [True, False])
 def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
-    POINT_IDS = 'vtkOriginalPointIds'
-    CELL_IDS = 'vtkOriginalCellIds'
     extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
-    assert extracted.point_data.keys() == ['labels', POINT_IDS]
-    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+    assert extracted.point_data.keys() == ['labels', _vtk_core.VTK_ORIGINAL_POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', _vtk_core.VTK_ORIGINAL_CELL_IDS]
 
     extracted = grid4x4.extract_values(
         ranges=grid4x4.get_data_range(),
@@ -2657,9 +2676,9 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
         pass_cell_ids=pass_cell_ids,
     )
     if pass_cell_ids:
-        assert CELL_IDS in extracted.cell_data
+        assert _vtk_core.VTK_ORIGINAL_CELL_IDS in extracted.cell_data
     if pass_point_ids:
-        assert POINT_IDS in extracted.point_data
+        assert _vtk_core.VTK_ORIGINAL_POINT_IDS in extracted.point_data
 
     extracted = grid4x4.extract_values(
         ranges=grid4x4.get_data_range(preference='point'),
@@ -3957,3 +3976,349 @@ def test_pack_labels_preference(uniform):
     expected_shape = mesh.cell_data['labels_in'].shape
     actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
+
+
+HEXBEAM_CELLS_BOOL = np.ones(40, dtype=bool)  # matches hexbeam.n_cells == 40
+HEXBEAM_POINTS_BOOL = np.ones(99, dtype=bool)  # matches hexbeam.n_points == 99
+
+
+class DatasetPartialFilter:
+    """Class for dynamically applying a partially defined filter to a dataset.
+
+    This class performs a similar function to `functools.partial`. However, unlike
+    `functools.partial`, which requires a fully bound callable as a first argument, to
+    create the partial function, this class instead allows creating a partial function
+    using a method name (as string) instead of the actual callable.
+
+    This allows for the callable argument to the partial function to be the resolved
+    dynamically at runtime instead of being defined statically. This ensures that the
+    actual method/filter used by the dataset for testing is resolved correctly by the
+    MRO, e.g. for DataSet subclasses which overload or redefine filters. E.g. for
+    PointSet objects, we want `PointSet.some_filter` to be called instead calling
+    `DataSetFilters.some_filter`.
+
+    Examples
+    --------
+    Instead of creating a partial function with a static function like this:
+        partial = functools.partial(pyvista.DataSetFilters.extract_points, *partial_args, **partial_kwargs)
+
+    We use the filter name instead:
+        partial = DatasetPartialFilter('extract_points', *partial_args, **partial_kwargs)
+
+    Later, we call the method on a dataset. The actual callable used to define the
+    partial function is resolved at runtime. Just like functools.partial, we can
+    optionally add additional args or kwargs:
+        DatasetPartialFilter(dataset, *more_args, **more_kwargs)
+
+    """
+
+    def __init__(self, filter_name: str, *partial_args, **partial_kwargs):
+
+        assert isinstance(filter_name, str)
+        self.filter_name = filter_name
+        self._partial_args = partial_args
+        self._partial_kwargs = partial_kwargs
+
+    def __call__(self, dataset: pyvista.DataSet, *args, **kwargs):
+        """Call partially defined method on a dataset.
+
+        e.g. Add filter and call it with additional args:
+            DatasetPartialFilter(dataset, *args, **kwargs)
+        """
+        assert isinstance(dataset, pyvista.DataSet)
+        # Create partial function with dynamically-resolved method
+        self._dataset = dataset
+        func = getattr(dataset, self.filter_name)
+        partial_func = functools.partial(func, *self._partial_args, **self._partial_kwargs)
+
+        # Call the partial function with new args
+        return partial_func(*args, **kwargs)
+
+
+class FilterTestCase(NamedTuple):
+    test_name: str
+    partial_filter: DatasetPartialFilter
+
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_CELLS = FilterTestCase(
+    test_name='remove_cells',
+    partial_filter=DatasetPartialFilter('remove_cells', invert=False),
+)
+REMOVE_CELLS_INVERT = FilterTestCase(
+    test_name='remove_cells_invert',
+    partial_filter=DatasetPartialFilter('remove_cells', invert=True),
+)
+
+# Define filter pairs which should produce exactly the same result
+EXTRACT_CELLS = FilterTestCase(
+    test_name='extract_cells',
+    partial_filter=DatasetPartialFilter('extract_cells', invert=False),
+)
+EXTRACT_CELLS_INVERT = FilterTestCase(
+    test_name='extract_cells_invert',
+    partial_filter=DatasetPartialFilter('extract_cells', invert=True),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_ANY = FilterTestCase(
+    test_name='remove_points_any',
+    partial_filter=DatasetPartialFilter(
+        'remove_points',
+        invert=False,
+        mode='any',
+    ),
+)
+EXTRACT_POINTS_INVERT_ALL = FilterTestCase(
+    test_name='extract_points_invert_all',
+    partial_filter=DatasetPartialFilter('extract_points', invert=True, mode='all'),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_ALL = FilterTestCase(
+    test_name='remove_points_all',
+    partial_filter=DatasetPartialFilter(
+        'remove_points',
+        invert=False,
+        mode='all',
+    ),
+)
+EXTRACT_POINTS_INVERT_ANY = FilterTestCase(
+    test_name='extract_points_invert_any',
+    partial_filter=DatasetPartialFilter('extract_points', invert=True, mode='any'),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_INVERT_ALL = FilterTestCase(
+    test_name='remove_points_invert_all',
+    partial_filter=DatasetPartialFilter('remove_points', invert=True, mode='all'),
+)
+EXTRACT_POINTS_ANY = FilterTestCase(
+    test_name='extract_points_any',
+    partial_filter=DatasetPartialFilter('extract_points', mode='any'),
+)
+
+# Define filter pairs which should produce exactly the same result
+REMOVE_POINTS_INVERT_ANY = FilterTestCase(
+    test_name='remove_points_invert_any',
+    partial_filter=DatasetPartialFilter('remove_points', invert=True, mode='any'),
+)
+EXTRACT_POINTS_ALL = FilterTestCase(
+    test_name='extract_points_all',
+    partial_filter=DatasetPartialFilter('extract_points', mode='all'),
+)
+
+
+def parametrize_filter(param_name, named_filters: List[FilterTestCase]):
+    """Parametrize test using named filters."""
+    ids = [f.test_name for f in named_filters]
+    filters = [f.partial_filter for f in named_filters]
+    return pytest.mark.parametrize(param_name, filters, ids=ids)
+
+
+@parametrize_filter('filter_under_test', [REMOVE_CELLS, EXTRACT_CELLS_INVERT])
+@pytest.mark.parametrize('ind', [(1, 2), range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+def test_remove_cells_extract_cells_invert(ind, hexbeam, filter_under_test):
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_cells == hexbeam.n_cells - len(np.array(ind))
+
+
+@parametrize_filter('filter_under_test', [EXTRACT_CELLS, REMOVE_CELLS_INVERT])
+@pytest.mark.parametrize('ind', [(1, 2), range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+def test_extract_cells_remove_cells_invert(ind, hexbeam, filter_under_test):
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_cells == len(np.array(ind))
+
+
+@parametrize_filter('filter_under_test', [EXTRACT_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
+@pytest.mark.parametrize('ind', [[True] * len(HEXBEAM_POINTS_BOOL), HEXBEAM_POINTS_BOOL])
+def test_remove_points_extract_points_bool_ind(ind, hexbeam, filter_under_test):
+    # Test complete mesh is returned
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_points == hexbeam.n_points
+    assert filtered.n_cells == hexbeam.n_cells
+    assert np.array_equal(filtered.points, hexbeam.points)
+    assert np.array_equal(filtered.cells, hexbeam.cells)
+
+
+@parametrize_filter('filter_under_test', [EXTRACT_POINTS_ANY, REMOVE_POINTS_INVERT_ALL])
+def test_extract_points_any_remove_points_all(hexbeam, filter_under_test):
+    # Test single point
+    ind = [0]
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_cells == 1
+    assert filtered.n_points == 8
+
+
+@parametrize_filter('filter_under_test', [EXTRACT_POINTS_ALL, REMOVE_POINTS_INVERT_ANY])
+def test_extract_points_all_remove_points_any(hexbeam, filter_under_test):
+    # Test single point
+    ind = [0]
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_cells == 0
+    assert filtered.n_points == 0
+
+    # Test single cell
+    ind = hexbeam.cells[1:9]
+    filtered = filter_under_test(hexbeam, ind)
+    assert filtered.n_cells == 1
+    assert filtered.n_points == 8
+
+
+@parametrize_filter(
+    'filter_under_test',
+    [REMOVE_CELLS, EXTRACT_CELLS_INVERT, REMOVE_POINTS_ANY, EXTRACT_POINTS_INVERT_ALL],
+)
+def test_remove_cells_array_names(hexbeam, filter_under_test):
+    filtered = filter_under_test(hexbeam, 0)
+    assert filtered is not hexbeam
+    expected = [
+        *hexbeam.array_names,
+        _vtk_core.VTK_ORIGINAL_POINT_IDS,
+        _vtk_core.VTK_ORIGINAL_CELL_IDS,
+    ]
+    assert expected == filtered.array_names
+
+
+@parametrize_filter(
+    'filter_under_test',
+    [REMOVE_CELLS, EXTRACT_CELLS_INVERT, REMOVE_POINTS_ANY, EXTRACT_POINTS_INVERT_ALL],
+)
+def test_remove_cells_extract_cells_pass_cell_ids(hexbeam, filter_under_test):
+    ind = 0
+    filtered = filter_under_test(hexbeam, ind, pass_cell_ids=True)
+    assert filtered.n_cells == hexbeam.n_cells - 1
+    assert _vtk_core.VTK_ORIGINAL_CELL_IDS in filtered.cell_data.keys()
+    assert ind not in filtered[_vtk_core.VTK_ORIGINAL_CELL_IDS]
+
+    ind = 0
+    filtered = filter_under_test(hexbeam, ind, pass_point_ids=True)
+    assert filtered.n_cells == hexbeam.n_cells - 1
+    assert filtered.n_points < hexbeam.n_points
+    assert _vtk_core.VTK_ORIGINAL_POINT_IDS in filtered.point_data.keys()
+    assert ind not in filtered[_vtk_core.VTK_ORIGINAL_POINT_IDS]
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+@pytest.mark.parametrize('dataset_index', list(range(6)))
+@pytest.mark.parametrize('match_input_type', [True, False])
+@pytest.mark.parametrize('inplace', [True, False])
+@parametrize_filter(
+    'filter_under_test',
+    [EXTRACT_CELLS_INVERT, EXTRACT_POINTS_INVERT_ALL],
+)
+def test_exract_cells_extract_points_match_input_type_inplace(
+    inplace,
+    datasets_incl_pointset,
+    filter_under_test,
+    match_input_type,
+    dataset_index,
+):
+    _is_cell_filter = 'cell' in filter_under_test.filter_name
+    dataset = datasets_incl_pointset[dataset_index]
+    unfiltered = dataset.copy()  # copy to protect
+
+    args = (dataset, 0)
+    kwargs = dict(inplace=inplace, match_input_type=match_input_type)
+
+    # Test error raised when no cells to extract
+    if _is_cell_filter and isinstance(dataset, pv.PointSet):
+        # match = 'Invalid indices. Index 0 is out of bounds for a mesh with 0 cells.'
+        match = 'Cell operations are not supported. PointSets contain no cells.'
+        with pytest.raises(pv.PointSetCellOperationError, match=match):
+            filter_under_test(*args, **kwargs)
+        return
+    filtered = filter_under_test(*args, **kwargs)
+
+    # Test in place
+    if inplace and type(dataset) is type(filtered):
+        assert filtered is dataset
+    else:
+        assert filtered is not dataset
+
+    # Test something was extracted
+    if _is_cell_filter:
+        assert filtered.n_cells < unfiltered.n_cells
+    else:
+        assert filtered.n_points < unfiltered.n_points
+
+    # Test output type
+    assert type(filtered) is _get_expected_output_type(dataset, match_input_type=match_input_type)
+
+
+def _get_expected_output_type(alg_input, match_input_type):
+    return (
+        type(alg_input)
+        if match_input_type and isinstance(alg_input, (pv.PolyData, pv.PointSet))
+        else pv.UnstructuredGrid
+    )
+
+
+@parametrize_filter('filter_under_test', [REMOVE_POINTS_ANY, EXTRACT_POINTS_ANY])
+def test_remove_points_extract_points_invalid(hexbeam, filter_under_test):
+    match = 'Boolean array size must match the number of points (99)'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
+
+
+@parametrize_filter('filter_under_test', [REMOVE_CELLS, EXTRACT_CELLS_INVERT])
+def test_remove_cells_extract_cells_invalid(hexbeam, filter_under_test):
+    match = 'Boolean array size must match the number of cells (40)'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        filter_under_test(hexbeam, np.ones(10, dtype=bool), inplace=True)
+
+
+@pytest.fixture()
+def simple_poly():
+    p1 = [1, 1, 1]
+    p2 = [2, 2, 2]
+    p3 = [3, 3, 3]
+    cell = [3, 0, 1, 2]
+    return pv.PolyData([p1, p2, p3], cell)
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=True, include_cells=True),
+        dict(adjacent_cells=True, include_cells=None),
+        dict(mode='any'),
+    ],
+)
+def test_extract_points_mode_any(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 3
+    assert out.n_cells == 1
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=False, include_cells=True),
+        dict(adjacent_cells=False, include_cells=None),
+        dict(mode='all'),
+    ],
+)
+def test_extract_points_mode_all(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 0
+    assert out.n_cells == 0
+
+    out = simple_poly.extract_points([0, 1, 2], **kwargs)
+    assert out.n_points == 3
+    assert out.n_cells == 1
+
+
+@pytest.mark.parametrize(
+    'kwargs',
+    [
+        dict(adjacent_cells=True, include_cells=False),
+        dict(adjacent_cells=False, include_cells=False),
+        dict(mode='vertex'),
+    ],
+)
+def test_extract_points_mode_vertex(simple_poly, kwargs):
+    out = simple_poly.extract_points(0, **kwargs)
+    assert out.n_points == 1
+    assert out.n_cells == 1
+    assert np.array_equal(out.points[0], simple_poly.points[0])
