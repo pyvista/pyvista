@@ -113,7 +113,7 @@ quiet-level = 3
 omit = [
     'pyvista/ext/coverage.py',
     'pyvista/conftest.py',
-    # uept for backwards compatibility:
+    # kept for backwards compatibility:
     'pyvista/plotting/theme.py',
 ]
 
