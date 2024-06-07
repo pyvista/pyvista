@@ -421,8 +421,8 @@ def validate_axes(
     check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
     if must_have_orientation is not None:
         check_contains(
-            item=must_have_orientation,
             container=['right', 'left'],
+            must_contain=must_have_orientation,
             name=f"{name} orientation",
         )
     elif must_have_orientation is None and len(axes) == 2:
