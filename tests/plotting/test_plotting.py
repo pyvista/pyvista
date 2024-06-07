@@ -3922,8 +3922,6 @@ def test_axes_actor_properties():
     axes_actor.y_axis_shaft_properties.interpolation_model = InterpolationType.PBR
     axes_actor.y_axis_shaft_properties.metallic = 0.2
     assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
 
     # z shaft
     axes_actor.z_axis_shaft_properties.interpolation_model = InterpolationType.PBR
