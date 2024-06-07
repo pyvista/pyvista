@@ -32,7 +32,6 @@ def _cast_to_list(
     -------
     list
         List or nested list array.
-
     """
     return _cast_to_numpy(arr).tolist()
 
@@ -128,7 +127,7 @@ def _cast_to_numpy(
     try:
         if as_any:
             out = np.asanyarray(arr, dtype=dtype)
-            if copy and out is arr:
+            if copy:
                 out = out.copy()
         else:
             out = np.array(arr, dtype=dtype, copy=copy)
