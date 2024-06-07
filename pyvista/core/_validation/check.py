@@ -47,6 +47,10 @@ _Shape = Union[_ScalarShape, _ArrayShape]
 _ShapeLike = Union[int, _Shape]
 
 
+def _to_numpy(array) -> npt.NDArray[Any]:
+    return array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+
+
 def check_subdtype(
     input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
@@ -102,7 +106,7 @@ def check_subdtype(
     try:
         input_dtype = np.dtype(input_obj)  # type: ignore[arg-type]
     except TypeError:
-        input_dtype = _cast_to_numpy(input_obj).dtype
+        input_dtype = _to_numpy(input_obj).dtype
 
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
@@ -120,8 +124,6 @@ def check_subdtype(
 def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
-    ``numpy.bool`` and ``bool`` are considered real numbers for this check.
-
     Notes
     -----
     Arrays with ``infinity`` or ``NaN`` values are considered real and
@@ -130,7 +132,7 @@ def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array")
 
     Parameters
     ----------
-    array : float | ArrayLike[float] | NDArray[float]
+    array : float | ArrayLike[float]
         Number or array to check.
 
     name : str, default: "Array"
@@ -158,9 +160,9 @@ def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array")
     >>> _validation.check_real([1, 2, 3])
 
     """
-    dtype = _cast_to_numpy(array).dtype
+    dtype = _to_numpy(array).dtype
     try:
-        check_subdtype(dtype, (np.floating, np.integer, np.bool_), name=name)
+        check_subdtype(dtype, (np.floating, np.integer), name=name)
     except TypeError as e:
         raise TypeError(f"{name} must have real numbers.") from e
 
@@ -216,7 +218,7 @@ def check_sorted(
     >>> _validation.check_sorted([1, 2, 3])
 
     """
-    array = _cast_to_numpy(array)
+    array = _to_numpy(array)
 
     ndim = array.ndim
     if ndim == 0:
@@ -233,16 +235,16 @@ def check_sorted(
         except ValueError:
             raise ValueError(f"Axis {axis} is out of bounds for ndim {ndim}.")
 
-    def _do_check(_func, _arg1, _arg2):
+    def _do_check(_arg1, _arg2):
         # Check sorting by comparing consecutive values with slicers
         if ascending and not strict:
-            is_sorted = _func(operator.le, _arg1, _arg2)
+            is_sorted = np.all(_arg1 <= _arg2)
         elif ascending and strict:
-            is_sorted = _func(operator.lt, _arg1, _arg2)
+            is_sorted = np.all(_arg1 < _arg2)
         elif not ascending and not strict:
-            is_sorted = _func(operator.ge, _arg1, _arg2)
+            is_sorted = np.all(_arg1 >= _arg2)
         else:  # not ascending and strict
-            is_sorted = _func(operator.gt, _arg1, _arg2)
+            is_sorted = np.all(_arg1 > _arg2)
         return is_sorted
 
     # Create slicers to get a view along an axis
@@ -261,10 +263,10 @@ def check_sorted(
     second = [slice(None)] * ndim
     second[axis] = second_slice
 
-    func_np = lambda op, arg1, arg2: np.all(op(arg1, arg2))
-    is_sorted = _do_check(func_np, array[tuple(first)], array[tuple(second)])
+    is_sorted = _do_check(array[tuple(first)], array[tuple(second)])
 
     if not is_sorted:
+        # Show the array's elements in error msg if array is small
         msg_body = f"with {array.size} elements"
         order = "ascending" if ascending else "descending"
         strict_ = "strict " if strict else ""
@@ -302,7 +304,7 @@ def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array
     >>> _validation.check_finite([1, 2, 3])
 
     """
-    array = _cast_to_numpy(array)
+    array = _to_numpy(array)
     if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must have finite values.")
 
@@ -350,7 +352,7 @@ def check_integer(
     >>> _validation.check_integer([1.0, 2.0])
 
     """
-    array = _cast_to_numpy(array)
+    array = _to_numpy(array)
     if strict:
         check_subdtype(array, np.integer)
     elif not np.array_equal(array, np.floor(array)):
@@ -434,7 +436,7 @@ def check_greater_than(
     >>> _validation.check_greater_than([1, 2, 3], value=0)
 
     """
-    array = _cast_to_numpy(array)
+    array = _to_numpy(array)
     if strict:
         op = operator.gt
         msg = f"{name} values must all be greater than {value}."
@@ -495,7 +497,7 @@ def check_less_than(
     >>> _validation.check_less_than([-1, -2, -3], value=0)
 
     """
-    array = _cast_to_numpy(array)
+    array = _to_numpy(array)
     if strict:
         op = operator.lt
         msg = f"{name} values must all be less than {value}."
@@ -563,11 +565,11 @@ def check_range(
     >>> _validation.check_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng = _cast_to_numpy(rng)
-    array = _cast_to_numpy(array)
-
+    rng = _to_numpy(rng)
     check_shape(rng, 2, name="Range")
     check_sorted(rng, name="Range")
+
+    array = _to_numpy(array)
     check_greater_than(array, rng[0], strict=strict_lower, name=name)
     check_less_than(array, rng[1], strict=strict_upper, name=name)
 
@@ -1190,7 +1192,7 @@ def check_length(
     array_len = len(sized_input)
 
     if exact_length is not None:
-        exact_length = np.atleast_1d(_cast_to_numpy(exact_length))
+        exact_length = np.atleast_1d(exact_length)
         check_integer(exact_length, name="Exact length")
         if array_len not in exact_length:
             raise ValueError(

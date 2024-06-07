@@ -650,7 +650,6 @@ def test_check_real():
     check_real(1)
     check_real(-2.0)
     check_real(np.array(2.0, dtype="uint8"))
-    check_real(np.array(True, dtype=bool))
     match = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
