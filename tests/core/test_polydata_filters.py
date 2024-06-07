@@ -71,6 +71,7 @@ def test_decimate_polylines(poly_circle):
     assert decimated.n_points >= 14
     assert decimated.n_points <= 16
 
+
 def test_decimate_polylines_maximum_error(poly_circle):
     assert poly_circle.n_points == 30
     # low maximum error will prevent decimation.
