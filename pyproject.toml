@@ -150,6 +150,10 @@ markers = [
     'needs_download: this test downloads data during execution',
 ]
 image_cache_dir = "tests/plotting/image_cache"
+minversion = "7"
+log_cli_level = "INFO"
+xfail_strict = true
+addopts = ["-ra", "--strict-config", "--strict-markers"]
 
 [tool.mypy]
 ignore_missing_imports = true
