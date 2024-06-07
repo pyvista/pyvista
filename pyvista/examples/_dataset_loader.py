@@ -60,8 +60,8 @@ from pyvista.core.utilities.fileio import get_ext
 #   1. classes for single file inputs: T -> T
 #   2. classes for multi-file inputs: (T, ...) -> (T, ...)
 # Any properties with these typevars should have a one-to-one mapping for all files
-_FilePropStrType_co = TypeVar("_FilePropStrType_co", str, Tuple[str, ...], covariant=True)
-_FilePropIntType_co = TypeVar("_FilePropIntType_co", int, Tuple[int, ...], covariant=True)
+_FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
+_FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetType = Union[Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]]
@@ -168,7 +168,7 @@ class _Downloadable(Protocol[_FilePropStrType_co]):
         # Make single urls iterable and replace 'raw' with 'blob'
         url_raw = self.source_url_raw
         url_iter = [url_raw] if isinstance(url_raw, str) else url_raw
-        url_blob = [url.replace("/raw/", "/blob/") for url in url_iter]
+        url_blob = [url.replace('/raw/', '/blob/') for url in url_iter]
         return url_blob[0] if isinstance(url_raw, str) else tuple(url_blob)
 
     @property
@@ -386,7 +386,7 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
                 )
                 return read_func(path) if load_func is None else load_func(read_func(path))
             else:
-                raise RuntimeError(f"Error loading dataset from path:\n\t{self.path}")
+                raise RuntimeError(f'Error loading dataset from path:\n\t{self.path}')
 
 
 class _DownloadableFile(_SingleFile, _Downloadable[str]):
@@ -429,7 +429,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             self._download_func = download_file
             self._source_name = Path(path).name if Path(path).is_absolute() else path
 
-        target_file = "" if target_file is None and (get_ext(path) == ".zip") else target_file
+        target_file = '' if target_file is None and (get_ext(path) == '.zip') else target_file
         if target_file is not None:
             # download from archive
             self._download_func = functools.partial(
@@ -446,7 +446,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
                     fullpath = file_from_files(target_file, self.path)
                 except (FileNotFoundError, RuntimeError):
                     # Get folder path
-                    fullpath = os.path.join(USER_DATA_PATH, path + ".unzip", target_file)
+                    fullpath = os.path.join(USER_DATA_PATH, path + '.unzip', target_file)
                     fullpath = fullpath if os.path.isdir(fullpath) else None
             # set the file path as the relative path of the target file if
             # the fullpath could not be resolved (i.e. not yet downloaded)
@@ -549,6 +549,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def path_loadable(self) -> Tuple[str, ...]:
+
         return tuple(
             [
                 file.path
@@ -613,7 +614,7 @@ class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable
         return tuple(path_out)
 
 
-_ScalarType = TypeVar("_ScalarType", int, str, pv.BaseReader)
+_ScalarType = TypeVar('_ScalarType', int, str, pv.BaseReader)
 
 
 def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_ScalarType]]]):
@@ -742,16 +743,16 @@ def _load_and_merge(files: Sequence[_SingleFile]):
 def _get_file_or_folder_size(filepath) -> int:
     if os.path.isfile(filepath):
         return os.path.getsize(filepath)
-    assert os.path.isdir(filepath), "Expected a file or folder path."
+    assert os.path.isdir(filepath), 'Expected a file or folder path.'
     all_filepaths = _get_all_nested_filepaths(filepath)
     return sum(os.path.getsize(file) for file in all_filepaths)
 
 
 def _format_file_size(size: int) -> str:
     size_flt = float(size)
-    for unit in ("B", "KB", "MB"):
+    for unit in ('B', 'KB', 'MB'):
         if round(size_flt * 10) / 10 < 1000.0:
-            return f"{int(size_flt)} {unit}" if unit == "B" else f"{size_flt:3.1f} {unit}"
+            return f"{int(size_flt)} {unit}" if unit == 'B' else f"{size_flt:3.1f} {unit}"
         size_flt /= 1000.0
     return f"{size_flt:.1f} GB"
 
@@ -760,7 +761,7 @@ def _get_file_or_folder_ext(path: str):
     """Wrap the `get_ext` function to handle special cases for directories."""
     if os.path.isfile(path):
         return get_ext(path)
-    assert os.path.isdir(path), "Expected a file or folder path."
+    assert os.path.isdir(path), 'Expected a file or folder path.'
     all_paths = _get_all_nested_filepaths(path)
     ext = [get_ext(file) for file in all_paths]
     assert len(ext) != 0, f'No files with extensions were found in"\n\t{path}'
@@ -773,7 +774,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     Optionally exclude any readme files (if any).
     """
     assert os.path.isfile(filepath) or os.path.isdir(filepath)
-    condition = lambda name: True if not exclude_readme else not name.lower().startswith("readme")
+    condition = lambda name: True if not exclude_readme else not name.lower().startswith('readme')
     return next(
         [os.path.join(path, name) for name in files if condition(name)]
         for path, _, files in os.walk(filepath)

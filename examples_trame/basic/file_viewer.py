@@ -40,7 +40,7 @@ def handle(file_exchange, **kwargs):
             print(file.info)
             bytes_ = file.content
             with tempfile.NamedTemporaryFile(suffix=file.name) as path:
-                with Path(path.name).open("wb") as f:
+                with Path(path.name).open('wb') as f:
                     f.write(bytes_)
                 ds = pv.read(path.name)
             pl.add_mesh(ds, name=file.name)

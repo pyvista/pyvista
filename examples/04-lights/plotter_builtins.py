@@ -44,7 +44,7 @@ light_types
 
 mesh = examples.download_st_helens().warp_by_scalar()
 plotter = pv.Plotter()
-plotter.add_mesh(mesh, color="white")
+plotter.add_mesh(mesh, color='white')
 plotter.show()
 
 
@@ -57,14 +57,14 @@ plotter.show()
 # the top, but having more contrast with views closer to the side. This becomes
 # especially clear when exploring the figures interactively.
 
-plotter = pv.Plotter(lighting="three lights")
-plotter.add_mesh(mesh, color="white")
+plotter = pv.Plotter(lighting='three lights')
+plotter.add_mesh(mesh, color='white')
 plotter.show()
 
 ###############################################################################
 # Again we can check what kind of lights this setting uses:
 
-plotter = pv.Plotter(lighting="three lights")
+plotter = pv.Plotter(lighting='three lights')
 light_types = [light.light_type for light in plotter.renderer.lights]
 
 # Remove from plotters so output is not produced in docs
@@ -82,8 +82,8 @@ light_types
 # scene will often result in ominous visuals due to objects having
 # larger regions in shadow.
 
-plotter = pv.Plotter(lighting="none", window_size=(1000, 1000))
-plotter.add_mesh(mesh, color="white", smooth_shading=True)
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
+plotter.add_mesh(mesh, color='white', smooth_shading=True)
 light = pv.Light()
 light.set_direction_angle(30, -20)
 plotter.add_light(light)
@@ -98,8 +98,8 @@ plotter.show()
 # angle has.  It has a subtle, but realistic effect.  Notice the sharp
 # shadows due to the mountaintop.
 
-plotter = pv.Plotter(lighting="none", window_size=(1000, 1000))
-plotter.add_mesh(mesh, color="white", smooth_shading=True)
+plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
+plotter.add_mesh(mesh, color='white', smooth_shading=True)
 light = pv.Light()
 light.set_direction_angle(20, -20)
 plotter.add_light(light)

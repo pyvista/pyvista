@@ -146,8 +146,8 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]],
         ]
     ] = {
-        ".vtk": _vtk.vtkRectilinearGridWriter,
-        ".vtr": _vtk.vtkXMLRectilinearGridWriter,
+        '.vtk': _vtk.vtkRectilinearGridWriter,
+        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
     }
 
     def __init__(
@@ -171,7 +171,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
-                raise TypeError(f"Type ({type(args[0])}) not understood by `RectilinearGrid`")
+                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
@@ -273,7 +273,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             List of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing="ij")
+        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
@@ -310,7 +310,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         """
         xx, yy, zz = self.meshgrid
-        return np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")]
+        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(self, points):  # numpydoc ignore=PR01
@@ -550,8 +550,8 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     _WRITERS: ClassVar[
         Dict[str, Union[Type[_vtk.vtkDataSetWriter], Type[_vtk.vtkXMLImageDataWriter]]]
     ] = {
-        ".vtk": _vtk.vtkDataSetWriter,
-        ".vti": _vtk.vtkXMLImageDataWriter,
+        '.vtk': _vtk.vtkDataSetWriter,
+        '.vti': _vtk.vtkXMLImageDataWriter,
     }
 
     def __init__(
@@ -667,8 +667,8 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
-        return np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")]
+        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(self, points):  # numpydoc ignore=PR01
@@ -743,7 +743,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
         >>> _ = pl.add_axes_at_origin(ylabel=None)
-        >>> pl.camera_position = "xz"
+        >>> pl.camera_position = 'xz'
         >>> pl.show()
 
         Set the origin to ``(1, 1, 1)`` and show how this shifts the
@@ -753,7 +753,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(grid, show_edges=True)
         >>> _ = pl.add_axes_at_origin(ylabel=None)
-        >>> pl.camera_position = "xz"
+        >>> pl.camera_position = 'xz'
         >>> pl.show()
 
         """
@@ -879,7 +879,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
     @extent.setter
     def extent(self, new_extent: Sequence[int]):  # numpydoc ignore=GL08
         if len(new_extent) != 6:
-            raise ValueError("Extent must be a vector of 6 values.")
+            raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)
 
     @wraps(RectilinearGridFilters.to_tetrahedra)

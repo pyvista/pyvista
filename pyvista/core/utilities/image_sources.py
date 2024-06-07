@@ -254,7 +254,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ["_whole_extent", "whole_extent"]
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(
         self,
@@ -401,7 +401,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ["_whole_extent", "whole_extent"]
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(
         self,
@@ -588,7 +588,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ["_whole_extent", "whole_extent"]
+    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
         super().__init__()

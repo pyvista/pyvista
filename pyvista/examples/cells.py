@@ -34,8 +34,8 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
     if edges.n_cells:
-        pl.add_mesh(grid.extract_all_edges(), line_width=5, color="k", render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=30, color="r")
+        pl.add_mesh(grid.extract_all_edges(), line_width=5, color='k', render_lines_as_tubes=True)
+    pl.add_points(grid, render_points_as_spheres=True, point_size=30, color='r')
     pl.add_point_labels(
         grid.points,
         range(grid.n_points),
@@ -271,7 +271,7 @@ def Triangle() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Triangle()
-    >>> examples.plot_cell(grid, cpos="xy")
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -310,7 +310,7 @@ def TriangleStrip() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.TriangleStrip()
-    >>> examples.plot_cell(grid, cpos="xy")
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -441,7 +441,7 @@ def Pixel() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Pixel()
-    >>> examples.plot_cell(grid, cpos="xy")
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 
@@ -481,7 +481,7 @@ def Quadrilateral() -> UnstructuredGrid:
 
     >>> from pyvista import examples
     >>> grid = examples.cells.Quadrilateral()
-    >>> examples.plot_cell(grid, cpos="xy")
+    >>> examples.plot_cell(grid, cpos='xy')
 
     List the grid's cells.
 

@@ -48,7 +48,7 @@ with SinglePageLayout(server) as layout:
 
     with layout.toolbar:
         # Make sure `mode` matches
-        viewer.ui_controls(mode="trame")
+        viewer.ui_controls(mode='trame')
 
         vuetify3.VSpacer()
 
@@ -65,7 +65,7 @@ with SinglePageLayout(server) as layout:
 
     with layout.content:
         # Use PyVista UI template for Plotters
-        view = viewer.ui(add_menu=False, mode="trame")
+        view = viewer.ui(add_menu=False, mode='trame')
         ctrl.view_update = view.update
 
     # hide footer

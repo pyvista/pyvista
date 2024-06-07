@@ -15,7 +15,7 @@ A user-defined Foo class is defined that extends the functionality of
 >>> class Foo(pv.PolyData):
 ...     pass  # Extend PolyData here
 ...
->>> pv._wrappers["vtkPolyData"] = Foo
+>>> pv._wrappers['vtkPolyData'] = Foo
 >>> image = pv.ImageData()
 >>> surface = image.extract_surface()
 >>> assert isinstance(surface, Foo)
@@ -37,16 +37,16 @@ from .pointset import StructuredGrid
 from .pointset import UnstructuredGrid
 
 _wrappers = {
-    "vtkExplicitStructuredGrid": ExplicitStructuredGrid,
-    "vtkUnstructuredGrid": UnstructuredGrid,
-    "vtkRectilinearGrid": RectilinearGrid,
-    "vtkStructuredGrid": StructuredGrid,
-    "vtkPolyData": PolyData,
-    "vtkImageData": ImageData,
-    "vtkStructuredPoints": ImageData,
-    "vtkMultiBlockDataSet": MultiBlock,
-    "vtkTable": Table,
-    "vtkPointSet": PointSet,
-    "vtkPartitionedDataSet": PartitionedDataSet,
+    'vtkExplicitStructuredGrid': ExplicitStructuredGrid,
+    'vtkUnstructuredGrid': UnstructuredGrid,
+    'vtkRectilinearGrid': RectilinearGrid,
+    'vtkStructuredGrid': StructuredGrid,
+    'vtkPolyData': PolyData,
+    'vtkImageData': ImageData,
+    'vtkStructuredPoints': ImageData,
+    'vtkMultiBlockDataSet': MultiBlock,
+    'vtkTable': Table,
+    'vtkPointSet': PointSet,
+    'vtkPartitionedDataSet': PartitionedDataSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }

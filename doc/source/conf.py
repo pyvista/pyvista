@@ -46,7 +46,7 @@ if not Path(pyvista.FIGURE_PATH).exists():
 
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
-os.environ["PYVISTA_BUILDING_GALLERY"] = "true"
+os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
 # SG warnings
 import warnings
@@ -95,84 +95,84 @@ extensions = [
 
 # Configuration of pyvista.ext.coverage
 coverage_additional_modules = [
-    "pyvista",
-    "pyvista.errors",
-    "pyvista.report",
+    'pyvista',
+    'pyvista.errors',
+    'pyvista.report',
     # core
-    "pyvista.core.cell",
-    "pyvista.core.celltype",
-    "pyvista.core.composite",
-    "pyvista.core.dataobject",
-    "pyvista.core.dataset",
-    "pyvista.core.datasetattributes",
-    "pyvista.core.errors",
-    "pyvista.core.grid",
-    "pyvista.core.objects",
-    "pyvista.core.pointset",
-    "pyvista.core.pyvista_ndarray",
-    "pyvista.core.filters.composite",
-    "pyvista.core.filters.data_set",
-    "pyvista.core.filters.poly_data",
-    "pyvista.core.filters.structured_grid",
-    "pyvista.core.filters.image_data",
-    "pyvista.core.filters.unstructured_grid",
-    "pyvista.core.utilitis.arrays",
-    "pyvista.core.utilitis.cell_type_helper",
-    "pyvista.core.utilitis.cells",
-    "pyvista.core.utilitis.features",
-    "pyvista.core.utilitis.fileio",
-    "pyvista.core.utilitis.geometric_objects",
-    "pyvista.core.utilitis.helpers",
-    "pyvista.core.utilitis.misc",
-    "pyvista.core.utilitis.observers",
-    "pyvista.core.utilitis.parametric_objects",
-    "pyvista.core.utilitis.points",
-    "pyvista.core.utilitis.reader",
-    "pyvista.core.utilitis.transformations",
+    'pyvista.core.cell',
+    'pyvista.core.celltype',
+    'pyvista.core.composite',
+    'pyvista.core.dataobject',
+    'pyvista.core.dataset',
+    'pyvista.core.datasetattributes',
+    'pyvista.core.errors',
+    'pyvista.core.grid',
+    'pyvista.core.objects',
+    'pyvista.core.pointset',
+    'pyvista.core.pyvista_ndarray',
+    'pyvista.core.filters.composite',
+    'pyvista.core.filters.data_set',
+    'pyvista.core.filters.poly_data',
+    'pyvista.core.filters.structured_grid',
+    'pyvista.core.filters.image_data',
+    'pyvista.core.filters.unstructured_grid',
+    'pyvista.core.utilitis.arrays',
+    'pyvista.core.utilitis.cell_type_helper',
+    'pyvista.core.utilitis.cells',
+    'pyvista.core.utilitis.features',
+    'pyvista.core.utilitis.fileio',
+    'pyvista.core.utilitis.geometric_objects',
+    'pyvista.core.utilitis.helpers',
+    'pyvista.core.utilitis.misc',
+    'pyvista.core.utilitis.observers',
+    'pyvista.core.utilitis.parametric_objects',
+    'pyvista.core.utilitis.points',
+    'pyvista.core.utilitis.reader',
+    'pyvista.core.utilitis.transformations',
     # demos
-    "pyvista.demos.demos",
-    "pyvista.demos.logo",
+    'pyvista.demos.demos',
+    'pyvista.demos.logo',
     # examples
-    "pyvista.examples.cells",
-    "pyvista.examples.downloads",
-    "pyvista.examples.examples",
-    "pyvista.examples.gltf",
-    "pyvista.examples.planets",
-    "pyvista.examples.vrml",
+    'pyvista.examples.cells',
+    'pyvista.examples.downloads',
+    'pyvista.examples.examples',
+    'pyvista.examples.gltf',
+    'pyvista.examples.planets',
+    'pyvista.examples.vrml',
     # plotting
-    "pyvista.plotting.actor_properties",
-    "pyvista.plotting.actor",
-    "pyvista.plotting.axes_actor",
-    "pyvista.plotting.axes",
-    "pyvista.plotting.background_renderer",
-    "pyvista.plotting.camera",
-    "pyvista.plotting.charts",
-    "pyvista.plotting.colors",
-    "pyvista.plotting.composite_mapper",
-    "pyvista.plotting.cube_axes_actor",
-    "pyvista.plotting.errors",
-    "pyvista.plotting.helpers",
-    "pyvista.plotting.lights",
-    "pyvista.plotting.lookup_table",
-    "pyvista.plotting.mapper",
-    "pyvista.plotting.opts",
-    "pyvista.plotting.picking",
-    "pyvista.plotting.plotter",
-    "pyvista.plotting.prop3d",
-    "pyvista.plotting.render_passes",
-    "pyvista.plotting.render_window_interactor",
-    "pyvista.plotting.renderer",
-    "pyvista.plotting.renderers",
-    "pyvista.plotting.scalar_bars",
-    "pyvista.plotting.texture",
-    "pyvista.plotting.themes",
-    "pyvista.plotting.tools",
-    "pyvista.plotting.volume_property",
-    "pyvista.plotting.volume",
-    "pyvista.plotting.widgets",
+    'pyvista.plotting.actor_properties',
+    'pyvista.plotting.actor',
+    'pyvista.plotting.axes_actor',
+    'pyvista.plotting.axes',
+    'pyvista.plotting.background_renderer',
+    'pyvista.plotting.camera',
+    'pyvista.plotting.charts',
+    'pyvista.plotting.colors',
+    'pyvista.plotting.composite_mapper',
+    'pyvista.plotting.cube_axes_actor',
+    'pyvista.plotting.errors',
+    'pyvista.plotting.helpers',
+    'pyvista.plotting.lights',
+    'pyvista.plotting.lookup_table',
+    'pyvista.plotting.mapper',
+    'pyvista.plotting.opts',
+    'pyvista.plotting.picking',
+    'pyvista.plotting.plotter',
+    'pyvista.plotting.prop3d',
+    'pyvista.plotting.render_passes',
+    'pyvista.plotting.render_window_interactor',
+    'pyvista.plotting.renderer',
+    'pyvista.plotting.renderers',
+    'pyvista.plotting.scalar_bars',
+    'pyvista.plotting.texture',
+    'pyvista.plotting.themes',
+    'pyvista.plotting.tools',
+    'pyvista.plotting.volume_property',
+    'pyvista.plotting.volume',
+    'pyvista.plotting.widgets',
 ]
 coverage_ignore_modules = [
-    r"\.plot_directive$",  # Issue with class parameter documentation
+    r'\.plot_directive$',  # Issue with class parameter documentation
 ]
 
 
@@ -204,24 +204,24 @@ numpydoc_xref_param_type = True
 
 # linkcheck ignore entries
 nitpick_ignore_regex = [
-    (r"py:.*", ".*ColorLike"),
-    (r"py:.*", ".*lookup_table_ndarray"),
-    (r"py:.*", "ActiveArrayInfo"),
-    (r"py:.*", "FieldAssociation"),
-    (r"py:.*", "VTK"),
-    (r"py:.*", "colors.Colormap"),
-    (r"py:.*", "cycler.Cycler"),
-    (r"py:.*", "ipywidgets.Widget"),
-    (r"py:.*", "meshio.*"),
-    (r"py:.*", "networkx.*"),
-    (r"py:.*", "of"),
-    (r"py:.*", "optional"),
-    (r"py:.*", "or"),
-    (r"py:.*", "pyvista.LookupTable.n_values"),
-    (r"py:.*", "pyvista.PVDDataSet"),
-    (r"py:.*", "sys.float_info.max"),
-    (r"py:.*", "various"),
-    (r"py:.*", "vtk.*"),
+    (r'py:.*', '.*ColorLike'),
+    (r'py:.*', '.*lookup_table_ndarray'),
+    (r'py:.*', 'ActiveArrayInfo'),
+    (r'py:.*', 'FieldAssociation'),
+    (r'py:.*', 'VTK'),
+    (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'cycler.Cycler'),
+    (r'py:.*', 'ipywidgets.Widget'),
+    (r'py:.*', 'meshio.*'),
+    (r'py:.*', 'networkx.*'),
+    (r'py:.*', 'of'),
+    (r'py:.*', 'optional'),
+    (r'py:.*', 'or'),
+    (r'py:.*', 'pyvista.LookupTable.n_values'),
+    (r'py:.*', 'pyvista.PVDDataSet'),
+    (r'py:.*', 'sys.float_info.max'),
+    (r'py:.*', 'various'),
+    (r'py:.*', 'vtk.*'),
 ]
 
 
@@ -231,30 +231,30 @@ add_module_names = False
 # NOTE: if these are changed, then doc/intersphinx/update.sh
 # must be changed accordingly to keep auto-updated mappings working
 intersphinx_mapping = {
-    "python": (
-        "https://docs.python.org/3.11",
-        (None, "../intersphinx/python-objects.inv"),
+    'python': (
+        'https://docs.python.org/3.11',
+        (None, '../intersphinx/python-objects.inv'),
     ),  # Pin Python 3.11. See https://github.com/pyvista/pyvista/pull/5018 .
-    "scipy": (
-        "https://docs.scipy.org/doc/scipy/",
-        (None, "../intersphinx/scipy-objects.inv"),
+    'scipy': (
+        'https://docs.scipy.org/doc/scipy/',
+        (None, '../intersphinx/scipy-objects.inv'),
     ),
-    "numpy": ("https://numpy.org/doc/stable", (None, "../intersphinx/numpy-objects.inv")),
-    "matplotlib": (
-        "https://matplotlib.org/stable",
-        (None, "../intersphinx/matplotlib-objects.inv"),
+    'numpy': ('https://numpy.org/doc/stable', (None, '../intersphinx/numpy-objects.inv')),
+    'matplotlib': (
+        'https://matplotlib.org/stable',
+        (None, '../intersphinx/matplotlib-objects.inv'),
     ),
-    "imageio": (
-        "https://imageio.readthedocs.io/en/stable",
-        (None, "../intersphinx/imageio-objects.inv"),
+    'imageio': (
+        'https://imageio.readthedocs.io/en/stable',
+        (None, '../intersphinx/imageio-objects.inv'),
     ),
-    "pandas": (
-        "https://pandas.pydata.org/pandas-docs/stable",
-        (None, "../intersphinx/pandas-objects.inv"),
+    'pandas': (
+        'https://pandas.pydata.org/pandas-docs/stable',
+        (None, '../intersphinx/pandas-objects.inv'),
     ),
-    "pytest": ("https://docs.pytest.org/en/stable", (None, "../intersphinx/pytest-objects.inv")),
-    "pyvistaqt": ("https://qtdocs.pyvista.org/", (None, "../intersphinx/pyvistaqt-objects.inv")),
-    "trimesh": ("https://trimesh.org", (None, "../intersphinx/trimesh-objects.inv")),
+    'pytest': ('https://docs.pytest.org/en/stable', (None, '../intersphinx/pytest-objects.inv')),
+    'pyvistaqt': ('https://qtdocs.pyvista.org/', (None, '../intersphinx/pyvistaqt-objects.inv')),
+    'trimesh': ('https://trimesh.org', (None, '../intersphinx/trimesh-objects.inv')),
 }
 intersphinx_timeout = 10
 
@@ -309,7 +309,7 @@ cname = os.getenv("DOCUMENTATION_CNAME", "docs.pyvista.org")
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = "en"
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -318,10 +318,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", 
 
 # Pages are not detected correct by ``make linkcheck``
 linkcheck_ignore = [
-    "https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183",
-    "https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564",
-    "https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization",
-    "https://docs.pyvista.org/versions.json",
+    'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
+    'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
+    'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
+    'https://docs.pyvista.org/versions.json',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -344,11 +344,11 @@ class ResetPyVista:
         """
         import pyvista
 
-        pyvista._wrappers["vtkPolyData"] = pyvista.PolyData
-        pyvista.set_plot_theme("document")
+        pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+        pyvista.set_plot_theme('document')
 
     def __repr__(self):
-        return "ResetPyVista"
+        return 'ResetPyVista'
 
 
 reset_pyvista = ResetPyVista()
@@ -396,8 +396,8 @@ import re
 # -- .. pyvista-plot:: directive ----------------------------------------------
 from numpydoc.docscrape_sphinx import SphinxDocString
 
-IMPORT_PYVISTA_RE = r"\b(import +pyvista|from +pyvista +import)\b"
-IMPORT_MATPLOTLIB_RE = r"\b(import +matplotlib|from +matplotlib +import)\b"
+IMPORT_PYVISTA_RE = r'\b(import +pyvista|from +pyvista +import)\b'
+IMPORT_MATPLOTLIB_RE = r'\b(import +matplotlib|from +matplotlib +import)\b'
 
 plot_setup = """
 from pyvista import set_plot_theme as __s_p_t
@@ -408,28 +408,28 @@ plot_cleanup = plot_setup
 
 
 def _str_examples(self):
-    examples_str = "\n".join(self["Examples"])
+    examples_str = "\n".join(self['Examples'])
 
     if (
         self.use_plots
         and re.search(IMPORT_MATPLOTLIB_RE, examples_str)
-        and "plot::" not in examples_str
+        and 'plot::' not in examples_str
     ):
         out = []
-        out += self._str_header("Examples")
-        out += [".. plot::", ""]
-        out += self._str_indent(self["Examples"])
-        out += [""]
+        out += self._str_header('Examples')
+        out += ['.. plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
         return out
-    elif re.search(IMPORT_PYVISTA_RE, examples_str) and "plot-pyvista::" not in examples_str:
+    elif re.search(IMPORT_PYVISTA_RE, examples_str) and 'plot-pyvista::' not in examples_str:
         out = []
-        out += self._str_header("Examples")
-        out += [".. pyvista-plot::", ""]
-        out += self._str_indent(self["Examples"])
-        out += [""]
+        out += self._str_header('Examples')
+        out += ['.. pyvista-plot::', '']
+        out += self._str_indent(self['Examples'])
+        out += ['']
         return out
     else:
-        return self._str_section("Examples")
+        return self._str_section('Examples')
 
 
 SphinxDocString._str_examples = _str_examples
@@ -513,8 +513,8 @@ panels_add_bootstrap_css = False
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = [
-    "cards.css",  # used in card CSS
-    "no_italic.css",  # disable italic for span classes
+    'cards.css',  # used in card CSS
+    'no_italic.css',  # disable italic for span classes
 ]
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -586,7 +586,7 @@ notfound_no_urls_prefix = True
 
 # Copy button customization ---------------------------------------------------
 # exclude traditional Python prompts from the copied code
-copybutton_prompt_text = r">>> ?|\.\.\. "
+copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
 
 

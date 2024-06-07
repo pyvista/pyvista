@@ -63,7 +63,7 @@ pv.plot(
 # array from 0-255.
 rgba = points - points.min(axis=0)
 rgba /= rgba.max(axis=0)
-pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos="xy", rgba=True)
+pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos='xy', rgba=True)
 
 ###############################################################################
 # Point Cloud Plot Styles
@@ -74,7 +74,7 @@ pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos
 # to create softer points at the expense of render performance.
 #
 # Here's the basic plot again, but with the style as ``'points_gaussian'``:
-pv.plot(points, style="points_gaussian", opacity=0.5, point_size=15)
+pv.plot(points, style='points_gaussian', opacity=0.5, point_size=15)
 
 
 ###############################################################################
@@ -89,21 +89,21 @@ pl = pv.Plotter(shape=(2, 2))
 # Standard points
 actor = pl.add_points(
     points,
-    style="points",
+    style='points',
     emissive=False,
     scalars=rgba,
     rgba=True,
     point_size=10,
     ambient=0.7,
 )
-pl.add_text('"points" not as spheres', color="w")
+pl.add_text('"points" not as spheres', color='w')
 
 # Gaussian points
 pl.subplot(0, 1)
 actor = pl.add_points(
     points,
     render_points_as_spheres=False,
-    style="points_gaussian",
+    style='points_gaussian',
     emissive=False,
     scalars=rgba,
     rgba=True,
@@ -111,36 +111,36 @@ actor = pl.add_points(
     point_size=10,
     ambient=1.0,
 )
-pl.add_text('"points_gaussian" not as spheres\nemissive=False', color="w")
+pl.add_text('"points_gaussian" not as spheres\nemissive=False', color='w')
 
 # Gaussian points with emissive=True
 pl.subplot(1, 0)
 actor = pl.add_points(
     points,
     render_points_as_spheres=False,
-    style="points_gaussian",
+    style='points_gaussian',
     emissive=True,
     scalars=rgba,
     rgba=True,
     point_size=10,
 )
-pl.add_text('"points_gaussian" not as spheres\nemissive=True', color="w")
+pl.add_text('"points_gaussian" not as spheres\nemissive=True', color='w')
 
 # With render_points_as_spheres=True
 pl.subplot(1, 1)
 actor = pl.add_points(
     points,
-    style="points_gaussian",
+    style='points_gaussian',
     render_points_as_spheres=True,
     scalars=rgba,
     rgba=True,
     point_size=10,
 )
-pl.add_text('"points_gaussian" as spheres', color="w")
+pl.add_text('"points_gaussian" as spheres', color='w')
 
-pl.background_color = "k"
+pl.background_color = 'k'
 pl.link_views()
-pl.camera_position = "xy"
+pl.camera_position = 'xy'
 pl.camera.zoom(1.2)
 pl.show()
 
@@ -157,14 +157,14 @@ scalars = np.linalg.norm(cloud.points - cloud.center, axis=1)
 pl = pv.Plotter(off_screen=True)
 pl.add_mesh(
     cloud,
-    style="points_gaussian",
-    color="#fff7c2",
+    style='points_gaussian',
+    color='#fff7c2',
     scalars=scalars,
     opacity=0.25,
     point_size=4.0,
     show_scalar_bar=False,
 )
-pl.background_color = "k"
+pl.background_color = 'k'
 pl.show(auto_close=False)
 path = pl.generate_orbital_path(n_points=36, shift=cloud.length, factor=3.0)
 pl.open_gif("orbit_cloud.gif")

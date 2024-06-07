@@ -28,14 +28,14 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
         screenshot = None
 
     try:
-        if backend in ["server", "client", "trame", "html"]:
+        if backend in ['server', 'client', 'trame', 'html']:
             from pyvista.trame.jupyter import show_trame
 
             return show_trame(plotter, mode=backend, **kwargs)
 
     except ImportError as e:
         warnings.warn(
-            f"Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.",
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.',
         )
 
     return show_static_image(plotter, screenshot)

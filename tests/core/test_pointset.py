@@ -23,8 +23,8 @@ def test_pointset_basic():
     pset = pv.PointSet()
     assert pset.n_points == 0
     assert pset.n_cells == 0
-    assert "PointSet" in str(pset)
-    assert "PointSet" in repr(pset)
+    assert 'PointSet' in str(pset)
+    assert 'PointSet' in repr(pset)
     assert pset.area == 0
     assert pset.volume == 0
 
@@ -76,7 +76,7 @@ def test_pointset(pointset):
     assert pointset.n_points == pointset.points.shape[0]
     assert pointset.n_cells == 0
 
-    arr_name = "arr"
+    arr_name = 'arr'
     pointset.point_data[arr_name] = np.random.default_rng().random(10)
     assert arr_name in pointset.point_data
 
@@ -94,10 +94,10 @@ def test_save(tmpdir, pointset):
     assert np.allclose(points, pointset.points)
 
 
-@pytest.mark.parametrize("deep", [True, False])
+@pytest.mark.parametrize('deep', [True, False])
 def test_cast_to_polydata(pointset, deep):
     data = np.linspace(0, 1, pointset.n_points)
-    key = "key"
+    key = 'key'
     pointset.point_data[key] = data
 
     pdata = pointset.cast_to_polydata(deep)
@@ -113,7 +113,7 @@ def test_cast_to_polydata(pointset, deep):
 
 def test_cast_to_unstructured_grid(pointset):
     data = np.linspace(0, 1, pointset.n_points)
-    key = "key"
+    key = 'key'
     pointset.point_data[key] = data
 
     pdata = pointset.cast_to_unstructured_grid()
@@ -137,7 +137,7 @@ def test_filters_return_pointset(sphere):
 def test_pointset_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], np.int64)
     if force_float:
-        with pytest.warns(UserWarning, match="Points is not a float type"):
+        with pytest.warns(UserWarning, match='Points is not a float type'):
             pset = pv.PointSet(np_points, force_float=force_float)
     else:
         pset = pv.PointSet(np_points, force_float=force_float)
@@ -158,7 +158,7 @@ def test_points_to_double():
 
 def test_translate():
     np_points = np.array([1, 2, 3], np.int64)
-    with pytest.warns(UserWarning, match="Points is not a float type"):
+    with pytest.warns(UserWarning, match='Points is not a float type'):
         pset = pv.PointSet(np_points)
     pset.translate((4, 3, 2), inplace=True)
     assert np.allclose(pset.center, [5, 5, 5])
@@ -236,14 +236,14 @@ def test_flip_normal():
 
 
 def test_threshold(pointset):
-    pointset["scalars"] = range(pointset.n_points)
+    pointset['scalars'] = range(pointset.n_points)
     out = pointset.threshold(pointset.n_points // 2)
     assert isinstance(out, pv.PointSet)
     assert out.n_points == pointset.n_points // 2
 
 
 def test_threshold_percent(pointset):
-    pointset["scalars"] = range(pointset.n_points)
+    pointset['scalars'] = range(pointset.n_points)
     out = pointset.threshold_percent(50)
     assert isinstance(out, pv.PointSet)
     assert out.n_points == pointset.n_points // 2

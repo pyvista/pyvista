@@ -55,7 +55,7 @@ edges = mesh.extract_feature_edges(
 pl = pyvista.Plotter()
 pl.enable_anti_aliasing()
 pl.add_mesh(mesh, smooth_shading=True, split_sharp_edges=True)
-pl.add_mesh(edges, color="k", line_width=5)
+pl.add_mesh(edges, color='k', line_width=5)
 pl.show()
 
 
@@ -72,5 +72,5 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 
 pl = pyvista.Plotter()
 pl.enable_anti_aliasing()
-pl.add_mesh(mesh, color="w", split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5)
+pl.add_mesh(mesh, color='w', split_sharp_edges=True, pbr=True, metallic=1.0, roughness=0.5)
 pl.show()

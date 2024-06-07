@@ -44,11 +44,11 @@ def test_ssaa_pass():
     assert not passes._passes
     ssaa_pass = passes.enable_ssaa_pass()
     assert isinstance(ssaa_pass, _vtk.vtkSSAAPass)
-    assert list(passes._passes.keys()).count("vtkSSAAPass") == 1
+    assert list(passes._passes.keys()).count('vtkSSAAPass') == 1
 
     # enabling again should not add the pass again
     ssaa_pass = passes.enable_ssaa_pass()
-    assert list(passes._passes.keys()).count("vtkSSAAPass") == 1
+    assert list(passes._passes.keys()).count('vtkSSAAPass') == 1
 
     passes.disable_ssaa_pass()
     assert not passes._passes
@@ -63,11 +63,11 @@ def test_depth_of_field_pass():
     assert not passes._passes
     ren_pass = passes.enable_depth_of_field_pass()
     assert isinstance(ren_pass, _vtk.vtkDepthOfFieldPass)
-    assert list(passes._passes.keys()).count("vtkDepthOfFieldPass") == 1
+    assert list(passes._passes.keys()).count('vtkDepthOfFieldPass') == 1
 
     # enabling again should not add the pass again
     ren_pass = passes.enable_depth_of_field_pass()
-    assert list(passes._passes.keys()).count("vtkDepthOfFieldPass") == 1
+    assert list(passes._passes.keys()).count('vtkDepthOfFieldPass') == 1
 
     passes.disable_depth_of_field_pass()
     assert not passes._passes
@@ -80,14 +80,14 @@ def test_depth_of_field_pass():
 def test_depth_of_field_raise_no_ssao():
     ren, passes = make_passes()
     passes.enable_ssao_pass(0.5, 0.005, 16, False)
-    with pytest.raises(RuntimeError, match="Depth of field pass is incompatible"):
+    with pytest.raises(RuntimeError, match='Depth of field pass is incompatible'):
         passes.enable_depth_of_field_pass()
 
 
 def test_ssao_raise_no_depth_of_field():
     ren, passes = make_passes()
     passes.enable_depth_of_field_pass()
-    with pytest.raises(RuntimeError, match="SSAO pass is incompatible"):
+    with pytest.raises(RuntimeError, match='SSAO pass is incompatible'):
         passes.enable_ssao_pass(0.5, 0.005, 16, False)
 
 
@@ -107,11 +107,11 @@ def test_edl_pass():
     assert not passes._passes
     ren_pass = passes.enable_edl_pass()
     assert isinstance(ren_pass, _vtk.vtkEDLShading)
-    assert list(passes._passes.keys()).count("vtkEDLShading") == 1
+    assert list(passes._passes.keys()).count('vtkEDLShading') == 1
 
     # enabling again should just not add the pass again
     ren_pass = passes.enable_edl_pass()
-    assert list(passes._passes.keys()).count("vtkEDLShading") == 1
+    assert list(passes._passes.keys()).count('vtkEDLShading') == 1
 
     passes.disable_edl_pass()
     assert not passes._passes
@@ -127,11 +127,11 @@ def test_ssao_pass():
 
     ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
     assert isinstance(ren_pass, _vtk.vtkSSAOPass)
-    assert list(passes._passes.keys()).count("vtkSSAOPass") == 1
+    assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     # enabling again should just not add the pass again
     ren_pass = passes.enable_ssao_pass(0.5, 0.005, 16, False)
-    assert list(passes._passes.keys()).count("vtkSSAOPass") == 1
+    assert list(passes._passes.keys()).count('vtkSSAOPass') == 1
 
     passes.disable_ssao_pass()
     assert not passes._passes

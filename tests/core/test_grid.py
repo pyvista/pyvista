@@ -99,7 +99,7 @@ def test_init_bad_input():
         pv.UnstructuredGrid(np.array(1))
 
     with pytest.raises(TypeError, match="must be a numeric type"):
-        pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), "woa")
+        pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
     points = rnd_generator.random((4, 3))
@@ -139,7 +139,7 @@ def test_init_from_arrays():
     assert np.allclose(grid.cell_connectivity, np.arange(16))
 
     # grid.cells is not mutable
-    assert not grid.cells.flags["WRITEABLE"]
+    assert not grid.cells.flags['WRITEABLE']
 
     # but attribute can be set
     new_cells = [8, 0, 1, 2, 3, 4, 5, 6, 7]
@@ -147,8 +147,8 @@ def test_init_from_arrays():
     assert np.allclose(grid.cells, new_cells)
 
 
-@pytest.mark.parametrize("multiple_cell_types", [False, True])
-@pytest.mark.parametrize("flat_cells", [False, True])
+@pytest.mark.parametrize('multiple_cell_types', [False, True])
+@pytest.mark.parametrize('flat_cells', [False, True])
 def test_init_from_dict(multiple_cell_types, flat_cells):
     # Try mixed construction
     vtk_cell_format, cell_type, points = create_hex_example()
@@ -313,7 +313,7 @@ def test_destructor():
 
 def test_surface_indices(hexbeam):
     surf = hexbeam.extract_surface()
-    surf_ind = surf.point_data["vtkOriginalPointIds"]
+    surf_ind = surf.point_data['vtkOriginalPointIds']
     assert np.allclose(surf_ind, hexbeam.surface_indices())
 
 
@@ -330,10 +330,10 @@ def test_triangulate_inplace(hexbeam):
     assert (hexbeam.celltypes == CellType.TETRA).all()
 
 
-@pytest.mark.parametrize("binary", [True, False])
-@pytest.mark.parametrize("extension", pv.UnstructuredGrid._WRITERS)
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join(f"tmp.{extension}"))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
     grid = pv.UnstructuredGrid(filename)
@@ -347,7 +347,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 
 def test_pathlib_read_write(tmpdir, hexbeam):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join("tmp.vtk")))
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
     assert not path.is_file()
     hexbeam.save(path)
     assert path.is_file()
@@ -363,17 +363,17 @@ def test_pathlib_read_write(tmpdir, hexbeam):
 
 
 def test_init_bad_filename():
-    filename = str(Path(test_path) / "test_grid.py")
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.UnstructuredGrid(filename)
 
     with pytest.raises(FileNotFoundError):
-        pv.UnstructuredGrid("not a file")
+        pv.UnstructuredGrid('not a file')
 
 
 def test_save_bad_extension():
     with pytest.raises(FileNotFoundError):
-        pv.UnstructuredGrid("file.abc")
+        pv.UnstructuredGrid('file.abc')
 
 
 def test_linear_copy(hexbeam):
@@ -413,7 +413,7 @@ def test_linear_copy_surf_elem():
     qfilter = vtk.vtkMeshQuality()
     qfilter.SetInputData(lgrid)
     qfilter.Update()
-    qual = pv.wrap(qfilter.GetOutput())["Quality"]
+    qual = pv.wrap(qfilter.GetOutput())['Quality']
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
@@ -425,14 +425,14 @@ def test_extract_cells(hexbeam, invert):
     part_beam = hexbeam.extract_cells(ind, invert=invert)
     assert part_beam.n_cells == len(n_ind)
     assert part_beam.n_points < hexbeam.n_points
-    assert np.allclose(part_beam.cell_data["vtkOriginalCellIds"], n_ind)
+    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], n_ind)
 
     mask = np.zeros(hexbeam.n_cells, dtype=bool)
     mask[ind] = True
     part_beam = hexbeam.extract_cells(ind, invert=invert)
     assert part_beam.n_cells == len(n_ind)
     assert part_beam.n_points < hexbeam.n_points
-    assert np.allclose(part_beam.cell_data["vtkOriginalCellIds"], n_ind)
+    assert np.allclose(part_beam.cell_data['vtkOriginalCellIds'], n_ind)
 
     ind = np.vstack(([1, 2], [4, 5]))[:, 0]
     part_beam = hexbeam.extract_cells(ind)
@@ -476,7 +476,7 @@ def test_merge_invalid(hexbeam, sphere):
 
 def test_init_structured_raise():
     with pytest.raises(TypeError, match="Invalid parameters"):
-        pv.StructuredGrid(["a", "b", "c"])
+        pv.StructuredGrid(['a', 'b', 'c'])
     with pytest.raises(ValueError, match="Too many args"):
         pv.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
@@ -508,9 +508,9 @@ def structured_points():
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
     source = np.empty((x.size, 3), x.dtype)
-    source[:, 0] = x.ravel("F")
-    source[:, 1] = y.ravel("F")
-    source[:, 2] = z.ravel("F")
+    source[:, 0] = x.ravel('F')
+    source[:, 1] = y.ravel('F')
+    source[:, 2] = z.ravel('F')
     return source, (*x.shape, 1)
 
 
@@ -626,12 +626,12 @@ def test_no_copy_rectilinear_grid():
 
 def test_grid_repr(struct_grid):
     str_ = str(struct_grid)
-    assert "StructuredGrid" in str_
-    assert f"N Points:     {struct_grid.n_points}\n" in str_
+    assert 'StructuredGrid' in str_
+    assert f'N Points:     {struct_grid.n_points}\n' in str_
 
     repr_ = repr(struct_grid)
-    assert "StructuredGrid" in repr_
-    assert f"N Points:     {struct_grid.n_points}\n" in repr_
+    assert 'StructuredGrid' in repr_
+    assert f'N Points:     {struct_grid.n_points}\n' in repr_
 
 
 def test_slice_structured(struct_grid):
@@ -662,10 +662,10 @@ def test_invalid_init_structured():
         pv.StructuredGrid(x, y, z)
 
 
-@pytest.mark.parametrize("binary", [True, False])
-@pytest.mark.parametrize("extension", pv.StructuredGrid._WRITERS)
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', pv.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
-    filename = str(tmpdir.mkdir("tmpdir").join(f"tmp.{extension}"))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
     grid = pv.StructuredGrid(filename)
@@ -682,9 +682,9 @@ def test_save_structured(extension, binary, tmpdir, struct_grid):
 
 def test_load_structured_bad_filename():
     with pytest.raises(FileNotFoundError):
-        pv.StructuredGrid("not a file")
+        pv.StructuredGrid('not a file')
 
-    filename = str(Path(test_path) / "test_grid.py")
+    filename = str(Path(test_path) / 'test_grid.py')
     with pytest.raises(IOError):  # noqa: PT011
         pv.StructuredGrid(filename)
 
@@ -933,11 +933,11 @@ def test_image_data_to_tetrahedra():
 
 def test_fft_and_rfft(noise_2d):
     grid = pv.ImageData(dimensions=(10, 10, 1))
-    with pytest.raises(MissingDataError, match="FFT filter requires point scalars"):
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
-    grid["cell_data"] = np.arange(grid.n_cells)
-    with pytest.raises(MissingDataError, match="FFT filter requires point scalars"):
+    grid['cell_data'] = np.arange(grid.n_cells)
+    with pytest.raises(MissingDataError, match='FFT filter requires point scalars'):
         grid.fft()
 
     name = noise_2d.active_scalars_name
@@ -948,10 +948,10 @@ def test_fft_and_rfft(noise_2d):
     assert full_pass[name].dtype == np.complex128
 
     # expect FFT and and RFFT to transform from time --> freq --> time domain
-    assert np.allclose(noise_2d["scalars"], full_pass[name].real)
+    assert np.allclose(noise_2d['scalars'], full_pass[name].real)
     assert np.allclose(full_pass[name].imag, 0)
 
-    output_scalars_name = "out_scalars"
+    output_scalars_name = 'out_scalars'
     # also, disable active scalars to check if it will be automatically set
     noise_2d.active_scalars_name = None
     noise_fft = noise_2d.fft(output_scalars_name=output_scalars_name)
@@ -968,16 +968,16 @@ def test_fft_low_pass(noise_2d):
     name = noise_2d.active_scalars_name
     noise_no_scalars = noise_2d.copy()
     noise_no_scalars.clear_data()
-    with pytest.raises(MissingDataError, match="FFT filters require point scalars"):
+    with pytest.raises(MissingDataError, match='FFT filters require point scalars'):
         noise_no_scalars.low_pass(1, 1, 1)
 
     noise_too_many_scalars = noise_no_scalars.copy()
-    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), "a")
-    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), "b")
-    with pytest.raises(AmbiguousDataError, match="There are multiple point scalars available"):
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'a')
+    noise_too_many_scalars.point_data.set_array(np.arange(noise_2d.n_points), 'b')
+    with pytest.raises(AmbiguousDataError, match='There are multiple point scalars available'):
         noise_too_many_scalars.low_pass(1, 1, 1)
 
-    with pytest.raises(ValueError, match="must be complex data"):
+    with pytest.raises(ValueError, match='must be complex data'):
         noise_2d.low_pass(1, 1, 1)
 
     out_zeros = noise_2d.fft().low_pass(0, 0, 0)
@@ -996,10 +996,10 @@ def test_fft_high_pass(noise_2d):
     assert not np.allclose(out[name], 0)
 
 
-@pytest.mark.parametrize("binary", [True, False])
-@pytest.mark.parametrize("extension", [".vtk", ".vtr"])
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f"tmp.{extension}"))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pv.RectilinearGrid(filename)
@@ -1017,10 +1017,10 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert grid.dimensions == ogrid.dimensions
 
 
-@pytest.mark.parametrize("binary", [True, False])
-@pytest.mark.parametrize("extension", [".vtk", ".vti"])
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['.vtk', '.vti'])
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f"tmp.{extension}"))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pv.ImageData(filename)
@@ -1041,8 +1041,8 @@ def test_grid_points():
     # test creation of 2d grids
     x = y = range(3)
     z = [0]
-    xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
-    points = np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")]
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
     grid = pv.ImageData()
     with pytest.raises(AttributeError):
         grid.points = points
@@ -1069,7 +1069,7 @@ def test_grid_points():
     with pytest.raises(AttributeError):
         grid.points = points
     x, y, z = np.array([0, 1, 3]), np.array([0, 2.5, 5]), np.array([0, 1])
-    xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
     grid.x = x
     grid.y = y
     grid.z = z
@@ -1077,7 +1077,7 @@ def test_grid_points():
     assert np.allclose(grid.meshgrid, (xx, yy, zz))
     assert np.allclose(
         grid.points,
-        np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")],
+        np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')],
     )
 
 
@@ -1107,13 +1107,13 @@ def test_gaussian_smooth(hexbeam):
     assert not np.all(uniform.active_scalars == values)
 
 
-@pytest.mark.parametrize("ind", [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+@pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells(ind, hexbeam):
     grid_copy = hexbeam.remove_cells(ind)
     assert grid_copy.n_cells < hexbeam.n_cells
 
 
-@pytest.mark.parametrize("ind", [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
+@pytest.mark.parametrize('ind', [range(10), np.arange(10), HEXBEAM_CELLS_BOOL])
 def test_remove_cells_not_inplace(ind, hexbeam):
     grid_copy = hexbeam.copy()  # copy to protect
     grid_w_removed = grid_copy.remove_cells(ind)
@@ -1127,7 +1127,7 @@ def test_remove_cells_invalid(hexbeam):
         grid_copy.remove_cells(np.ones(10, dtype=bool), inplace=True)
 
 
-@pytest.mark.parametrize("ind", [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
+@pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_CELLS_BOOL])
 def test_hide_cells(ind, struct_grid):
     struct_grid.hide_cells(ind, inplace=True)
     assert struct_grid.HasAnyBlankCells()
@@ -1136,16 +1136,16 @@ def test_hide_cells(ind, struct_grid):
     assert id(out) != id(struct_grid)
     assert out.HasAnyBlankCells()
 
-    with pytest.raises(ValueError, match="Boolean array size must match"):
+    with pytest.raises(ValueError, match='Boolean array size must match'):
         struct_grid.hide_cells(np.ones(10, dtype=bool), inplace=True)
 
 
-@pytest.mark.parametrize("ind", [range(10), np.arange(10), STRUCTGRID_POINTS_BOOL])
+@pytest.mark.parametrize('ind', [range(10), np.arange(10), STRUCTGRID_POINTS_BOOL])
 def test_hide_points(ind, struct_grid):
     struct_grid.hide_points(ind)
     assert struct_grid.HasAnyBlankPoints()
 
-    with pytest.raises(ValueError, match="Boolean array size must match"):
+    with pytest.raises(ValueError, match='Boolean array size must match'):
         struct_grid.hide_points(np.ones(10, dtype=bool))
 
 
@@ -1177,11 +1177,11 @@ def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     assert grid.n_cells == 120
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
-    assert "BLOCK_I" in grid.cell_data
-    assert "BLOCK_J" in grid.cell_data
-    assert "BLOCK_K" in grid.cell_data
-    assert "vtkGhostType" in grid.cell_data
-    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 40
+    assert 'BLOCK_I' in grid.cell_data
+    assert 'BLOCK_J' in grid.cell_data
+    assert 'BLOCK_K' in grid.cell_data
+    assert 'vtkGhostType' in grid.cell_data
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
 
 def test_ExplicitStructuredGrid_init():
@@ -1191,77 +1191,77 @@ def test_ExplicitStructuredGrid_init():
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
     assert repr(grid) == str(grid)
-    assert "N Cells" in str(grid)
-    assert "N Points" in str(grid)
-    assert "N Arrays" in str(grid)
+    assert 'N Cells' in str(grid)
+    assert 'N Points' in str(grid)
+    assert 'N Arrays' in str(grid)
 
 
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     block_i = np.fromstring(
-        """
+        '''
         0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0
         1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1
         2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2
         3 0 1 2 3 0 1 2 3
-        """,
-        sep=" ",
+        ''',
+        sep=' ',
         dtype=int,
     )
 
     block_j = np.fromstring(
-        """
+        '''
         0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4
         4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3
         3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2
         2 3 3 3 3 4 4 4 4
-        """,
-        sep=" ",
+        ''',
+        sep=' ',
         dtype=int,
     )
 
     block_k = np.fromstring(
-        """
+        '''
         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
         1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3
         3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 5 5
         5 5 5 5 5 5 5 5 5
-        """,
-        sep=" ",
+        ''',
+        sep=' ',
         dtype=int,
     )
 
     grid = examples.load_explicit_structured()
     grid = grid.cast_to_unstructured_grid()
     assert isinstance(grid, pv.UnstructuredGrid)
-    assert "BLOCK_I" in grid.cell_data
-    assert "BLOCK_J" in grid.cell_data
-    assert "BLOCK_K" in grid.cell_data
-    assert np.array_equal(grid.cell_data["BLOCK_I"], block_i)
-    assert np.array_equal(grid.cell_data["BLOCK_J"], block_j)
-    assert np.array_equal(grid.cell_data["BLOCK_K"], block_k)
+    assert 'BLOCK_I' in grid.cell_data
+    assert 'BLOCK_J' in grid.cell_data
+    assert 'BLOCK_K' in grid.cell_data
+    assert np.array_equal(grid.cell_data['BLOCK_I'], block_i)
+    assert np.array_equal(grid.cell_data['BLOCK_J'], block_j)
+    assert np.array_equal(grid.cell_data['BLOCK_K'], block_k)
 
 
 def test_ExplicitStructuredGrid_save():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
-    grid.save("grid.vtu")
-    grid = pv.ExplicitStructuredGrid("grid.vtu")
+    grid.save('grid.vtu')
+    grid = pv.ExplicitStructuredGrid('grid.vtu')
     assert grid.n_cells == 120
     assert grid.n_points == 210
     assert grid.bounds == (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
-    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 40
-    Path("grid.vtu").unlink()
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
+    Path('grid.vtu').unlink()
 
 
 def test_ExplicitStructuredGrid_hide_cells():
     ghost = np.asarray(
-        """
+        '''
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
     32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
-    """.split(),
+    '''.split(),
         dtype=np.uint8,
     )
 
@@ -1269,14 +1269,14 @@ def test_ExplicitStructuredGrid_hide_cells():
 
     copy = grid.hide_cells(range(80, 120))
     assert isinstance(copy, pv.ExplicitStructuredGrid)
-    assert "vtkGhostType" in copy.cell_data
-    assert "vtkGhostType" not in grid.cell_data
-    assert np.array_equal(copy.cell_data["vtkGhostType"], ghost)
+    assert 'vtkGhostType' in copy.cell_data
+    assert 'vtkGhostType' not in grid.cell_data
+    assert np.array_equal(copy.cell_data['vtkGhostType'], ghost)
 
     out = grid.hide_cells(range(80, 120), inplace=True)
     assert out is grid
-    assert "vtkGhostType" in grid.cell_data
-    assert np.array_equal(grid.cell_data["vtkGhostType"], ghost)
+    assert 'vtkGhostType' in grid.cell_data
+    assert np.array_equal(grid.cell_data['vtkGhostType'], ghost)
 
 
 def test_ExplicitStructuredGrid_show_cells():
@@ -1285,13 +1285,13 @@ def test_ExplicitStructuredGrid_show_cells():
 
     copy = grid.show_cells()
     assert isinstance(copy, pv.ExplicitStructuredGrid)
-    assert "vtkGhostType" in copy.cell_data
-    assert np.count_nonzero(copy.cell_data["vtkGhostType"]) == 0
-    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 40
+    assert 'vtkGhostType' in copy.cell_data
+    assert np.count_nonzero(copy.cell_data['vtkGhostType']) == 0
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
     out = grid.show_cells(inplace=True)
     assert out is grid
-    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 0
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 0
 
 
 def test_ExplicitStructuredGrid_dimensions():
@@ -1342,19 +1342,19 @@ def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
 
     with pytest.raises(ValueError, match="Invalid value for `rel`"):
-        indices = grid.neighbors(0, rel="foo")
+        indices = grid.neighbors(0, rel='foo')
 
-    indices = grid.neighbors(0, rel="topological")
+    indices = grid.neighbors(0, rel='topological')
     assert isinstance(indices, list)
     assert all(np.issubdtype(ind, np.integer) for ind in indices)
     assert indices == [1, 4, 20]
 
-    indices = grid.neighbors(0, rel="connectivity")
+    indices = grid.neighbors(0, rel='connectivity')
     assert isinstance(indices, list)
     assert all(np.issubdtype(ind, np.integer) for ind in indices)
     assert indices == [1, 4, 20]
 
-    indices = grid.neighbors(0, rel="geometric")
+    indices = grid.neighbors(0, rel='geometric')
     assert isinstance(indices, list)
     assert all(np.issubdtype(ind, np.integer) for ind in indices)
     assert indices == [1, 4, 20]
@@ -1362,54 +1362,54 @@ def test_ExplicitStructuredGrid_neighbors():
 
 def test_ExplicitStructuredGrid_compute_connectivity():
     connectivity = np.asarray(
-        """
+        '''
     42 43 43 41 46 47 47 45 46 47 47 45 46 47 47 45 38 39 39 37 58 59 59 57
     62 63 63 61 62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61
     62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61
     62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61 62 63 63 61
     54 55 55 53 26 27 27 25 30 31 31 29 30 31 31 29 30 31 31 29 22 23 23 21
-    """.split(),
+    '''.split(),
         dtype=int,
     )
 
     grid = examples.load_explicit_structured()
-    assert "ConnectivityFlags" not in grid.cell_data
+    assert 'ConnectivityFlags' not in grid.cell_data
 
     copy = grid.compute_connectivity()
     assert isinstance(copy, pv.ExplicitStructuredGrid)
-    assert "ConnectivityFlags" in copy.cell_data
-    assert "ConnectivityFlags" not in grid.cell_data
-    assert np.array_equal(copy.cell_data["ConnectivityFlags"], connectivity)
+    assert 'ConnectivityFlags' in copy.cell_data
+    assert 'ConnectivityFlags' not in grid.cell_data
+    assert np.array_equal(copy.cell_data['ConnectivityFlags'], connectivity)
 
     out = grid.compute_connectivity(inplace=True)
     assert out is grid
-    assert "ConnectivityFlags" in grid.cell_data
-    assert np.array_equal(grid.cell_data["ConnectivityFlags"], connectivity)
+    assert 'ConnectivityFlags' in grid.cell_data
+    assert np.array_equal(grid.cell_data['ConnectivityFlags'], connectivity)
 
 
 def test_ExplicitStructuredGrid_compute_connections():
     connections = np.asarray(
-        """
+        '''
     3 4 4 3 4 5 5 4 4 5 5 4 4 5 5 4 3 4 4 3 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4
     5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6
     6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 3 4 4 3 4 5 5 4 4 5 5
     4 4 5 5 4 3 4 4 3
-    """.split(),
+    '''.split(),
         dtype=int,
     )
 
     grid = examples.load_explicit_structured()
-    assert "number_of_connections" not in grid.cell_data
+    assert 'number_of_connections' not in grid.cell_data
 
     copy = grid.compute_connections()
     assert isinstance(copy, pv.ExplicitStructuredGrid)
-    assert "number_of_connections" in copy.cell_data
-    assert "number_of_connections" not in grid.cell_data
-    assert np.array_equal(copy.cell_data["number_of_connections"], connections)
+    assert 'number_of_connections' in copy.cell_data
+    assert 'number_of_connections' not in grid.cell_data
+    assert np.array_equal(copy.cell_data['number_of_connections'], connections)
 
     grid.compute_connections(inplace=True)
-    assert "number_of_connections" in grid.cell_data
-    assert np.array_equal(grid.cell_data["number_of_connections"], connections)
+    assert 'number_of_connections' in grid.cell_data
+    assert np.array_equal(grid.cell_data['number_of_connections'], connections)
 
 
 def test_ExplicitStructuredGrid_raise_init():

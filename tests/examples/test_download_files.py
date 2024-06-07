@@ -19,7 +19,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 
-if "TEST_DOWNLOADS" in os.environ:
+if 'TEST_DOWNLOADS' in os.environ:
     warnings.warn('"TEST_DOWNLOADS" has been deprecated. Use `pytest --test_downloads`')
 
 pytestmark = pytest.mark.needs_download
@@ -121,7 +121,7 @@ def test_download_blood_vessels():
 
     data = examples.download_blood_vessels()
     assert isinstance(data, pv.UnstructuredGrid)
-    assert data.active_vectors_name == "velocity"
+    assert data.active_vectors_name == 'velocity'
 
 
 def test_download_bunny_coarse():
@@ -147,9 +147,9 @@ def test_download_iron_protein():
 def test_download_tetra_dc_mesh():
     data = examples.download_tetra_dc_mesh()
     assert data.n_blocks == 2
-    assert data.keys() == ["forward", "inverse"]
-    assert data["forward"].active_scalars_name == "Resistivity(log10)-fwd"
-    assert data["inverse"].active_scalars_name == "Resistivity(log10)"
+    assert data.keys() == ['forward', 'inverse']
+    assert data['forward'].active_scalars_name == 'Resistivity(log10)-fwd'
+    assert data['inverse'].active_scalars_name == 'Resistivity(log10)'
 
 
 def test_download_tetrahedron():
@@ -589,17 +589,17 @@ def test_download_cubemap_park():
 def test_download_gif_simple():
     filename = examples.download_gif_simple(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("gif")
+    assert filename.endswith('gif')
 
     dataset = examples.download_gif_simple(load=True)
     assert isinstance(dataset, pv.ImageData)
-    assert "frame0" in dataset.point_data
+    assert 'frame0' in dataset.point_data
 
 
 def test_download_black_vase():
     filename = examples.download_black_vase(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_black_vase(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -609,7 +609,7 @@ def test_download_black_vase():
 def test_download_ivan_angel():
     filename = examples.download_ivan_angel(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_ivan_angel(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -619,7 +619,7 @@ def test_download_ivan_angel():
 def test_download_bird_bath():
     filename = examples.download_bird_bath(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_bird_bath(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -629,7 +629,7 @@ def test_download_bird_bath():
 def test_download_owl():
     filename = examples.download_owl(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_owl(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -639,7 +639,7 @@ def test_download_owl():
 def test_download_plastic_vase():
     filename = examples.download_plastic_vase(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_plastic_vase(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -649,7 +649,7 @@ def test_download_plastic_vase():
 def test_download_sea_vase():
     filename = examples.download_sea_vase(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_sea_vase(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -659,7 +659,7 @@ def test_download_sea_vase():
 def test_download_sparse_points():
     filename = examples.download_sparse_points(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("txt")
+    assert filename.endswith('txt')
 
     dataset = examples.download_sparse_points(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -736,7 +736,7 @@ def test_download_embryo():
 
     dataset = examples.download_embryo()
     assert isinstance(dataset, pv.ImageData)
-    assert not np.any(dataset["SLCImage"] == 255)
+    assert not np.any(dataset['SLCImage'] == 255)
 
 
 def test_download_antarctica_velocity():
@@ -954,7 +954,7 @@ def test_download_gltf_avocado():
 def test_download_cloud_dark_matter():
     filename = examples.download_cloud_dark_matter(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("npy")
+    assert filename.endswith('npy')
 
     dataset = examples.download_cloud_dark_matter(load=True)
     assert isinstance(dataset, pv.DataSet)
@@ -965,7 +965,7 @@ def test_download_cloud_dark_matter():
 def test_download_cloud_dark_matter_dense():
     filename = examples.download_cloud_dark_matter_dense(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("npy")
+    assert filename.endswith('npy')
 
     dataset = examples.download_cloud_dark_matter_dense(load=True)
     assert isinstance(dataset, pv.DataSet)
@@ -975,7 +975,7 @@ def test_download_cloud_dark_matter_dense():
 def test_download_stars_cloud_hyg():
     filename = examples.download_stars_cloud_hyg(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_stars_cloud_hyg(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -985,7 +985,7 @@ def test_download_stars_cloud_hyg():
 def test_download_cad_model_case():
     filename = examples.download_cad_model_case(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtp")
+    assert filename.endswith('vtp')
 
     dataset = examples.download_cad_model_case(load=True)
     assert isinstance(dataset, pv.PolyData)
@@ -995,7 +995,7 @@ def test_download_cad_model_case():
 def test_download_aero_bracket():
     filename = examples.download_aero_bracket(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vtu")
+    assert filename.endswith('vtu')
 
     dataset = examples.download_aero_bracket(load=True)
     assert isinstance(dataset, pv.UnstructuredGrid)
@@ -1005,7 +1005,7 @@ def test_download_aero_bracket():
 def test_download_coil_magnetic_field():
     filename = examples.download_coil_magnetic_field(load=False)
     assert Path(filename).is_file()
-    assert filename.endswith("vti")
+    assert filename.endswith('vti')
 
     dataset = examples.download_coil_magnetic_field(load=True)
     assert isinstance(dataset, pv.ImageData)

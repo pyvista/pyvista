@@ -34,11 +34,11 @@ from pyvista import examples
 # <pyvista.examples.downloads.download_teapot>`.
 
 kinds = [
-    "tetrahedron",
-    "cube",
-    "octahedron",
-    "dodecahedron",
-    "icosahedron",
+    'tetrahedron',
+    'cube',
+    'octahedron',
+    'dodecahedron',
+    'icosahedron',
 ]
 centers = [
     (0, 1, 0),
@@ -74,13 +74,13 @@ for ind, solid in enumerate(solids):
     smooth_shading = ind == len(solids) - 1
     p.add_mesh(
         solid,
-        color="silver",
+        color='silver',
         smooth_shading=smooth_shading,
         specular=1.0,
         specular_power=10,
     )
 p.view_vector((5.0, 2, 3))
-p.add_floor("-z", lighting=True, color="lightblue", pad=1.0)
+p.add_floor('-z', lighting=True, color='lightblue', pad=1.0)
 p.enable_shadows()
 p.show()
 

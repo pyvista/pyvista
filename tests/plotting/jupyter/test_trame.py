@@ -45,18 +45,18 @@ else:
 
 def test_set_jupyter_backend_trame():
     try:
-        pv.global_theme.jupyter_backend = "trame"
-        assert pv.global_theme.jupyter_backend == "trame"
-        pv.global_theme.jupyter_backend = "client"
-        assert pv.global_theme.jupyter_backend == "client"
-        pv.global_theme.jupyter_backend = "server"
-        assert pv.global_theme.jupyter_backend == "server"
+        pv.global_theme.jupyter_backend = 'trame'
+        assert pv.global_theme.jupyter_backend == 'trame'
+        pv.global_theme.jupyter_backend = 'client'
+        assert pv.global_theme.jupyter_backend == 'client'
+        pv.global_theme.jupyter_backend = 'server'
+        assert pv.global_theme.jupyter_backend == 'server'
     finally:
         pv.global_theme.jupyter_backend = None
 
 
 def test_trame_server_launch():
-    pv.set_jupyter_backend("trame")
+    pv.set_jupyter_backend('trame')
     name = pv.global_theme.trame.jupyter_server_name
     elegantly_launch(name)
     server = get_server(name=name)
@@ -70,23 +70,23 @@ def test_base_viewer_ui():
         viewer.ui()
 
 
-@pytest.mark.parametrize("client_type", ["vue2", "vue3"])
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
-    name = f"{pv.global_theme.trame.jupyter_server_name}-{client_type}"
-    pv.set_jupyter_backend("trame")
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame')
     elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
     pl = pv.Plotter(notebook=True)
 
-    for mode in ["trame", "client", "server"]:
+    for mode in ['trame', 'client', 'server']:
         ui = plotter_ui(pl, mode=mode, server=server)
         assert isinstance(ui, _BasePyVistaView)
 
     # Test invalid mode
-    mode = "invalid"
+    mode = 'invalid'
     with pytest.raises(ValueError, match=f"`{mode}` is not a valid mode choice. Use one of: (.*)"):
         ui = plotter_ui(pl, mode=mode, server=server)
 
@@ -95,11 +95,11 @@ def test_trame_plotter_ui(client_type):
     assert isinstance(ui, _BasePyVistaView)
 
 
-@pytest.mark.parametrize("client_type", ["vue2", "vue3"])
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
 def test_trame(client_type):
     # give different names for servers so different instances are created
-    name = f"{pv.global_theme.trame.jupyter_server_name}-{client_type}"
-    pv.set_jupyter_backend("trame")
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame')
     elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
@@ -112,12 +112,12 @@ def test_trame(client_type):
     if pv.global_theme.trame.server_proxy_enabled:
         assert pv.global_theme.trame.server_proxy_prefix in widget.src
     else:
-        assert "http://" in widget.src
+        assert 'http://' in widget.src
 
     viewer = get_viewer(pl)
 
-    for cp in ["xy", "xz", "yz", "isometric"]:
-        exec(f"viewer.view_{cp}()")
+    for cp in ['xy', 'xz', 'yz', 'isometric']:
+        exec(f'viewer.view_{cp}()')
         cpos = list(pl.camera_position)
         pl.camera_position = cp[:3]
         assert cpos == pl.camera_position
@@ -144,9 +144,9 @@ def test_trame(client_type):
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
-    assert not hasattr(pl.renderer, "axes_actor")
+    assert not hasattr(pl.renderer, 'axes_actor')
     viewer.on_axis_visiblity_change(**server.state.to_dict())
-    assert hasattr(pl.renderer, "axes_actor")
+    assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
     viewer.on_axis_visiblity_change(**server.state.to_dict())
     assert not pl.renderer.axes_widget.GetEnabled()
@@ -169,11 +169,11 @@ def test_trame(client_type):
     assert isinstance(viewer.screenshot(), memoryview)
 
 
-@pytest.mark.parametrize("client_type", ["vue2", "vue3"])
+@pytest.mark.parametrize('client_type', ['vue2', 'vue3'])
 def test_trame_custom_menu_items(client_type):
     # give different names for servers so different instances are created
-    name = f"{pv.global_theme.trame.jupyter_server_name}-{client_type}"
-    pv.set_jupyter_backend("trame")
+    name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
+    pv.set_jupyter_backend('trame')
     elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
@@ -192,7 +192,7 @@ def test_trame_custom_menu_items(client_type):
 
     # vuetify items to pass as argument
     def custom_tools():
-        divider(vertical=True, classes="mx-1")
+        divider(vertical=True, classes='mx-1')
         slider(
             ("resolution", 3),
             "Resolution slider",
@@ -201,11 +201,11 @@ def test_trame_custom_menu_items(client_type):
             step=1,
         )
         text_field(("resolution", 3), "Resolution value", type="number")
-        divider(vertical=True, classes="mx-1")
+        divider(vertical=True, classes='mx-1')
         select(
             model=("visibility", "Show"),
             tooltip="Toggle visibility",
-            items=["Visibility", ["Hide", "Show"]],
+            items=['Visibility', ["Hide", "Show"]],
         )
 
     with viewer.make_layout(server, template_name=pl._id_name):
@@ -216,8 +216,8 @@ def test_trame_custom_menu_items(client_type):
             add_menu_items=custom_tools,
         )
 
-    src = build_url(server, ui=pl._id_name, host="localhost", protocol="http")
-    widget = Widget(viewer, src, "99%", "600px")
+    src = build_url(server, ui=pl._id_name, host='localhost', protocol='http')
+    widget = Widget(viewer, src, '99%', '600px')
 
     state, ctrl = server.state, server.controller
     ctrl.view_update = widget.viewer.update
@@ -241,25 +241,25 @@ def test_trame_custom_menu_items(client_type):
 
 
 def test_trame_jupyter_modes():
-    pv.set_jupyter_backend("trame")
+    pv.set_jupyter_backend('trame')
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend="server", return_viewer=True)
+    widget = pl.show(jupyter_backend='server', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
     assert not pl._closed
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend="trame", return_viewer=True)
+    widget = pl.show(jupyter_backend='trame', return_viewer=True)
     assert isinstance(widget, Widget)
     assert not pl.suppress_rendering
     assert not pl._closed
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
-    widget = pl.show(jupyter_backend="client", return_viewer=True)
+    widget = pl.show(jupyter_backend='client', return_viewer=True)
     assert isinstance(widget, Widget)
     assert pl.suppress_rendering
     assert not pl._closed
@@ -269,13 +269,13 @@ def test_trame_closed_plotter():
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
     pl.close()
-    with pytest.raises(RuntimeError, match="The render window for this plotter has been destroyed"):
+    with pytest.raises(RuntimeError, match='The render window for this plotter has been destroyed'):
         PyVistaRemoteLocalView(pl)
 
 
 @pytest.mark.skipif(True, reason="#5262")
 def test_trame_views():
-    server = get_server("foo")
+    server = get_server('foo')
 
     pl = pv.Plotter(notebook=True)
     pl.add_mesh(pv.Cone())
@@ -289,18 +289,18 @@ def test_trame_jupyter_custom_size():
     w, h = 200, 150
     plotter = pv.Plotter(notebook=True, window_size=(w, h))
     _ = plotter.add_mesh(pv.Cone())
-    widget = plotter.show(jupyter_backend="trame", return_viewer=True)
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
-    assert f"width: {w}px" in html
-    assert f"height: {h}px" in html
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
 
     plotter = pv.Plotter(notebook=True)
     plotter.window_size = (w, h)
     _ = plotter.add_mesh(pv.Cone())
-    widget = plotter.show(jupyter_backend="trame", return_viewer=True)
+    widget = plotter.show(jupyter_backend='trame', return_viewer=True)
     html = widget.value
-    assert f"width: {w}px" in html
-    assert f"height: {h}px" in html
+    assert f'width: {w}px' in html
+    assert f'height: {h}px' in html
 
     # Make sure that if size is default theme, it uses 99%/600px
     previous_size = pv.global_theme.window_size
@@ -308,22 +308,22 @@ def test_trame_jupyter_custom_size():
     try:
         plotter = pv.Plotter(notebook=True)
         _ = plotter.add_mesh(pv.Cone())
-        widget = plotter.show(jupyter_backend="trame", return_viewer=True)
+        widget = plotter.show(jupyter_backend='trame', return_viewer=True)
         html = widget.value
-        assert "width: 99%" in html
-        assert "height: 600px" in html
+        assert 'width: 99%' in html
+        assert 'height: 600px' in html
     finally:
         pv.global_theme.window_size = previous_size
 
 
 def test_trame_jupyter_custom_handler():
     def handler(viewer, src, **kwargs):
-        return IFrame(src, "75%", "500px")
+        return IFrame(src, '75%', '500px')
 
     plotter = pv.Plotter(notebook=True)
     _ = plotter.add_mesh(pv.Cone())
     iframe = plotter.show(
-        jupyter_backend="trame",
+        jupyter_backend='trame',
         jupyter_kwargs=dict(handler=handler),
         return_viewer=True,
     )
@@ -332,12 +332,12 @@ def test_trame_jupyter_custom_handler():
 
 def test_trame_int64():
     mesh = pv.Sphere()
-    mesh["int64"] = np.arange(mesh.n_cells, dtype=np.int64)
+    mesh['int64'] = np.arange(mesh.n_cells, dtype=np.int64)
 
     plotter = pv.Plotter(notebook=True)
-    _ = plotter.add_mesh(mesh, scalars="int64")
+    _ = plotter.add_mesh(mesh, scalars='int64')
     widget = plotter.show(
-        jupyter_backend="trame",
+        jupyter_backend='trame',
         return_viewer=True,
     )
     # Basically just assert that it didn't error out
@@ -346,7 +346,7 @@ def test_trame_int64():
 
 @pytest.mark.skip_plotting()
 def test_trame_export_html(tmpdir):
-    filename = str(tmpdir.join("tmp.html"))
+    filename = str(tmpdir.join('tmp.html'))
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Wavelet())
     plotter.export_html(filename)
@@ -354,18 +354,18 @@ def test_trame_export_html(tmpdir):
 
 
 def test_export_single(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join("scene-single"))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert Path(f"{filename}").is_file()
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_multi(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join("scene-multi"))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = pv.MultiBlock()
     # Add examples
     multi.append(examples.load_ant())
@@ -378,11 +378,11 @@ def test_export_multi(tmpdir, skip_check_gc):
     plotter.add_mesh(multi)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert Path(f"{filename}").is_file()
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_texture(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join("scene-texture"))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = examples.load_globe()
     texture = examples.load_globe_texture()
     # Create the scene
@@ -390,34 +390,34 @@ def test_export_texture(tmpdir, skip_check_gc):
     plotter.add_mesh(data, texture=texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert Path(f"{filename}").is_file()
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_verts(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join("scene-verts"))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert Path(f"{filename}").is_file()
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_color(tmpdir, skip_check_gc):
-    filename = str(tmpdir.mkdir("tmpdir").join("scene-color"))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = examples.load_airplane()
     # Create the scene
     plotter = pv.Plotter()
-    plotter.add_mesh(data, color="yellow")
+    plotter.add_mesh(data, color='yellow')
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert Path(f"{filename}").is_file()
+    assert Path(f'{filename}').is_file()
 
 
 def test_embeddable_widget(skip_check_gc):
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(pv.Sphere())
-    widget = plotter.show(jupyter_backend="html", return_viewer=True)
+    widget = plotter.show(jupyter_backend='html', return_viewer=True)
     # Basically just assert that it didn't error out
     assert isinstance(widget, EmbeddableWidget)

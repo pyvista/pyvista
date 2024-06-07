@@ -40,7 +40,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):
-        label = (fmt % v if fmt.startswith("%") else fmt.format(v)) if fmt else f"{v}"
+        label = (fmt % v if fmt.startswith('%') else fmt.format(v)) if fmt else f'{v}'
         labels.InsertNextValue(label)
     return labels
 
@@ -136,9 +136,9 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         camera,
         minor_ticks=False,
         tick_location=None,
-        x_title="X Axis",
-        y_title="Y Axis",
-        z_title="Z Axis",
+        x_title='X Axis',
+        y_title='Y Axis',
+        z_title='Z Axis',
         x_axis_visibility=True,
         y_axis_visibility=True,
         z_axis_visibility=True,
@@ -158,7 +158,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
         # empty string used for clearing axis labels
         self._empty_str = _vtk.vtkStringArray()
-        self._empty_str.InsertNextValue("")
+        self._empty_str.InsertNextValue('')
 
         # stop labels from being generated several times during init
         self.x_axis_visibility = False
@@ -183,15 +183,15 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         if x_label_format is None:
             x_label_format = pyvista.global_theme.font.fmt
             if x_label_format is None:
-                x_label_format = "%.1f"
+                x_label_format = '%.1f'
         if y_label_format is None:
             y_label_format = pyvista.global_theme.font.fmt
             if y_label_format is None:
-                y_label_format = "%.1f"
+                y_label_format = '%.1f'
         if z_label_format is None:
             z_label_format = pyvista.global_theme.font.fmt
             if z_label_format is None:
-                z_label_format = "%.1f"
+                z_label_format = '%.1f'
 
         self.x_label_format = x_label_format
         self.y_label_format = y_label_format
@@ -213,21 +213,21 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         """
         tloc = self.GetTickLocation()
         if tloc == 0:
-            return "inside"
+            return 'inside'
         if tloc == 1:
-            return "outside"
-        return "both"
+            return 'outside'
+        return 'both'
 
     @tick_location.setter
     def tick_location(self, value: str):  # numpydoc ignore=GL08
         if not isinstance(value, str):
-            raise TypeError(f"`tick_location` must be a string, not {type(value)}")
+            raise TypeError(f'`tick_location` must be a string, not {type(value)}')
         value = value.lower()
-        if value in ("inside"):
+        if value in ('inside'):
             self.SetTickLocationToInside()
-        elif value in ("outside"):
+        elif value in ('outside'):
             self.SetTickLocationToOutside()
-        elif value in ("both"):
+        elif value in ('both'):
             self.SetTickLocationToBoth()
         else:
             raise ValueError(
@@ -509,7 +509,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(0, self._empty_str)
         else:
-            self.SetXTitle("")
+            self.SetXTitle('')
             self.SetAxisLabels(0, self._empty_str)
 
     def _update_y_labels(self):
@@ -524,7 +524,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(1, self._empty_str)
         else:
-            self.SetYTitle("")
+            self.SetYTitle('')
             self.SetAxisLabels(1, self._empty_str)
 
     def _update_z_labels(self):
@@ -539,7 +539,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             else:
                 self.SetAxisLabels(2, self._empty_str)
         else:
-            self.SetZTitle("")
+            self.SetZTitle('')
             self.SetAxisLabels(2, self._empty_str)
 
     @property

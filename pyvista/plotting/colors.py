@@ -200,206 +200,206 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 IPYGANY_MAP = {
-    "reds": "Reds",
-    "spectral": "Spectral",
+    'reds': 'Reds',
+    'spectral': 'Spectral',
 }
 
 # Following colors are copied from matplotlib.colors, synonyms (colors with a
 # different name but same hex value) are removed and put in the `color_synonyms`
 # dictionary. An extra `paraview_background` color is added.
 hexcolors = {
-    "aliceblue": "#F0F8FF",
-    "antiquewhite": "#FAEBD7",
-    "aquamarine": "#7FFFD4",
-    "azure": "#F0FFFF",
-    "beige": "#F5F5DC",
-    "bisque": "#FFE4C4",
-    "black": "#000000",
-    "blanchedalmond": "#FFEBCD",
-    "blue": "#0000FF",
-    "blueviolet": "#8A2BE2",
-    "brown": "#654321",
-    "burlywood": "#DEB887",
-    "cadetblue": "#5F9EA0",
-    "chartreuse": "#7FFF00",
-    "chocolate": "#D2691E",
-    "coral": "#FF7F50",
-    "cornflowerblue": "#6495ED",
-    "cornsilk": "#FFF8DC",
-    "crimson": "#DC143C",
-    "cyan": "#00FFFF",
-    "darkblue": "#00008B",
-    "darkcyan": "#008B8B",
-    "darkgoldenrod": "#B8860B",
-    "darkgray": "#A9A9A9",
-    "darkgreen": "#006400",
-    "darkkhaki": "#BDB76B",
-    "darkmagenta": "#8B008B",
-    "darkolivegreen": "#556B2F",
-    "darkorange": "#FF8C00",
-    "darkorchid": "#9932CC",
-    "darkred": "#8B0000",
-    "darksalmon": "#E9967A",
-    "darkseagreen": "#8FBC8F",
-    "darkslateblue": "#483D8B",
-    "darkslategray": "#2F4F4F",
-    "darkturquoise": "#00CED1",
-    "darkviolet": "#9400D3",
-    "deeppink": "#FF1493",
-    "deepskyblue": "#00BFFF",
-    "dimgray": "#696969",
-    "dodgerblue": "#1E90FF",
-    "firebrick": "#B22222",
-    "floralwhite": "#FFFAF0",
-    "forestgreen": "#228B22",
-    "gainsboro": "#DCDCDC",
-    "ghostwhite": "#F8F8FF",
-    "gold": "#FFD700",
-    "goldenrod": "#DAA520",
-    "gray": "#808080",
-    "green": "#008000",
-    "greenyellow": "#ADFF2F",
-    "honeydew": "#F0FFF0",
-    "hotpink": "#FF69B4",
-    "indianred": "#CD5C5C",
-    "indigo": "#4B0082",
-    "ivory": "#FFFFF0",
-    "khaki": "#F0E68C",
-    "lavender": "#E6E6FA",
-    "lavenderblush": "#FFF0F5",
-    "lawngreen": "#7CFC00",
-    "lemonchiffon": "#FFFACD",
-    "lightblue": "#ADD8E6",
-    "lightcoral": "#F08080",
-    "lightcyan": "#E0FFFF",
-    "lightgoldenrodyellow": "#FAFAD2",
-    "lightgray": "#D3D3D3",
-    "lightgreen": "#90EE90",
-    "lightpink": "#FFB6C1",
-    "lightsalmon": "#FFA07A",
-    "lightseagreen": "#20B2AA",
-    "lightskyblue": "#87CEFA",
-    "lightslategray": "#778899",
-    "lightsteelblue": "#B0C4DE",
-    "lightyellow": "#FFFFE0",
-    "lime": "#00FF00",
-    "limegreen": "#32CD32",
-    "linen": "#FAF0E6",
-    "magenta": "#FF00FF",
-    "maroon": "#800000",
-    "mediumaquamarine": "#66CDAA",
-    "mediumblue": "#0000CD",
-    "mediumorchid": "#BA55D3",
-    "mediumpurple": "#9370DB",
-    "mediumseagreen": "#3CB371",
-    "mediumslateblue": "#7B68EE",
-    "mediumspringgreen": "#00FA9A",
-    "mediumturquoise": "#48D1CC",
-    "mediumvioletred": "#C71585",
-    "midnightblue": "#191970",
-    "mintcream": "#F5FFFA",
-    "mistyrose": "#FFE4E1",
-    "moccasin": "#FFE4B5",
-    "navajowhite": "#FFDEAD",
-    "navy": "#000080",
-    "oldlace": "#FDF5E6",
-    "olive": "#808000",
-    "olivedrab": "#6B8E23",
-    "orange": "#FFA500",
-    "orangered": "#FF4500",
-    "orchid": "#DA70D6",
-    "palegoldenrod": "#EEE8AA",
-    "palegreen": "#98FB98",
-    "paleturquoise": "#AFEEEE",
-    "palevioletred": "#DB7093",
-    "papayawhip": "#FFEFD5",
-    "paraview_background": "#52576e",
-    "peachpuff": "#FFDAB9",
-    "peru": "#CD853F",
-    "pink": "#FFC0CB",
-    "plum": "#DDA0DD",
-    "powderblue": "#B0E0E6",
-    "purple": "#800080",
-    "raw_sienna": "#965434",
-    "rebeccapurple": "#663399",
-    "red": "#FF0000",
-    "rosybrown": "#BC8F8F",
-    "royalblue": "#4169E1",
-    "saddlebrown": "#8B4513",
-    "salmon": "#FA8072",
-    "sandybrown": "#F4A460",
-    "seagreen": "#2E8B57",
-    "seashell": "#FFF5EE",
-    "sienna": "#A0522D",
-    "silver": "#C0C0C0",
-    "skyblue": "#87CEEB",
-    "slateblue": "#6A5ACD",
-    "slategray": "#708090",
-    "snow": "#FFFAFA",
-    "springgreen": "#00FF7F",
-    "steelblue": "#4682B4",
-    "tan": "#D2B48C",
-    "teal": "#008080",
-    "thistle": "#D8BFD8",
-    "tomato": "#FF6347",
-    "turquoise": "#40E0D0",
-    "violet": "#EE82EE",
-    "wheat": "#F5DEB3",
-    "white": "#FFFFFF",
-    "whitesmoke": "#F5F5F5",
-    "yellow": "#FFFF00",
-    "yellowgreen": "#9ACD32",
-    "tab:blue": "#1f77b4",
-    "tab:orange": "#ff7f0e",
-    "tab:green": "#2ca02c",
-    "tab:red": "#d62728",
-    "tab:purple": "#9467bd",
-    "tab:brown": "#8c564b",
-    "tab:pink": "#e377c2",
-    "tab:gray": "#7f7f7f",
-    "tab:olive": "#bcbd22",
-    "tab:cyan": "#17becf",
+    'aliceblue': '#F0F8FF',
+    'antiquewhite': '#FAEBD7',
+    'aquamarine': '#7FFFD4',
+    'azure': '#F0FFFF',
+    'beige': '#F5F5DC',
+    'bisque': '#FFE4C4',
+    'black': '#000000',
+    'blanchedalmond': '#FFEBCD',
+    'blue': '#0000FF',
+    'blueviolet': '#8A2BE2',
+    'brown': '#654321',
+    'burlywood': '#DEB887',
+    'cadetblue': '#5F9EA0',
+    'chartreuse': '#7FFF00',
+    'chocolate': '#D2691E',
+    'coral': '#FF7F50',
+    'cornflowerblue': '#6495ED',
+    'cornsilk': '#FFF8DC',
+    'crimson': '#DC143C',
+    'cyan': '#00FFFF',
+    'darkblue': '#00008B',
+    'darkcyan': '#008B8B',
+    'darkgoldenrod': '#B8860B',
+    'darkgray': '#A9A9A9',
+    'darkgreen': '#006400',
+    'darkkhaki': '#BDB76B',
+    'darkmagenta': '#8B008B',
+    'darkolivegreen': '#556B2F',
+    'darkorange': '#FF8C00',
+    'darkorchid': '#9932CC',
+    'darkred': '#8B0000',
+    'darksalmon': '#E9967A',
+    'darkseagreen': '#8FBC8F',
+    'darkslateblue': '#483D8B',
+    'darkslategray': '#2F4F4F',
+    'darkturquoise': '#00CED1',
+    'darkviolet': '#9400D3',
+    'deeppink': '#FF1493',
+    'deepskyblue': '#00BFFF',
+    'dimgray': '#696969',
+    'dodgerblue': '#1E90FF',
+    'firebrick': '#B22222',
+    'floralwhite': '#FFFAF0',
+    'forestgreen': '#228B22',
+    'gainsboro': '#DCDCDC',
+    'ghostwhite': '#F8F8FF',
+    'gold': '#FFD700',
+    'goldenrod': '#DAA520',
+    'gray': '#808080',
+    'green': '#008000',
+    'greenyellow': '#ADFF2F',
+    'honeydew': '#F0FFF0',
+    'hotpink': '#FF69B4',
+    'indianred': '#CD5C5C',
+    'indigo': '#4B0082',
+    'ivory': '#FFFFF0',
+    'khaki': '#F0E68C',
+    'lavender': '#E6E6FA',
+    'lavenderblush': '#FFF0F5',
+    'lawngreen': '#7CFC00',
+    'lemonchiffon': '#FFFACD',
+    'lightblue': '#ADD8E6',
+    'lightcoral': '#F08080',
+    'lightcyan': '#E0FFFF',
+    'lightgoldenrodyellow': '#FAFAD2',
+    'lightgray': '#D3D3D3',
+    'lightgreen': '#90EE90',
+    'lightpink': '#FFB6C1',
+    'lightsalmon': '#FFA07A',
+    'lightseagreen': '#20B2AA',
+    'lightskyblue': '#87CEFA',
+    'lightslategray': '#778899',
+    'lightsteelblue': '#B0C4DE',
+    'lightyellow': '#FFFFE0',
+    'lime': '#00FF00',
+    'limegreen': '#32CD32',
+    'linen': '#FAF0E6',
+    'magenta': '#FF00FF',
+    'maroon': '#800000',
+    'mediumaquamarine': '#66CDAA',
+    'mediumblue': '#0000CD',
+    'mediumorchid': '#BA55D3',
+    'mediumpurple': '#9370DB',
+    'mediumseagreen': '#3CB371',
+    'mediumslateblue': '#7B68EE',
+    'mediumspringgreen': '#00FA9A',
+    'mediumturquoise': '#48D1CC',
+    'mediumvioletred': '#C71585',
+    'midnightblue': '#191970',
+    'mintcream': '#F5FFFA',
+    'mistyrose': '#FFE4E1',
+    'moccasin': '#FFE4B5',
+    'navajowhite': '#FFDEAD',
+    'navy': '#000080',
+    'oldlace': '#FDF5E6',
+    'olive': '#808000',
+    'olivedrab': '#6B8E23',
+    'orange': '#FFA500',
+    'orangered': '#FF4500',
+    'orchid': '#DA70D6',
+    'palegoldenrod': '#EEE8AA',
+    'palegreen': '#98FB98',
+    'paleturquoise': '#AFEEEE',
+    'palevioletred': '#DB7093',
+    'papayawhip': '#FFEFD5',
+    'paraview_background': '#52576e',
+    'peachpuff': '#FFDAB9',
+    'peru': '#CD853F',
+    'pink': '#FFC0CB',
+    'plum': '#DDA0DD',
+    'powderblue': '#B0E0E6',
+    'purple': '#800080',
+    'raw_sienna': '#965434',
+    'rebeccapurple': '#663399',
+    'red': '#FF0000',
+    'rosybrown': '#BC8F8F',
+    'royalblue': '#4169E1',
+    'saddlebrown': '#8B4513',
+    'salmon': '#FA8072',
+    'sandybrown': '#F4A460',
+    'seagreen': '#2E8B57',
+    'seashell': '#FFF5EE',
+    'sienna': '#A0522D',
+    'silver': '#C0C0C0',
+    'skyblue': '#87CEEB',
+    'slateblue': '#6A5ACD',
+    'slategray': '#708090',
+    'snow': '#FFFAFA',
+    'springgreen': '#00FF7F',
+    'steelblue': '#4682B4',
+    'tan': '#D2B48C',
+    'teal': '#008080',
+    'thistle': '#D8BFD8',
+    'tomato': '#FF6347',
+    'turquoise': '#40E0D0',
+    'violet': '#EE82EE',
+    'wheat': '#F5DEB3',
+    'white': '#FFFFFF',
+    'whitesmoke': '#F5F5F5',
+    'yellow': '#FFFF00',
+    'yellowgreen': '#9ACD32',
+    'tab:blue': '#1f77b4',
+    'tab:orange': '#ff7f0e',
+    'tab:green': '#2ca02c',
+    'tab:red': '#d62728',
+    'tab:purple': '#9467bd',
+    'tab:brown': '#8c564b',
+    'tab:pink': '#e377c2',
+    'tab:gray': '#7f7f7f',
+    'tab:olive': '#bcbd22',
+    'tab:cyan': '#17becf',
 }
 
 color_names = {h.lower(): n for n, h in hexcolors.items()}
 
 color_char_to_word = {
-    "b": "blue",
-    "g": "green",
-    "r": "red",
-    "c": "cyan",
-    "m": "magenta",
-    "y": "yellow",
-    "k": "black",
-    "w": "white",
+    'b': 'blue',
+    'g': 'green',
+    'r': 'red',
+    'c': 'cyan',
+    'm': 'magenta',
+    'y': 'yellow',
+    'k': 'black',
+    'w': 'white',
 }
 
 color_synonyms = {
     **color_char_to_word,
-    "aqua": "cyan",
-    "darkgrey": "darkgray",
-    "darkslategrey": "darkslategray",
-    "dimgrey": "dimgray",
-    "fuchsia": "magenta",
-    "grey": "gray",
-    "lightgrey": "lightgray",
-    "lightslategrey": "lightslategray",
-    "pv": "paraview_background",
-    "paraview": "paraview_background",
-    "slategrey": "slategray",
+    'aqua': 'cyan',
+    'darkgrey': 'darkgray',
+    'darkslategrey': 'darkslategray',
+    'dimgrey': 'dimgray',
+    'fuchsia': 'magenta',
+    'grey': 'gray',
+    'lightgrey': 'lightgray',
+    'lightslategrey': 'lightslategray',
+    'pv': 'paraview_background',
+    'paraview': 'paraview_background',
+    'slategrey': 'slategray',
 }
 
 matplotlib_default_colors = [
-    "#1f77b4",
-    "#ff7f0e",
-    "#2ca02c",
-    "#d62728",
-    "#9467bd",
-    "#8c564b",
-    "#e377c2",
-    "#7f7f7f",
-    "#bcbd22",
-    "#17becf",
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
 ]
 
 COLOR_SCHEMES = {
@@ -727,10 +727,10 @@ class Color:
 
     # Supported names for each color channel.
     CHANNEL_NAMES = (
-        {"red", "r"},  # 0
-        {"green", "g"},  # 1
-        {"blue", "b"},  # 2
-        {"alpha", "a", "opacity"},  # 3
+        {'red', 'r'},  # 0
+        {'green', 'g'},  # 1
+        {'blue', 'b'},  # 2
+        {'alpha', 'a', 'opacity'},  # 3
     )
 
     def __init__(
@@ -809,8 +809,8 @@ class Color:
             Stripped hexadecimal string.
 
         """
-        h = h.lstrip("#")
-        if h.startswith("0x"):
+        h = h.lstrip('#')
+        if h.startswith('0x'):
             h = h[2:]
         return h
 
@@ -1030,7 +1030,7 @@ class Color:
         '#ff000040'
 
         """
-        return "#" + "".join(
+        return '#' + ''.join(
             f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity)
         )
 
@@ -1142,7 +1142,7 @@ class Color:
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization."""
-        return {"r": self._red, "g": self._green, "b": self._blue, "a": self._opacity}
+        return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     @property
     def opacity(self):  # numpydoc ignore=RT01
@@ -1151,7 +1151,7 @@ class Color:
         Examples
         --------
         >>> import pyvista as pv
-        >>> color = pv.Color("r", opacity=0.5)
+        >>> color = pv.Color('r', opacity=0.5)
         >>> color.opacity
         128
         >>> color
@@ -1196,7 +1196,7 @@ class Color:
         return f"Color({kwargs})"
 
 
-PARAVIEW_BACKGROUND = Color("paraview").float_rgb  # [82, 87, 110] / 255
+PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
@@ -1228,7 +1228,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module("colorcet"):
+        if has_module('colorcet'):
             import colorcet
 
             try:
@@ -1237,7 +1237,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        if has_module("cmocean"):
+        if has_module('cmocean'):
             import cmocean
 
             try:
@@ -1260,7 +1260,7 @@ def get_cmap_safe(cmap):
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
-                raise TypeError("When inputting a list as a cmap, each item should be a string.")
+                raise TypeError('When inputting a list as a cmap, each item should be a string.')
 
         cmap = ListedColormap(cmap)
 
@@ -1276,7 +1276,7 @@ def get_default_cycler():
         A cycler object for color that matches matplotlib's default colors.
 
     """
-    return cycler("color", matplotlib_default_colors)
+    return cycler('color', matplotlib_default_colors)
 
 
 def get_hexcolors_cycler():
@@ -1291,7 +1291,7 @@ def get_hexcolors_cycler():
         ``pyvista.plotting.colors.hexcolors``.
 
     """
-    return cycler("color", hexcolors.keys())
+    return cycler('color', hexcolors.keys())
 
 
 def get_matplotlib_theme_cycler():
@@ -1304,7 +1304,7 @@ def get_matplotlib_theme_cycler():
         Color cycler of the current matplotlib theme.
 
     """
-    return plt.rcParams["axes.prop_cycle"]
+    return plt.rcParams['axes.prop_cycle']
 
 
 def color_scheme_to_cycler(scheme):
@@ -1335,11 +1335,11 @@ def color_scheme_to_cycler(scheme):
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:
-            raise ValueError(f"Color scheme not understood: {scheme}")
+            raise ValueError(f'Color scheme not understood: {scheme}')
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
-    return cycler("color", colors)
+    return cycler('color', colors)
 
 
 def get_cycler(color_cycler):
@@ -1373,19 +1373,19 @@ def get_cycler(color_cycler):
     if color_cycler is None:
         return None
     elif isinstance(color_cycler, str):
-        if color_cycler == "default":
+        if color_cycler == 'default':
             return get_default_cycler()
-        elif color_cycler == "matplotlib":
+        elif color_cycler == 'matplotlib':
             return get_matplotlib_theme_cycler()
-        elif color_cycler == "all":
+        elif color_cycler == 'all':
             return get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
             return color_scheme_to_cycler(color_cycler)
         else:
-            raise ValueError(f"color cycler of name `{color_cycler}` not found.")
+            raise ValueError(f'color cycler of name `{color_cycler}` not found.')
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler("color", color_cycler)
+        return cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
         return color_cycler
     else:
-        raise TypeError(f"color cycler of type {type(color_cycler)} not supported.")
+        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')

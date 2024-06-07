@@ -37,11 +37,11 @@ def test_logo_voxel():
 
 
 @pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS testing on Azure fails when downloading",
+    platform.system() == 'Darwin',
+    reason='MacOS testing on Azure fails when downloading',
 )
 @skip_no_plotting
-@pytest.mark.skipif(os.name == "nt", reason="Test fails on Windows")
+@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()

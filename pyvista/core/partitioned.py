@@ -44,7 +44,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         super().__init__(*args, **kwargs)
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkPartitionedDataSet):
-                deep = kwargs.get("deep", True)
+                deep = kwargs.get('deep', True)
                 if deep:
                     self.deep_copy(args[0])
                 else:
@@ -79,7 +79,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
             return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f"index ({index}) out of range for this dataset.")
+                raise IndexError(f'index ({index}) out of range for this dataset.')
             if index < 0:
                 index = self.n_partitions + index
             return wrap(self.GetPartition(index))
@@ -103,7 +103,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                 self.SetPartition(i, d)
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
-                raise IndexError(f"index ({index}) out of range for this dataset.")
+                raise IndexError(f'index ({index}) out of range for this dataset.')
             if index < 0:
                 index = self.n_partitions + index
             self.SetPartition(index, data)

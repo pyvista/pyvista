@@ -81,7 +81,7 @@ class VtkErrorCatcher:
         error_win.SetInstance(self._error_output_orig)
         self.events = self._observer.event_history
         if self.raise_errors and self.events:
-            errors = [RuntimeError(f"{e.kind}: {e.alert}", e.path, e.address) for e in self.events]
+            errors = [RuntimeError(f'{e.kind}: {e.alert}', e.path, e.address) for e in self.events]
             raise RuntimeError(errors)
 
 
@@ -97,12 +97,12 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type="ErrorEvent", log=True, store_history=False):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
         self.__message_etc = None
-        self.CallDataType = "string0"
+        self.CallDataType = 'string0'
         self.__observing = False
         self.event_type = event_type
         self.__log = log
@@ -114,17 +114,17 @@ class Observer:
     def parse_message(message):
         """Parse the given message."""
         # Message format
-        regex = re.compile(r"([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)")
+        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
         except:
-            return "", "", "", message
+            return '', '', '', message
         else:
             return kind, path, address, alert
 
     def log_message(self, kind, alert):
         """Parse different event types and passes them to logging."""
-        if kind == "ERROR":
+        if kind == 'ERROR':
             logging.error(alert)
         else:
             logging.warning(alert)
@@ -147,11 +147,11 @@ class Observer:
         except Exception:  # pragma: no cover
             try:
                 if len(message) > 120:
-                    message = f"{message[:100]!r} ... ({len(message)} characters)"
+                    message = f'{message[:100]!r} ... ({len(message)} characters)'
                 else:
                     message = repr(message)
                 print(
-                    f"PyVista error in handling VTK error message:\n{message}",
+                    f'PyVista error in handling VTK error message:\n{message}',
                     file=sys.__stdout__,
                 )
                 traceback.print_tb(sys.last_traceback, file=sys.__stderr__)
@@ -183,8 +183,8 @@ class Observer:
     def observe(self, algorithm):
         """Make this an observer of an algorithm."""
         if self.__observing:
-            raise RuntimeError("This error observer is already observing an algorithm.")
-        if hasattr(algorithm, "GetExecutive") and algorithm.GetExecutive() is not None:
+            raise RuntimeError('This error observer is already observing an algorithm.')
+        if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
         self.__observing = True
@@ -235,7 +235,7 @@ class ProgressMonitor:
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)
-        logging.debug("SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.")
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(self, obj, *args):
         """Call progress update callback.
@@ -255,12 +255,12 @@ class ProgressMonitor:
         from tqdm import tqdm
 
         # check if in main thread
-        if threading.current_thread().__class__.__name__ == "_MainThread":
+        if threading.current_thread().__class__.__name__ == '_MainThread':
             self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(
             total=1,
             leave=True,
-            bar_format="{l_bar}{bar}[{elapsed}<{remaining}]",
+            bar_format='{l_bar}{bar}[{elapsed}<{remaining}]',
         )
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)
@@ -272,5 +272,5 @@ class ProgressMonitor:
         self._progress_bar.refresh()
         self._progress_bar.close()
         self.algorithm.RemoveObservers(self.event_type)
-        if threading.current_thread().__class__.__name__ == "_MainThread":
+        if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)

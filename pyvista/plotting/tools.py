@@ -60,16 +60,16 @@ def _system_supports_plotting():
         ``True`` when system supports plotting.
 
     """
-    if os.environ.get("ALLOW_PLOTTING", "").lower() == "true":
+    if os.environ.get('ALLOW_PLOTTING', '').lower() == 'true':
         return True
 
     # Windows case
-    if os.name == "nt":
+    if os.name == 'nt':
         # actually have to check here.  Somewhat expensive.
         return supports_open_gl()
 
     # mac case
-    if platform.system() == "Darwin":
+    if platform.system() == 'Darwin':
         # check if finder available
         proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
         try:
@@ -80,7 +80,7 @@ def _system_supports_plotting():
             return True
 
         # display variable set, likely available
-        return "DISPLAY" in os.environ
+        return 'DISPLAY' in os.environ
 
     # Linux case
     try:
@@ -128,9 +128,9 @@ def create_axes_marker(
     x_color=None,
     y_color=None,
     z_color=None,
-    xlabel="X",
-    ylabel="Y",
-    zlabel="Z",
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
     labels_off=False,
     line_width=2,
     cone_radius=0.4,
@@ -267,16 +267,16 @@ def create_axes_marker(
 def create_axes_orientation_box(
     line_width=1,
     text_scale=0.366667,
-    edge_color="black",
+    edge_color='black',
     x_color=None,
     y_color=None,
     z_color=None,
-    xlabel="X",
-    ylabel="Y",
-    zlabel="Z",
-    x_face_color="red",
-    y_face_color="green",
-    z_face_color="blue",
+    xlabel='X',
+    ylabel='Y',
+    zlabel='Z',
+    x_face_color='red',
+    y_face_color='green',
+    z_face_color='blue',
     color_box=False,
     label_color=None,
     labels_off=False,
@@ -354,13 +354,13 @@ def create_axes_orientation_box(
     >>> actor = pv.create_axes_orientation_box(
     ...     line_width=1,
     ...     text_scale=0.53,
-    ...     edge_color="black",
-    ...     x_color="k",
+    ...     edge_color='black',
+    ...     x_color='k',
     ...     y_color=None,
     ...     z_color=None,
-    ...     xlabel="X",
-    ...     ylabel="Y",
-    ...     zlabel="Z",
+    ...     xlabel='X',
+    ...     ylabel='Y',
+    ...     zlabel='Z',
     ...     color_box=False,
     ...     labels_off=False,
     ...     opacity=1.0,
@@ -426,7 +426,7 @@ def create_axes_orientation_box(
             ],
             np.uint8,
         )
-        cube.cell_data["face_colors"] = face_colors
+        cube.cell_data['face_colors'] = face_colors
 
         cube_mapper = _vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
@@ -434,7 +434,7 @@ def create_axes_orientation_box(
         cube_mapper.Update()
 
         cube_actor = pyvista.Actor(mapper=cube_mapper)
-        cube_actor.prop.culling = "back"
+        cube_actor.prop.culling = 'back'
         cube_actor.prop.opacity = opacity
 
         prop_assembly = _vtk.vtkPropAssembly()
@@ -477,7 +477,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True, kind="quadratic"):
+def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadratic'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
@@ -549,37 +549,37 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind="quadrat
     """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
-        "linear": np.linspace(0, 255, n_colors, dtype=np.uint8),
-        "geom": np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
-        "geom_r": np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        "sigmoid": sigmoid(np.linspace(-10.0, 10.0, n_colors)),
-        "sigmoid_1": sigmoid(np.linspace(-1.0, 1.0, n_colors)),
-        "sigmoid_2": sigmoid(np.linspace(-2.0, 2.0, n_colors)),
-        "sigmoid_3": sigmoid(np.linspace(-3.0, 3.0, n_colors)),
-        "sigmoid_4": sigmoid(np.linspace(-4.0, 4.0, n_colors)),
-        "sigmoid_5": sigmoid(np.linspace(-5.0, 5.0, n_colors)),
-        "sigmoid_6": sigmoid(np.linspace(-6.0, 6.0, n_colors)),
-        "sigmoid_7": sigmoid(np.linspace(-7.0, 7.0, n_colors)),
-        "sigmoid_8": sigmoid(np.linspace(-8.0, 8.0, n_colors)),
-        "sigmoid_9": sigmoid(np.linspace(-9.0, 9.0, n_colors)),
-        "sigmoid_10": sigmoid(np.linspace(-10.0, 10.0, n_colors)),
-        "sigmoid_15": sigmoid(np.linspace(-15.0, 15.0, n_colors)),
-        "sigmoid_20": sigmoid(np.linspace(-20.0, 20.0, n_colors)),
-        "foreground": np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
+        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
+        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
+        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+        'sigmoid': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_1': sigmoid(np.linspace(-1.0, 1.0, n_colors)),
+        'sigmoid_2': sigmoid(np.linspace(-2.0, 2.0, n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3.0, 3.0, n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4.0, 4.0, n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5.0, 5.0, n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6.0, 6.0, n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7.0, 7.0, n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8.0, 8.0, n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9.0, 9.0, n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        'sigmoid_15': sigmoid(np.linspace(-15.0, 15.0, n_colors)),
+        'sigmoid_20': sigmoid(np.linspace(-20.0, 20.0, n_colors)),
+        'foreground': np.hstack((0, [255] * (n_colors - 1))).astype(np.uint8),
     }
-    transfer_func["linear_r"] = transfer_func["linear"][::-1]
-    transfer_func["sigmoid_r"] = transfer_func["sigmoid"][::-1]
+    transfer_func['linear_r'] = transfer_func['linear'][::-1]
+    transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
     for i in range(3, 11):
-        k = f"sigmoid_{i}"
-        rk = f"{k}_r"
+        k = f'sigmoid_{i}'
+        rk = f'{k}_r'
         transfer_func[rk] = transfer_func[k][::-1]
     if isinstance(mapping, str):
         try:
             return transfer_func[mapping]
         except KeyError:
             raise ValueError(
-                f"Opacity transfer function ({mapping}) unknown. "
-                f"Valid options: {list(transfer_func.keys())}",
+                f'Opacity transfer function ({mapping}) unknown. '
+                f'Valid options: {list(transfer_func.keys())}',
             ) from None
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
@@ -595,7 +595,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind="quadrat
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
-                    raise ValueError("No interpolation.")
+                    raise ValueError('No interpolation.')
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
 
@@ -611,10 +611,10 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind="quadrat
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
             raise RuntimeError(
-                f"Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements",
+                f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements',
             )
         return mapping
-    raise TypeError(f"Transfer function type ({type(mapping)}) not understood")
+    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')
 
 
 def parse_font_family(font_family: str) -> int:
@@ -675,7 +675,7 @@ def check_matplotlib_vtk_compatibility():
     """
     import matplotlib as mpl
 
-    mpl_vers = tuple(map(int, mpl.__version__.split(".")[:2]))
+    mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
         if mpl_vers >= (3, 6):
             return False
@@ -684,7 +684,7 @@ def check_matplotlib_vtk_compatibility():
         if mpl_vers >= (3, 6):
             return True
         return False  # pragma: no cover
-    raise RuntimeError("Uncheckable versions.")  # pragma: no cover
+    raise RuntimeError('Uncheckable versions.')  # pragma: no cover
 
 
 def check_math_text_support():
@@ -703,6 +703,6 @@ def check_math_text_support():
     # and capturing the output:
     # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
     _cmd = "import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());"
-    proc = subprocess.run([sys.executable, "-c", _cmd], check=False, capture_output=True)
-    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == "True"
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
     return math_text_support and check_matplotlib_vtk_compatibility()

@@ -71,7 +71,7 @@ pl.add_mesh(
     specular=0.5,
     specular_power=90,
     smooth_shading=True,
-    color="orange",
+    color='orange',
 )
 pl.add_mesh(base_mesh)
 pl.enable_shadows()
@@ -89,12 +89,12 @@ plotter = pyvista.Plotter(lighting=None, window_size=(800, 800))
 # add several planes
 for plane_y in [2, 5, 10]:
     screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
-    plotter.add_mesh(screen, color="white")
+    plotter.add_mesh(screen, color='white')
 
 light = pyvista.Light(
     position=(0, 0, 0),
     focal_point=(0, 1, 0),
-    color="cyan",
+    color='cyan',
     intensity=15,
     positional=True,
     cone_angle=15,
@@ -117,12 +117,12 @@ plotter = pyvista.Plotter(lighting=None, window_size=(800, 800))
 # add several planes
 for plane_y in [2, 5, 10]:
     screen = pyvista.Plane(center=(0, plane_y, 0), direction=(0, 1, 0), i_size=5, j_size=5)
-    plotter.add_mesh(screen, color="white")
+    plotter.add_mesh(screen, color='white')
 
 light = pyvista.Light(
     position=(0, 0, 0),
     focal_point=(0, 1, 0),
-    color="cyan",
+    color='cyan',
     intensity=15,
     cone_angle=15,
     shadow_attenuation=0.95,

@@ -25,7 +25,7 @@ mesh = examples.load_random_hills()
 
 plotter = pv.Plotter(off_screen=True)
 actor = plotter.add_mesh(mesh)
-plotter.set_background("lightgrey")
+plotter.set_background('lightgrey')
 
 
 # -----------------------------------------------------------------------------

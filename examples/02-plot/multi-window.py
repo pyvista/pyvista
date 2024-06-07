@@ -33,7 +33,7 @@ plotter.add_mesh(globe, texture=texture)
 
 plotter.subplot(0, 1)
 plotter.add_text("Render Window 1", font_size=30)
-plotter.add_mesh(pv.Cube(), show_edges=True, color="lightblue")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 plotter.subplot(1, 0)
 plotter.add_text("Render Window 2", font_size=30)
@@ -79,7 +79,7 @@ pv.global_theme.multi_rendering_splitting_position = 0.40
 
 # shape="3|1" means 3 plots on the left and 1 on the right,
 # shape="4/2" means 4 plots on top of 2 at bottom.
-plotter = pv.Plotter(shape="3|1", window_size=(1000, 1200))
+plotter = pv.Plotter(shape='3|1', window_size=(1000, 1200))
 
 plotter.subplot(0)
 plotter.add_text("Airplane Example")
@@ -138,7 +138,7 @@ plotter.camera.zoom(10)
 
 plotter.subplot(2, 0)
 plotter.add_text("Group 2")
-plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color="lightblue")
+plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color='lightblue')
 plotter.view_isometric()
 plotter.camera.zoom(2)
 
@@ -169,7 +169,7 @@ plotter.add_mesh(examples.load_airplane(), show_edges=False)
 
 plotter.subplot(4, 3)
 plotter.add_text("Cell (4,3)")
-plotter.add_mesh(pv.Cube(), show_edges=True, color="lightblue")
+plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 # Display the window
 plotter.show()

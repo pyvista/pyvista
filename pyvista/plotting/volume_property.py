@@ -69,11 +69,11 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
     ... )
-    >>> grid["scalars"] -= grid["scalars"].min()
-    >>> grid["scalars"] *= 255 / grid["scalars"].max()
+    >>> grid['scalars'] -= grid['scalars'].min()
+    >>> grid['scalars'] *= 255 / grid['scalars'].max()
     >>> pl = pv.Plotter()
     >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-    >>> lut = pv.LookupTable(cmap="bwr")
+    >>> lut = pv.LookupTable(cmap='bwr')
     >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
     >>> actor.prop.apply_lookup_table(lut)
     >>> pl.show()
@@ -131,18 +131,18 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> grid = pv.sample_function(
         ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(40, 40, 40)
         ... )
-        >>> grid["scalars"] -= grid["scalars"].min()
-        >>> grid["scalars"] *= 255 / grid["scalars"].max()
+        >>> grid['scalars'] -= grid['scalars'].min()
+        >>> grid['scalars'] *= 255 / grid['scalars'].max()
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(grid, show_scalar_bar=False)
-        >>> lut = pv.LookupTable(cmap="bwr")
+        >>> lut = pv.LookupTable(cmap='bwr')
         >>> lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
         >>> actor.prop.apply_lookup_table(lut)
         >>> pl.show()
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            raise TypeError("`lookup_table` must be a `pyvista.LookupTable`")
+            raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
 
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
@@ -164,7 +164,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         >>> vol = pv.ImageData(dimensions=(n, n, n), origin=(c, c, c))
         >>> scalars = np.linalg.norm(vol.points, axis=1)
         >>> scalars *= 255 / scalars.max()
-        >>> vol["scalars"] = scalars
+        >>> vol['scalars'] = scalars
 
         Demonstrate nearest (default) interpolation.
 
@@ -173,9 +173,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap="plasma",
+        ...     cmap='plasma',
         ... )
-        >>> actor.prop.interpolation_type = "nearest"
+        >>> actor.prop.interpolation_type = 'nearest'
         >>> pl.show()
 
         Demonstrate linear interpolation.
@@ -185,9 +185,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         ...     vol,
         ...     show_scalar_bar=False,
         ...     opacity=[0.3, 0.0, 0.05, 0.0, 0.0, 0.0, 1.0, 0.0],
-        ...     cmap="plasma",
+        ...     cmap='plasma',
         ... )
-        >>> actor.prop.interpolation_type = "linear"
+        >>> actor.prop.interpolation_type = 'linear'
         >>> pl.show()
 
         """
@@ -195,9 +195,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
     @interpolation_type.setter
     def interpolation_type(self, value: str):  # numpydoc ignore=GL08
-        if value == "linear":
+        if value == 'linear':
             self.SetInterpolationTypeToLinear()
-        elif value == "nearest":
+        elif value == 'nearest':
             self.SetInterpolationTypeToNearest()
         else:
             raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
@@ -349,17 +349,17 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     def __repr__(self):
         """Representation of this property."""
         props = [
-            f"{type(self).__name__} ({hex(id(self))})",
+            f'{type(self).__name__} ({hex(id(self))})',
         ]
 
         for attr in dir(self):
-            if not attr.startswith("_") and attr[0].islower():
-                name = " ".join(attr.split("_")).capitalize() + ":"
+            if not attr.startswith('_') and attr[0].islower():
+                name = ' '.join(attr.split('_')).capitalize() + ':'
                 value = getattr(self, attr)
                 if callable(value):
                     continue
                 if isinstance(value, str):
                     value = f'"{value}"'
-                props.append(f"  {name:28s} {value}")
+                props.append(f'  {name:28s} {value}')
 
-        return "\n".join(props)
+        return '\n'.join(props)

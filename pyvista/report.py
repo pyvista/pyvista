@@ -22,8 +22,8 @@ plotter.close()\
 def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    proc = subprocess.run([sys.executable, "-c", _cmd], check=False, capture_output=True)
-    return "" if proc.returncode else proc.stdout.decode()
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    return '' if proc.returncode else proc.stdout.decode()
 
 
 class GPUInfo:
@@ -160,29 +160,29 @@ class Report(scooby.Report):
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
-        core = ["pyvista", "vtk", "numpy", "matplotlib", "scooby", "pooch", "pillow"]
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
         # Optional packages.
         optional = [
-            "imageio",
-            "pyvistaqt",
-            "PyQt5",
-            "IPython",
-            "colorcet",
-            "cmocean",
-            "ipywidgets",
-            "scipy",
-            "tqdm",
-            "meshio",
-            "jupyterlab",
-            "pytest_pyvista",
-            "trame",
-            "trame_client",
-            "trame_server",
-            "trame_vtk",
-            "trame_vuetify",
-            "jupyter_server_proxy",
-            "nest_asyncio",
+            'imageio',
+            'pyvistaqt',
+            'PyQt5',
+            'IPython',
+            'colorcet',
+            'cmocean',
+            'ipywidgets',
+            'scipy',
+            'tqdm',
+            'meshio',
+            'jupyterlab',
+            'pytest_pyvista',
+            'trame',
+            'trame_client',
+            'trame_server',
+            'trame_vtk',
+            'trame_vuetify',
+            'jupyter_server_proxy',
+            'nest_asyncio',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
@@ -199,7 +199,7 @@ class Report(scooby.Report):
                 ("GPU Details", "None"),
             ]
 
-        extra_meta.append(("MathText Support", check_math_text_support()))
+        extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,

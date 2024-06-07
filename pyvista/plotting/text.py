@@ -45,7 +45,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     Create text annotation in four corners.
 
     >>> from pyvista import CornerAnnotation
-    >>> text = CornerAnnotation(0, "text")
+    >>> text = CornerAnnotation(0, 'text')
     >>> prop = text.prop
     """
 
@@ -85,29 +85,29 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
             Text to be displayed for each corner.
         """
         corner_mappings = {
-            "lower_left": self.LowerLeft,
-            "lower_right": self.LowerRight,
-            "upper_left": self.UpperLeft,
-            "upper_right": self.UpperRight,
-            "lower_edge": self.LowerEdge,
-            "upper_edge": self.UpperEdge,
-            "left_edge": self.LeftEdge,
-            "right_edge": self.RightEdge,
+            'lower_left': self.LowerLeft,
+            'lower_right': self.LowerRight,
+            'upper_left': self.UpperLeft,
+            'upper_right': self.UpperRight,
+            'lower_edge': self.LowerEdge,
+            'upper_edge': self.UpperEdge,
+            'left_edge': self.LeftEdge,
+            'right_edge': self.RightEdge,
         }
-        corner_mappings["ll"] = corner_mappings["lower_left"]
-        corner_mappings["lr"] = corner_mappings["lower_right"]
-        corner_mappings["ul"] = corner_mappings["upper_left"]
-        corner_mappings["ur"] = corner_mappings["upper_right"]
-        corner_mappings["top"] = corner_mappings["upper_edge"]
-        corner_mappings["bottom"] = corner_mappings["lower_edge"]
-        corner_mappings["right"] = corner_mappings["right_edge"]
-        corner_mappings["r"] = corner_mappings["right_edge"]
-        corner_mappings["left"] = corner_mappings["left_edge"]
-        corner_mappings["l"] = corner_mappings["left_edge"]
+        corner_mappings['ll'] = corner_mappings['lower_left']
+        corner_mappings['lr'] = corner_mappings['lower_right']
+        corner_mappings['ul'] = corner_mappings['upper_left']
+        corner_mappings['ur'] = corner_mappings['upper_right']
+        corner_mappings['top'] = corner_mappings['upper_edge']
+        corner_mappings['bottom'] = corner_mappings['lower_edge']
+        corner_mappings['right'] = corner_mappings['right_edge']
+        corner_mappings['r'] = corner_mappings['right_edge']
+        corner_mappings['left'] = corner_mappings['left_edge']
+        corner_mappings['l'] = corner_mappings['left_edge']
         if isinstance(position, str):
             position = corner_mappings[position]
         elif position is True:
-            position = corner_mappings["upper_left"]
+            position = corner_mappings['upper_left']
         self.SetText(position, text)
 
     @property
@@ -375,7 +375,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @opacity.setter
     def opacity(self, opacity: float):  # numpydoc ignore=GL08
-        _check_range(opacity, (0, 1), "opacity")
+        _check_range(opacity, (0, 1), 'opacity')
         self.SetOpacity(opacity)
 
     @property
@@ -411,7 +411,7 @@ class TextProperty(_vtk.vtkTextProperty):
 
     @background_opacity.setter
     def background_opacity(self, opacity: float):  # numpydoc ignore=GL08
-        _check_range(opacity, (0, 1), "background_opacity")
+        _check_range(opacity, (0, 1), 'background_opacity')
         self.SetBackgroundOpacity(opacity)
 
     @property
@@ -524,7 +524,7 @@ class TextProperty(_vtk.vtkTextProperty):
         path = pathlib.Path(font_file)
         path = path.resolve()
         if not Path(path).is_file():
-            raise FileNotFoundError(f"Unable to locate {path}")
+            raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
 
@@ -539,21 +539,21 @@ class TextProperty(_vtk.vtkTextProperty):
             Should be either "left", "center" or "right".
         """
         justification = self.GetJustificationAsString().lower()
-        if justification == "centered":
-            justification = "center"
+        if justification == 'centered':
+            justification = 'center'
         return justification
 
     @justification_horizontal.setter
     def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
-        if justification.lower() == "left":
+        if justification.lower() == 'left':
             self.SetJustificationToLeft()
-        elif justification.lower() == "center":
+        elif justification.lower() == 'center':
             self.SetJustificationToCentered()
-        elif justification.lower() == "right":
+        elif justification.lower() == 'right':
             self.SetJustificationToRight()
         else:
             raise ValueError(
-                f"Invalid {justification} for justification_horizontal. "
+                f'Invalid {justification} for justification_horizontal. '
                 'Should be either "left", "center" or "right".',
             )
 
@@ -568,21 +568,21 @@ class TextProperty(_vtk.vtkTextProperty):
             Should be either "bottom", "center" or "top".
         """
         justification = self.GetVerticalJustificationAsString().lower()
-        if justification == "centered":
-            justification = "center"
+        if justification == 'centered':
+            justification = 'center'
         return justification
 
     @justification_vertical.setter
     def justification_vertical(self, justification: str):  # numpydoc ignore=GL08
-        if justification.lower() == "bottom":
+        if justification.lower() == 'bottom':
             self.SetVerticalJustificationToBottom()
-        elif justification.lower() == "center":
+        elif justification.lower() == 'center':
             self.SetVerticalJustificationToCentered()
-        elif justification.lower() == "top":
+        elif justification.lower() == 'top':
             self.SetVerticalJustificationToTop()
         else:
             raise ValueError(
-                f"Invalid {justification} for justification_vertical. "
+                f'Invalid {justification} for justification_vertical. '
                 'Should be either "bottom", "center" or "top".',
             )
 

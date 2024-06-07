@@ -21,20 +21,20 @@ SKIP_PLOTTING = not system_supports_plotting()
 # Configure skip_plotting marker
 def pytest_configure(config):
     config.addinivalue_line(
-        "markers",
-        "skip_plotting: skip the test if system does not support plotting",
+        'markers',
+        'skip_plotting: skip the test if system does not support plotting',
     )
 
 
 def pytest_runtest_setup(item):
-    skip = any(mark.name == "skip_plotting" for mark in item.iter_markers())
+    skip = any(mark.name == 'skip_plotting' for mark in item.iter_markers())
     if skip and SKIP_PLOTTING:
-        pytest.skip("Test requires system to support plotting")
+        pytest.skip('Test requires system to support plotting')
 
 
 def _is_vtk(obj):
     try:
-        return obj.__class__.__name__.startswith("vtk")
+        return obj.__class__.__name__.startswith('vtk')
     except Exception:  # old Python sometimes no __class__.__name__
         return False
 
@@ -67,7 +67,7 @@ def check_gc():
 
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
-    msg = "Not all objects GCed:\n"
+    msg = 'Not all objects GCed:\n'
     for obj in after:
         cn = obj.__class__.__name__
         cf = inspect.currentframe()
@@ -77,20 +77,20 @@ def check_gc():
             if isinstance(referrer, dict):
                 for k, v in referrer.items():
                     if k is obj:
-                        referrers[ri] = "dict: d key"
+                        referrers[ri] = 'dict: d key'
                         del k, v
                         break
                     elif v is obj:
-                        referrers[ri] = f"dict: d[{k!r}]"
+                        referrers[ri] = f'dict: d[{k!r}]'
                         del k, v
                         break
                     del k, v
                 else:
-                    referrers[ri] = f"dict: len={len(referrer)}"
+                    referrers[ri] = f'dict: len={len(referrer)}'
             else:
                 referrers[ri] = repr(referrer)
             del ri, referrer
-        msg += f"{cn}: {referrers}\n"
+        msg += f'{cn}: {referrers}\n'
         del cn, referrers
     assert len(after) == 0, msg
 
@@ -111,9 +111,9 @@ def make_two_char_img(text):
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
     pl = pv.Plotter(window_size=(300, 300), lighting=None, off_screen=True)
-    pl.add_text(text, color="w", font_size=100, position=(0.1, 0.1), viewport=True, font="courier")
-    pl.background_color = "k"
-    pl.camera.zoom = "tight"
+    pl.add_text(text, color='w', font_size=100, position=(0.1, 0.1), viewport=True, font='courier')
+    pl.background_color = 'k'
+    pl.camera.zoom = 'tight'
     return pv.Texture(pl.screenshot()).to_image()
 
 
@@ -122,11 +122,11 @@ def cubemap(texture):
     """Sample texture as a cubemap."""
     return pv.Texture(
         [
-            make_two_char_img("X+"),
-            make_two_char_img("X-"),
-            make_two_char_img("Y+"),
-            make_two_char_img("Y-"),
-            make_two_char_img("Z+"),
-            make_two_char_img("Z-"),
+            make_two_char_img('X+'),
+            make_two_char_img('X-'),
+            make_two_char_img('Y+'),
+            make_two_char_img('Y-'),
+            make_two_char_img('Z+'),
+            make_two_char_img('Z-'),
         ],
     )

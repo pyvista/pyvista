@@ -75,7 +75,7 @@ class Widget(HTML):  # numpydoc ignore=PR01
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError("Please install `ipywidgets`.")
+            raise ImportError('Please install `ipywidgets`.')
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
 
@@ -93,7 +93,7 @@ class Widget(HTML):  # numpydoc ignore=PR01
 
         iframe_attrs_str = " ".join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
 
-        value = f"<iframe {iframe_attrs_str}></iframe>"
+        value = f'<iframe {iframe_attrs_str}></iframe>'
 
         super().__init__(value, **kwargs)
         self._viewer = viewer
@@ -116,9 +116,9 @@ class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
     def __init__(self, plotter, width, height, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError("Please install `ipywidgets`.")
+            raise ImportError('Please install `ipywidgets`.')
         scene = plotter.export_html(filename=None)
-        src = scene.getvalue().replace('"', "&quot;")
+        src = scene.getvalue().replace('"', '&quot;')
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
         border = "border: 1px solid rgb(221,221,221);"
@@ -170,7 +170,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
         port = pyvista.global_theme.trame.jupyter_server_port
     if host is None:
         # Default to `127.0.0.1` unless user sets TRAME_DEFAULT_HOST
-        host = os.environ.get("TRAME_DEFAULT_HOST", "127.0.0.1")
+        host = os.environ.get('TRAME_DEFAULT_HOST', '127.0.0.1')
     if (
         wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
     ):  # pragma: no cover
@@ -180,18 +180,18 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     html_widgets.initialize(server)
     vtk_widgets.initialize(server)
 
-    if server.client_type == "vue2":
+    if server.client_type == 'vue2':
         vuetify2_widgets.initialize(server)
     else:
         vuetify3_widgets.initialize(server)
 
     def on_ready(**_):  # numpydoc ignore=GL08
-        logger.debug(f"Server ready: {server}")
+        logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
         server.controller.on_server_ready.add(on_ready)
         server.start(
-            exec_mode="task",
+            exec_mode='task',
             host=host,
             port=port,
             open_browser=False,
@@ -209,11 +209,11 @@ def build_url(
     ui=None,
     server_proxy_enabled=None,
     server_proxy_prefix=None,
-    host="localhost",
-    protocol="http",
+    host='localhost',
+    protocol='http',
 ):  # numpydoc ignore=PR01,RT01
     """Build the URL for the iframe."""
-    params = f"?ui={ui}&reconnect=auto" if ui else "?reconnect=auto"
+    params = f'?ui={ui}&reconnect=auto' if ui else '?reconnect=auto'
     if server_proxy_enabled is None:
         server_proxy_enabled = pyvista.global_theme.trame.server_proxy_enabled
     if server_proxy_enabled:
@@ -224,7 +224,7 @@ def build_url(
             f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
         )
     else:
-        src = f"{protocol}://{host}:{_server.port}/index.html{params}"
+        src = f'{protocol}://{host}:{_server.port}/index.html{params}'
     logger.debug(src)
     return src
 
@@ -244,7 +244,7 @@ def initialize(
     viewer = get_viewer(
         plotter,
         server=server,
-        suppress_rendering=mode == "client",
+        suppress_rendering=mode == 'client',
     )
 
     with viewer.make_layout(server, template_name=plotter._id_name) as layout:
@@ -332,13 +332,13 @@ def show_trame(
 
 
             def handler(viewer, src, **kwargs):
-                return IFrame(src, "75%", "500px")
+                return IFrame(src, '75%', '500px')
 
 
             p = pyvista.Plotter(notebook=True)
             _ = p.add_mesh(mesh)
             iframe = p.show(
-                jupyter_backend="trame",
+                jupyter_backend='trame',
                 jupyter_kwargs=dict(handler=handler),
                 return_viewer=True,
             )
@@ -360,15 +360,15 @@ def show_trame(
         raise RuntimeError(CLOSED_PLOTTER_ERROR)
 
     if plotter._window_size_unset:
-        dw, dh = "99%", "600px"
+        dw, dh = '99%', '600px'
     else:
         dw, dh = plotter.window_size
-        dw = f"{dw}px"
-        dh = f"{dh}px"
-    kwargs.setdefault("width", dw)
-    kwargs.setdefault("height", dh)
+        dw = f'{dw}px'
+        dh = f'{dh}px'
+    kwargs.setdefault('width', dw)
+    kwargs.setdefault('height', dh)
 
-    if mode == "html":
+    if mode == 'html':
         return EmbeddableWidget(plotter, **kwargs)
 
     if jupyter_extension_enabled is None:
@@ -414,8 +414,8 @@ def show_trame(
             ui=plotter._id_name,
             server_proxy_enabled=server_proxy_enabled,
             server_proxy_prefix=server_proxy_prefix,
-            host=kwargs.get("host", "localhost"),
-            protocol=kwargs.get("protocol", "http"),
+            host=kwargs.get('host', 'localhost'),
+            protocol=kwargs.get('protocol', 'http'),
         )
 
     if callable(handler):

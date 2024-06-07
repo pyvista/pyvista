@@ -16,8 +16,8 @@ from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS CI fails when downloading examples",
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -36,7 +36,7 @@ def vtk_array_to_tuple(arr):
 
 
 def to_vtk_scientific(val):
-    parts = val.split("e")
+    parts = val.split('e')
     sign, exp = parts[1][0], parts[1][1:]
     exp = exp.lstrip("0")  # Remove leading zeros of exponent
     return (
@@ -66,7 +66,7 @@ class PlotterChanged:
 @pytest.fixture()
 def pl():
     p = pv.Plotter(window_size=(600, 600))
-    p.background_color = "w"
+    p.background_color = 'w'
     return p
 
 

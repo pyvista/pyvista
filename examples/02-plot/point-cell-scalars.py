@@ -29,8 +29,8 @@ grid
 # At this point it's possible to assign only point or cell scalars to this
 # dataset. First, let's just plot some simple point scalars.
 
-grid.point_data["Point Data"] = range(grid.n_points)
-grid.plot(scalars="Point Data")
+grid.point_data['Point Data'] = range(grid.n_points)
+grid.plot(scalars='Point Data')
 
 
 ###############################################################################
@@ -38,8 +38,8 @@ grid.plot(scalars="Point Data")
 # ~~~~~~~~~~~~~~~~~
 # Next, let's plot cell scalars. We're simply assigning based on the cell
 # index.
-grid.cell_data["Cell Data"] = range(grid.n_cells)
-grid.plot(scalars="Cell Data")
+grid.cell_data['Cell Data'] = range(grid.n_cells)
+grid.plot(scalars='Cell Data')
 
 
 ###############################################################################
@@ -71,7 +71,7 @@ split_cells
 # between cells. This matches how stresses and strains are calculated from
 # finite element solutions.
 
-split_cells.point_data["Point Cell Data"] = np.hstack(
+split_cells.point_data['Point Cell Data'] = np.hstack(
     (
         np.linspace(0, 8, 8),  # cell 0
         np.linspace(0, 12, 8),  # cell 1
@@ -79,4 +79,4 @@ split_cells.point_data["Point Cell Data"] = np.hstack(
         np.linspace(0, 20, 8),  # cell 3
     ),
 )
-split_cells.plot(scalars="Point Cell Data")
+split_cells.plot(scalars='Point Cell Data')

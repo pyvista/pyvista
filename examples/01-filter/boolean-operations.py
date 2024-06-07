@@ -65,10 +65,10 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 result = sphere_a.boolean_union(sphere_b)
 pl = pv.Plotter()
-_ = pl.add_mesh(sphere_a, color="r", style="wireframe", line_width=3)
-_ = pl.add_mesh(sphere_b, color="b", style="wireframe", line_width=3)
-_ = pl.add_mesh(result, color="lightblue")
-pl.camera_position = "xz"
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='lightblue')
+pl.camera_position = 'xz'
 pl.show()
 
 
@@ -87,10 +87,10 @@ pl.show()
 
 result = sphere_a.boolean_difference(sphere_b)
 pl = pv.Plotter()
-_ = pl.add_mesh(sphere_a, color="r", style="wireframe", line_width=3)
-_ = pl.add_mesh(sphere_b, color="b", style="wireframe", line_width=3)
-_ = pl.add_mesh(result, color="lightblue")
-pl.camera_position = "xz"
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='lightblue')
+pl.camera_position = 'xz'
 pl.show()
 
 
@@ -109,10 +109,10 @@ pl.show()
 
 result = sphere_a.boolean_intersection(sphere_b)
 pl = pv.Plotter()
-_ = pl.add_mesh(sphere_a, color="r", style="wireframe", line_width=3)
-_ = pl.add_mesh(sphere_b, color="b", style="wireframe", line_width=3)
-_ = pl.add_mesh(result, color="lightblue")
-pl.camera_position = "xz"
+_ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+_ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
+_ = pl.add_mesh(result, color='lightblue')
+pl.camera_position = 'xz'
 pl.show()
 
 
@@ -128,7 +128,7 @@ pl.show()
 cube = pv.Cube().triangulate().subdivide(3)
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
-result.plot(color="lightblue")
+result.plot(color='lightblue')
 
 
 ###############################################################################
@@ -138,7 +138,7 @@ cube = pv.Cube().triangulate().subdivide(3)
 sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
-result.plot(color="lightblue")
+result.plot(color='lightblue')
 
 
 ###############################################################################
@@ -148,7 +148,7 @@ cube = pv.Cube().triangulate().subdivide(3)
 cube.flip_normals()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
-result.plot(color="lightblue")
+result.plot(color='lightblue')
 
 
 ###############################################################################
@@ -159,4 +159,4 @@ cube.flip_normals()
 sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
-result.plot(color="lightblue")
+result.plot(color='lightblue')

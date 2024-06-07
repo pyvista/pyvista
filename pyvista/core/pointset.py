@@ -53,10 +53,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import VectorLike
 
 DEFAULT_INPLACE_WARNING = (
-    "You did not specify a value for `inplace` and the default value will "
-    "be changing to `False` in future versions for point-based meshes (e.g., "
-    "`PolyData`). Please make sure you are not assuming this to be an inplace "
-    "operation."
+    'You did not specify a value for `inplace` and the default value will '
+    'be changing to `False` in future versions for point-based meshes (e.g., '
+    '`PolyData`). Please make sure you are not assuming this to be an inplace '
+    'operation.'
 )
 
 
@@ -143,12 +143,12 @@ class _PointSet(DataSet):
         >>> import pyvista as pv
         >>> hex_mesh = pv.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
-        >>> removed.plot(color="lightblue", show_edges=True, line_width=3)
+        >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    f"Boolean array size must match the number of cells ({self.n_cells})",
+                    f'Boolean array size must match the number of cells ({self.n_cells})',
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
@@ -380,7 +380,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def plot(self, *args, **kwargs):
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
-        kwargs.setdefault("style", "points")
+        kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @wraps(PolyDataFilters.threshold)
@@ -426,16 +426,16 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def contour(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            "Contour and other dimension reducing filters are not supported on PointSets",
+            'Contour and other dimension reducing filters are not supported on PointSets',
         )
 
     def cell_data_to_point_data(self, *args, **kwargs):
         """Raise PointSets do not have cells."""
-        raise PointSetNotSupported("PointSets contain no cells or cell data.")
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
 
     def point_data_to_cell_data(self, *args, **kwargs):
         """Raise PointSets do not have cells."""
-        raise PointSetNotSupported("PointSets contain no cells or cell data.")
+        raise PointSetNotSupported('PointSets contain no cells or cell data.')
 
     def triangulate(self, *args, **kwargs):
         """Raise cell operations are not supported."""
@@ -673,8 +673,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> mesh = pv.PolyData(
     ...     points, lines=pv.CellArray.from_regular_cells(lines)
     ... )
-    >>> mesh.cell_data["line_idx"] = np.arange(n_lines)
-    >>> mesh.plot(scalars="line_idx")
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
+    >>> mesh.plot(scalars='line_idx')
 
     Construct a set of random triangle strips using a ``pv.CellArray``.
     Because each strip in this example can have a different number
@@ -692,8 +692,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
     ... )
-    >>> mesh.cell_data["strip_idx"] = np.arange(n_strips)
-    >>> mesh.plot(show_edges=True, scalars="strip_idx")
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
+    >>> mesh.plot(show_edges=True, scalars='strip_idx')
 
     Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
     mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
@@ -704,15 +704,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> small_sphere = pv.Sphere().compute_normals()
     >>> inflated_points = (
-    ...     small_sphere.points + 0.1 * small_sphere.point_data["Normals"]
+    ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
     ... )
     >>> larger_sphere = pv.PolyData(
     ...     inflated_points, faces=small_sphere.GetPolys()
     ... )
     >>> plotter = pv.Plotter()
-    >>> _ = plotter.add_mesh(small_sphere, color="red", show_edges=True)
+    >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
     >>> _ = plotter.add_mesh(
-    ...     larger_sphere, color="blue", opacity=0.3, show_edges=True
+    ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
     ... )
     >>> plotter.show()
 
@@ -739,13 +739,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             ),
         ]
     ] = {
-        ".ply": _vtk.vtkPLYWriter,
-        ".vtp": _vtk.vtkXMLPolyDataWriter,
-        ".stl": _vtk.vtkSTLWriter,
-        ".vtk": _vtk.vtkPolyDataWriter,
-        ".geo": _vtk.vtkHoudiniPolyDataWriter,
-        ".obj": _vtk.vtkOBJWriter,
-        ".iv": _vtk.vtkIVWriter,
+        '.ply': _vtk.vtkPLYWriter,
+        '.vtp': _vtk.vtkXMLPolyDataWriter,
+        '.stl': _vtk.vtkSTLWriter,
+        '.vtk': _vtk.vtkPolyDataWriter,
+        '.geo': _vtk.vtkHoudiniPolyDataWriter,
+        '.obj': _vtk.vtkOBJWriter,
+        '.iv': _vtk.vtkIVWriter,
     }
 
     def __init__(
@@ -772,12 +772,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             return
 
         # filename
-        opt_kwarg = ["faces", "n_faces", "lines", "n_lines"]
+        opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
         if isinstance(var_inp, (str, pathlib.Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        "No other arguments should be set when first parameter is a string",
+                        'No other arguments should be set when first parameter is a string',
                     )
             self._from_file(var_inp, force_ext=force_ext)  # is filename
 
@@ -788,7 +788,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        "No other arguments should be set when first parameter is a PolyData",
+                        'No other arguments should be set when first parameter is a PolyData',
                     )
             if deep:
                 self.deep_copy(var_inp)
@@ -812,14 +812,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 - vtk.vtkDataArray
 
                 Instead got: {type(var_inp)}"""
-            raise TypeError(dedent(msg.strip("\n")))
+            raise TypeError(dedent(msg.strip('\n')))
 
         # At this point, points have been setup, add faces and/or lines
         if faces is lines is strips is verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
 
-        for k, v in (("verts", verts), ("strips", strips), ("faces", faces), ("lines", lines)):
+        for k, v in (('verts', verts), ('strips', strips), ('faces', faces), ('lines', lines)):
             if v is None:
                 continue
 
@@ -835,10 +835,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
         for k, v in (
-            ("n_verts", n_verts),
-            ("n_strips", n_strips),
-            ("n_faces", n_faces),
-            ("n_lines", n_lines),
+            ('n_verts', n_verts),
+            ('n_strips', n_strips),
+            ('n_faces', n_faces),
+            ('n_lines', n_lines),
         ):
             if v is not None:
                 warnings.warn(
@@ -902,7 +902,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ...     )
         ... ).T
         >>> mesh.plot(
-        ...     color="lightblue",
+        ...     color='lightblue',
         ...     render_points_as_spheres=True,
         ...     point_size=60,
         ... )
@@ -1014,7 +1014,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """
         array = _vtk.vtk_to_numpy(self.GetPolys().GetData())
         # Flag this array as read only to ensure users do not attempt to write to it.
-        array.flags["WRITEABLE"] = False
+        array.flags['WRITEABLE'] = False
         return array
 
     @faces.setter
@@ -1447,12 +1447,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.save("my_mesh.stl")  # doctest:+SKIP
+        >>> sphere.save('my_mesh.stl')  # doctest:+SKIP
 
         Save a mesh as a PLY.
 
         >>> sphere = pv.Sphere()
-        >>> sphere.save("my_mesh.ply")  # doctest:+SKIP
+        >>> sphere.save('my_mesh.ply')  # doctest:+SKIP
 
         Save a mesh as a PLY with a texture array.  Here we also
         create a simple RGB array representing the texture.
@@ -1463,33 +1463,33 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> # Just the green channel is set as a repeatedly
         >>> # decreasing value
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
-        >>> sphere.point_data["my_texture"] = texture
+        >>> sphere.point_data['my_texture'] = texture
         >>> sphere.save(
-        ...     "my_mesh.ply", texture="my_texture"
+        ...     'my_mesh.ply', texture='my_texture'
         ... )  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
         alpha channel.
 
-        >>> sphere.save("my_mesh.ply", texture=texture)  # doctest:+SKIP
+        >>> sphere.save('my_mesh.ply', texture=texture)  # doctest:+SKIP
 
         Save a mesh as a VTK file.
 
         >>> sphere = pv.Sphere()
-        >>> sphere.save("my_mesh.vtk")  # doctest:+SKIP
+        >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
         filename = str(Path(str(filename)).expanduser().resolve())
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in [".stl", ".ply"] and recompute_normals:
+        if ftype in ['.stl', '.ply'] and recompute_normals:
             with contextlib.suppress(TypeError):
                 self.compute_normals(inplace=True)
 
         # validate texture
-        if ftype == ".ply" and texture is not None:
+        if ftype == '.ply' and texture is not None:
             if isinstance(texture, str):
                 if self[texture].dtype != np.uint8:
                     raise ValueError(
@@ -1497,12 +1497,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                     )
             elif isinstance(texture, np.ndarray):
                 if texture.dtype != np.uint8:
-                    raise ValueError(f"Invalid datatype {texture.dtype} of texture array")
+                    raise ValueError(f'Invalid datatype {texture.dtype} of texture array')
             else:
                 raise TypeError(
-                    f"Invalid type {type(texture)} for texture.  "
-                    "Should be either a string representing a point or "
-                    "cell array, or a numpy array.",
+                    f'Invalid type {type(texture)} for texture.  '
+                    'Should be either a string representing a point or '
+                    'cell array, or a numpy array.',
                 )
 
         super().save(filename, binary, texture=texture)
@@ -1560,7 +1560,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if self.point_data.active_normals is not None:
             normals = self.point_data.active_normals
         else:
-            normals = self.compute_normals(cell_normals=False, inplace=False).point_data["Normals"]
+            normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
 
     @property
@@ -1593,7 +1593,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if self.cell_data.active_normals is not None:
             normals = self.cell_data.active_normals
         else:
-            normals = self.compute_normals(point_normals=False, inplace=False).cell_data["Normals"]
+            normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals
 
     @property
@@ -1633,7 +1633,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
         """
-        if not hasattr(self, "_obbTree"):
+        if not hasattr(self, '_obbTree'):
             self._obbTree = _vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
             self._obbTree.BuildLocator()
@@ -1690,7 +1690,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __del__(self):
         """Delete the object."""
-        if hasattr(self, "_obbTree"):
+        if hasattr(self, '_obbTree'):
             del self._obbTree
 
 
@@ -1702,7 +1702,7 @@ class PointGrid(_PointSet):
         """Initialize the point grid."""
         super().__init__()
 
-    def plot_curvature(self, curv_type="mean", **kwargs):
+    def plot_curvature(self, curv_type='mean', **kwargs):
         """Plot the curvature of the external surface of the grid.
 
         Parameters
@@ -1790,8 +1790,8 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
     ] = {
-        ".vtu": _vtk.vtkXMLUnstructuredGridWriter,
-        ".vtk": _vtk.vtkUnstructuredGridWriter,
+        '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+        '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
 
     def __init__(self, *args, deep=False, **kwargs) -> None:
@@ -1818,7 +1818,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
             else:
                 itype = type(args[0])
-                raise TypeError(f"Cannot work with input type {itype}")
+                raise TypeError(f'Cannot work with input type {itype}')
 
         # Cell dictionary creation
         elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
@@ -1834,11 +1834,11 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
                 self._check_for_consistency()
             else:
-                raise TypeError("All input types must be sequences.")
+                raise TypeError('All input types must be sequences.')
         else:
             raise TypeError(
-                "Invalid parameters.  Initialization with arrays requires the "
-                "following arrays:\n`cells`, `cell_type`, `points`",
+                'Invalid parameters.  Initialization with arrays requires the '
+                'following arrays:\n`cells`, `cell_type`, `points`',
             )
 
     def __repr__(self):
@@ -1961,14 +1961,14 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         if self.n_cells != self.celltypes.size:
             raise ValueError(
-                f"Number of cell types ({self.celltypes.size}) "
-                f"must match the number of cells {self.n_cells})",
+                f'Number of cell types ({self.celltypes.size}) '
+                f'must match the number of cells {self.n_cells})',
             )
 
         if self.n_cells != self.offset.size - 1:  # pragma: no cover
             raise ValueError(
-                f"Size of the offset ({self.offset.size}) "
-                f"must be one greater than the number of cells ({self.n_cells})",
+                f'Size of the offset ({self.offset.size}) '
+                f'must be one greater than the number of cells ({self.n_cells})',
             )
 
     @property
@@ -2021,7 +2021,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         """
         # Flag this array as read only to ensure users do not attempt to write to it.
         array = _vtk.vtk_to_numpy(self.GetCells().GetData())
-        array.flags["WRITEABLE"] = False
+        array.flags['WRITEABLE'] = False
         return array
 
     @cells.setter
@@ -2269,7 +2269,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         carr = self.GetCells()
         # This will be the number of cells + 1.
         array = _vtk.vtk_to_numpy(carr.GetOffsetsArray())
-        array.flags["WRITEABLE"] = False
+        array.flags['WRITEABLE'] = False
         return array
 
     def cast_to_explicit_structured_grid(self):
@@ -2294,30 +2294,30 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         --------
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.cast_to_unstructured_grid()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.cast_to_explicit_structured_grid()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
-        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         s2 = self.cell_data.keys()
         if not s1.issubset(s2):
             raise TypeError("'BLOCK_I', 'BLOCK_J' and 'BLOCK_K' cell arrays are required")
         alg = _vtk.vtkUnstructuredGridToExplicitStructuredGrid()
         alg.SetInputData(self)
-        alg.SetInputArrayToProcess(0, 0, 0, 1, "BLOCK_I")
-        alg.SetInputArrayToProcess(1, 0, 0, 1, "BLOCK_J")
-        alg.SetInputArrayToProcess(2, 0, 0, 1, "BLOCK_K")
+        alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
+        alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
+        alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
         grid = _get_output(alg)
-        grid.cell_data.remove("ConnectivityFlags")  # unrequired
+        grid.cell_data.remove('ConnectivityFlags')  # unrequired
         return grid
 
 
@@ -2385,7 +2385,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     >>> xrng = np.arange(-10, 10, 2, dtype=np.float32)
     >>> yrng = np.arange(-10, 10, 5, dtype=np.float32)
     >>> zrng = np.arange(-10, 10, 1, dtype=np.float32)
-    >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing="ij")
+    >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
     >>> grid = pv.StructuredGrid(x, y, z)
     >>> grid
     StructuredGrid (...)
@@ -2401,7 +2401,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     _WRITERS: ClassVar[
         dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
-    ] = {".vtk": _vtk.vtkStructuredGridWriter, ".vts": _vtk.vtkXMLStructuredGridWriter}
+    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2468,13 +2468,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
         """
         if not (x.shape == y.shape == z.shape):
-            raise ValueError("Input point array shapes must match exactly")
+            raise ValueError('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0] = x.ravel("F")
-        points[:, 1] = y.ravel("F")
-        points[:, 2] = z.ravel("F")
+        points[:, 0] = x.ravel('F')
+        points[:, 1] = y.ravel('F')
+        points[:, 2] = z.ravel('F')
 
         # ensure that the inputs are 3D
         dim = list(x.shape)
@@ -2501,7 +2501,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing="ij")
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.dimensions
         (20, 10, 4)
@@ -2531,7 +2531,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> xrng = np.arange(-10, 10, 1, dtype=np.float32)
         >>> yrng = np.arange(-10, 10, 2, dtype=np.float32)
         >>> zrng = np.arange(-10, 10, 5, dtype=np.float32)
-        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing="ij")
+        >>> x, y, z = np.meshgrid(xrng, yrng, zrng, indexing='ij')
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.x.shape
         (20, 10, 4)
@@ -2552,7 +2552,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
     @property
     def points_matrix(self):  # numpydoc ignore=RT01
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
-        return self.points.reshape((*self.dimensions, 3), order="F")
+        return self.points.reshape((*self.dimensions, 3), order='F')
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
@@ -2570,10 +2570,10 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         voi = []
         rate = []
         if len(key) != 3:
-            raise RuntimeError("Slices must have exactly 3 dimensions.")
+            raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
             if isinstance(k, Iterable):
-                raise RuntimeError("Fancy indexing is not supported.")
+                raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
                 step = 1
@@ -2625,7 +2625,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    f"Boolean array size must match the number of cells ({self.n_cells})",
+                    f'Boolean array size must match the number of cells ({self.n_cells})',
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
@@ -2668,7 +2668,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_points:
                 raise ValueError(
-                    f"Boolean array size must match the number of points ({self.n_points})",
+                    f'Boolean array size must match the number of points ({self.n_points})',
                 )
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
@@ -2678,13 +2678,13 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
-        return array.reshape(self.dimensions, order="F")
+        return array.reshape(self.dimensions, order='F')
 
     def _reshape_cell_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
-        return array.reshape(cell_dims, order="F")
+        return array.reshape(cell_dims, order='F')
 
 
 class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
@@ -2743,7 +2743,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             str,
             type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
-    ] = {".vtu": _vtk.vtkXMLUnstructuredGridWriter, ".vtk": _vtk.vtkUnstructuredGridWriter}
+    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""
@@ -2811,9 +2811,9 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             [[0, 1, 1, 0, 0, 1, 1, 0], [0, 0, 1, 1, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1, 1, 1]],
         )
         for c in range(ncells):
-            i, j, k = np.unravel_index(c, shape0, order="F")
+            i, j, k = np.unravel_index(c, shape0, order='F')
             coord = (2 * i + connectivity[0], 2 * j + connectivity[1], 2 * k + connectivity[2])
-            cinds = np.ravel_multi_index(coord, shape1, order="F")  # type: ignore[call-overload]
+            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore[call-overload]
             cells[c, 1:] = indices[cinds]
         cells = cells.flatten()
         points = vtk_points(points)
@@ -2851,16 +2851,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         --------
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.cast_to_unstructured_grid()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.cast_to_explicit_structured_grid()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         grid = ExplicitStructuredGrid()
@@ -2869,7 +2869,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         alg.SetInputDataObject(grid)
         alg.Update()
         ugrid = _get_output(alg)
-        ugrid.cell_data.remove("vtkOriginalCellIds")  # unrequired
+        ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
 
@@ -2904,21 +2904,21 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()  # doctest:+SKIP
         >>> grid = grid.hide_cells(range(80, 120))  # doctest:+SKIP
-        >>> grid.save("grid.vtu")  # doctest:+SKIP
+        >>> grid.save('grid.vtu')  # doctest:+SKIP
 
-        >>> grid = pv.ExplicitStructuredGrid("grid.vtu")  # doctest:+SKIP
+        >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
         >>> grid.plot(
-        ...     color="w", show_edges=True, show_bounds=True
+        ...     color='w', show_edges=True, show_bounds=True
         ... )  # doctest:+SKIP
 
         >>> grid.show_cells()  # doctest:+SKIP
         >>> grid.plot(
-        ...     color="w", show_edges=True, show_bounds=True
+        ...     color='w', show_edges=True, show_bounds=True
         ... )  # doctest:+SKIP
 
         """
         if texture is not None:
-            raise ValueError("Cannot save texture of a pointset.")
+            raise ValueError('Cannot save texture of a pointset.')
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
@@ -2949,7 +2949,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         ind_arr = np.asanyarray(ind)
@@ -2989,10 +2989,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         >>> grid = grid.show_cells()
-        >>> grid.plot(color="w", show_edges=True, show_bounds=True)
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)
 
         """
         if inplace:
@@ -3109,7 +3109,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order="F")  # type: ignore[call-overload]
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore[call-overload]
         except ValueError:
             return None
         else:
@@ -3152,7 +3152,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """
         dims = self._dimensions()
         try:
-            coords = np.unravel_index(ind, np.array(dims) - 1, order="F")
+            coords = np.unravel_index(ind, np.array(dims) - 1, order='F')
         except ValueError:
             return None
         else:
@@ -3161,7 +3161,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             return coords
         return None
 
-    def neighbors(self, ind: int | VectorLike[int], rel: str = "connectivity") -> list[int]:
+    def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
 
         Parameters
@@ -3195,8 +3195,8 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> neighbors = grid.extract_cells(ind)
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_axes()
-        >>> _ = plotter.add_mesh(cell, color="r", show_edges=True)
-        >>> _ = plotter.add_mesh(neighbors, color="w", show_edges=True)
+        >>> _ = plotter.add_mesh(cell, color='r', show_edges=True)
+        >>> _ = plotter.add_mesh(neighbors, color='w', show_edges=True)
         >>> plotter.show()
 
         """
@@ -3285,14 +3285,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             ind = [ind]
 
         rel_map = {
-            "connectivity": connectivity,
-            "geometric": geometric,
-            "topological": topological,
+            'connectivity': connectivity,
+            'geometric': geometric,
+            'topological': topological,
         }
 
         if rel not in rel_map:
             raise ValueError(
-                f"Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}",
+                f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}',
             )
         rel_func = rel_map[rel]
 
@@ -3380,16 +3380,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         """
         if inplace:
-            if "ConnectivityFlags" in self.cell_data:
-                array = self.cell_data["ConnectivityFlags"]
+            if 'ConnectivityFlags' in self.cell_data:
+                array = self.cell_data['ConnectivityFlags']
             else:
                 grid = self.compute_connectivity(inplace=False)
-                array = grid.cell_data["ConnectivityFlags"]
+                array = grid.cell_data['ConnectivityFlags']
             array = array.reshape((-1, 1))
             array = array.astype(np.uint8)
             array = np.unpackbits(array, axis=1)
             array = array.sum(axis=1)
-            self.cell_data["number_of_connections"] = array
+            self.cell_data['number_of_connections'] = array
             return self
         else:
             return self.copy().compute_connections(inplace=True)

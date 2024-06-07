@@ -6,7 +6,6 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     from .base_viewer import BaseViewer
 
 _VIEWERS: Dict[str, BaseViewer] = {}
-UI_TITLE = "PyVista"
+UI_TITLE = 'PyVista'
 
 
 def get_viewer(plotter, server=None, suppress_rendering=False):
@@ -60,7 +59,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
     if not server:
         server = get_server()
-    if server.client_type == "vue2":
+    if server.client_type == 'vue2':
         viewer = Vue2Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
     else:
         viewer = Vue3Viewer(plotter, suppress_rendering=suppress_rendering, server=server)
@@ -112,7 +111,7 @@ def plotter_ui(
         Trame view interface for pyvista.
 
     """
-    viewer = get_viewer(plotter, server=kwargs.get("server"), suppress_rendering=mode == "client")
+    viewer = get_viewer(plotter, server=kwargs.get('server'), suppress_rendering=mode == 'client')
     return viewer.ui(
         mode=mode,
         default_server_rendering=default_server_rendering,

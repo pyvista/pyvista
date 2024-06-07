@@ -58,7 +58,7 @@ cpos = [(11.6159, -1.2803, 1.5338), (4.1354, 1.4796, 1.2711), (-0.0352, -0.0004,
 cubemap = examples.download_sky_box_cube_map()
 
 pl = pv.Plotter()
-pl.background_color = "w"
+pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
 pl.set_environment_texture(cubemap)
@@ -70,10 +70,10 @@ pl.show()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pl = pv.Plotter()
-pl.background_color = "w"
+pl.background_color = 'w'
 pl.add_mesh(bunnies, scalars=colors, rgb=True, pbr=True, metallic=0.85)
 pl.camera_position = cpos
 pl.enable_depth_of_field()
-pl.enable_anti_aliasing("ssaa")
+pl.enable_anti_aliasing('ssaa')
 pl.set_environment_texture(cubemap)
 pl.show()

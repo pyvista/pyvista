@@ -67,9 +67,9 @@ def test_multiple_lines_source():
     points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]])
     algo = pv.MultipleLinesSource(points=points)
     assert np.array_equal(algo.points, points)
-    with pytest.raises(ValueError, match="Array of points must have three values per point"):
+    with pytest.raises(ValueError, match='Array of points must have three values per point'):
         algo.points = points[:, :1]
-    with pytest.raises(ValueError, match=">=2 points need to define multiple lines."):
+    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
         algo.points = points[0, :]
 
 
@@ -142,18 +142,18 @@ def test_text3d_source_empty_string():
 
 
 def test_text3d_source():
-    src = pv.Text3DSource(string="Text")
-    assert src.string == "Text"
+    src = pv.Text3DSource(string='Text')
+    assert src.string == 'Text'
     out = src.output
     assert len(out.split_bodies()) == 4
 
 
-@pytest.mark.parametrize("string", [" ", "TEXT"])
-@pytest.mark.parametrize("center", [(0, 0, 0), (1, -2, 3)])
-@pytest.mark.parametrize("height", [None, 0, 1, 2])
-@pytest.mark.parametrize("width", [None, 0, 1, 2])
-@pytest.mark.parametrize("depth", [None, 0, 1, 2])
-@pytest.mark.parametrize("normal", [(0, 0, 1)])
+@pytest.mark.parametrize('string', [" ", 'TEXT'])
+@pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
+@pytest.mark.parametrize('height', [None, 0, 1, 2])
+@pytest.mark.parametrize('width', [None, 0, 1, 2])
+@pytest.mark.parametrize('depth', [None, 0, 1, 2])
+@pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
         string=string,
@@ -211,7 +211,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # bounding box center and/or the mean of its points will otherwise
         # vary and is challenging to test
         new_normal = np.array((1, -2, 3))
-        src = pv.Text3DSource(string="I", center=center, normal=new_normal, depth=0)
+        src = pv.Text3DSource(string='I', center=center, normal=new_normal, depth=0)
         out = src.output
         actual_normal = np.mean(out.cell_normals, axis=0)
         expected_normal = new_normal / np.linalg.norm(new_normal)
@@ -243,12 +243,12 @@ def test_text3d_source_update(text3d_source_with_text):
 
 def text3d_source_test_params():
     return (
-        ("string", "TEXT"),
-        ("center", (1, 2, 3)),
-        ("normal", (4, 5, 6)),
-        ("height", 2),
-        ("width", 3),
-        ("depth", 4),
+        ('string', 'TEXT'),
+        ('center', (1, 2, 3)),
+        ('normal', (4, 5, 6)),
+        ('height', 2),
+        ('width', 3),
+        ('depth', 4),
     )
 
 
@@ -275,7 +275,7 @@ def test_text3d_source_output(text3d_source_with_text):
 
 
 @pytest.mark.parametrize(
-    "kwarg_tuple",
+    'kwarg_tuple',
     text3d_source_test_params(),
 )
 def test_text3d_source_modified_init(kwarg_tuple):
@@ -289,7 +289,7 @@ def test_text3d_source_modified_init(kwarg_tuple):
 
 
 @pytest.mark.parametrize(
-    "kwarg_tuple",
+    'kwarg_tuple',
     text3d_source_test_params(),
 )
 def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
@@ -311,7 +311,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     assert points_before is points_after
 
     # Test setting a new value sets modified flag but does not change output
-    new_value = value + value if name == "string" else np.array(value) * 2
+    new_value = value + value if name == 'string' else np.array(value) * 2
     points_before = text3d_source_with_text._output.GetPoints()
     setattr(text3d_source_with_text, name, new_value)
     points_after = text3d_source_with_text._output.GetPoints()
@@ -379,7 +379,7 @@ def test_polygon_source():
 
 def test_platonic_solid_source():
     algo = pv.PlatonicSolidSource()
-    assert algo.kind == "tetrahedron"
+    assert algo.kind == 'tetrahedron'
 
 
 def test_plane_source():

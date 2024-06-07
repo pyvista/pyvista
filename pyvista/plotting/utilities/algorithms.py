@@ -55,7 +55,7 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
             #     see workaround in PreserveTypeAlgorithmBase.
             #     This check remains as a fail-safe.
-            raise PyVistaPipelineError("The passed algorithm is failing to produce an output.")
+            raise PyVistaPipelineError('The passed algorithm is failing to produce an output.')
         # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
         #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
         #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
@@ -155,9 +155,9 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
             Returns 1 if successful.
         """
         class_name = self.GetInputData(inInfo, 0, 0).GetClassName()
-        if class_name == "vtkPointSet":
+        if class_name == 'vtkPointSet':
             # See https://gitlab.kitware.com/vtk/vtk/-/issues/18771
-            self.OutputType = "vtkPolyData"
+            self.OutputType = 'vtkPolyData'
         else:
             self.OutputType = class_name
         self.FillOutputPortInformation(0, outInfo.GetInformationObject(0))
@@ -186,7 +186,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name: str, preference: str = "point"):
+    def __init__(self, name: str, preference: str = 'point'):
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name
@@ -236,8 +236,8 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             self,
             nInputPorts=1,
             nOutputPorts=1,
-            inputType="vtkPointSet",
-            outputType="vtkPolyData",
+            inputType='vtkPointSet',
+            outputType='vtkPolyData',
         )
 
     def RequestData(self, _request, inInfo, outInfo):
@@ -293,7 +293,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
-            raise ValueError("IDs must be set for points or cells or both.")
+            raise ValueError('IDs must be set for points or cells or both.')
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
@@ -325,10 +325,10 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
             out = self.GetOutputData(outInfo, 0)
             output = inp.copy()
             if self.point_ids:
-                output.point_data["point_ids"] = np.arange(0, output.n_points, dtype=int)
+                output.point_data['point_ids'] = np.arange(0, output.n_points, dtype=int)
             if self.cell_ids:
-                output.cell_data["cell_ids"] = np.arange(0, output.n_cells, dtype=int)
-            if output.active_scalars_name in ["point_ids", "cell_ids"]:
+                output.cell_data['cell_ids'] = np.arange(0, output.n_cells, dtype=int)
+            if output.active_scalars_name in ['point_ids', 'cell_ids']:
                 output.active_scalars_name = inp.active_scalars_name
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
@@ -344,7 +344,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
         """Initialize algorithm."""
         super().__init__(
             nInputPorts=2,
-            outputType="vtkUnstructuredGrid",
+            outputType='vtkUnstructuredGrid',
         )
 
     def RequestData(self, _request, inInfo, outInfo):
@@ -369,7 +369,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             clipped = wrap(self.GetInputData(inInfo, 0, 0))
             source = wrap(self.GetInputData(inInfo, 1, 0))
             out = self.GetOutputData(outInfo, 0)
-            output = source.extract_cells(np.unique(clipped.cell_data["cell_ids"]))
+            output = source.extract_cells(np.unique(clipped.cell_data['cell_ids']))
             out.ShallowCopy(output)
         except Exception:  # pragma: no cover
             traceback.print_exc()
@@ -426,7 +426,7 @@ def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlin
     return surf_filter
 
 
-def active_scalars_algorithm(inp, name, preference="point"):
+def active_scalars_algorithm(inp, name, preference='point'):
     """Add a filter that sets the active scalars.
 
     Parameters

@@ -7,16 +7,16 @@ import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = Path(__file__).parent / "namespace-plotting.txt"
+namespace_data = Path(__file__).parent / 'namespace-plotting.txt'
 with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
-    namespace = [n.split(", ")[0] for n in namespace if not n.startswith("#")]
+    namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
 
 
-@pytest.mark.parametrize("name", namespace)
+@pytest.mark.parametrize('name', namespace)
 def test_plotting_top_namespace(name):
-    module = importlib.import_module("pyvista.plotting")
+    module = importlib.import_module('pyvista.plotting')
     assert hasattr(module, name)
 
 

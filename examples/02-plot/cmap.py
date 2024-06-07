@@ -39,7 +39,7 @@ from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
-mesh["values"] = pv.plotting.tools.normalize(mesh["Elevation"]) * 100
+mesh['values'] = pv.plotting.tools.normalize(mesh['Elevation']) * 100
 
 ###############################################################################
 # Build a custom colormap - here we make a colormap with 5 discrete colors
@@ -52,7 +52,7 @@ grey = np.array([189 / 256, 189 / 256, 189 / 256, 1.0])
 yellow = np.array([255 / 256, 247 / 256, 0 / 256, 1.0])
 red = np.array([1.0, 0.0, 0.0, 1.0])
 
-mapping = np.linspace(mesh["values"].min(), mesh["values"].max(), 256)
+mapping = np.linspace(mesh['values'].min(), mesh['values'].max(), 256)
 newcolors = np.empty((256, 4))
 newcolors[mapping >= 80] = red
 newcolors[mapping < 80] = grey
@@ -65,31 +65,31 @@ my_colormap = ListedColormap(newcolors)
 
 ###############################################################################
 # Simply pass the colormap to the plotting routine.
-mesh.plot(scalars="values", cmap=my_colormap)
+mesh.plot(scalars='values', cmap=my_colormap)
 
 ###############################################################################
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
 # to PyVista.
 boring_cmap = plt.get_cmap("viridis", 5)
-mesh.plot(scalars="values", cmap=boring_cmap)
+mesh.plot(scalars='values', cmap=boring_cmap)
 
 ###############################################################################
 # You can also pass a list of color strings to the color map.  This
 # approach divides up the colormap into 5 equal parts.
-mesh.plot(scalars=mesh["values"], cmap=["black", "blue", "yellow", "grey", "red"])
+mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 ###############################################################################
 # If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the colormap
 scalars = np.empty(mesh.n_points)
-scalars[mesh["values"] >= 80] = 4  # red
-scalars[mesh["values"] < 80] = 3  # grey
-scalars[mesh["values"] < 55] = 2  # yellow
-scalars[mesh["values"] < 30] = 1  # blue
-scalars[mesh["values"] < 1] = 0  # black
+scalars[mesh['values'] >= 80] = 4  # red
+scalars[mesh['values'] < 80] = 3  # grey
+scalars[mesh['values'] < 55] = 2  # yellow
+scalars[mesh['values'] < 30] = 1  # blue
+scalars[mesh['values'] < 1] = 0  # black
 
-mesh.plot(scalars=scalars, cmap=["black", "blue", "yellow", "grey", "red"])
+mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 ###############################################################################
 # Matplotlib vs. Colorcet
@@ -111,37 +111,37 @@ p = pv.Plotter(shape=(2, 2), border=False)
 p.subplot(0, 0)
 p.add_mesh(
     mesh,
-    scalars="Elevation",
+    scalars='Elevation',
     cmap="fire",
     lighting=True,
-    scalar_bar_args={"title": "Colorcet Fire"},
+    scalar_bar_args={'title': "Colorcet Fire"},
 )
 
 p.subplot(0, 1)
 p.add_mesh(
     mesh,
-    scalars="Elevation",
+    scalars='Elevation',
     cmap="fire",
     lighting=False,
-    scalar_bar_args={"title": "Colorcet Fire (No Lighting)"},
+    scalar_bar_args={'title': "Colorcet Fire (No Lighting)"},
 )
 
 p.subplot(1, 0)
 p.add_mesh(
     mesh,
-    scalars="Elevation",
+    scalars='Elevation',
     cmap="hot",
     lighting=True,
-    scalar_bar_args={"title": "Matplotlib Hot"},
+    scalar_bar_args={'title': "Matplotlib Hot"},
 )
 
 p.subplot(1, 1)
 p.add_mesh(
     mesh,
-    scalars="Elevation",
+    scalars='Elevation',
     cmap="hot",
     lighting=False,
-    scalar_bar_args={"title": "Matplotlib Hot (No Lighting)"},
+    scalar_bar_args={'title': "Matplotlib Hot (No Lighting)"},
 )
 
 p.show()
