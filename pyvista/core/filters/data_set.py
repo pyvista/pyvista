@@ -5124,11 +5124,13 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5283,11 +5285,13 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]

@@ -2470,10 +2470,13 @@ def test_extract_values_split_ranges_values(labeled_data):
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
 values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
-values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
-    'val0',
-    'val1',
-]
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
 
 
 @pytest.mark.parametrize(

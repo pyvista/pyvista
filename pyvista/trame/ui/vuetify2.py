@@ -5,6 +5,7 @@ This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

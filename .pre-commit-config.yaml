@@ -9,6 +9,7 @@ repos:
     rev: v0.3.9
     hooks:
       - id: blackdoc
+        args: ["--skip-string-normalization"]
         files: '\.py$'
         exclude: pyvista/plotting/charts.py
 
