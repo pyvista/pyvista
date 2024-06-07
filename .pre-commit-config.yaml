@@ -19,10 +19,11 @@ repos:
         exclude: pyvista/plotting/charts.py
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
+        exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/pycqa/pydocstyle
@@ -93,12 +94,12 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.2
+    rev: 0.28.4
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.3
+    rev: v0.4.7
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
