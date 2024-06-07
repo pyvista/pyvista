@@ -48,7 +48,7 @@ test_path = str(Path(__file__).resolve().parent)
 def is_binary(filename):
     """Return ``True`` when a file is binary."""
     textchars = bytearray({7, 8, 9, 10, 12, 13, 27} | set(range(0x20, 0x100)) - {0x7F})
-    with Path(filename).open('rb') as f:
+    with Path(filename).open("rb") as f:
         data = f.read(1024)
     return bool(data.translate(None, textchars))
 
@@ -67,7 +67,7 @@ def test_init_from_pdata(sphere):
     assert not np.allclose(sphere.points[0], mesh.points[0])
 
 
-@pytest.mark.parametrize('faces_is_cell_array', [False, True])
+@pytest.mark.parametrize("faces_is_cell_array", [False, True])
 def test_init_from_arrays(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
@@ -96,7 +96,7 @@ def test_init_from_arrays(faces_is_cell_array):
     assert np.allclose(faces, mesh.faces)
 
 
-@pytest.mark.parametrize('faces_is_cell_array', [False, True])
+@pytest.mark.parametrize("faces_is_cell_array", [False, True])
 def test_init_from_arrays_with_vert(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1], [0, 1.5, 1.5]])
 
@@ -112,7 +112,7 @@ def test_init_from_arrays_with_vert(faces_is_cell_array):
     assert mesh.n_cells == 4
 
 
-@pytest.mark.parametrize('faces_is_cell_array', [False, True])
+@pytest.mark.parametrize("faces_is_cell_array", [False, True])
 def test_init_from_arrays_triangular(faces_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
 
@@ -167,24 +167,24 @@ def test_invalid_init():
         pv.PolyData(np.array([1.0]))
 
     with pytest.raises(TypeError):
-        pv.PolyData([1.0, 2.0, 3.0], 'woa')
+        pv.PolyData([1.0, 2.0, 3.0], "woa")
 
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.PolyData('woa', 'woa')
+        pv.PolyData("woa", "woa")
 
     poly = pv.PolyData()
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.PolyData(poly, 'woa')
+        pv.PolyData(poly, "woa")
 
     with pytest.raises(TypeError):
-        pv.PolyData({'woa'})
+        pv.PolyData({"woa"})
 
 
 def test_invalid_file():
     with pytest.raises(FileNotFoundError):
-        pv.PolyData('file.bad')
+        pv.PolyData("file.bad")
 
-    filename = str(Path(test_path) / 'test_polydata.py')
+    filename = str(Path(test_path) / "test_polydata.py")
     with pytest.raises(IOError):  # noqa: PT011
         pv.PolyData(filename)
 
@@ -211,7 +211,7 @@ def test_invalid_connectivity_arrays(arr, value):
         _ = pv.PolyData(points, **{arr: value})
 
 
-@pytest.mark.parametrize('lines_is_cell_array', [False, True])
+@pytest.mark.parametrize("lines_is_cell_array", [False, True])
 def test_lines_on_init(lines_is_cell_array):
     points = np.random.default_rng().random((5, 3))
     lines = [2, 0, 1, 3, 2, 3, 4]
@@ -233,7 +233,7 @@ def _assert_verts_equal(
         assert mesh.get_cell(i).type == expected_typ
 
 
-@pytest.mark.parametrize('verts_is_cell_array', [False, True])
+@pytest.mark.parametrize("verts_is_cell_array", [False, True])
 def test_verts(verts_is_cell_array):
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0.5, 0.5, -1]])
     verts = [1, 0, 1, 1, 1, 2, 1, 3, 1, 4]
@@ -259,10 +259,10 @@ def test_verts(verts_is_cell_array):
     )
 
 
-@pytest.mark.parametrize('verts', [([1, 0]), (pv.CellArray([1, 0]))])
-@pytest.mark.parametrize('lines', [([2, 1, 2]), (pv.CellArray([2, 1, 2]))])
-@pytest.mark.parametrize('faces', [([3, 3, 4, 5]), (pv.CellArray([3, 3, 4, 5]))])
-@pytest.mark.parametrize('strips', [([4, 6, 7, 8, 9]), (pv.CellArray([4, 6, 7, 8, 9]))])
+@pytest.mark.parametrize("verts", [([1, 0]), (pv.CellArray([1, 0]))])
+@pytest.mark.parametrize("lines", [([2, 1, 2]), (pv.CellArray([2, 1, 2]))])
+@pytest.mark.parametrize("faces", [([3, 3, 4, 5]), (pv.CellArray([3, 3, 4, 5]))])
+@pytest.mark.parametrize("strips", [([4, 6, 7, 8, 9]), (pv.CellArray([4, 6, 7, 8, 9]))])
 def test_mixed_cell_polydata(verts, lines, faces, strips):
     points = np.zeros((10, 3))
     points[:, 0] = np.linspace(0, 9, 10)
@@ -276,10 +276,10 @@ def test_mixed_cell_polydata(verts, lines, faces, strips):
 def test_polydata_repr_str():
     pd = pv.PolyData()
     assert repr(pd) == str(pd)
-    assert 'N Cells' in str(pd)
-    assert 'N Points' in str(pd)
-    assert 'X Bounds' in str(pd)
-    assert 'N Arrays' in str(pd)
+    assert "N Cells" in str(pd)
+    assert "N Points" in str(pd)
+    assert "X Bounds" in str(pd)
+    assert "N Arrays" in str(pd)
 
 
 def test_geodesic(sphere):
@@ -340,7 +340,7 @@ def test_ray_trace_origin():
 
 
 def test_multi_ray_trace(sphere):
-    trimesh = pytest.importorskip('trimesh')
+    trimesh = pytest.importorskip("trimesh")
     if not trimesh.ray.has_embree:
         pytest.skip("Requires Embree")
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
@@ -353,7 +353,7 @@ def test_multi_ray_trace(sphere):
     # patch embree to test retry
     with patch.object(
         trimesh.ray.ray_pyembree.RayMeshIntersector,
-        'intersects_location',
+        "intersects_location",
         return_value=[np.array([])] * 3,
     ):
         points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
@@ -481,18 +481,18 @@ def test_merge(sphere, sphere_shifted, hexbeam):
     arc_2 = pv.CircularArc([10, 10, 0], [20, 0, 0], [10, 0, 0], negative=False, resolution=3)
     merged = arc_1 + arc_2
     assert merged.n_lines == 2
-    assert merged.active_scalars_name == 'Distance'
+    assert merged.active_scalars_name == "Distance"
 
     # test merge with lines as iterable
     merged = arc_1.merge((arc_2, arc_2))
     assert merged.n_lines == 3
-    assert merged.active_scalars_name == 'Distance'
+    assert merged.active_scalars_name == "Distance"
 
 
-@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+@pytest.mark.parametrize("input_", [examples.load_hexbeam(), pv.Sphere()])
 def test_merge_active_scalars(input_):
     mesh1 = input_.copy()
-    mesh1['foo'] = np.arange(mesh1.n_points)
+    mesh1["foo"] = np.arange(mesh1.n_points)
     mesh2 = mesh1.copy()
 
     a = mesh1.copy()
@@ -506,7 +506,7 @@ def test_merge_active_scalars(input_):
 
     a = mesh1.copy()
     b = mesh2.copy()
-    a.active_scalars_name = 'foo'
+    a.active_scalars_name = "foo"
     b.active_scalars_name = None
     merged = a.merge(b)
     assert merged.active_scalars_name is None
@@ -516,7 +516,7 @@ def test_merge_active_scalars(input_):
     a = mesh1.copy()
     b = mesh2.copy()
     a.active_scalars_name = None
-    b.active_scalars_name = 'foo'
+    b.active_scalars_name = "foo"
     merged = a.merge(b)
     assert merged.active_scalars_name is None
     merged = b.merge(a)
@@ -524,25 +524,25 @@ def test_merge_active_scalars(input_):
 
     a = mesh1.copy()
     b = mesh2.copy()
-    a.active_scalars_name = 'foo'
-    b.active_scalars_name = 'foo'
+    a.active_scalars_name = "foo"
+    b.active_scalars_name = "foo"
     merged = a.merge(b)
-    assert merged.active_scalars_name == 'foo'
+    assert merged.active_scalars_name == "foo"
     merged = b.merge(a)
-    assert merged.active_scalars_name == 'foo'
+    assert merged.active_scalars_name == "foo"
 
 
-@pytest.mark.parametrize('input_', [examples.load_hexbeam(), pv.Sphere()])
+@pytest.mark.parametrize("input_", [examples.load_hexbeam(), pv.Sphere()])
 def test_merge_main_has_priority(input_):
     mesh = input_.copy()
     data_main = np.arange(mesh.n_points, dtype=float)
-    mesh.point_data['present_in_both'] = data_main
-    mesh.set_active_scalars('present_in_both')
+    mesh.point_data["present_in_both"] = data_main
+    mesh.set_active_scalars("present_in_both")
 
     other = mesh.copy()
     data_other = -data_main
-    other.point_data['present_in_both'] = data_other
-    other.set_active_scalars('present_in_both')
+    other.point_data["present_in_both"] = data_other
+    other.set_active_scalars("present_in_both")
 
     # note: order of points can change after point merging
     def matching_point_data(this, that, scalars_name):
@@ -554,12 +554,12 @@ def test_merge_main_has_priority(input_):
         )
 
     merged = mesh.merge(other, main_has_priority=True)
-    assert matching_point_data(merged, mesh, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
+    assert matching_point_data(merged, mesh, "present_in_both")
+    assert merged.active_scalars_name == "present_in_both"
 
     merged = mesh.merge(other, main_has_priority=False)
-    assert matching_point_data(merged, other, 'present_in_both')
-    assert merged.active_scalars_name == 'present_in_both'
+    assert matching_point_data(merged, other, "present_in_both")
+    assert merged.active_scalars_name == "present_in_both"
 
 
 def test_add(sphere, sphere_shifted):
@@ -592,7 +592,7 @@ def test_intersection(sphere, sphere_shifted):
     assert second.n_points == sphere_shifted.n_points
 
 
-@pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
+@pytest.mark.parametrize("curv_type", ["mean", "gaussian", "maximum", "minimum"])
 def test_curvature(sphere, curv_type):
     curv = sphere.curvature(curv_type)
     assert np.any(curv)
@@ -601,41 +601,41 @@ def test_curvature(sphere, curv_type):
 
 def test_invalid_curvature(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
-        sphere.curvature('not valid')
+        sphere.curvature("not valid")
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f"tmp{extension}"))
     sphere.save(filename, binary)
 
     if binary:
-        if extension == '.vtp':
+        if extension == ".vtp":
             with Path(filename).open() as f:
-                assert 'binary' in f.read(1000)
+                assert "binary" in f.read(1000)
         else:
             is_binary(filename)
     else:
         with Path(filename).open() as f:
             fst = f.read(100).lower()
             assert (
-                'ascii' in fst
-                or 'xml' in fst
-                or 'solid' in fst
-                or 'pgeometry' in fst
-                or '# generated' in fst
-                or '#inventor' in fst
+                "ascii" in fst
+                or "xml" in fst
+                or "solid" in fst
+                or "pgeometry" in fst
+                or "# generated" in fst
+                or "#inventor" in fst
             )
 
-    if extension not in ('.geo', '.iv'):
+    if extension not in (".geo", ".iv"):
         mesh = pv.PolyData(filename)
         assert mesh.faces.shape == sphere.faces.shape
         assert mesh.points.shape == sphere.points.shape
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join("tmp.vtk")))
     sphere.save(path)
     assert path.is_file()
 
@@ -651,7 +651,7 @@ def test_pathlib_read_write(tmpdir, sphere):
 
 def test_invalid_save(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
-        sphere.save('file.abc')
+        sphere.save("file.abc")
 
 
 def test_triangulate_filter(plane):
@@ -664,7 +664,7 @@ def test_triangulate_filter(plane):
     assert not plane.extract_all_edges().is_all_triangles
 
 
-@pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
+@pytest.mark.parametrize("subfilter", ["butterfly", "loop", "linear"])
 def test_subdivision(sphere, subfilter):
     mesh = sphere.subdivide(1, subfilter, progress_bar=True)
     assert mesh.n_points > sphere.n_points
@@ -678,7 +678,7 @@ def test_subdivision(sphere, subfilter):
 
 def test_invalid_subdivision(sphere):
     with pytest.raises(ValueError):  # noqa: PT011
-        sphere.subdivide(1, 'not valid')
+        sphere.subdivide(1, "not valid")
 
     # check non-triangulated
     mesh = pv.Cylinder()
@@ -738,16 +738,16 @@ def test_compute_normals(sphere):
     sphere_normals = sphere
     sphere_normals.compute_normals(inplace=True)
 
-    point_normals = sphere_normals.point_data['Normals']
-    cell_normals = sphere_normals.cell_data['Normals']
+    point_normals = sphere_normals.point_data["Normals"]
+    cell_normals = sphere_normals.cell_data["Normals"]
     assert point_normals.shape[0] == sphere.n_points
     assert cell_normals.shape[0] == sphere.n_cells
 
 
 def test_compute_normals_raises(sphere):
     msg = (
-        'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
-        'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).'
+        "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
+        "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells)."
     )
 
     point_cloud = pv.PolyData(sphere.points)
@@ -762,48 +762,48 @@ def test_compute_normals_raises(sphere):
 
 
 def test_compute_normals_inplace(sphere):
-    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere.point_data["numbers"] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
 
-    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+    sphere["numbers"] *= -1  # sphere2 'numbers' are also modified
 
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
 
     sphere.compute_normals(inplace=True)
 
     sphere[
-        'numbers'
+        "numbers"
     ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
 
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
 
 
 def test_compute_normals_split_vertices(cube):
     # verify edge splitting occurs and point IDs are tracked
     cube_split_norm = cube.compute_normals(split_vertices=True)
     assert cube_split_norm.n_points == 24
-    assert 'pyvistaOriginalPointIds' in cube_split_norm.point_data
-    assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
+    assert "pyvistaOriginalPointIds" in cube_split_norm.point_data
+    assert len(set(cube_split_norm.point_data["pyvistaOriginalPointIds"])) == 8
 
 
 @pytest.fixture()
 def ant_with_normals(ant):
-    ant['Scalars'] = range(ant.n_points)
+    ant["Scalars"] = range(ant.n_points)
     point_normals = [[0, 0, 1]] * ant.n_points
-    ant.point_data['PointNormals'] = point_normals
-    ant.point_data.active_normals_name = 'PointNormals'
+    ant.point_data["PointNormals"] = point_normals
+    ant.point_data.active_normals_name = "PointNormals"
 
     cell_normals = [[1, 0, 0]] * ant.n_cells
-    ant.cell_data['CellNormals'] = cell_normals
-    ant.cell_data.active_normals_name = 'CellNormals'
+    ant.cell_data["CellNormals"] = cell_normals
+    ant.cell_data.active_normals_name = "CellNormals"
     return ant
 
 
 def test_point_normals_returns_active_normals(ant_with_normals):
     ant = ant_with_normals
-    expected_point_normals = ant['PointNormals']
+    expected_point_normals = ant["PointNormals"]
 
     actual_point_normals = ant.point_normals
     assert actual_point_normals.shape[0] == ant.n_points
@@ -813,7 +813,7 @@ def test_point_normals_returns_active_normals(ant_with_normals):
 
 
 def test_point_normals_computes_new_normals(ant):
-    expected_point_normals = ant.copy().compute_normals().point_data['Normals']
+    expected_point_normals = ant.copy().compute_normals().point_data["Normals"]
     ant.point_data.clear()
     assert ant.array_names == []
     assert ant.point_data.active_normals is None
@@ -825,7 +825,7 @@ def test_point_normals_computes_new_normals(ant):
 
 def test_cell_normals_returns_active_normals(ant_with_normals):
     ant = ant_with_normals
-    expected_cell_normals = ant['CellNormals']
+    expected_cell_normals = ant["CellNormals"]
 
     actual_cell_normals = ant.cell_normals
     assert actual_cell_normals.shape[0] == ant.n_cells
@@ -835,7 +835,7 @@ def test_cell_normals_returns_active_normals(ant_with_normals):
 
 
 def test_cell_normals_computes_new_normals(ant):
-    expected_cell_normals = ant.copy().compute_normals().cell_data['Normals']
+    expected_cell_normals = ant.copy().compute_normals().cell_data["Normals"]
     ant.cell_data.clear()
     assert ant.array_names == []
     assert ant.cell_data.active_normals is None
@@ -909,16 +909,16 @@ def test_volume(sphere_dense):
 def test_remove_points_any(sphere):
     remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
-    sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
+    sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode="any")
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
 def test_remove_points_all(sphere):
     sphere_copy = sphere.copy()
-    sphere_copy.cell_data['ind'] = np.arange(sphere_copy.n_faces_strict)
+    sphere_copy.cell_data["ind"] = np.arange(sphere_copy.n_faces_strict)
     remove = sphere.faces[1:4]
-    sphere_copy.remove_points(remove, inplace=True, mode='all')
+    sphere_copy.remove_points(remove, inplace=True, mode="all")
     assert sphere_copy.n_points == sphere.n_points
     assert sphere_copy.n_faces_strict == sphere.n_faces_strict - 1
 
@@ -939,7 +939,7 @@ def test_remove_points_fail(sphere, plane):
 
 def test_vertice_cells_on_read(tmpdir):
     point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
-    filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
+    filename = str(tmpdir.mkdir("tmpdir").join("foo.ply"))
     point_cloud.save(filename)
     recovered = pv.read(filename)
     assert recovered.n_cells == 100
@@ -951,7 +951,7 @@ def test_center_of_mass(sphere):
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
     cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
     assert len(cloud.center_of_mass()) == 3
-    cloud['weights'] = np.random.default_rng().random(cloud.n_points)
+    cloud["weights"] = np.random.default_rng().random(cloud.n_points)
     center = cloud.center_of_mass(True)
     assert len(center) == 3
 
@@ -965,7 +965,7 @@ def test_project_points_to_plane():
     A, b = 100, 100
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     poly = pv.StructuredGrid(xx, yy, zz).extract_geometry(progress_bar=True)
-    poly['elev'] = zz.ravel(order='f')
+    poly["elev"] = zz.ravel(order="f")
 
     # Wrong normal length
     with pytest.raises(TypeError):
@@ -997,12 +997,12 @@ def test_tube(spline):
     assert np.allclose(line.points, tube.points)
 
     # Complicated
-    tube = spline.tube(radius=0.5, scalars='arc_length', progress_bar=True)
+    tube = spline.tube(radius=0.5, scalars="arc_length", progress_bar=True)
     assert tube.n_points
     assert tube.n_cells
 
     # Complicated with absolute radius
-    tube = spline.tube(radius=0.5, scalars='arc_length', absolute=True, progress_bar=True)
+    tube = spline.tube(radius=0.5, scalars="arc_length", absolute=True, progress_bar=True)
     assert tube.n_points
     assert tube.n_cells
 
@@ -1082,10 +1082,10 @@ def test_strips():
 
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length(progress_bar=True)
-    ribbon = line.ribbon(width=0.5, scalars='arc_length')
+    ribbon = line.ribbon(width=0.5, scalars="arc_length")
     assert ribbon.n_points
 
-    for tcoords in [True, 'lower', 'normalized', False]:
+    for tcoords in [True, "lower", "normalized", False]:
         ribbon = line.ribbon(width=0.5, tcoords=tcoords)
         assert ribbon.n_points
 
@@ -1117,9 +1117,9 @@ def test_extrude():
 
 def test_extrude_capping_warnings():
     arc = pv.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match="default value of the ``capping`` keyword"):
         arc.extrude([0, 0, 1])
-    with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
+    with pytest.warns(PyVistaFutureWarning, match="default value of the ``capping`` keyword"):
         arc.extrude_rotate()
 
 
@@ -1129,7 +1129,7 @@ def test_flip_normals(sphere, plane):
 
     sphere.compute_normals(inplace=True)
     sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
+    assert np.allclose(sphere_flipped.point_data["Normals"], -sphere.point_data["Normals"])
 
     # invalid case
     with pytest.raises(NotAllTrianglesError):
@@ -1211,7 +1211,7 @@ def test_tetrahedron_regular_faces():
     assert np.array_equal(tetra.faces.reshape(-1, 4)[:, 1:], tetra.regular_faces)
 
 
-@pytest.mark.parametrize('deep', [False, True])
+@pytest.mark.parametrize("deep", [False, True])
 def test_regular_faces(deep):
     points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
     faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
@@ -1276,9 +1276,9 @@ def test_irregular_faces_mutable():
     _assert_irregular_faces_equal(mesh.irregular_faces, expected)
 
 
-@pytest.mark.parametrize('cells', ['faces', 'lines', 'strips', 'verts'])
+@pytest.mark.parametrize("cells", ["faces", "lines", "strips", "verts"])
 def test_n_faces_etc_deprecated(cells: str):
-    n_cells = 'n_' + cells
+    n_cells = "n_" + cells
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)

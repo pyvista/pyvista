@@ -5,17 +5,17 @@ Examples
 Apply a built-in theme
 
 >>> import pyvista as pv
->>> pv.set_plot_theme('default')
->>> pv.set_plot_theme('document')
->>> pv.set_plot_theme('dark')
->>> pv.set_plot_theme('paraview')
+>>> pv.set_plot_theme("default")
+>>> pv.set_plot_theme("document")
+>>> pv.set_plot_theme("dark")
+>>> pv.set_plot_theme("paraview")
 
 Load a theme into pyvista
 
 >>> from pyvista.plotting.themes import DocumentTheme
 >>> theme = DocumentTheme()
->>> theme.save('my_theme.json')  # doctest:+SKIP
->>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
+>>> theme.save("my_theme.json")  # doctest:+SKIP
+>>> loaded_theme = pv.load_theme("my_theme.json")  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.
@@ -23,7 +23,7 @@ pyvista.
 >>> my_theme = DocumentTheme()
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
->>> my_theme.cmap = 'jet'
+>>> my_theme.cmap = "jet"
 >>> pv.global_theme.load_theme(my_theme)
 >>> pv.global_theme.font.size
 20
@@ -65,15 +65,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 def _set_plot_theme_from_env() -> None:
     """Set plot theme from an environment variable."""
-    if 'PYVISTA_PLOT_THEME' in os.environ:
+    if "PYVISTA_PLOT_THEME" in os.environ:
         try:
-            theme = os.environ['PYVISTA_PLOT_THEME']
+            theme = os.environ["PYVISTA_PLOT_THEME"]
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ", ".join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}',
+                f"Should be one of the following: {allowed}",
             )
 
 
@@ -95,8 +95,8 @@ def load_theme(filename):
     >>> import pyvista as pv
     >>> from pyvista.plotting.themes import DocumentTheme
     >>> theme = DocumentTheme()
-    >>> theme.save('my_theme.json')  # doctest:+SKIP
-    >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
+    >>> theme.save("my_theme.json")  # doctest:+SKIP
+    >>> loaded_theme = pv.load_theme("my_theme.json")  # doctest:+SKIP
 
     """
     with Path(filename).open() as f:
@@ -118,19 +118,19 @@ def set_plot_theme(theme):
     Set to the default theme.
 
     >>> import pyvista as pv
-    >>> pv.set_plot_theme('default')
+    >>> pv.set_plot_theme("default")
 
     Set to the document theme.
 
-    >>> pv.set_plot_theme('document')
+    >>> pv.set_plot_theme("document")
 
     Set to the dark theme.
 
-    >>> pv.set_plot_theme('dark')
+    >>> pv.set_plot_theme("dark")
 
     Set to the ParaView theme.
 
-    >>> pv.set_plot_theme('paraview')
+    >>> pv.set_plot_theme("paraview")
 
     """
     import pyvista
@@ -146,7 +146,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
+            f"Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}",
         )
 
 
@@ -157,7 +157,7 @@ class _ForceSlots(type):
     @classmethod
     def __prepare__(metaclass, name, bases, **kwargs):
         super_prepared = super().__prepare__(metaclass, name, bases, **kwargs)
-        super_prepared['__slots__'] = ()
+        super_prepared["__slots__"] = ()
         return super_prepared
 
 
@@ -172,7 +172,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         inst = cls()
         for key, value in dict_.items():
             attr = getattr(inst, key)
-            if hasattr(attr, 'from_dict'):
+            if hasattr(attr, "from_dict"):
                 setattr(inst, key, attr.from_dict(value))
             else:
                 setattr(inst, key, value)
@@ -192,7 +192,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         for key in self._all__slots__():
             value = getattr(self, key)
             key = key[1:]
-            if hasattr(value, 'to_dict'):
+            if hasattr(value, "to_dict"):
                 dict_[key] = value.to_dict()
             else:
                 dict_[key] = value
@@ -246,21 +246,21 @@ class _LightingConfig(_ThemeConfig):
     Set global PBR parameters.
 
     >>> import pyvista as pv
-    >>> pv.global_theme.lighting_params.interpolation = 'pbr'
+    >>> pv.global_theme.lighting_params.interpolation = "pbr"
     >>> pv.global_theme.lighting_params.metallic = 0.5
     >>> pv.global_theme.lighting_params.roughness = 0.25
 
     """
 
     __slots__ = [
-        '_interpolation',
-        '_metallic',
-        '_roughness',
-        '_ambient',
-        '_diffuse',
-        '_specular',
-        '_specular_power',
-        '_emissive',
+        "_interpolation",
+        "_metallic",
+        "_roughness",
+        "_ambient",
+        "_diffuse",
+        "_specular",
+        "_specular_power",
+        "_emissive",
     ]
 
     def __init__(self):
@@ -291,7 +291,7 @@ class _LightingConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.lighting_params.interpolation = 'Phong'
+        >>> pv.global_theme.lighting_params.interpolation = "Phong"
         >>> pv.global_theme.lighting_params.interpolation
         <InterpolationType.PHONG: 2>
 
@@ -328,7 +328,7 @@ class _LightingConfig(_ThemeConfig):
 
     @metallic.setter
     def metallic(self, metallic: float):  # numpydoc ignore=GL08
-        _check_range(metallic, (0, 1), 'metallic')
+        _check_range(metallic, (0, 1), "metallic")
         self._metallic = metallic
 
     @property
@@ -354,7 +354,7 @@ class _LightingConfig(_ThemeConfig):
 
     @roughness.setter
     def roughness(self, roughness: float):  # numpydoc ignore=GL08
-        _check_range(roughness, (0, 1), 'roughness')
+        _check_range(roughness, (0, 1), "roughness")
         self._roughness = roughness
 
     @property
@@ -379,7 +379,7 @@ class _LightingConfig(_ThemeConfig):
 
     @ambient.setter
     def ambient(self, ambient: float):  # numpydoc ignore=GL08
-        _check_range(ambient, (0, 1), 'ambient')
+        _check_range(ambient, (0, 1), "ambient")
         self._ambient = ambient
 
     @property
@@ -405,7 +405,7 @@ class _LightingConfig(_ThemeConfig):
 
     @diffuse.setter
     def diffuse(self, diffuse: float):  # numpydoc ignore=GL08
-        _check_range(diffuse, (0, 1), 'diffuse')
+        _check_range(diffuse, (0, 1), "diffuse")
         self._diffuse = diffuse
 
     @property
@@ -429,7 +429,7 @@ class _LightingConfig(_ThemeConfig):
 
     @specular.setter
     def specular(self, specular: float):  # numpydoc ignore=GL08
-        _check_range(specular, (0, 1), 'specular')
+        _check_range(specular, (0, 1), "specular")
         self._specular = specular
 
     @property
@@ -452,7 +452,7 @@ class _LightingConfig(_ThemeConfig):
 
     @specular_power.setter
     def specular_power(self, specular_power: float):  # numpydoc ignore=GL08
-        _check_range(specular_power, (0, 128), 'specular_power')
+        _check_range(specular_power, (0, 128), "specular_power")
         self._specular_power = specular_power
 
     @property
@@ -490,7 +490,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
+    __slots__ = ["_number_of_peels", "_occlusion_ratio", "_enabled"]
 
     def __init__(self):
         self._number_of_peels = 4
@@ -546,16 +546,16 @@ class _DepthPeelingConfig(_ThemeConfig):
         self._enabled = bool(enabled)
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Number': 'number_of_peels',
-            'Occlusion ratio': 'occlusion_ratio',
-            'Enabled': 'enabled',
+            "Number": "number_of_peels",
+            "Occlusion ratio": "occlusion_ratio",
+            "Enabled": "enabled",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-        return '\n'.join(txt)
+            txt.append(f"    {name:<21}: {setting}")
+        return "\n".join(txt)
 
 
 class _SilhouetteConfig(_ThemeConfig):
@@ -567,16 +567,16 @@ class _SilhouetteConfig(_ThemeConfig):
 
     >>> import pyvista as pv
     >>> pv.global_theme.silhouette.enabled = True
-    >>> pv.global_theme.silhouette.color = 'grey'
+    >>> pv.global_theme.silhouette.color = "grey"
     >>> pv.global_theme.silhouette.line_width = 2
     >>> pv.global_theme.silhouette.feature_angle = 20
 
     """
 
-    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
+    __slots__ = ["_color", "_line_width", "_opacity", "_feature_angle", "_decimate", "_enabled"]
 
     def __init__(self):
-        self._color = Color('black')
+        self._color = Color("black")
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
@@ -599,7 +599,7 @@ class _SilhouetteConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.silhouette.color = 'red'
+        >>> pv.global_theme.silhouette.color = "red"
 
         """
         return self._color
@@ -638,7 +638,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):  # numpydoc ignore=GL08
-        _check_range(opacity, (0, 1), 'opacity')
+        _check_range(opacity, (0, 1), "opacity")
         self._opacity = float(opacity)
 
     @property
@@ -676,22 +676,22 @@ class _SilhouetteConfig(_ThemeConfig):
         if decimate is None:
             self._decimate = None
         else:
-            _check_range(decimate, (0, 1), 'decimate')
+            _check_range(decimate, (0, 1), "decimate")
             self._decimate = float(decimate)
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Color': 'color',
-            'Line width': 'line_width',
-            'Opacity': 'opacity',
-            'Feature angle': 'feature_angle',
-            'Decimate': 'decimate',
+            "Color": "color",
+            "Line width": "line_width",
+            "Opacity": "opacity",
+            "Feature angle": "feature_angle",
+            "Decimate": "decimate",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-        return '\n'.join(txt)
+            txt.append(f"    {name:<21}: {setting}")
+        return "\n".join(txt)
 
 
 class _ColorbarConfig(_ThemeConfig):
@@ -706,7 +706,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_width', '_height', '_position_x', '_position_y']
+    __slots__ = ["_width", "_height", "_position_x", "_position_y"]
 
     def __init__(self):
         self._width = None
@@ -779,18 +779,18 @@ class _ColorbarConfig(_ThemeConfig):
         self._position_y = float(position_y)
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Width': 'width',
-            'Height': 'height',
-            'X Position': 'position_x',
-            'Y Position': 'position_y',
+            "Width": "width",
+            "Height": "height",
+            "X Position": "position_x",
+            "Y Position": "position_y",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
+            txt.append(f"    {name:<21}: {setting}")
 
-        return '\n'.join(txt)
+        return "\n".join(txt)
 
 
 class _AxesConfig(_ThemeConfig):
@@ -818,7 +818,7 @@ class _AxesConfig(_ThemeConfig):
 
     Set the x-axis color to black.
 
-    >>> pv.global_theme.axes.x_color = 'black'
+    >>> pv.global_theme.axes.x_color = "black"
 
     Show the axes orientation widget by default.
 
@@ -830,29 +830,29 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
+    __slots__ = ["_x_color", "_y_color", "_z_color", "_box", "_show"]
 
     def __init__(self):
-        self._x_color = Color('tomato')
-        self._y_color = Color('seagreen')
-        self._z_color = Color('mediumblue')
+        self._x_color = Color("tomato")
+        self._y_color = Color("seagreen")
+        self._z_color = Color("mediumblue")
         self._box = False
         self._show = True
 
     def __repr__(self):
-        txt = ['Axes configuration']
+        txt = ["Axes configuration"]
         parm = {
-            'X Color': 'x_color',
-            'Y Color': 'y_color',
-            'Z Color': 'z_color',
-            'Use Box': 'box',
-            'Show': 'show',
+            "X Color": "x_color",
+            "Y Color": "y_color",
+            "Z Color": "z_color",
+            "Use Box": "box",
+            "Show": "show",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
+            txt.append(f"    {name:<21}: {setting}")
 
-        return '\n'.join(txt)
+        return "\n".join(txt)
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
@@ -867,7 +867,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='tomato', hex='#ff6347ff', opacity=255)
 
         Change the default color.
-        >>> pv.global_theme.axes.x_color = 'red'
+        >>> pv.global_theme.axes.x_color = "red"
         """
         return self._x_color
 
@@ -888,7 +888,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='seagreen', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
-        >>> pv.global_theme.axes.y_color = 'green'
+        >>> pv.global_theme.axes.y_color = "green"
         """
         return self._y_color
 
@@ -909,7 +909,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='blue', hex='#0000ffff', opacity=255)
 
         Change the default color.
-        >>> pv.global_theme.axes.z_color = 'purple'
+        >>> pv.global_theme.axes.z_color = "purple"
         """
         return self._z_color
 
@@ -964,7 +964,7 @@ class _Font(_ThemeConfig):
     'arial', 'courier', or 'times'.
 
     >>> import pyvista as pv
-    >>> pv.global_theme.font.family = 'arial'
+    >>> pv.global_theme.font.family = "arial"
 
     Set the default font size to 20.
 
@@ -980,39 +980,39 @@ class _Font(_ThemeConfig):
 
     Set the default text color to 'grey'
 
-    >>> pv.global_theme.font.color = 'grey'
+    >>> pv.global_theme.font.color = "grey"
 
     Set the string formatter used to format numerical data to '%.6e'
 
-    >>> pv.global_theme.font.fmt = '%.6e'
+    >>> pv.global_theme.font.fmt = "%.6e"
 
     """
 
-    __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
+    __slots__ = ["_family", "_size", "_title_size", "_label_size", "_color", "_fmt"]
 
     def __init__(self):
-        self._family = 'arial'
+        self._family = "arial"
         self._size = 12
         self._title_size = None
         self._label_size = None
-        self._color = Color('white')
+        self._color = Color("white")
         self._fmt = None
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Family': 'family',
-            'Size': 'size',
-            'Title size': 'title_size',
-            'Label size': 'label_size',
-            'Color': 'color',
-            'Float format': 'fmt',
+            "Family": "family",
+            "Size": "size",
+            "Title size": "title_size",
+            "Label size": "label_size",
+            "Color": "color",
+            "Float format": "fmt",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
+            txt.append(f"    {name:<21}: {setting}")
 
-        return '\n'.join(txt)
+        return "\n".join(txt)
 
     @property
     def family(self) -> str:  # numpydoc ignore=RT01
@@ -1029,7 +1029,7 @@ class _Font(_ThemeConfig):
         Set the default global font family to 'courier'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.family = 'courier'
+        >>> pv.global_theme.font.family = "courier"
 
         """
         return self._family
@@ -1102,7 +1102,7 @@ class _Font(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.font.color = 'black'
+        >>> pv.global_theme.font.color = "black"
         """
         return self._color
 
@@ -1119,7 +1119,7 @@ class _Font(_ThemeConfig):
         Set the string formatter used to format numerical data to '%.6e'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = "%.6e"
 
         """
         return self._fmt
@@ -1133,15 +1133,15 @@ class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
-        '_name',
-        '_slider_length',
-        '_slider_width',
-        '_slider_color',
-        '_tube_width',
-        '_tube_color',
-        '_cap_opacity',
-        '_cap_length',
-        '_cap_width',
+        "_name",
+        "_slider_length",
+        "_slider_width",
+        "_slider_color",
+        "_tube_width",
+        "_tube_color",
+        "_cap_opacity",
+        "_cap_length",
+        "_cap_width",
     ]
 
     def __init__(self):
@@ -1211,7 +1211,7 @@ class _SliderStyleConfig(_ThemeConfig):
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):  # numpydoc ignore=GL08
-        _check_range(cap_opacity, (0, 1), 'cap_opacity')
+        _check_range(cap_opacity, (0, 1), "cap_opacity")
         self._cap_opacity = float(cap_opacity)
 
     @property
@@ -1221,7 +1221,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.tube_color = 'black'
+        >>> pv.global_theme.slider_styles.modern.tube_color = "black"
         """
         return self._tube_color
 
@@ -1252,7 +1252,7 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_color = 'grey'
+        >>> pv.global_theme.slider_styles.modern.slider_color = "grey"
 
         """
         return self._slider_color
@@ -1294,21 +1294,21 @@ class _SliderStyleConfig(_ThemeConfig):
         self._slider_length = float(slider_length)
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Slider length': 'slider_length',
-            'Slider width': 'slider_width',
-            'Slider color': 'slider_color',
-            'Tube width': 'tube_width',
-            'Tube color': 'tube_color',
-            'Cap opacity': 'cap_opacity',
-            'Cap length': 'cap_length',
-            'Cap width': 'cap_width',
+            "Slider length": "slider_length",
+            "Slider width": "slider_width",
+            "Slider color": "slider_color",
+            "Tube width": "tube_width",
+            "Tube color": "tube_color",
+            "Cap opacity": "cap_opacity",
+            "Cap length": "cap_length",
+            "Cap width": "cap_width",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'        {name:<17}: {setting}')
-        return '\n'.join(txt)
+            txt.append(f"        {name:<17}: {setting}")
+        return "\n".join(txt)
 
 
 class _SliderConfig(_ThemeConfig):
@@ -1342,23 +1342,23 @@ class _SliderConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_classic', '_modern']
+    __slots__ = ["_classic", "_modern"]
 
     def __init__(self):
         """Initialize the slider configuration."""
         self._classic = _SliderStyleConfig()
-        self._classic.name = 'classic'
+        self._classic.name = "classic"
         self._classic.slider_length = 0.02
         self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'
+        self._classic.slider_color = "gray"
         self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'
+        self._classic.tube_color = "white"
         self._classic.cap_opacity = 1
         self._classic.cap_length = 0.01
         self._classic.cap_width = 0.02
 
         self._modern = _SliderStyleConfig()
-        self._modern.name = 'modern'
+        self._modern.name = "modern"
         self._modern.slider_length = 0.02
         self._modern.slider_width = 0.04
         self._modern.slider_color = (110, 113, 117)
@@ -1376,7 +1376,7 @@ class _SliderConfig(_ThemeConfig):
     @classic.setter
     def classic(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            raise TypeError("Configuration type must be `_SliderStyleConfig`")
         self._classic = config
 
     @property
@@ -1387,19 +1387,19 @@ class _SliderConfig(_ThemeConfig):
     @modern.setter
     def modern(self, config: _SliderStyleConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            raise TypeError("Configuration type must be `_SliderStyleConfig`")
         self._modern = config
 
     def __repr__(self):
-        txt = ['']
+        txt = [""]
         parm = {
-            'Classic': 'classic',
-            'Modern': 'modern',
+            "Classic": "classic",
+            "Modern": "modern",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-        return '\n'.join(txt)
+            txt.append(f"    {name:<21}: {setting}")
+        return "\n".join(txt)
 
     def __iter__(self):
         for style in [self._classic, self._modern]:
@@ -1420,32 +1420,32 @@ class _TrameConfig(_ThemeConfig):
     """
 
     __slots__ = [
-        '_interactive_ratio',
-        '_still_ratio',
-        '_jupyter_server_name',
-        '_jupyter_server_port',
-        '_server_proxy_enabled',
-        '_server_proxy_prefix',
-        '_default_mode',
-        '_jupyter_extension_available',
-        '_jupyter_extension_enabled',
+        "_interactive_ratio",
+        "_still_ratio",
+        "_jupyter_server_name",
+        "_jupyter_server_port",
+        "_server_proxy_enabled",
+        "_server_proxy_prefix",
+        "_default_mode",
+        "_jupyter_extension_available",
+        "_jupyter_extension_enabled",
     ]
 
     def __init__(self):
         self._interactive_ratio = 1
         self._still_ratio = 1
-        self._jupyter_server_name = 'pyvista-jupyter'
+        self._jupyter_server_name = "pyvista-jupyter"
         self._jupyter_server_port = 0
-        self._server_proxy_enabled = 'PYVISTA_TRAME_SERVER_PROXY_PREFIX' in os.environ
+        self._server_proxy_enabled = "PYVISTA_TRAME_SERVER_PROXY_PREFIX" in os.environ
         # default for ``jupyter-server-proxy``
-        service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
-        prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
-        if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))  # noqa: PTH118
+        service = os.environ.get("JUPYTERHUB_SERVICE_PREFIX", "")
+        prefix = os.environ.get("PYVISTA_TRAME_SERVER_PROXY_PREFIX", "/proxy/")
+        if service and not prefix.startswith("http"):  # pragma: no cover
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip("/"))  # noqa: PTH118
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
-        self._jupyter_extension_available = 'TRAME_JUPYTER_WWW' in os.environ
+        self._jupyter_extension_available = "TRAME_JUPYTER_WWW" in os.environ
         self._jupyter_extension_enabled = (
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
@@ -1459,7 +1459,7 @@ class _TrameConfig(_ThemeConfig):
         elif jupyter_mode == "native":  # pragma: no cover
             self._jupyter_extension_enabled = False
             self._server_proxy_enabled = False
-        self._default_mode = 'trame'
+        self._default_mode = "trame"
 
     @property
     def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
@@ -1601,10 +1601,10 @@ class _CameraConfig(_ThemeConfig):
     """
 
     __slots__ = [
-        '_position',
-        '_viewup',
-        '_parallel_projection',
-        '_parallel_scale',
+        "_position",
+        "_viewup",
+        "_parallel_projection",
+        "_parallel_scale",
     ]
 
     def __init__(self):
@@ -1694,7 +1694,7 @@ class Theme(_ThemeConfig):
     Change the global default background color to white.
 
     >>> import pyvista as pv
-    >>> pv.global_theme.color = 'white'
+    >>> pv.global_theme.color = "white"
 
     Show edges by default.
 
@@ -1704,74 +1704,74 @@ class Theme(_ThemeConfig):
 
     >>> from pyvista.plotting.themes import DocumentTheme
     >>> my_theme = DocumentTheme()
-    >>> my_theme.color = 'red'
-    >>> my_theme.background = 'white'
+    >>> my_theme.color = "red"
+    >>> my_theme.background = "white"
     >>> pv.global_theme.load_theme(my_theme)
 
     """
 
     __slots__ = [
-        '_name',
-        '_background',
-        '_jupyter_backend',
-        '_trame',
-        '_full_screen',
-        '_window_size',
-        '_image_scale',
-        '_camera',
-        '_notebook',
-        '_font',
-        '_auto_close',
-        '_cmap',
-        '_color',
-        '_color_cycler',
-        '_above_range_color',
-        '_below_range_color',
-        '_nan_color',
-        '_edge_color',
-        '_line_width',
-        '_point_size',
-        '_outline_color',
-        '_floor_color',
-        '_colorbar_orientation',
-        '_colorbar_horizontal',
-        '_colorbar_vertical',
-        '_show_scalar_bar',
-        '_show_edges',
-        '_show_vertices',
-        '_lighting',
-        '_interactive',
-        '_render_points_as_spheres',
-        '_render_lines_as_tubes',
-        '_transparent_background',
-        '_title',
-        '_axes',
-        '_multi_samples',
-        '_multi_rendering_splitting_position',
-        '_volume_mapper',
-        '_smooth_shading',
-        '_depth_peeling',
-        '_silhouette',
-        '_slider_styles',
-        '_return_cpos',
-        '_hidden_line_removal',
-        '_anti_aliasing',
-        '_enable_camera_orientation_widget',
-        '_split_sharp_edges',
-        '_sharp_edges_feature_angle',
-        '_before_close_callback',
-        '_allow_empty_mesh',
-        '_lighting_params',
-        '_interpolate_before_map',
-        '_opacity',
-        '_before_close_callback',
-        '_logo_file',
-        '_edge_opacity',
+        "_name",
+        "_background",
+        "_jupyter_backend",
+        "_trame",
+        "_full_screen",
+        "_window_size",
+        "_image_scale",
+        "_camera",
+        "_notebook",
+        "_font",
+        "_auto_close",
+        "_cmap",
+        "_color",
+        "_color_cycler",
+        "_above_range_color",
+        "_below_range_color",
+        "_nan_color",
+        "_edge_color",
+        "_line_width",
+        "_point_size",
+        "_outline_color",
+        "_floor_color",
+        "_colorbar_orientation",
+        "_colorbar_horizontal",
+        "_colorbar_vertical",
+        "_show_scalar_bar",
+        "_show_edges",
+        "_show_vertices",
+        "_lighting",
+        "_interactive",
+        "_render_points_as_spheres",
+        "_render_lines_as_tubes",
+        "_transparent_background",
+        "_title",
+        "_axes",
+        "_multi_samples",
+        "_multi_rendering_splitting_position",
+        "_volume_mapper",
+        "_smooth_shading",
+        "_depth_peeling",
+        "_silhouette",
+        "_slider_styles",
+        "_return_cpos",
+        "_hidden_line_removal",
+        "_anti_aliasing",
+        "_enable_camera_orientation_widget",
+        "_split_sharp_edges",
+        "_sharp_edges_feature_angle",
+        "_before_close_callback",
+        "_allow_empty_mesh",
+        "_lighting_params",
+        "_interpolate_before_map",
+        "_opacity",
+        "_before_close_callback",
+        "_logo_file",
+        "_edge_opacity",
     ]
 
     def __init__(self):
         """Initialize the theme."""
-        self._name = 'default'
+        self._name = "default"
         self._background = Color([0.3, 0.3, 0.3])
         self._full_screen = False
         self._camera = _CameraConfig()
@@ -1780,18 +1780,18 @@ class Theme(_ThemeConfig):
         self._window_size = [1024, 768]
         self._image_scale = 1
         self._font = _Font()
-        self._cmap = 'viridis'
-        self._color = Color('white')
+        self._cmap = "viridis"
+        self._color = Color("white")
         self._color_cycler = None
-        self._nan_color = Color('darkgray')
-        self._above_range_color = Color('grey')
-        self._below_range_color = Color('grey')
-        self._edge_color = Color('black')
+        self._nan_color = Color("darkgray")
+        self._above_range_color = Color("grey")
+        self._below_range_color = Color("grey")
+        self._edge_color = Color("black")
         self._line_width = 1.0
         self._point_size = 5.0
-        self._outline_color = Color('white')
-        self._floor_color = Color('gray')
-        self._colorbar_orientation = 'horizontal'
+        self._outline_color = Color("white")
+        self._floor_color = Color("gray")
+        self._colorbar_orientation = "horizontal"
 
         self._colorbar_horizontal = _ColorbarConfig()
         self._colorbar_horizontal.width = 0.6
@@ -1813,7 +1813,7 @@ class Theme(_ThemeConfig):
         self._render_points_as_spheres = False
         self._render_lines_as_tubes = False
         self._transparent_background = False
-        self._title = 'PyVista'
+        self._title = "PyVista"
         self._axes = _AxesConfig()
         self._split_sharp_edges = False
         self._sharp_edges_feature_angle = 30.0
@@ -1823,25 +1823,25 @@ class Theme(_ThemeConfig):
         # Grab system flag for anti-aliasing
         # Use a default value of 8 multi-samples as this is default for VTK
         try:
-            self._multi_samples = int(os.environ.get('PYVISTA_MULTI_SAMPLES', 8))
+            self._multi_samples = int(os.environ.get("PYVISTA_MULTI_SAMPLES", 8))
         except ValueError:  # pragma: no cover
             self._multi_samples = 8
 
         # Grab system flag for auto-closing
-        self._auto_close = os.environ.get('PYVISTA_AUTO_CLOSE', '').lower() != 'false'
+        self._auto_close = os.environ.get("PYVISTA_AUTO_CLOSE", "").lower() != "false"
 
-        self._jupyter_backend = os.environ.get('PYVISTA_JUPYTER_BACKEND', 'trame')
+        self._jupyter_backend = os.environ.get("PYVISTA_JUPYTER_BACKEND", "trame")
         self._trame = _TrameConfig()
 
         self._multi_rendering_splitting_position = None
-        self._volume_mapper = 'fixed_point' if os.name == 'nt' else 'smart'
+        self._volume_mapper = "fixed_point" if os.name == "nt" else "smart"
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
         self._slider_styles = _SliderConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
-        self._anti_aliasing = 'msaa'
+        self._anti_aliasing = "msaa"
         self._enable_camera_orientation_widget = False
 
         self._lighting_params = _LightingConfig()
@@ -1903,23 +1903,21 @@ class Theme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(
-        ...     scalars='Elevation', cmap='rainbow', show_edges=True
-        ... )
+        >>> dargs = dict(scalars="Elevation", cmap="rainbow", show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
-        ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     scalar_bar_args={"title": "Elevation - interpolated"},
+        ...     **dargs,
         ... )
         >>> p.subplot(0, 1)
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
-        ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     scalar_bar_args={"title": "Elevation - interpolated"},
+        ...     **dargs,
         ... )
         >>> p.link_views()
         >>> p.camera_position = [
@@ -1950,7 +1948,7 @@ class Theme(_ThemeConfig):
 
     @opacity.setter
     def opacity(self, opacity: float):  # numpydoc ignore=GL08
-        _check_range(opacity, (0, 1), 'opacity')
+        _check_range(opacity, (0, 1), "opacity")
         self._opacity = float(opacity)
 
     @property
@@ -1972,7 +1970,7 @@ class Theme(_ThemeConfig):
 
     @edge_opacity.setter
     def edge_opacity(self, edge_opacity: float):  # numpydoc ignore=GL08
-        _check_range(edge_opacity, (0, 1), 'edge_opacity')
+        _check_range(edge_opacity, (0, 1), "edge_opacity")
         self._edge_opacity = float(edge_opacity)
 
     @property
@@ -1984,7 +1982,7 @@ class Theme(_ThemeConfig):
         Set the above range color to red.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.above_range_color = 'r'
+        >>> pv.global_theme.above_range_color = "r"
         >>> pv.global_theme.above_range_color
         Color(name='red', hex='#ff0000ff', opacity=255)
 
@@ -2004,7 +2002,7 @@ class Theme(_ThemeConfig):
         Set the below range color to blue.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.below_range_color = 'b'
+        >>> pv.global_theme.below_range_color = "b"
         >>> pv.global_theme.below_range_color
         Color(name='blue', hex='#0000ffff', opacity=255)
 
@@ -2041,7 +2039,7 @@ class Theme(_ThemeConfig):
         Set the default global background of all plots to white.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.background = 'white'
+        >>> pv.global_theme.background = "white"
         """
         return self._background
 
@@ -2089,7 +2087,7 @@ class Theme(_ThemeConfig):
         --------
         Just show static images.
 
-        >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
+        >>> pv.set_jupyter_backend("static")  # doctest:+SKIP
 
         Disable all plotting within JupyterLab and display using a
         standard desktop VTK render window.
@@ -2113,7 +2111,7 @@ class Theme(_ThemeConfig):
     @trame.setter
     def trame(self, config: _TrameConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _TrameConfig):
-            raise TypeError('Configuration type must be `_TrameConfig`.')
+            raise TypeError("Configuration type must be `_TrameConfig`.")
         self._trame = config
 
     @property
@@ -2235,11 +2233,11 @@ class Theme(_ThemeConfig):
     @window_size.setter
     def window_size(self, window_size: List[int]):  # numpydoc ignore=GL08
         if len(window_size) != 2:
-            raise ValueError('Expected a length 2 iterable for ``window_size``.')
+            raise ValueError("Expected a length 2 iterable for ``window_size``.")
 
         # ensure positive size
         if window_size[0] < 0 or window_size[1] < 0:
-            raise ValueError('Window size must be a positive value.')
+            raise ValueError("Window size must be a positive value.")
 
         self._window_size = window_size
 
@@ -2252,7 +2250,7 @@ class Theme(_ThemeConfig):
     def image_scale(self, value: int):  # numpydoc ignore=GL08
         value = int(value)
         if value < 1:
-            raise ValueError('Scale factor must be a positive integer.')
+            raise ValueError("Scale factor must be a positive integer.")
         self._image_scale = int(value)
 
     @property
@@ -2265,7 +2263,7 @@ class Theme(_ThemeConfig):
         'arial', 'courier', or 'times'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.font.family = 'arial'
+        >>> pv.global_theme.font.family = "arial"
 
         Set the default font size to 20.
 
@@ -2281,11 +2279,11 @@ class Theme(_ThemeConfig):
 
         Set the default text color to 'grey'.
 
-        >>> pv.global_theme.font.color = 'grey'
+        >>> pv.global_theme.font.color = "grey"
 
         String formatter used to format numerical data to '%.6e'.
 
-        >>> pv.global_theme.font.fmt = '%.6e'
+        >>> pv.global_theme.font.fmt = "%.6e"
 
         """
         return self._font
@@ -2293,7 +2291,7 @@ class Theme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):  # numpydoc ignore=GL08
         if not isinstance(config, _Font):
-            raise TypeError('Configuration type must be `_Font`.')
+            raise TypeError("Configuration type must be `_Font`.")
         self._font = config
 
     @property
@@ -2313,7 +2311,7 @@ class Theme(_ThemeConfig):
         Set the default global colormap to 'jet'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.cmap = 'jet'
+        >>> pv.global_theme.cmap = "jet"
 
         """
         return self._cmap
@@ -2322,7 +2320,7 @@ class Theme(_ThemeConfig):
     def cmap(self, cmap):  # numpydoc ignore=GL08
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
-            raise ValueError(f'Invalid color map {cmap}')
+            raise ValueError(f"Invalid color map {cmap}")
         self._cmap = cmap
 
     @property
@@ -2344,7 +2342,7 @@ class Theme(_ThemeConfig):
         Set the default mesh color to 'red'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.color = 'red'
+        >>> pv.global_theme.color = "red"
 
         """
         return self._color
@@ -2375,7 +2373,7 @@ class Theme(_ThemeConfig):
         Set the default color cycler to iterate through red, green, and blue.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.color_cycler = ['red', 'green', 'blue']
+        >>> pv.global_theme.color_cycler = ["red", "green", "blue"]
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
@@ -2400,7 +2398,7 @@ class Theme(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.nan_color = 'darkgray'
+        >>> pv.global_theme.nan_color = "darkgray"
 
         """
         return self._nan_color
@@ -2418,7 +2416,7 @@ class Theme(_ThemeConfig):
         Set the global edge color to 'blue'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.edge_color = 'blue'
+        >>> pv.global_theme.edge_color = "blue"
 
         """
         return self._edge_color
@@ -2466,7 +2464,7 @@ class Theme(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.outline_color = 'white'
+        >>> pv.global_theme.outline_color = "white"
 
         """
         return self._outline_color
@@ -2482,7 +2480,7 @@ class Theme(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.floor_color = 'black'
+        >>> pv.global_theme.floor_color = "black"
 
         """
         return self._floor_color
@@ -2500,14 +2498,14 @@ class Theme(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.colorbar_orientation = 'horizontal'
+        >>> pv.global_theme.colorbar_orientation = "horizontal"
 
         """
         return self._colorbar_orientation
 
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):  # numpydoc ignore=GL08
-        if colorbar_orientation not in ['vertical', 'horizontal']:
+        if colorbar_orientation not in ["vertical", "horizontal"]:
             raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
         self._colorbar_orientation = colorbar_orientation
 
@@ -2532,7 +2530,7 @@ class Theme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            raise TypeError("Configuration type must be `_ColorbarConfig`.")
         self._colorbar_horizontal = config
 
     @property
@@ -2557,7 +2555,7 @@ class Theme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            raise TypeError("Configuration type must be `_ColorbarConfig`.")
         self._colorbar_vertical = config
 
     @property
@@ -2711,7 +2709,7 @@ class Theme(_ThemeConfig):
         Set title globally to 'plot'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.title = 'plot'
+        >>> pv.global_theme.title = "plot"
 
         """
         return self._title
@@ -2731,7 +2729,7 @@ class Theme(_ThemeConfig):
         Use super-sampling anti-aliasing in the global theme.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.anti_aliasing = 'ssaa'
+        >>> pv.global_theme.anti_aliasing = "ssaa"
         >>> pv.global_theme.anti_aliasing
         'ssaa'
 
@@ -2749,7 +2747,7 @@ class Theme(_ThemeConfig):
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: Union[str, None]):  # numpydoc ignore=GL08
         if isinstance(anti_aliasing, str):
-            if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
+            if anti_aliasing not in ["ssaa", "msaa", "fxaa"]:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
         elif anti_aliasing is not None:
             raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
@@ -2769,7 +2767,7 @@ class Theme(_ThemeConfig):
         Set the default number of multisamples to 2 and enable ``"msaa"``
 
         >>> import pyvista as pv
-        >>> pv.global_theme.anti_aliasing = 'msaa'
+        >>> pv.global_theme.anti_aliasing = "msaa"
         >>> pv.global_theme.multi_samples = 2
 
         """
@@ -2818,14 +2816,14 @@ class Theme(_ThemeConfig):
         Set default volume mapper globally to 'gpu'.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.volume_mapper = 'gpu'
+        >>> pv.global_theme.volume_mapper = "gpu"
 
         """
         return self._volume_mapper
 
     @volume_mapper.setter
     def volume_mapper(self, mapper: str):  # numpydoc ignore=GL08
-        mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
+        mappers = ["fixed_point", "gpu", "open_gl", "smart"]
         if mapper not in mappers:
             raise ValueError(
                 f"Mapper ({mapper}) unknown. Available volume mappers "
@@ -2872,7 +2870,7 @@ class Theme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _DepthPeelingConfig):
-            raise TypeError('Configuration type must be `_DepthPeelingConfig`.')
+            raise TypeError("Configuration type must be `_DepthPeelingConfig`.")
         self._depth_peeling = config
 
     @property
@@ -2884,7 +2882,7 @@ class Theme(_ThemeConfig):
         Set parameters of the silhouette.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.silhouette.color = 'grey'
+        >>> pv.global_theme.silhouette.color = "grey"
         >>> pv.global_theme.silhouette.line_width = 2.0
         >>> pv.global_theme.silhouette.feature_angle = 20
 
@@ -2894,7 +2892,7 @@ class Theme(_ThemeConfig):
     @silhouette.setter
     def silhouette(self, config: _SilhouetteConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SilhouetteConfig):
-            raise TypeError('Configuration type must be `_SilhouetteConfig`')
+            raise TypeError("Configuration type must be `_SilhouetteConfig`")
         self._silhouette = config
 
     @property
@@ -2905,7 +2903,7 @@ class Theme(_ThemeConfig):
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _SliderConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`.')
+            raise TypeError("Configuration type must be `_SliderConfig`.")
         self._slider_styles = config
 
     @property
@@ -2917,7 +2915,7 @@ class Theme(_ThemeConfig):
         Set the x-axis color to black.
 
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.x_color = 'black'
+        >>> pv.global_theme.axes.x_color = "black"
 
         Show the axes orientation widget by default.
 
@@ -2933,7 +2931,7 @@ class Theme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _AxesConfig):
-            raise TypeError('Configuration type must be `_AxesConfig`.')
+            raise TypeError("Configuration type must be `_AxesConfig`.")
         self._axes = config
 
     @property
@@ -2985,54 +2983,54 @@ class Theme(_ThemeConfig):
 
     def __repr__(self):
         """User friendly representation of the current theme."""
-        txt = [f'{self.name.capitalize()} Theme']
-        txt.append('-' * len(txt[0]))
+        txt = [f"{self.name.capitalize()} Theme"]
+        txt.append("-" * len(txt[0]))
         parm = {
-            'Background': 'background',
-            'Jupyter backend': 'jupyter_backend',
-            'Full screen': 'full_screen',
-            'Window size': 'window_size',
-            'Camera': 'camera',
-            'Notebook': 'notebook',
-            'Font': 'font',
-            'Auto close': 'auto_close',
-            'Colormap': 'cmap',
-            'Color': 'color',
-            'Color Cycler': 'color_cycler',
-            'NaN color': 'nan_color',
-            'Edge color': 'edge_color',
-            'Outline color': 'outline_color',
-            'Floor color': 'floor_color',
-            'Colorbar orientation': 'colorbar_orientation',
-            'Colorbar - horizontal': 'colorbar_horizontal',
-            'Colorbar - vertical': 'colorbar_vertical',
-            'Show scalar bar': 'show_scalar_bar',
-            'Show edges': 'show_edges',
-            'Lighting': 'lighting',
-            'Interactive': 'interactive',
-            'Render points as spheres': 'render_points_as_spheres',
-            'Transparent Background': 'transparent_background',
-            'Title': 'title',
-            'Axes': 'axes',
-            'Multi-samples': 'multi_samples',
-            'Multi-renderer Split Pos': 'multi_rendering_splitting_position',
-            'Volume mapper': 'volume_mapper',
-            'Smooth shading': 'smooth_shading',
-            'Depth peeling': 'depth_peeling',
-            'Silhouette': 'silhouette',
-            'Slider Styles': 'slider_styles',
-            'Return Camera Position': 'return_cpos',
-            'Hidden Line Removal': 'hidden_line_removal',
-            'Anti-Aliasing': '_anti_aliasing',
-            'Split sharp edges': '_split_sharp_edges',
-            'Sharp edges feat. angle': '_sharp_edges_feature_angle',
-            'Before close callback': '_before_close_callback',
+            "Background": "background",
+            "Jupyter backend": "jupyter_backend",
+            "Full screen": "full_screen",
+            "Window size": "window_size",
+            "Camera": "camera",
+            "Notebook": "notebook",
+            "Font": "font",
+            "Auto close": "auto_close",
+            "Colormap": "cmap",
+            "Color": "color",
+            "Color Cycler": "color_cycler",
+            "NaN color": "nan_color",
+            "Edge color": "edge_color",
+            "Outline color": "outline_color",
+            "Floor color": "floor_color",
+            "Colorbar orientation": "colorbar_orientation",
+            "Colorbar - horizontal": "colorbar_horizontal",
+            "Colorbar - vertical": "colorbar_vertical",
+            "Show scalar bar": "show_scalar_bar",
+            "Show edges": "show_edges",
+            "Lighting": "lighting",
+            "Interactive": "interactive",
+            "Render points as spheres": "render_points_as_spheres",
+            "Transparent Background": "transparent_background",
+            "Title": "title",
+            "Axes": "axes",
+            "Multi-samples": "multi_samples",
+            "Multi-renderer Split Pos": "multi_rendering_splitting_position",
+            "Volume mapper": "volume_mapper",
+            "Smooth shading": "smooth_shading",
+            "Depth peeling": "depth_peeling",
+            "Silhouette": "silhouette",
+            "Slider Styles": "slider_styles",
+            "Return Camera Position": "return_cpos",
+            "Hidden Line Removal": "hidden_line_removal",
+            "Anti-Aliasing": "_anti_aliasing",
+            "Split sharp edges": "_split_sharp_edges",
+            "Sharp edges feat. angle": "_sharp_edges_feature_angle",
+            "Before close callback": "_before_close_callback",
         }
         for name, attr in parm.items():
             setting = getattr(self, attr)
-            txt.append(f'{name:<25}: {setting}')
+            txt.append(f"{name:<25}: {setting}")
 
-        return '\n'.join(txt)
+        return "\n".join(txt)
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
@@ -3061,7 +3059,7 @@ class Theme(_ThemeConfig):
         >>> my_theme = DocumentTheme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
-        >>> my_theme.cmap = 'jet'
+        >>> my_theme.cmap = "jet"
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.font.size
         20
@@ -3082,7 +3080,7 @@ class Theme(_ThemeConfig):
 
         if not isinstance(theme, Theme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
+                "``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.",
             )
 
         for attr_name in Theme.__slots__:
@@ -3104,15 +3102,15 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> theme = pv.themes.DocumentTheme()
-        >>> theme.background = 'white'
-        >>> theme.save('my_theme.json')  # doctest:+SKIP
-        >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
+        >>> theme.background = "white"
+        >>> theme.save("my_theme.json")  # doctest:+SKIP
+        >>> loaded_theme = pv.load_theme("my_theme.json")  # doctest:+SKIP
 
         """
         data = self.to_dict()
         # functions are not serializable
         del data["before_close_callback"]
-        with Path(filename).open('w') as f:
+        with Path(filename).open("w") as f:
             json.dump(data, f)
 
     @property
@@ -3174,7 +3172,7 @@ class Theme(_ThemeConfig):
     @lighting_params.setter
     def lighting_params(self, config: _LightingConfig):  # numpydoc ignore=GL08
         if not isinstance(config, _LightingConfig):
-            raise TypeError('Configuration type must be `_LightingConfig`.')
+            raise TypeError("Configuration type must be `_LightingConfig`.")
         self._lighting_params = config
 
     @property
@@ -3192,7 +3190,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> logo_file = examples.download_file('vtk.png')
+        >>> logo_file = examples.download_file("vtk.png")
         >>> pv.global_theme.logo_file = logo_file
 
         Now the logo will be used by default for :func:`pyvista.Plotter.add_logo_widget`.
@@ -3211,7 +3209,7 @@ class Theme(_ThemeConfig):
             path = None
         else:
             if not pathlib.Path(logo_file).exists():
-                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+                raise FileNotFoundError(f"Logo file ({logo_file}) not found.")
             path = str(logo_file)
         self._logo_file = path
 
@@ -3231,24 +3229,24 @@ class DarkTheme(Theme):
 
     Alternatively, set via a string.
 
-    >>> pv.set_plot_theme('dark')
+    >>> pv.set_plot_theme("dark")
 
     """
 
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'dark'
-        self.background = 'black'
-        self.cmap = 'viridis'
-        self.font.color = 'white'
+        self.name = "dark"
+        self.background = "black"
+        self.cmap = "viridis"
+        self.font.color = "white"
         self.show_edges = False
-        self.color = 'lightblue'
-        self.outline_color = 'white'
-        self.edge_color = 'white'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'seagreen'
-        self.axes.z_color = 'blue'
+        self.color = "lightblue"
+        self.outline_color = "white"
+        self.edge_color = "white"
+        self.axes.x_color = "tomato"
+        self.axes.y_color = "seagreen"
+        self.axes.z_color = "blue"
 
 
 class ParaViewTheme(Theme):
@@ -3264,26 +3262,26 @@ class ParaViewTheme(Theme):
 
     Alternatively, set via a string.
 
-    >>> pv.set_plot_theme('paraview')
+    >>> pv.set_plot_theme("paraview")
 
     """
 
     def __init__(self):
         """Initialize theme."""
         super().__init__()
-        self.name = 'paraview'
-        self.background = 'paraview'
-        self.cmap = 'coolwarm'
-        self.font.family = 'arial'
+        self.name = "paraview"
+        self.background = "paraview"
+        self.cmap = "coolwarm"
+        self.font.family = "arial"
         self.font.label_size = 16
-        self.font.color = 'white'
+        self.font.color = "white"
         self.show_edges = False
-        self.color = 'white'
-        self.outline_color = 'white'
-        self.edge_color = 'black'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'gold'
-        self.axes.z_color = 'green'
+        self.color = "white"
+        self.outline_color = "white"
+        self.edge_color = "black"
+        self.axes.x_color = "tomato"
+        self.axes.y_color = "gold"
+        self.axes.z_color = "green"
 
 
 class DocumentTheme(Theme):
@@ -3309,27 +3307,27 @@ class DocumentTheme(Theme):
 
     Alternatively, set via a string.
 
-    >>> pv.set_plot_theme('document')
+    >>> pv.set_plot_theme("document")
 
     """
 
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.name = 'document'
-        self.background = 'white'
-        self.cmap = 'viridis'
+        self.name = "document"
+        self.background = "white"
+        self.cmap = "viridis"
         self.font.size = 18
         self.font.title_size = 18
         self.font.label_size = 18
-        self.font.color = 'black'
+        self.font.color = "black"
         self.show_edges = False
-        self.color = 'lightblue'
-        self.outline_color = 'black'
-        self.edge_color = 'black'
-        self.axes.x_color = 'tomato'
-        self.axes.y_color = 'seagreen'
-        self.axes.z_color = 'blue'
+        self.color = "lightblue"
+        self.outline_color = "black"
+        self.edge_color = "black"
+        self.axes.x_color = "tomato"
+        self.axes.y_color = "seagreen"
+        self.axes.z_color = "blue"
 
 
 class DocumentProTheme(DocumentTheme):
@@ -3347,8 +3345,8 @@ class DocumentProTheme(DocumentTheme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
-        self.anti_aliasing = 'ssaa'
-        self.color_cycler = get_cycler('default')
+        self.anti_aliasing = "ssaa"
+        self.color_cycler = get_cycler("default")
         self.render_points_as_spheres = True
         self.multi_samples = 8
         self.depth_peeling.number_of_peels = 4
@@ -3370,7 +3368,7 @@ class _TestingTheme(Theme):
 
     def __init__(self):
         super().__init__()
-        self.name = 'testing'
+        self.name = "testing"
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False

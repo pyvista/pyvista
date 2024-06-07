@@ -16,6 +16,6 @@ mesh = examples.download_dragon()
 
 plotter = pv.Plotter()
 plotter.add_mesh(mesh)
-plotter.add_floor('-y')
-plotter.add_floor('-z')
+plotter.add_floor("-y")
+plotter.add_floor("-z")
 plotter.show()

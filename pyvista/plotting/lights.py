@@ -35,7 +35,7 @@ class LightType(IntEnum):
 
     def __str__(self):
         """Pretty name for a light type."""
-        return self.name.replace('_', ' ').title()
+        return self.name.replace("_", " ").title()
 
 
 class Light(vtkLight):
@@ -145,7 +145,7 @@ class Light(vtkLight):
         position=None,
         focal_point=None,
         color=None,
-        light_type='scene light',
+        light_type="scene light",
         intensity=None,
         positional=None,
         cone_angle=None,
@@ -172,24 +172,24 @@ class Light(vtkLight):
         if isinstance(light_type, str):
             # be forgiving: ignore spaces and case
             light_type_orig = light_type
-            type_normalized = light_type.replace(' ', '').lower()
+            type_normalized = light_type.replace(" ", "").lower()
             mapping = {
-                'headlight': LightType.HEADLIGHT,
-                'cameralight': LightType.CAMERA_LIGHT,
-                'scenelight': LightType.SCENE_LIGHT,
+                "headlight": LightType.HEADLIGHT,
+                "cameralight": LightType.CAMERA_LIGHT,
+                "scenelight": LightType.SCENE_LIGHT,
             }
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
-                light_keys = ', '.join(mapping)
+                light_keys = ", ".join(mapping)
                 msg = (
                     f'Invalid light_type "{light_type_orig}"\n'
-                    f'Choose from one of the following: {light_keys}'
+                    f"Choose from one of the following: {light_keys}"
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
             raise TypeError(
-                f'Parameter light_type must be int or str, not {type(light_type).__name__}.',
+                f"Parameter light_type must be int or str, not {type(light_type).__name__}.",
             )
         # LightType is an int subclass
 
@@ -220,25 +220,25 @@ class Light(vtkLight):
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
-        return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
+        return f"<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>"
 
     def __eq__(self, other):
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
-            'light_type',
-            'position',
-            'focal_point',
-            'ambient_color',
-            'diffuse_color',
-            'specular_color',
-            'intensity',
-            'on',
-            'positional',
-            'exponent',
-            'cone_angle',
-            'attenuation_values',
-            'shadow_attenuation',
+            "light_type",
+            "position",
+            "focal_point",
+            "ambient_color",
+            "diffuse_color",
+            "specular_color",
+            "intensity",
+            "on",
+            "positional",
+            "exponent",
+            "cone_angle",
+            "attenuation_values",
+            "shadow_attenuation",
         ]
         for attr in native_attrs:
             if getattr(self, attr) != getattr(other, attr):
@@ -308,7 +308,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.ambient_color = 'red'
+        >>> light.ambient_color = "red"
         >>> light.ambient_color
         Color(name='red', hex='#ff0000ff', opacity=255)
 
@@ -366,7 +366,7 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> light = pv.Light()
-        >>> light.specular_color = '#00FF00'
+        >>> light.specular_color = "#00FF00"
         >>> light.specular_color
         Color(name='lime', hex='#00ff00ff', opacity=255)
 
@@ -503,19 +503,14 @@ class Light(vtkLight):
         brightness.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
-        >>> _ = plotter.add_mesh(pv.Cube(), color='cyan')
-        >>> light_bright = pv.Light(
-        ...     position=(3, 0, 0), light_type='scene light'
-        ... )
-        >>> light_dim = pv.Light(
-        ...     position=(0, 3, 0), light_type='scene light'
-        ... )
+        >>> plotter = pv.Plotter(lighting="none")
+        >>> _ = plotter.add_mesh(pv.Cube(), color="cyan")
+        >>> light_bright = pv.Light(position=(3, 0, 0), light_type="scene light")
+        >>> light_dim = pv.Light(position=(0, 3, 0), light_type="scene light")
         >>> light_dim.intensity = 0.5
         >>> for light in light_bright, light_dim:
         ...     light.positional = True
         ...     plotter.add_light(light)
-        ...
         >>> plotter.show()
 
         """
@@ -636,11 +631,9 @@ class Light(vtkLight):
         beam.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> plotter = pv.Plotter(lighting="none")
         >>> for offset, exponent in zip([0, 1.5, 3], [1, 2, 5]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color="white")
         ...     light = pv.Light(
         ...         position=(offset, 0, 0.1),
         ...         focal_point=(offset, 0, 0),
@@ -649,7 +642,6 @@ class Light(vtkLight):
         ...     light.positional = True
         ...     light.cone_angle = 80
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -684,19 +676,14 @@ class Light(vtkLight):
         variation of the intensity of the beams.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> plotter = pv.Plotter(lighting="none")
         >>> for offset, angle in zip([0, 1.5, 3], [70, 30, 20]):
-        ...     _ = plotter.add_mesh(
-        ...         pv.Plane((offset, 0, 0)), color='white'
-        ...     )
-        ...     light = pv.Light(
-        ...         position=(offset, 0, 1), focal_point=(offset, 0, 0)
-        ...     )
+        ...     _ = plotter.add_mesh(pv.Plane((offset, 0, 0)), color="white")
+        ...     light = pv.Light(position=(offset, 0, 1), focal_point=(offset, 0, 0))
         ...     light.exponent = 15
         ...     light.positional = True
         ...     light.cone_angle = angle
         ...     plotter.add_light(light)
-        ...
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -733,13 +720,12 @@ class Light(vtkLight):
         box gets lit by both lights.
 
         >>> import pyvista as pv
-        >>> plotter = pv.Plotter(lighting='none')
+        >>> plotter = pv.Plotter(lighting="none")
         >>> for offset in 1, 2.5, 4:
         ...     _ = plotter.add_mesh(
-        ...         pv.Cube(center=(offset, offset, 0)), color='white'
+        ...         pv.Cube(center=(offset, offset, 0)), color="white"
         ...     )
-        ...
-        >>> colors = ['b', 'g']
+        >>> colors = ["b", "g"]
         >>> all_attenuations = [(0, 0.1, 0), (0, 0, 0.1)]
         >>> centers = [(0, 1, 0), (1, 0, 0)]
         >>> for color, attenuation_constants, center in zip(
@@ -813,7 +799,7 @@ class Light(vtkLight):
                 trans = vtkmatrix_from_array(matrix)
             except ValueError:
                 raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
+                    "Transformation matrix must be a 4-by-4 matrix or array-like.",
                 ) from None
         self.SetTransformMatrix(trans)
 
@@ -875,7 +861,7 @@ class Light(vtkLight):
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
             raise TypeError(
-                f'Light type must be an integer subclass instance, got {ltype} instead.',
+                f"Light type must be an integer subclass instance, got {ltype} instead.",
             )
         self.SetLightType(ltype)
 
@@ -1043,19 +1029,19 @@ class Light(vtkLight):
 
         """
         immutable_attrs = [
-            'light_type',
-            'position',
-            'focal_point',
-            'ambient_color',
-            'diffuse_color',
-            'specular_color',
-            'intensity',
-            'on',
-            'positional',
-            'exponent',
-            'cone_angle',
-            'attenuation_values',
-            'shadow_attenuation',
+            "light_type",
+            "position",
+            "focal_point",
+            "ambient_color",
+            "diffuse_color",
+            "specular_color",
+            "intensity",
+            "on",
+            "positional",
+            "exponent",
+            "cone_angle",
+            "attenuation_values",
+            "shadow_attenuation",
         ]
         new_light = Light()
 
@@ -1149,7 +1135,7 @@ class Light(vtkLight):
         """
         if not isinstance(vtk_light, vtkLight):
             raise TypeError(
-                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.',
+                f"Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.",
             )
 
         light = cls()
@@ -1187,11 +1173,10 @@ class Light(vtkLight):
 
         >>> import pyvista as pv
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(pv.Cube(), color='white')
+        >>> _ = plotter.add_mesh(pv.Cube(), color="white")
         >>> for light in plotter.renderer.lights:
         ...     light.intensity /= 5
-        ...
-        >>> spotlight = pv.Light(position=(-1, 1, 1), color='cyan')
+        >>> spotlight = pv.Light(position=(-1, 1, 1), color="cyan")
         >>> spotlight.positional = True
         >>> spotlight.cone_angle = 20
         >>> spotlight.intensity = 10

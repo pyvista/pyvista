@@ -20,7 +20,7 @@ import pyvista as pv
 ###############################################################################
 # Turn on color cycling in PyVista's theme and set it to use the default
 # cycler.
-pv.global_theme.color_cycler = 'default'
+pv.global_theme.color_cycler = "default"
 
 ###############################################################################
 # List the available colors in the cycler
@@ -47,7 +47,7 @@ pv.global_theme.color_cycler = None
 pl = pv.Plotter()
 
 # Set to iterate over Red, Green, and Blue
-pl.set_color_cycler(['red', 'green', 'blue'])
+pl.set_color_cycler(["red", "green", "blue"])
 
 pl.add_mesh(pv.Cone(center=(0, 0, 0)))  # red
 pl.add_mesh(pv.Cube(center=(1, 0, 0)))  # green
@@ -62,14 +62,14 @@ pl.show()
 pl = pv.Plotter(shape=(1, 2))
 
 pl.subplot(0, 0)
-pl.renderer.set_color_cycler('default')
+pl.renderer.set_color_cycler("default")
 pl.add_mesh(pv.Cone(center=(0, 0, 0)))
 pl.add_mesh(pv.Cube(center=(1, 0, 0)))
 pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
 pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
 pl.subplot(0, 1)
-pl.renderer.set_color_cycler(['magenta', 'seagreen', 'aqua', 'orange'])
+pl.renderer.set_color_cycler(["magenta", "seagreen", "aqua", "orange"])
 pl.add_mesh(pv.Cone(center=(0, 0, 0)))
 pl.add_mesh(pv.Cube(center=(1, 0, 0)))
 pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
@@ -94,10 +94,10 @@ pl.add_mesh(pv.Cube(center=(1, 0, 0)))
 pl.add_mesh(pv.Sphere(center=(1, 1, 0)))
 pl.add_mesh(pv.Cylinder(center=(0, 1, 0)))
 
-colors = cycler('color', ['lightcoral', 'seagreen', 'aqua', 'firebrick'])()
+colors = cycler("color", ["lightcoral", "seagreen", "aqua", "firebrick"])()
 
 for actor in pl.renderer.actors.values():
     if isinstance(actor, pv.Actor):
-        actor.prop.color = next(colors)['color']
+        actor.prop.color = next(colors)["color"]
 
 pl.show()

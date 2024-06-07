@@ -64,14 +64,14 @@ plane_vis = pv.Plane(
 
 # plot it
 pl = pv.Plotter()
-pl.add_mesh(mesh, show_edges=True, color='white', opacity=0.5, label='Tessellated mesh')
+pl.add_mesh(mesh, show_edges=True, color="white", opacity=0.5, label="Tessellated mesh")
 pl.add_mesh(
     pv.PolyData(point_cloud),
-    color='red',
+    color="red",
     render_points_as_spheres=True,
     point_size=10,
-    label='Points to project',
+    label="Points to project",
 )
-pl.add_mesh(plane_vis, color='blue', opacity=0.1, label='Projection Plane')
+pl.add_mesh(plane_vis, color="blue", opacity=0.1, label="Projection Plane")
 pl.add_legend()
 pl.show()

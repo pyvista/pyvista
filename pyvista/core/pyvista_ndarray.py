@@ -65,8 +65,8 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             obj = np.asarray(array).view(cls)
         else:
             raise TypeError(
-                f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray',
+                f"pyvista_ndarray got an invalid type {type(array)}. "
+                "Expected an Iterable or vtk.vtkAbstractArray",
             )
 
         obj.association = association
@@ -88,9 +88,9 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # attributes of this class
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
-            self.dataset = getattr(obj, 'dataset', None)
-            self.association = getattr(obj, 'association', FieldAssociation.NONE)
-            self.VTKObject = getattr(obj, 'VTKObject', None)
+            self.dataset = getattr(obj, "dataset", None)
+            self.association = getattr(obj, "association", FieldAssociation.NONE)
+            self.VTKObject = getattr(obj, "VTKObject", None)
         else:
             self.dataset = None
             self.association = FieldAssociation.NONE

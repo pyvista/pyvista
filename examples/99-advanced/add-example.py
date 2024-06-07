@@ -106,7 +106,7 @@ dataset
 #
 #    Also note that this image number uses one based indexing.
 
-dataset.plot(text='Example Figure')
+dataset.plot(text="Example Figure")
 
 
 ###############################################################################
@@ -150,13 +150,13 @@ pl.close()
 pl = pv.Plotter(off_screen=True)
 
 # optimize for size
-pl.open_gif('example_movie.gif', palettesize=16)
+pl.open_gif("example_movie.gif", palettesize=16)
 
 sphere = pv.Sphere(theta_resolution=10, phi_resolution=10)
 
 # Add initial mesh to setup the camera
 actor = pl.add_mesh(sphere)
-pl.background_color = 'w'
+pl.background_color = "w"
 
 # clear and overwrite the mesh on each frame
 n_frames = 20
@@ -181,7 +181,7 @@ pl.close()
 # and you can easily access any files added with
 # :func:`pyvista.examples.downloads.download_file`.
 
-filename = examples.download_file('bunny.ply')
+filename = examples.download_file("bunny.ply")
 filename
 
 

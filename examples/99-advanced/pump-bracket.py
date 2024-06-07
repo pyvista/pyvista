@@ -58,11 +58,11 @@ cpos = [
 ]
 
 dataset.plot(
-    scalars='disp_3',
+    scalars="disp_3",
     cpos=cpos,
     show_scalar_bar=False,
     ambient=0.2,
-    anti_aliasing='fxaa',
+    anti_aliasing="fxaa",
 )
 
 
@@ -79,11 +79,11 @@ pl = pv.Plotter()
 pl.add_mesh(dataset, color="white", opacity=0.5)
 
 # Add the deformed pump bracket with the mode shape
-warp = dataset.warp_by_vector('disp_2', factor=0.1)
+warp = dataset.warp_by_vector("disp_2", factor=0.1)
 pl.add_mesh(warp, show_scalar_bar=False, ambient=0.2)
 
 pl.camera_position = cpos
-pl.enable_anti_aliasing('fxaa')
+pl.enable_anti_aliasing("fxaa")
 pl.show()
 
 
@@ -95,15 +95,15 @@ pl.show()
 # to vary the displacement.
 
 # feel free to change this to visualize different mode shapes
-mode_shape = 'disp_6'
+mode_shape = "disp_6"
 
 # copy the dataset as we will modify its coordinates
 ds = dataset.copy()
 
 pl = pv.Plotter(off_screen=True)
-pl.add_mesh(ds, lighting=True, color='w')
+pl.add_mesh(ds, lighting=True, color="w")
 pl.camera_position = cpos
-pl.enable_anti_aliasing('fxaa')
+pl.enable_anti_aliasing("fxaa")
 
 n_frames = 16
 pl.open_gif("pump_bracket_mode_shape.gif")

@@ -32,15 +32,15 @@ def test_plotter_image_before_show():
 def test_has_render_window_fail():
     pl = pv.Plotter()
     pl.close()
-    with pytest.raises(RenderWindowUnavailable, match='not available'):
+    with pytest.raises(RenderWindowUnavailable, match="not available"):
         pl._check_has_ren_win()
-    with pytest.raises(RenderWindowUnavailable, match='not available'):
+    with pytest.raises(RenderWindowUnavailable, match="not available"):
         pl._make_render_window_current()
 
 
 def test_render_lines_as_tubes_show_edges_warning(sphere):
     pl = pv.Plotter()
-    with pytest.warns(UserWarning, match='not supported'):
+    with pytest.warns(UserWarning, match="not supported"):
         actor = pl.add_mesh(sphere, render_lines_as_tubes=True, show_edges=True)
     assert not actor.prop.show_edges
     assert actor.prop.render_lines_as_tubes
@@ -50,8 +50,8 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
 def test_screenshot_fail_suppressed_rendering():
     plotter = pv.Plotter()
     plotter.suppress_rendering = True
-    with pytest.warns(UserWarning, match='screenshot is unable to be taken'):
-        plotter.show(screenshot='tmp.png')
+    with pytest.warns(UserWarning, match="screenshot is unable to be taken"):
+        plotter.show(screenshot="tmp.png")
 
 
 def test_plotter_line_point_smoothing():
@@ -119,7 +119,7 @@ def test_pickable_actors():
 def test_plotter_image_scale():
     pl = pv.Plotter()
     assert isinstance(pl.image_scale, int)
-    with pytest.raises(ValueError, match='must be a positive integer'):
+    with pytest.raises(ValueError, match="must be a positive integer"):
         pl.image_scale = 0
 
     pl.image_scale = 2
@@ -150,7 +150,7 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
 
 
-@pytest.mark.parametrize('split_sharp_edges', [True, False])
+@pytest.mark.parametrize("split_sharp_edges", [True, False])
 def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
     point_cloud = pv.PolyData([0.0, 0.0, 0.0])
     assert point_cloud.n_verts == point_cloud.n_cells
@@ -168,19 +168,19 @@ def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
 
 def test_smooth_shading_shallow_copy(sphere):
     """See also ``test_compute_normals_inplace``."""
-    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere.point_data["numbers"] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
 
-    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    sphere["numbers"] *= -1  # sphere2 'numbers' are also modified
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
 
     pl = pv.Plotter()
     pl.add_mesh(sphere, scalars=None, smooth_shading=True)
     # Modify after adding and using compute_normals via smooth_shading
-    sphere['numbers'] *= -1
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    sphere["numbers"] *= -1
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
     pl.close()
 
 
@@ -244,33 +244,33 @@ def test_no_added_with_scalar_bar(sphere):
 
 def test_plotter_remains_shallow():
     sphere = pv.Sphere()
-    sphere.point_data['numbers'] = np.arange(sphere.n_points)
+    sphere.point_data["numbers"] = np.arange(sphere.n_points)
     sphere2 = sphere.copy(deep=False)
 
-    sphere['numbers'] *= -1  # sphere2 'numbers' are also modified
+    sphere["numbers"] *= -1  # sphere2 'numbers' are also modified
 
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
 
     plotter = pv.Plotter()
     plotter.add_mesh(sphere, scalars=None)
 
     sphere[
-        'numbers'
+        "numbers"
     ] *= -1  # sphere2 'numbers' are also modified after adding to Plotter.  (See  issue #2461)
 
-    assert np.array_equal(sphere['numbers'], sphere2['numbers'])
-    assert np.shares_memory(sphere['numbers'], sphere2['numbers'])
+    assert np.array_equal(sphere["numbers"], sphere2["numbers"])
+    assert np.shares_memory(sphere["numbers"], sphere2["numbers"])
 
 
 def test_add_multiple(sphere):
-    point_data_name = 'data'
+    point_data_name = "data"
     sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
     pl.add_mesh(sphere, copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_points), copy_mesh=True)
     pl.add_mesh(sphere, scalars=np.arange(sphere.n_cells), copy_mesh=True)
-    pl.add_mesh(sphere, scalars='data', copy_mesh=True)
+    pl.add_mesh(sphere, scalars="data", copy_mesh=True)
     pl.show()
     assert sphere.n_arrays == 1
 
@@ -306,7 +306,7 @@ def test_remove_blurring(sphere):
 def test_add_points_invalid_style(sphere):
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "points"'):
-        pl.add_points(sphere, style='wireframe')
+        pl.add_points(sphere, style="wireframe")
 
 
 @pytest.mark.parametrize(("connected", "n_lines"), [(False, 2), (True, 3)])
@@ -329,26 +329,26 @@ def test_clear_actors(cube, sphere):
 
 def test_anti_aliasing_multiplot(sphere):
     pl = pv.Plotter(shape=(1, 2))
-    pl.enable_anti_aliasing('ssaa', all_renderers=False)
-    assert 'vtkSSAAPass' in pl.renderers[0]._render_passes._passes
-    assert 'vtkSSAAPass' not in pl.renderers[1]._render_passes._passes
+    pl.enable_anti_aliasing("ssaa", all_renderers=False)
+    assert "vtkSSAAPass" in pl.renderers[0]._render_passes._passes
+    assert "vtkSSAAPass" not in pl.renderers[1]._render_passes._passes
 
-    pl.enable_anti_aliasing('ssaa', all_renderers=True)
-    assert 'vtkSSAAPass' in pl.renderers[1]._render_passes._passes
+    pl.enable_anti_aliasing("ssaa", all_renderers=True)
+    assert "vtkSSAAPass" in pl.renderers[1]._render_passes._passes
 
     pl.disable_anti_aliasing(all_renderers=False)
-    assert 'vtkSSAAPass' not in pl.renderers[0]._render_passes._passes
-    assert 'vtkSSAAPass' in pl.renderers[1]._render_passes._passes
+    assert "vtkSSAAPass" not in pl.renderers[0]._render_passes._passes
+    assert "vtkSSAAPass" in pl.renderers[1]._render_passes._passes
 
     pl.disable_anti_aliasing(all_renderers=True)
-    assert 'vtkSSAAPass' not in pl.renderers[0]._render_passes._passes
-    assert 'vtkSSAAPass' not in pl.renderers[1]._render_passes._passes
+    assert "vtkSSAAPass" not in pl.renderers[0]._render_passes._passes
+    assert "vtkSSAAPass" not in pl.renderers[1]._render_passes._passes
 
 
 def test_anti_aliasing_invalid():
     pl = pv.Plotter()
     with pytest.raises(ValueError, match='Should be either "fxaa" or "ssaa"'):
-        pl.renderer.enable_anti_aliasing('invalid')
+        pl.renderer.enable_anti_aliasing("invalid")
 
 
 def test_plot_return_img_without_cpos(sphere: pv.PolyData):
@@ -387,7 +387,7 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     with pytest.raises(MissingDataError):
         pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
 
-    with pytest.raises(TypeError, match='not supported for volume rendering'):
+    with pytest.raises(TypeError, match="not supported for volume rendering"):
         pl.add_volume(sphere)
 
 
@@ -432,30 +432,30 @@ def test_multi_block_color_cycler():
     actor, mapper = plotter.add_composite(spheres)
 
     # pass custom cycler
-    mapper.set_unique_colors(['red', 'green', 'blue'])
+    mapper.set_unique_colors(["red", "green", "blue"])
 
-    assert mapper.block_attr[0].color.name == 'red'
-    assert mapper.block_attr[1].color.name == 'green'
-    assert mapper.block_attr[2].color.name == 'blue'
-    assert mapper.block_attr[3].color.name == 'red'
+    assert mapper.block_attr[0].color.name == "red"
+    assert mapper.block_attr[1].color.name == "green"
+    assert mapper.block_attr[2].color.name == "blue"
+    assert mapper.block_attr[3].color.name == "red"
 
     # test wrong args
     with pytest.raises(ValueError):  # noqa: PT011
-        mapper.set_unique_colors('foo')
+        mapper.set_unique_colors("foo")
 
     with pytest.raises(TypeError):
         mapper.set_unique_colors(5)
 
 
 @pytest.mark.parametrize(
-    ('face', 'normal'),
+    ("face", "normal"),
     [
-        ('-Z', (0, 0, 1)),
-        ('-Y', (0, 1, 0)),
-        ('-X', (1, 0, 0)),
-        ('+Z', (0, 0, -1)),
-        ('+Y', (0, -1, 0)),
-        ('+X', (-1, 0, 0)),
+        ("-Z", (0, 0, 1)),
+        ("-Y", (0, 1, 0)),
+        ("-X", (1, 0, 0)),
+        ("+Z", (0, 0, -1)),
+        ("+Y", (0, -1, 0)),
+        ("+X", (-1, 0, 0)),
     ],
 )
 def test_plotter_add_floor(face, normal):
@@ -466,8 +466,8 @@ def test_plotter_add_floor(face, normal):
 
 def test_plotter_add_floor_raise_error():
     pl = pv.Plotter()
-    with pytest.raises(NotImplementedError, match='not implemented'):
-        pl.add_floor(face='invalid')
+    with pytest.raises(NotImplementedError, match="not implemented"):
+        pl.add_floor(face="invalid")
 
 
 def test_plotter_zoom_camera():
@@ -517,13 +517,13 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
 def test_legend_font(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
+    legend_labels = [["sphere", "r"]]
     legend = plotter.add_legend(
         labels=legend_labels,
         border=True,
         bcolor=None,
         size=[0.1, 0.1],
-        font_family='times',
+        font_family="times",
     )
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 

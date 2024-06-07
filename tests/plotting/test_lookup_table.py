@@ -16,7 +16,7 @@ def lut():
 
 @pytest.fixture()
 def lut_w_cmap():
-    return LookupTable('viridis')
+    return LookupTable("viridis")
 
 
 def test_values(lut):
@@ -30,20 +30,20 @@ def test_values(lut):
     assert lut.values.dtype == np.uint8
     assert np.allclose(lut.values, values)
 
-    with pytest.raises(RuntimeError, match='cannot be set'):
+    with pytest.raises(RuntimeError, match="cannot be set"):
         lut.n_values = 10
 
 
 def test_apply_cmap(lut):
     n_values = 5
-    lut.cmap = 'reds'
+    lut.cmap = "reds"
     lut.n_values = n_values
     assert lut.values.shape == (n_values, 4)
     assert lut.n_values == n_values
 
 
 def test_init_cmap():
-    new_lut = LookupTable('gray', n_values=2, flip=True)
+    new_lut = LookupTable("gray", n_values=2, flip=True)
     assert np.allclose([[254, 255, 255, 255], [0, 0, 0, 255]], new_lut.values)
 
 
@@ -57,12 +57,12 @@ def test_init_custom():
     hue_range = (0.2, 0.3)
     alpha_range = (0.3, 0.4)
     scalar_range = (1, 9)
-    ramp = 'linear'
-    nan_color = Color('r')
-    above_range_color = Color('b')
-    below_range_color = Color('g')
+    ramp = "linear"
+    nan_color = Color("r")
+    above_range_color = Color("b")
+    below_range_color = Color("g")
     log_scale = True
-    annotations = {0: 'low', 4.5: 'medium', 9: 'high'}
+    annotations = {0: "low", 4.5: "medium", 9: "high"}
 
     new_lut = LookupTable(
         value_range=value_range,
@@ -91,7 +91,7 @@ def test_init_custom():
 
 def test_annotations(lut):
     assert lut.annotations == {}
-    anno = {0: 'low', 0.5: 'medium', 1: 'high'}
+    anno = {0: "low", 0.5: "medium", 1: "high"}
     lut.annotations = anno
     assert lut.annotations == anno
 
@@ -129,13 +129,13 @@ def test_alpha_range(lut, lut_w_cmap):
 
 
 def test_nan_color(lut):
-    lut.nan_color = 'b'
-    assert lut.nan_color == Color('b')
+    lut.nan_color = "b"
+    assert lut.nan_color == Color("b")
 
 
 def test_below_range_color(lut):
-    lut.below_range_color = 'r'
-    assert lut.below_range_color == Color('r')
+    lut.below_range_color = "r"
+    assert lut.below_range_color == Color("r")
     assert lut.GetUseBelowRangeColor()
 
     lut.below_range_color = None
@@ -147,8 +147,8 @@ def test_below_range_color(lut):
 
 
 def test_above_range_color(lut):
-    lut.above_range_color = 'r'
-    assert lut.above_range_color == Color('r')
+    lut.above_range_color = "r"
+    assert lut.above_range_color == Color("r")
     assert lut.GetUseAboveRangeColor()
 
     lut.above_range_color = None
@@ -160,10 +160,10 @@ def test_above_range_color(lut):
 
 
 def test_ramp(lut):
-    lut.ramp = 'linear'
-    assert lut.ramp == 'linear'
-    with pytest.raises(ValueError, match='must be one of the following'):
-        lut.ramp = 'foo'
+    lut.ramp = "linear"
+    assert lut.ramp == "linear"
+    with pytest.raises(ValueError, match="must be one of the following"):
+        lut.ramp = "foo"
 
 
 def test_log_scale(lut):
@@ -175,17 +175,17 @@ def test_log_scale(lut):
 
 
 def test_repr(lut):
-    assert 'PyVista' in repr(lut)
+    assert "PyVista" in repr(lut)
 
     lut.values = lut.values**0.5
-    assert 'From values' in repr(lut)
+    assert "From values" in repr(lut)
 
-    lut.cmap = 'viridis'
-    assert 'viridis' in repr(lut)
+    lut.cmap = "viridis"
+    assert "viridis" in repr(lut)
 
     # try a colorcet
-    lut.cmap = 'fire'
-    assert 'fire' in repr(lut)
+    lut.cmap = "fire"
+    assert "fire" in repr(lut)
 
 
 def test_scalar_range(lut):
@@ -195,12 +195,12 @@ def test_scalar_range(lut):
 
 
 def test_table_cmap_list(lut):
-    lut.cmap = ['red', 'green', 'blue']
+    lut.cmap = ["red", "green", "blue"]
     assert lut.n_values == 3
 
 
 def test_table_values_update(lut, skip_check_gc):
-    lut.cmap = 'Greens'
+    lut.cmap = "Greens"
     lut.values[:, -1] = np.linspace(0, 255, lut.n_values)
     assert lut.values.max() == 255
     assert lut.values[:, 2].max() < 255
@@ -226,14 +226,14 @@ def test_call(lut):
 
 def test_custom_opacity(lut, skip_check_gc):
     values_copy = lut.values.copy()
-    lut.apply_opacity('sigmoid')
+    lut.apply_opacity("sigmoid")
     assert not np.array_equiv(lut.values[:, -1], 255)
     # check RGB isn't changed when applying an opacity
     assert np.array_equal(values_copy[:, :-1], lut.values[:, :-1])
 
     # ensure opacity is not reset when changing the colormap
     opac_orig = lut.values[:, -1].copy()
-    lut.cmap = 'jet'
+    lut.cmap = "jet"
     assert np.array_equal(lut.values[:, -1], opac_orig)
 
     lut.apply_opacity(0)
@@ -243,11 +243,11 @@ def test_custom_opacity(lut, skip_check_gc):
     lut.apply_opacity(1)
     assert np.array_equiv(lut.values[:, -1], 255)
 
-    with pytest.raises(ValueError, match='between 0 and 1'):
+    with pytest.raises(ValueError, match="between 0 and 1"):
         lut.apply_opacity(-0.1)
 
 
-@pytest.mark.parametrize('clamping', [True, False])
+@pytest.mark.parametrize("clamping", [True, False])
 def test_to_opacity_tf(lut, clamping):
     tf = lut.to_opacity_tf(clamping=clamping)
     assert isinstance(tf, vtk.vtkPiecewiseFunction)

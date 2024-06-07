@@ -68,13 +68,13 @@ def voxelize(mesh, density=None, check_surface=True):
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        raise TypeError(f"Invalid density {density!r}, expected number or array-like.")
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        raise ValueError("Input mesh must have faces for voxelization.")
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -83,7 +83,7 @@ def voxelize(mesh, density=None, check_surface=True):
     x = np.arange(x_min, x_max, density_x)
     y = np.arange(y_min, y_max, density_y)
     z = np.arange(z_min, z_max, density_z)
-    x, y, z = np.meshgrid(x, y, z, indexing='ij')
+    x, y, z = np.meshgrid(x, y, z, indexing="ij")
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
 
@@ -93,7 +93,7 @@ def voxelize(mesh, density=None, check_surface=True):
 
     # get part of the mesh within the mesh's bounding surface.
     selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask = selection.point_data['SelectedPoints'].view(np.bool_)
+    mask = selection.point_data["SelectedPoints"].view(np.bool_)
 
     # extract cells from point indices
     return ugrid.extract_points(mask)
@@ -148,22 +148,22 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     >>> vox = pv.voxelize_volume(mesh, density=0.15)
     >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
-    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars="InsideMesh", show_edges=True, cpos=cpos)
 
     Slice the voxel volume to view ``InsideMesh``.
 
     >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='InsideMesh', show_edges=True)
+    >>> slices.plot(scalars="InsideMesh", show_edges=True)
 
     Create a voxel volume from unequal density dimensions and plot result.
 
     >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
-    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars="InsideMesh", show_edges=True, cpos=cpos)
 
     Slice the unequal density voxel volume to view ``InsideMesh``.
 
     >>> slices = vox.slice_orthogonal()
-    >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+    >>> slices.plot(scalars="InsideMesh", show_edges=True, cpos=cpos)
 
     """
     mesh = wrap(mesh)
@@ -174,13 +174,13 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+        raise TypeError(f"Invalid density {density!r}, expected number or array-like.")
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError('Input mesh must have faces for voxelization.')
+        raise ValueError("Input mesh must have faces for voxelization.")
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -195,15 +195,15 @@ def voxelize_volume(mesh, density=None, check_surface=True):
 
     # get part of the mesh within the mesh's bounding surface.
     selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
+    mask_vol = selection.point_data["SelectedPoints"].view(np.bool_)
 
     # Get voxels that fall within input mesh boundaries
     cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
-    voi['InsideMesh'] = np.zeros(voi.n_cells)
-    voi['InsideMesh'][cell_ids] = 1
+    voi["InsideMesh"] = np.zeros(voi.n_cells)
+    voi["InsideMesh"][cell_ids] = 1
 
     return voi
 
@@ -242,7 +242,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specify dimensions.')
+        raise NotImplementedError("Please specify dimensions.")
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.ImageData()
     image.dimensions = dimensions
@@ -601,9 +601,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap="gist_earth_r", show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 
@@ -632,12 +630,12 @@ def sample_function(
     elif output_type == np.float32:
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
-        if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+        if os.name == "nt":
+            raise ValueError("This function on Windows only supports int32 or smaller")
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
-        if os.name == 'nt':
-            raise ValueError('This function on Windows only supports int32 or smaller')
+        if os.name == "nt":
+            raise ValueError("This function on Windows only supports int32 or smaller")
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()
@@ -652,7 +650,7 @@ def sample_function(
     elif output_type == np.uint8:
         samp.SetOutputScalarTypeToUnsignedChar()
     else:
-        raise ValueError(f'Invalid output_type {output_type}')
+        raise ValueError(f"Invalid output_type {output_type}")
 
-    _update_alg(samp, progress_bar=progress_bar, message='Sampling')
+    _update_alg(samp, progress_bar=progress_bar, message="Sampling")
     return wrap(samp.GetOutput())

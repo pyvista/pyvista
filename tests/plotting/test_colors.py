@@ -9,12 +9,12 @@ import pytest
 import pyvista as pv
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = ['Greys']
+COLORMAPS = ["Greys"]
 
 try:
     import cmocean  # noqa: F401
 
-    COLORMAPS.append('algae')
+    COLORMAPS.append("algae")
 except ImportError:
     pass
 
@@ -22,7 +22,7 @@ except ImportError:
 try:
     import colorcet  # noqa: F401
 
-    COLORMAPS.append('fire')
+    COLORMAPS.append("fire")
 except:
     pass
 
@@ -94,14 +94,14 @@ def test_color():
             pv.Color(invalid_color)
     for invalid_opacity in invalid_opacities:
         with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color('b', invalid_opacity)
+            pv.Color("b", invalid_opacity)
     # Check hex and name getters
-    assert pv.Color(name).hex_rgba == f'#{h}'
-    assert pv.Color(name).hex_rgb == f'#{h[:-2]}'
-    assert pv.Color('b').name == 'blue'
+    assert pv.Color(name).hex_rgba == f"#{h}"
+    assert pv.Color(name).hex_rgb == f"#{h[:-2]}"
+    assert pv.Color("b").name == "blue"
     # Check sRGB conversion
-    assert pv.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
-    assert pv.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
+    assert pv.Color("gray", 0.5).linear_to_srgb() == "#bcbcbcbc"
+    assert pv.Color("#bcbcbcbc").srgb_to_linear() == "#80808080"
     # Check iteration and indexing
     c = pv.Color(i_rgba)
     assert all(ci == fi for ci, fi in zip(c, f_rgba))

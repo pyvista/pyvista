@@ -19,7 +19,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.csv"))
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
 
@@ -47,14 +47,14 @@ def test_table_init(tmpdir):
     # create from dictionary
     array_dict = {}
     for i in range(nc):
-        array_dict[f'foo{i}'] = arrays[:, i].copy()
+        array_dict[f"foo{i}"] = arrays[:, i].copy()
     table = pv.Table(array_dict)
     assert table.n_rows == nr
     assert table.n_columns == nc
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:, i], table[f'foo{i}'])
+        assert np.allclose(arrays[:, i], table[f"foo{i}"])
 
     dataset = examples.load_hexbeam()
     array_dict = dict(dataset.point_data)
@@ -67,13 +67,13 @@ def test_table_init(tmpdir):
         assert np.allclose(dataset[name], table[name])
 
     # Create from vtkTable object
-    h = '\t'.join([f'a{i}' for i in range(nc)])
-    np.savetxt(filename, arrays, delimiter='\t', header=h, comments='')
+    h = "\t".join([f"a{i}" for i in range(nc)])
+    np.savetxt(filename, arrays, delimiter="\t", header=h, comments="")
 
     reader = vtk.vtkDelimitedTextReader()
     reader.SetFileName(filename)
     reader.DetectNumericColumnsOn()
-    reader.SetFieldDelimiterCharacters('\t')
+    reader.SetFieldDelimiterCharacters("\t")
     reader.SetHaveHeaders(True)
     reader.Update()
 
@@ -107,19 +107,19 @@ def test_table_row_arrays():
     arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table()
     for i in range(nc):
-        table[f'foo{i}'] = arrays[:, i]
+        table[f"foo{i}"] = arrays[:, i]
     assert table.n_columns == nc
     assert table.n_rows == nr
     for i in range(nc):
-        assert np.allclose(table[f'foo{i}'], arrays[:, i])
+        assert np.allclose(table[f"foo{i}"], arrays[:, i])
     # Multi component
     table = pv.Table()
-    table['multi'] = arrays
+    table["multi"] = arrays
     assert table.n_columns == 1
     assert table.n_rows == nr
     assert np.allclose(table[0], arrays)
-    assert np.allclose(table['multi'], arrays)
-    del table['multi']
+    assert np.allclose(table["multi"], arrays)
+    del table["multi"]
     assert table.n_columns == 0
 
     dataset = examples.load_hexbeam()
@@ -157,20 +157,20 @@ def test_table_row_np_bool():
     n = 50
     table = pv.Table()
     bool_arr = np.zeros(n, np.bool_)
-    table.row_arrays['bool_arr'] = bool_arr
+    table.row_arrays["bool_arr"] = bool_arr
     bool_arr[:] = True
-    assert table.row_arrays['bool_arr'].all()
-    assert table._row_array('bool_arr').all()
-    assert table._row_array('bool_arr').dtype == np.bool_
+    assert table.row_arrays["bool_arr"].all()
+    assert table._row_array("bool_arr").all()
+    assert table._row_array("bool_arr").dtype == np.bool_
 
 
 def test_table_row_uint8():
     n = 50
     table = pv.Table()
     arr = np.zeros(n, np.uint8)
-    table.row_arrays['arr'] = arr
+    table.row_arrays["arr"] = arr
     arr[:] = np.arange(n)
-    assert np.allclose(table.row_arrays['arr'], np.arange(n))
+    assert np.allclose(table.row_arrays["arr"], np.arange(n))
 
 
 def test_table_repr():
@@ -191,12 +191,12 @@ def test_table_pandas():
     arrays = np.random.default_rng().random((nr, nc))
     df = pd.DataFrame()
     for i in range(nc):
-        df[f'foo{i}'] = arrays[:, i].copy()
+        df[f"foo{i}"] = arrays[:, i].copy()
     table = pv.Table(df)
     assert table.n_rows == nr
     assert table.n_columns == nc
     for i in range(nc):
-        assert np.allclose(table.row_arrays[f'foo{i}'], arrays[:, i])
+        assert np.allclose(table.row_arrays[f"foo{i}"], arrays[:, i])
     assert df.equals(table.to_pandas())
 
 

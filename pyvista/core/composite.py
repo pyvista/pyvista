@@ -35,7 +35,7 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+_TypeMultiBlockLeaf = Union["MultiBlock", DataSet]
 
 
 class MultiBlock(
@@ -108,23 +108,21 @@ class MultiBlock(
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
-    ...
 
     >>> for block in blocks:
     ...     # Do something with each dataset
     ...     surf = block.extract_surface()
-    ...
 
     """
 
     plot = pyvista._plot.plot
 
-    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], _vtk.vtkXMLMultiBlockDataWriter)
+    _WRITERS = dict.fromkeys([".vtm", ".vtmb"], _vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize multi block."""
         super().__init__()
-        deep = kwargs.pop('deep', False)
+        deep = kwargs.pop("deep", False)
 
         # keep a python reference to the dataset to avoid
         # unintentional garbage collections since python does not
@@ -147,11 +145,11 @@ class MultiBlock(
                 for key, block in args[0].items():
                     self.append(block, key)
             else:
-                raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
+                raise TypeError(f"Type {type(args[0])} is not supported by pyvista.MultiBlock")
 
         elif len(args) > 1:
             raise ValueError(
-                'Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.',
+                "Invalid number of arguments:\n``pyvista.MultiBlock``supports 0 or 1 arguments.",
             )
 
         # Upon creation make sure all nested structures are wrapped
@@ -204,7 +202,7 @@ class MultiBlock(
             maxima = np.maximum.reduce(all_bounds)[1::2]
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
+        the_bounds = np.stack([minima, maxima]).ravel("F")
 
         return cast(BoundsLike, tuple(the_bounds))
 
@@ -375,14 +373,14 @@ class MultiBlock(
         ...     "sphere": pv.Sphere(center=(2, 2, 0)),
         ... }
         >>> blocks = pv.MultiBlock(data)
-        >>> blocks.get_index_by_name('sphere')
+        >>> blocks.get_index_by_name("sphere")
         1
 
         """
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
-        raise KeyError(f'Block name ({name}) not found')
+        raise KeyError(f"Block name ({name}) not found")
 
     @overload
     def __getitem__(
@@ -410,7 +408,7 @@ class MultiBlock(
             index = self.get_index_by_name(index)
         ############################
         if index < -self.n_blocks or index >= self.n_blocks:
-            raise IndexError(f'index ({index}) out of range for this dataset.')
+            raise IndexError(f"index ({index}) out of range for this dataset.")
         if index < 0:
             index = self.n_blocks + index
 
@@ -453,7 +451,7 @@ class MultiBlock(
         # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
         if isinstance(wrapped, pyvista_ndarray):
-            raise TypeError('dataset should not be or contain an array')
+            raise TypeError("dataset should not be or contain an array")
         dataset = wrapped
         self.n_blocks += 1
         self[index] = dataset
@@ -480,9 +478,7 @@ class MultiBlock(
         ...     "sphere": pv.Sphere(center=(2, 2, 0)),
         ... }
         >>> blocks = pv.MultiBlock(data)
-        >>> blocks_uniform = pv.MultiBlock(
-        ...     {"uniform": examples.load_uniform()}
-        ... )
+        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
         >>> blocks.extend(blocks_uniform)
         >>> len(blocks)
         3
@@ -558,7 +554,7 @@ class MultiBlock(
         ... }
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.append(pv.Cone())
-        >>> blocks.set_block_name(2, 'cone')
+        >>> blocks.set_block_name(2, "cone")
         >>> blocks.keys()
         ['cube', 'sphere', 'cone']
 
@@ -686,10 +682,10 @@ class MultiBlock(
         >>> multi = pv.MultiBlock()
         >>> multi.append(pv.PolyData())
         >>> multi[0] = pv.UnstructuredGrid()
-        >>> multi.append(pv.PolyData(), 'poly')
+        >>> multi.append(pv.PolyData(), "poly")
         >>> multi.keys()
         ['Block-00', 'poly']
-        >>> multi['bar'] = pv.PolyData()
+        >>> multi["bar"] = pv.PolyData()
         >>> multi.n_blocks
         3
 
@@ -736,7 +732,7 @@ class MultiBlock(
             self._refs[data.memory_address] = data
 
         if name is None:
-            name = f'Block-{i:02}'
+            name = f"Block-{i:02}"
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
     def __delitem__(self, index: Union[int, str, slice]) -> None:
@@ -757,7 +753,7 @@ class MultiBlock(
     def _remove_ref(self, index: int):
         """Remove python reference to the dataset."""
         dataset = self[index]
-        if hasattr(dataset, 'memory_address'):
+        if hasattr(dataset, "memory_address"):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
     def __iter__(self) -> MultiBlock:
@@ -1058,7 +1054,7 @@ class MultiBlock(
     def set_active_scalars(
         self,
         name: Optional[str],
-        preference: str = 'cell',
+        preference: str = "cell",
         allow_missing: bool = False,
     ) -> Tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
@@ -1146,12 +1142,12 @@ class MultiBlock(
                 dtypes.add(scalars.dtype)
 
         if len(dims) > 1:
-            raise ValueError(f'Inconsistent dimensions {dims} in active scalars.')
+            raise ValueError(f"Inconsistent dimensions {dims} in active scalars.")
 
         # check complex mismatch
         is_complex = [np.issubdtype(dtype, np.complexfloating) for dtype in dtypes]
         if any(is_complex) and not all(is_complex):
-            raise ValueError('Inconsistent complex and real data types in active scalars.')
+            raise ValueError("Inconsistent complex and real data types in active scalars.")
 
         return field_asc, scalars
 
@@ -1231,11 +1227,11 @@ class MultiBlock(
             allow_missing=True,
         )
 
-        data_attr = f'{field.name.lower()}_data'
+        data_attr = f"{field.name.lower()}_data"
         dtype = scalars.dtype
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
-                raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+                raise ValueError("RGB array must be n_points/n_cells by 3/4 in shape.")
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
@@ -1247,12 +1243,12 @@ class MultiBlock(
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
-                raise TypeError('`component` must be either None or an integer')
+                raise TypeError("`component` must be either None or an integer")
             if component is not None:
                 if component >= scalars.shape[1] or component < 0:
                     raise ValueError(
-                        'Component must be nonnegative and less than the '
-                        f'dimensionality of the scalars array: {scalars.shape[1]}',
+                        "Component must be nonnegative and less than the "
+                        f"dimensionality of the scalars array: {scalars.shape[1]}",
                     )
             scalars_name = self._convert_to_single_component(data_attr, scalars_name, component)
 
@@ -1268,9 +1264,9 @@ class MultiBlock(
                 if scalars is not None:
                     scalars = np.array(scalars.astype(float))
                     dattr = getattr(block, data_attr)
-                    dattr[f'{scalars_name}-real'] = scalars
-                    dattr.active_scalars_name = f'{scalars_name}-real'
-        return f'{scalars_name}-real'
+                    dattr[f"{scalars_name}-real"] = scalars
+                    dattr.active_scalars_name = f"{scalars_name}-real"
+        return f"{scalars_name}-real"
 
     def _convert_to_single_component(
         self,
@@ -1288,9 +1284,9 @@ class MultiBlock(
                     if scalars is not None:
                         scalars = np.linalg.norm(scalars, axis=1)
                         dattr = getattr(block, data_attr)
-                        dattr[f'{scalars_name}-normed'] = scalars
-                        dattr.active_scalars_name = f'{scalars_name}-normed'
-            return f'{scalars_name}-normed'
+                        dattr[f"{scalars_name}-normed"] = scalars
+                        dattr.active_scalars_name = f"{scalars_name}-normed"
+            return f"{scalars_name}-normed"
 
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1299,9 +1295,9 @@ class MultiBlock(
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     dattr = getattr(block, data_attr)
-                    dattr[f'{scalars_name}-{component}'] = scalars[:, component]
-                    dattr.active_scalars_name = f'{scalars_name}-{component}'
-        return f'{scalars_name}-{component}'
+                    dattr[f"{scalars_name}-{component}"] = scalars[:, component]
+                    dattr.active_scalars_name = f"{scalars_name}-{component}"
+        return f"{scalars_name}-{component}"
 
     def _get_consistent_active_scalars(self):
         """Get if there are any consistent active scalars."""

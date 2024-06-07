@@ -23,12 +23,12 @@ from pyvista import examples
 
 cow = examples.download_cow()
 cow.rotate_x(90, inplace=True)
-plotter = pv.Plotter(lighting='none', window_size=(1000, 1000))
-plotter.add_mesh(cow, color='white')
+plotter = pv.Plotter(lighting="none", window_size=(1000, 1000))
+plotter.add_mesh(cow, color="white")
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
-plotter.add_mesh(floor, color='green')
+plotter.add_mesh(floor, color="green")
 
-UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
+UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color="white")
 UFO.positional = True
 UFO.cone_angle = 40
 UFO.exponent = 10
@@ -47,15 +47,15 @@ plotter.show()
 # Light actors can be very useful when designing complex scenes where
 # spotlights are involved in lighting.
 
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting="none")
 plane = pv.Plane(i_size=4, j_size=4)
-plotter.add_mesh(plane, color='white')
+plotter.add_mesh(plane, color="white")
 
 rot120 = np.array([[-0.5, -np.sqrt(3) / 2, 0], [np.sqrt(3) / 2, -0.5, 0], [0, 0, 1]])
 
 position = (-1.5, -1.5, 3)
 focus = (-0.5, -0.5, 0)
-colors = ['red', 'lime', 'blue']
+colors = ["red", "lime", "blue"]
 for color in colors:
     position = rot120 @ position
     focus = rot120 @ focus
@@ -76,12 +76,12 @@ plotter.show()
 # example's cone angle and omitting the manual camera positioning exemplifies
 # the problem:
 
-plotter = pv.Plotter(lighting='none')
-plotter.add_mesh(cow, color='white')
+plotter = pv.Plotter(lighting="none")
+plotter.add_mesh(cow, color="white")
 floor = pv.Plane(center=(*cow.center[:2], cow.bounds[-2]), i_size=30, j_size=25)
-plotter.add_mesh(floor, color='green')
+plotter.add_mesh(floor, color="green")
 
-UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color='white')
+UFO = pv.Light(position=(0, 0, 10), focal_point=(0, 0, 0), color="white")
 UFO.positional = True
 UFO.cone_angle = 89
 UFO.exponent = 10

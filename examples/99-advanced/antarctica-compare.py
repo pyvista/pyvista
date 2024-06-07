@@ -56,7 +56,7 @@ p.show(cpos="xy")
 
 ###############################################################################
 
-vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap="Blues", log_scale=True)
 
 mesh.plot(cpos="xy", **vel_dargs)
 
@@ -70,7 +70,7 @@ b = extract_node(20)
 pl = pv.Plotter()
 pl.add_mesh(a, **vel_dargs)
 pl.add_mesh(b, **vel_dargs)
-pl.show(cpos='xy')
+pl.show(cpos="xy")
 
 ###############################################################################
 # plot vectors without mesh
@@ -90,16 +90,16 @@ pl.show()
 # Compare directions. Normalize them so we can get a reasonable direction
 # comparison.
 
-flow_a = a.point_data['ssavelocity'].copy()
+flow_a = a.point_data["ssavelocity"].copy()
 flow_a /= np.linalg.norm(flow_a, axis=1).reshape(-1, 1)
-flow_b = b.point_data['ssavelocity'].copy()
+flow_b = b.point_data["ssavelocity"].copy()
 flow_b /= np.linalg.norm(flow_b, axis=1).reshape(-1, 1)
 
 
 # plot normalized vectors
 pl = pv.Plotter()
-pl.add_arrows(a.points, flow_a, mag=10000, color='b', label='flow_a')
-pl.add_arrows(b.points, flow_b, mag=10000, color='r', label='flow_b')
+pl.add_arrows(a.points, flow_a, mag=10000, color="b", label="flow_a")
+pl.add_arrows(b.points, flow_b, mag=10000, color="r", label="flow_b")
 pl.add_legend()
 pl.camera_position = [
     (-1044239.3240694795, 354805.0268606294, 484178.24825854995),
@@ -114,14 +114,14 @@ pl.show()
 agree = flow_a.dot(flow_b.mean(0))
 
 pl = pv.Plotter()
-pl.add_mesh(a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block b'})
-pl.add_mesh(b, color='w')
-pl.show(cpos='xy')
+pl.add_mesh(a, scalars=agree, cmap="bwr", scalar_bar_args={"title": "Flow agreement with block b"})
+pl.add_mesh(b, color="w")
+pl.show(cpos="xy")
 
 ###############################################################################
 agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()
-pl.add_mesh(a, color='w')
-pl.add_mesh(b, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreement with block a'})
-pl.show(cpos='xy')
+pl.add_mesh(a, color="w")
+pl.add_mesh(b, scalars=agree, cmap="bwr", scalar_bar_args={"title": "Flow agreement with block a"})
+pl.show(cpos="xy")

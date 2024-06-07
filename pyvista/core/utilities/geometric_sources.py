@@ -116,7 +116,7 @@ if _vtk.vtk_version_info < (9, 3):
         >>> source.output.plot(show_edges=True, line_width=5)
         """
 
-        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
+        _new_attr_exceptions: ClassVar[List[str]] = ["_direction"]
 
         def __init__(
             self,
@@ -576,15 +576,13 @@ class CylinderSource(_vtk.vtkCylinderSource):
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     pv.CylinderSource().output, show_edges=True, line_width=5
-    ... )
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[List[str]] = ["_center", "_direction"]
 
     def __init__(
         self,
@@ -787,7 +785,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         List of points defining a broken line.
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['points']
+    _new_attr_exceptions: ClassVar[List[str]] = ["points"]
 
     def __init__(self, points=None):
         """Initialize the multiple lines source class."""
@@ -818,7 +816,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         """
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
-            raise ValueError('>=2 points need to define multiple lines.')
+            raise ValueError(">=2 points need to define multiple lines.")
         self.SetPoints(pyvista.vtk_points(points))
 
     @property
@@ -876,16 +874,16 @@ class Text3DSource(vtkVectorText):
     """
 
     _new_attr_exceptions: ClassVar[List[str]] = [
-        '_center',
-        '_height',
-        '_width',
-        '_depth',
-        '_normal',
-        '_process_empty_string',
-        '_output',
-        '_extrude_filter',
-        '_tri_filter',
-        '_modified',
+        "_center",
+        "_height",
+        "_width",
+        "_depth",
+        "_normal",
+        "_process_empty_string",
+        "_output",
+        "_extrude_filter",
+        "_tri_filter",
+        "_modified",
     ]
 
     def __init__(
@@ -926,12 +924,12 @@ class Text3DSource(vtkVectorText):
 
     def __setattr__(self, name, value):  # numpydoc ignore=GL08
         """Override to set modified flag and disable setting new attributes."""
-        if hasattr(self, name) and name != '_modified':
+        if hasattr(self, name) and name != "_modified":
             # Set modified flag
             old_value = getattr(self, name)
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
-                object.__setattr__(self, '_modified', True)
+                object.__setattr__(self, "_modified", True)
         else:
             # Do not allow setting attributes.
             # This is similar to using @no_new_attr decorator but without
@@ -942,7 +940,7 @@ class Text3DSource(vtkVectorText):
             else:
                 raise AttributeError(
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}',
+                    f"{self.__class__.__name__}",
                 )
 
     def __del__(self):
@@ -1009,7 +1007,7 @@ class Text3DSource(vtkVectorText):
 
     @width.setter
     def width(self, width: float):  # numpydoc ignore=GL08
-        _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
+        _check_range(width, rng=(0, float("inf")), parm_name="width") if width is not None else None
         self._width = width
 
     @property
@@ -1020,7 +1018,7 @@ class Text3DSource(vtkVectorText):
     @height.setter
     def height(self, height: float):  # numpydoc ignore=GL08
         (
-            _check_range(height, rng=(0, float('inf')), parm_name='height')
+            _check_range(height, rng=(0, float("inf")), parm_name="height")
             if height is not None
             else None
         )
@@ -1033,7 +1031,7 @@ class Text3DSource(vtkVectorText):
 
     @depth.setter
     def depth(self, depth: float):  # numpydoc ignore=GL08
-        _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
+        _check_range(depth, rng=(0, float("inf")), parm_name="depth") if depth is not None else None
         self._depth = depth
 
     def update(self):
@@ -1180,7 +1178,7 @@ class CubeSource(_vtk.vtkCubeSource):
         y_length=1.0,
         z_length=1.0,
         bounds=None,
-        point_dtype='float32',
+        point_dtype="float32",
     ):
         """Initialize the cube source class."""
         super().__init__()
@@ -1202,7 +1200,7 @@ class CubeSource(_vtk.vtkCubeSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                "Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)",
             )
         self._bounds = bounds
         self.SetBounds(bounds)
@@ -1319,8 +1317,8 @@ class CubeSource(_vtk.vtkCubeSource):
         """
         precision = self.GetOutputPointsPrecision()
         return {
-            SINGLE_PRECISION: 'float32',
-            DOUBLE_PRECISION: 'float64',
+            SINGLE_PRECISION: "float32",
+            DOUBLE_PRECISION: "float64",
         }[precision]
 
     @point_dtype.setter
@@ -1338,11 +1336,11 @@ class CubeSource(_vtk.vtkCubeSource):
         point_dtype: str
             Desired output point types.
         """
-        if point_dtype not in ['float32', 'float64']:
+        if point_dtype not in ["float32", "float64"]:
             raise ValueError("Point dtype must be either 'float32' or 'float64'")
         precision = {
-            'float32': SINGLE_PRECISION,
-            'float64': DOUBLE_PRECISION,
+            "float32": SINGLE_PRECISION,
+            "float64": DOUBLE_PRECISION,
         }[point_dtype]
         self.SetOutputPointsPrecision(precision)
 
@@ -1420,7 +1418,7 @@ class DiscSource(_vtk.vtkDiskSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
+                "To change vtkDiskSource with `center` requires VTK 9.2 or later.",
             )
 
     @property
@@ -1576,7 +1574,7 @@ class LineSource(_vtk.vtkLineSource):
             Location in ``[x, y, z]``.
         """
         if np.array(pointa).size != 3:
-            raise TypeError('Point A must be a length three tuple of floats.')
+            raise TypeError("Point A must be a length three tuple of floats.")
         self.SetPoint1(*pointa)
 
     @property
@@ -1600,7 +1598,7 @@ class LineSource(_vtk.vtkLineSource):
             Location in ``[x, y, z]``.
         """
         if np.array(pointb).size != 3:
-            raise TypeError('Point B must be a length three tuple of floats.')
+            raise TypeError("Point B must be a length three tuple of floats.")
         self.SetPoint2(*pointb)
 
     @property
@@ -1624,7 +1622,7 @@ class LineSource(_vtk.vtkLineSource):
             Number of pieces to divide line into.
         """
         if resolution <= 0:
-            raise ValueError('Resolution must be positive')
+            raise ValueError("Resolution must be positive")
         self.SetResolution(resolution)
 
     @property
@@ -1751,7 +1749,7 @@ class SphereSource(_vtk.vtkSphereSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
+                "To change vtkSphereSource with `center` requires VTK 9.2 or later.",
             )
 
     @property
@@ -2116,24 +2114,24 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
     Create and plot a dodecahedron.
 
     >>> import pyvista as pv
-    >>> dodeca = pv.PlatonicSolidSource('dodecahedron')
+    >>> dodeca = pv.PlatonicSolidSource("dodecahedron")
     >>> dodeca.output.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
+    _new_attr_exceptions: ClassVar[List[str]] = ["_kinds"]
 
-    def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
+    def __init__(self: PlatonicSolidSource, kind="tetrahedron"):
         """Initialize the platonic solid source class."""
         super().__init__()
         self._kinds: Dict[str, int] = {
-            'tetrahedron': 0,
-            'cube': 1,
-            'octahedron': 2,
-            'icosahedron': 3,
-            'dodecahedron': 4,
+            "tetrahedron": 0,
+            "cube": 1,
+            "octahedron": 2,
+            "icosahedron": 3,
+            "dodecahedron": 4,
         }
         self.kind = kind
 
@@ -2474,7 +2472,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                "Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)",
             )
         self._bounds = bounds
         self.SetBounds(bounds)

@@ -65,10 +65,10 @@ pl.show()
 # Here we create a lookup table with a narrow table range (same as ``clim``)
 # and color values above and below the range.
 
-lut = pv.LookupTable(cmap='magma')
+lut = pv.LookupTable(cmap="magma")
 lut.scalar_range = (5, 15)
-lut.below_range_color = pv.Color('grey', opacity=0.5)
-lut.above_range_color = 'r'
+lut.below_range_color = pv.Color("grey", opacity=0.5)
+lut.above_range_color = "r"
 lut.plot()
 
 
@@ -122,7 +122,7 @@ pl.show()
 
 pl = pv.Plotter()
 actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
-pl.add_text('Alpha Range Demo')
+pl.add_text("Alpha Range Demo")
 
 
 def set_min_alpha(min_value):
@@ -149,15 +149,15 @@ pl.add_slider_widget(
     set_min_alpha,
     (0, 1),
     value=lut.alpha_range[0],
-    interaction_event='always',
-    title='Alpha Range',
+    interaction_event="always",
+    title="Alpha Range",
     tube_width=0.003,
 )
 pl.add_slider_widget(
     set_max_alpha,
     (0, 1),
     value=lut.alpha_range[1],
-    interaction_event='always',
+    interaction_event="always",
     tube_width=0.0,
 )
 
@@ -192,7 +192,7 @@ def make_double_slider(attr, idx):
             pl.slider_widgets[idx * 2 + 1].GetRepresentation().SetValue(max_value)
         setattr(lut, attr, (min_value, max_value))
 
-        if attr == 'scalar_range':
+        if attr == "scalar_range":
             actor.mapper.scalar_range = getattr(lut, attr)
 
     def set_max(max_value):
@@ -203,18 +203,18 @@ def make_double_slider(attr, idx):
             pl.slider_widgets[idx * 2].GetRepresentation().SetValue(min_value)
         setattr(lut, attr, (min_value, max_value))
 
-        if attr == 'scalar_range':
+        if attr == "scalar_range":
             actor.mapper.scalar_range = getattr(lut, attr)
 
-    rng = scalars_rng if attr == 'scalar_range' else (0, 1)
+    rng = scalars_rng if attr == "scalar_range" else (0, 1)
 
     # create two overlapping slider bars by hiding the tube of the second
     pl.add_slider_widget(
         set_min,
         rng,
         value=getattr(lut, attr)[0],
-        interaction_event='always',
-        title=' '.join(attr.split('_')).capitalize(),
+        interaction_event="always",
+        title=" ".join(attr.split("_")).capitalize(),
         tube_width=0.003,
         pointa=(0.6, 0.9 - 0.165 * idx),
         pointb=(0.9, 0.9 - 0.165 * idx),
@@ -223,7 +223,7 @@ def make_double_slider(attr, idx):
         set_max,
         rng,
         value=getattr(lut, attr)[1],
-        interaction_event='always',
+        interaction_event="always",
         tube_width=0.0,
         pointa=(0.6, 0.9 - 0.165 * idx),
         pointb=(0.9, 0.9 - 0.165 * idx),
@@ -232,11 +232,11 @@ def make_double_slider(attr, idx):
 
 pl = pv.Plotter()
 actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
-make_double_slider('alpha_range', 0)
-make_double_slider('hue_range', 1)
-make_double_slider('value_range', 2)
-make_double_slider('saturation_range', 3)
-make_double_slider('scalar_range', 4)
+make_double_slider("alpha_range", 0)
+make_double_slider("hue_range", 1)
+make_double_slider("value_range", 2)
+make_double_slider("saturation_range", 3)
+make_double_slider("scalar_range", 4)
 
 pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
 cpos = pl.show(return_cpos=True)

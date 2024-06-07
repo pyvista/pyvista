@@ -17,9 +17,7 @@ like this:
     >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
     >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
     >>> cells = np.hstack((cell0_ids, cell1_ids))
-    >>> cell_type = np.array(
-    ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
-    ... )
+    >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
 there will be a ``NameError`` when the code block is copied into Python
 because the ``np`` name is undefined. However, pytest and sphinx test
@@ -134,7 +132,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
         of failed doctests under the specified modules.
 
     """
-    skip_pattern = re.compile(r'doctest: *\+SKIP')
+    skip_pattern = re.compile(r"doctest: *\+SKIP")
 
     if modules is None:
         modules = discover_modules()
@@ -155,7 +153,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             continue
 
         # mock print to suppress output from a few talkative tests
-        globs = {'print': (lambda *args, **kwargs: ...)}
+        globs = {"print": (lambda *args, **kwargs: ...)}
         for iline, example in enumerate(dt.examples, start=1):
             if not example.source.strip() or (
                 respect_skips and skip_pattern.search(example.source)
@@ -165,45 +163,45 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
                 exec(example.source, globs)
             except Exception as exc:
                 if verbose:
-                    print(f'FAILED: {dt.name} -- {exc!r}')
-                erroring_code = ''.join([example.source for example in dt.examples[:iline]])
+                    print(f"FAILED: {dt.name} -- {exc!r}")
+                erroring_code = "".join([example.source for example in dt.examples[:iline]])
                 failures[dt_name] = exc, erroring_code
                 break
         else:
             if verbose:
-                print(f'PASSED: {dt.name}')
+                print(f"PASSED: {dt.name}")
 
     total = len(doctests)
     fails = len(failures)
     passes = total - fails
-    print(f'\n{passes} passes and {fails} failures out of {total} total doctests.\n')
+    print(f"\n{passes} passes and {fails} failures out of {total} total doctests.\n")
     if not fails:
         return failures
 
-    print('List of failures:')
+    print("List of failures:")
     for name, (exc, erroring_code) in failures.items():
-        print('-' * 60)
-        print(f'{name}:')
-        print(indent(erroring_code, '    '))
+        print("-" * 60)
+        print(f"{name}:")
+        print(indent(erroring_code, "    "))
         print(repr(exc))
-    print('-' * 60)
+    print("-" * 60)
 
     return failures
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description='Look for name errors in doctests.')
+    parser = ArgumentParser(description="Look for name errors in doctests.")
     parser.add_argument(
-        '-v',
-        '--verbose',
-        action='store_true',
-        help='print passes and failures as tests progress',
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="print passes and failures as tests progress",
     )
     parser.add_argument(
-        '--no-respect-skips',
-        action='store_false',
-        dest='respect_skips',
-        help='ignore doctest SKIP directives',
+        "--no-respect-skips",
+        action="store_false",
+        dest="respect_skips",
+        help="ignore doctest SKIP directives",
     )
     args = parser.parse_args()
 

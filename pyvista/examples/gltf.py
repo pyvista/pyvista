@@ -8,13 +8,13 @@ from .downloads import USER_DATA_PATH
 
 GLTF_FETCHER = pooch.create(
     path=USER_DATA_PATH,
-    base_url='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/',
+    base_url="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/",
     registry={
-        'Avocado/glTF-Binary/Avocado.glb': None,
-        'CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb': None,
-        'DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf': None,
-        'GearboxAssy/glTF-Binary/GearboxAssy.glb': None,
-        'SheenChair/glTF-Binary/SheenChair.glb': None,
+        "Avocado/glTF-Binary/Avocado.glb": None,
+        "CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb": None,
+        "DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf": None,
+        "GearboxAssy/glTF-Binary/GearboxAssy.glb": None,
+        "SheenChair/glTF-Binary/SheenChair.glb": None,
     },
     retry_if_failed=3,
 )
@@ -42,7 +42,7 @@ def download_damaged_helmet():  # pragma: no cover
     >>> pl.show()
 
     """
-    return GLTF_FETCHER.fetch('DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf')
+    return GLTF_FETCHER.fetch("DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf")
 
 
 def download_sheen_chair():  # pragma: no cover
@@ -67,7 +67,7 @@ def download_sheen_chair():  # pragma: no cover
     >>> pl.show()  # doctest:+SKIP
 
     """
-    return GLTF_FETCHER.fetch('SheenChair/glTF-Binary/SheenChair.glb')
+    return GLTF_FETCHER.fetch("SheenChair/glTF-Binary/SheenChair.glb")
 
 
 def download_gearbox():  # pragma: no cover
@@ -90,7 +90,7 @@ def download_gearbox():  # pragma: no cover
     >>> pl.show()
 
     """
-    return GLTF_FETCHER.fetch('GearboxAssy/glTF-Binary/GearboxAssy.glb')
+    return GLTF_FETCHER.fetch("GearboxAssy/glTF-Binary/GearboxAssy.glb")
 
 
 def download_avocado():  # pragma: no cover
@@ -113,7 +113,7 @@ def download_avocado():  # pragma: no cover
     >>> pl.show()
 
     """
-    return GLTF_FETCHER.fetch('Avocado/glTF-Binary/Avocado.glb')
+    return GLTF_FETCHER.fetch("Avocado/glTF-Binary/Avocado.glb")
 
 
 def download_milk_truck():  # pragma: no cover
@@ -136,4 +136,4 @@ def download_milk_truck():  # pragma: no cover
     >>> pl.show()
 
     """
-    return GLTF_FETCHER.fetch('CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb')
+    return GLTF_FETCHER.fetch("CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb")

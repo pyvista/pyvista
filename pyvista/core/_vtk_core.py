@@ -403,7 +403,7 @@ except ImportError:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
+            raise VTKVersionError("Chart backgrounds require the vtkPythonContext2D module")
 
 
 from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass

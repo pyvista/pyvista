@@ -80,13 +80,13 @@ def numpy_to_idarr(
 
     # np.asarray will eat anything, so we have to weed out bogus inputs
     if not issubclass(ind.dtype.type, (np.bool_, np.integer)):
-        raise TypeError('Indices must be either a mask or an integer array-like')
+        raise TypeError("Indices must be either a mask or an integer array-like")
 
     if ind.dtype == np.bool_:
         ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
     elif ind.dtype != pyvista.ID_TYPE:
         ind = ind.astype(pyvista.ID_TYPE)
-    elif not ind.flags['C_CONTIGUOUS']:
+    elif not ind.flags["C_CONTIGUOUS"]:
         ind = np.ascontiguousarray(ind, dtype=pyvista.ID_TYPE)
 
     # must ravel or segfault when saving MultiBlock

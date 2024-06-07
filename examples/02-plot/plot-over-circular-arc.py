@@ -23,7 +23,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 #
 # Add the height scalars to a uniform 3D mesh.
 mesh = examples.load_uniform()
-mesh['height'] = mesh.points[:, 2]
+mesh["height"] = mesh.points[:, 2]
 
 # Make two points at the bounds of the mesh and one at the center to
 # construct a circular arc.
@@ -45,4 +45,4 @@ p.show()
 
 ###############################################################################
 # Run the filter and produce a line plot.
-mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, 'height')
+mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, "height")

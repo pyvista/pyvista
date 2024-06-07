@@ -187,15 +187,15 @@ class CompositeFilters:
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:
             raise RuntimeError(
-                'This multiblock contains non-PolyData datasets. Convert all the '
-                'datasets to PolyData with `as_polydata`',
+                "This multiblock contains non-PolyData datasets. Convert all the "
+                "datasets to PolyData with `as_polydata`",
             )
 
         # track original point indices
         if split_vertices and track_vertices:
             for block in self:
                 ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
-                block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
+                block.point_data.set_array(ids, "pyvistaOriginalPointIds")
 
         alg = _vtk.vtkPolyDataNormals()
         alg.SetComputeCellNormals(cell_normals)
@@ -207,5 +207,5 @@ class CompositeFilters:
         alg.SetNonManifoldTraversal(non_manifold_traversal)
         alg.SetFeatureAngle(feature_angle)
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, 'Computing Normals')
+        _update_alg(alg, progress_bar, "Computing Normals")
         return _get_output(alg)

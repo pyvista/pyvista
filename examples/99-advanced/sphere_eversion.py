@@ -157,17 +157,17 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
 
 # plot options to use for each frame
 opts = dict(
-    color='aquamarine',
+    color="aquamarine",
     specular=1.0,
     specular_power=50.0,
-    backface_params=dict(color='forestgreen'),
+    backface_params=dict(color="forestgreen"),
     smooth_shading=True,
     reset_camera=True,
 )
 
 # use a small figure window to reduce the size of the GIF
 plotter = pv.Plotter(window_size=(300, 300))
-plotter.open_gif('sphere_eversion.gif')
+plotter.open_gif("sphere_eversion.gif")
 
 
 def save_frame(x, y, z):

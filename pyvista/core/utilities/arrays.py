@@ -52,20 +52,20 @@ def parse_field_choice(field):
     """
     if isinstance(field, str):
         field = field.strip().lower()
-        if field in ['cell', 'c', 'cells']:
+        if field in ["cell", "c", "cells"]:
             field = FieldAssociation.CELL
-        elif field in ['point', 'p', 'points']:
+        elif field in ["point", "p", "points"]:
             field = FieldAssociation.POINT
-        elif field in ['field', 'f', 'fields']:
+        elif field in ["field", "f", "fields"]:
             field = FieldAssociation.NONE
-        elif field in ['row', 'r']:
+        elif field in ["row", "r"]:
             field = FieldAssociation.ROW
         else:
-            raise ValueError(f'Data field ({field}) not supported.')
+            raise ValueError(f"Data field ({field}) not supported.")
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise TypeError(f'Data field ({field}) not supported.')
+        raise TypeError(f"Data field ({field}) not supported.")
     return field
 
 
@@ -221,8 +221,8 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     if isinstance(arr, (list, tuple, str)):
         arr = np.array(arr)
     if isinstance(arr, np.ndarray):
-        if arr.dtype == np.dtype('O'):
-            arr = arr.astype('|S')
+        if arr.dtype == np.dtype("O"):
+            arr = arr.astype("|S")
         if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
             if arr.ndim > 0:
@@ -239,7 +239,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
         return vtk_data
     # Otherwise input must be a vtkDataArray
     if not isinstance(arr, (_vtk.vtkDataArray, _vtk.vtkBitArray, _vtk.vtkStringArray)):
-        raise TypeError(f'Invalid input array type ({type(arr)}).')
+        raise TypeError(f"Invalid input array type ({type(arr)}).")
     # Handle booleans
     if isinstance(arr, _vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
@@ -250,7 +250,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
+def get_array(mesh, name, preference="cell", err=False) -> Optional[pyvista.ndarray]:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -279,12 +279,12 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndar
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            raise KeyError(f"Data array ({name}) not present in this dataset.")
         return arr
 
     if not isinstance(preference, str):
-        raise TypeError('`preference` must be a string')
-    if preference not in ['cell', 'point', 'field']:
+        raise TypeError("`preference` must be a string")
+    if preference not in ["cell", "point", "field"]:
         raise ValueError(
             f'`preference` must be either "cell", "point", "field" for a '
             f'{type(mesh)}, not "{preference}".',
@@ -309,11 +309,11 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndar
     elif farr is not None:
         return farr
     elif err:
-        raise KeyError(f'Data array ({name}) not present in this dataset.')
+        raise KeyError(f"Data array ({name}) not present in this dataset.")
     return None
 
 
-def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+def get_array_association(mesh, name, preference="cell", err=False) -> FieldAssociation:
     """Return the array association.
 
     Parameters
@@ -343,7 +343,7 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     if isinstance(mesh, _vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            raise KeyError(f"Data array ({name}) not present in this dataset.")
         return FieldAssociation.ROW
 
     # with multiple arrays, return the array preference if possible
@@ -354,13 +354,13 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
     preference = parse_field_choice(preference)
     if preference not in preferences:
-        raise ValueError(f'Data field ({preference}) not supported.')
+        raise ValueError(f"Data field ({preference}) not supported.")
 
     matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
     # optionally raise if no match
     if not matches:
         if err:
-            raise KeyError(f'Data array ({name}) not present in this dataset.')
+            raise KeyError(f"Data array ({name}) not present in this dataset.")
         return FieldAssociation.NONE
     # use preference if it applies
     if preference in matches:
@@ -387,24 +387,24 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
+            f"Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).",
         )
     raise ValueError(
-        f'Number of scalars ({scalars.shape[0]}) '
-        f'must match either the number of points ({dataset.n_points}) '
-        f'or the number of cells ({dataset.n_cells}).',
+        f"Number of scalars ({scalars.shape[0]}) "
+        f"must match either the number of points ({dataset.n_points}) "
+        f"or the number of cells ({dataset.n_cells}).",
     )
 
 
-def _assoc_array(obj, name, association='point'):
+def _assoc_array(obj, name, association="point"):
     """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
     behavior when using ``GetAbstractArray`` with an invalid key or index.
 
     """
-    vtk_attr = f'Get{association.title()}Data'
-    python_attr = f'{association.lower()}_data'
+    vtk_attr = f"Get{association.title()}Data"
+    python_attr = f"{association.lower()}_data"
 
     if isinstance(obj, pyvista.DataSet):
         try:
@@ -434,7 +434,7 @@ def point_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    return _assoc_array(obj, name, 'point')
+    return _assoc_array(obj, name, "point")
 
 
 def field_array(obj, name):
@@ -454,7 +454,7 @@ def field_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    return _assoc_array(obj, name, 'field')
+    return _assoc_array(obj, name, "field")
 
 
 def cell_array(obj, name):
@@ -474,7 +474,7 @@ def cell_array(obj, name):
         Wrapped array if the index or name is valid. Otherwise, ``None``.
 
     """
-    return _assoc_array(obj, name, 'cell')
+    return _assoc_array(obj, name, "cell")
 
 
 def row_array(obj, name):
@@ -565,9 +565,9 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
     """Set object name for scalar string arrays."""
     # This is used as a flag so that scalar arrays can be reshaped later.
     try:
-        vtkarr.SetObjectName('scalar')
+        vtkarr.SetObjectName("scalar")
     except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'
+        vtkarr.GetObjectName = lambda: "scalar"
 
 
 def convert_string_array(arr, name=None):
@@ -598,10 +598,10 @@ def convert_string_array(arr, name=None):
     if isinstance(arr, np.ndarray):
         # VTK default fonts only support ASCII. See https://gitlab.kitware.com/vtk/vtk/-/issues/16904
         if (
-            np.issubdtype(arr.dtype, np.str_) and not ''.join(arr.tolist()).isascii()
+            np.issubdtype(arr.dtype, np.str_) and not "".join(arr.tolist()).isascii()
         ):  # avoids segfault
             raise ValueError(
-                'String array contains non-ASCII characters that are not supported by VTK.',
+                "String array contains non-ASCII characters that are not supported by VTK.",
             )
         vtkarr = _vtk.vtkStringArray()
         if arr.ndim == 0:
@@ -620,9 +620,9 @@ def convert_string_array(arr, name=None):
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
-    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype="|U")
     try:
-        if arr.GetObjectName() == 'scalar':
+        if arr.GetObjectName() == "scalar":
             return np.array("".join(arr_out))
     except AttributeError:
         pass
@@ -651,8 +651,8 @@ def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
         shape = (4, 4)
     else:
         raise TypeError(
-            'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
-            f' got {type(matrix).__name__} instead.',
+            "Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,"
+            f" got {type(matrix).__name__} instead.",
         )
     array = np.zeros(shape)
     for i, j in product(range(shape[0]), range(shape[1])):
@@ -682,7 +682,7 @@ def vtkmatrix_from_array(array):
     elif array.shape == (4, 4):
         matrix = _vtk.vtkMatrix4x4()
     else:
-        raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
+        raise ValueError(f"Invalid shape {array.shape}, must be (3, 3) or (4, 4).")
     m, n = array.shape
     for i, j in product(range(m), range(n)):
         matrix.SetElement(i, j, array[i, j])
@@ -729,7 +729,7 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
+        preference = "point" if len(possible_vectors_point) == 1 else "cell"
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError("No vector-like data available.")
@@ -778,7 +778,7 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
+        preference = "point" if len(possible_scalars_point) == 1 else "cell"
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
         raise MissingDataError("No data available.")
@@ -819,15 +819,15 @@ def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float
         elif transform_like.shape == (4, 4):
             transform_array = transform_like
         else:
-            raise ValueError('Transformation array must be 3x3 or 4x4.')
+            raise ValueError("Transformation array must be 3x3 or 4x4.")
     else:
         raise TypeError(
-            'Input transform must be one of:\n'
-            '\tvtk.vtkMatrix4x4\n'
-            '\tvtk.vtkMatrix3x3\n'
-            '\tvtk.vtkTransform\n'
-            '\t4x4 np.ndarray\n'
-            '\t3x3 np.ndarray\n',
+            "Input transform must be one of:\n"
+            "\tvtk.vtkMatrix4x4\n"
+            "\tvtk.vtkMatrix3x3\n"
+            "\tvtk.vtkTransform\n"
+            "\t4x4 np.ndarray\n"
+            "\t3x3 np.ndarray\n",
         )
     return transform_array
 
@@ -866,7 +866,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
     @property
     def _string(self) -> str:
         """Get the vtkStringArray string."""
-        return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
+        return "".join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
 
     @_string.setter
     def _string(self, str_: str):
@@ -913,7 +913,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
 
     def __setattr__(self, key, value):
         object.__setattr__(self, key, value)
-        self._update_string() if key != '_string' else None
+        self._update_string() if key != "_string" else None
 
     def update(self, *args, **kwargs):
         super().update(*args, **kwargs)

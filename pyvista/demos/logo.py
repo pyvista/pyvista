@@ -27,7 +27,7 @@ from pyvista.core import _vtk_core as _vtk
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
-LOGO_TITLE = 'PyVista'
+LOGO_TITLE = "PyVista"
 
 
 def atomize(grid, shift_fac=0.1, scale=0.9):
@@ -164,12 +164,12 @@ def logo_basic():
 
     Add scalars and plot the logo.
 
-    >>> logo['x_coord'] = logo.points[:, 0]
+    >>> logo["x_coord"] = logo.points[:, 0]
     >>> cpos = logo.plot(
-    ...     scalars='x_coord',
-    ...     cmap='Spectral',
+    ...     scalars="x_coord",
+    ...     cmap="Spectral",
     ...     smooth_shading=True,
-    ...     cpos='xy',
+    ...     cpos="xy",
     ... )
 
     """
@@ -225,65 +225,65 @@ def plot_logo(
     mesh_letters = logo_letters()
 
     # letter 'P'
-    p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
+    p_mesh = mesh_letters["P"].compute_normals(split_vertices=True)
     p_mesh.flip_normals()
-    plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
+    plotter.add_mesh(p_mesh, color="#376fa0", smooth_shading=True)
 
     # letter 'y'
-    y_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
+    y_mesh = mesh_letters["y"].compute_normals(split_vertices=True)
     y_mesh.flip_normals()
-    plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
+    plotter.add_mesh(y_mesh, color="#ffd040", smooth_shading=True)
 
     # letter 'V'
-    v_grid = pyvista.voxelize(mesh_letters['V'], density=0.08)
+    v_grid = pyvista.voxelize(mesh_letters["V"], density=0.08)
     v_grid_atom = atomize(v_grid)
-    v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
+    v_grid_atom["scalars"] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface()
     faces = v_grid_atom_surf.faces.reshape(-1, 5).copy()
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(
         v_grid_atom_surf,
-        scalars='scalars',
+        scalars="scalars",
         show_edges=True,
-        cmap='winter',
+        cmap="winter",
         show_scalar_bar=False,
     )
 
     # letter 'i'
-    i_grid = pyvista.voxelize(mesh_letters['i'], density=0.1)
+    i_grid = pyvista.voxelize(mesh_letters["i"], density=0.1)
 
     plotter.add_mesh(
         i_grid.extract_surface(),
-        style='points',
-        color='r',
+        style="points",
+        color="r",
         render_points_as_spheres=True,
         point_size=14,
     )
-    plotter.add_mesh(i_grid, style='wireframe', color='k', line_width=4)
+    plotter.add_mesh(i_grid, style="wireframe", color="k", line_width=4)
 
     # letter 's'
-    mesh = mesh_letters['s']
-    mesh['scalars'] = mesh.points[:, 0]
+    mesh = mesh_letters["s"]
+    mesh["scalars"] = mesh.points[:, 0]
     plotter.add_mesh(
         mesh,
-        scalars='scalars',
-        style='wireframe',
+        scalars="scalars",
+        style="wireframe",
         line_width=2,
-        cmap='gist_heat',
+        cmap="gist_heat",
         backface_culling=True,
         render_lines_as_tubes=True,
         show_scalar_bar=False,
     )
 
     # letter 't'
-    mesh = mesh_letters['t'].clean().compute_normals()
+    mesh = mesh_letters["t"].clean().compute_normals()
     scalars = mesh.points[:, 0]
-    plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap='autumn', show_scalar_bar=False)
+    plotter.add_mesh(mesh, scalars=scalars, show_edges=True, cmap="autumn", show_scalar_bar=False)
 
     # letter 'a'
     grid = examples.download_letter_a()
-    grid.points[:, 0] += mesh_letters['a'].center[0] - grid.center[0]
+    grid.points[:, 0] += mesh_letters["a"].center[0] - grid.center[0]
 
     # select some cells from grid
     cells = grid.cells.reshape(-1, 5)
@@ -294,19 +294,19 @@ def plot_logo(
 
     cells = a_part.cells.reshape(-1, 5)
     scalars = grid.points[cells[:, 1], 1]
-    plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
+    plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap="Greens", show_scalar_bar=False)
 
     if show_note:
         text = text_3d("You can move me!", depth=0.1)
         text.points *= 0.1
         text.translate([4.0, -0.3, 0], inplace=True)
-        plotter.add_mesh(text, color='black')
+        plotter.add_mesh(text, color="black")
 
     # finalize plot and show it
-    plotter.set_background(kwargs.pop('background', 'white'))
-    plotter.camera_position = 'xy'
-    if 'zoom' in kwargs:
-        plotter.camera.zoom(kwargs.pop('zoom'))
+    plotter.set_background(kwargs.pop("background", "white"))
+    plotter.camera_position = "xy"
+    if "zoom" in kwargs:
+        plotter.camera.zoom(kwargs.pop("zoom"))
 
     # plotter.remove_scalar_bar()
     plotter.enable_anti_aliasing()

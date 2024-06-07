@@ -54,7 +54,7 @@ def glyphs(grid_sz=3):
 
     # add random scalars
     rng_int = rng.integers(0, n, size=x.size)
-    mesh.point_data['scalars'] = rng_int
+    mesh.point_data["scalars"] = rng_int
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(
@@ -93,9 +93,9 @@ def plot_glyphs(grid_sz=3, **kwargs):
     # construct the glyphs on top of the mesh; don't scale by scalars now
     mesh = glyphs(grid_sz)
 
-    kwargs.setdefault('specular', 1)
-    kwargs.setdefault('specular_power', 15)
-    kwargs.setdefault('smooth_shading', True)
+    kwargs.setdefault("specular", 1)
+    kwargs.setdefault("specular_power", 15)
+    kwargs.setdefault("smooth_shading", True)
 
     # create plotter and add our glyphs with some nontrivial lighting
     plotter = pyvista.Plotter()
@@ -119,20 +119,20 @@ def orientation_cube():
     >>> from pyvista import demos
     >>> ocube = demos.orientation_cube()
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(ocube['cube'], show_edges=True)
-    >>> _ = pl.add_mesh(ocube['x_p'], color='blue')
-    >>> _ = pl.add_mesh(ocube['x_n'], color='blue')
-    >>> _ = pl.add_mesh(ocube['y_p'], color='green')
-    >>> _ = pl.add_mesh(ocube['y_n'], color='green')
-    >>> _ = pl.add_mesh(ocube['z_p'], color='red')
-    >>> _ = pl.add_mesh(ocube['z_n'], color='red')
+    >>> _ = pl.add_mesh(ocube["cube"], show_edges=True)
+    >>> _ = pl.add_mesh(ocube["x_p"], color="blue")
+    >>> _ = pl.add_mesh(ocube["x_n"], color="blue")
+    >>> _ = pl.add_mesh(ocube["y_p"], color="green")
+    >>> _ = pl.add_mesh(ocube["y_n"], color="green")
+    >>> _ = pl.add_mesh(ocube["z_p"], color="red")
+    >>> _ = pl.add_mesh(ocube["z_n"], color="red")
     >>> pl.show_axes()
     >>> pl.show()
 
     """
     cube = pyvista.Cube()
 
-    x_p = text_3d('X+', depth=0.2)
+    x_p = text_3d("X+", depth=0.2)
     x_p.points *= 0.45
     x_p.rotate_y(90, inplace=True)
     x_p.rotate_x(90, inplace=True)
@@ -140,7 +140,7 @@ def orientation_cube():
     x_p.translate([0.5, 0, 0], inplace=True)
     # x_p.point_data['mesh'] = 1
 
-    x_n = text_3d('X-', depth=0.2)
+    x_n = text_3d("X-", depth=0.2)
     x_n.points *= 0.45
     x_n.rotate_y(90, inplace=True)
     x_n.rotate_x(90, inplace=True)
@@ -149,7 +149,7 @@ def orientation_cube():
     x_n.translate([-0.5, 0, 0], inplace=True)
     # x_n.point_data['mesh'] = 2
 
-    y_p = text_3d('Y+', depth=0.2)
+    y_p = text_3d("Y+", depth=0.2)
     y_p.points *= 0.45
     y_p.rotate_x(90, inplace=True)
     y_p.rotate_z(180, inplace=True)
@@ -157,34 +157,34 @@ def orientation_cube():
     y_p.translate([0, 0.5, 0], inplace=True)
     # y_p.point_data['mesh'] = 3
 
-    y_n = text_3d('Y-', depth=0.2)
+    y_n = text_3d("Y-", depth=0.2)
     y_n.points *= 0.45
     y_n.rotate_x(90, inplace=True)
     y_n.translate(-np.array(y_n.center), inplace=True)
     y_n.translate([0, -0.5, 0], inplace=True)
     # y_n.point_data['mesh'] = 4
 
-    z_p = text_3d('Z+', depth=0.2)
+    z_p = text_3d("Z+", depth=0.2)
     z_p.points *= 0.45
     z_p.rotate_z(90, inplace=True)
     z_p.translate(-np.array(z_p.center), inplace=True)
     z_p.translate([0, 0, 0.5], inplace=True)
     # z_p.point_data['mesh'] = 5
 
-    z_n = text_3d('Z-', depth=0.2)
+    z_n = text_3d("Z-", depth=0.2)
     z_n.points *= 0.45
     z_n.rotate_x(180, inplace=True)
     z_n.translate(-np.array(z_n.center), inplace=True)
     z_n.translate([0, 0, -0.5], inplace=True)
 
     return {
-        'cube': cube,
-        'x_p': x_p,
-        'x_n': x_n,
-        'y_p': y_p,
-        'y_n': y_n,
-        'z_p': z_p,
-        'z_n': z_n,
+        "cube": cube,
+        "x_p": x_p,
+        "x_n": x_n,
+        "y_p": y_p,
+        "y_n": y_n,
+        "z_p": z_p,
+        "z_n": z_n,
     }
 
 
@@ -205,13 +205,13 @@ def orientation_plotter():
     """
     ocube = orientation_cube()
     pl = pyvista.Plotter()
-    pl.add_mesh(ocube['cube'], show_edges=True)
-    pl.add_mesh(ocube['x_p'], color='blue')
-    pl.add_mesh(ocube['x_n'], color='blue')
-    pl.add_mesh(ocube['y_p'], color='green')
-    pl.add_mesh(ocube['y_n'], color='green')
-    pl.add_mesh(ocube['z_p'], color='red')
-    pl.add_mesh(ocube['z_n'], color='red')
+    pl.add_mesh(ocube["cube"], show_edges=True)
+    pl.add_mesh(ocube["x_p"], color="blue")
+    pl.add_mesh(ocube["x_n"], color="blue")
+    pl.add_mesh(ocube["y_p"], color="green")
+    pl.add_mesh(ocube["y_n"], color="green")
+    pl.add_mesh(ocube["z_p"], color="red")
+    pl.add_mesh(ocube["z_n"], color="red")
     pl.show_axes()
     return pl
 
@@ -270,7 +270,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     plotter.add_mesh(mesh, scalars="Height", show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
-        title='Wave Example',
+        title="Wave Example",
         window_size=[800, 600],
         auto_close=False,
         interactive_update=True,
@@ -337,8 +337,8 @@ def plot_ants_plane(notebook=None):
        Create plotting object.
 
        >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+       >>> _ = plotter.add_mesh(ant, "r")
+       >>> _ = plotter.add_mesh(ant_copy, "b")
 
        Add airplane mesh and make the color equal to the Y position.
 
@@ -346,9 +346,9 @@ def plot_ants_plane(notebook=None):
        >>> _ = plotter.add_mesh(
        ...     airplane,
        ...     scalars=plane_scalars,
-       ...     scalar_bar_args={'title': 'Plane Y Location'},
+       ...     scalar_bar_args={"title": "Plane Y Location"},
        ... )
-       >>> _ = plotter.add_text('Ants and Plane Example')
+       >>> _ = plotter.add_text("Ants and Plane Example")
        >>> plotter.show()
 
     Parameters
@@ -378,17 +378,17 @@ def plot_ants_plane(notebook=None):
 
     # Create plotting object
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(ant, 'r')
-    plotter.add_mesh(ant_copy, 'b')
+    plotter.add_mesh(ant, "r")
+    plotter.add_mesh(ant_copy, "b")
 
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(
         airplane,
         scalars=plane_scalars,
-        scalar_bar_args={'title': 'Plane Y\nLocation'},
+        scalar_bar_args={"title": "Plane Y\nLocation"},
     )
-    plotter.add_text('Ants and Plane Example')
+    plotter.add_text("Ants and Plane Example")
     plotter.show()
 
 
@@ -419,19 +419,19 @@ def plot_beam(notebook=None):
         (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177),
     ]
 
-    cmap = 'bwr'
+    cmap = "bwr"
 
     # plot this displaced beam
     plotter = pyvista.Plotter(notebook=notebook)
     plotter.add_mesh(
         grid,
         scalars=d,
-        scalar_bar_args={'title': 'Y Displacement'},
+        scalar_bar_args={"title": "Y Displacement"},
         rng=[-d.max(), d.max()],
         cmap=cmap,
     )
     plotter.camera_position = cpos
-    plotter.add_text('Static Beam Example')
+    plotter.add_text("Static Beam Example")
     plotter.show()
 
 
@@ -464,17 +464,17 @@ def plot_datasets(dataset_type=None):
 
     """
     allowable_types = [
-        'PolyData',
-        'UnstructuredGrid',
-        'ImageData',
-        'RectilinearGrid',
-        'StructuredGrid',
+        "PolyData",
+        "UnstructuredGrid",
+        "ImageData",
+        "RectilinearGrid",
+        "StructuredGrid",
     ]
     if dataset_type is not None:
         if dataset_type not in allowable_types:
             raise ValueError(
-                f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}',
+                f"Invalid dataset_type {dataset_type}.  Must be one "
+                f"of the following: {allowable_types}",
             )
 
     ###########################################################################
@@ -523,51 +523,51 @@ def plot_datasets(dataset_type=None):
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    pl = pyvista.Plotter() if dataset_type is not None else pyvista.Plotter(shape='3/2')
+    pl = pyvista.Plotter() if dataset_type is not None else pyvista.Plotter(shape="3/2")
 
     # polydata
     if dataset_type is None:
         pl.subplot(0)
-        pl.add_text('4. PolyData')
-    if dataset_type in [None, 'PolyData']:
+        pl.add_text("4. PolyData")
+    if dataset_type in [None, "PolyData"]:
         pl.add_points(points, point_size=20)
         pl.add_mesh(line, line_width=5)
         pl.add_mesh(poly)
-        pl.add_mesh(poly.extract_all_edges(), line_width=2, color='k')
+        pl.add_mesh(poly.extract_all_edges(), line_width=2, color="k")
 
     # unstructuredgrid
     if dataset_type is None:
         pl.subplot(1)
-        pl.add_text('5. UnstructuredGrid')
-    if dataset_type in [None, 'UnstructuredGrid']:
+        pl.add_text("5. UnstructuredGrid")
+    if dataset_type in [None, "UnstructuredGrid"]:
         pl.add_mesh(ugrid)
-        pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color='k')
+        pl.add_mesh(ugrid.extract_all_edges(), line_width=2, color="k")
 
     # ImageData
     if dataset_type is None:
         pl.subplot(2)
-        pl.add_text('1. ImageData')
-    if dataset_type in [None, 'ImageData']:
+        pl.add_text("1. ImageData")
+    if dataset_type in [None, "ImageData"]:
         pl.add_mesh(image)
-        pl.add_mesh(image.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.add_mesh(image.extract_all_edges(), color="k", style="wireframe", line_width=2)
+        pl.camera_position = "xy"
 
     # RectilinearGrid
     if dataset_type is None:
         pl.subplot(3)
-        pl.add_text('2. RectilinearGrid')
-    if dataset_type in [None, 'RectilinearGrid']:
+        pl.add_text("2. RectilinearGrid")
+    if dataset_type in [None, "RectilinearGrid"]:
         pl.add_mesh(rec_grid)
-        pl.add_mesh(rec_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.add_mesh(rec_grid.extract_all_edges(), color="k", style="wireframe", line_width=2)
+        pl.camera_position = "xy"
 
     # StructuredGrid
     if dataset_type is None:
         pl.subplot(4)
-        pl.add_text('3. StructuredGrid')
-    if dataset_type in [None, 'StructuredGrid']:
+        pl.add_text("3. StructuredGrid")
+    if dataset_type in [None, "StructuredGrid"]:
         pl.add_mesh(struct_grid)
-        pl.add_mesh(struct_grid.extract_all_edges(), color='k', style='wireframe', line_width=2)
-        pl.camera_position = 'xy'
+        pl.add_mesh(struct_grid.extract_all_edges(), color="k", style="wireframe", line_width=2)
+        pl.camera_position = "xy"
 
     pl.show()

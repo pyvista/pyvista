@@ -86,14 +86,14 @@ cpos = [
 ]
 
 p = pv.Plotter()
-p.add_mesh(grid.outline(), color='k')
+p.add_mesh(grid.outline(), color="k")
 p.add_mesh(probes, render_points_as_spheres=True, **dargs)
 p.show(cpos=cpos)
 
 
 ###############################################################################
 # Run an interpolation
-interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_points')
+interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy="mask_points")
 
 ###############################################################################
 # Visualize the results

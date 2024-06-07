@@ -44,7 +44,7 @@ mesh
 # ~~~~~~~~~~~~~~~~
 # Plot the dataset by part ID.
 
-mesh.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
+mesh.plot(scalars="PartID", cmap=["green", "blue"], show_scalar_bar=False)
 
 
 ###############################################################################
@@ -75,7 +75,7 @@ line
 # Sample the stress
 sampled = line.sample(mesh, tolerance=1e-3)
 x_coord = 0.1 - sampled.points[:, 0]
-samp_z_stress = -sampled['Stress'][:, 2]
+samp_z_stress = -sampled["Stress"][:, 2]
 
 # Expected Hertzian contact pressure
 h_pressure = np.array(
@@ -100,8 +100,8 @@ h_pressure = np.array(
     ],
 )
 
-plt.plot(x_coord, samp_z_stress, '.', label='Z Component Stress')
-plt.plot(h_pressure[:, 0], h_pressure[:, 1], label='Hertzian contact pressure')
+plt.plot(x_coord, samp_z_stress, ".", label="Z Component Stress")
+plt.plot(h_pressure[:, 0], h_pressure[:, 1], label="Hertzian contact pressure")
 plt.legend()
 plt.show()
 
@@ -113,18 +113,18 @@ plt.show()
 # create a plot window and add the dataset to it.
 
 pl = pv.Plotter()
-z_stress = np.abs(mesh['Stress'][:, 2])
+z_stress = np.abs(mesh["Stress"][:, 2])
 pl.add_mesh(
     mesh,
     scalars=z_stress,
     clim=[0, 1.2e9],
-    cmap='gouldian',
-    scalar_bar_args={'title': 'Z Component Stress (Pa)', 'color': 'w'},
+    cmap="gouldian",
+    scalar_bar_args={"title": "Z Component Stress (Pa)", "color": "w"},
     lighting=True,
     show_edges=False,
     ambient=0.2,
 )
-pl.camera_position = 'xz'
+pl.camera_position = "xz"
 pl.set_focus(a)
 pl.camera.zoom(2.5)
 pl.show()

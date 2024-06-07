@@ -135,9 +135,9 @@ def _option_boolean(arg):
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
         return True
-    elif arg.strip().lower() in ('no', '0', 'false'):
+    elif arg.strip().lower() in ("no", "0", "false"):
         return False
-    elif arg.strip().lower() in ('yes', '1', 'true'):
+    elif arg.strip().lower() in ("yes", "1", "true"):
         return True
     else:  # pragma: no cover
         raise ValueError(f'"{arg}" unknown boolean')
@@ -149,7 +149,7 @@ def _option_context(arg):
 
 
 def _option_format(arg):
-    return directives.choice(arg, ('python', 'doctest'))
+    return directives.choice(arg, ("python", "doctest"))
 
 
 class PlotDirective(Directive):
@@ -160,18 +160,18 @@ class PlotDirective(Directive):
     optional_arguments = 2
     final_argument_whitespace = False
     option_spec: ClassVar[Dict[str, Callable]] = {
-        'alt': directives.unchanged,
-        'height': directives.length_or_unitless,
-        'width': directives.length_or_percentage_or_unitless,
-        'scale': directives.nonnegative_int,
-        'align': Image.align,
-        'include-source': _option_boolean,
-        'format': _option_format,
-        'context': _option_context,
-        'nofigs': directives.flag,
-        'encoding': directives.encoding,
-        'caption': directives.unchanged,
-        'force_static': directives.flag,
+        "alt": directives.unchanged,
+        "height": directives.length_or_unitless,
+        "width": directives.length_or_percentage_or_unitless,
+        "scale": directives.nonnegative_int,
+        "align": Image.align,
+        "include-source": _option_boolean,
+        "format": _option_format,
+        "context": _option_context,
+        "nofigs": directives.flag,
+        "encoding": directives.encoding,
+        "caption": directives.unchanged,
+        "force_static": directives.flag,
     }
 
     def run(self):
@@ -194,14 +194,14 @@ def setup(app):
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
-    app.add_directive('pyvista-plot', PlotDirective)
-    app.add_config_value('plot_include_source', True, False)
-    app.add_config_value('plot_basedir', None, True)
-    app.add_config_value('plot_html_show_formats', True, True)
-    app.add_config_value('plot_template', None, True)
-    app.add_config_value('plot_setup', None, True)
-    app.add_config_value('plot_cleanup', None, True)
-    return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
+    app.add_directive("pyvista-plot", PlotDirective)
+    app.add_config_value("plot_include_source", True, False)
+    app.add_config_value("plot_basedir", None, True)
+    app.add_config_value("plot_html_show_formats", True, True)
+    app.add_config_value("plot_template", None, True)
+    app.add_config_value("plot_setup", None, True)
+    app.add_config_value("plot_cleanup", None, True)
+    return {"parallel_read_safe": True, "parallel_write_safe": True, "version": pyvista.__version__}
 
 
 # -----------------------------------------------------------------------------
@@ -210,12 +210,12 @@ def setup(app):
 def _contains_doctest(text):
     try:
         # check if it's valid Python as-is
-        compile(text, '<string>', 'exec')
+        compile(text, "<string>", "exec")
     except SyntaxError:
         pass
     else:
         return False
-    r = re.compile(r'^\s*>>>', re.M)
+    r = re.compile(r"^\s*>>>", re.M)
     m = r.search(text)
     return bool(m)
 
@@ -228,7 +228,7 @@ def _contains_pyvista_plot(text):
 
 def _strip_comments(code):
     """Remove comments from a line of python code."""
-    return re.sub(r'(?m)^ *#.*\n?', '', code)
+    return re.sub(r"(?m)^ *#.*\n?", "", code)
 
 
 def _split_code_at_show(text):
@@ -237,9 +237,9 @@ def _split_code_at_show(text):
     Includes logic to deal with edge cases like:
 
     >>> import pyvista as pv
-    >>> pv.Sphere().plot(color='blue', cpos='xy')
+    >>> pv.Sphere().plot(color="blue", cpos="xy")
 
-    >>> pv.Sphere().plot(color='red', cpos='xy')
+    >>> pv.Sphere().plot(color="red", cpos="xy")
 
     """
     parts = []
@@ -253,13 +253,13 @@ def _split_code_at_show(text):
         # check if show(...) or plot(...) is within the line
         line = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
-            if _strip_comments(line).endswith(')'):
+            if _strip_comments(line).endswith(")"):
                 parts.append("\n".join(part))
                 part = []
                 within_plot = False
 
-        elif '.show(' in line or '.plot(' in line:
-            if _strip_comments(line).endswith(')'):
+        elif ".show(" in line or ".plot(" in line:
+            if _strip_comments(line).endswith(")"):
                 parts.append("\n".join(part))
                 part = []
             else:  # allow for multi-line plot(...
@@ -360,10 +360,10 @@ def _run_code(code, code_path, ns=None, function_name=None):
     name, if function_name is not None.
     """
     # do not execute code containing any SKIP directives
-    if 'doctest:+SKIP' in code:
+    if "doctest:+SKIP" in code:
         return ns
 
-    if 'pyvista-plot::' in code:
+    if "pyvista-plot::" in code:
         return ns
 
     try:
@@ -428,7 +428,7 @@ def render_figures(
             figures = pyvista.plotting.plotter._ALL_PLOTTERS
 
             for j, (_, plotter) in enumerate(figures.items()):
-                if hasattr(plotter, '_gif_filename'):
+                if hasattr(plotter, "_gif_filename"):
                     image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
@@ -461,16 +461,16 @@ def run(arguments, content, options, state_machine, state, lineno):
     """Run the plot directive."""
     document = state_machine.document
     config = document.settings.env.config
-    nofigs = 'nofigs' in options
-    force_static = 'force_static' in options
+    nofigs = "nofigs" in options
+    force_static = "force_static" in options
 
-    default_fmt = 'png'
+    default_fmt = "png"
 
-    options.setdefault('include-source', config.plot_include_source)
-    keep_context = 'context' in options
-    _ = None if not keep_context else options['context']
+    options.setdefault("include-source", config.plot_include_source)
+    keep_context = "context" in options
+    _ = None if not keep_context else options["context"]
 
-    rst_file = document.attributes['source']
+    rst_file = document.attributes["source"]
     rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
@@ -482,13 +482,13 @@ def run(arguments, content, options, state_machine, state, lineno):
             )
 
         # If there is content, it will be passed as a caption.
-        caption = '\n'.join(content)
+        caption = "\n".join(content)
 
         # Enforce unambiguous use of captions.
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.',
+                    "Caption specified in both content and options. Please remove ambiguity.",
                 )
             # Use caption option
             caption = options["caption"]
@@ -496,38 +496,38 @@ def run(arguments, content, options, state_machine, state, lineno):
         # If the optional function name is provided, use it
         function_name = arguments[1] if len(arguments) == 2 else None
 
-        code = Path(source_file_name).read_text(encoding='utf-8')
+        code = Path(source_file_name).read_text(encoding="utf-8")
         output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
         code = textwrap.dedent("\n".join(map(str, content)))
-        counter = document.attributes.get('_plot_counter', 0) + 1
-        document.attributes['_plot_counter'] = counter
+        counter = document.attributes.get("_plot_counter", 0) + 1
+        document.attributes["_plot_counter"] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
-        output_base = '%s-%d.py' % (base, counter)
+        output_base = "%s-%d.py" % (base, counter)
         function_name = None
-        caption = options.get('caption', '')
+        caption = options.get("caption", "")
 
     base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
-    if source_ext in ('.py', '.rst', '.txt'):
+    if source_ext in (".py", ".rst", ".txt"):
         output_base = base
     else:
-        source_ext = ''
+        source_ext = ""
 
     # ensure that LaTeX includegraphics doesn't choke in foo.bar.pdf filenames
-    output_base = output_base.replace('.', '-')
+    output_base = output_base.replace(".", "-")
 
     # is it in doctest format?
     is_doctest = _contains_doctest(code)
-    if 'format' in options:
-        is_doctest = options['format'] != 'python'
+    if "format" in options:
+        is_doctest = options["format"] != "python"
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
     source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
+    build_dir = str(Path(setup.app.doctreedir).parent / "plot_directive" / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
@@ -542,14 +542,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     dest_dir_link = os.path.join(  # noqa: PTH118
         relpath(setup.confdir, rst_dir),
         source_rel_dir,
-    ).replace(os.path.sep, '/')
+    ).replace(os.path.sep, "/")
     try:
-        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
+        build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, "/")
     except ValueError:  # pragma: no cover
         # on Windows, relpath raises ValueError when path and start are on
         # different mounts/drives
         build_dir_link = build_dir
-    _ = dest_dir_link + '/' + output_base + source_ext
+    _ = dest_dir_link + "/" + output_base + source_ext
 
     # make figures
     try:
@@ -575,31 +575,31 @@ def run(arguments, content, options, state_machine, state, lineno):
         errors = [sm]
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    caption = "\n" + "\n".join("   " + line.strip() for line in caption.split("\n"))
 
     # generate output restructuredtext
     total_lines = []
     for _, (code_piece, images) in enumerate(results):
-        if options['include-source']:
+        if options["include-source"]:
             if is_doctest:
-                lines = ['', *code_piece.splitlines()]
+                lines = ["", *code_piece.splitlines()]
             else:
                 lines = [
-                    '.. code-block:: python',
-                    '',
-                    *textwrap.indent(code_piece, '    ').splitlines(),
+                    ".. code-block:: python",
+                    "",
+                    *textwrap.indent(code_piece, "    ").splitlines(),
                 ]
             source_code = "\n".join(lines)
         else:
-            source_code = ''
+            source_code = ""
 
         if nofigs:
             images = []
 
         opts = [
-            f':{key}: {val}'
+            f":{key}: {val}"
             for key, val in options.items()
-            if key in ('alt', 'height', 'width', 'scale', 'align')
+            if key in ("alt", "height", "width", "scale", "align")
         ]
 
         result = jinja2.Template(config.plot_template or TEMPLATE).render(
@@ -633,7 +633,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     # copy script (if necessary)
     Path(dest_dir, output_base + source_ext).write_text(
         doctest.script_from_examples(code) if source_file_name == rst_file and is_doctest else code,
-        encoding='utf-8',
+        encoding="utf-8",
     )
 
     return errors
