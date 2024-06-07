@@ -23,14 +23,9 @@ Some key differences include:
 
 from __future__ import annotations
 
-import sys
-import typing
-from typing import TYPE_CHECKING
-from typing import Any
 from typing import List
 from typing import Sequence
 from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 
