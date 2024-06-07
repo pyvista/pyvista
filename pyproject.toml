@@ -294,6 +294,8 @@ target-version = 'py38'
 
 [tool.ruff.format]
 docstring-code-format = false
+quote-style = "preserve"
+
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
