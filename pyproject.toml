@@ -296,7 +296,6 @@ exclude = [
 ]
 line-length = 100
 indent-width = 4
-target-version = 'py38'
 
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
