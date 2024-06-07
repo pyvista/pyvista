@@ -25,7 +25,7 @@ def _cast_to_list(
 
     Parameters
     ----------
-    arr : ArrayLike[float]
+    arr : float | ArrayLike[float]
         Array to cast.
 
     Returns
@@ -44,7 +44,7 @@ def _cast_to_tuple(
 
     Parameters
     ----------
-    arr : ArrayLike[float]
+    arr : float | ArrayLike[float]
         Array to cast.
 
     Returns
@@ -67,7 +67,7 @@ def _cast_to_numpy(
     as_any: bool = True,
     dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
-    must_be_real=False,
+    must_be_real: bool = False,
 ) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
