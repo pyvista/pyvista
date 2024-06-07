@@ -20,10 +20,10 @@ except ModuleNotFoundError:
 
 
 pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin',
-    reason='MacOS testing on Azure fails when downloading',
+    platform.system() == "Darwin",
+    reason="MacOS testing on Azure fails when downloading",
 )
-skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
+skip_windows = pytest.mark.skipif(os.name == "nt", reason="Test fails on Windows")
 
 
 def test_get_reader_fail(tmp_path):
@@ -36,8 +36,8 @@ def test_get_reader_fail(tmp_path):
 
 def test_reader_invalid_file():
     # cannot use the BaseReader
-    with pytest.raises(FileNotFoundError, match='does not exist'):
-        pv.DICOMReader('dummy/')
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        pv.DICOMReader("dummy/")
 
 
 def test_xmlimagedatareader(tmpdir):
@@ -123,8 +123,8 @@ def test_xmlmultiblockreader(tmpdir):
 def test_reader_cell_point_data(tmpdir):
     tmpfile = tmpdir.join("temp.vtp")
     mesh = pv.Sphere()
-    mesh['height'] = mesh.points[:, 1]
-    mesh['id'] = np.arange(mesh.n_cells)
+    mesh["height"] = mesh.points[:, 1]
+    mesh["id"] = np.arange(mesh.n_cells)
     mesh.save(tmpfile.strpath)
     # mesh has an additional 'Normals' point data array
 
@@ -133,38 +133,38 @@ def test_reader_cell_point_data(tmpdir):
     assert reader.number_cell_arrays == 1
     assert reader.number_point_arrays == 2
 
-    assert reader.cell_array_names == ['id']
-    assert reader.point_array_names == ['Normals', 'height']
+    assert reader.cell_array_names == ["id"]
+    assert reader.point_array_names == ["Normals", "height"]
 
-    assert reader.all_cell_arrays_status == {'id': True}
-    assert reader.all_point_arrays_status == {'Normals': True, 'height': True}
+    assert reader.all_cell_arrays_status == {"id": True}
+    assert reader.all_point_arrays_status == {"Normals": True, "height": True}
 
-    assert reader.cell_array_status('id') is True
-    assert reader.point_array_status('Normals') is True
+    assert reader.cell_array_status("id") is True
+    assert reader.point_array_status("Normals") is True
 
     reader.disable_all_cell_arrays()
-    assert reader.cell_array_status('id') is False
+    assert reader.cell_array_status("id") is False
 
     reader.disable_all_point_arrays()
-    assert reader.all_point_arrays_status == {'Normals': False, 'height': False}
+    assert reader.all_point_arrays_status == {"Normals": False, "height": False}
 
     reader.enable_all_cell_arrays()
-    assert reader.cell_array_status('id') is True
+    assert reader.cell_array_status("id") is True
 
     reader.enable_all_point_arrays()
-    assert reader.all_point_arrays_status == {'Normals': True, 'height': True}
+    assert reader.all_point_arrays_status == {"Normals": True, "height": True}
 
-    reader.disable_cell_array('id')
-    assert reader.cell_array_status('id') is False
+    reader.disable_cell_array("id")
+    assert reader.cell_array_status("id") is False
 
-    reader.disable_point_array('Normals')
-    assert reader.point_array_status('Normals') is False
+    reader.disable_point_array("Normals")
+    assert reader.point_array_status("Normals") is False
 
-    reader.enable_cell_array('id')
-    assert reader.cell_array_status('id') is True
+    reader.enable_cell_array("id")
+    assert reader.cell_array_status("id") is True
 
-    reader.enable_point_array('Normals')
-    assert reader.point_array_status('Normals') is True
+    reader.enable_point_array("Normals")
+    assert reader.point_array_status("Normals") is True
 
 
 def test_ensightreader_arrays():
@@ -176,31 +176,31 @@ def test_ensightreader_arrays():
     assert reader.number_point_arrays == 0
 
     assert reader.cell_array_names == [
-        'v2',
-        'nut',
-        'k',
-        'nuTilda',
-        'p',
-        'omega',
-        'f',
-        'epsilon',
-        'U',
+        "v2",
+        "nut",
+        "k",
+        "nuTilda",
+        "p",
+        "omega",
+        "f",
+        "epsilon",
+        "U",
     ]
     assert reader.point_array_names == []
 
     reader.disable_all_cell_arrays()
-    reader.enable_cell_array('k')
+    reader.enable_cell_array("k")
 
     assert reader.all_cell_arrays_status == {
-        'v2': False,
-        'nut': False,
-        'k': True,
-        'nuTilda': False,
-        'p': False,
-        'omega': False,
-        'f': False,
-        'epsilon': False,
-        'U': False,
+        "v2": False,
+        "nut": False,
+        "k": True,
+        "nuTilda": False,
+        "p": False,
+        "omega": False,
+        "f": False,
+        "epsilon": False,
+        "U": False,
     }
 
     mesh = reader.read()
@@ -208,7 +208,7 @@ def test_ensightreader_arrays():
 
     for i in range(mesh.n_blocks):
         assert all([mesh[i].n_points, mesh[i].n_cells])
-        assert mesh[i].array_names == ['k']
+        assert mesh[i].array_names == ["k"]
 
     # re-enable all cell arrays and read again
     reader.enable_all_cell_arrays()
@@ -218,15 +218,15 @@ def test_ensightreader_arrays():
     for i in range(all_mesh.n_blocks):
         assert all([all_mesh[i].n_points, all_mesh[i].n_cells])
         assert all_mesh[i].array_names == [
-            'v2',
-            'nut',
-            'k',
-            'nuTilda',
-            'p',
-            'omega',
-            'f',
-            'epsilon',
-            'U',
+            "v2",
+            "nut",
+            "k",
+            "nuTilda",
+            "p",
+            "omega",
+            "f",
+            "epsilon",
+            "U",
         ]
 
 
@@ -250,7 +250,7 @@ def test_ensightreader_timepoints():
 
     # assert all the data is different
     for m_1, m_3 in zip(mesh_1, mesh_3):
-        assert not all(m_1['DENS'] == m_3['DENS'])
+        assert not all(m_1["DENS"] == m_3["DENS"])
 
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
@@ -377,10 +377,10 @@ def test_facetreader():
 
 
 def test_plot3dmetareader():
-    filename = download_file('multi.p3d')
-    download_file('multi-bin.xyz')
-    download_file('multi-bin.q')
-    download_file('multi-bin.f')
+    filename = download_file("multi.p3d")
+    download_file("multi-bin.xyz")
+    download_file("multi-bin.q")
+    download_file("multi-bin.f")
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.Plot3DMetaReader)
     assert reader.path == filename
@@ -391,8 +391,8 @@ def test_plot3dmetareader():
 
 
 def test_multiblockplot3dreader():
-    filename = download_file('multi-bin.xyz')
-    q_filename = download_file('multi-bin.q')
+    filename = download_file("multi-bin.xyz")
+    q_filename = download_file("multi-bin.q")
     reader = pv.MultiBlockPlot3DReader(filename)
     assert reader.path == filename
 
@@ -418,10 +418,10 @@ def test_multiblockplot3dreader():
     for m in mesh:
         assert len(m.array_names) > 0
 
-    assert 'MachNumber' in mesh[0].point_data
-    assert 'PressureGradient' in mesh[0].point_data
-    assert 'KineticEnergy' in mesh[0].point_data
-    assert 'Entropy' not in mesh[0].point_data
+    assert "MachNumber" in mesh[0].point_data
+    assert "PressureGradient" in mesh[0].point_data
+    assert "KineticEnergy" in mesh[0].point_data
+    assert "Entropy" not in mesh[0].point_data
 
     reader = pv.MultiBlockPlot3DReader(filename)
     reader.add_q_files([q_filename])
@@ -461,7 +461,7 @@ def test_multiblockplot3dreader():
     reader.add_function(reader.ENTROPY)
     reader.remove_all_functions()
     mesh_no_functions = reader.read()
-    assert 'ENTROPY' not in mesh_no_functions[0].point_data
+    assert "ENTROPY" not in mesh_no_functions[0].point_data
 
 
 def test_binarymarchingcubesreader():
@@ -519,7 +519,7 @@ def test_pvdreader():
 def test_pvdreader_no_time_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename = str(Path(filename).parent / 'dualSphereNoTime.pvd')
+    filename = str(Path(filename).parent / "dualSphereNoTime.pvd")
 
     reader = pv.PVDReader(filename)
     assert reader.time_values == [0.0]
@@ -536,7 +536,7 @@ def test_pvdreader_no_time_group():
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
-    filename = str(Path(filename).parent / 'dualSphereAnimation4NoPart.pvd')
+    filename = str(Path(filename).parent / "dualSphereAnimation4NoPart.pvd")
 
     reader = pv.PVDReader(filename)
     assert reader.active_time_value == 0.0
@@ -580,7 +580,7 @@ def test_openfoamreader_active_time():
 
     with pytest.raises(
         ValueError,
-        match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
+        match=r"Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]",
     ):
         reader.set_active_time_value(1000)
 
@@ -694,35 +694,35 @@ def test_openfoam_patch_arrays():
     # vtk version 9.1.0 changed the way patch names are handled.
     vtk_version = pv.vtk_version_info
     if vtk_version >= (9, 1, 0):
-        patch_array_key = 'boundary'
-        reader_patch_prefix = 'patch/'
+        patch_array_key = "boundary"
+        reader_patch_prefix = "patch/"
     else:
-        patch_array_key = 'Patches'
-        reader_patch_prefix = ''
+        patch_array_key = "Patches"
+        reader_patch_prefix = ""
 
     reader = get_cavity_reader()
     assert reader.number_patch_arrays == 4
     assert reader.patch_array_names == [
-        'internalMesh',
-        f'{reader_patch_prefix}movingWall',
-        f'{reader_patch_prefix}fixedWalls',
-        f'{reader_patch_prefix}frontAndBack',
+        "internalMesh",
+        f"{reader_patch_prefix}movingWall",
+        f"{reader_patch_prefix}fixedWalls",
+        f"{reader_patch_prefix}frontAndBack",
     ]
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True,
-        f'{reader_patch_prefix}movingWall': True,
-        f'{reader_patch_prefix}fixedWalls': True,
-        f'{reader_patch_prefix}frontAndBack': True,
+        "internalMesh": True,
+        f"{reader_patch_prefix}movingWall": True,
+        f"{reader_patch_prefix}fixedWalls": True,
+        f"{reader_patch_prefix}frontAndBack": True,
     }
 
     # first only read in 'internalMesh'
     for patch_array in reader.patch_array_names[1:]:
         reader.disable_patch_array(patch_array)
     assert reader.all_patch_arrays_status == {
-        'internalMesh': True,
-        f'{reader_patch_prefix}movingWall': False,
-        f'{reader_patch_prefix}fixedWalls': False,
-        f'{reader_patch_prefix}frontAndBack': False,
+        "internalMesh": True,
+        f"{reader_patch_prefix}movingWall": False,
+        f"{reader_patch_prefix}fixedWalls": False,
+        f"{reader_patch_prefix}frontAndBack": False,
     }
     mesh = reader.read()
     assert mesh.n_blocks == 1
@@ -731,30 +731,30 @@ def test_openfoam_patch_arrays():
     # now read in one more patch
     reader = get_cavity_reader()
     reader.disable_all_patch_arrays()
-    reader.enable_patch_array('internalMesh')
-    reader.enable_patch_array(f'{reader_patch_prefix}fixedWalls')
+    reader.enable_patch_array("internalMesh")
+    reader.enable_patch_array(f"{reader_patch_prefix}fixedWalls")
     mesh = reader.read()
     assert mesh.n_blocks == 2
     assert patch_array_key in mesh.keys()
-    assert mesh[patch_array_key].keys() == ['fixedWalls']
+    assert mesh[patch_array_key].keys() == ["fixedWalls"]
 
     # check multiple patch arrays without 'internalMesh'
     reader = get_cavity_reader()
-    reader.disable_patch_array('internalMesh')
+    reader.disable_patch_array("internalMesh")
     mesh = reader.read()
     assert mesh.n_blocks == 1
     assert patch_array_key in mesh.keys()
-    assert mesh[patch_array_key].keys() == ['movingWall', 'fixedWalls', 'frontAndBack']
+    assert mesh[patch_array_key].keys() == ["movingWall", "fixedWalls", "frontAndBack"]
 
 
 def test_openfoam_case_type():
     reader = get_cavity_reader()
-    reader.case_type = 'decomposed'
-    assert reader.case_type == 'decomposed'
-    reader.case_type = 'reconstructed'
-    assert reader.case_type == 'reconstructed'
+    reader.case_type = "decomposed"
+    assert reader.case_type == "decomposed"
+    reader.case_type = "reconstructed"
+    assert reader.case_type == "reconstructed"
     with pytest.raises(ValueError, match="Unknown case type 'wrong_value'."):
-        reader.case_type = 'wrong_value'
+        reader.case_type = "wrong_value"
 
 
 @pytest.mark.needs_vtk_version(9, 1)
@@ -804,11 +804,11 @@ def test_read_cgns():
     # actual block
     assert len(block[0][0].cell_data) == 3
 
-    assert reader.base_array_names == ['SQNZ']
-    assert reader.base_array_status('SQNZ') is True
+    assert reader.base_array_names == ["SQNZ"]
+    assert reader.base_array_status("SQNZ") is True
 
-    assert reader.family_array_names == ['inflow', 'outflow', 'sym', 'wall']
-    assert reader.family_array_status('inflow') is True
+    assert reader.family_array_names == ["inflow", "outflow", "sym", "wall"]
+    assert reader.family_array_status("inflow") is True
 
 
 def test_bmpreader():
@@ -941,7 +941,7 @@ def test_hdf_reader():
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
     assert mesh.n_points == 6724
-    assert 'VEL' in mesh.point_data
+    assert "VEL" in mesh.point_data
     assert mesh.n_cells == 4800
 
 
@@ -960,28 +960,28 @@ def test_xdmf_reader():
     assert reader.number_grids == 6
     assert reader.number_point_arrays == 2
 
-    assert reader.point_array_names == ['phi', 'u']
-    assert reader.cell_array_names == ['a']
+    assert reader.point_array_names == ["phi", "u"]
+    assert reader.cell_array_names == ["a"]
 
     blocks = reader.read()
     assert reader.active_time_value == 0.0
-    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.0, 0.0, 0.0, 0.0]))
+    assert np.array_equal(blocks["TimeSeries_meshio"]["phi"], np.array([0.0, 0.0, 0.0, 0.0]))
     reader.set_active_time_value(0.25)
     assert reader.active_time_value == 0.25
     blocks = reader.read()
-    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.25, 0.25, 0.25, 0.25]))
+    assert np.array_equal(blocks["TimeSeries_meshio"]["phi"], np.array([0.25, 0.25, 0.25, 0.25]))
     reader.set_active_time_value(0.5)
     assert reader.active_time_value == 0.5
     blocks = reader.read()
-    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.5, 0.5, 0.5, 0.5]))
+    assert np.array_equal(blocks["TimeSeries_meshio"]["phi"], np.array([0.5, 0.5, 0.5, 0.5]))
     reader.set_active_time_value(0.75)
     assert reader.active_time_value == 0.75
     blocks = reader.read()
-    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([0.75, 0.75, 0.75, 0.75]))
+    assert np.array_equal(blocks["TimeSeries_meshio"]["phi"], np.array([0.75, 0.75, 0.75, 0.75]))
     reader.set_active_time_value(1.0)
     assert reader.active_time_value == 1.0
     blocks = reader.read()
-    assert np.array_equal(blocks['TimeSeries_meshio']['phi'], np.array([1.0, 1.0, 1.0, 1.0]))
+    assert np.array_equal(blocks["TimeSeries_meshio"]["phi"], np.array([1.0, 1.0, 1.0, 1.0]))
 
     reader.set_active_time_point(0)
     assert reader.active_time_value == 0.0

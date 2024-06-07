@@ -37,7 +37,7 @@ sampled = pv.sample_function(noise, bounds=(-10, 10, -10, 10, -10, 10), dim=(500
 # Here we warp by scalar to give the terrain some height based on the
 # value of the Perlin noise.  This is necessary to the terrain its shape.
 
-mesh = sampled.warp_by_scalar('scalars')
+mesh = sampled.warp_by_scalar("scalars")
 mesh = mesh.extract_surface()
 
 # clean and smooth a little to reduce Perlin noise artifacts
@@ -64,7 +64,7 @@ pl = pv.Plotter()
 pl.add_mesh(
     mesh,
     scalars=z,
-    cmap='gist_earth',
+    cmap="gist_earth",
     n_colors=10,
     show_scalar_bar=False,
     smooth_shading=True,
@@ -78,6 +78,6 @@ pl.show()
 
 pl = pv.Plotter(lighting=None)
 pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True, cone_angle=90, intensity=1.2))
-pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
+pl.add_mesh(mesh, cmap="gist_earth", show_scalar_bar=False, smooth_shading=True, clim=clim)
 pl.enable_shadows = True
 pl.show()

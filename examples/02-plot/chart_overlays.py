@@ -40,8 +40,8 @@ v = np.cos(t)
 f, ax = plt.subplots(tight_layout=True)
 h_line = ax.plot(t[:1], h[:1])[0]
 ax.set_ylim([-1, 1])
-ax.set_xlabel('Time (s)')
-_ = ax.set_ylabel('Height (m)')
+ax.set_xlabel("Time (s)")
+_ = ax.set_ylabel("Height (m)")
 # sphinx_gallery_defer_figures
 
 ###############################################################################
@@ -83,7 +83,7 @@ time_slider = p.add_slider_widget(
     "Time",
     (0.25, 0.9),
     (0.75, 0.9),
-    interaction_event='always',
+    interaction_event="always",
 )
 
 # Start incrementing time automatically

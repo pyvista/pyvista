@@ -38,10 +38,10 @@ print(image.point_data)
 
 # Create a theme that we can reuse when plotting the image
 grey_theme = pv.themes.DocumentTheme()
-grey_theme.cmap = 'gray'
+grey_theme.cmap = "gray"
 grey_theme.show_scalar_bar = False
 grey_theme.axes.show = False
-image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
+image.plot(theme=grey_theme, cpos="xy", text="Unprocessed Moon Landing Image")
 
 
 ###############################################################################
@@ -67,11 +67,11 @@ fft_image.point_data
 # and the middle is the high frequency content of the image.
 
 fft_image.plot(
-    scalars=np.abs(fft_image.point_data['PNGImage']),
+    scalars=np.abs(fft_image.point_data["PNGImage"]),
     cpos="xy",
     theme=grey_theme,
     log_scale=True,
-    text='Moon Landing Image FFT',
+    text="Moon Landing Image FFT",
     copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
@@ -94,7 +94,7 @@ ratio_to_keep = 0.10
 
 # modify the fft_image data
 width, height, _ = fft_image.dimensions
-data = fft_image['PNGImage'].reshape(height, width)  # note: axes flipped
+data = fft_image["PNGImage"].reshape(height, width)  # note: axes flipped
 data[int(height * ratio_to_keep) : -int(height * ratio_to_keep)] = 0
 data[:, int(width * ratio_to_keep) : -int(width * ratio_to_keep)] = 0
 
@@ -103,7 +103,7 @@ fft_image.plot(
     cpos="xy",
     theme=grey_theme,
     log_scale=True,
-    text='Moon Landing Image FFT with Noise Removed',
+    text="Moon Landing Image FFT with Noise Removed",
     copy_mesh=True,  # don't overwrite scalars when plotting
 )
 
@@ -115,5 +115,5 @@ fft_image.plot(
 
 
 rfft = fft_image.rfft()
-rfft['PNGImage'] = np.real(rfft['PNGImage'])
-rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')
+rfft["PNGImage"] = np.real(rfft["PNGImage"])
+rfft.plot(cpos="xy", theme=grey_theme, text="Processed Moon Landing Image")

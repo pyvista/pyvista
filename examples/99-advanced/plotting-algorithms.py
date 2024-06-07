@@ -53,8 +53,8 @@ def update_resolution(value):
 # plotter and connect a slider widget to our callback that adjusts the
 # resolution.
 p = pv.Plotter()
-p.add_mesh(algo, color='red')
-p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
+p.add_mesh(algo, color="red")
+p.add_slider_widget(update_resolution, [5, 100], title="Resolution")
 p.show()
 
 ###############################################################################
@@ -72,8 +72,8 @@ def update_n_sides(value):
 
 
 p = pv.Plotter()
-p.add_mesh_clip_box(poly_source, color='red')
-p.add_slider_widget(update_n_sides, [3, 25], title='N Sides')
+p.add_mesh_clip_box(poly_source, color="red")
+p.add_slider_widget(update_n_sides, [3, 25], title="N Sides")
 p.view_xy()
 p.show()
 
@@ -105,13 +105,13 @@ splatter.Update()
 # Pipe splatter filter into a contour filter
 contour = vtk.vtkContourFilter()
 contour.SetInputConnection(splatter.GetOutputPort())
-contour.SetInputArrayToProcess(0, 0, 0, 0, 'SplatterValues')
+contour.SetInputArrayToProcess(0, 0, 0, 0, "SplatterValues")
 contour.SetNumberOfContours(1)
 contour.SetValue(0, 0.95 * splatter.GetRadius())
 
 # Use PyVista to plot output of contour filter
 p = pv.Plotter(notebook=0)
-p.add_mesh(mesh, style='wireframe')
+p.add_mesh(mesh, style="wireframe")
 p.add_mesh(contour, color=True)
 p.add_slider_widget(splatter.SetRadius, [0.01, 0.05])
 p.show()

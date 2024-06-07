@@ -22,8 +22,8 @@ class QApplication:
 
 
 def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
-    pytest.importorskip('sphinx_gallery')
-    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pytest.importorskip("sphinx_gallery")
+    monkeypatch.setattr(pv, "BUILDING_GALLERY", True)
     pv.close_all()
 
     scraper = Scraper()
@@ -34,18 +34,18 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
     plotters[0].iren.initialize()
     plotters[0].app = QApplication([])  # fake QApplication
     plotters[0].add_mesh(pv.Cone())
-    plotters[0].camera_position = 'xy'
+    plotters[0].camera_position = "xy"
 
     plotters[1].add_mesh(pv.Cone())
 
     src_dir = str(tmpdir)
-    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
+    out_dir = str(Path(str(tmpdir)) / "_build" / "html")
     img_fnames = [
-        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
+        str(Path(src_dir) / "auto_examples" / "images" / f"sg_img_{n}.png") for n in range(n_win)
     ]
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
+    target_file = str(Path(src_dir) / "auto_examples" / "sg.py")
     block = None
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
@@ -69,39 +69,39 @@ def test_scraper_with_app(tmpdir, monkeypatch, n_win=2):
         plotter.close()
 
 
-@pytest.mark.parametrize('scraper_type', ['static', 'dynamic'])
-@pytest.mark.parametrize('n_win', [1, 2])
+@pytest.mark.parametrize("scraper_type", ["static", "dynamic"])
+@pytest.mark.parametrize("n_win", [1, 2])
 def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
-    pytest.importorskip('sphinx_gallery')
-    monkeypatch.setattr(pv, 'BUILDING_GALLERY', True)
+    pytest.importorskip("sphinx_gallery")
+    monkeypatch.setattr(pv, "BUILDING_GALLERY", True)
     pv.close_all()
     plotters = [pv.Plotter(off_screen=True) for _ in range(n_win)]
     plotter_gif = pv.Plotter()
 
     # Initialize scraper and check stable representation
-    if scraper_type == 'static':
+    if scraper_type == "static":
         scraper = Scraper()
-        assert repr(scraper) == '<Scraper object>'
-    elif scraper_type == 'dynamic':
+        assert repr(scraper) == "<Scraper object>"
+    elif scraper_type == "dynamic":
         scraper = DynamicScraper()
-        assert repr(scraper) == '<DynamicScraper object>'
+        assert repr(scraper) == "<DynamicScraper object>"
     else:
-        raise ValueError(f'Invalid scraper type: {scraper}')
+        raise ValueError(f"Invalid scraper type: {scraper}")
 
     src_dir = str(tmpdir)
-    out_dir = str(Path(str(tmpdir)) / '_build' / 'html')
+    out_dir = str(Path(str(tmpdir)) / "_build" / "html")
     img_fnames = [
-        str(Path(src_dir) / 'auto_examples' / 'images' / f'sg_img_{n}.png') for n in range(n_win)
+        str(Path(src_dir) / "auto_examples" / "images" / f"sg_img_{n}.png") for n in range(n_win)
     ]
 
     # create and save GIF to tmpdir
-    gif_path = str(Path(tmpdir + 'sg_img_0.gif').resolve())
+    gif_path = str(Path(tmpdir + "sg_img_0.gif").resolve())
     plotter_gif.open_gif(gif_path)
     plotter_gif.write_frame()
     plotter_gif.close()
 
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
+    target_file = str(Path(src_dir) / "auto_examples" / "sg.py")
     block = ("empty_block", "", 0)
     block_vars = dict(
         image_path_iterator=iter(img_fnames),
@@ -124,15 +124,15 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
 
 
 def test_scraper_raise(tmpdir):
-    pytest.importorskip('sphinx_gallery')
+    pytest.importorskip("sphinx_gallery")
     pv.close_all()
     plotter = pv.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
-    out_dir = str(Path(tmpdir) / '_build' / 'html')
-    img_fname = str(Path(src_dir) / 'auto_examples' / 'images' / 'sg_img.png')
+    out_dir = str(Path(tmpdir) / "_build" / "html")
+    img_fname = str(Path(src_dir) / "auto_examples" / "images" / "sg_img.png")
     gallery_conf = {"src_dir": src_dir, "builder_name": "html"}
-    target_file = str(Path(src_dir) / 'auto_examples' / 'sg.py')
+    target_file = str(Path(src_dir) / "auto_examples" / "sg.py")
     block = None
     block_vars = dict(
         image_path_iterator=(img for img in [img_fname]),
@@ -150,4 +150,4 @@ def test_scraper_raise(tmpdir):
 
 
 def test_namespace_contract():
-    assert hasattr(pv, '_get_sg_image_scraper')
+    assert hasattr(pv, "_get_sg_image_scraper")

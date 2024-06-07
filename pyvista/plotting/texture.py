@@ -84,12 +84,12 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     Create a cubemap from 6 images.
 
-    >>> px = examples.download_sky(direction='posx')  # doctest:+SKIP
-    >>> nx = examples.download_sky(direction='negx')  # doctest:+SKIP
-    >>> py = examples.download_sky(direction='posy')  # doctest:+SKIP
-    >>> ny = examples.download_sky(direction='negy')  # doctest:+SKIP
-    >>> pz = examples.download_sky(direction='posz')  # doctest:+SKIP
-    >>> nz = examples.download_sky(direction='negz')  # doctest:+SKIP
+    >>> px = examples.download_sky(direction="posx")  # doctest:+SKIP
+    >>> nx = examples.download_sky(direction="negx")  # doctest:+SKIP
+    >>> py = examples.download_sky(direction="posy")  # doctest:+SKIP
+    >>> ny = examples.download_sky(direction="negy")  # doctest:+SKIP
+    >>> pz = examples.download_sky(direction="posz")  # doctest:+SKIP
+    >>> nz = examples.download_sky(direction="negz")  # doctest:+SKIP
     >>> texture = pv.Texture([px, nx, py, ny, pz, nz])  # doctest:+SKIP
     >>> texture.cube_map  # doctest:+SKIP
     True
@@ -110,10 +110,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
 
-        CLAMP_TO_EDGE = (0, 'Clamp to edge')
-        REPEAT = (1, 'Repeat')
-        MIRRORED_REPEAT = (2, 'Mirrored repeat')
-        CLAMP_TO_BORDER = (3, 'Clamp to border')
+        CLAMP_TO_EDGE = (0, "Clamp to edge")
+        REPEAT = (1, "Repeat")
+        MIRRORED_REPEAT = (2, "Mirrored repeat")
+        CLAMP_TO_BORDER = (3, "Clamp to border")
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
@@ -137,15 +137,15 @@ class Texture(_vtk.vtkTexture, DataObject):
             for i, image in enumerate(uinput):
                 if not isinstance(image, pyvista.ImageData):
                     raise TypeError(
-                        'If a sequence, the each item in the first argument must be a '
-                        'pyvista.ImageData',
+                        "If a sequence, the each item in the first argument must be a "
+                        "pyvista.ImageData",
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
         elif uinput is None:
             pass
         else:
-            raise TypeError(f'Cannot create a pyvista.Texture from ({type(uinput)})')
+            raise TypeError(f"Cannot create a pyvista.Texture from ({type(uinput)})")
 
     def _from_file(self, filename, **kwargs):
         try:
@@ -172,12 +172,12 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> from pyvista import examples
         >>> texture = examples.download_masonry_texture()
         >>> texture.interpolation = False
-        >>> texture.plot(cpos='xy', zoom=3)
+        >>> texture.plot(cpos="xy", zoom=3)
 
         Plot the same texture with interpolation.
 
         >>> texture.interpolation = True
-        >>> texture.plot(cpos='xy', zoom=3)
+        >>> texture.plot(cpos="xy", zoom=3)
 
         """
         return bool(self.GetInterpolate())
@@ -205,21 +205,21 @@ class Texture(_vtk.vtkTexture, DataObject):
         """Create a texture from a np.ndarray."""
         if image.ndim not in [2, 3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise ValueError('Input image must be nn by nm by RGB[A]')
+            raise ValueError("Input image must be nn by nm by RGB[A]")
 
         if image.ndim == 3:
             if image.shape[2] not in [1, 3, 4]:
-                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+                raise ValueError("Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)")
             n_components = image.shape[2]
         elif image.ndim == 2:
             n_components = 1
 
         grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
-        grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
+        grid.point_data["Image"] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
             (-1, n_components),
-            order='F',
+            order="F",
         )
-        grid.set_active_scalars('Image')
+        grid.set_active_scalars("Image")
         self._from_image_data(grid)
 
     @property
@@ -248,7 +248,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.repeat = False
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         This is the texture plotted with repeat set to ``True``.
@@ -256,7 +256,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.repeat = True
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         """
@@ -498,19 +498,19 @@ class Texture(_vtk.vtkTexture, DataObject):
         """
         if self.cube_map:
             return self._plot_skybox(**kwargs)
-        kwargs.setdefault('zoom', 'tight')
-        kwargs.setdefault('lighting', False)
-        kwargs.setdefault('show_axes', False)
-        kwargs.setdefault('show_scalar_bar', False)
+        kwargs.setdefault("zoom", "tight")
+        kwargs.setdefault("lighting", False)
+        kwargs.setdefault("show_axes", False)
+        kwargs.setdefault("show_scalar_bar", False)
         mesh = pyvista.Plane(i_size=self.dimensions[0], j_size=self.dimensions[1])
         return mesh.plot(texture=self, **kwargs)
 
     def _plot_skybox(self, **kwargs):
         """Plot this texture as a skybox."""
-        cpos = kwargs.pop('cpos', 'xy')
-        zoom = kwargs.pop('zoom', 0.5)
-        show_axes = kwargs.pop('show_axes', True)
-        lighting = kwargs.pop('lighting', None)
+        cpos = kwargs.pop("cpos", "xy")
+        zoom = kwargs.pop("zoom", 0.5)
+        show_axes = kwargs.pop("show_axes", True)
+        lighting = kwargs.pop("lighting", None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
         pl.set_environment_texture(self, True)
@@ -557,7 +557,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.wrap = pv.Texture.WrapType.CLAMP_TO_EDGE
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         Here is the default repeat:
@@ -565,7 +565,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.wrap = pv.Texture.WrapType.REPEAT
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         And here is mirrored repeat:
@@ -573,7 +573,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.wrap = pv.Texture.WrapType.MIRRORED_REPEAT
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         Finally, this is clamp to border:
@@ -581,23 +581,23 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> texture.wrap = pv.Texture.WrapType.CLAMP_TO_BORDER
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(plane, texture=texture)
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         """
-        if not hasattr(self, 'GetWrap'):  # pragma: no cover
+        if not hasattr(self, "GetWrap"):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+            raise VTKVersionError("`wrap` requires VTK v9.1.0 or newer.")
 
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
     def wrap(self, value: Union[Texture.WrapType, int]):  # numpydoc ignore=GL08
-        if not hasattr(self, 'SetWrap'):  # pragma: no cover
+        if not hasattr(self, "SetWrap"):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
+            raise VTKVersionError("`wrap` requires VTK v9.1.0 or newer.")
 
         self.SetWrap(value)
 
@@ -682,8 +682,8 @@ def numpy_to_texture(image):
     if image.dtype != np.uint8:
         image = image.astype(np.uint8)
         warnings.warn(
-            'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
-            'and converted to np.uint8.',
+            "Expected `image` dtype to be ``np.uint8``. `image` has been copied "
+            "and converted to np.uint8.",
             UserWarning,
         )
 

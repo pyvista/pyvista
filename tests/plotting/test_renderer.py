@@ -70,15 +70,15 @@ def test_show_bounds_invalid_axes_ranges():
 
     # send incorrect axes_ranges types
     axes_ranges = 1
-    with pytest.raises(TypeError, match='numeric sequence'):
+    with pytest.raises(TypeError, match="numeric sequence"):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
-    axes_ranges = [0, 1, 'a', 'b', 2, 3]
-    with pytest.raises(TypeError, match='All of the elements'):
+    axes_ranges = [0, 1, "a", "b", 2, 3]
+    with pytest.raises(TypeError, match="All of the elements"):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
     axes_ranges = [0, 1, 2, 3, 4]
-    with pytest.raises(ValueError, match='[xmin, xmax, ymin, max, zmin, zmax]'):
+    with pytest.raises(ValueError, match="[xmin, xmax, ymin, max, zmin, zmax]"):
         plotter.show_bounds(axes_ranges=axes_ranges)
 
 
@@ -158,7 +158,7 @@ def test_layer():
     assert plotter.renderer.layer == 0
 
 
-@pytest.mark.parametrize('has_border', [True, False])
+@pytest.mark.parametrize("has_border", [True, False])
 def test_border(has_border):
     border_color = (1.0, 1.0, 1.0)
     border_width = 1
@@ -180,34 +180,34 @@ def test_bad_legend_origin_and_size(sphere):
     """Ensure bad parameters to origin/size raise ValueErrors."""
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
-    legend_labels = [['sphere', 'r']]
-    with pytest.raises(ValueError, match='Invalid loc'):
-        plotter.add_legend(labels=legend_labels, loc='bar')
-    with pytest.raises(ValueError, match='size'):
+    legend_labels = [["sphere", "r"]]
+    with pytest.raises(ValueError, match="Invalid loc"):
+        plotter.add_legend(labels=legend_labels, loc="bar")
+    with pytest.raises(ValueError, match="size"):
         plotter.add_legend(labels=legend_labels, size=[])
     # test non-sequences also raise
-    with pytest.raises(ValueError, match='size'):
+    with pytest.raises(ValueError, match="size"):
         plotter.add_legend(labels=legend_labels, size=type)
 
 
-@pytest.mark.parametrize('loc', ACTOR_LOC_MAP)
+@pytest.mark.parametrize("loc", ACTOR_LOC_MAP)
 def test_add_legend_loc(loc):
     pl = pv.Plotter()
-    pl.add_mesh(pv.PolyData([0.0, 0.0, 0.0]), label='foo')
+    pl.add_mesh(pv.PolyData([0.0, 0.0, 0.0]), label="foo")
     legend = pl.add_legend(loc=loc)
 
     # note: this is only valid with the defaults:
     # border=0.05 and size=(0.2, 0.2)
     positions = {
-        'upper right': (0.75, 0.75),
-        'upper left': (0.05, 0.75),
-        'lower left': (0.05, 0.05),
-        'lower right': (0.75, 0.05),
-        'center left': (0.05, 0.4),
-        'center right': (0.75, 0.4),
-        'lower center': (0.4, 0.05),
-        'upper center': (0.4, 0.75),
-        'center': (0.4, 0.4),
+        "upper right": (0.75, 0.75),
+        "upper left": (0.05, 0.75),
+        "lower left": (0.05, 0.05),
+        "lower right": (0.75, 0.05),
+        "center left": (0.05, 0.4),
+        "center right": (0.75, 0.4),
+        "lower center": (0.4, 0.05),
+        "upper center": (0.4, 0.75),
+        "center": (0.4, 0.4),
     }
     assert legend.GetPosition() == positions[loc]
 
@@ -215,25 +215,25 @@ def test_add_legend_loc(loc):
 def test_add_legend_no_face(sphere):
     pl = pv.Plotter()
     sphere.point_data["Z"] = sphere.points[:, 2]
-    pl.add_mesh(sphere, scalars='Z', label='sphere')
+    pl.add_mesh(sphere, scalars="Z", label="sphere")
     pl.add_legend(face=None)
 
     pl = pv.Plotter()
     pl.add_mesh(sphere)
-    pl.add_legend(labels=[['sphere', 'k']], face=None)
+    pl.add_legend(labels=[["sphere", "k"]], face=None)
 
 
 def test_add_remove_legend(sphere):
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    pl.add_mesh(sphere, label="sphere")
     pl.add_legend()
     pl.remove_legend()
 
 
-@pytest.mark.parametrize('face', ['-', '^', 'o', 'r', None, pv.PolyData([0.0, 0.0, 0.0])])
+@pytest.mark.parametrize("face", ["-", "^", "o", "r", None, pv.PolyData([0.0, 0.0, 0.0])])
 def test_legend_face(sphere, face, verify_image_cache):
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    pl.add_mesh(sphere, label="sphere")
     pl.add_legend(face=face, size=(0.5, 0.5))
 
 
@@ -243,11 +243,11 @@ def test_legend_from_glyph(sphere, verify_image_cache):
     y = sphere.face_normals[:, 1] ** 2
     z = sphere.face_normals[:, 2] ** 2
 
-    sphere['scale'] = (x**2 + y**2 + z**2) ** (1 / 2)
-    sphere['normals'] = sphere.face_normals * 0.1
+    sphere["scale"] = (x**2 + y**2 + z**2) ** (1 / 2)
+    sphere["normals"] = sphere.face_normals * 0.1
 
-    arrows = sphere.glyph(scale='scale', orient='normals', tolerance=0.05)
-    pl.add_mesh(arrows, color='red', label='Magnitude')
+    arrows = sphere.glyph(scale="scale", orient="normals", tolerance=0.05)
+    pl.add_mesh(arrows, color="red", label="Magnitude")
     pl.add_mesh(sphere)
     pl.add_legend(size=(0.5, 0.5))
 
@@ -278,8 +278,8 @@ def test_legend_using_add_legend(random_hills, verify_image_cache):
     pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
 
     legend_entries = []
-    legend_entries.append(['my label 1', 'g'])
-    legend_entries.append(['my label 2', 'blue'])
+    legend_entries.append(["my label 1", "g"])
+    legend_entries.append(["my label 2", "blue"])
     pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
 
@@ -293,11 +293,11 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
 
     legend_entries = []
-    legend_entries.append(['my label 1', 'g'])
-    legend_entries.append(['my label 2', 'blue', pv.Circle()])
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
+    legend_entries.append(["my label 1", "g"])
+    legend_entries.append(["my label 2", "blue", pv.Circle()])
+    legend_entries.append({"label": "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
+    legend_entries.append({"label": "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
+    legend_entries.append({"label": "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
 
     pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
@@ -319,7 +319,7 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
 
 def test_legend_add_entry_warning(verify_image_cache):
     pl = pv.Plotter()
-    legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
+    legend_entries = [{"label": "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
 
     with pytest.warns(UserWarning, match="Some of the arguments given to legend are not used"):
         pl.add_legend(legend_entries, size=(0.5, 0.5))
@@ -338,7 +338,7 @@ def test_legend_add_entry_exception():
 def test_add_legend_background_opacity(sphere):
     background_opacity = 0.4
     pl = pv.Plotter()
-    pl.add_mesh(sphere, label='sphere')
+    pl.add_mesh(sphere, label="sphere")
     actor = pl.add_legend(background_opacity=background_opacity)
     assert actor.GetBackgroundOpacity() == background_opacity
 

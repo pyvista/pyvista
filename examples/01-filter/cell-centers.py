@@ -80,7 +80,7 @@ pl.add_mesh(mesh, show_edges=True, line_width=5)
 pl.add_points(
     edge_centers,
     render_points_as_spheres=True,
-    color='r',
+    color="r",
     point_size=20,
 )
 pl.show()

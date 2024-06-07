@@ -30,8 +30,8 @@ def test_gpuinfo():
     assert len(_repr_html) > 1
 
     # test corrupted internal infos
-    gpuinfo._gpu_info = 'foo'
-    for func_name in ['renderer', 'version', 'vendor']:
+    gpuinfo._gpu_info = "foo"
+    for func_name in ["renderer", "version", "vendor"]:
         with pytest.raises(RuntimeError, match=func_name):
             getattr(gpuinfo, func_name)()
 
@@ -69,8 +69,8 @@ def test_plot_boundaries():
 
 
 @pytest.mark.skip_plotting()
-@pytest.mark.parametrize('flip', [True, False])
-@pytest.mark.parametrize('faces', [True, False])
+@pytest.mark.parametrize("flip", [True, False])
+@pytest.mark.parametrize("faces", [True, False])
 def test_plot_normals(flip, faces):
     sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     sphere.plot_normals(off_screen=True, flip=flip, faces=faces)
@@ -84,29 +84,29 @@ def test_get_sg_image_scraper():
 
 def test_skybox(tmpdir):
     path = str(tmpdir.mkdir("tmpdir"))
-    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    sets = ["posx", "negx", "posy", "negy", "posz", "negz"]
     filenames = []
     for suffix in sets:
-        image = Image.new('RGB', (10, 10))
-        filename = str(Path(path) / suffix) + '.jpg'
+        image = Image.new("RGB", (10, 10))
+        filename = str(Path(path) / suffix) + ".jpg"
         image.save(filename)
         filenames.append(filename)
 
     skybox = pv.cubemap(path)
     assert isinstance(skybox, pv.Texture)
 
-    with pytest.raises(FileNotFoundError, match='Unable to locate'):
-        pv.cubemap('')
+    with pytest.raises(FileNotFoundError, match="Unable to locate"):
+        pv.cubemap("")
 
     skybox = pv.cubemap_from_filenames(filenames)
     assert isinstance(skybox, pv.Texture)
 
-    with pytest.raises(ValueError, match='must contain 6 paths'):
-        pv.cubemap_from_filenames(image_paths=['/path'])
+    with pytest.raises(ValueError, match="must contain 6 paths"):
+        pv.cubemap_from_filenames(image_paths=["/path"])
 
 
 def test_view_vectors():
-    views = ('xy', 'yx', 'xz', 'zx', 'yz', 'zy')
+    views = ("xy", "yx", "xz", "zx", "yz", "zy")
 
     for view in views:
         vec, viewup = view_vectors(view)
@@ -116,12 +116,12 @@ def test_view_vectors():
         assert np.array_equal(viewup.shape, (3,))
 
     with pytest.raises(ValueError, match="Unexpected value for direction"):
-        view_vectors('invalid')
+        view_vectors("invalid")
 
 
 @pytest.fixture()
 def gif_file(tmpdir):
-    filename = str(tmpdir.join('sample.gif'))
+    filename = str(tmpdir.join("sample.gif"))
 
     pl = pv.Plotter(window_size=(300, 200))
     pl.open_gif(filename, palettesize=16, fps=1)
@@ -130,11 +130,11 @@ def gif_file(tmpdir):
     opacity = mesh.points[:, 0]
     opacity -= opacity.min()
     opacity /= opacity.max()
-    for color in ['red', 'blue', 'green']:
+    for color in ["red", "blue", "green"]:
         pl.clear()
-        pl.background_color = 'w'
+        pl.background_color = "w"
         pl.add_mesh(mesh, color=color, opacity=opacity)
-        pl.camera_position = 'xy'
+        pl.camera_position = "xy"
         pl.write_frame()
 
     pl.close()
@@ -156,7 +156,7 @@ def test_gif_reader(gif_file):
 
     # load each frame to the grid
     for i, frame in enumerate(ImageSequence.Iterator(img)):
-        data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-        data_name = f'frame{i}'
+        data = np.array(frame.convert("RGB").getdata(), dtype=np.uint8)
+        data_name = f"frame{i}"
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])

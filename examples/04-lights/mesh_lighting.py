@@ -26,8 +26,8 @@ horse.points = (horse.points - horse.center) * 100
 shifted = horse.translate((0, 10, 0), inplace=False)
 
 plotter = pv.Plotter()
-plotter.add_mesh(horse, color='brown')
-plotter.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
+plotter.add_mesh(horse, color="brown")
+plotter.add_mesh(shifted, color="brown", show_edges=True, lighting=False)
 plotter.show()
 
 
@@ -37,7 +37,7 @@ plotter.show()
 # the second mesh would be practically impossible to understand even with the
 # option to interactively explore the surface:
 
-shifted.plot(color='brown', lighting=False)
+shifted.plot(color="brown", lighting=False)
 
 ###############################################################################
 # For further examples about fine-tuning mesh properties that affect

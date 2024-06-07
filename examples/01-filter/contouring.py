@@ -70,10 +70,10 @@ arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
 ###############################################################################
 
 # Common display arguments
-dargs = dict(scalars='Elevation', n_colors=n_contours - 1, cmap='Set3')
+dargs = dict(scalars="Elevation", n_colors=n_contours - 1, cmap="Set3")
 
 pl = pv.Plotter()
-pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color='k')
+pl.add_mesh(edges, line_width=5, render_lines_as_tubes=True, color="k")
 pl.add_mesh(contours, **dargs)
 pl.add_mesh(arrows, **dargs)
 pl.show()

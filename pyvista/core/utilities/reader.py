@@ -27,7 +27,7 @@ from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
-HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+HDF_HELP = "https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats"
 
 
 def _lazy_vtk_instantiation(module_name, class_name):
@@ -194,7 +194,7 @@ def get_reader(filename, force_ext=None):
     >>> mesh = reader.read()
     >>> mesh
     PolyData ...
-    >>> mesh.plot(color='lightblue')
+    >>> mesh.plot(color="lightblue")
 
     """
     ext = _get_ext_force(filename, force_ext)
@@ -204,7 +204,7 @@ def get_reader(filename, force_ext=None):
     except KeyError:
         if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
-                pathlib.Path(f).suffix == '.dcm' for f in files
+                pathlib.Path(f).suffix == ".dcm" for f in files
             ):
                 Reader = DICOMReader
             else:
@@ -280,8 +280,8 @@ class BaseReader:
     """
 
     _class_reader: Any = None
-    _vtk_module_name: str = ''
-    _vtk_class_name: str = ''
+    _vtk_module_name: str = ""
+    _vtk_class_name: str = ""
 
     def __init__(self, path):
         """Initialize Reader by setting path."""
@@ -445,7 +445,7 @@ class PointCellDataSelection:
     >>> reader.all_cell_arrays_status  # doctest: +NORMALIZE_WHITESPACE
     {'v2': True, 'nut': True, 'k': True, 'nuTilda': True, 'p': True, 'omega': True, 'f': True, 'epsilon': True, 'U': True}
     >>> reader.disable_all_cell_arrays()
-    >>> reader.enable_cell_array('U')
+    >>> reader.enable_cell_array("U")
     >>> mesh = reader.read()  # MultiBlock mesh
     >>> mesh[0].array_names
     ['U']
@@ -717,10 +717,10 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
     'RectilinearGrid.vtr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> sliced_mesh = mesh.slice('y')
+    >>> sliced_mesh = mesh.slice("y")
     >>> sliced_mesh.plot(
-    ...     scalars='Void Volume Fraction',
-    ...     cpos='xz',
+    ...     scalars="Void Volume Fraction",
+    ...     cpos="xz",
     ...     show_scalar_bar=False,
     ... )
 
@@ -752,7 +752,7 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
     >>> mesh.plot(
     ...     scalars="Nodal Displacement",
     ...     component=0,
-    ...     cpos='xy',
+    ...     cpos="xy",
     ...     show_scalar_bar=False,
     ... )
 
@@ -805,7 +805,7 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
     'StructuredGrid.vts'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(style='wireframe', line_width=4, show_scalar_bar=False)
+    >>> mesh.plot(style="wireframe", line_width=4, show_scalar_bar=False)
 
     """
 
@@ -839,8 +839,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     ...     scalars="velocity",
     ...     component=1,
     ...     clim=[-20, 20],
-    ...     cpos='xy',
-    ...     cmap='RdBu',
+    ...     cpos="xy",
+    ...     cmap="RdBu",
     ...     show_scalar_bar=False,
     ... )
 
@@ -1203,8 +1203,8 @@ class POpenFOAMReader(OpenFOAMReader):
     """
 
     _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
-    _vtk_module_name = ''
-    _vtk_class_name = ''
+    _vtk_module_name = ""
+    _vtk_class_name = ""
 
     @property
     def case_type(self):
@@ -1227,17 +1227,17 @@ class POpenFOAMReader(OpenFOAMReader):
         >>> from pyvista import examples
         >>> filename = examples.download_cavity(load=False)
         >>> reader = pv.POpenFOAMReader(filename)
-        >>> reader.case_type = 'reconstructed'
+        >>> reader.case_type = "reconstructed"
         >>> reader.case_type
         'reconstructed'
         """
-        return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
+        return "reconstructed" if self.reader.GetCaseType() else "decomposed"
 
     @case_type.setter
     def case_type(self, value):  # numpydoc ignore=GL08
-        if value == 'reconstructed':
+        if value == "reconstructed":
             self.reader.SetCaseType(1)
-        elif value == 'decomposed':
+        elif value == "decomposed":
             self.reader.SetCaseType(0)
         else:
             raise ValueError(f"Unknown case type '{value}'.")
@@ -1277,7 +1277,7 @@ class OBJReader(BaseReader):
     'trumpet.obj'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(cpos='yz', show_scalar_bar=False)
+    >>> mesh.plot(cpos="yz", show_scalar_bar=False)
 
     """
 
@@ -1341,8 +1341,8 @@ class VTKDataSetReader(BaseReader):
     'brain.vtk'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> sliced_mesh = mesh.slice('x')
-    >>> sliced_mesh.plot(cpos='yz', show_scalar_bar=False)
+    >>> sliced_mesh = mesh.slice("x")
+    >>> sliced_mesh.plot(cpos="yz", show_scalar_bar=False)
 
     """
 
@@ -1378,7 +1378,7 @@ class BYUReader(BaseReader):
     'teapot.g'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(cpos='xy', show_scalar_bar=False)
+    >>> mesh.plot(cpos="xy", show_scalar_bar=False)
 
     """
 
@@ -1537,7 +1537,7 @@ class MultiBlockPlot3DReader(BaseReader):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> filename = examples.download_file('multi-bin.xyz')
+        >>> filename = examples.download_file("multi-bin.xyz")
         >>> reader = pv.reader.MultiBlockPlot3DReader(filename)
         >>> reader.add_function(112)  # add a function by its integer value
         >>> reader.add_function(
@@ -1957,10 +1957,10 @@ class _PVDReader(BaseVTKReader):
             element_attrib = element.attrib
             datasets.append(
                 PVDDataSet(
-                    float(element_attrib.get('timestep', 0)),
-                    int(element_attrib.get('part', 0)),
-                    element_attrib['file'],
-                    element_attrib.get('group'),
+                    float(element_attrib.get("timestep", 0)),
+                    int(element_attrib.get("part", 0)),
+                    element_attrib["file"],
+                    element_attrib.get("group"),
                 ),
             )
         self._datasets = sorted(datasets)
@@ -2001,7 +2001,7 @@ class PVDReader(BaseReader, TimeReader):
     >>> reader.active_time_value
     5.0
     >>> mesh = reader.read()[0]  # MultiBlock mesh with only 1 block
-    >>> mesh.plot(scalars='z')
+    >>> mesh.plot(scalars="z")
 
     """
 
@@ -2367,9 +2367,9 @@ class HDFReader(BaseReader):
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
                 raise RuntimeError(
-                    f'{self.path} is missing the Type attribute. '
-                    'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.',
+                    f"{self.path} is missing the Type attribute. "
+                    "The VTKHDF format has changed as of 9.2.0, "
+                    f"see {HDF_HELP} for more details.",
                 )
             else:
                 raise
@@ -2429,12 +2429,12 @@ class _GIFReader(BaseVTKReader):
         self._n_frames = img.n_frames
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
-            data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            data = np.array(frame.convert("RGB").getdata(), dtype=np.uint8)
+            self._data_object.point_data.set_array(data, f"frame{i}")
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if "frame0" in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = "frame0"
 
 
 class GIFReader(BaseReader):
@@ -2454,7 +2454,7 @@ class GIFReader(BaseReader):
     'sample.gif'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot(rgba=True, zoom='tight', border=True, border_width=2)
+    >>> mesh.plot(rgba=True, zoom="tight", border=True, border_width=2)
 
     """
 
@@ -2783,9 +2783,9 @@ class ParticleReader(BaseReader):
             The byte order of the data. 'BigEndian' or 'LittleEndian'.
 
         """
-        if endian == 'BigEndian':
+        if endian == "BigEndian":
             self.reader.SetDataByteOrderToBigEndian()
-        elif endian == 'LittleEndian':
+        elif endian == "LittleEndian":
             self.reader.SetDataByteOrderToLittleEndian()
         else:
             raise ValueError(f"Invalid endian: {endian}.")
@@ -2816,66 +2816,66 @@ class ProStarReader(BaseReader):
 
 CLASS_READERS = {
     # Standard dataset readers:
-    '.bmp': BMPReader,
-    '.cas': FluentReader,
-    '.case': EnSightReader,
-    '.cgns': CGNSReader,
-    '.cube': GaussianCubeReader,
-    '.dat': TecplotReader,
-    '.dcm': DICOMReader,
-    '.dem': DEMReader,
-    '.facet': FacetReader,
-    '.foam': POpenFOAMReader,
-    '.g': BYUReader,
-    '.gif': GIFReader,
-    '.glb': GLTFReader,
-    '.gltf': GLTFReader,
-    '.h5': FLUENTCFFReader,
-    '.hdf': HDFReader,
-    '.hdr': HDRReader,
-    '.img': DICOMReader,
-    '.inp': AVSucdReader,
-    '.jpeg': JPEGReader,
-    '.jpg': JPEGReader,
-    '.mha': MetaImageReader,
-    '.mhd': MetaImageReader,
-    '.mnc': MINCImageReader,
-    '.mr': GESignaReader,
-    '.neu': GambitReader,
-    '.nhdr': NRRDReader,
-    '.nii': NIFTIReader,
-    '.nii.gz': NIFTIReader,
-    '.nrrd': NRRDReader,
-    '.obj': OBJReader,
-    '.p3d': Plot3DMetaReader,
-    '.pdb': PDBReader,
-    '.ply': PLYReader,
-    '.png': PNGReader,
-    '.pnm': PNMReader,
-    '.pts': PTSReader,
-    '.pvd': PVDReader,
-    '.pvti': XMLPImageDataReader,
-    '.pvtk': VTKPDataSetReader,
-    '.pvtr': XMLPRectilinearGridReader,
-    '.pvtu': XMLPUnstructuredGridReader,
-    '.raw': ParticleReader,
-    '.res': MFIXReader,
-    '.segy': SegYReader,
-    '.sgy': SegYReader,
-    '.slc': SLCReader,
-    '.stl': STLReader,
-    '.tif': TIFFReader,
-    '.tiff': TIFFReader,
-    '.tri': BinaryMarchingCubesReader,
-    '.vrt': ProStarReader,
-    '.vti': XMLImageDataReader,
-    '.vtk': VTKDataSetReader,
-    '.vtm': XMLMultiBlockDataReader,
-    '.vtmb': XMLMultiBlockDataReader,
-    '.vtp': XMLPolyDataReader,
-    '.vtpd': XMLPartitionedDataSetReader,
-    '.vtr': XMLRectilinearGridReader,
-    '.vts': XMLStructuredGridReader,
-    '.vtu': XMLUnstructuredGridReader,
-    '.xdmf': XdmfReader,
+    ".bmp": BMPReader,
+    ".cas": FluentReader,
+    ".case": EnSightReader,
+    ".cgns": CGNSReader,
+    ".cube": GaussianCubeReader,
+    ".dat": TecplotReader,
+    ".dcm": DICOMReader,
+    ".dem": DEMReader,
+    ".facet": FacetReader,
+    ".foam": POpenFOAMReader,
+    ".g": BYUReader,
+    ".gif": GIFReader,
+    ".glb": GLTFReader,
+    ".gltf": GLTFReader,
+    ".h5": FLUENTCFFReader,
+    ".hdf": HDFReader,
+    ".hdr": HDRReader,
+    ".img": DICOMReader,
+    ".inp": AVSucdReader,
+    ".jpeg": JPEGReader,
+    ".jpg": JPEGReader,
+    ".mha": MetaImageReader,
+    ".mhd": MetaImageReader,
+    ".mnc": MINCImageReader,
+    ".mr": GESignaReader,
+    ".neu": GambitReader,
+    ".nhdr": NRRDReader,
+    ".nii": NIFTIReader,
+    ".nii.gz": NIFTIReader,
+    ".nrrd": NRRDReader,
+    ".obj": OBJReader,
+    ".p3d": Plot3DMetaReader,
+    ".pdb": PDBReader,
+    ".ply": PLYReader,
+    ".png": PNGReader,
+    ".pnm": PNMReader,
+    ".pts": PTSReader,
+    ".pvd": PVDReader,
+    ".pvti": XMLPImageDataReader,
+    ".pvtk": VTKPDataSetReader,
+    ".pvtr": XMLPRectilinearGridReader,
+    ".pvtu": XMLPUnstructuredGridReader,
+    ".raw": ParticleReader,
+    ".res": MFIXReader,
+    ".segy": SegYReader,
+    ".sgy": SegYReader,
+    ".slc": SLCReader,
+    ".stl": STLReader,
+    ".tif": TIFFReader,
+    ".tiff": TIFFReader,
+    ".tri": BinaryMarchingCubesReader,
+    ".vrt": ProStarReader,
+    ".vti": XMLImageDataReader,
+    ".vtk": VTKDataSetReader,
+    ".vtm": XMLMultiBlockDataReader,
+    ".vtmb": XMLMultiBlockDataReader,
+    ".vtp": XMLPolyDataReader,
+    ".vtpd": XMLPartitionedDataSetReader,
+    ".vtr": XMLRectilinearGridReader,
+    ".vts": XMLStructuredGridReader,
+    ".vtu": XMLUnstructuredGridReader,
+    ".xdmf": XdmfReader,
 }

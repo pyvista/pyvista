@@ -22,7 +22,7 @@ def global_variables_reset():  # noqa: PT004
     pyvista.FIGURE_PATH = tmp_figurepath
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def set_mpl():  # noqa: PT004
     """Avoid matplotlib windows popping up."""
     try:
@@ -31,7 +31,7 @@ def set_mpl():  # noqa: PT004
         pass
     else:
         mpl.rcdefaults()
-        mpl.use('agg', force=True)
+        mpl.use("agg", force=True)
 
 
 @pytest.fixture()
@@ -125,20 +125,20 @@ def datasets():
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
-    mesh_a['data_a'] = mesh_a.points[:, 0] * 10
-    mesh_a['data_b'] = mesh_a.points[:, 1] * 10
-    mesh_a['cell_data'] = mesh_a.cell_centers().points[:, 0]
-    mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, 'all_data')
+    mesh_a["data_a"] = mesh_a.points[:, 0] * 10
+    mesh_a["data_b"] = mesh_a.points[:, 1] * 10
+    mesh_a["cell_data"] = mesh_a.cell_centers().points[:, 0]
+    mesh_a.point_data.set_array(mesh_a.points[:, 2] * 10, "all_data")
 
     mesh_b = pyvista.Sphere(center=(1, 0, 0), direction=(0, 0, -1))
-    mesh_b['data_a'] = mesh_b.points[:, 0] * 10
-    mesh_b['data_b'] = mesh_b.points[:, 1] * 10
-    mesh_b['cell_data'] = mesh_b.cell_centers().points[:, 0]
-    mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, 'all_data')
+    mesh_b["data_a"] = mesh_b.points[:, 0] * 10
+    mesh_b["data_b"] = mesh_b.points[:, 1] * 10
+    mesh_b["cell_data"] = mesh_b.cell_centers().points[:, 0]
+    mesh_b.point_data.set_array(mesh_b.points[:, 2] * 10, "all_data")
 
     mesh_c = pyvista.Sphere(center=(2, 0, 0), direction=(0, 0, -1))
-    mesh_c.point_data.set_array(mesh_c.points, 'multi-comp')
-    mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, 'all_data')
+    mesh_c.point_data.set_array(mesh_c.points, "multi-comp")
+    mesh_c.point_data.set_array(mesh_c.points[:, 2] * 10, "all_data")
 
     mblock = pyvista.MultiBlock()
     mblock.append(mesh_a)
@@ -181,7 +181,7 @@ def texture():
     pl = pyvista.Plotter(window_size=(300, 200), lighting=None)
     mesh = pyvista.Sphere()
     pl.add_mesh(mesh, scalars=range(mesh.n_points), show_scalar_bar=False)
-    pl.background_color = 'w'
+    pl.background_color = "w"
     return pyvista.Texture(pl.screenshot())
 
 
@@ -191,7 +191,7 @@ def image(texture):
 
 
 def pytest_addoption(parser):
-    parser.addoption("--test_downloads", action='store_true', default=False)
+    parser.addoption("--test_downloads", action="store_true", default=False)
 
 
 def marker_names(item):
@@ -205,7 +205,7 @@ def pytest_collection_modifyitems(config, items):
     if not test_downloads:
         skip_downloads = pytest.mark.skip("Downloads not enabled with --test_downloads")
         for item in items:
-            if 'needs_download' in marker_names(item):
+            if "needs_download" in marker_names(item):
                 item.add_marker(skip_downloads)
 
 
@@ -215,14 +215,14 @@ def pytest_runtest_setup(item):
     See pytest.mark.needs_vtk_version in pyproject.toml.
 
     """
-    for item_mark in item.iter_markers('needs_vtk_version'):
+    for item_mark in item.iter_markers("needs_vtk_version"):
         # this test needs the given VTK version
         # allow both needs_vtk_version(9, 1) and needs_vtk_version((9, 1))
         args = item_mark.args
         version_needed = args[0] if len(args) == 1 and isinstance(args[0], tuple) else args
         if pyvista.vtk_version_info < version_needed:
-            version_str = '.'.join(map(str, version_needed))
-            pytest.skip(f'Test needs VTK {version_str} or newer.')
+            version_str = ".".join(map(str, version_needed))
+            pytest.skip(f"Test needs VTK {version_str} or newer.")
 
 
 def pytest_report_header(config):

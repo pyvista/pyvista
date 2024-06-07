@@ -31,12 +31,12 @@ import numpy as np
 import numpy.typing as npt
 
 # Create alias of npt.NDArray bound to numeric types only
-NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
+NumberType = TypeVar("NumberType", bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
 NumberType.__doc__ = """Type variable for numeric data types."""
 NumpyArray = npt.NDArray[NumberType]
 
 # Define generic nested sequence
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 _FiniteNestedSequence = Union[  # Note: scalar types are excluded
     Sequence[_T],
     Sequence[Sequence[_T]],

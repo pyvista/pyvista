@@ -21,18 +21,18 @@ from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoade
 
 # get location of this folder and the example files
 dir_path = str(Path(os.path.realpath(__file__)).parent)
-antfile = str(Path(dir_path) / 'ant.ply')
-planefile = str(Path(dir_path) / 'airplane.ply')
-hexbeamfile = str(Path(dir_path) / 'hexbeam.vtk')
-spherefile = str(Path(dir_path) / 'sphere.ply')
-uniformfile = str(Path(dir_path) / 'uniform.vtk')
-rectfile = str(Path(dir_path) / 'rectilinear.vtk')
-globefile = str(Path(dir_path) / 'globe.vtk')
-mapfile = str(Path(dir_path) / '2k_earth_daymap.jpg')
-channelsfile = str(Path(dir_path) / 'channels.vti')
-logofile = str(Path(dir_path) / 'pyvista_logo.png')
-nutfile = str(Path(dir_path) / 'nut.ply')
-frogtissuesfile = str(Path(dir_path) / 'frog_tissues.vti')
+antfile = str(Path(dir_path) / "ant.ply")
+planefile = str(Path(dir_path) / "airplane.ply")
+hexbeamfile = str(Path(dir_path) / "hexbeam.vtk")
+spherefile = str(Path(dir_path) / "sphere.ply")
+uniformfile = str(Path(dir_path) / "uniform.vtk")
+rectfile = str(Path(dir_path) / "rectilinear.vtk")
+globefile = str(Path(dir_path) / "globe.vtk")
+mapfile = str(Path(dir_path) / "2k_earth_daymap.jpg")
+channelsfile = str(Path(dir_path) / "channels.vti")
+logofile = str(Path(dir_path) / "pyvista_logo.png")
+nutfile = str(Path(dir_path) / "nut.ply")
+frogtissuesfile = str(Path(dir_path) / "frog_tissues.vti")
 
 
 def load_ant():
@@ -629,7 +629,7 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
     >>> from pyvista import examples
     >>> grid = examples.load_hydrogen_orbital(3, 2, -2)
-    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap='magma')
+    >>> grid.plot(volume=True, opacity=[1, 0, 1], cmap="magma")
 
     See :ref:`plot_atomic_orbitals_example` for additional examples using
     this function.
@@ -652,17 +652,17 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
         from sympy.physics.hydrogen import Psi_nlm
     except ImportError:  # pragma: no cover
         raise ImportError(
-            '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',
+            "\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n",
         ) from None
 
     if n < 1:
-        raise ValueError('`n` must be at least 1')
+        raise ValueError("`n` must be at least 1")
     if l not in range(n):
-        raise ValueError(f'`l` must be one of: {list(range(n))}')
+        raise ValueError(f"`l` must be one of: {list(range(n))}")
     if m not in range(-l, l + 1):
-        raise ValueError(f'`m` must be one of: {list(range(-l, l + 1))}')
+        raise ValueError(f"`m` must be one of: {list(range(-l, l + 1))}")
 
-    psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), 'numpy')
+    psi = lambdify((r, phi, theta), Psi_nlm(n, l, m, r, phi, theta, 1), "numpy")
 
     org = 1.5 * n**2 + 1.0 if n == 1 else 1.5 * n**2 + 10.0
 
@@ -679,8 +679,8 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
     r, theta, phi = pyvista.cartesian_to_spherical(grid.x, grid.y, grid.z)
     wfc = psi(r, phi, theta).reshape(grid.dimensions)
 
-    grid['real_wf'] = np.real(wfc.ravel())
-    grid['wf'] = wfc.ravel()
+    grid["real_wf"] = np.real(wfc.ravel())
+    grid["wf"] = wfc.ravel()
     return grid
 
 
@@ -699,7 +699,7 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
-    >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
+    >>> image.plot(cpos="xy", zoom="tight", rgb=True, show_axes=False)
 
     .. seealso::
 
@@ -740,10 +740,10 @@ def load_frog_tissues():
 
     >>> # Configure colors / color bar
     >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
+    >>> cmap = "glasbey"  # Use a categorical colormap
     >>> categories = True  # Ensure n_colors matches number of labels
     >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
+    ...     "foreground"  # Make foreground opaque, background transparent
     ... )
     >>> opacity_unit_distance = 1
 
@@ -753,7 +753,7 @@ def load_frog_tissues():
 
     Define rendering parameters
 
-    >>> mapper = 'gpu'
+    >>> mapper = "gpu"
     >>> shade = True
     >>> ambient = 0.3
     >>> diffuse = 0.6
@@ -778,7 +778,7 @@ def load_frog_tissues():
     ...     cmap=cmap,
     ...     resolution=res,
     ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
+    >>> p.camera_position = "yx"  # Set camera to provide a dorsal view
     >>> p.show()
 
     .. seealso::

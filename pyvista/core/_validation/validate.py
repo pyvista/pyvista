@@ -349,7 +349,7 @@ def validate_axes(
     *axes,
     normalize=True,
     must_be_orthogonal=True,
-    must_have_orientation='right',
+    must_have_orientation="right",
     name="Axes",
 ):
     """Validate 3D axes vectors.
@@ -410,7 +410,7 @@ def validate_axes(
     Create a validated left-handed axes array from two vectors.
 
     >>> _validation.validate_axes(
-    ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
+    ...     [1, 0, 0], [0, 1, 0], must_have_orientation="left"
     ... )
     array([[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],
@@ -422,7 +422,7 @@ def validate_axes(
     if must_have_orientation is not None:
         check_contains(
             item=must_have_orientation,
-            container=['right', 'left'],
+            container=["right", "left"],
             name=f"{name} orientation",
         )
     elif must_have_orientation is None and len(axes) == 2:
@@ -438,7 +438,7 @@ def validate_axes(
         if len(axes) == 3:
             axes_array[2] = validate_array3(axes[2], name=f"{name} Vector[2]")
         else:  # len(axes) == 2
-            if must_have_orientation == 'right':
+            if must_have_orientation == "right":
                 axes_array[2] = np.cross(axes_array[0], axes_array[1])
             else:
                 axes_array[2] = np.cross(axes_array[1], axes_array[0])
@@ -466,9 +466,9 @@ def validate_axes(
 
     if must_have_orientation:
         dot = np.dot(cross_0_1, axes_norm[2])
-        if must_have_orientation == 'right' and dot < 0:
+        if must_have_orientation == "right" and dot < 0:
             raise ValueError(f"{name} do not have a right-handed orientation.")
-        if must_have_orientation == 'left' and dot > 0:
+        if must_have_orientation == "left" and dot > 0:
             raise ValueError(f"{name} do not have a left-handed orientation.")
 
     if normalize:
@@ -525,12 +525,12 @@ def validate_transform4x4(transform, /, *, name="Transform"):
                 arr = valid_arr
         except ValueError:
             raise TypeError(
-                'Input transform must be one of:\n'
-                '\tvtkMatrix4x4\n'
-                '\tvtkMatrix3x3\n'
-                '\tvtkTransform\n'
-                '\t4x4 np.ndarray\n'
-                '\t3x3 np.ndarray\n',
+                "Input transform must be one of:\n"
+                "\tvtkMatrix4x4\n"
+                "\tvtkMatrix3x3\n"
+                "\tvtkTransform\n"
+                "\t4x4 np.ndarray\n"
+                "\t3x3 np.ndarray\n",
             )
 
     return arr
@@ -570,7 +570,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         try:
             arr = validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
-            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
+            raise TypeError("Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n")
     return arr
 
 
@@ -637,16 +637,16 @@ def validate_number(num, /, *, reshape=True, **kwargs):
     10
 
     """
-    kwargs.setdefault('name', 'Number')
-    kwargs.setdefault('to_list', True)
-    kwargs.setdefault('must_be_finite', True)
+    kwargs.setdefault("name", "Number")
+    kwargs.setdefault("to_list", True)
+    kwargs.setdefault("must_be_finite", True)
 
     if reshape:
         shape = [(), (1,)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
+        _set_default_kwarg_mandatory(kwargs, "reshape_to", ())
     else:
         shape = ()
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+    _set_default_kwarg_mandatory(kwargs, "must_have_shape", shape)
 
     return validate_array(num, **kwargs)
 
@@ -692,11 +692,11 @@ def validate_data_range(rng, /, **kwargs):
     (0.0, 1.0)
 
     """
-    kwargs.setdefault('name', 'Data Range')
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', 2)
-    _set_default_kwarg_mandatory(kwargs, 'must_be_sorted', True)
-    if 'to_list' not in kwargs:
-        kwargs.setdefault('to_tuple', True)
+    kwargs.setdefault("name", "Data Range")
+    _set_default_kwarg_mandatory(kwargs, "must_have_shape", 2)
+    _set_default_kwarg_mandatory(kwargs, "must_be_sorted", True)
+    if "to_list" not in kwargs:
+        kwargs.setdefault("to_tuple", True)
     return validate_array(rng, **kwargs)
 
 
@@ -763,10 +763,10 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [3, (-1, 3)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
+        _set_default_kwarg_mandatory(kwargs, "reshape_to", (-1, 3))
     else:
         shape = (-1, 3)
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+    _set_default_kwarg_mandatory(kwargs, "must_have_shape", shape)
 
     return validate_array(arr, **kwargs)
 
@@ -837,10 +837,10 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     """
     if reshape:
         shape = [(), (-1), (1, -1)]
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
+        _set_default_kwarg_mandatory(kwargs, "reshape_to", (-1))
     else:
         shape = -1
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+    _set_default_kwarg_mandatory(kwargs, "must_have_shape", shape)
     return validate_array(arr, **kwargs)
 
 
@@ -921,12 +921,12 @@ def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
     """
     # Set default dtype out but allow overriding as long as the dtype
     # is also integral
-    kwargs.setdefault('dtype_out', int)
-    if kwargs['dtype_out'] is not int:
-        check_subdtype(kwargs['dtype_out'], np.integer)
+    kwargs.setdefault("dtype_out", int)
+    if kwargs["dtype_out"] is not int:
+        check_subdtype(kwargs["dtype_out"], np.integer)
 
-    _set_default_kwarg_mandatory(kwargs, 'must_be_integer', True)
-    _set_default_kwarg_mandatory(kwargs, 'must_be_nonnegative', True)
+    _set_default_kwarg_mandatory(kwargs, "must_be_integer", True)
+    _set_default_kwarg_mandatory(kwargs, "must_be_nonnegative", True)
 
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
@@ -1004,12 +1004,12 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     if reshape:
         shape.append((1, 3))
         shape.append((3, 1))
-        _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
+        _set_default_kwarg_mandatory(kwargs, "reshape_to", (-1))
     if broadcast:
         shape.append(())  # allow 0D scalars
         shape.append((1,))  # 1D 1-element vectors
-        _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
-    _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
+        _set_default_kwarg_mandatory(kwargs, "broadcast_to", (3,))
+    _set_default_kwarg_mandatory(kwargs, "must_have_shape", shape)
 
     return validate_array(arr, **kwargs)
 

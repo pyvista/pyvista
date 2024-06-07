@@ -29,7 +29,7 @@ import pyvista as pv
 
 data_array = [8, 7, 6, 5, 4, 3, 2, 1]
 points_volume = pv.ImageData(dimensions=(2, 2, 2))
-points_volume.point_data['Data'] = data_array
+points_volume.point_data["Data"] = data_array
 
 ################################################################################
 # If we plot the volume, it is represented as a single cell with eight points,
@@ -64,11 +64,11 @@ cell_edges = cells_volume.extract_all_edges()
 
 plot = pv.Plotter()
 plot.add_mesh(points_volume, color=True, show_edges=True, opacity=0.7)
-plot.add_mesh(cell_edges, color='black', line_width=2)
+plot.add_mesh(cell_edges, color="black", line_width=2)
 plot.add_points(
     cell_centers,
     render_points_as_spheres=True,
-    color='red',
+    color="red",
     point_size=20,
 )
 plot.camera.azimuth = -25
@@ -94,13 +94,13 @@ np.array_equal(array_before, array_after)
 #
 # For context, we first show the input data array.
 
-points_volume.point_data['Data']
+points_volume.point_data["Data"]
 
 ################################################################################
 # Now apply the filter and print the result.
 
 points_ithresh = points_volume.image_threshold(2)
-points_ithresh.point_data['Data']
+points_ithresh.point_data["Data"]
 
 ################################################################################
 # The filter returns binary point data as expected. Values equal to or greater
@@ -132,13 +132,13 @@ points_ithresh_as_cells.plot(show_edges=True)
 #
 # For context, we first show the input data array.
 
-cells_volume.cell_data['Data']
+cells_volume.cell_data["Data"]
 
 ################################################################################
 # Now apply the filter and print the result.
 
 cells_thresh = cells_volume.threshold(2)
-cells_thresh.cell_data['Data']
+cells_thresh.cell_data["Data"]
 
 ################################################################################
 # When the input is cell data, this filter returns seven discrete values greater
@@ -153,7 +153,7 @@ cells_thresh.plot(show_edges=True)
 # image, the filter does not produce the desired result.
 
 points_thresh = points_volume.threshold(2)
-points_thresh.point_data['Data']
+points_thresh.point_data["Data"]
 
 ################################################################################
 # In this case, since the image of the point only has a single cell, the filter has no
@@ -177,7 +177,7 @@ points_thresh.plot(show_edges=True)
 
 data_array = np.linspace(0, 255, 16, dtype=np.uint8)[::-1]
 points_image = pv.ImageData(dimensions=(4, 4, 1))
-points_image.point_data['Data'] = data_array
+points_image.point_data["Data"] = data_array
 
 ################################################################################
 # Plot the image. As before, the plot does not appear correct since the point
@@ -185,10 +185,10 @@ points_image.point_data['Data'] = data_array
 # (one for each pixel).
 
 plot_kwargs = dict(
-    cpos='xy',
-    zoom='tight',
+    cpos="xy",
+    zoom="tight",
     show_axes=False,
-    cmap='gray',
+    cmap="gray",
     clim=[0, 255],
     show_edges=True,
 )
@@ -213,11 +213,11 @@ cell_centers = cells_image.cell_centers()
 
 plot = pv.Plotter()
 plot.add_mesh(points_image, color=True, opacity=0.7)
-plot.add_mesh(cells_image, style='wireframe', color='black', line_width=2)
+plot.add_mesh(cells_image, style="wireframe", color="black", line_width=2)
 plot.add_points(
     cell_centers,
     render_points_as_spheres=True,
-    color='red',
+    color="red",
     point_size=20,
 )
 plot.view_xy()

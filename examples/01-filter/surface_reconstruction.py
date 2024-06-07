@@ -26,8 +26,8 @@ surf
 
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(points)
-pl.add_title('Point Cloud of 3D Surface')
+pl.add_title("Point Cloud of 3D Surface")
 pl.subplot(0, 1)
 pl.add_mesh(surf, color=True, show_edges=True)
-pl.add_title('Reconstructed Surface')
+pl.add_title("Reconstructed Surface")
 pl.show()

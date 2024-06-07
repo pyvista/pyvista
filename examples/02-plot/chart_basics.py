@@ -54,7 +54,7 @@ x = np.arange(11)
 y = rng.integers(-5, 6, 11)
 chart = pv.Chart2D()
 chart.background_color = (0.5, 0.9, 0.5)  # Use custom background color for chart
-chart.plot(x, y, 'x--b')  # Marker style 'x', striped line style '--', blue color 'b'
+chart.plot(x, y, "x--b")  # Marker style 'x', striped line style '--', blue color 'b'
 chart.show()
 
 ###############################################################################
@@ -168,6 +168,6 @@ ax.set_title("$B(\\alpha, \\beta)$")
 # Next, embed the figure into a pyvista plotting window
 p = pv.Plotter()
 chart = pv.ChartMPL(f)
-chart.background_color = 'w'
+chart.background_color = "w"
 p.add_chart(chart)
 p.show()

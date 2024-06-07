@@ -35,7 +35,7 @@ mesh = examples.download_nefertiti()
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh_clip_box(mesh, color='white')
+p.add_mesh_clip_box(mesh, color="white")
 p.show(cpos=[-1, -1, 0.2])
 
 

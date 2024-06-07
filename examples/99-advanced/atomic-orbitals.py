@@ -80,8 +80,8 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 pl = pv.Plotter()
-vol = pl.add_volume(grid, cmap='magma', opacity=[1, 0, 1])
-vol.prop.interpolation_type = 'linear'
+vol = pl.add_volume(grid, cmap="magma", opacity=[1, 0, 1])
+vol.prop.interpolation_type = "linear"
 pl.camera.zoom(2)
 pl.show_axes()
 pl.show()
@@ -98,11 +98,11 @@ pl.show()
 # :func:`contour() <pyvista.DataSetFilters.contour>` to capture where the
 # positive and negative phases cross ``eval_at``.
 
-eval_at = grid['real_wf'].max() * 0.1
+eval_at = grid["real_wf"].max() * 0.1
 contours = grid.contour(
     [eval_at],
-    scalars=np.abs(grid['real_wf']),
-    method='marching_cubes',
+    scalars=np.abs(grid["real_wf"]),
+    method="marching_cubes",
 )
 contours = contours.interpolate(grid)
 contours.plot(
@@ -134,26 +134,26 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 
-def plot_orbital(orbital, cpos='iso', clip_plane='x'):
+def plot_orbital(orbital, cpos="iso", clip_plane="x"):
     """Plot an electron orbital using an RGBA colormap."""
-    neg_mask = orbital['real_wf'] < 0
+    neg_mask = orbital["real_wf"] < 0
     rgba = np.zeros((orbital.n_points, 4), np.uint8)
     rgba[neg_mask, 0] = 255
     rgba[~neg_mask, 1] = 255
 
     # normalize opacity
-    opac = np.abs(orbital['real_wf']) ** 2
+    opac = np.abs(orbital["real_wf"]) ** 2
     opac /= opac.max()
     rgba[:, -1] = opac * 255
 
-    orbital['plot_scalars'] = rgba
+    orbital["plot_scalars"] = rgba
 
     pl = pv.Plotter()
     vol = pl.add_volume(
         orbital,
-        scalars='plot_scalars',
+        scalars="plot_scalars",
     )
-    vol.prop.interpolation_type = 'linear'
+    vol.prop.interpolation_type = "linear"
     if clip_plane:
         pl.add_volume_clip_plane(
             vol,
@@ -167,7 +167,7 @@ def plot_orbital(orbital, cpos='iso', clip_plane='x'):
 
 
 hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
-plot_orbital(hydro_orbital, clip_plane='-x')
+plot_orbital(hydro_orbital, clip_plane="-x")
 
 
 ###############################################################################
@@ -179,7 +179,7 @@ plot_orbital(hydro_orbital, clip_plane='-x')
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
-plot_orbital(hydro_orbital, clip_plane='-y')
+plot_orbital(hydro_orbital, clip_plane="-y")
 
 
 ###############################################################################
@@ -191,7 +191,7 @@ plot_orbital(hydro_orbital, clip_plane='-y')
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
-plot_orbital(hydro_orbital, clip_plane='-y')
+plot_orbital(hydro_orbital, clip_plane="-y")
 
 
 ###############################################################################
@@ -208,7 +208,7 @@ rng = np.random.default_rng(seed=0)
 # Generate the orbital and sample based on the square of the probability of an
 # electron being within a particular volume of space.
 hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0, zoom_fac=0.5)
-prob = np.abs(hydro_orbital['real_wf']) ** 2
+prob = np.abs(hydro_orbital["real_wf"]) ** 2
 prob /= prob.sum()
 indices = rng.choice(hydro_orbital.n_points, 10000, p=prob)
 
@@ -219,7 +219,7 @@ points += rng.random(points.shape) - 0.5
 
 # Create a point cloud and add the phase as the active scalars
 point_cloud = pv.PolyData(points)
-point_cloud['phase'] = hydro_orbital['real_wf'][indices] < 0
+point_cloud["phase"] = hydro_orbital["real_wf"][indices] < 0
 
 # Turn the point cloud into individual spheres. We do this so we can improve
 # the plot by enabling surface space ambient occlusion (SSAO)
@@ -236,13 +236,13 @@ pl.add_mesh(
     dplot,
     smooth_shading=True,
     show_scalar_bar=False,
-    cmap=['red', 'green'],
+    cmap=["red", "green"],
     ambient=0.2,
 )
 pl.enable_ssao(radius=10)
 pl.enable_anti_aliasing()
 pl.camera.zoom(2)
-pl.background_color = 'w'
+pl.background_color = "w"
 pl.show()
 
 
@@ -258,12 +258,12 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 point_cloud.plot(
-    style='points_gaussian',
+    style="points_gaussian",
     render_points_as_spheres=False,
     point_size=3,
     emissive=True,
-    background='k',
+    background="k",
     show_scalar_bar=False,
-    cpos='xz',
+    cpos="xz",
     zoom=2,
 )

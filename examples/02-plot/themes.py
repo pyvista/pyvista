@@ -37,7 +37,7 @@ def plot_example():
 # Here's an example of our default plotting theme - this is what you
 # would see by default after running any of our examples locally.
 
-pv.set_plot_theme('default')
+pv.set_plot_theme("default")
 plot_example()
 
 ###############################################################################
@@ -128,7 +128,7 @@ cpos = pv.Sphere().plot()
 from pyvista import themes
 
 my_theme = themes.DarkTheme()
-my_theme.color = 'red'
+my_theme.color = "red"
 my_theme.lighting = False
 my_theme.show_edges = True
 my_theme.axes.box = True
@@ -151,11 +151,11 @@ cpos = pv.Sphere().plot()
 from pyvista import themes
 
 my_theme = themes.DocumentTheme()
-my_theme.color = 'black'
+my_theme.color = "black"
 my_theme.lighting = True
 my_theme.show_edges = True
-my_theme.edge_color = 'white'
-my_theme.background = 'white'
+my_theme.edge_color = "white"
+my_theme.background = "white"
 
 cpos = pv.Sphere().plot(theme=my_theme)
 

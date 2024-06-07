@@ -24,7 +24,7 @@ from .tools import opacity_transfer_function
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
-RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
+RAMP_MAP = {0: "linear", 1: "s-curve", 2: "sqrt"}
 RAMP_MAP_INV = {k: v for v, k in RAMP_MAP.items()}
 
 
@@ -54,8 +54,8 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
         """Finalize array (associate with parent metadata)."""
         _vtk.VTKArray.__array_finalize__(self, obj)
         if np.shares_memory(self, obj):
-            self.table = getattr(obj, 'table', None)
-            self.VTKObject = getattr(obj, 'VTKObject', None)
+            self.table = getattr(obj, "table", None)
+            self.VTKObject = getattr(obj, "VTKObject", None)
         else:
             self.table = None
             self.VTKObject = None
@@ -187,7 +187,7 @@ class LookupTable(_vtk.vtkLookupTable):
     Plot the lookup table with the ``'inferno'`` color map.
 
     >>> import pyvista as pv
-    >>> lut = pv.LookupTable('inferno', n_values=32)
+    >>> lut = pv.LookupTable("inferno", n_values=32)
     >>> lut
     LookupTable (...)
       Table Range:                (0.0, 1.0)
@@ -204,7 +204,7 @@ class LookupTable(_vtk.vtkLookupTable):
     _nan_color_set = False
     _cmap = None
     _values_manual = False
-    _opacity_parm: Tuple[Any, bool, str] = (None, False, 'quadratic')
+    _opacity_parm: Tuple[Any, bool, str] = (None, False, "quadratic")
 
     def __init__(
         self,
@@ -225,7 +225,7 @@ class LookupTable(_vtk.vtkLookupTable):
     ):
         """Initialize the lookup table."""
         if cmap is not None and values is not None:
-            raise ValueError('Cannot set both `cmap` and `values`.')
+            raise ValueError("Cannot set both `cmap` and `values`.")
 
         if cmap is not None:
             self.apply_cmap(cmap, n_values=n_values, flip=flip)
@@ -339,14 +339,14 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.cmap = 'Oranges'
+        >>> lut.cmap = "Oranges"
         >>> lut.plot()
 
         Apply a list of colors as a colormap.
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.cmap = ['black', 'red', 'orange']
+        >>> lut.cmap = ["black", "red", "orange"]
         >>> lut.plot()
 
         """
@@ -382,23 +382,23 @@ class LookupTable(_vtk.vtkLookupTable):
 
     def __repr__(self):
         """Return the representation."""
-        lines = [f'{type(self).__name__} ({hex(id(self))})']
-        lines.append(f'  Table Range:                {self.scalar_range}')
-        lines.append(f'  N Values:                   {self.n_values}')
-        lines.append(f'  Above Range Color:          {self.above_range_color}')
-        lines.append(f'  Below Range Color:          {self.below_range_color}')
-        lines.append(f'  NAN Color:                  {self.nan_color}')
-        lines.append(f'  Log Scale:                  {self.log_scale}')
+        lines = [f"{type(self).__name__} ({hex(id(self))})"]
+        lines.append(f"  Table Range:                {self.scalar_range}")
+        lines.append(f"  N Values:                   {self.n_values}")
+        lines.append(f"  Above Range Color:          {self.above_range_color}")
+        lines.append(f"  Below Range Color:          {self.below_range_color}")
+        lines.append(f"  NAN Color:                  {self.nan_color}")
+        lines.append(f"  Log Scale:                  {self.log_scale}")
 
         lines.append(f'  Color Map:                  "{self._lookup_type}"')
         if not (self.cmap or self._values_manual):
-            lines.append(f'    Alpha Range:              {self.alpha_range}')
-            lines.append(f'    Hue Range:                {self.hue_range}')
-            lines.append(f'    Saturation Range          {self.saturation_range}')
-            lines.append(f'    Value Range               {self.value_range}')
-            lines.append(f'    Ramp                      {self.ramp}')
+            lines.append(f"    Alpha Range:              {self.alpha_range}")
+            lines.append(f"    Hue Range:                {self.hue_range}")
+            lines.append(f"    Saturation Range          {self.saturation_range}")
+            lines.append(f"    Value Range               {self.value_range}")
+            lines.append(f"    Ramp                      {self.ramp}")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     @property
     def scalar_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
@@ -442,7 +442,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> lut = pv.LookupTable()
         >>> lut.hue_range = (0.7, 0.7)
         >>> lut.alpha_range = (1.0, 0.0)
-        >>> lut.plot(background='grey')
+        >>> lut.plot(background="grey")
 
         """
         if self._cmap:
@@ -472,7 +472,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> lut = pv.LookupTable()
         >>> lut.hue_range = (0.7, 0.7)
         >>> lut.saturation_range = (0.0, 1.0)
-        >>> lut.plot(background='grey')
+        >>> lut.plot(background="grey")
 
         """
         if self._cmap:
@@ -512,7 +512,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.nan_color = 'grey'
+        >>> lut.nan_color = "grey"
         >>> lut.plot()
 
         """
@@ -536,7 +536,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.nan_color = 'grey'
+        >>> lut.nan_color = "grey"
         >>> lut.nan_opacity = 0.5
         >>> lut.plot()
 
@@ -581,7 +581,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
         >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 's-curve'
+        >>> lut.ramp = "s-curve"
         >>> lut.plot()
 
         Plot the linear ramp.
@@ -589,7 +589,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
         >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 'linear'
+        >>> lut.ramp = "linear"
         >>> lut.plot()
 
         Plot the ``"sqrt"`` ramp.
@@ -597,7 +597,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
         >>> lut.hue_range = (0.0, 0.33)
-        >>> lut.ramp = 'sqrt'
+        >>> lut.ramp = "sqrt"
         >>> lut.plot()
 
         """
@@ -608,7 +608,7 @@ class LookupTable(_vtk.vtkLookupTable):
         try:
             self.SetRamp(RAMP_MAP_INV[value])
         except KeyError:
-            raise ValueError(f'`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}')
+            raise ValueError(f"`ramp` must be one of the following:\n{list(RAMP_MAP_INV.keys())}")
         self.rebuild()
 
     @property
@@ -624,7 +624,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.above_range_color = 'blue'
+        >>> lut.above_range_color = "blue"
         >>> lut.plot()
 
         Disable the usage of the above range color.
@@ -660,7 +660,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.above_range_color = 'grey'
+        >>> lut.above_range_color = "grey"
         >>> lut.above_range_opacity = 0.5
         >>> lut.plot()
 
@@ -688,7 +688,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.below_range_color = 'blue'
+        >>> lut.below_range_color = "blue"
         >>> lut.plot()
 
         Disable the usage of the below range color.
@@ -724,7 +724,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.below_range_color = 'grey'
+        >>> lut.below_range_color = "grey"
         >>> lut.below_range_opacity = 0.5
         >>> lut.plot()
 
@@ -763,7 +763,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         >>> import pyvista as pv
         >>> lut = pv.LookupTable()
-        >>> lut.apply_cmap('cividis', n_values=32)
+        >>> lut.apply_cmap("cividis", n_values=32)
         >>> lut.plot()
 
         """
@@ -785,7 +785,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         self._cmap = cmap
 
-    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = 'quadratic'):
+    def apply_opacity(self, opacity, interpolate: bool = True, kind: str = "quadratic"):
         """Assign custom opacity to this lookup table.
 
         Parameters
@@ -821,7 +821,7 @@ class LookupTable(_vtk.vtkLookupTable):
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
-        >>> lut = pv.LookupTable(cmap='viridis')
+        >>> lut = pv.LookupTable(cmap="viridis")
         >>> lut.apply_opacity([1.0, 0.4, 0.0, 0.4, 0.9])
         >>> lut.scalar_range = (
         ...     mesh.active_scalars.min(),
@@ -834,7 +834,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         if isinstance(opacity, (float, int)):
             if not 0 <= opacity <= 1:
-                raise ValueError(f'Opacity must be between 0 and 1, got {opacity}')
+                raise ValueError(f"Opacity must be between 0 and 1, got {opacity}")
             self.values[:, -1] = opacity * 255
         elif len(opacity) == self.n_values:
             # no interpolation is necessary
@@ -893,7 +893,7 @@ class LookupTable(_vtk.vtkLookupTable):
         Plot the ``"reds"`` colormap with 10 values.
 
         >>> import pyvista as pv
-        >>> lut = pv.LookupTable('reds')
+        >>> lut = pv.LookupTable("reds")
         >>> lut.n_values = 10
         >>> lut.plot()
 
@@ -914,7 +914,7 @@ class LookupTable(_vtk.vtkLookupTable):
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(
-                'Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.',
+                "Number of values cannot be set when the values array has been manually set. Reassign the values array if you wish to change the number of values.",
             )
         else:
             self.SetNumberOfColors(value)
@@ -933,8 +933,8 @@ class LookupTable(_vtk.vtkLookupTable):
         Assign annotations to the lookup table.
 
         >>> import pyvista as pv
-        >>> lut = pv.LookupTable('magma')
-        >>> lut.annotations = {0: 'low', 0.5: 'medium', 1: 'high'}
+        >>> lut = pv.LookupTable("magma")
+        >>> lut.annotations = {0: "low", 0.5: "medium", 1: "high"}
         >>> lut.plot()
 
         """
@@ -959,14 +959,14 @@ class LookupTable(_vtk.vtkLookupTable):
     def _lookup_type(self) -> str:
         """Return the lookup type."""
         if self.cmap:
-            if hasattr(self.cmap, 'name'):
-                return f'{self.cmap.name}'
+            if hasattr(self.cmap, "name"):
+                return f"{self.cmap.name}"
             else:  # pragma: no cover
-                return f'{self.cmap}'
+                return f"{self.cmap}"
         elif self._values_manual:
-            return 'From values array'
+            return "From values array"
         else:
-            return 'PyVista Lookup Table'
+            return "PyVista Lookup Table"
 
     def plot(self, **kwargs):
         """Plot this lookup table.
@@ -981,40 +981,40 @@ class LookupTable(_vtk.vtkLookupTable):
         Plot the ``"viridis"`` colormap with the below and above colors.
 
         >>> import pyvista as pv
-        >>> lut = pv.LookupTable('viridis', n_values=8)
-        >>> lut.below_range_color = 'black'
-        >>> lut.above_range_color = 'grey'
-        >>> lut.nan_color = 'r'
+        >>> lut = pv.LookupTable("viridis", n_values=8)
+        >>> lut.below_range_color = "black"
+        >>> lut.above_range_color = "grey"
+        >>> lut.nan_color = "r"
         >>> lut.plot()
 
         Plot only ``"blues"`` colormap.
 
         >>> import pyvista as pv
-        >>> lut = pv.LookupTable('blues', n_values=1024)
+        >>> lut = pv.LookupTable("blues", n_values=1024)
         >>> lut.plot()
 
         """
         # need a trivial polydata for this
         mesh = pyvista.PolyData(np.zeros((2, 3)))
-        mesh['Lookup Table'] = self.scalar_range
+        mesh["Lookup Table"] = self.scalar_range
 
-        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop('off_screen', None))
+        pl = pyvista.Plotter(window_size=(800, 230), off_screen=kwargs.pop("off_screen", None))
         actor = pl.add_mesh(mesh, scalars=None, show_scalar_bar=False)
         actor.mapper.lookup_table = self
         actor.visibility = False
 
         scalar_bar_kwargs = {
-            'color': 'k',
-            'title': self._lookup_type + '\n',
-            'outline': False,
-            'title_font_size': 40,
+            "color": "k",
+            "title": self._lookup_type + "\n",
+            "outline": False,
+            "title_font_size": 40,
         }
         label_level = 0
         if self.below_range_color:
-            scalar_bar_kwargs['below_label'] = 'below'
+            scalar_bar_kwargs["below_label"] = "below"
             label_level = 1
         if self.above_range_color:
-            scalar_bar_kwargs['above_label'] = 'above'
+            scalar_bar_kwargs["above_label"] = "above"
             label_level = 1
 
         label_level += self._nan_color_set
@@ -1028,7 +1028,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if self._nan_color_set and self.nan_opacity > 0:
             scalar_bar.SetDrawNanAnnotation(self._nan_color_set)
 
-        pl.background_color = kwargs.pop('background', 'w')
+        pl.background_color = kwargs.pop("background", "w")
         pl.show(**kwargs)
 
     def to_color_tf(self) -> _vtk.vtkColorTransferFunction:
@@ -1130,4 +1130,4 @@ class LookupTable(_vtk.vtkLookupTable):
             try:
                 return np.array([self.map_value(item) for item in value])
             except:
-                raise TypeError('LookupTable __call__ expects a single value or an iterable.')
+                raise TypeError("LookupTable __call__ expects a single value or an iterable.")

@@ -40,7 +40,7 @@ def test_single_cell_picking():
 
     width, height = plotter.window_size
     plotter.iren._mouse_move(width // 2, height // 2)
-    plotter.iren._simulate_keypress('p')
+    plotter.iren._simulate_keypress("p")
 
     plotter.close()
 
@@ -49,7 +49,7 @@ def test_single_cell_picking():
     assert plotter.picked_cells.n_cells == 1
 
 
-@pytest.mark.parametrize('through', [False, True])
+@pytest.mark.parametrize("through", [False, True])
 def test_multi_cell_picking(through):
     cube = pv.Cube()
 
@@ -66,7 +66,7 @@ def test_multi_cell_picking(through):
     plotter.add_mesh(cube, pickable=True)
     plotter.add_actor(actor)
     plotter.enable_cell_picking(
-        color='blue',
+        color="blue",
         through=through,
         start=True,
         show=True,
@@ -96,7 +96,7 @@ def test_multi_cell_picking(through):
         assert merged.n_cells < cube.n_cells + n_sphere_cells
 
 
-@pytest.mark.parametrize('left_clicking', [False, True])
+@pytest.mark.parametrize("left_clicking", [False, True])
 def test_mesh_picking(sphere, left_clicking):
     picked = []
 
@@ -152,7 +152,7 @@ def test_actor_picking(sphere):
     assert pl.picked_mesh is None
 
 
-@pytest.mark.parametrize('left_clicking', [False, True])
+@pytest.mark.parametrize("left_clicking", [False, True])
 def test_surface_point_picking(sphere, left_clicking):
     picked = []
 
@@ -183,7 +183,7 @@ def test_surface_point_picking(sphere, left_clicking):
     assert pl.picked_point is None
 
 
-@pytest.mark.parametrize('left_clicking', [False, True])
+@pytest.mark.parametrize("left_clicking", [False, True])
 def test_disable_picking(sphere, left_clicking):
     pl = pv.Plotter()
     pl.add_mesh(sphere)
@@ -220,7 +220,7 @@ def test_cell_picking_interactive():
     width, height = pl.window_size
 
     # simulate "r" keypress
-    pl.iren._simulate_keypress('r')
+    pl.iren._simulate_keypress("r")
     pl.iren._mouse_left_button_press(width // 2, height // 2)
     pl.iren._mouse_left_button_release(width, height)
 
@@ -245,7 +245,7 @@ def test_cell_picking_interactive_subplot():
     width, height = pl.window_size
 
     # Activate picking
-    pl.iren._simulate_keypress('r')
+    pl.iren._simulate_keypress("r")
 
     # select just the left-hand side
     pl.iren._mouse_left_button_press(width // 4, height // 2)
@@ -264,7 +264,7 @@ def test_cell_picking_interactive_subplot():
     assert pl.picked_cells.get_cell(0).type == pv.CellType.QUAD
 
 
-@pytest.mark.parametrize('left_clicking', [False, True])
+@pytest.mark.parametrize("left_clicking", [False, True])
 def test_point_picking(left_clicking):
     picked = []
 
@@ -297,10 +297,10 @@ def test_point_picking(left_clicking):
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 2, 0),
-    reason='Hardware picker unavailable for VTK<9.2',
+    reason="Hardware picker unavailable for VTK<9.2",
 )
-@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
-@pytest.mark.parametrize('pickable_window', [False, True])
+@pytest.mark.skipif(os.name == "nt", reason="Test fails on Windows")
+@pytest.mark.parametrize("pickable_window", [False, True])
 def test_point_picking_window(pickable_window):
     class Tracker:
         def __init__(self):
@@ -325,7 +325,7 @@ def test_point_picking_window(pickable_window):
         callback=tracker,
         tolerance=0.2,
         pickable_window=pickable_window,
-        picker='hardware',  # picker allows picking in the window
+        picker="hardware",  # picker allows picking in the window
         # do not use point picker as it snaps to points
     )
 
@@ -365,7 +365,7 @@ def test_path_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = pl.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks["c"]
     clear_callback[0]()
     pl.close()
 
@@ -392,7 +392,7 @@ def test_geodesic_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = pl.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks["c"]
     clear_callback[0]()
     pl.close()
 
@@ -418,7 +418,7 @@ def test_horizon_picking():
     # pick nothing
     picker.Pick(0, 0, 0, renderer)
     # 'c' to clear
-    clear_callback = pl.iren._key_press_event_callbacks['c']
+    clear_callback = pl.iren._key_press_event_callbacks["c"]
     clear_callback[0]()
     pl.close()
 
@@ -486,7 +486,7 @@ def test_block_picking(multiblock_poly):
     picked_blocks = []
 
     def turn_blue(index, dataset):
-        mapper.block_attr[index].color = 'blue'
+        mapper.block_attr[index].color = "blue"
         picked_blocks.append(index)
 
     pl.enable_block_picking(callback=turn_blue)
@@ -504,7 +504,7 @@ def test_block_picking(multiblock_poly):
     assert pl.picked_block_index == picked_blocks[0]
 
 
-@pytest.mark.parametrize('mode', ['mesh', 'cell', 'face', 'edge', 'point'])
+@pytest.mark.parametrize("mode", ["mesh", "cell", "face", "edge", "point"])
 def test_element_picking(mode):
     class Tracker:
         def __init__(self):
@@ -538,15 +538,15 @@ def test_element_picking(mode):
 
     assert tracker.last_picked is not None
 
-    if mode == 'mesh':
+    if mode == "mesh":
         assert tracker.last_picked == mesh
-    elif mode == 'cell':
+    elif mode == "cell":
         assert tracker.last_picked.n_points == 8
-    elif mode == 'face':
+    elif mode == "face":
         assert tracker.last_picked.n_points == 4
-    elif mode == 'edge':
+    elif mode == "edge":
         assert tracker.last_picked.n_points == 2
-    elif mode == 'point':
+    elif mode == "point":
         assert isinstance(tracker.last_picked, pv.PolyData)
         assert tracker.last_picked.n_points == 1
 
@@ -566,7 +566,7 @@ def test_switch_picking_type():
         pl.enable_point_picking()
 
     pl.show(auto_close=False, interactive=False)
-    pl.iren._simulate_keypress('r')
+    pl.iren._simulate_keypress("r")
     pl.iren._mouse_left_button_press(width // 4, height // 4)
     pl.iren._mouse_left_button_release(width, height)
 

@@ -28,7 +28,7 @@ ctrl.on_server_ready.add(ctrl.view_update)
 mesh = pv.Cone()
 
 pl = pv.Plotter()
-actor = pl.add_mesh(mesh, color='seagreen')
+actor = pl.add_mesh(mesh, color="seagreen")
 
 
 # -----------------------------------------------------------------------------

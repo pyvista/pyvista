@@ -19,7 +19,7 @@ cpos = [(0.036, 0.367, 0.884), (0.024, 0.033, -0.022), (-0.303, 0.895, -0.325)]
 # We can easily display all vertices of a mesh with a ``points`` style
 # representation when plotting:
 pl = pv.Plotter()
-pl.add_mesh(mesh, style='points', color='magenta', render_points_as_spheres=True, point_size=10)
+pl.add_mesh(mesh, style="points", color="magenta", render_points_as_spheres=True, point_size=10)
 pl.show(cpos=cpos)
 
 
@@ -42,7 +42,7 @@ pl = pv.Plotter()
 pl.add_mesh(
     mesh,
     show_edges=True,
-    vertex_color='magenta',
+    vertex_color="magenta",
     render_points_as_spheres=True,
     point_size=10,
     show_vertices=True,
@@ -71,7 +71,7 @@ pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_points(
     surf_points,
-    color='magenta',
+    color="magenta",
     render_points_as_spheres=True,
     point_size=10,
     scalars=surf_points[:, 1],

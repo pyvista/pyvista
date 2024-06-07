@@ -33,7 +33,7 @@ elevation
 ###############################################################################
 # Let's inspect the imagery that we just loaded.
 
-mpl.rcParams['figure.dpi'] = 500
+mpl.rcParams["figure.dpi"] = 500
 plt.imshow(topo_map.to_array())
 
 

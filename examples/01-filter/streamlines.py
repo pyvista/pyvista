@@ -87,7 +87,7 @@ p.show()
 # inlet surface is extracted just inside the domain for use as the seed for
 # the streamlines.
 
-source_mesh = mesh.slice('z', origin=(0, 0, 182))  # inlet surface
+source_mesh = mesh.slice("z", origin=(0, 0, 182))  # inlet surface
 # thin out ~40% points to get a nice density of streamlines
 seed_mesh = source_mesh.decimate_boundary(0.4)
 streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction="forward")
@@ -153,10 +153,10 @@ vectors[:, 0] = np.sin(np.pi * x) * np.cos(np.pi * y) * np.cos(np.pi * z)
 vectors[:, 1] = -np.cos(np.pi * x) * np.sin(np.pi * y) * np.cos(np.pi * z)
 vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.sin(np.pi * z)
 
-mesh['vectors'] = vectors
+mesh["vectors"] = vectors
 ###############################################################################
 stream, src = mesh.streamlines(
-    'vectors',
+    "vectors",
     return_source=True,
     terminal_speed=0.0,
     n_points=200,

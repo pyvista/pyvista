@@ -42,7 +42,7 @@ sampled = pv.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(xdim, ydi
 
 # warp and plot the sampled noise
 warped_noise = sampled.warp_by_scalar()
-warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
+warped_noise.plot(show_scalar_bar=False, text="Perlin Noise", lighting=False)
 
 
 ###############################################################################
@@ -70,21 +70,21 @@ subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 # to :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`.
 
 # scale to make the plot viewable
-subset['scalars'] = np.abs(subset.active_scalars)
+subset["scalars"] = np.abs(subset.active_scalars)
 warped_subset = subset.warp_by_scalar(factor=0.0001)
 
-pl = pv.Plotter(lighting='three lights')
-pl.add_mesh(warped_subset, cmap='blues', show_scalar_bar=False)
+pl = pv.Plotter(lighting="three lights")
+pl.add_mesh(warped_subset, cmap="blues", show_scalar_bar=False)
 pl.show_bounds(
     axes_ranges=(0, max_freq, 0, max_freq, 0, warped_subset.bounds[-1]),
-    xtitle='X Frequency',
-    ytitle='Y Frequency',
-    ztitle='Amplitude',
+    xtitle="X Frequency",
+    ytitle="Y Frequency",
+    ztitle="Amplitude",
     show_zlabels=False,
-    color='k',
+    color="k",
     font_size=26,
 )
-pl.add_text('Frequency Domain of the Perlin Noise')
+pl.add_text("Frequency Domain of the Perlin Noise")
 pl.show()
 
 
@@ -101,9 +101,9 @@ pl.show()
 # As expected, we only see low frequency noise.
 
 low_pass = sampled_fft.low_pass(1.0, 1.0, 1.0).rfft()
-low_pass['scalars'] = np.real(low_pass.active_scalars)
+low_pass["scalars"] = np.real(low_pass.active_scalars)
 warped_low_pass = low_pass.warp_by_scalar()
-warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False)
+warped_low_pass.plot(show_scalar_bar=False, text="Low Pass of the Perlin Noise", lighting=False)
 
 
 ###############################################################################
@@ -120,9 +120,9 @@ warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise',
 # frequency noise has been attenuated.
 
 high_pass = sampled_fft.high_pass(1.0, 1.0, 1.0).rfft()
-high_pass['scalars'] = np.real(high_pass.active_scalars)
+high_pass["scalars"] = np.real(high_pass.active_scalars)
 warped_high_pass = high_pass.warp_by_scalar()
-warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False)
+warped_high_pass.plot(show_scalar_bar=False, text="High Pass of the Perlin Noise", lighting=False)
 
 
 ###############################################################################
@@ -131,19 +131,19 @@ warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise
 # Show that the sum of the low and high passes equals the original noise.
 
 grid = pv.ImageData(dimensions=sampled.dimensions, spacing=sampled.spacing)
-grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
+grid["scalars"] = high_pass["scalars"] + low_pass["scalars"]
 
 print(
-    'Low and High Pass identical to the original:',
-    np.allclose(grid['scalars'], sampled['scalars']),
+    "Low and High Pass identical to the original:",
+    np.allclose(grid["scalars"], sampled["scalars"]),
 )
 
 pl = pv.Plotter(shape=(1, 2))
 pl.add_mesh(sampled.warp_by_scalar(), show_scalar_bar=False, lighting=False)
-pl.add_text('Original Dataset')
+pl.add_text("Original Dataset")
 pl.subplot(0, 1)
 pl.add_mesh(grid.warp_by_scalar(), show_scalar_bar=False, lighting=False)
-pl.add_text('Sum of the Low and High Passes')
+pl.add_text("Sum of the Low and High Passes")
 pl.show()
 
 
@@ -156,18 +156,18 @@ pl.show()
 def warp_low_pass_noise(cfreq, scalar_ptp=None):
     """Process the sampled FFT and warp by scalars."""
     if scalar_ptp is None:
-        scalar_ptp = np.ptp(sampled['scalars'])
+        scalar_ptp = np.ptp(sampled["scalars"])
     output = sampled_fft.low_pass(cfreq, cfreq, cfreq).rfft()
 
     # on the left: raw FFT magnitude
-    output['scalars'] = output.active_scalars.real
+    output["scalars"] = output.active_scalars.real
     warped_raw = output.warp_by_scalar()
 
     # on the right: scale to fixed warped height
     output_scaled = output.translate((-11, 11, 0), inplace=False)
-    output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
-    warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
-    warped_scaled.active_scalars_name = 'scalars'
+    output_scaled["scalars_warp"] = output["scalars"] / np.ptp(output["scalars"]) * scalar_ptp
+    warped_scaled = output_scaled.warp_by_scalar("scalars_warp")
+    warped_scaled.active_scalars_name = "scalars"
     # push center back to xy plane due to peaks near 0 frequency
     warped_scaled.translate((0, 0, -warped_scaled.center[-1]), inplace=True)
 

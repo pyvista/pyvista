@@ -101,7 +101,7 @@ with SinglePageLayout(server) as layout:
             classes="pa-0 fill-height",
         ):
             # Use PyVista UI template for Plotters
-            view = plotter_ui(pl, namespace='demo')
+            view = plotter_ui(pl, namespace="demo")
             ctrl.view_update = view.update
             ctrl.view_update_image = view.update_image
 

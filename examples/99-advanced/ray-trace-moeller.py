@@ -98,10 +98,10 @@ direction = np.array([0, 0, -1])
 inter, tuv = ray_triangle_intersection(start, direction, points)
 t, u, v = tuv
 
-print('Intersected', inter)
-print('t:', t)
-print('u:', u)
-print('v:', v)
+print("Intersected", inter)
+print("t:", t)
+print("u:", u)
+print("v:", v)
 
 
 ###############################################################################
@@ -114,34 +114,34 @@ if inter:
     point = tri.points[0] * a + tri.points[1] * b + tri.points[2] * c
 
     pl = pv.Plotter()
-    pl.add_text(f'Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})', font_size=26)
+    pl.add_text(f"Intersected at ({point[0]:.3}, {point[0]:.3}, {point[0]:.3})", font_size=26)
     pl.add_mesh(tri)
     _ = pl.add_arrows(
         np.array([start]),
         np.array([direction]),
         show_scalar_bar=False,
-        color='r',
-        style='wireframe',
+        color="r",
+        style="wireframe",
     )
-    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color='b')
-    pl.add_point_labels(tri, [f'a = {1 - u - v:.3}', f'b = {u:.3}', f'c = {v:.3}'], font_size=40)
+    pl.add_points(np.array([point]), point_size=20, render_points_as_spheres=True, color="b")
+    pl.add_point_labels(tri, [f"a = {1 - u - v:.3}", f"b = {u:.3}", f"c = {v:.3}"], font_size=40)
     pl.show_bounds()
-    pl.camera_position = 'xy'
+    pl.camera_position = "xy"
     pl.show()
 
 else:  # no intersection
     pl = pv.Plotter()
-    pl.add_text('No intersection')
+    pl.add_text("No intersection")
     _ = pl.add_arrows(
         np.array([start]),
         np.array([direction]),
         show_scalar_bar=False,
-        color='r',
-        style='wireframe',
+        color="r",
+        style="wireframe",
     )
     pl.add_mesh(tri)
 
     pl.show_bounds()
-    pl.camera_position = 'xy'
+    pl.camera_position = "xy"
 
     pl.show()

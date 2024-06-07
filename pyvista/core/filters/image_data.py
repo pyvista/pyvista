@@ -87,11 +87,11 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                raise ValueError("If `scalars` not given, active scalars must be point array.")
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = self.get_array_association(scalars, preference="point")
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                raise ValueError("Can only process point data, given `scalars` are cell data.")
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -107,14 +107,14 @@ class ImageDataFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
-        _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
+        _update_alg(alg, progress_bar, "Performing Gaussian Smoothing")
         return _get_output(alg)
 
     def median_smooth(
         self,
         kernel_size=(3, 3, 3),
         scalars=None,
-        preference='point',
+        preference="point",
         progress_bar=False,
     ):
         """Smooth data using a median filter.
@@ -193,7 +193,7 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         alg.SetKernelSize(kernel_size[0], kernel_size[1], kernel_size[2])
-        _update_alg(alg, progress_bar, 'Performing Median Smoothing')
+        _update_alg(alg, progress_bar, "Performing Median Smoothing")
         return _get_output(alg)
 
     def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
@@ -240,7 +240,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
-        _update_alg(alg, progress_bar, 'Extracting Subset')
+        _update_alg(alg, progress_bar, "Extracting Subset")
         result = _get_output(alg)
         # Adjust for the confusing issue with the extents
         #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
@@ -326,11 +326,11 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)
             field, scalars = self.active_scalars_info
             if field.value == 1:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                raise ValueError("If `scalars` not given, active scalars must be point array.")
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = self.get_array_association(scalars, preference="point")
             if field.value == 1:
-                raise ValueError('Can only process point data, given `scalars` are cell data.')
+                raise ValueError("Can only process point data, given `scalars` are cell data.")
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -341,7 +341,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetKernelSize(*kernel_size)
         alg.SetDilateValue(dilate_value)
         alg.SetErodeValue(erode_value)
-        _update_alg(alg, progress_bar, 'Performing Dilation and Erosion')
+        _update_alg(alg, progress_bar, "Performing Dilation and Erosion")
         return _get_output(alg)
 
     def image_threshold(
@@ -350,7 +350,7 @@ class ImageDataFilters(DataSetFilters):
         in_value=1.0,
         out_value=0.0,
         scalars=None,
-        preference='point',
+        preference="point",
         progress_bar=False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
@@ -432,11 +432,11 @@ class ImageDataFilters(DataSetFilters):
         ) and array_dtype != np.dtype(np.uint8)
         cast_dtype = (
             has_int_dtype
-            and int(np.__version__.split('.')[0]) < 2
-            and platform.system() in ['Darwin', 'Linux']
+            and int(np.__version__.split(".")[0]) < 2
+            and platform.system() in ["Darwin", "Linux"]
         )
         if cast_dtype:
-            self[scalars] = self[scalars].astype(float, casting='safe')
+            self[scalars] = self[scalars].astype(float, casting="safe")
 
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
@@ -451,7 +451,7 @@ class ImageDataFilters(DataSetFilters):
         threshold_val = np.atleast_1d(threshold)
         if (size := threshold_val.size) not in (1, 2):
             raise ValueError(
-                f'Threshold must have one or two values, got {size}.',
+                f"Threshold must have one or two values, got {size}.",
             )
         if size == 2:
             alg.ThresholdBetween(threshold_val[0], threshold_val[1])
@@ -469,7 +469,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             alg.SetReplaceOut(False)
         # run the algorithm
-        _update_alg(alg, progress_bar, 'Performing Image Thresholding')
+        _update_alg(alg, progress_bar, "Performing Image Thresholding")
         output = _get_output(alg)
         if cast_dtype:
             self[scalars] = self[scalars].astype(array_dtype)
@@ -540,15 +540,15 @@ class ImageDataFilters(DataSetFilters):
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                raise MissingDataError('FFT filter requires point scalars.') from None
+                raise MissingDataError("FFT filter requires point scalars.") from None
 
             # possible only cell scalars were made active
             if self.point_data.active_scalars_name is None:
-                raise MissingDataError('FFT filter requires point scalars.')
+                raise MissingDataError("FFT filter requires point scalars.")
 
         alg = _vtk.vtkImageFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Fast Fourier Transform')
+        _update_alg(alg, progress_bar, "Performing Fast Fourier Transform")
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -620,7 +620,7 @@ class ImageDataFilters(DataSetFilters):
         self._check_fft_scalars()
         alg = _vtk.vtkImageRFFT()
         alg.SetInputDataObject(self)
-        _update_alg(alg, progress_bar, 'Performing Reverse Fast Fourier Transform.')
+        _update_alg(alg, progress_bar, "Performing Reverse Fast Fourier Transform.")
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -700,7 +700,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing Low Pass Filter')
+        _update_alg(alg, progress_bar, "Performing Low Pass Filter")
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -780,7 +780,7 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetCutOff(x_cutoff, y_cutoff, z_cutoff)
         alg.SetOrder(order)
-        _update_alg(alg, progress_bar, 'Performing High Pass Filter')
+        _update_alg(alg, progress_bar, "Performing High Pass Filter")
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
@@ -797,7 +797,7 @@ class ImageDataFilters(DataSetFilters):
             pdata[name] = pdata.pop(pdata.active_scalars_name)
 
         # always view the datatype of the point_data as complex128
-        dataset._association_complex_names['POINT'].add(name)
+        dataset._association_complex_names["POINT"].add(name)
 
     def _check_fft_scalars(self):
         """Check for complex active scalars.
@@ -809,20 +809,20 @@ class ImageDataFilters(DataSetFilters):
         if self.point_data.active_scalars_name is None:
             possible_scalars = self.point_data.keys()
             if len(possible_scalars) == 1:
-                self.set_active_scalars(possible_scalars[0], preference='point')
+                self.set_active_scalars(possible_scalars[0], preference="point")
             elif len(possible_scalars) > 1:
                 raise AmbiguousDataError(
-                    'There are multiple point scalars available. Set one to be '
-                    'active with `point_data.active_scalars_name = `',
+                    "There are multiple point scalars available. Set one to be "
+                    "active with `point_data.active_scalars_name = `",
                 )
             else:
-                raise MissingDataError('FFT filters require point scalars.')
+                raise MissingDataError("FFT filters require point scalars.")
 
         if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
             raise ValueError(
-                'Active scalars must be complex data for this filter, represented '
-                'as an array with a datatype of `numpy.complex64` or '
-                '`numpy.complex128`.',
+                "Active scalars must be complex data for this filter, represented "
+                "as an array with a datatype of `numpy.complex64` or "
+                "`numpy.complex128`.",
             )
 
     def _flip_uniform(self, axis) -> pyvista.ImageData:
@@ -844,8 +844,8 @@ class ImageDataFilters(DataSetFilters):
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
-        output_mesh_type: Literal['quads', 'triangles'] = 'quads',
-        output_style: Literal['default', 'boundary'] = 'default',
+        output_mesh_type: Literal["quads", "triangles"] = "quads",
+        output_style: Literal["default", "boundary"] = "default",
         scalars: str | None = None,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
@@ -921,22 +921,22 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+        if not hasattr(_vtk, "vtkSurfaceNets3D"):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+            raise VTKVersionError("Surface nets 3D require VTK 9.3.0 or newer.")
 
         alg = _vtk.vtkSurfaceNets3D()
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
-                raise ValueError('If `scalars` not given, active scalars must be point array.')
+                raise ValueError("If `scalars` not given, active scalars must be point array.")
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference="point")  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError(
-                    f'Can only process point data, given `scalars` are {field.name.lower()} data.',
+                    f"Can only process point data, given `scalars` are {field.name.lower()} data.",
                 )
         alg.SetInputArrayToProcess(
             0,
@@ -948,19 +948,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(self)
         if n_labels is not None:
             alg.GenerateLabels(n_labels, 1, n_labels)
-        if output_mesh_type == 'quads':
+        if output_mesh_type == "quads":
             alg.SetOutputMeshTypeToQuads()
-        elif output_mesh_type == 'triangles':
+        elif output_mesh_type == "triangles":
             alg.SetOutputMeshTypeToTriangles()
         else:
             raise ValueError(
                 f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
             )
-        if output_style == 'default':
+        if output_style == "default":
             alg.SetOutputStyleToDefault()
-        elif output_style == 'boundary':
+        elif output_style == "boundary":
             alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':
+        elif output_style == "selected":
             raise NotImplementedError(f'Output style "{output_style}" is not implemented')
         else:
             raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
@@ -974,7 +974,7 @@ class ImageDataFilters(DataSetFilters):
         # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
-        _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
+        _update_alg(alg, progress_bar, "Performing Labeled Surface Extraction")
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
@@ -1087,7 +1087,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference="point")  # type: ignore[attr-defined]
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1202,7 +1202,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference="cell")  # type: ignore[attr-defined]
             if field != FieldAssociation.CELL:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
@@ -1250,14 +1250,14 @@ class ImageDataFilters(DataSetFilters):
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
         if points_to_cells:
-            output_scalars = scalars if scalars else _get_output_scalars('point')
+            output_scalars = scalars if scalars else _get_output_scalars("point")
             # Enlarge image so points become cell centers
             origin_operator = operator.sub
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
         else:  # cells_to_points
-            output_scalars = scalars if scalars else _get_output_scalars('cell')
+            output_scalars = scalars if scalars else _get_output_scalars("cell")
             # Shrink image so cell centers become points
             origin_operator = operator.add
             dims_operator = operator.sub  # Decrease dimensions
@@ -1290,7 +1290,7 @@ class ImageDataFilters(DataSetFilters):
 
     def pad_image(
         self,
-        pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
+        pad_value: float | VectorLike[float] | Literal["wrap", "mirror"] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
         pad_singleton_dims: bool = False,
@@ -1404,13 +1404,13 @@ class ImageDataFilters(DataSetFilters):
 
         Pad with wrapping.
 
-        >>> padded = gray_image.pad_image('wrap', pad_size=100)
+        >>> padded = gray_image.pad_image("wrap", pad_size=100)
         >>> plot = grayscale_image_plotter(padded)
         >>> plot.show()
 
         Pad with mirroring.
 
-        >>> padded = gray_image.pad_image('mirror', pad_size=100)
+        >>> padded = gray_image.pad_image("mirror", pad_size=100)
         >>> plot = grayscale_image_plotter(padded)
         >>> plot.show()
 
@@ -1422,16 +1422,16 @@ class ImageDataFilters(DataSetFilters):
         >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
         >>>
         >>> plot_kwargs = dict(
-        ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
+        ...     cpos="xy", zoom="tight", rgb=True, show_axes=False
         ... )
         >>> padded.plot(**plot_kwargs)
 
         Pad each edge of the image separately with a different color.
 
-        >>> orange = pv.Color('orange').int_rgba
-        >>> purple = pv.Color('purple').int_rgba
-        >>> blue = pv.Color('blue').int_rgba
-        >>> green = pv.Color('green').int_rgba
+        >>> orange = pv.Color("orange").int_rgba
+        >>> purple = pv.Color("purple").int_rgba
+        >>> blue = pv.Color("blue").int_rgba
+        >>> green = pv.Color("green").int_rgba
         >>>
         >>> padded = color_image.pad_image(orange, pad_size=(100, 0, 0, 0))
         >>> padded = padded.pad_image(purple, pad_size=(0, 100, 0, 0))
@@ -1450,7 +1450,7 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference="point")  # type: ignore[attr-defined]
         if field != FieldAssociation.POINT:
             raise ValueError(
                 f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1459,11 +1459,11 @@ class ImageDataFilters(DataSetFilters):
         # Process pad size to create a length-6 tuple (-X,+X,-Y,+Y,-Z,+Z)
         pad_sz = np.atleast_1d(pad_size)
         if not pad_sz.ndim == 1:
-            raise ValueError(f'Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.')
+            raise ValueError(f"Pad size must be one dimensional. Got {pad_sz.ndim} dimensions.")
         if not np.issubdtype(pad_sz.dtype, np.integer):
-            raise TypeError(f'Pad size must be integers. Got dtype {pad_sz.dtype.name}.')
+            raise TypeError(f"Pad size must be integers. Got dtype {pad_sz.dtype.name}.")
         if np.any(pad_sz < 0):
-            raise ValueError(f'Pad size cannot be negative. Got {pad_size}.')
+            raise ValueError(f"Pad size cannot be negative. Got {pad_size}.")
 
         length = len(pad_sz)
         if length == 1:
@@ -1512,9 +1512,9 @@ class ImageDataFilters(DataSetFilters):
             f"number/component vector for constant padding."
         )
         if isinstance(pad_value, str):
-            if pad_value == 'mirror':
+            if pad_value == "mirror":
                 alg = _vtk.vtkImageMirrorPad()
-            elif pad_value == 'wrap':
+            elif pad_value == "wrap":
                 alg = _vtk.vtkImageWrapPad()
             else:
                 raise ValueError(error_msg)
@@ -1565,11 +1565,11 @@ class ImageDataFilters(DataSetFilters):
             """
 
             def _update_and_get_output():
-                _update_alg(alg, progress_bar, 'Padding image')
+                _update_alg(alg, progress_bar, "Padding image")
                 return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
-            self.set_active_scalars(scalars_, preference='point')
+            self.set_active_scalars(scalars_, preference="point")
             if pad_multi_component is None:
                 return _update_and_get_output()
             else:
@@ -1607,5 +1607,5 @@ class ImageDataFilters(DataSetFilters):
             data.remove(cell_array)
 
         # Restore active scalars
-        self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
+        self.set_active_scalars(scalars, preference="point")  # type: ignore[attr-defined]
         return output

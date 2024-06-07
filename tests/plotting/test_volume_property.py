@@ -12,7 +12,7 @@ def vol_prop():
 
 
 def test_volume_lookup_table(vol_prop, skip_check_gc):
-    lut = pv.LookupTable(cmap='bwr')
+    lut = pv.LookupTable(cmap="bwr")
     lut.apply_opacity([1.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.3])
     orig = vol_prop.GetRGBTransferFunction()
     vol_prop.apply_lookup_table(lut)
@@ -22,12 +22,12 @@ def test_volume_lookup_table(vol_prop, skip_check_gc):
 def test_interpolation_type(vol_prop):
     assert isinstance(vol_prop.interpolation_type, str)
 
-    for interpolation_type in ['nearest', 'linear']:
+    for interpolation_type in ["nearest", "linear"]:
         vol_prop.interpolation_type = interpolation_type
         assert vol_prop.interpolation_type == interpolation_type
 
-    with pytest.raises(ValueError, match='must be either'):
-        vol_prop.interpolation_type = 'not valid'
+    with pytest.raises(ValueError, match="must be either"):
+        vol_prop.interpolation_type = "not valid"
 
 
 def test_volume_property_shade(vol_prop):
@@ -81,5 +81,5 @@ def test_volume_property_copy(vol_prop):
 
 
 def test_volume_property_repr(vol_prop):
-    assert 'Interpolation type:' in repr(vol_prop)
+    assert "Interpolation type:" in repr(vol_prop)
     assert "nearest" in repr(vol_prop)

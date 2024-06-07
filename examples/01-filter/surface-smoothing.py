@@ -65,7 +65,7 @@ orig_edges = surf.extract_feature_edges()
 pl = pv.Plotter()
 pl.add_mesh(smooth, show_edges=True, show_scalar_bar=False)
 pl.camera_position = cpos
-pl.add_mesh(orig_edges, show_scalar_bar=False, color='k', line_width=2)
+pl.add_mesh(orig_edges, show_scalar_bar=False, color="k", line_width=2)
 pl.show()
 
 
@@ -84,10 +84,10 @@ smooth_w_taubin = surf.smooth_taubin(n_iter=50, pass_band=0.05)
 pl = pv.Plotter()
 pl.add_mesh(smooth_w_taubin, show_edges=True, show_scalar_bar=False)
 pl.camera_position = cpos
-pl.add_mesh(orig_edges, show_scalar_bar=False, color='k', line_width=2)
+pl.add_mesh(orig_edges, show_scalar_bar=False, color="k", line_width=2)
 pl.show()
 
 # output the volumes of the original and smoothed meshes
-print(f'Original surface volume:   {surf.volume:.1f}')
-print(f'Laplacian smoothed volume: {smooth.volume:.1f}')
-print(f'Taubin smoothed volume:    {smooth_w_taubin.volume:.1f}')
+print(f"Original surface volume:   {surf.volume:.1f}")
+print(f"Laplacian smoothed volume: {smooth.volume:.1f}")
+print(f"Taubin smoothed volume:    {smooth_w_taubin.volume:.1f}")

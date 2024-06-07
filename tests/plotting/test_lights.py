@@ -8,20 +8,20 @@ import pyvista as pv
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
-    ('light_type', pv.Light.CAMERA_LIGHT, 'SetLightType'),  # resets transformation!
-    ('position', (1, 1, 1), 'SetPosition'),
-    ('focal_point', (2, 2, 2), 'SetFocalPoint'),
-    ('ambient_color', (1.0, 0.0, 0.0), 'SetAmbientColor'),
-    ('diffuse_color', (0.0, 1.0, 0.0), 'SetDiffuseColor'),
-    ('specular_color', (0.0, 0.0, 1.0), 'SetSpecularColor'),
-    ('intensity', 0.5, 'SetIntensity'),
-    ('on', False, 'SetSwitch'),
-    ('positional', True, 'SetPositional'),
-    ('exponent', 1.5, 'SetExponent'),
-    ('cone_angle', 45, 'SetConeAngle'),
-    ('attenuation_values', (3, 2, 1), 'SetAttenuationValues'),
-    ('transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetTransformMatrix'),
-    ('shadow_attenuation', 0.5, 'SetShadowAttenuation'),
+    ("light_type", pv.Light.CAMERA_LIGHT, "SetLightType"),  # resets transformation!
+    ("position", (1, 1, 1), "SetPosition"),
+    ("focal_point", (2, 2, 2), "SetFocalPoint"),
+    ("ambient_color", (1.0, 0.0, 0.0), "SetAmbientColor"),
+    ("diffuse_color", (0.0, 1.0, 0.0), "SetDiffuseColor"),
+    ("specular_color", (0.0, 0.0, 1.0), "SetSpecularColor"),
+    ("intensity", 0.5, "SetIntensity"),
+    ("on", False, "SetSwitch"),
+    ("positional", True, "SetPositional"),
+    ("exponent", 1.5, "SetExponent"),
+    ("cone_angle", 45, "SetConeAngle"),
+    ("attenuation_values", (3, 2, 1), "SetAttenuationValues"),
+    ("transform_matrix", np.arange(4 * 4).reshape(4, 4), "SetTransformMatrix"),
+    ("shadow_attenuation", 0.5, "SetShadowAttenuation"),
 ]
 
 
@@ -29,7 +29,7 @@ def test_init():
     position = (1, 1, 1)
     focal_point = (2, 2, 2)
     color = (0.5, 0.5, 0.5)
-    light_type = 'headlight'
+    light_type = "headlight"
     cone_angle = 15
     intensity = 2
     exponent = 1.5
@@ -133,16 +133,16 @@ def test_colors():
     assert light.ambient_color == color
 
     # test whether strings raise but don't test the result
-    for valid in 'white', 'r', '#c0ffee':
+    for valid in "white", "r", "#c0ffee":
         light.diffuse_color = valid
         light.specular_color = valid
         light.ambient_color = valid
     with pytest.raises(ValueError):  # noqa: PT011
-        light.diffuse_color = 'invalid'
+        light.diffuse_color = "invalid"
     with pytest.raises(ValueError):  # noqa: PT011
-        light.specular_color = 'invalid'
+        light.specular_color = "invalid"
     with pytest.raises(ValueError):  # noqa: PT011
-        light.ambient_color = 'invalid'
+        light.ambient_color = "invalid"
 
 
 def test_positioning():
@@ -202,7 +202,7 @@ def test_transforms():
     assert np.allclose(light.world_focal_point, linear_trans @ focal_point + shift)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        light.transform_matrix = 'invalid'
+        light.transform_matrix = "invalid"
 
 
 def test_intensity():
@@ -252,7 +252,7 @@ def test_shape():
 
 
 @pytest.mark.parametrize(
-    ('int_code', 'enum_code'),
+    ("int_code", "enum_code"),
     [
         (1, pv.Light.HEADLIGHT),
         (2, pv.Light.CAMERA_LIGHT),
@@ -285,14 +285,14 @@ def test_type_setters():
 
 def test_type_invalid():
     with pytest.raises(TypeError):
-        light = pv.Light(light_type=['invalid'])
+        light = pv.Light(light_type=["invalid"])
     with pytest.raises(ValueError):  # noqa: PT011
-        light = pv.Light(light_type='invalid')
+        light = pv.Light(light_type="invalid")
 
     light = pv.Light()
 
     with pytest.raises(TypeError):
-        light.light_type = ['invalid']
+        light.light_type = ["invalid"]
 
 
 def test_from_vtk():
@@ -315,9 +315,9 @@ def test_from_vtk():
 
     # invalid case
     with pytest.raises(TypeError):
-        pv.Light.from_vtk('invalid')
+        pv.Light.from_vtk("invalid")
     with pytest.raises(TypeError):
-        pv.Light('invalid')
+        pv.Light("invalid")
 
 
 def test_add_vtk_light():

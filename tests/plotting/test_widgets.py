@@ -103,7 +103,7 @@ def test_widget_plane(uniform):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(uniform)
-    p.add_plane_widget(callback=func, assign_to_axis='z', implicit=True)
+    p.add_plane_widget(callback=func, assign_to_axis="z", implicit=True)
     p.close()
 
     p = pv.Plotter()
@@ -153,12 +153,12 @@ def test_widget_text_slider(uniform):
     p = pv.Plotter()
     func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    with pytest.raises(TypeError, match='must be a list'):
-        p.add_text_slider_widget(callback=func, data='foo')
-    with pytest.raises(ValueError, match='list of values is empty'):
+    with pytest.raises(TypeError, match="must be a list"):
+        p.add_text_slider_widget(callback=func, data="foo")
+    with pytest.raises(ValueError, match="list of values is empty"):
         p.add_text_slider_widget(callback=func, data=[])
     for style in pv.global_theme.slider_styles:
-        p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
+        p.add_text_slider_widget(callback=func, data=["foo", "bar"], style=style)
     p.close()
 
 
@@ -170,16 +170,16 @@ def test_widget_slider(uniform):
     p.close()
 
     p = pv.Plotter()
-    for interaction_event in ['start', 'end', 'always']:
+    for interaction_event in ["start", "end", "always"]:
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=interaction_event)
-    with pytest.raises(TypeError, match='type for ``style``'):
+    with pytest.raises(TypeError, match="type for ``style``"):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
         p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
-    with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
+    with pytest.raises(TypeError, match="Expected type for `interaction_event`"):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
-    with pytest.raises(ValueError, match='Expected value for `interaction_event`'):
-        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event='foo')
+    with pytest.raises(ValueError, match="Expected value for `interaction_event`"):
+        p.add_slider_widget(callback=func, rng=[0, 10], interaction_event="foo")
     p.close()
 
     p = pv.Plotter()
@@ -256,7 +256,7 @@ def test_widget_spline(uniform):
     p = pv.Plotter()
     p.add_mesh(uniform)
     pts = np.array([[1, 5, 4], [2, 4, 9], [3, 6, 2]])
-    with pytest.raises(ValueError, match='`initial_points` must be length `n_handles`'):
+    with pytest.raises(ValueError, match="`initial_points` must be length `n_handles`"):
         p.add_spline_widget(callback=func, n_handles=4, initial_points=pts)
     p.add_spline_widget(callback=func, n_handles=3, initial_points=pts)
     p.close()
@@ -328,7 +328,7 @@ def test_widget_closed(uniform):
     pl = pv.Plotter()
     pl.add_mesh(uniform)
     pl.close()
-    with pytest.raises(RuntimeError, match='closed plotter'):
+    with pytest.raises(RuntimeError, match="closed plotter"):
         pl.add_checkbox_button_widget(callback=lambda value: value)
 
 
@@ -371,7 +371,7 @@ def test_plot_algorithm_widgets():
 
 def test_add_volume_clip_plane(uniform):
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match='The `volume` parameter type must'):
+    with pytest.raises(TypeError, match="The `volume` parameter type must"):
         pl.add_volume_clip_plane(pv.Sphere())
 
     widget = pl.add_volume_clip_plane(uniform)
@@ -472,14 +472,14 @@ def test_affine_widget(sphere):
             pl.add_affine_transform_widget(actor)
         return
 
-    with pytest.raises(TypeError, match='callable'):
-        pl.add_affine_transform_widget(actor, interact_callback='foo')
+    with pytest.raises(TypeError, match="callable"):
+        pl.add_affine_transform_widget(actor, interact_callback="foo")
 
-    with pytest.raises(ValueError, match='(3, 3)'):
+    with pytest.raises(ValueError, match="(3, 3)"):
         pl.add_affine_transform_widget(actor, axes=np.eye(5))
 
     axes = [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
-    with pytest.raises(ValueError, match='right hand'):
+    with pytest.raises(ValueError, match="right hand"):
         pl.add_affine_transform_widget(actor, axes=axes)
 
     widget = pl.add_affine_transform_widget(
@@ -627,7 +627,7 @@ def test_logo_widget(verify_image_cache):
     pl.show()
 
     pl = pv.Plotter()
-    with pytest.raises(TypeError, match='must be a pyvista.ImageData or a file path'):
+    with pytest.raises(TypeError, match="must be a pyvista.ImageData or a file path"):
         pl.add_logo_widget(logo=0)
 
 
@@ -658,7 +658,7 @@ def test_clear_box_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_box_widget(None)
     pl.clear_box_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_plane_widget(verify_image_cache):
@@ -667,7 +667,7 @@ def test_clear_plane_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_plane_widget(None)
     pl.clear_plane_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_line_widget(verify_image_cache):
@@ -676,7 +676,7 @@ def test_clear_line_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_line_widget(None)
     pl.clear_line_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_slider_widget(verify_image_cache):
@@ -685,7 +685,7 @@ def test_clear_slider_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_slider_widget(None, [0, 1])
     pl.clear_slider_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_spline_widget(verify_image_cache):
@@ -694,7 +694,7 @@ def test_clear_spline_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_spline_widget(None)
     pl.clear_spline_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_measure_widget(verify_image_cache):
@@ -703,7 +703,7 @@ def test_clear_measure_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_measurement_widget(None)
     pl.clear_measure_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_sphere_widget(verify_image_cache):
@@ -712,7 +712,7 @@ def test_clear_sphere_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_sphere_widget(None)
     pl.clear_sphere_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 @pytest.mark.needs_vtk_version(9, 1)
@@ -722,7 +722,7 @@ def test_clear_camera_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_camera_orientation_widget()
     pl.clear_camera_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_button_widget(verify_image_cache):
@@ -731,7 +731,7 @@ def test_clear_button_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_checkbox_button_widget(None)
     pl.clear_button_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 def test_clear_logo_widget(verify_image_cache):
@@ -740,7 +740,7 @@ def test_clear_logo_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_logo_widget(None)
     pl.clear_logo_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -750,4 +750,4 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.add_mesh(mesh)
     pl.add_camera3d_widget()
     pl.clear_camera3d_widgets()
-    pl.show(cpos='xy')
+    pl.show(cpos="xy")

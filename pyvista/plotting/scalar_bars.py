@@ -43,12 +43,12 @@ class ScalarBars:
     def __repr__(self):
         """Nice representation of this class."""
         lines = []
-        lines.append('Scalar Bar Title     Interactive')
+        lines.append("Scalar Bar Title     Interactive")
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
             title = f'"{title}"'
-            lines.append(f'{title:20} {interactive!s:5}')
-        return '\n'.join(lines)
+            lines.append(f"{title:20} {interactive!s:5}")
+        return "\n".join(lines)
 
     def _remove_mapper_from_plotter(
         self,
@@ -105,19 +105,19 @@ class ScalarBars:
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
-        >>> mesh['data'] = mesh.points[:, 2]
+        >>> mesh["data"] = mesh.points[:, 2]
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, cmap='coolwarm')
+        >>> _ = pl.add_mesh(mesh, cmap="coolwarm")
         >>> pl.remove_scalar_bar()
         >>> pl.show()
 
         """
         if title is None:
             if len(self) > 1:
-                titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
+                titles = ", ".join(f'"{key}"' for key in self._scalar_bar_actors)
                 raise ValueError(
-                    'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}',
+                    "Multiple scalar bars found.  Pick title of the"
+                    f"scalar bar from one of the following:\n{titles}",
                 )
             else:
                 title = next(iter(self._scalar_bar_actors.keys()))
@@ -162,7 +162,7 @@ class ScalarBars:
 
     def add_scalar_bar(
         self,
-        title='',
+        title="",
         mapper=None,
         n_labels=5,
         italic=False,
@@ -337,23 +337,23 @@ class ScalarBars:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere['Data'] = sphere.points[:, 2]
+        >>> sphere["Data"] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(sphere, show_scalar_bar=False)
         >>> _ = plotter.add_scalar_bar(
-        ...     'Data',
+        ...     "Data",
         ...     interactive=True,
         ...     vertical=False,
         ...     title_font_size=35,
         ...     label_font_size=30,
         ...     outline=True,
-        ...     fmt='%10.5f',
+        ...     fmt="%10.5f",
         ... )
         >>> plotter.show()
 
         """
         if mapper is None:
-            raise ValueError('Mapper cannot be ``None`` when creating a scalar bar')
+            raise ValueError("Mapper cannot be ``None`` when creating a scalar bar")
 
         if theme is None:
             theme = pyvista.global_theme
@@ -369,7 +369,7 @@ class ScalarBars:
         if fmt is None:
             fmt = theme.font.fmt
         if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
+            if theme.colorbar_orientation.lower() == "vertical":
                 vertical = True
 
         # Automatically choose size if not specified
@@ -403,7 +403,7 @@ class ScalarBars:
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
             if not self._plotter._scalar_bar_slots:
-                raise RuntimeError(f'Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.')
+                raise RuntimeError(f"Maximum number of color bars ({MAX_N_COLOR_BARS}) reached.")
 
             slot = min(self._plotter._scalar_bar_slots)
             self._plotter._scalar_bar_slots.remove(slot)
@@ -470,13 +470,13 @@ class ScalarBars:
             scalar_bar.SetAboveRangeAnnotation(above_label)
         elif lut.above_range_color:
             scalar_bar.DrawAboveRangeSwatchOn()
-            scalar_bar.SetAboveRangeAnnotation('above')
+            scalar_bar.SetAboveRangeAnnotation("above")
         if below_label is not None:
             scalar_bar.DrawBelowRangeSwatchOn()
             scalar_bar.SetBelowRangeAnnotation(below_label)
         elif lut.below_range_color:
             scalar_bar.DrawBelowRangeSwatchOn()
-            scalar_bar.SetBelowRangeAnnotation('below')
+            scalar_bar.SetBelowRangeAnnotation("below")
 
         # edit the size of the colorbar
         scalar_bar.SetHeight(height)

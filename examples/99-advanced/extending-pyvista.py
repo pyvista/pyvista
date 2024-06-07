@@ -100,7 +100,7 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # :class:`pyvista.PolyData` would now be created as a ``FooData`` object. Note,
 # that the key is the underlying vtk object.
 
-pyvista._wrappers['vtkPolyData'] = FooData
+pyvista._wrappers["vtkPolyData"] = FooData
 
 ###############################################################################
 # It is no longer necessary to specifically wrap :class:`pyvista.PolyData`
@@ -149,14 +149,14 @@ except TypeError:
 # Usage of ``pyvista._wrappers`` may require resetting the default value
 # to avoid leaking the setting into cases where it is unused.
 
-pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+pyvista._wrappers["vtkPolyData"] = pyvista.PolyData
 
 ###############################################################################
 # For instances where a localized usage is preferred, a tear-down method is
 # recommended.  One example is a ``try...finally`` block.
 
 try:
-    pyvista._wrappers['vtkPolyData'] = FooData
+    pyvista._wrappers["vtkPolyData"] = FooData
     # some operation that sometimes raises an error
 finally:
-    pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
+    pyvista._wrappers["vtkPolyData"] = pyvista.PolyData

@@ -50,7 +50,7 @@ class Camera(_vtk.vtkCamera):
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument',
+                    "Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument",
                 )
             self._renderer = proxy(renderer)
         else:
@@ -58,22 +58,22 @@ class Camera(_vtk.vtkCamera):
 
     def __repr__(self):
         """Print a repr specifying the id of the camera and its camera type."""
-        return f'<{self.__class__.__name__} at {hex(id(self))}>'
+        return f"<{self.__class__.__name__} at {hex(id(self))}>"
 
     def __eq__(self, other):
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
 
         native_attrs = [
-            'position',
-            'focal_point',
-            'parallel_projection',
-            'distance',
-            'thickness',
-            'parallel_scale',
-            'clipping_range',
-            'view_angle',
-            'roll',
+            "position",
+            "focal_point",
+            "parallel_projection",
+            "distance",
+            "thickness",
+            "parallel_scale",
+            "clipping_range",
+            "view_angle",
+            "roll",
         ]
         for attr in native_attrs:
             if getattr(self, attr) != getattr(other, attr):
@@ -235,8 +235,8 @@ class Camera(_vtk.vtkCamera):
 
         xmlstr = ElementTree.tostring(root).decode()
         newxml = md.parseString(xmlstr)
-        with Path(filename).open('w') as outfile:
-            outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
+        with Path(filename).open("w") as outfile:
+            outfile.write(newxml.toprettyxml(indent="\t", newl="\n"))
 
     @property
     def position(self):  # numpydoc ignore=RT01
@@ -279,7 +279,7 @@ class Camera(_vtk.vtkCamera):
         """
         if self._renderer is None:
             raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.',
+                "Camera is must be associated with a renderer to reset its clipping range.",
             )
         self._renderer.reset_camera_clipping_range()
 
@@ -450,12 +450,12 @@ class Camera(_vtk.vtkCamera):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Sphere())
-        >>> pl.camera.zoom('tight')
+        >>> pl.camera.zoom("tight")
         >>> pl.show()
 
         """
         if isinstance(value, str):
-            if not value == 'tight':
+            if not value == "tight":
                 raise ValueError('If a string, ``zoom`` can only be "tight"')
             self.tight()
             return
@@ -565,7 +565,7 @@ class Camera(_vtk.vtkCamera):
     @clipping_range.setter
     def clipping_range(self, points):  # numpydoc ignore=GL08
         if points[0] > points[1]:
-            raise ValueError('Near point must be lower than the far point.')
+            raise ValueError("Near point must be lower than the far point.")
         self.SetClippingRange(points[0], points[1])
 
     @property
@@ -760,18 +760,18 @@ class Camera(_vtk.vtkCamera):
         False
         """
         immutable_attrs = [
-            'position',
-            'focal_point',
-            'model_transform_matrix',
-            'distance',
-            'thickness',
-            'parallel_scale',
-            'up',
-            'clipping_range',
-            'view_angle',
-            'roll',
-            'parallel_projection',
-            'is_set',
+            "position",
+            "focal_point",
+            "model_transform_matrix",
+            "distance",
+            "thickness",
+            "parallel_scale",
+            "up",
+            "clipping_range",
+            "view_angle",
+            "roll",
+            "parallel_projection",
+            "is_set",
         ]
         new_camera = Camera()
 
@@ -781,7 +781,7 @@ class Camera(_vtk.vtkCamera):
 
         return new_camera
 
-    def tight(self, padding=0.0, adjust_render_window=True, view='xy', negative=False):
+    def tight(self, padding=0.0, adjust_render_window=True, view="xy", negative=False):
         """Adjust the camera position so that the actors fill the entire renderer.
 
         The camera view direction is reoriented to be normal to the ``view``
@@ -829,7 +829,7 @@ class Camera(_vtk.vtkCamera):
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(puppy, rgb=True)
-        >>> pl.background_color = 'b'
+        >>> pl.background_color = "b"
         >>> pl.camera.tight(padding=0.05)
         >>> pl.show()
 

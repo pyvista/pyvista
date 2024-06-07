@@ -25,8 +25,8 @@ cpos = [
 
 ###############################################################################
 # Compute the cell quality. Note that there are many different quality measures
-qual = mesh.compute_cell_quality(quality_measure='scaled_jacobian')
+qual = mesh.compute_cell_quality(quality_measure="scaled_jacobian")
 qual
 
 ###############################################################################
-qual.plot(cpos=cpos, scalars='CellQuality')
+qual.plot(cpos=cpos, scalars="CellQuality")

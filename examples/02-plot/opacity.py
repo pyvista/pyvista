@@ -84,9 +84,9 @@ tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
 import matplotlib.pyplot as plt
 
 plt.plot(tf)
-plt.title('My Interpolated Opacity Transfer Function')
-plt.ylabel('Opacity')
-plt.xlabel('Index along scalar mapping')
+plt.title("My Interpolated Opacity Transfer Function")
+plt.ylabel("Opacity")
+plt.xlabel("Index along scalar mapping")
 plt.show()
 
 ###############################################################################
@@ -105,19 +105,19 @@ knee = examples.download_knee()
 # And here we inspect the DICOM image with a few different opacity mappings:
 p = pv.Plotter(shape=(2, 2), border=False)
 
-p.add_mesh(knee, cmap="bone", scalar_bar_args={'title': "No Opacity"})
+p.add_mesh(knee, cmap="bone", scalar_bar_args={"title": "No Opacity"})
 p.view_xy()
 
 p.subplot(0, 1)
-p.add_mesh(knee, cmap="bone", opacity="linear", scalar_bar_args={'title': "Linear Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="linear", scalar_bar_args={"title": "Linear Opacity"})
 p.view_xy()
 
 p.subplot(1, 0)
-p.add_mesh(knee, cmap="bone", opacity="sigmoid", scalar_bar_args={'title': "Sigmoidal Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="sigmoid", scalar_bar_args={"title": "Sigmoidal Opacity"})
 p.view_xy()
 
 p.subplot(1, 1)
-p.add_mesh(knee, cmap="bone", opacity="geom_r", scalar_bar_args={'title': "Log Scale Opacity"})
+p.add_mesh(knee, cmap="bone", opacity="geom_r", scalar_bar_args={"title": "Log Scale Opacity"})
 p.view_xy()
 
 p.show()
@@ -135,7 +135,7 @@ p.show()
 # using a second array to control the transparency of the mesh
 
 model = examples.download_model_with_variance()
-contours = model.contour(10, scalars='Temperature')
+contours = model.contour(10, scalars="Temperature")
 contours.array_names
 
 ###############################################################################
@@ -146,21 +146,21 @@ contours.array_names
 # the temperature variance array by the maximum value.  That way high
 # variance will be completely transparent.
 
-contours['Temperature_var'] /= contours['Temperature_var'].max()
+contours["Temperature_var"] /= contours["Temperature_var"].max()
 
 p = pv.Plotter(shape=(1, 2))
 
 p.subplot(0, 0)
-p.add_text('Opacity by Array')
+p.add_text("Opacity by Array")
 p.add_mesh(
     contours.copy(),
-    scalars='Temperature',
-    opacity='Temperature_var',
+    scalars="Temperature",
+    opacity="Temperature_var",
     use_transparency=True,
-    cmap='bwr',
+    cmap="bwr",
 )
 
 p.subplot(0, 1)
-p.add_text('No Opacity')
-p.add_mesh(contours, scalars='Temperature', cmap='bwr')
+p.add_text("No Opacity")
+p.add_mesh(contours, scalars="Temperature", cmap="bwr")
 p.show()

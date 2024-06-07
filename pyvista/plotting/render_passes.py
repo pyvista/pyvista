@@ -8,15 +8,15 @@ from . import _vtk
 
 # The order of both the pre and post-passes matters.
 PRE_PASS = [
-    'vtkEDLShading',
+    "vtkEDLShading",
 ]
 
 POST_PASS = [
-    'vtkDepthOfFieldPass',
-    'vtkGaussianBlurPass',
-    'vtkOpenGLFXAAPass',
-    'vtkSSAOPass',
-    'vtkSSAAPass',  # should be last
+    "vtkDepthOfFieldPass",
+    "vtkGaussianBlurPass",
+    "vtkOpenGLFXAAPass",
+    "vtkSSAOPass",
+    "vtkSSAAPass",  # should be last
 ]
 
 
@@ -219,7 +219,7 @@ class RenderPasses:
             return None
 
         if self._ssao_pass is not None:
-            raise RuntimeError('Depth of field pass is incompatible with the SSAO pass.')
+            raise RuntimeError("Depth of field pass is incompatible with the SSAO pass.")
 
         self._dof_pass = _vtk.vtkDepthOfFieldPass()
         self._dof_pass.SetAutomaticFocalDistance(automatic_focal_distance)
@@ -254,7 +254,7 @@ class RenderPasses:
 
         """
         if self._dof_pass is not None:
-            raise RuntimeError('SSAO pass is incompatible with the depth of field pass.')
+            raise RuntimeError("SSAO pass is incompatible with the depth of field pass.")
 
         if self._ssao_pass is not None:
             return None
@@ -298,7 +298,7 @@ class RenderPasses:
     def _update_passes(self):
         """Reassemble pass delegation."""
         if self._renderer is None:  # pragma: no cover
-            raise RuntimeError('The renderer has been closed.')
+            raise RuntimeError("The renderer has been closed.")
 
         current_pass = self._camera_pass
         for class_name in PRE_PASS + POST_PASS:

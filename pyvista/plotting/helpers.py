@@ -72,8 +72,8 @@ def plot_compare_four(
     screenshot=None,
     camera_position=None,
     outline=None,
-    outline_color='k',
-    labels=('A', 'B', 'C', 'D'),
+    outline_color="k",
+    labels=("A", "B", "C", "D"),
     link=True,
     notebook=None,
 ):
@@ -126,7 +126,7 @@ def plot_compare_four(
     if show_kwargs is None:
         show_kwargs = {}
 
-    plotter_kwargs['notebook'] = notebook
+    plotter_kwargs["notebook"] = notebook
 
     pl = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
 
@@ -169,22 +169,22 @@ def view_vectors(view: str, negative: bool = False) -> Tuple[NumpyArray[int], Nu
         ``[x, y, z]`` vector that points to the viewup direction.
 
     """
-    if view == 'xy':
+    if view == "xy":
         vec = np.array([0, 0, 1])
         viewup = np.array([0, 1, 0])
-    elif view == 'yx':
+    elif view == "yx":
         vec = np.array([0, 0, -1])
         viewup = np.array([1, 0, 0])
-    elif view == 'xz':
+    elif view == "xz":
         vec = np.array([0, -1, 0])
         viewup = np.array([0, 0, 1])
-    elif view == 'zx':
+    elif view == "zx":
         vec = np.array([0, 1, 0])
         viewup = np.array([1, 0, 0])
-    elif view == 'yz':
+    elif view == "yz":
         vec = np.array([1, 0, 0])
         viewup = np.array([0, 0, 1])
-    elif view == 'zy':
+    elif view == "zy":
         vec = np.array([-1, 0, 0])
         viewup = np.array([0, 1, 0])
     else:

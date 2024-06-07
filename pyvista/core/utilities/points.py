@@ -48,15 +48,15 @@ def vtk_points(points, deep=True, force_float=False):
 
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
-        raise TypeError('Points must be a numeric type')
+        raise TypeError("Points must be a numeric type")
 
     if force_float:
         if not np.issubdtype(points.dtype, np.floating):
             warnings.warn(
-                'Points is not a float type. This can cause issues when '
-                'transforming or applying filters. Casting to '
-                '``np.float32``. Disable this by passing '
-                '``force_float=False``.',
+                "Points is not a float type. This can cause issues when "
+                "transforming or applying filters. Casting to "
+                "``np.float32``. Disable this by passing "
+                "``force_float=False``.",
             )
             points = points.astype(np.float32)
 
@@ -64,13 +64,13 @@ def vtk_points(points, deep=True, force_float=False):
     if points.ndim == 1:
         points = points.reshape(-1, 3)
     elif points.ndim > 2:
-        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
+        raise ValueError(f"Dimension of ``points`` should be 1 or 2, not {points.ndim}")
 
     # verify shape
     if points.shape[1] != 3:
         raise ValueError(
-            'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)',
+            "Points array must contain three values per point. "
+            f"Shape is {points.shape} and should be (X, 3)",
         )
 
     # use the underlying vtk data if present to avoid memory leaks
@@ -88,7 +88,7 @@ def vtk_points(points, deep=True, force_float=False):
                 deep = True
 
     # points must be contiguous
-    points = np.require(points, requirements=['C'])
+    points = np.require(points, requirements=["C"])
     vtkpts = _vtk.vtkPoints()
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
@@ -228,12 +228,12 @@ def fit_plane_to_points(points, return_meta=False):
     >>> # Plot the fitted plane
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     plane, color='lightblue', style='wireframe', line_width=4
+    ...     plane, color="lightblue", style="wireframe", line_width=4
     ... )
     >>> _ = pl.add_points(
     ...     cloud,
     ...     render_points_as_spheres=True,
-    ...     color='r',
+    ...     color="r",
     ...     point_size=30,
     ... )
     >>> pl.show()
@@ -252,9 +252,9 @@ def fit_plane_to_points(points, return_meta=False):
     >>> # Plot the fitted plane
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     plane, show_edges=True, color='lightblue', opacity=0.25
+    ...     plane, show_edges=True, color="lightblue", opacity=0.25
     ... )
-    >>> _ = pl.add_mesh(mesh, color='gray')
+    >>> _ = pl.add_mesh(mesh, color="gray")
     >>> pl.camera_position = [
     ...     (-117, 76, 235),
     ...     (1.69, -1.38, 0),
@@ -409,7 +409,7 @@ def vector_poly_data(orig, vec):
 
     Convert these to arrows and plot it.
 
-    >>> pdata.glyph(orient='vectors', scale='mag').plot()
+    >>> pdata.glyph(orient="vectors", scale="mag").plot()
 
     """
     # shape, dimension checking
@@ -422,12 +422,12 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise ValueError('orig array must be 3D')
+        raise ValueError("orig array must be 3D")
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise ValueError('vec array must be 3D')
+        raise ValueError("vec array must be 3D")
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()
@@ -444,14 +444,14 @@ def vector_poly_data(orig, vec):
     pdata.SetVerts(vcells)
 
     # Add vectors to polydata
-    name = 'vectors'
+    name = "vectors"
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
 
     # Add magnitude of vectors to polydata
-    name = 'mag'
+    name = "mag"
     scalars = (vec * vec).sum(1) ** 0.5
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
