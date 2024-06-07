@@ -32,11 +32,14 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-# Create alias of npt.NDArray bound to numeric types only
-NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
+# Define numeric types
+NumberType = TypeVar(
+    'NumberType',
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+)
 NumberType.__doc__ = """Type variable for numeric data types."""
-NumpyArray = npt.NDArray[NumberType]
 
+NumpyArray = npt.NDArray[NumberType]
 
 _FiniteNestedList = Union[
     List[NumberType],
@@ -49,20 +52,6 @@ _FiniteNestedTuple = Union[
     Tuple[Tuple[NumberType]],
     Tuple[Tuple[Tuple[NumberType]]],
     Tuple[Tuple[Tuple[Tuple[NumberType]]]],
-]
-# Define generic nested sequence
-_T = TypeVar('_T')
-_FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
-]
-
-_ArrayLike = Union[
-    NumpyArray[NumberType],
-    _FiniteNestedSequence[NumberType],
-    _FiniteNestedSequence[NumpyArray[NumberType]],
 ]
 
 _ArrayLike1D = Union[
@@ -84,4 +73,10 @@ _ArrayLike4D = Union[
     NumpyArray[NumberType],
     Sequence[Sequence[Sequence[Sequence[NumberType]]]],
     Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
+]
+_ArrayLike = Union[
+    _ArrayLike1D[NumberType],
+    _ArrayLike2D[NumberType],
+    _ArrayLike3D[NumberType],
+    _ArrayLike4D[NumberType],
 ]
