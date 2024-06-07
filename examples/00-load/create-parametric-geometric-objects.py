@@ -21,7 +21,7 @@ import pyvista as pv
 # +++++++++++
 
 supertoroid = pv.ParametricSuperToroid(n1=0.5)
-supertoroid.plot(color="lightblue", smooth_shading=True)
+supertoroid.plot(color='lightblue', smooth_shading=True)
 
 ###############################################################################
 # Parametric Ellipsoid
@@ -29,7 +29,7 @@ supertoroid.plot(color="lightblue", smooth_shading=True)
 
 # Ellipsoid with a long x axis
 ellipsoid = pv.ParametricEllipsoid(10, 5, 5)
-ellipsoid.plot(color="lightblue")
+ellipsoid.plot(color='lightblue')
 
 
 ###############################################################################
@@ -46,7 +46,7 @@ cpos = [
 
 # half ellipsoid
 part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi / 2)
-part_ellipsoid.plot(color="lightblue", smooth_shading=True, cpos=cpos)
+part_ellipsoid.plot(color='lightblue', smooth_shading=True, cpos=cpos)
 
 
 ###############################################################################
@@ -54,7 +54,7 @@ part_ellipsoid.plot(color="lightblue", smooth_shading=True, cpos=cpos)
 # ++++++++++++
 
 pseudosphere = pv.ParametricPseudosphere()
-pseudosphere.plot(color="lightblue", smooth_shading=True)
+pseudosphere.plot(color='lightblue', smooth_shading=True)
 
 ###############################################################################
 # Bohemian Dome
@@ -62,49 +62,49 @@ pseudosphere.plot(color="lightblue", smooth_shading=True)
 
 
 bohemiandome = pv.ParametricBohemianDome()
-bohemiandome.plot(color="lightblue")
+bohemiandome.plot(color='lightblue')
 
 ###############################################################################
 # Bour
 # ++++
 
 bour = pv.ParametricBour()
-bour.plot(color="lightblue")
+bour.plot(color='lightblue')
 
 ###############################################################################
 # Boy's Surface
 # +++++++++++++
 
 boy = pv.ParametricBoy()
-boy.plot(color="lightblue")
+boy.plot(color='lightblue')
 
 ###############################################################################
 # Catalan Minimal
 # +++++++++++++++
 
 catalanminimal = pv.ParametricCatalanMinimal()
-catalanminimal.plot(color="lightblue")
+catalanminimal.plot(color='lightblue')
 
 ###############################################################################
 # Conic Spiral
 # ++++++++++++
 
 conicspiral = pv.ParametricConicSpiral()
-conicspiral.plot(color="lightblue")
+conicspiral.plot(color='lightblue')
 
 ###############################################################################
 # Cross Cap
 # +++++++++
 
 crosscap = pv.ParametricCrossCap()
-crosscap.plot(color="lightblue")
+crosscap.plot(color='lightblue')
 
 ###############################################################################
 # Dini
 # ++++
 
 dini = pv.ParametricDini()
-dini.plot(color="lightblue")
+dini.plot(color='lightblue')
 
 ###############################################################################
 # Enneper
@@ -125,35 +125,35 @@ figure8klein.plot()
 # +++++++++
 
 henneberg = pv.ParametricHenneberg()
-henneberg.plot(color="lightblue")
+henneberg.plot(color='lightblue')
 
 ###############################################################################
 # Klein
 # +++++
 
 klein = pv.ParametricKlein()
-klein.plot(color="lightblue")
+klein.plot(color='lightblue')
 
 ###############################################################################
 # Kuen
 # ++++
 
 kuen = pv.ParametricKuen()
-kuen.plot(color="lightblue")
+kuen.plot(color='lightblue')
 
 ###############################################################################
 # Mobius
 # ++++++
 
 mobius = pv.ParametricMobius()
-mobius.plot(color="lightblue")
+mobius.plot(color='lightblue')
 
 ###############################################################################
 # Plucker Conoid
 # ++++++++++++++
 
 pluckerconoid = pv.ParametricPluckerConoid()
-pluckerconoid.plot(color="lightblue")
+pluckerconoid.plot(color='lightblue')
 
 
 ###############################################################################
@@ -161,28 +161,28 @@ pluckerconoid.plot(color="lightblue")
 # ++++++++++++
 
 randomhills = pv.ParametricRandomHills()
-randomhills.plot(color="lightblue")
+randomhills.plot(color='lightblue')
 
 ###############################################################################
 # Roman
 # +++++
 
 roman = pv.ParametricRoman()
-roman.plot(color="lightblue")
+roman.plot(color='lightblue')
 
 ###############################################################################
 # Super Ellipsoid
 # +++++++++++++++
 
 superellipsoid = pv.ParametricSuperEllipsoid(n1=0.1, n2=2)
-superellipsoid.plot(color="lightblue")
+superellipsoid.plot(color='lightblue')
 
 ###############################################################################
 # Torus
 # +++++
 
 torus = pv.ParametricTorus()
-torus.plot(color="lightblue")
+torus.plot(color='lightblue')
 
 ###############################################################################
 # Circular Arc
@@ -196,7 +196,7 @@ resolution = 100
 arc = pv.CircularArc(pointa, pointb, center, resolution)
 
 pl = pv.Plotter()
-pl.add_mesh(arc, color="k", line_width=4)
+pl.add_mesh(arc, color='k', line_width=4)
 pl.show_bounds()
 pl.view_xy()
 pl.show()
@@ -213,4 +213,4 @@ resolution = 100
 
 arc = pv.CircularArc(pointa, pointb, center, resolution)
 poly = arc.extrude([0, 0, 1])
-poly.plot(color="lightblue", cpos="iso", show_edges=True)
+poly.plot(color='lightblue', cpos='iso', show_edges=True)

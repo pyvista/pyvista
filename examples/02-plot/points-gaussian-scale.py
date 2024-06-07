@@ -44,7 +44,7 @@ pos[:, 2] = tube_radius * np.sin(phi)
 # data arrays.
 
 pdata = pv.PolyData(pos)
-pdata["radius"] = rad
+pdata['radius'] = rad
 
 
 ###############################################################################
@@ -54,12 +54,12 @@ pdata["radius"] = rad
 pl = pv.Plotter()
 actor = pl.add_mesh(
     pdata,
-    style="points_gaussian",
+    style='points_gaussian',
     emissive=False,
     render_points_as_spheres=True,
     show_scalar_bar=False,
 )
-actor.mapper.scale_array = "radius"
+actor.mapper.scale_array = 'radius'
 pl.camera.zoom(1.5)
 pl.show()
 
@@ -68,14 +68,14 @@ pl.show()
 # Show the same plot with ``emissive=True``.
 
 pl = pv.Plotter()
-pl.background_color = "k"
+pl.background_color = 'k'
 actor = pl.add_mesh(
     pdata,
-    style="points_gaussian",
+    style='points_gaussian',
     emissive=True,
     render_points_as_spheres=True,
     show_scalar_bar=False,
 )
-actor.mapper.scale_array = "radius"
+actor.mapper.scale_array = 'radius'
 pl.camera.zoom(1.5)
 pl.show()

@@ -20,7 +20,7 @@ import numpy as np
 if TYPE_CHECKING:  # pragma: no cover
     from .._typing_core import VectorLike
 
-T = TypeVar("T", bound="AnnotatedIntEnum")
+T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
 def assert_empty_kwargs(**kwargs):
@@ -49,13 +49,13 @@ def assert_empty_kwargs(**kwargs):
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = ", ".join([f'"{key}"' for key in keys])
-    grammar = "is an invalid keyword argument" if n == 1 else "are invalid keyword arguments"
+    bad_arguments = ', '.join([f'"{key}"' for key in keys])
+    grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
     message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
 
-def check_valid_vector(point: VectorLike[float], name: str = "") -> None:
+def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
     """
     Check if a vector contains three components.
 
@@ -75,11 +75,11 @@ def check_valid_vector(point: VectorLike[float], name: str = "") -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        raise TypeError(f"{name} must be a length three iterable of floats.")
+        raise TypeError(f'{name} must be a length three iterable of floats.')
     if len(point) != 3:
-        if name == "":
-            name = "Vector"
-        raise ValueError(f"{name} must be a length three iterable of floats.")
+        if name == '':
+            name = 'Vector'
+        raise ValueError(f'{name} must be a length three iterable of floats.')
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01
@@ -97,7 +97,7 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
 
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
-            raise TypeError(f"{cls.__name__} is an abstract class and may not be instantiated.")
+            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
         return object.__new__(cls)
 
     cls_.__new__ = __new__
@@ -204,9 +204,9 @@ def try_callback(func, *args):
     except Exception:
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
-        formatted_exception = "Encountered issue in callback (most recent call last):\n" + "".join(
+        formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
             traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
-        ).rstrip("\n")
+        ).rstrip('\n')
         warnings.warn(formatted_exception)
 
 
@@ -263,13 +263,13 @@ def _check_range(value, rng, parm_name):
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
         raise ValueError(
-            f"The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.",
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
         )
 
 
 def no_new_attr(cls):  # numpydoc ignore=RT01
     """Override __setattr__ to not permit new attributes."""
-    if not hasattr(cls, "_new_attr_exceptions"):
+    if not hasattr(cls, '_new_attr_exceptions'):
         cls._new_attr_exceptions = []
 
     def __setattr__(self, name, value):
@@ -283,7 +283,7 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
         else:
             raise AttributeError(
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f"{self.__class__.__name__}",
+                f'{self.__class__.__name__}',
             )
 
     cls.__setattr__ = __setattr__

@@ -46,11 +46,11 @@ class OfflineViewerDirective(Directive):
         source_file = str(Path(self.state.document.current_source).parent / self.arguments[0])
         source_file = Path(source_file).absolute().resolve()
         if not Path(source_file).is_file():
-            logger.warn(f"Source file {source_file} does not exist.")
+            logger.warn(f'Source file {source_file} does not exist.')
             return []
 
         # copy viewer HTML to _static
-        static_path = Path(output_dir) / "_static"
+        static_path = Path(output_dir) / '_static'
         static_path.mkdir(exist_ok=True)
         if not Path(static_path, Path(HTML_VIEWER_PATH).name).exists():
             shutil.copy(HTML_VIEWER_PATH, static_path)
@@ -70,41 +70,41 @@ class OfflineViewerDirective(Directive):
             dest_partial_path = Path(source_file.parent).relative_to(source_dir)
         else:
             logger.warn(
-                f"Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path",
+                f'Source file {source_file} is not a subpath of either the build directory of the source directory. Cannot extract base path',
             )
             return []
 
-        dest_path = Path(output_dir).joinpath("_images").joinpath(dest_partial_path)
+        dest_path = Path(output_dir).joinpath('_images').joinpath(dest_partial_path)
         dest_path.mkdir(parents=True, exist_ok=True)
         dest_file = dest_path.joinpath(source_file.name).resolve()
         if source_file != dest_file:
             try:
                 shutil.copy(source_file, dest_file)
             except Exception as e:
-                logger.warn(f"Failed to copy file from {source_file} to {dest_file}: {e}")
+                logger.warn(f'Failed to copy file from {source_file} to {dest_file}: {e}')
 
         # Compute the relative path of the current source to the source directory,
         # which is the same as the relative path of the '_static' directory to the
         # generated HTML file.
         relpath_to_source_root = relative_path(self.state.document.current_source, source_dir)
         rel_viewer_path = (
-            Path() / relpath_to_source_root / "_static" / Path(HTML_VIEWER_PATH).name
+            Path() / relpath_to_source_root / '_static' / Path(HTML_VIEWER_PATH).name
         ).as_posix()
         rel_asset_path = Path(os.path.relpath(dest_file, static_path)).as_posix()
         html = f"""
     <iframe src='{rel_viewer_path}?fileURL={rel_asset_path}' width='100%%' height='400px' frameborder='0'></iframe>
 """
 
-        raw_node = nodes.raw("", html, format="html")
+        raw_node = nodes.raw('', html, format='html')
 
         return [raw_node]
 
 
 def setup(app):
-    app.add_directive("offlineviewer", OfflineViewerDirective)
+    app.add_directive('offlineviewer', OfflineViewerDirective)
 
     return {
-        "version": "0.1",
-        "parallel_read_safe": True,
-        "parallel_write_safe": True,
+        'version': '0.1',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
     }

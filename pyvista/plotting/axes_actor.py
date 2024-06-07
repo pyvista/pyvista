@@ -49,9 +49,9 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor.y_axis_shaft_properties.color = (1, 1, 1)
     >>> axes_actor.z_axis_shaft_properties.color = (1, 1, 1)
 
-    >>> axes_actor.x_axis_label = "U"
-    >>> axes_actor.y_axis_label = "V"
-    >>> axes_actor.z_axis_label = "W"
+    >>> axes_actor.x_axis_label = 'U'
+    >>> axes_actor.y_axis_label = 'V'
+    >>> axes_actor.z_axis_label = 'W'
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -410,7 +410,7 @@ class AxesActor(_vtk.vtkAxesActor):
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.x_axis_label = "This axis"
+        >>> axes.axes_actor.x_axis_label = 'This axis'
         >>> axes.axes_actor.x_axis_label
         'This axis'
 
@@ -429,7 +429,7 @@ class AxesActor(_vtk.vtkAxesActor):
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.y_axis_label = "This axis"
+        >>> axes.axes_actor.y_axis_label = 'This axis'
         >>> axes.axes_actor.y_axis_label
         'This axis'
 
@@ -448,7 +448,7 @@ class AxesActor(_vtk.vtkAxesActor):
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.z_axis_label = "This axis"
+        >>> axes.axes_actor.z_axis_label = 'This axis'
         >>> axes.axes_actor.z_axis_label
         'This axis'
 

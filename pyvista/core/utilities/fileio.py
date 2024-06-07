@@ -29,7 +29,7 @@ def set_pickle_format(format: str):  # noqa: A002
         If the provided format is not supported.
 
     """
-    supported = {"xml", "legacy"}
+    supported = {'xml', 'legacy'}
     format_ = format.lower()
     if format_ not in supported:
         raise ValueError(
@@ -152,18 +152,18 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> mesh = pv.read(examples.antfile)
-    >>> mesh.plot(cpos="xz")
+    >>> mesh.plot(cpos='xz')
 
     Load a vtk file.
 
-    >>> mesh = pv.read("my_mesh.vtk")  # doctest:+SKIP
+    >>> mesh = pv.read('my_mesh.vtk')  # doctest:+SKIP
 
     Load a meshio file.
 
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
     """
     if file_format is not None and force_ext is not None:
-        raise ValueError("Only one of `file_format` and `force_ext` may be specified.")
+        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
@@ -173,14 +173,14 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         return multi
     filename = str(Path(str(filename)).expanduser().resolve())
     if not Path(filename).is_file() and not Path(filename).is_dir():
-        raise FileNotFoundError(f"File ({filename}) not found")
+        raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present
     if file_format:
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in [".e", ".exo"]:
+    if ext in ['.e', '.exo']:
         return read_exodus(filename)
 
     try:
@@ -333,7 +333,7 @@ def read_exodus(
     Examples
     --------
     >>> import pyvista as pv
-    >>> data = pv.read_exodus("mymesh.exo")  # doctest:+SKIP
+    >>> data = pv.read_exodus('mymesh.exo')  # doctest:+SKIP
 
     """
     from .helpers import wrap
@@ -366,7 +366,7 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError(f"Could not parse sideset ID/name: {sideset}")
+            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -538,7 +538,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
     >>> import pyvista as pv
     >>> sphere = pv.Sphere()
-    >>> pv.save_meshio("mymesh.inp", sphere)  # doctest:+SKIP
+    >>> pv.save_meshio('mymesh.inp', sphere)  # doctest:+SKIP
 
     """
     try:
@@ -585,9 +585,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             cell = (
                 cell
                 if cell_type not in pixel_voxel
-                else cell[[0, 1, 3, 2]]
-                if cell_type == 8
-                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+                else cell[[0, 1, 3, 2]] if cell_type == 8 else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
             cell_type = vtk_to_meshio_type[cell_type]
@@ -652,9 +650,9 @@ def _try_imageio_imread(filename):
         from imageio import imread
     except ModuleNotFoundError:  # pragma: no cover
         raise ModuleNotFoundError(
-            "Problem reading the image with VTK. Install imageio to try to read the "
-            "file using imageio with:\n\n"
-            "   pip install imageio",
+            'Problem reading the image with VTK. Install imageio to try to read the '
+            'file using imageio with:\n\n'
+            '   pip install imageio',
         ) from None
 
     return imread(filename)

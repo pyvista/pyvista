@@ -53,12 +53,12 @@ from .helpers import wrap
 from .misc import check_valid_vector
 
 NORMALS = {
-    "x": [1, 0, 0],
-    "y": [0, 1, 0],
-    "z": [0, 0, 1],
-    "-x": [-1, 0, 0],
-    "-y": [0, -1, 0],
-    "-z": [0, 0, -1],
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
 }
 
 
@@ -191,11 +191,13 @@ def Cylinder(
     >>> cylinder = pv.Cylinder(
     ...     center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
     ... )
-    >>> cylinder.plot(show_edges=True, line_width=5, cpos="xy")
+    >>> cylinder.plot(show_edges=True, line_width=5, cpos='xy')
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pv.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
+    ...     pv.Cylinder(
+    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
+    ...     ),
     ...     show_edges=True,
     ...     line_width=5,
     ... )
@@ -299,7 +301,7 @@ def CylinderStructured(
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
-    zz = zz.ravel(order="f")
+    zz = zz.ravel(order='f')
 
     # Create the grid
     grid = pyvista.StructuredGrid()
@@ -382,7 +384,7 @@ def Arrow(
     )
     surf = arrow.output
 
-    if scale == "auto":
+    if scale == 'auto':
         scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
         surf.points *= scale
@@ -610,7 +612,9 @@ def SolidSphere(
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
-    >>> partial_solid_sphere = pv.SolidSphere(start_theta=180, end_theta=360)
+    >>> partial_solid_sphere = pv.SolidSphere(
+    ...     start_theta=180, end_theta=360
+    ... )
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
@@ -740,7 +744,9 @@ def SolidSphereGeneric(
     ...     phi=np.linspace(0, 180, 30),
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(scalars="Volume", show_edges=True, clim=[3e-5, 5e-4])
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
 
     Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
     `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
@@ -752,7 +758,9 @@ def SolidSphereGeneric(
     ...     phi=phi,
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(scalars="Volume", show_edges=True, clim=[3e-5, 5e-4])
+    >>> solid_sphere.plot(
+    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
+    ... )
 
     """
     if radius is None:
@@ -838,7 +846,7 @@ def SolidSphereGeneric(
             ``(n, 3)`` Cartesian coordinate array.
 
         """
-        r, phi, theta = np.meshgrid(r, phi, theta, indexing="ij")
+        r, phi, theta = np.meshgrid(r, phi, theta, indexing='ij')
         x, y, z = pyvista.spherical_to_cartesian(r, phi, theta)
         return np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 
@@ -1084,7 +1092,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
 
     >>> import pyvista as pv
     >>> mesh = pv.Line((0, 0, 0), (0, 0, 1))
-    >>> mesh.plot(color="k", line_width=10)
+    >>> mesh.plot(color='k', line_width=10)
 
     """
     src = LineSource(pointa, pointb, resolution)
@@ -1092,7 +1100,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     # Compute distance of every point along line
     compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
-    line["Distance"] = distance
+    line['Distance'] = distance
     return line
 
 
@@ -1116,7 +1124,7 @@ def MultipleLines(points=None):
     >>> import pyvista as pv
     >>> mesh = pv.MultipleLines(points=[[0, 0, 0], [1, 1, 1], [0, 0, 1]])
     >>> plotter = pv.Plotter()
-    >>> actor = plotter.add_mesh(mesh, color="k", line_width=10)
+    >>> actor = plotter.add_mesh(mesh, color='k', line_width=10)
     >>> plotter.camera.azimuth = 45
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
@@ -1171,7 +1179,7 @@ def Cube(
     z_length=1.0,
     bounds=None,
     clean=True,
-    point_dtype="float32",
+    point_dtype='float32',
 ):
     """Create a cube.
 
@@ -1245,7 +1253,7 @@ def Cube(
 
     # add face index data for compatibility with PlatonicSolid
     # but make it inactive for backwards compatibility
-    cube.cell_data.set_array([1, 4, 0, 3, 5, 2], "FaceIndex")
+    cube.cell_data.set_array([1, 4, 0, 3, 5, 2], 'FaceIndex')
 
     # clean duplicate points
     if clean:
@@ -1495,8 +1503,8 @@ def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal
     Examples
     --------
     >>> import pyvista as pv
-    >>> text_mesh = pv.Text3D("PyVista")
-    >>> text_mesh.plot(cpos="xy")
+    >>> text_mesh = pv.Text3D('PyVista')
+    >>> text_mesh.plot(cpos='xy')
     """
     return Text3DSource(
         string,
@@ -1591,7 +1599,7 @@ def Wavelet(
     Smooth it to create "waves"
 
     >>> waves = thresh.smooth(n_iter=100, relaxation_factor=0.1)
-    >>> waves.plot(color="white", smooth_shading=True, show_edges=True)
+    >>> waves.plot(color='white', smooth_shading=True, show_edges=True)
 
     """
     wavelet_source = _vtk.vtkRTAnalyticSource()
@@ -1651,14 +1659,14 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> import pyvista as pv
     >>> arc = pv.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(arc, color="k", line_width=10)
-    >>> _ = pl.show_bounds(location="all", font_size=30, use_2d=True)
+    >>> _ = pl.add_mesh(arc, color='k', line_width=10)
+    >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
     """
-    check_valid_vector(pointa, "pointa")
-    check_valid_vector(pointb, "pointb")
-    check_valid_vector(center, "center")
+    check_valid_vector(pointa, 'pointa')
+    check_valid_vector(pointb, 'pointb')
+    check_valid_vector(center, 'center')
     if not np.isclose(
         np.linalg.norm(np.array(pointa) - np.array(center)),
         np.linalg.norm(np.array(pointb) - np.array(center)),
@@ -1685,7 +1693,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
     angles = np.linspace(0.0, 1.0, arc.n_points) * angle
-    arc["Distance"] = radius * angles
+    arc['Distance'] = radius * angles
     return arc
 
 
@@ -1728,14 +1736,16 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     >>> import pyvista as pv
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pv.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
+    >>> arc = pv.CircularArcFromNormal(
+    ...     [0, 0, 0], normal=normal, polar=polar
+    ... )
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(arc, color="k", line_width=10)
-    >>> _ = pl.show_bounds(location="all", font_size=30, use_2d=True)
+    >>> _ = pl.add_mesh(arc, color='k', line_width=10)
+    >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
     """
-    check_valid_vector(center, "center")
+    check_valid_vector(center, 'center')
     if normal is None:
         normal = [0, 0, 1]
     if polar is None:
@@ -1747,9 +1757,9 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     arc.SetCenter(*center)
     arc.SetResolution(resolution)
     arc.UseNormalAndAngleOn()
-    check_valid_vector(normal, "normal")
+    check_valid_vector(normal, 'normal')
     arc.SetNormal(*normal)
-    check_valid_vector(polar, "polar")
+    check_valid_vector(polar, 'polar')
     arc.SetPolarVector(*polar)
     arc.SetAngle(angle)
     arc.Update()
@@ -1759,7 +1769,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
     angles = np.linspace(0.0, angle, resolution + 1)
-    arc["Distance"] = radius * angles
+    arc['Distance'] = radius * angles
     return arc
 
 
@@ -1801,13 +1811,13 @@ def Pyramid(points=None):
         ]
 
     if len(points) != 5:
-        raise TypeError("Points must be given as length 5 np.ndarray or list.")
+        raise TypeError('Points must be given as length 5 np.ndarray or list.')
 
-    check_valid_vector(points[0], "points[0]")
-    check_valid_vector(points[1], "points[1]")
-    check_valid_vector(points[2], "points[2]")
-    check_valid_vector(points[3], "points[3]")
-    check_valid_vector(points[4], "points[4]")
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+    check_valid_vector(points[4], 'points[4]')
 
     pyramid = _vtk.vtkPyramid()
     pyramid.GetPointIds().SetId(0, 0)
@@ -1850,11 +1860,11 @@ def Triangle(points=None):
         points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
 
     if len(points) != 3:
-        raise TypeError("Points must be given as length 3 np.ndarray or list")
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
 
-    check_valid_vector(points[0], "points[0]")
-    check_valid_vector(points[1], "points[1]")
-    check_valid_vector(points[2], "points[2]")
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
     return wrap(pyvista.PolyData(points, cells))
@@ -1887,7 +1897,7 @@ def Rectangle(points=None):
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
     if len(points) != 3:
-        raise TypeError("Points must be given as length 3 np.ndarray or list")
+        raise TypeError('Points must be given as length 3 np.ndarray or list')
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -1959,7 +1969,7 @@ def Quadrilateral(points=None):
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]]
     if len(points) != 4:
-        raise TypeError("Points must be given as length 4 np.ndarray or list")
+        raise TypeError('Points must be given as length 4 np.ndarray or list')
 
     points, _ = _coerce_pointslike_arg(points)
 
@@ -2129,7 +2139,7 @@ def Superquadric(
     return source.output
 
 
-def PlatonicSolid(kind="tetrahedron", radius=1.0, center=(0.0, 0.0, 0.0)):
+def PlatonicSolid(kind='tetrahedron', radius=1.0, center=(0.0, 0.0, 0.0)):
     """Create a Platonic solid of a given size.
 
     Parameters
@@ -2162,13 +2172,13 @@ def PlatonicSolid(kind="tetrahedron", radius=1.0, center=(0.0, 0.0, 0.0)):
     Create and plot a dodecahedron.
 
     >>> import pyvista as pv
-    >>> dodeca = pv.PlatonicSolid("dodecahedron")
+    >>> dodeca = pv.PlatonicSolid('dodecahedron')
     >>> dodeca.plot(categories=True)
 
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    check_valid_vector(center, "center")
+    check_valid_vector(center, 'center')
 
     source = PlatonicSolidSource()
     source.kind = kind
@@ -2176,7 +2186,7 @@ def PlatonicSolid(kind="tetrahedron", radius=1.0, center=(0.0, 0.0, 0.0)):
     # rename and activate cell scalars
     cell_data = solid.cell_data.get_array(0)
     solid.clear_data()
-    solid.cell_data["FaceIndex"] = cell_data
+    solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
     solid.scale(radius, inplace=True)
     solid.points += np.asanyarray(center) - solid.center
@@ -2213,7 +2223,7 @@ def Tetrahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    return PlatonicSolid(kind="tetrahedron", radius=radius, center=center)
+    return PlatonicSolid(kind='tetrahedron', radius=radius, center=center)
 
 
 def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
@@ -2247,7 +2257,7 @@ def Octahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    return PlatonicSolid(kind="octahedron", radius=radius, center=center)
+    return PlatonicSolid(kind='octahedron', radius=radius, center=center)
 
 
 def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
@@ -2280,7 +2290,7 @@ def Dodecahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    return PlatonicSolid(kind="dodecahedron", radius=radius, center=center)
+    return PlatonicSolid(kind='dodecahedron', radius=radius, center=center)
 
 
 def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
@@ -2314,7 +2324,7 @@ def Icosahedron(radius=1.0, center=(0.0, 0.0, 0.0)):
     See :ref:`platonic_example` for more examples using this filter.
 
     """
-    return PlatonicSolid(kind="icosahedron", radius=radius, center=center)
+    return PlatonicSolid(kind='icosahedron', radius=radius, center=center)
 
 
 def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
@@ -2377,7 +2387,7 @@ def Icosphere(radius=1.0, center=(0.0, 0.0, 0.0), nsub=3):
     to travel to the sphere.
 
     >>> icosphere = pv.Icosphere(nsub=4)
-    >>> icosphere.compute_cell_sizes().plot(scalars="Area")
+    >>> icosphere.compute_cell_sizes().plot(scalars='Area')
 
     """
     mesh = Icosahedron()

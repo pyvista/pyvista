@@ -43,7 +43,7 @@ pv.set_plot_theme("document")
 # Collision faces will be plotted on this sphere, and to do so we
 # initialize an initial ``"collisions"`` mask.
 sphere0 = pv.Sphere()
-sphere0["collisions"] = np.zeros(sphere0.n_cells, dtype=bool)
+sphere0['collisions'] = np.zeros(sphere0.n_cells, dtype=bool)
 
 # This mesh will be the moving mesh
 sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
@@ -54,9 +54,9 @@ sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
 
 pl = pv.Plotter()
 pl.enable_hidden_line_removal()
-pl.add_mesh(sphere0, scalars="collisions", show_scalar_bar=False, cmap="bwr")
-pl.camera_position = "xz"
-pl.add_mesh(sphere1, style="wireframe", color="green", line_width=5)
+pl.add_mesh(sphere0, scalars='collisions', show_scalar_bar=False, cmap='bwr')
+pl.camera_position = 'xz'
+pl.add_mesh(sphere1, style='wireframe', color='green', line_width=5)
 
 # for this example
 pl.open_gif("collision_movie.gif")
@@ -71,8 +71,8 @@ for _ in range(int(2 / delta_x)):
 
     collision_mask = np.zeros(sphere0.n_cells, dtype=bool)
     if n_contacts:
-        collision_mask[col["ContactCells"]] = True
-    sphere0["collisions"] = collision_mask
+        collision_mask[col['ContactCells']] = True
+    sphere0['collisions'] = collision_mask
     pl.write_frame()
 
     # alternatively, disable movie plotting and simply render the image

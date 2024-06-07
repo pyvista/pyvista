@@ -148,7 +148,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
-        raise ValueError("`member` must be a callable.")
+        raise ValueError('`member` must be a callable.')
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
 
@@ -184,16 +184,16 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES: ClassVar[
-        Dict[str, Dict[str, Union[int, str]]]
-    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
-        "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
-        "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
-        ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
-        "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
-        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
-    }
+    LINE_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
+            "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
+            "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
+            ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
+            "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
+            "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
+        }
+    )
 
     def __init__(self, color="k", width=1, style="-"):
         """Initialize a new Pen instance."""
@@ -216,7 +216,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-           >>> plot.pen.color = "r"
+           >>> plot.pen.color = 'r'
            >>> chart.show()
 
         """
@@ -265,7 +265,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-           >>> plot.pen.style = "-."
+           >>> plot.pen.style = '-.'
            >>> chart.show()
 
         """
@@ -279,8 +279,8 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
             self.SetLineType(self.LINE_STYLES[val]["id"])
             self._line_style = val
         except KeyError:
-            formatted_styles = '", "'.join(self.LINE_STYLES.keys())
-            raise ValueError(f'Invalid line style. Allowed line styles: "{formatted_styles}"')
+            formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
+            raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -321,7 +321,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
-           >>> plot.brush.color = "r"
+           >>> plot.brush.color = 'r'
            >>> chart.show()
 
         """
@@ -640,8 +640,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             self.SetBehavior(self.BEHAVIORS[val])
             self._behavior = val
         except KeyError:
-            formatted_behaviors = '", "'.join(self.BEHAVIORS.keys())
-            raise ValueError(f'Invalid behavior. Allowed behaviors: "{formatted_behaviors}"')
+            formatted_behaviors = "\", \"".join(self.BEHAVIORS.keys())
+            raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
 
     @property
     def margin(self):  # numpydoc ignore=RT01
@@ -656,7 +656,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> chart.background_color = "c"
+           >>> chart.background_color = 'c'
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
            >>> chart.show()
 
@@ -836,15 +836,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
            >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-           >>> chart.y_axis.tick_labels = [
-           ...     "Very small",
-           ...     "Small",
-           ...     "Still small",
-           ...     "Small?",
-           ...     "Not large",
-           ...     "Large?",
-           ...     "Very large",
-           ... ]
+           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
+           ...                             "Small?", "Not large", "Large?",
+           ...                             "Very large"]
            >>> chart.show()
 
            Revert back to automatic tick placement.
@@ -892,15 +886,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
            >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-           >>> chart.y_axis.tick_labels = [
-           ...     "Very small",
-           ...     "Small",
-           ...     "Still small",
-           ...     "Small?",
-           ...     "Not large",
-           ...     "Large?",
-           ...     "Very large",
-           ... ]
+           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
+           ...                             "Small?", "Not large", "Large?",
+           ...                             "Very large"]
            >>> chart.show()
 
            Revert back to automatic tick placement.
@@ -1238,7 +1226,7 @@ class _Chart(DocSubs):
     @size.setter
     def size(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f"Invalid size {val}.")
+            raise ValueError(f'Invalid size {val}.')
         self._size = val
 
     @property
@@ -1268,7 +1256,7 @@ class _Chart(DocSubs):
     @loc.setter
     def loc(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f"Invalid loc {val}.")
+            raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
     @property
@@ -1285,9 +1273,9 @@ class _Chart(DocSubs):
 
            >>> import pyvista as pv
            >>> chart = pv.{cls}({chart_args}){chart_init}
-           >>> chart.border_color = "r"
+           >>> chart.border_color = 'r'
            >>> chart.border_width = 5
-           >>> chart.border_style = "--"
+           >>> chart.border_style = '--'
            >>> chart.show(interactive=False)
 
         """
@@ -1311,9 +1299,9 @@ class _Chart(DocSubs):
 
            >>> import pyvista as pv
            >>> chart = pv.{cls}({chart_args}){chart_init}
-           >>> chart.border_color = "r"
+           >>> chart.border_color = 'r'
            >>> chart.border_width = 5
-           >>> chart.border_style = "--"
+           >>> chart.border_style = '--'
            >>> chart.show(interactive=False)
 
         """
@@ -1338,9 +1326,9 @@ class _Chart(DocSubs):
 
            >>> import pyvista as pv
            >>> chart = pv.{cls}({chart_args}){chart_init}
-           >>> chart.border_color = "r"
+           >>> chart.border_color = 'r'
            >>> chart.border_width = 5
-           >>> chart.border_style = "--"
+           >>> chart.border_style = '--'
            >>> chart.show(interactive=False)
 
         """
@@ -1365,14 +1353,14 @@ class _Chart(DocSubs):
 
            >>> import pyvista as pv
            >>> chart = pv.{cls}({chart_args}){chart_init}
-           >>> chart.border_color = "r"
+           >>> chart.border_color = 'r'
            >>> chart.border_width = 5
-           >>> chart.border_style = "--"
+           >>> chart.border_style = '--'
            >>> chart.show(interactive=False)
 
            Set the active border color to yellow and activate the chart.
 
-           >>> chart.active_border_color = "y"
+           >>> chart.active_border_color = 'y'
            >>> chart.show(interactive=True)
 
         """
@@ -1451,7 +1439,7 @@ class _Chart(DocSubs):
 
            Set the active background color to blue and activate the chart.
 
-           >>> chart.active_background_color = "b"
+           >>> chart.active_background_color = 'b'
            >>> chart.show(interactive=True)
 
         """
@@ -1526,7 +1514,7 @@ class _Chart(DocSubs):
 
            >>> import pyvista as pv
            >>> chart = pv.{cls}({chart_args}){chart_init}
-           >>> chart.title = "My Chart"
+           >>> chart.title = 'My Chart'
            >>> chart.show()
 
         """
@@ -1574,7 +1562,7 @@ class _Chart(DocSubs):
         screenshot=None,
         window_size=None,
         notebook=None,
-        background="w",
+        background='w',
         dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
@@ -1689,7 +1677,7 @@ class _Plot(DocSubs):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.color = "r"
+           >>> plot.color = 'r'
            >>> chart.show()
 
         """
@@ -1720,7 +1708,7 @@ class _Plot(DocSubs):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.line_style = "-"  # Make sure all lines are visible
+           >>> plot.line_style = '-'  # Make sure all lines are visible
            >>> plot.pen.width = 10
            >>> chart.show()
 
@@ -1771,7 +1759,7 @@ class _Plot(DocSubs):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.line_style = "-"  # Make sure all lines are visible
+           >>> plot.line_style = '-'  # Make sure all lines are visible
            >>> plot.line_width = 10
            >>> chart.show()
 
@@ -1799,7 +1787,7 @@ class _Plot(DocSubs):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.line_style = "-."
+           >>> plot.line_style = '-.'
            >>> chart.show()
 
         """
@@ -2017,7 +2005,7 @@ class _MultiCompPlot(_Plot):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.color = "r"
+           >>> plot.color = 'r'
            >>> chart.show()
 
         """
@@ -2142,7 +2130,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
        >>> import numpy as np
        >>> chart = pv.Chart2D()
        >>> x = np.linspace(0, 1, 100)
-       >>> y = np.sin(6.5 * x - 1)
+       >>> y = np.sin(6.5*x-1)
        >>> _ = chart.line(x, y, "y", 4)
        >>> chart.background_texture = examples.load_globe_texture()
        >>> chart.hide_axes()
@@ -2302,7 +2290,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> x = np.linspace(0, 2 * np.pi, 20)
+       >>> x = np.linspace(0, 2*np.pi, 20)
        >>> y = np.sin(x)
        >>> chart = pv.Chart2D()
        >>> _ = chart.scatter(x, y)
@@ -2310,16 +2298,16 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     """
 
-    MARKER_STYLES: ClassVar[
-        Dict[str, Dict[str, Union[int, str]]]
-    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
-        "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
-        "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
-        "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
-        "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
-        "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
-        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
-    }
+    MARKER_STYLES: ClassVar[Dict[str, Dict[str, Union[int, str]]]] = (
+        {  # descr is used in the documentation, set to None to hide it from the docs.
+            "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
+            "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
+            "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
+            "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
+            "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
+            "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
+        }
+    )
     _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D scatter plot",
         "chart_init": "pv.Chart2D()",
@@ -2483,8 +2471,8 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
             self.SetMarkerStyle(self.MARKER_STYLES[val]["id"])
             self._marker_style = val
         except KeyError:
-            formatted_styles = '", "'.join(self.MARKER_STYLES.keys())
-            raise ValueError(f'Invalid marker style. Allowed marker styles: "{formatted_styles}"')
+            formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
+            raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
 
 
 class AreaPlot(_vtk.vtkPlotArea, _Plot):
@@ -2528,20 +2516,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
        >>> chart = pv.Chart2D()
        >>> _ = chart.area(x, p_min, p_max)
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = [
-       ...     "Jan",
-       ...     "Feb",
-       ...     "Mar",
-       ...     "Apr",
-       ...     "May",
-       ...     "Jun",
-       ...     "Jul",
-       ...     "Aug",
-       ...     "Sep",
-       ...     "Oct",
-       ...     "Nov",
-       ...     "Dec",
-       ... ]
+       >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May",
+       ...                             "Jun", "Jul", "Aug", "Sep", "Oct",
+       ...                             "Nov", "Dec"]
        >>> chart.x_axis.label = "Month"
        >>> chart.y_axis.label = "Precipitation [mm]"
        >>> chart.show()
@@ -2730,15 +2707,7 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
        >>> chart = pv.Chart2D()
        >>> _ = chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = [
-       ...     "Mon",
-       ...     "Tue",
-       ...     "Wed",
-       ...     "Thu",
-       ...     "Fri",
-       ...     "Sat",
-       ...     "Sun",
-       ... ]
+       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
        >>> chart.x_label = "Day of week"
        >>> chart.y_label = "Average time spent"
        >>> chart.grid = False  # Disable the grid lines
@@ -2898,9 +2867,9 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
             self.SetOrientation(self.ORIENTATIONS[val])
             self._orientation = val
         except KeyError:
-            formatted_orientations = '", "'.join(self.ORIENTATIONS.keys())
+            formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f'Invalid orientation. Allowed orientations: "{formatted_orientations}"',
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
             )
 
 
@@ -2941,20 +2910,12 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
        >>> import numpy as np
        >>> year = [f"{y}" for y in np.arange(2011, 2021)]
        >>> x = np.arange(len(year))
-       >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648, 57761, 76370, 93702]
-       >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875, 53689, 46650, 50321]
-       >>> n_f = [
-       ...     166556,
-       ...     157249,
-       ...     151552,
-       ...     138183,
-       ...     129669,
-       ...     113985,
-       ...     92965,
-       ...     73683,
-       ...     57097,
-       ...     29499,
-       ... ]
+       >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
+       ...        57761, 76370, 93702]
+       >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875,
+       ...        53689, 46650, 50321]
+       >>> n_f = [166556, 157249, 151552, 138183, 129669,
+       ...        113985, 92965, 73683, 57097, 29499]
        >>> chart = pv.Chart2D()
        >>> plot = chart.stack(x, [n_e, n_h, n_f])
        >>> plot.labels = ["Electric", "Hybrid", "Fossil"]
@@ -3057,7 +3018,7 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
            >>> chart.show()
 
            Update the stack sizes.
@@ -3110,11 +3071,11 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> x = np.linspace(0, 2 * np.pi, 20)
+       >>> x = np.linspace(0, 2*np.pi, 20)
        >>> y = np.sin(x)
        >>> chart = pv.Chart2D()
        >>> _ = chart.scatter(x, y)
-       >>> _ = chart.line(x, y, "r")
+       >>> _ = chart.line(x, y, 'r')
        >>> chart.show()
 
        Combine multiple types of plots in the same chart.
@@ -3125,20 +3086,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
        >>> e = np.abs(rng.normal(scale=2, size=7))
        >>> z = rng.integers(0, 5, 7)
        >>> chart = pv.Chart2D()
-       >>> _ = chart.area(x, y - e, y + e, color=(0.12, 0.46, 0.71, 0.2))
+       >>> _ = chart.area(x, y-e, y+e, color=(0.12, 0.46, 0.71, 0.2))
        >>> _ = chart.line(x, y, color="tab:blue", style="--", label="Scores")
        >>> _ = chart.scatter(x, y, color="tab:blue", style="d")
        >>> _ = chart.bar(x, z, color="tab:orange", label="Violations")
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = [
-       ...     "Mon",
-       ...     "Tue",
-       ...     "Wed",
-       ...     "Thu",
-       ...     "Fri",
-       ...     "Sat",
-       ...     "Sun",
-       ... ]
+       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri",
+       ...                             "Sat", "Sun"]
        >>> chart.x_label = "Day of week"
        >>> chart.show()
 
@@ -3302,7 +3256,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
                 break
         return marker_style, line_style, color
 
-    def plot(self, x, y=None, fmt="-"):
+    def plot(self, x, y=None, fmt='-'):
         """Matplotlib like plot method.
 
         Parameters
@@ -3351,7 +3305,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
            Generate a line and scatter plot.
 
            >>> chart = pv.Chart2D()
-           >>> scatter_plot, line_plot = chart.plot(range(10), fmt="o-")
+           >>> scatter_plot, line_plot = chart.plot(range(10), fmt='o-')
            >>> chart.show()
 
         """
@@ -3585,7 +3539,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
            >>> chart.show()
 
         """
@@ -3862,10 +3816,10 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> x = np.linspace(0, 2 * np.pi, 20)
+           >>> x = np.linspace(0, 2*np.pi, 20)
            >>> y = np.sin(x)
            >>> chart = pv.Chart2D()
-           >>> _ = chart.line(x, y, "r")
+           >>> _ = chart.line(x, y, 'r')
            >>> chart.grid = False
            >>> chart.show()
 
@@ -3942,13 +3896,9 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> rng = np.random.default_rng(
-       ...     1
-       ... )  # Seeded random number generator used for data generation
+       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
        >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-       >>> chart = pv.ChartBox(
-       ...     normal_data, labels=[f"x ~ N({i},1)" for i in range(5)]
-       ... )
+       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
        >>> chart.show()
 
     """
@@ -4033,9 +3983,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> rng = np.random.default_rng(
-           ...     1
-           ... )  # Seeded random number generator for data generation
+           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
            >>> chart = pv.ChartBox([rng.normal(size=100)])
            >>> chart.show()
 
@@ -4086,13 +4034,9 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> rng = np.random.default_rng(
-       ...     1
-       ... )  # Seeded random number generator used for data generation
+       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
        >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-       >>> chart = pv.ChartBox(
-       ...     normal_data, labels=[f"x ~ N({i},1)" for i in range(5)]
-       ... )
+       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
        >>> chart.show()
 
     """
@@ -4143,7 +4087,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
+            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
             _Chart._geometry.fset(self, value)
 
@@ -4160,9 +4104,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> rng = np.random.default_rng(
-           ...     1
-           ... )  # Seeded random number generator for data generation
+           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
            >>> chart = pv.ChartBox([rng.normal(size=100)])
            >>> chart.show()
 
@@ -4291,13 +4233,7 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
 
        >>> import pyvista as pv
        >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-       >>> l = [
-       ...     "Social benefits",
-       ...     "Governance",
-       ...     "Economic policy",
-       ...     "Education",
-       ...     "Other",
-       ... ]
+       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
        >>> chart = pv.ChartPie(x, labels=l)
        >>> chart.show()
 
@@ -4408,13 +4344,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 
        >>> import pyvista as pv
        >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-       >>> l = [
-       ...     "Social benefits",
-       ...     "Governance",
-       ...     "Economic policy",
-       ...     "Education",
-       ...     "Other",
-       ... ]
+       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
        >>> chart = pv.ChartPie(x, labels=l)
        >>> chart.show()
 
@@ -4471,7 +4401,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
+            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
             _Chart._geometry.fset(self, value)
 
@@ -4635,9 +4565,9 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
        >>> speed = np.sqrt(U**2 + V**2)
 
        >>> f, ax = plt.subplots()
-       >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap="autumn")
+       >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap='autumn')
        >>> _ = f.colorbar(strm.lines)
-       >>> _ = ax.set_title("Streamplot with varying Color")
+       >>> _ = ax.set_title('Streamplot with varying Color')
        >>> plt.tight_layout()
 
        >>> chart = pv.ChartMPL(f)
@@ -4672,7 +4602,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         self._fig.patch.set_alpha(0)
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
-        self._canvas.mpl_connect("draw_event", self._redraw)  # Attach 'draw_event' callback
+        self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
         self._redraw_on_render = redraw_on_render
 
         self._redraw()
@@ -4776,7 +4706,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
 
     @_geometry.setter
     def _geometry(self, _):
-        raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
+        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
@@ -4801,7 +4731,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     @position.setter
     def position(self, val):  # numpydoc ignore=GL08
         if len(val) != 2:
-            raise ValueError(f"Invalid position {val}, must be length 2.")
+            raise ValueError(f'Invalid position {val}, must be length 2.')
         self.SetPosition(*val)
 
     @property
@@ -4821,7 +4751,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
            >>> f, ax = plt.subplots()
            >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
            >>> chart = pv.ChartMPL(f)
-           >>> chart.title = "My Chart"
+           >>> chart.title = 'My Chart'
            >>> chart.show()
 
         """
@@ -5009,7 +4939,7 @@ class Charts:
         """
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         if chart not in self._charts:  # pragma: no cover
-            raise ValueError("chart_index not present in charts collection.")
+            raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
         if chart._background is not None:

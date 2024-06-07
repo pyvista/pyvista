@@ -8,16 +8,16 @@ from pyvista.plotting.mapper import PointGaussianMapper
 
 @pytest.fixture()
 def mapper(sphere):
-    sphere["array"] = sphere.points[:, 2]
+    sphere['array'] = sphere.points[:, 2]
     pl = pv.Plotter()
-    actor = pl.add_points(sphere, style="points_gaussian")
+    actor = pl.add_points(sphere, style='points_gaussian')
     return actor.mapper
 
 
 def test_mapper_init(mapper):
     assert isinstance(mapper, PointGaussianMapper)
-    assert "False" in repr(mapper)
-    assert "Emissive" in repr(mapper)
+    assert 'False' in repr(mapper)
+    assert 'Emissive' in repr(mapper)
 
 
 def test_emissive(mapper):
@@ -39,17 +39,17 @@ def test_scale_factor(mapper):
 def test_scale_array(mapper):
     assert mapper.scale_array is None
 
-    with pytest.raises(KeyError, match="does not exist"):
-        mapper.scale_array = "foo"
+    with pytest.raises(KeyError, match='does not exist'):
+        mapper.scale_array = 'foo'
 
-    scale_array = "array"
+    scale_array = 'array'
     mapper.scale_array = scale_array
     assert mapper.scale_array == scale_array
 
 
 def test_use_circular_splat(mapper):
     mapper.use_circular_splat()
-    assert "offsetVCVSOutput" in mapper.GetSplatShaderCode()
+    assert 'offsetVCVSOutput' in mapper.GetSplatShaderCode()
 
     mapper.use_default_splat()
     assert mapper.GetSplatShaderCode() is None

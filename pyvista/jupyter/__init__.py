@@ -9,12 +9,12 @@ import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
-    "static",
-    "client",
-    "server",
-    "trame",
-    "html",
-    "none",
+    'static',
+    'client',
+    'server',
+    'trame',
+    'html',
+    'none',
 ]
 
 
@@ -26,28 +26,28 @@ def _validate_jupyter_backend(backend):
     """
     # Must be a string
     if backend is None:
-        backend = "none"
+        backend = 'none'
     backend = backend.lower()
 
     try:
         import IPython
     except ImportError:  # pragma: no cover
-        raise ImportError("Install IPython to display with pyvista in a notebook.")
+        raise ImportError('Install IPython to display with pyvista in a notebook.')
 
     if backend not in ALLOWED_BACKENDS:
-        backend_list_str = ", ".join([f'"{item}"' for item in ALLOWED_BACKENDS])
+        backend_list_str = ', '.join([f'"{item}"' for item in ALLOWED_BACKENDS])
         raise ValueError(
             f'Invalid Jupyter notebook plotting backend "{backend}".\n'
-            f"Use one of the following:\n{backend_list_str}",
+            f'Use one of the following:\n{backend_list_str}',
         )
 
-    if backend in ["server", "client", "trame", "html"]:
+    if backend in ['server', 'client', 'trame', 'html']:
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:  # pragma: no cover
-            raise ImportError("Please install `trame` and `ipywidgets` to use this feature.")
+            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
 
-    if backend == "none":
+    if backend == 'none':
         backend = None
     return backend
 
@@ -98,11 +98,11 @@ def set_jupyter_backend(backend, name=None, **kwargs):
     --------
     Enable the trame Trame backend.
 
-    >>> pv.set_jupyter_backend("trame")  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('trame')  # doctest:+SKIP
 
     Just show static images.
 
-    >>> pv.set_jupyter_backend("static")  # doctest:+SKIP
+    >>> pv.set_jupyter_backend('static')  # doctest:+SKIP
 
     Disable all plotting within JupyterLab and display using a
     standard desktop VTK render window.

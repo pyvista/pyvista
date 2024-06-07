@@ -45,13 +45,13 @@ pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
     structure,
-    scalars="T",
+    scalars='T',
     smooth_shading=True,
     split_sharp_edges=True,
-    cmap="reds",
+    cmap='reds',
     ambient=0.2,
 )
-pl.enable_anti_aliasing("fxaa")  # also try 'ssaa'
+pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
@@ -67,16 +67,16 @@ pl.show()
 # pushed out of the "back" of the case via a fan.
 
 # Clip the air in the XY plane
-z_slice = air.clip("z", value=-0.005)
+z_slice = air.clip('z', value=-0.005)
 
 # Plot it
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
-pl.add_mesh(z_slice, scalars="U", lighting=False, scalar_bar_args={"title": "Velocity"})
-pl.add_mesh(structure, color="w", smooth_shading=True, split_sharp_edges=True)
-pl.camera_position = "xy"
+pl.add_mesh(z_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Velocity'})
+pl.add_mesh(structure, color='w', smooth_shading=True, split_sharp_edges=True)
+pl.camera_position = 'xy'
 pl.camera.roll = 90
-pl.enable_anti_aliasing("fxaa")
+pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
@@ -90,22 +90,22 @@ pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
     z_slice,
-    scalars="T",
+    scalars='T',
     lighting=False,
-    scalar_bar_args={"title": "Temperature"},
-    cmap="reds",
+    scalar_bar_args={'title': 'Temperature'},
+    cmap='reds',
 )
 pl.add_mesh(
     structure,
-    scalars="T",
+    scalars='T',
     smooth_shading=True,
     split_sharp_edges=True,
-    cmap="reds",
+    cmap='reds',
     show_scalar_bar=False,
 )
-pl.camera_position = "xy"
+pl.camera_position = 'xy'
 pl.camera.roll = 90
-pl.enable_anti_aliasing("fxaa")
+pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
@@ -128,18 +128,18 @@ lines = air.streamlines_from_source(points, max_time=2.0)
 # Plot
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
-pl.add_mesh(lines, line_width=2, scalars="T", cmap="reds", scalar_bar_args={"title": "Temperature"})
+pl.add_mesh(lines, line_width=2, scalars='T', cmap='reds', scalar_bar_args={'title': 'Temperature'})
 pl.add_mesh(
     structure,
-    scalars="T",
+    scalars='T',
     smooth_shading=True,
     split_sharp_edges=True,
-    cmap="reds",
+    cmap='reds',
     show_scalar_bar=False,
 )
-pl.camera_position = "xy"
+pl.camera_position = 'xy'
 pl.camera.roll = 90
-pl.enable_anti_aliasing("fxaa")  # also try 'ssaa'
+pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
@@ -175,15 +175,15 @@ opac[1:] = np.geomspace(1e-7, 0.1, 19)
 opac[-5:] = [0.05, 0.1, 0.5, 0.5, 0.5]
 
 pl = pv.Plotter()
-pl.add_mesh(structure, color="w", smooth_shading=True, split_sharp_edges=True)
+pl.add_mesh(structure, color='w', smooth_shading=True, split_sharp_edges=True)
 vol = pl.add_volume(
     grid,
-    scalars="T",
+    scalars='T',
     opacity=opac,
-    cmap="autumn_r",
+    cmap='autumn_r',
     show_scalar_bar=True,
-    scalar_bar_args={"title": "Temperature"},
+    scalar_bar_args={'title': 'Temperature'},
 )
-vol.prop.interpolation_type = "linear"
+vol.prop.interpolation_type = 'linear'
 pl.camera.zoom(2)
 pl.show()

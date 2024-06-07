@@ -55,7 +55,7 @@ curvsurf.plot(texture=tex)
 
 elevated = curvsurf.elevation()
 
-elevated.plot(scalars="Elevation", cmap="terrain", texture=tex, interpolate_before_map=False)
+elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False)
 
 
 ###############################################################################

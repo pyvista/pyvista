@@ -10,8 +10,8 @@ import pyvista as pv
 from pyvista import examples
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS CI fails when downloading examples",
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -28,16 +28,16 @@ def actor_from_multi_block():
 @pytest.fixture()
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
-    vol["scalars"] = 255 - vol.z * 25
+    vol['scalars'] = 255 - vol.z * 25
     pl = pv.Plotter()
     return pl.add_volume(vol)
 
 
 def test_actor_init_empty():
     actor = pv.Actor()
-    assert "Position" in repr(actor)
-    assert "Has mapper" in repr(actor)
-    assert "Mapper" not in repr(actor)
+    assert 'Position' in repr(actor)
+    assert 'Has mapper' in repr(actor)
+    assert 'Mapper' not in repr(actor)
     assert isinstance(actor.prop, pv.Property)
     assert actor.mapper is None
 
@@ -58,7 +58,7 @@ def test_actor_init_empty():
 def test_actor_from_argument():
     mapper = pv.DataSetMapper()
     prop = pv.Property()
-    name = "Actor"
+    name = 'Actor'
     actor = pv.Actor(mapper=mapper, prop=prop, name=name)
     assert actor.mapper is mapper
     assert actor.prop is prop
@@ -70,7 +70,7 @@ def test_actor_from_plotter():
     actor = pv.Plotter().add_mesh(mesh, lighting=False)
     assert actor.mapper.dataset is mesh
     assert actor.prop.lighting is False
-    assert "Mapper" in repr(actor)
+    assert 'Mapper' in repr(actor)
 
 
 def test_actor_copy_deep(actor):
@@ -208,7 +208,7 @@ def test_actor_name(actor):
     actor.name = 1
     assert actor._name == 1
 
-    with pytest.raises(ValueError, match="Name must be truthy"):
+    with pytest.raises(ValueError, match='Name must be truthy'):
         actor.name = None
 
 

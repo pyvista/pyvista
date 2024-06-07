@@ -63,7 +63,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
         if scalars.shape[0] == mesh.n_points and scalars.shape[0] == mesh.n_cells:
-            use_points = preference == "point"
+            use_points = preference == 'point'
         else:
             use_points = scalars.shape[0] == mesh.n_points
 
@@ -73,7 +73,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             pass_pointid=use_points or texture is not None,
             pass_cellid=not use_points,
         )
-        indices_array = "vtkOriginalPointIds" if use_points else "vtkOriginalCellIds"
+        indices_array = 'vtkOriginalPointIds' if use_points else 'vtkOriginalCellIds'
 
     try:
         if split_sharp_edges:
@@ -85,7 +85,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
             if is_polydata:
                 if has_scalars and use_points:
                     # we must track the original IDs with our own array from compute_normals
-                    indices_array = "pyvistaOriginalPointIds"
+                    indices_array = 'pyvistaOriginalPointIds'
         elif mesh.point_data.active_normals is None:
             mesh.compute_normals(cell_normals=False, inplace=True)
     except TypeError as e:
@@ -203,35 +203,35 @@ def _common_arg_parser(
 ):
     """Parse arguments in common between add_volume, composite, and mesh."""
     # supported aliases
-    clim = kwargs.pop("rng", clim)
-    cmap = kwargs.pop("colormap", cmap)
+    clim = kwargs.pop('rng', clim)
+    cmap = kwargs.pop('colormap', cmap)
     culling = kwargs.pop("backface_culling", culling)
-    rgb = kwargs.pop("rgba", rgb)
-    vertex_color = kwargs.pop("vertex_color", theme.edge_color)
-    vertex_style = kwargs.pop("vertex_style", "points")
-    vertex_opacity = kwargs.pop("vertex_opacity", 1.0)
+    rgb = kwargs.pop('rgba', rgb)
+    vertex_color = kwargs.pop('vertex_color', theme.edge_color)
+    vertex_style = kwargs.pop('vertex_style', 'points')
+    vertex_opacity = kwargs.pop('vertex_opacity', 1.0)
 
     # Support aliases for 'back', 'front', or 'none'. Consider deprecating
     if culling is False:
-        culling = "none"
-    elif culling in ["b", "backface", True]:
-        culling = "back"
-    elif culling in ["f", "frontface"]:
-        culling = "front"
+        culling = 'none'
+    elif culling in ['b', 'backface', True]:
+        culling = 'back'
+    elif culling in ['f', 'frontface']:
+        culling = 'front'
 
     if show_scalar_bar is None:
         # use theme unless plotting RGB
         _default = theme.show_scalar_bar or scalar_bar_args
         show_scalar_bar = False if rgb else _default
     # Avoid mutating input
-    scalar_bar_args = {"n_colors": n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
+    scalar_bar_args = {'n_colors': n_colors} if scalar_bar_args is None else scalar_bar_args.copy()
 
     # theme based parameters
     if split_sharp_edges is None:
         split_sharp_edges = theme.split_sharp_edges
-    feature_angle = kwargs.pop("feature_angle", theme.sharp_edges_feature_angle)
+    feature_angle = kwargs.pop('feature_angle', theme.sharp_edges_feature_angle)
     if render_points_as_spheres is None:
-        if style == "points_gaussian":
+        if style == 'points_gaussian':
             render_points_as_spheres = False
         else:
             render_points_as_spheres = theme.render_points_as_spheres
@@ -240,7 +240,7 @@ def _common_arg_parser(
         smooth_shading = True if pbr else theme.smooth_shading
 
     if name is None:
-        name = f"{type(dataset).__name__}({dataset.memory_address})"
+        name = f'{type(dataset).__name__}({dataset.memory_address})'
         remove_existing_actor = False
     else:
         # check if this actor already exists
@@ -255,8 +255,8 @@ def _common_arg_parser(
         texture = None
 
     # allow directly specifying interpolation (potential future feature)
-    if "interpolation" in kwargs:
-        interpolation = kwargs.pop("interpolation")  # pragma: no cover:
+    if 'interpolation' in kwargs:
+        interpolation = kwargs.pop('interpolation')  # pragma: no cover:
     elif pbr:
         interpolation = InterpolationType.PBR
     elif smooth_shading:

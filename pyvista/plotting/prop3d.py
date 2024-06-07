@@ -78,8 +78,8 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
-        >>> actor = pl.add_mesh(mesh, color="r")
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(mesh, color='r')
         >>> actor.position = (0, 0, 1)  # shifts the red sphere up
         >>> pl.show()
 
@@ -106,11 +106,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -137,11 +137,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -168,11 +168,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -203,11 +203,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube(center=(0, 0, 3))
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -221,11 +221,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube(center=(0, 0, 3))
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )

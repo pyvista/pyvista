@@ -22,7 +22,7 @@ from pyvista import examples
 
 plotter = pv.Plotter()
 plotter.add_mesh(pv.Sphere(), smooth_shading=True)
-plotter.show_bounds(location="all")
+plotter.show_bounds(location='all')
 plotter.show()
 
 
@@ -41,7 +41,7 @@ plotter.add_mesh(gears, smooth_shading=True, split_sharp_edges=True)
 plotter.show_bounds(axes_ranges=[0, 5, 0, 5, 0, 2], show_zlabels=False)
 plotter.show()
 
-print(f"Actual dataset bounds: {gears.bounds}")
+print(f'Actual dataset bounds: {gears.bounds}')
 
 
 ###############################################################################

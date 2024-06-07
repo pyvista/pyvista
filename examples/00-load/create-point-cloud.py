@@ -112,22 +112,22 @@ vectors[0:5, :]
 
 ###############################################################################
 
-point_cloud["vectors"] = vectors
+point_cloud['vectors'] = vectors
 
 ###############################################################################
 # Now we can make arrows using those vectors using the glyph filter
 # (see :ref:`glyph_example` for more details).
 
 arrows = point_cloud.glyph(
-    orient="vectors",
+    orient='vectors',
     scale=False,
     factor=0.15,
 )
 
 # Display the arrows
 plotter = pv.Plotter()
-plotter.add_mesh(point_cloud, color="maroon", point_size=10.0, render_points_as_spheres=True)
-plotter.add_mesh(arrows, color="lightblue")
+plotter.add_mesh(point_cloud, color='maroon', point_size=10.0, render_points_as_spheres=True)
+plotter.add_mesh(arrows, color='lightblue')
 # plotter.add_point_labels([point_cloud.center,], ['Center',],
 #                          point_color='yellow', point_size=20)
 plotter.show_grid()

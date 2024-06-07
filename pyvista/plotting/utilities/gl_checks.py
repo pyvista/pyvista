@@ -60,4 +60,4 @@ def uses_egl() -> bool:
         otherwise ``False``.
     """
     ren_win_str = str(type(_vtk.vtkRenderWindow()))
-    return "EGL" in ren_win_str or "OSOpenGL" in ren_win_str
+    return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str

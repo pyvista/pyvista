@@ -3,6 +3,7 @@
 
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
+
 """
 
 # sphinx_gallery_start_ignore
@@ -28,15 +29,15 @@ from pyvista import examples
 # An XML PolyData file in ``.vtp`` format is created.  It will be saved in a
 # temporary file for this example.
 
-temp_file = NamedTemporaryFile("w", suffix=".vtp")
+temp_file = NamedTemporaryFile('w', suffix=".vtp")
 temp_file.name
 
 ###############################################################################
 # :class:`pyvista.Sphere` already includes ``Normals`` point data.  Additionally
 # ``height`` point data and ``id`` cell data is added.
 mesh = pyvista.Sphere()
-mesh["height"] = mesh.points[:, 1]
-mesh["id"] = np.arange(mesh.n_cells)
+mesh['height'] = mesh.points[:, 1]
+mesh['id'] = np.arange(mesh.n_cells)
 mesh.save(temp_file.name)
 
 ###############################################################################
@@ -71,7 +72,7 @@ print(f"Available cell data:    {reader.cell_array_names}")
 # is finally read into a pyvista object that only has the ``height`` point array.
 
 reader.disable_all_cell_arrays()
-reader.disable_point_array("Normals")
+reader.disable_point_array('Normals')
 print(f"Point array status: {reader.all_point_arrays_status}")
 print(f"Cell array status:  {reader.all_cell_arrays_status}")
 reader_mesh = reader.read()
@@ -110,25 +111,25 @@ reader.set_active_time_value(time_values[1])
 mesh_1 = reader.read()
 
 for block_0, block_1 in zip(mesh_0, mesh_1):
-    block_1["DENS_DIFF"] = block_1["DENS"] - block_0["DENS"]
+    block_1['DENS_DIFF'] = block_1['DENS'] - block_0['DENS']
 
 ###############################################################################
 # The value of `DENS` is plotted on the left column for both time points, and
 # the difference on the right.
 
-plotter = pyvista.Plotter(shape="2|1")
+plotter = pyvista.Plotter(shape='2|1')
 
 plotter.subplot(0)
-plotter.add_mesh(mesh_0, scalars="DENS", show_scalar_bar=False)
+plotter.add_mesh(mesh_0, scalars='DENS', show_scalar_bar=False)
 plotter.add_text(f"{time_values[0]}")
 
 plotter.subplot(1)
-plotter.add_mesh(mesh_1, scalars="DENS", show_scalar_bar=False)
+plotter.add_mesh(mesh_1, scalars='DENS', show_scalar_bar=False)
 plotter.add_text(f"{time_values[1]}")
 
 # pyvista currently cannot plot the same mesh twice with different scalars
 plotter.subplot(2)
-plotter.add_mesh(mesh_1.copy(), scalars="DENS_DIFF", show_scalar_bar=False)
+plotter.add_mesh(mesh_1.copy(), scalars='DENS_DIFF', show_scalar_bar=False)
 plotter.add_text("DENS Difference")
 
 plotter.link_views()
@@ -158,7 +159,7 @@ plotter.open_gif("wave_pvd.gif")
 for time_value in reader.time_values:
     reader.set_active_time_value(time_value)
     mesh = reader.read()[0]  # This dataset only has 1 block
-    plotter.add_mesh(mesh, scalars="z", show_scalar_bar=False, lighting=False)
+    plotter.add_mesh(mesh, scalars='z', show_scalar_bar=False, lighting=False)
     plotter.add_text(f"Time: {time_value:.0f}", color="black")
     plotter.write_frame()
     plotter.clear()

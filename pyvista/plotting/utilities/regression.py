@@ -61,16 +61,16 @@ def wrap_image_array(arr):
 
     """
     if arr.ndim != 3:
-        raise ValueError("Expecting a X by Y by (3 or 4) array")
+        raise ValueError('Expecting a X by Y by (3 or 4) array')
     if arr.shape[2] not in [3, 4]:
-        raise ValueError("Expecting a X by Y by (3 or 4) array")
+        raise ValueError('Expecting a X by Y by (3 or 4) array')
     if arr.dtype != np.uint8:
-        raise ValueError("Expecting a np.uint8 array")
+        raise ValueError('Expecting a np.uint8 array')
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_data["PNGImage"] = arr[::-1].reshape(-1, arr.shape[2])
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
@@ -101,7 +101,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = point_array(image, "ImageScalars")
+    img_array = point_array(image, 'ImageScalars')
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]
@@ -200,8 +200,8 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     Compare images from file.
 
     >>> import pyvista as pv
-    >>> img1 = pv.read("img1.png")  # doctest:+SKIP
-    >>> img2 = pv.read("img2.png")  # doctest:+SKIP
+    >>> img1 = pv.read('img1.png')  # doctest:+SKIP
+    >>> img2 = pv.read('img2.png')  # doctest:+SKIP
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
@@ -225,20 +225,20 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             if img.render_window is None:
                 raise RuntimeError(
-                    "Unable to extract image from Plotter as it has already been closed.",
+                    'Unable to extract image from Plotter as it has already been closed.',
                 )
             return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
             raise TypeError(
-                f"Unsupported data type {type(img)}.  Should be "
-                "Either a np.ndarray, vtkRenderWindow, or vtkImageData",
+                f'Unsupported data type {type(img)}.  Should be '
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData',
             )
 
     im1 = remove_alpha(to_img(im1))
     im2 = remove_alpha(to_img(im2))
 
     if im1.GetDimensions() != im2.GetDimensions():
-        raise RuntimeError("Input images are not the same size.")
+        raise RuntimeError('Input images are not the same size.')
 
     if use_vtk:
         img_diff = _vtk.vtkImageDifference()

@@ -204,14 +204,14 @@ class DynamicScraper:  # pragma: no cover
             raise RuntimeError(BUILDING_GALLERY_ERROR_MSG)
 
         # read global option  if it exists
-        force_static = block_vars["example_globals"].get(
+        force_static = block_vars['example_globals'].get(
             "PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT",
             False,
         )
         # override with block specific value if it exists
-        if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split("\n"):
+        if "PYVISTA_GALLERY_FORCE_STATIC = True" in block[1].split('\n'):
             force_static = True
-        elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split("\n"):
+        elif "PYVISTA_GALLERY_FORCE_STATIC = False" in block[1].split('\n'):
             force_static = False
 
         if force_static is None:

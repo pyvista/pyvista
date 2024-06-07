@@ -45,7 +45,7 @@ def _validate_axes(axes):
     return axes
 
 
-def _check_callable(func, name="callback"):
+def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
         raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
@@ -185,7 +185,7 @@ class AffineWidget3D:
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
         if pyvista.vtk_version_info < (9, 2):
-            raise VTKVersionError("AfflineWidget3D requires VTK v9.2.0 or newer.")
+            raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
@@ -487,7 +487,7 @@ class AffineWidget3D:
     def enable(self):
         """Enable the widget."""
         if not self._pl._picker_in_use:
-            self._pl.enable_mesh_picking(show_message=False, show=False, picker="hardware")
+            self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
             "MouseMoveEvent",
             self._move_callback,

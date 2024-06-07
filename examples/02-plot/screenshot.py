@@ -22,7 +22,7 @@ mesh = pv.read(filename)
 
 plotter = pv.Plotter(off_screen=True)
 plotter.add_mesh(mesh, color="orange")
-plotter.show(screenshot="airplane.png")
+plotter.show(screenshot='airplane.png')
 
 ###############################################################################
 # The ``img`` array can be used to plot the screenshot in ``matplotlib``:

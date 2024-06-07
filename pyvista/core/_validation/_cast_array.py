@@ -110,6 +110,6 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
     if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
-    elif out.dtype.name == "object":
+    elif out.dtype.name == 'object':
         raise TypeError("Object arrays are not supported.")
     return out

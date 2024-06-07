@@ -21,23 +21,23 @@ def test_observers():
 
     # Key events
     with pytest.raises(TypeError):
-        pl.add_key_event("w", 1)
+        pl.add_key_event('w', 1)
 
     # Callback must not have any  empty arguments.
     def callback(a, b, *, c, d=1.0):
         pass
 
     with pytest.raises(TypeError):
-        pl.add_key_event("w", callback)
+        pl.add_key_event('w', callback)
 
-    key = "w"
+    key = 'w'
     pl.add_key_event(key, empty_callback)
     assert key in pl.iren._key_press_event_callbacks
     pl.clear_events_for_key(key)
     assert key not in pl.iren._key_press_event_callbacks
     # attempting to clear non-existing events doesn't raise by default
     pl.clear_events_for_key(key)
-    with pytest.raises(ValueError, match="No events found for key"):
+    with pytest.raises(ValueError, match='No events found for key'):
         pl.clear_events_for_key(key, raise_on_missing=True)
 
     # Custom events
@@ -98,9 +98,9 @@ def test_track_click_position_multi_render():
 
     pl = pv.Plotter()
     with pytest.raises(TypeError):
-        pl.track_click_position(side="dark")
+        pl.track_click_position(side='dark')
 
-    pl.track_click_position(callback=callback, side="left", viewport=True)
+    pl.track_click_position(callback=callback, side='left', viewport=True)
     pl.show(auto_close=False)
     x, y = 10, 20
     pl.iren._mouse_right_button_click(2 * x, 2 * y)
@@ -108,7 +108,7 @@ def test_track_click_position_multi_render():
     assert points[0] == (x, y)
 
     # disable and ensure that clicking is no longer being tracked
-    pl.untrack_click_position(side="left")
+    pl.untrack_click_position(side='left')
     pl.iren._mouse_left_button_click(50, 50)
     assert len(points) == 1
 
@@ -124,8 +124,8 @@ def test_track_click_position():
         events.append("double")
 
     pl = pv.Plotter()
-    pl.track_click_position(callback=single_click_callback, side="left", double=False)
-    pl.track_click_position(callback=double_click_callback, side="left", double=True)
+    pl.track_click_position(callback=single_click_callback, side='left', double=False)
+    pl.track_click_position(callback=double_click_callback, side='left', double=True)
     pl.show(auto_close=False)
 
     # Test single and double clicks:
@@ -148,11 +148,11 @@ def test_track_click_position():
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__
     not in ("vtkWin32RenderWindowInteractor", "vtkXRenderWindowInteractor"),
-    reason="Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.",
+    reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
 @pytest.mark.needs_vtk_version(
     (9, 2),
-    reason="vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.",
+    reason='vtkXRenderWindowInteractor (Linux) does not invoke TimerEvents during ProcessEvents until VTK9.2.',
 )
 def test_timer():
     # Create a normal interactor from the offscreen plotter (not generic,
@@ -255,7 +255,7 @@ def test_poked_subplot_context(verify_image_cache):
 
 @pytest.mark.skip_plotting()
 def test_add_pick_observer():
-    with pytest.warns(PyVistaDeprecationWarning, match="`add_pick_obeserver` is deprecated"):
+    with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
         pl = pv.Plotter()
         pl.iren.add_pick_obeserver(empty_callback)
     pl = pv.Plotter()
@@ -263,7 +263,7 @@ def test_add_pick_observer():
 
 
 @pytest.mark.needs_vtk_version(9, 1)
-@pytest.mark.parametrize("event", ["LeftButtonReleaseEvent", "RightButtonReleaseEvent"])
+@pytest.mark.parametrize('event', ['LeftButtonReleaseEvent', 'RightButtonReleaseEvent'])
 def test_release_button_observers(event):
     class CallBack:
         def __init__(self):
