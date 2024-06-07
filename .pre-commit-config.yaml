@@ -5,6 +5,13 @@ ci:
   autoupdate_schedule: monthly
 
 repos:
+  - repo: https://github.com/keewis/blackdoc
+    rev: v0.3.9
+    hooks:
+      - id: blackdoc
+        files: '\.py$'
+        exclude: pyvista/plotting/charts.py
+
   - repo: https://github.com/PyCQA/flake8
     rev: 7.0.0
     hooks:

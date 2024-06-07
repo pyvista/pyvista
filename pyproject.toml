@@ -91,6 +91,13 @@ pyvista = [
     'frog_tissues.vti',
 ]
 
+[tool.blackdoc]
+# From https://numpydoc.readthedocs.io/en/latest/format.html
+# Extended discussion: https://github.com/pyvista/pyvista/pull/4129
+# The length of docstring lines should be kept to 75 characters to facilitate
+# reading the docstrings in text terminals.
+line-length = 75
+
 [tool.build_sphinx]
 source-dir = 'doc'
 build-dir  = './doc/_build'
@@ -286,9 +293,7 @@ indent-width = 4
 target-version = 'py38'
 
 [tool.ruff.format]
-docstring-code-format = true
-docstring-code-line-length = 75
-
+docstring-code-format = false
 [tool.ruff.lint]
 external = ["E131", "D102", "D105"]
 ignore = [
