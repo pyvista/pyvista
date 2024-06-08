@@ -7144,6 +7144,7 @@ class Plotter(BasePlotter):
         ... )
         >>> plotter.show()
         """
+
         # Define the lines
         pointa = np.asarray(pointa)
         pointb = np.asarray(pointb)
