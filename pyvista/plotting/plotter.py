@@ -7156,7 +7156,7 @@ class Plotter(BasePlotter):
         mlines = pyvista.MultipleLines(lines)
         mlines["Normal"] = np.array([offset, offset])
 
-        # Create arrows for the lines
+        # Create extension lines
         arrows = mlines.glyph(geom=pyvista.Line(), scale="Normal", factor=1.0, orient="Normal")
 
         # Define the midpoints between pointa and pointb
