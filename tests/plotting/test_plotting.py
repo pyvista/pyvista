@@ -3906,7 +3906,6 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@skip_lesser_9_0_X
 def test_actor_properties():
     from pyvista.plotting import _vtk
 
