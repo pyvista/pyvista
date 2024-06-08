@@ -2883,6 +2883,7 @@ class NetCDFCFReader(BaseReader):
         """
         return [self.reader.GetVariableArrayName(i) for i in range(self.number_variable_arrays)]
 
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
