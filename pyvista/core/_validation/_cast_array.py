@@ -99,7 +99,7 @@ def _cast_to_numpy(
             * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
 
     must_be_real : bool, default: True
-        Raise a TypeError if the array does not have real numbers, i.e.
+        Raise a ``TypeError`` if the array does not have real numbers, i.e.
         its data type is not integer or floating.
 
     Raises
