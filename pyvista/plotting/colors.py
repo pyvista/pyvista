@@ -170,17 +170,22 @@ tab:cyan
 from __future__ import annotations
 
 import inspect
-from typing import Optional, Tuple, Union
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
-from cycler import Cycler, cycler
+from cycler import Cycler
+from cycler import cycler
 
 try:
-    from matplotlib import colormaps, colors
+    from matplotlib import colormaps
+    from matplotlib import colors
 except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+from typing import Any
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt

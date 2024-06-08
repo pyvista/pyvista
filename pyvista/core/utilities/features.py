@@ -1,9 +1,10 @@
 """Module containing geometry helper functions."""
 
-import collections.abc
+from __future__ import annotations
+
+from collections.abc import Sequence
 import os
 import sys
-from typing import Sequence
 
 import numpy as np
 
@@ -64,7 +65,7 @@ def voxelize(mesh, density=None, check_surface=True):
         density = mesh.length / 100
     if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
+    elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
         raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
@@ -170,7 +171,7 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         density = mesh.length / 100
     if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
+    elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
         raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
@@ -430,7 +431,7 @@ def merge(
     >>> mesh.plot()
 
     """
-    if not isinstance(datasets, collections.abc.Sequence):
+    if not isinstance(datasets, Sequence):
         raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
 
     if len(datasets) < 1:

@@ -14,6 +14,8 @@ Denotes the first release candidate.
 """
 
 # major, minor, patch
+from __future__ import annotations
+
 version_info = 0, 44, 'dev0'
 
 # Nice string for the version

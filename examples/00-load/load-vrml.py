@@ -9,6 +9,8 @@ https://en.wikipedia.org/wiki/VRML
 
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 

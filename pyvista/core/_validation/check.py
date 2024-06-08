@@ -12,9 +12,13 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
+from collections.abc import Sequence
 from numbers import Number
-from typing import Tuple, Union, get_args, get_origin
+from typing import Tuple
+from typing import Union
+from typing import get_args
+from typing import get_origin
 
 import numpy as np
 
@@ -297,10 +301,7 @@ def check_integer(arr, /, *, strict=False, name="Array"):
     """
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
     if strict:
-        try:
-            check_subdtype(arr, np.integer)
-        except TypeError:
-            raise
+        check_subdtype(arr, np.integer)
     elif not np.array_equal(arr, np.floor(arr)):
         raise ValueError(f"{name} must have integer-like values.")
 
@@ -334,10 +335,7 @@ def check_nonnegative(arr, /, *, name="Array"):
     >>> _validation.check_nonnegative([1, 2, 3])
 
     """
-    try:
-        check_greater_than(arr, 0, strict=False, name=name)
-    except ValueError:
-        raise
+    check_greater_than(arr, 0, strict=False, name=name)
 
 
 def check_greater_than(arr, /, value, *, strict=True, name="Array"):
@@ -486,11 +484,8 @@ def check_range(arr, /, rng, *, strict_lower=False, strict_upper=False, name="Ar
     check_sorted(rng, name="Range")
 
     arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    try:
-        check_greater_than(arr, rng[0], strict=strict_lower, name=name)
-        check_less_than(arr, rng[1], strict=strict_upper, name=name)
-    except ValueError:
-        raise
+    check_greater_than(arr, rng[0], strict=strict_lower, name=name)
+    check_less_than(arr, rng[1], strict=strict_upper, name=name)
 
 
 def check_shape(
@@ -604,10 +599,7 @@ def check_number(num, /, *, name='Object'):
     >>> _validation.check_number(1 + 2j)
 
     """
-    try:
-        check_instance(num, Number, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(num, Number, allow_subclass=True, name=name)
 
 
 def check_string(obj, /, *, allow_subclass=True, name='Object'):
@@ -645,10 +637,7 @@ def check_string(obj, /, *, allow_subclass=True, name='Object'):
     >>> _validation.check_string("eggs")
 
     """
-    try:
-        check_instance(obj, str, allow_subclass=allow_subclass, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
 def check_sequence(obj, /, *, name='Object'):
@@ -682,10 +671,7 @@ def check_sequence(obj, /, *, name='Object'):
     >>> _validation.check_sequence("A")
 
     """
-    try:
-        check_instance(obj, Sequence, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
 def check_iterable(obj, /, *, name='Object'):
@@ -720,10 +706,7 @@ def check_iterable(obj, /, *, name='Object'):
     >>> _validation.check_iterable(np.array((4, 5, 6)))
 
     """
-    try:
-        check_instance(obj, Iterable, allow_subclass=True, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
 def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
@@ -844,10 +827,7 @@ def check_type(obj, /, classinfo, *, name='Object'):
     >>> _validation.check_type({'spam': "eggs"}, (dict, set))
 
     """
-    try:
-        check_instance(obj, classinfo, allow_subclass=False, name=name)
-    except TypeError:
-        raise
+    check_instance(obj, classinfo, allow_subclass=False, name=name)
 
 
 def check_iterable_items(
@@ -902,19 +882,15 @@ def check_iterable_items(
 
     """
     check_iterable(iterable_obj, name=name)
-    try:
-        any(
-            check_instance(
-                item,
-                item_type,
-                allow_subclass=allow_subclass,
-                name=f"All items of {name}",
-            )
-            for item in iterable_obj
+    any(
+        check_instance(
+            item,
+            item_type,
+            allow_subclass=allow_subclass,
+            name=f"All items of {name}",
         )
-
-    except TypeError:
-        raise
+        for item in iterable_obj
+    )
 
 
 def check_contains(*, item, container, name='Input'):
