@@ -1,5 +1,7 @@
 """PyVista Scalar bar module."""
 
+from __future__ import annotations
+
 import contextlib
 import weakref
 
@@ -396,7 +398,7 @@ class ScalarBars:
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
             # Color bar already present and ready to be used so returning
-            return
+            return None
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:

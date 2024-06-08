@@ -1,31 +1,42 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
-import collections.abc
+from __future__ import annotations
+
+from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
-from functools import partial, wraps
-from typing import ClassVar, Dict, Sequence, cast
+from functools import partial
+from functools import wraps
+from typing import ClassVar
+from typing import cast
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista import MAX_N_COLOR_BARS, vtk_version_info
+from pyvista import MAX_N_COLOR_BARS
+from pyvista import vtk_version_info
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
-from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .actor import Actor
 from .camera import Camera
 from .charts import Charts
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .render_passes import RenderPasses
-from .tools import create_axes_marker, create_axes_orientation_box, parse_font_family
-from .utilities.gl_checks import check_depth_peeling, uses_egl
+from .tools import create_axes_marker
+from .tools import create_axes_orientation_box
+from .tools import parse_font_family
+from .utilities.gl_checks import check_depth_peeling
+from .utilities.gl_checks import uses_egl
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -248,7 +259,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     """Renderer class."""
 
     # map camera_position string to an attribute
-    CAMERA_STR_ATTR_MAP: ClassVar[Dict[str, str]] = {
+    CAMERA_STR_ATTR_MAP: ClassVar[dict[str, str]] = {
         'xy': 'view_xy',
         'xz': 'view_xz',
         'yz': 'view_yz',
@@ -473,7 +484,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         float
-            Length of the diagional of the bounding box.
+            Length of the diagonal of the bounding box.
         """
         return pyvista.Box(self.bounds).length
 
@@ -986,6 +997,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkOrientationMarkerWidget
             Orientation marker widget.
 
+        See Also
+        --------
+        add_axes
+            Add an axes orientation widget.
+
         Examples
         --------
         Use an Arrow as the orientation widget.
@@ -993,7 +1009,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Cube(), show_edges=True)
-        >>> actor = pl.add_orientation_widget(pv.Arrow(), color='r')
+        >>> widget = pl.add_orientation_widget(pv.Arrow(), color='r')
         >>> pl.show()
 
         """
@@ -1056,22 +1072,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the labels.
 
         x_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes parameters.
+            Color used for the x-axis arrow.  Defaults to theme axes parameters.
 
         y_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes parameters.
+            Color used for the y-axis arrow.  Defaults to theme axes parameters.
 
         z_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes parameters.
+            Color used for the z-axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, default: "X"
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, default: "Y"
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, default: "Z"
-            Text used for the z axis.
+            Text used for the z-axis.
 
         labels_off : bool, default: false
             Enable or disable the text labels for the axes.
@@ -1097,8 +1113,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
-            Axes actor.
+        AxesActor
+            Axes actor of the added widget.
+
+
+        See Also
+        --------
+        show_axes
+            Similar method which calls :func:`add_axes` without any parameters.
+
+        add_axes_at_origin
+            Add an :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
@@ -1213,33 +1238,33 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the edges.
 
         x_color : ColorLike, optional
-            Color of the x axis text.
+            Color of the x-axis text.
 
         y_color : ColorLike, optional
-            Color of the y axis text.
+            Color of the y-axis text.
 
         z_color : ColorLike, optional
-            Color of the z axis text.
+            Color of the z-axis text.
 
         xlabel : str, optional
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, optional
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, optional
-            Text used for the z axis.
+            Text used for the z-axis.
 
         x_face_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes
+            Color used for the x-axis arrow.  Defaults to theme axes
             parameters.
 
         y_face_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes
+            Color used for the y-axis arrow.  Defaults to theme axes
             parameters.
 
         z_face_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes
+            Color used for the z-axis arrow.  Defaults to theme axes
             parameters.
 
         label_color : ColorLike, optional
@@ -1309,6 +1334,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def hide_axes(self):
         """Hide the axes orientation widget.
 
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1322,6 +1355,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def show_axes(self):
         """Show the axes orientation widget.
+
+        See Also
+        --------
+        add_axes
+            Similar method with additional options.
+
+        hide_axes
+            Hide the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
+        add_axes_at_origin
+            Add a :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
@@ -1338,8 +1385,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def axes_enabled(self):  # numpydoc ignore=RT01
-        """Return ``True`` when axes are enabled.
+    def axes_enabled(self):
+        """Return ``True`` when the axes widget is enabled.
+
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        hide_axes
+            Hide the axes orientation widget.
 
         Examples
         --------
@@ -1348,6 +1403,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
         >>> pl.renderer.axes_enabled
         False
+
+        Returns
+        -------
+        bool
+            Return ``True`` when the axes widget is enabled.
 
         """
         if hasattr(self, 'axes_widget'):
@@ -1411,13 +1471,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, default: True
-            Makes X axis visible.
+            Makes x-axis visible.
 
         show_yaxis : bool, default: True
-            Makes Y axis visible.
+            Makes y-axis visible.
 
         show_zaxis : bool, default: True
-            Makes Z axis visible.
+            Makes z-axis visible.
 
         show_xlabels : bool, default: True
             Shows X labels.
@@ -1455,22 +1515,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color='#FFFFFF'``
 
         xtitle : str, default: "X Axis"
-            Title of the X axis.  Default ``"X Axis"``.
+            Title of the x-axis.  Default ``"X Axis"``.
 
         ytitle : str, default: "Y Axis"
-            Title of the Y axis.  Default ``"Y Axis"``.
+            Title of the y-axis.  Default ``"Y Axis"``.
 
         ztitle : str, default: "Z Axis"
-            Title of the Z axis.  Default ``"Z Axis"``.
+            Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the X axis.
+            Number of labels for the x-axis.
 
         n_ylabels : int, default: 5
-            Number of labels for the Y axis.
+            Number of labels for the y-axis.
 
         n_zlabels : int, default: 5
-            Number of labels for the Z axis.
+            Number of labels for the z-axis.
 
         use_2d : bool, default: False
             This can be enabled for smoother plotting.
@@ -1711,7 +1771,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # set axes ranges if input
         if axes_ranges is not None:
-            if isinstance(axes_ranges, (collections.abc.Sequence, np.ndarray)):
+            if isinstance(axes_ranges, (Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
                 raise TypeError('Input axes_ranges must be a numeric sequence.')
@@ -2331,7 +2391,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Examples
         --------
         Look from the top down by setting view up to ``[0, 1, 0]``.
-        Notice how the Y axis appears vertical.
+        Notice how the y-axis appears vertical.
 
         >>> from pyvista import demos
         >>> pl = demos.orientation_plotter()
@@ -2490,7 +2550,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
-        if isinstance(actor, collections.abc.Iterable):
+        if isinstance(actor, Iterable):
             success = False
             for a in actor:
                 rv = self.remove_actor(a, reset_camera=reset_camera, render=render)
@@ -2525,7 +2585,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True):
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and Z axis.
+        Scaling in performed independently on the X, Y and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -2613,8 +2673,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
-        return cpos
+        return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
@@ -3731,6 +3790,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         tick_label_offset=2,
         label_color=None,
         tick_color=None,
+        scale=1.0,
     ):
         """Add ruler.
 
@@ -3801,6 +3861,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Either a string, rgb list, or hex color string for
             tick line colors.
 
+        scale : float, default: 1.0
+            Scale factor for the ruler.
+
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkActor
@@ -3849,9 +3914,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         distance = np.linalg.norm(np.asarray(pointa) - np.asarray(pointb))
         if flip_range:
-            ruler.SetRange(distance, 0)
+            ruler.SetRange(distance * scale, 0)
         else:
-            ruler.SetRange(0, distance)
+            ruler.SetRange(0, distance * scale)
 
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)

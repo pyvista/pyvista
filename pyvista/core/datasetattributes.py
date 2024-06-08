@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import contextlib
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 import warnings
 
 import numpy as np
@@ -12,12 +19,16 @@ import numpy as np
 from . import _vtk_core as _vtk
 from .errors import PyVistaDeprecationWarning
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities.arrays import FieldAssociation, convert_array, copy_vtk_array
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import convert_array
+from .utilities.arrays import copy_vtk_array
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
 
-    from ._typing_core import ArrayLike, MatrixLike, NumpyArray
+    from ._typing_core import ArrayLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
@@ -275,7 +286,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.VTKObject.GetNumberOfArrays()
 
     @property
-    def active_scalars(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_scalars(self) -> Optional[pyvista_ndarray]:
         """Return the active scalars.
 
         .. versionchanged:: 0.32.0
@@ -314,7 +325,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def active_vectors(self) -> Optional[NumpyArray[float]]:  # numpydoc ignore=RT01
+    def active_vectors(self) -> Optional[NumpyArray[float]]:
         """Return the active vectors as a pyvista_ndarray.
 
         .. versionchanged:: 0.32.0
@@ -351,7 +362,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def valid_array_len(self) -> Optional[int]:  # numpydoc ignore=RT01
+    def valid_array_len(self) -> Optional[int]:
         """Return the length data should be when added to the dataset.
 
         If there are no restrictions, returns ``None``.
@@ -386,7 +397,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @property
-    def active_t_coords(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_t_coords(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -424,7 +435,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     @property
-    def active_t_coords_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def active_t_coords_name(self) -> Optional[str]:
         """Return the name of the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -1078,12 +1089,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
     def _raise_field_data_no_scalars_vectors(self):
-        """Raise a TypeError if FieldData."""
+        """Raise a ``TypeError`` if FieldData."""
         if self.association == FieldAssociation.NONE:
             raise TypeError('FieldData does not have active scalars or vectors.')
 
     @property
-    def active_scalars_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def active_scalars_name(self) -> Optional[str]:
         """Return name of the active scalars.
 
         Returns
@@ -1140,7 +1151,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             self.SetActiveScalars(name)
 
     @property
-    def active_vectors_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def active_vectors_name(self) -> Optional[str]:
         """Return name of the active vectors.
 
         Returns
@@ -1212,7 +1223,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return True
 
     @property
-    def active_normals(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_normals(self) -> Optional[pyvista_ndarray]:
         """Return the normals.
 
         Returns
@@ -1296,7 +1307,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_normals_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def active_normals_name(self) -> Optional[str]:
         """Return the name of the normals array.
 
         Returns
@@ -1348,7 +1359,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise AttributeError('FieldData does not have active texture coordinates.')
 
     @property
-    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:  # numpydoc ignore=RT01
+    def active_texture_coordinates(self) -> Optional[pyvista_ndarray]:
         """Return the active texture coordinates array.
 
         Returns
@@ -1413,7 +1424,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.Modified()
 
     @property
-    def active_texture_coordinates_name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def active_texture_coordinates_name(self) -> Optional[str]:
         """Return the name of the active texture coordinates array.
 
         Returns

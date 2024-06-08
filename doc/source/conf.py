@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import faulthandler
 import locale
@@ -21,7 +23,8 @@ make_tables.make_all_tables()
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
 import functools
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Literal
 import warnings
 
 import matplotlib.pyplot as plt
@@ -13,28 +15,29 @@ import numpy as np
 
 import pyvista
 import pyvista.core._vtk_core as _vtk
-from pyvista.core.errors import (
-    AmbiguousDataError,
-    MissingDataError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import transformations
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike, NumpyArray, VectorLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -380,7 +383,7 @@ class DataSetFilters:
                 normal = cell["Normals"][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
+        if not isinstance(bounds, (np.ndarray, Sequence)):
             raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) not in [3, 6, 12]:
             raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
@@ -668,7 +671,7 @@ class DataSetFilters:
             function.FunctionValue(points, dists)
             self['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
-        result = DataSetFilters._clip_with_function(
+        return DataSetFilters._clip_with_function(
             self,
             function,
             invert=invert,
@@ -676,7 +679,6 @@ class DataSetFilters:
             progress_bar=progress_bar,
             crinkle=crinkle,
         )
-        return result
 
     def slice_implicit(
         self,
@@ -1428,10 +1430,10 @@ class DataSetFilters:
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
-        if isinstance(percent, (np.ndarray, collections.abc.Sequence)):
+        if isinstance(percent, (np.ndarray, Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
-        elif isinstance(percent, collections.abc.Iterable):
+        elif isinstance(percent, Iterable):
             raise TypeError('Percent must either be a single scalar or a sequence.')
         else:
             # Compute one value to threshold
@@ -1517,7 +1519,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Optional[Sequence[float]] = None, progress_bar=False):
+    def extract_geometry(self, extent: Sequence[float] | None = None, progress_bar=False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1723,7 +1725,7 @@ class DataSetFilters:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
             scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)
-        elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(scalar_range, (np.ndarray, Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
@@ -1869,7 +1871,7 @@ class DataSetFilters:
             raise ValueError(f"Method '{method}' is not supported")
 
         if rng is not None:
-            if not isinstance(rng, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(rng, (np.ndarray, Sequence)):
                 raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
             rng_shape = np.shape(rng)
             if rng_shape != (2,):
@@ -1879,7 +1881,7 @@ class DataSetFilters:
 
         if isinstance(scalars, str):
             scalars_name = scalars
-        elif isinstance(scalars, (collections.abc.Sequence, np.ndarray)):
+        elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is not None:
@@ -1918,7 +1920,7 @@ class DataSetFilters:
             if rng is None:
                 rng = self.get_data_range(scalars_name)
             alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(isosurfaces, (np.ndarray, Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
@@ -2266,10 +2268,10 @@ class DataSetFilters:
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``scale``
-            If ``scale`` , color by scale the glyphs.
-            If ``scalar`` , color by scalar the glyphs.
-            If ``vector`` , color by vector the glyphs.
+        color_mode : str, optional, default: ``'scale'``
+            If ``'scale'`` , color the glyphs by scale.
+            If ``'scalar'`` , color the glyphs by scalar.
+            If ``'vector'`` , color the glyphs by vector.
 
             .. versionadded:: 0.44
 
@@ -2314,11 +2316,11 @@ class DataSetFilters:
             _update_alg(arrow, progress_bar, 'Making Arrow')
             geom = arrow.GetOutput()
         # Check if a table of geometries was passed
-        if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
+        if isinstance(geom, (np.ndarray, Sequence)):
             if indices is None:
                 # use default "categorical" indices
                 indices = np.arange(len(geom))
-            if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(indices, (np.ndarray, Sequence)):
                 raise TypeError(
                     'If "geom" is a sequence then "indices" must '
                     'also be a sequence of the same length.',
@@ -2699,7 +2701,7 @@ class DataSetFilters:
         else:
             if isinstance(scalar_range, np.ndarray):
                 num_elements = scalar_range.size
-            elif isinstance(scalar_range, collections.abc.Sequence):
+            elif isinstance(scalar_range, Sequence):
                 num_elements = len(scalar_range)
             else:
                 raise TypeError('Scalar range must be a numpy array or a sequence.')
@@ -3163,8 +3165,6 @@ class DataSetFilters:
         values of all cells using a particular point. Optionally, the
         input cell data can be passed through to the output as well.
 
-        See also :func:`pyvista.DataSetFilters.point_data_to_cell_data`.
-
         Parameters
         ----------
         pass_cell_data : bool, default: False
@@ -3178,6 +3178,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        point_data_to_cell_data
+            Similar transformation applied to point data.
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
 
         Examples
         --------
@@ -3249,8 +3256,6 @@ class DataSetFilters:
         Point data are specified per node and cell data specified within cells.
         Optionally, the input point data can be passed through to the output.
 
-        See also: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
-
         Parameters
         ----------
         pass_point_data : bool, default: False
@@ -3264,6 +3269,13 @@ class DataSetFilters:
         pyvista.DataSet
             Dataset with the point data transformed into cell data.
             Return type matches input.
+
+        See Also
+        --------
+        cell_data_to_point_data
+            Similar transformation applied to cell data.
+        :meth:`~pyvista.ImageDataFilters.points_to_cells`
+            Re-mesh :class:`~pyvista.ImageData` to a cells-based representation.
 
         Examples
         --------
@@ -4389,8 +4401,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled_line = line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
-        return sampled_line
+        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_line(
         self,
@@ -4549,12 +4560,7 @@ class DataSetFilters:
         """
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
-        sampled_multiple_lines = multiple_lines.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_multiple_lines
+        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(
         self,
@@ -4633,12 +4639,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        sampled_circular_arc = circular_arc.sample(
-            self,
-            tolerance=tolerance,
-            progress_bar=progress_bar,
-        )
-        return sampled_circular_arc
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc_normal(
         self,
@@ -5123,21 +5124,19 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: Optional[
-            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
-        ] = None,
+        values: None | (
+            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
+        ) = None,
         *,
-        ranges: Optional[
-            Union[
-                VectorLike[float],
-                MatrixLike[float],
-                Dict[str, VectorLike[float]],
-                Dict[Tuple[float, float], str],
-            ]
-        ] = None,
-        scalars: Optional[str] = None,
+        ranges: None | (
+            VectorLike[float]
+            | MatrixLike[float]
+            | dict[str, VectorLike[float]]
+            | dict[tuple[float, float], str]
+        ) = None,
+        scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
+        component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         **kwargs,
     ):
         """Split mesh into separate sub-meshes using point or cell data.
@@ -5284,24 +5283,22 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: Optional[
-            Union[float, VectorLike[float], MatrixLike[float], Dict[str, float], Dict[float, str]]
-        ] = None,
+        values: None | (
+            float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
+        ) = None,
         *,
-        ranges: Optional[
-            Union[
-                VectorLike[float],
-                MatrixLike[float],
-                Dict[str, VectorLike[float]],
-                Dict[Tuple[float, float], str],
-            ]
-        ] = None,
-        scalars: Optional[str] = None,
+        ranges: None | (
+            VectorLike[float]
+            | MatrixLike[float]
+            | dict[str, VectorLike[float]]
+            | dict[tuple[float, float], str]
+        ) = None,
+        scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
-        component_mode: Union[Literal['any', 'all', 'multi'], int] = 'all',
+        component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         adjacent_cells: bool = True,
-        include_cells: Optional[bool] = None,
+        include_cells: bool | None = None,
         split: bool = False,
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
@@ -5770,7 +5767,7 @@ class DataSetFilters:
         def _update_id_mask(logic_):
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
-            id_mask[logic_] = not invert
+            id_mask[logic_] = True
 
         # Determine which ids to keep
         id_mask = np.zeros((len(array),), dtype=np.bool_)
@@ -5792,6 +5789,8 @@ class DataSetFilters:
                     # Extract all
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
+
+        id_mask = np.invert(id_mask) if invert else id_mask
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:
@@ -6191,6 +6190,10 @@ class DataSetFilters:
         - ``'volume'``
         - ``'warpage'``
 
+        Notes
+        -----
+        There is a `discussion about shape option <https://github.com/pyvista/pyvista/discussions/6143>`_.
+
         Parameters
         ----------
         quality_measure : str, default: 'scaled_jacobian'
@@ -6561,12 +6564,11 @@ class DataSetFilters:
         alg.SetMergePoints(merge_points)
         alg.SetMaximumNumberOfSubdivisions(max_n_subdivide)
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
-        output = _get_output(alg)
-        return output
+        return _get_output(alg)
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: Union[_vtk.vtkMatrix4x4, _vtk.vtkTransform, NumpyArray[float]],
+        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -7072,7 +7074,7 @@ class DataSetFilters:
         alg.SetInputDataObject(self)
         if isinstance(cell_types, int):
             alg.AddCellType(cell_types)
-        elif isinstance(cell_types, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(cell_types, (np.ndarray, Sequence)):
             for cell_type in cell_types:
                 alg.AddCellType(cell_type)
         else:
@@ -7135,7 +7137,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> import numpy as np
-        >>> image_labels = examples.download_frog_tissue()
+        >>> image_labels = examples.load_frog_tissues()
 
         Show label info for first four labels
 
@@ -7242,7 +7244,7 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> import numpy as np
-        >>> image_labels = examples.download_frog_tissue()
+        >>> image_labels = examples.load_frog_tissues()
 
         Show range of labels
 
@@ -7347,7 +7349,7 @@ def _set_threshold_limit(alg, value, method, invert):
 
     """
     # Check value
-    if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+    if isinstance(value, (np.ndarray, Sequence)):
         if len(value) != 2:
             raise ValueError(
                 f'Value range must be length one for a float value or two for min/max; not ({value}).',
@@ -7357,12 +7359,12 @@ def _set_threshold_limit(alg, value, method, invert):
             raise ValueError(
                 'Value sequence is invalid, please use (min, max). The provided first value is greater than the second.',
             )
-    elif isinstance(value, collections.abc.Iterable):
+    elif isinstance(value, Iterable):
         raise TypeError('Value must either be a single scalar or a sequence.')
     alg.SetInvert(invert)
     # Set values and function
     if pyvista.vtk_version_info >= (9, 1):
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+        if isinstance(value, (np.ndarray, Sequence)):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
             alg.SetUpperThreshold(value[1])
@@ -7378,7 +7380,7 @@ def _set_threshold_limit(alg, value, method, invert):
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
     else:  # pragma: no cover
         # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
+        if isinstance(value, (np.ndarray, Sequence)):
             alg.ThresholdBetween(value[0], value[1])
         else:
             # Single value

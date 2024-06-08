@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from typing import cast
 
 import numpy as np
 
@@ -11,7 +17,8 @@ from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
-from .colors import Color, get_cmap_safe
+from .colors import Color
+from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -277,7 +284,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetValueRange()
 
     @value_range.setter
@@ -314,7 +321,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return
+            return None
         return self.GetHueRange()
 
     @hue_range.setter

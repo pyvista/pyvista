@@ -50,6 +50,7 @@ Reader Classes
     NRRDReader
     OBJReader
     OpenFOAMReader
+    ParticleReader
     PDBReader
     PLYReader
     PNGReader
@@ -58,6 +59,7 @@ Reader Classes
     PTSReader
     PVDReader
     Plot3DMetaReader
+    ProStarReader
     SLCReader
     STLReader
     SegYReader
