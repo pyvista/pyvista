@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from math import pi
 import pathlib
 from pathlib import Path
 import re
-from typing import Dict, List
+from typing import Dict
+from typing import List
 from unittest.mock import patch
 import warnings
 
@@ -11,7 +14,9 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -614,9 +619,16 @@ def test_save(sphere, extension, binary, tmpdir):
     else:
         with Path(filename).open() as f:
             fst = f.read(100).lower()
-            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst or 'pgeometry' in fst
+            assert (
+                'ascii' in fst
+                or 'xml' in fst
+                or 'solid' in fst
+                or 'pgeometry' in fst
+                or '# generated' in fst
+                or '#inventor' in fst
+            )
 
-    if extension != '.geo':
+    if extension not in ('.geo', '.iv'):
         mesh = pv.PolyData(filename)
         assert mesh.faces.shape == sphere.faces.shape
         assert mesh.points.shape == sphere.points.shape

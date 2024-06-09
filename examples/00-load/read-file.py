@@ -17,6 +17,8 @@ Read a dataset from a known file type.
 # airplane mesh.
 
 # sphinx_gallery_thumbnail_number = 5
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 

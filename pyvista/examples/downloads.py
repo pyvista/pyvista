@@ -24,7 +24,8 @@ from __future__ import annotations
 import functools
 import logging
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+from pathlib import PureWindowsPath
 import shutil
 from typing import Union
 import warnings
@@ -36,17 +37,18 @@ from pooch.utils import get_logger
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.utilities.fileio import get_ext, read, read_texture
-from pyvista.examples._dataset_loader import (
-    _download_dataset,
-    _DownloadableFile,
-    _load_and_merge,
-    _load_as_cubemap,
-    _load_as_multiblock,
-    _MultiFileDownloadableDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
+from pyvista.core.utilities.fileio import get_ext
+from pyvista.core.utilities.fileio import read
+from pyvista.core.utilities.fileio import read_texture
+from pyvista.examples._dataset_loader import _download_dataset
+from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _load_and_merge
+from pyvista.examples._dataset_loader import _load_as_cubemap
+from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 # disable pooch verbose logging
 POOCH_LOGGER = get_logger()
@@ -2199,6 +2201,11 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     This dataset contains tissue segmentation labels for the frog dataset.
 
+    .. deprecated:: 0.44.0
+
+        This example does not load correctly on some systems and has been deprecated.
+        Use :func:`~pyvista.examples.load_frog_tissues` instead.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2209,62 +2216,6 @@ def download_frog_tissue(load=True):  # pragma: no cover
     -------
     pyvista.ImageData | str
         DataSet or filename depending on ``load``.
-
-    Examples
-    --------
-    Load data
-
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> data = examples.download_frog_tissue()
-
-    Plot tissue labels as a volume
-
-    First, define plotting parameters
-
-    >>> # Configure colors / color bar
-    >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
-    >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
-    >>> opacity_unit_distance = 1
-
-    Set plotting resolution to half the image's spacing
-
-    >>> res = np.array(data.spacing) / 2
-
-    Define rendering parameters
-
-    >>> mapper = 'gpu'
-    >>> shade = True
-    >>> ambient = 0.3
-    >>> diffuse = 0.6
-    >>> specular = 0.5
-    >>> specular_power = 40
-
-    Make and show plot
-
-    >>> p = pv.Plotter()
-    >>> _ = p.add_volume(
-    ...     data,
-    ...     clim=clim,
-    ...     ambient=ambient,
-    ...     shade=shade,
-    ...     diffuse=diffuse,
-    ...     specular=specular,
-    ...     specular_power=specular_power,
-    ...     mapper=mapper,
-    ...     opacity=opacity,
-    ...     opacity_unit_distance=opacity_unit_distance,
-    ...     categories=categories,
-    ...     cmap=cmap,
-    ...     resolution=res,
-    ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> p.show()
 
     .. seealso::
 
@@ -2277,6 +2228,14 @@ def download_frog_tissue(load=True):  # pragma: no cover
             Browse other medical datasets.
 
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
+
     return _download_dataset(_dataset_frog_tissue, load=load)
 
 
@@ -3448,9 +3407,13 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
 
     Examples
     --------
+    >>> import pyvista as pv
     >>> from pyvista import examples
     >>> dataset = examples.download_kitchen()
-    >>> dataset.streamlines(n_points=5).plot()
+    >>> point_a = (0.08, 2.50, 0.71)
+    >>> point_b = (0.08, 4.50, 0.71)
+    >>> line = pv.Line(point_a, point_b, resolution=39)
+    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
 
     .. seealso::
 
@@ -5262,15 +5225,14 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> graph = examples.download_osmnx_graph()  # doctest:+SKIP
 
-    .. seealso::
-
-        :ref:`Osmnx Graph Dataset <osmnx_graph_dataset>`
-            See this dataset in the Dataset Gallery for more info.
-
-        :ref:`open_street_map_example`
-            Full example using this dataset.
-
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        '`download_osmnx_graph` is deprecated and will be removed in v0.47.0. Please use https://github.com/pyvista/pyvista-osmnx.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
     try:
         import osmnx  # noqa: F401
     except ImportError:
@@ -7949,3 +7911,83 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
 
 _dataset_e07733s002i009 = _SingleFileDownloadableDatasetLoader('E07733S002I009.MR')
+
+
+def download_particles(load=True):  # pragma: no cover
+    """Download a particle dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_particles(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.reader.SetDataByteOrderToBigEndian()
+    >>> reader.reader.Update()
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Particles Dataset <particles_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_particles, load=load)
+
+
+_dataset_particles = _SingleFileDownloadableDatasetLoader('Particles.raw')
+
+
+def download_prostar(load=True):  # pragma: no cover
+    """Download a prostar dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_prostar()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`Prostar Dataset <prostar_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_prostar, load=load)
+
+
+def _prostar_files_func():  # pragma: no cover
+    # Multiple files needed for read, but only one gets loaded
+    prostar_cel = _DownloadableFile('prostar.cel')
+    prostar_vrt = _SingleFileDownloadableDatasetLoader('prostar.vrt')
+    return prostar_vrt, prostar_cel
+
+
+_dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)

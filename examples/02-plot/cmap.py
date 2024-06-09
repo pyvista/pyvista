@@ -8,6 +8,8 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values.
 """
 
+from __future__ import annotations
+
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -68,7 +70,7 @@ mesh.plot(scalars='values', cmap=my_colormap)
 ###############################################################################
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
 # to PyVista.
-boring_cmap = plt.cm.get_cmap("viridis", 5)
+boring_cmap = plt.get_cmap("viridis", 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
 ###############################################################################

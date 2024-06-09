@@ -1,15 +1,15 @@
 """Test examples that do not require downloading."""
 
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista import examples
-from tests.examples.test_dataset_loader import (
-    DatasetLoaderTestCase,
-    _generate_dataset_loader_test_cases_from_module,
-    _get_mismatch_fail_msg,
-)
+from tests.examples.test_dataset_loader import DatasetLoaderTestCase
+from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
+from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
 
 
 def pytest_generate_tests(metafunc):
@@ -102,3 +102,9 @@ def test_load_hydrogen_orbital():
 def test_load_logo():
     mesh = examples.load_logo()
     assert mesh.n_points
+
+
+def test_load_frog_tissue():
+    data = examples.load_frog_tissues()
+    assert data.n_points
+    assert data.get_data_range() == (0, 29)

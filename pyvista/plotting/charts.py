@@ -6,7 +6,13 @@ from functools import wraps
 import inspect
 import itertools
 import re
-from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Dict
+from typing import Optional
+from typing import Sequence
+from typing import Type
+from typing import Union
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -17,7 +23,11 @@ import pyvista
 from pyvista import vtk_version_info
 
 from . import _vtk
-from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
+from .colors import COLOR_SCHEMES
+from .colors import SCHEME_NAMES
+from .colors import Color
+from .colors import color_synonyms
+from .colors import hexcolors
 
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing import Chart
@@ -3138,7 +3148,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
-        # Overwrite custom X and Y axis using a wrapper object, as using the
+        # Overwrite custom x-axis and y-axis using a wrapper object, as using the
         # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
         self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))
         self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
@@ -3659,7 +3669,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
-        Create a 2D plot and hide the x axis.
+        Create a 2D plot and hide the x-axis.
 
         .. pyvista-plot::
            :force_static:
@@ -3679,7 +3689,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
-        Create a 2D plot and hide the y axis.
+        Create a 2D plot and hide the y-axis.
 
         .. pyvista-plot::
            :force_static:
@@ -3695,7 +3705,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_label(self):  # numpydoc ignore=RT01
-        """Return or set the label of this chart's x axis.
+        """Return or set the label of this chart's x-axis.
 
         Examples
         --------
@@ -3720,7 +3730,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_label(self):  # numpydoc ignore=RT01
-        """Return or set the label of this chart's y axis.
+        """Return or set the label of this chart's y-axis.
 
         Examples
         --------
@@ -3745,7 +3755,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_range(self):  # numpydoc ignore=RT01
-        """Return or set the range of this chart's x axis.
+        """Return or set the range of this chart's x-axis.
 
         Examples
         --------
@@ -3770,7 +3780,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_range(self):  # numpydoc ignore=RT01
-        """Return or set the range of this chart's y axis.
+        """Return or set the range of this chart's y-axis.
 
         Examples
         --------

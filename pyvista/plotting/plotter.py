@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 import contextlib
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
+from contextlib import suppress
 from copy import deepcopy
 import ctypes
 from functools import wraps
@@ -18,7 +19,7 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING
 import uuid
 import warnings
 import weakref
@@ -28,54 +29,60 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    _coerce_pointslike_arg,
-    convert_array,
-    get_array,
-    get_array_association,
-    raise_not_matching,
-)
-from pyvista.core.utilities.helpers import is_pyvista_dataset, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import raise_not_matching
+from pyvista.core.utilities.helpers import is_pyvista_dataset
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 from . import _vtk
-from ._plotting import _common_arg_parser, prepare_smooth_shading, process_opacity
+from ._plotting import _common_arg_parser
+from ._plotting import prepare_smooth_shading
+from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
-from .colors import Color, get_cmap_safe
+from .colors import Color
+from .colors import get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
 from .errors import RenderWindowUnavailable
-from .mapper import (
-    DataSetMapper,
-    FixedPointVolumeRayCastMapper,
-    GPUVolumeRayCastMapper,
-    OpenGLGPUVolumeRayCastMapper,
-    PointGaussianMapper,
-    SmartVolumeMapper,
-    UnstructuredGridVolumeRayCastMapper,
-)
+from .mapper import DataSetMapper
+from .mapper import FixedPointVolumeRayCastMapper
+from .mapper import GPUVolumeRayCastMapper
+from .mapper import OpenGLGPUVolumeRayCastMapper
+from .mapper import PointGaussianMapper
+from .mapper import SmartVolumeMapper
+from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
-from .renderer import Camera, Renderer
+from .renderer import Camera
+from .renderer import Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
-from .text import CornerAnnotation, Text, TextProperty
+from .text import CornerAnnotation
+from .text import Text
+from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize, opacity_transfer_function, parse_font_family  # noqa: F401
-from .utilities.algorithms import (
-    active_scalars_algorithm,
-    algorithm_to_mesh_handler,
-    decimation_algorithm,
-    extract_surface_algorithm,
-    pointset_to_polydata_algorithm,
-    set_algorithm_input,
-    triangulate_algorithm,
-)
+from .tools import normalize  # noqa: F401
+from .tools import opacity_transfer_function  # noqa: F401
+from .tools import parse_font_family  # noqa: F401
+from .utilities.algorithms import active_scalars_algorithm
+from .utilities.algorithms import algorithm_to_mesh_handler
+from .utilities.algorithms import decimation_algorithm
+from .utilities.algorithms import extract_surface_algorithm
+from .utilities.algorithms import pointset_to_polydata_algorithm
+from .utilities.algorithms import set_algorithm_input
+from .utilities.algorithms import triangulate_algorithm
 from .utilities.gl_checks import uses_egl
-from .utilities.regression import image_from_window, run_image_filter
+from .utilities.regression import image_from_window
+from .utilities.regression import run_image_filter
 from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
@@ -706,7 +713,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> point_cloud = np.random.default_rng().random((100, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> point_cloud = rng.random((100, 3))
         >>> pdata = pv.PolyData(point_cloud)
         >>> pdata['orig_sphere'] = np.arange(100)
         >>> sphere = pv.Sphere(radius=0.02)
@@ -1918,7 +1926,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_scale = value
 
     @contextmanager
-    def image_scale_context(self, scale: Optional[int] = None):
+    def image_scale_context(self, scale: int | None = None):
         """Set the image scale in an isolated context.
 
         Parameters
@@ -3384,8 +3392,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Plot spheres using `points_gaussian` style and scale them by radius.
 
         >>> N_SPHERES = 1_000_000
-        >>> pos = np.random.random((N_SPHERES, 3))
-        >>> rad = np.random.random(N_SPHERES) * 0.01
+        >>> rng = np.random.default_rng(seed=0)
+        >>> pos = rng.random((N_SPHERES, 3))
+        >>> rad = rng.random(N_SPHERES) * 0.01
         >>> pdata = pv.PolyData(pos)
         >>> pdata['radius'] = rad
         >>> pdata.plot(
@@ -4681,7 +4690,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
             self.renderers[views].camera.is_set = False
-        elif isinstance(views, collections.abc.Iterable):
+        elif isinstance(views, Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
@@ -4758,7 +4767,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
+        if isinstance(mesh, (Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
@@ -5155,7 +5164,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from imageio import __version__, get_writer
+            from imageio import __version__
+            from imageio import get_writer
         except ModuleNotFoundError:  # pragma: no cover
             raise ModuleNotFoundError(
                 'Install imageio to use `open_gif` with:\n\n   pip install imageio',
@@ -5748,7 +5758,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> points = np.random.default_rng().random((10, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(
         ...     points, render_points_as_spheres=True, point_size=100.0
@@ -5757,7 +5768,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Plot using the ``'points_gaussian'`` style
 
-        >>> points = np.random.default_rng().random((10, 3))
+        >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
         >>> actor = pl.add_points(points, style='points_gaussian')
         >>> pl.show()
@@ -5799,8 +5810,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> cent = np.random.default_rng().random((10, 3))
-        >>> direction = np.random.default_rng().random((10, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> cent = rng.random((10, 3))
+        >>> direction = rng.random((10, 3))
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()
@@ -7107,7 +7119,7 @@ class Plotter(BasePlotter):
 #
 # When pyvista.BUILDING_GALLERY = False, the objects will be ProxyType, and
 # when True, BasePlotter.
-_ALL_PLOTTERS: Dict[str, BasePlotter] = {}
+_ALL_PLOTTERS: dict[str, BasePlotter] = {}
 
 
 def _kill_display(disp_id):  # pragma: no cover
