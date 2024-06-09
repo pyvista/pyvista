@@ -970,33 +970,33 @@ class _AxesActorBase(ABC, Prop3D):
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.set_prop('ambient', 0.7)
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
 
         Set a property for the x-axis only. The property is set for
         both the axis shaft and tip by default.
 
         >>> axes_actor.set_prop('ambient', 0.3, axis='x')
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
 
         Set a property for the axes tips only. The property is set for
         all axes by default.
 
         >>> axes_actor.set_prop('ambient', 0.1, part='tip')
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
 
         Set a property for a single axis and specific part.
 
         >>> axes_actor.set_prop('ambient', 0.9, axis='z', part='shaft')
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
 
         The last example is equivalent to setting the property directly.
 
         >>> axes_actor.z_shaft_prop.ambient = 0.9
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
 
         """
         props_dict = self._filter_prop_objects(axis=axis, part=part)
@@ -1026,7 +1026,7 @@ class _AxesActorBase(ABC, Prop3D):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.get_prop('ambient')
-        AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
+        _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
 
         """
         props = [getattr(prop, name) for prop in self._actor_properties]
