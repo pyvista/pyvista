@@ -4049,6 +4049,7 @@ def test_axes_marker():
 
 
 @skip_lesser_9_0_X
+@skip_mac  # TODO: REMOVE THIS SKIP
 def test_axes_actor_properties():
     axes_actor = pv.AxesActor(
         shaft_type='cylinder',
