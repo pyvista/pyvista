@@ -3916,10 +3916,15 @@ def test_axes_actor_properties():
     z_color = (0.0, 1.0, 1.0)  # cyan
 
     axes_actor.x_axis_shaft_properties.color = x_color
+    axes_actor.x_axis_shaft_properties.opacity = 0.5
     axes_actor.x_axis_tip_properties.color = x_color
+
     axes_actor.y_axis_shaft_properties.color = y_color
+    axes_actor.y_axis_shaft_properties.opacity = 0.1
     axes_actor.y_axis_tip_properties.color = y_color
+
     axes_actor.z_axis_shaft_properties.color = z_color
+    axes_actor.z_axis_shaft_properties.opacity = 0.1
     axes_actor.z_axis_tip_properties.color = z_color
 
     plot = pv.Plotter()
