@@ -136,7 +136,7 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_labels_individually(axes_actor):
+def test_axes_actor_labels_individual(axes_actor):
     axes_actor.x_axis_label = 'Axis X'
     axes_actor.y_axis_label = 'Axis Y'
     axes_actor.z_axis_label = 'Axis Z'
