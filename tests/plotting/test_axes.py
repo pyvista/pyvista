@@ -832,7 +832,7 @@ def test_axes_actor_repr(axes_actor):
         "  Labels off:                 False",
         "  Label position:             (1.0, 1.0, 1.0)",
         "  Shaft type:                 'cylinder'",
-        "  Shaft radius:               0.015",
+        "  Shaft radius:               0.01",
         "  Shaft length:               (0.8, 0.8, 0.8)",
         "  Tip type:                   'cone'",
         "  Tip radius:                 0.4",
