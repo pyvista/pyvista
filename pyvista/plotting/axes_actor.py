@@ -412,13 +412,20 @@ class AxesActor(_vtk.vtkAxesActor):
         string with exactly three characters (one for each of the x, y, and z axes,
         respectively), or a sequence of three strings.
 
+        .. versionadded:: 0.44.0
+
         Examples
         --------
+        Set single-character axes labels.
+
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
         >>> axes_actor.labels = 'UVW'
         >>> axes_actor.labels
         ('U', 'V', 'W')
+
+        Set multi-character axes labels.
+
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
