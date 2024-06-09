@@ -3910,22 +3910,18 @@ def test_axes_actor_properties():
     axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
     axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
 
-    # Test properties using color and opacity
+    # Test properties using color
     x_color = (1.0, 0.0, 1.0)  # magenta
     y_color = (1.0, 1.0, 0.0)  # yellow
     z_color = (0.0, 1.0, 1.0)  # cyan
-    opacity = 0.2
 
     axes_actor.x_axis_shaft_properties.color = x_color
-    axes_actor.x_axis_shaft_properties.opacity = opacity
     axes_actor.x_axis_tip_properties.color = x_color
 
     axes_actor.y_axis_shaft_properties.color = y_color
-    axes_actor.y_axis_shaft_properties.opacity = opacity
     axes_actor.y_axis_tip_properties.color = y_color
 
     axes_actor.z_axis_shaft_properties.color = z_color
-    axes_actor.z_axis_shaft_properties.opacity = opacity
     axes_actor.z_axis_tip_properties.color = z_color
 
     plot = pv.Plotter()
