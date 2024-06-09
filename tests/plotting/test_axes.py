@@ -4,9 +4,10 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
-from pyvista.plotting import _vtk
+
 
 @pytest.fixture(autouse=True)
 def skip_check_gc(skip_check_gc):  # noqa: PT004
@@ -146,8 +147,6 @@ def test_axes_actor_axis_labels(axes_actor):
     assert axes_actor.x_axis_label == 'Axis X'
     assert axes_actor.y_axis_label == 'Axis Y'
     assert axes_actor.z_axis_label == 'Axis Z'
-
-
 
 
 @pytest.mark.needs_vtk_version(9, 1, 0)
