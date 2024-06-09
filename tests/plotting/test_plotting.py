@@ -37,8 +37,6 @@ from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType
-from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -3906,61 +3904,31 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@skip_lesser_9_0_X
-def test_actor_properties():
-    from pyvista.plotting import _vtk
+def test_axes_actor_colors():
+    # Test default colors
+    axes = pv.AxesActor()
+    axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
 
-    prop = pv.ActorProperties(_vtk.vtkProperty())
+    plot = pv.Plotter()
+    plot.add_actor(axes)
+    plot.camera.zoom(1.5)
+    plot.show()
 
-    prop.color = (1, 1, 1)
-    assert prop.color == (1, 1, 1)
+    # Test colors via properties
+    x_color = (1.0, 0.0, 1.0)  # magenta
+    y_color = (1.0, 1.0, 0.0)  # yellow
+    z_color = (0.0, 1.0, 1.0)  # cyan
+    axes.x_axis_shaft_properties.color = x_color
+    axes.x_axis_tip_properties.color = x_color
+    axes.y_axis_shaft_properties.color = y_color
+    axes.y_axis_tip_properties.color = y_color
+    axes.z_axis_shaft_properties.color = z_color
+    axes.z_axis_tip_properties.color = z_color
 
-    prop.metallic = 0.2
-    assert prop.metallic == 0.2
-
-    prop.roughness = 0.3
-    assert prop.roughness == 0.3
-
-    prop.anisotropy = 0.4
-    assert prop.anisotropy == 0.4
-
-    prop.anisotropy_rotation = 0.4
-    assert prop.anisotropy_rotation == 0.4
-
-    prop.lighting = False
-    assert not prop.lighting
-
-    prop.interpolation_model = InterpolationType.PHONG
-    assert prop.interpolation_model == InterpolationType.PHONG
-
-    prop.index_of_refraction = 1.5
-    assert prop.index_of_refraction == 1.5
-
-    prop.opacity = 0.6
-    assert prop.opacity == 0.6
-
-    prop.shading = False
-    assert not prop.shading
-
-    prop.representation = RepresentationType.POINTS
-    assert prop.representation == RepresentationType.POINTS
-
-
-def test_axes_actor_properties():
-    axes = pv.Axes()
-    axes_actor = axes.axes_actor
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-
-    axes_actor.x_axis_shaft_properties.color = (0.0, 1.0, 1.0)
-    axes_actor.x_axis_tip_properties.color = (0.0, 0.5, 0.5)
-    axes_actor.y_axis_shaft_properties.color = (1.0, 0.0, 1.0)
-    axes_actor.y_axis_tip_properties.color = (0.5, 0.0, 0.5)
-    axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 0.0)
-    axes_actor.z_axis_tip_properties.color = (0.5, 0.5, 0.0)
-
-    pl = pv.Plotter()
-    pl.add_actor(axes_actor)
-    pl.show()
+    plot = pv.Plotter()
+    plot.add_actor(axes)
+    plot.camera.zoom(1.5)
+    plot.show()
 
 
 def test_show_bounds_no_labels():
