@@ -3906,7 +3906,7 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-def test_axes_actor_colors():
+def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
 
