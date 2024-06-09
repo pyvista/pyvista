@@ -136,7 +136,7 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_axis_labels(axes_actor):
+def test_axes_actor_labels_individually(axes_actor):
     axes_actor.x_axis_label = 'Axis X'
     axes_actor.y_axis_label = 'Axis Y'
     axes_actor.z_axis_label = 'Axis Z'
@@ -144,3 +144,25 @@ def test_axes_actor_axis_labels(axes_actor):
     assert axes_actor.x_axis_label == 'Axis X'
     assert axes_actor.y_axis_label == 'Axis Y'
     assert axes_actor.z_axis_label == 'Axis Z'
+
+
+def test_axes_actor_labels_group(axes_actor):
+    new_labels = ['label1', 'label2', 'label3']
+    axes_actor.labels = new_labels
+    assert axes_actor.labels == tuple(new_labels)
+    assert axes_actor.x_axis_label == new_labels[0]
+    assert axes_actor.y_axis_label == new_labels[1]
+    assert axes_actor.z_axis_label == new_labels[2]
+
+    new_labels = 'UVW'
+    axes_actor.labels = new_labels
+    assert axes_actor.labels == (new_labels[0], new_labels[1], new_labels[2])
+    assert axes_actor.x_axis_label == new_labels[0]
+    assert axes_actor.y_axis_label == new_labels[1]
+    assert axes_actor.z_axis_label == new_labels[2]
+
+    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
+        axes_actor.labels = 'abcd'
+
+    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
+        axes_actor.labels = ['1', '2']

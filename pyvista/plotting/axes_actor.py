@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -401,6 +402,39 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
+
+    @property
+    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Axes text labels.
+
+        This property can be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately for setting or
+        getting the axes text labels.
+
+        A single string with exactly three characters can be used to set the labels
+        of the x, y, and z axes (respectively) to a single character. Alternatively.
+        a sequence of three strings can be used.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = 'UVW'
+        >>> axes_actor.labels
+        ('U', 'V', 'W')
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_axis_label, self.y_axis_label, self.z_axis_label
+
+    @labels.setter
+    def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
+        if len(labels) != 3:
+            raise ValueError('Labels sequence must have exactly 3 items.')
+        self.x_axis_label = labels[0]
+        self.y_axis_label = labels[1]
+        self.z_axis_label = labels[2]
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
