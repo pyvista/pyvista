@@ -213,6 +213,22 @@ def test_axes_color(default_theme):
     assert default_theme.axes.z_color == new_value
 
 
+def test_axes_shaft_type(default_theme):
+    default_theme.axes.shaft_type = 'line'
+    assert default_theme.axes.shaft_type == 'line'
+
+    default_theme.axes.shaft_type = 'cylinder'
+    assert default_theme.axes.shaft_type == 'cylinder'
+
+
+def test_axes_tip_type(default_theme):
+    default_theme.axes.tip_type = 'cone'
+    assert default_theme.axes.tip_type == 'cone'
+
+    default_theme.axes.tip_type = 'sphere'
+    assert default_theme.axes.tip_type == 'sphere'
+
+
 def test_axes_show(default_theme):
     new_value = not default_theme.axes.show
     default_theme.axes.show = new_value

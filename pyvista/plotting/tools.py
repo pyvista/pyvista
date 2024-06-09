@@ -10,10 +10,12 @@ from subprocess import PIPE
 from subprocess import Popen
 from subprocess import TimeoutExpired
 import sys
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk
 from .colors import Color
@@ -109,159 +111,22 @@ def system_supports_plotting():
     return SUPPORTS_PLOTTING
 
 
-def _update_axes_label_color(axes_actor, color=None):
-    """Set the axes label color (internal helper)."""
-    color = Color(color, default_color=pyvista.global_theme.font.color)
-    if isinstance(axes_actor, _vtk.vtkAxesActor):
-        prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
-        for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color.float_rgb)
-            prop.SetShadow(False)
-    elif isinstance(axes_actor, _vtk.vtkAnnotatedCubeActor):
-        axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
+def create_axes_marker(*args, **kwargs):  # numpydoc ignore=RT01,PR01
+    """Create an axes actor.
 
-
-def create_axes_marker(
-    label_color=None,
-    x_color=None,
-    y_color=None,
-    z_color=None,
-    xlabel='X',
-    ylabel='Y',
-    zlabel='Z',
-    labels_off=False,
-    line_width=2,
-    cone_radius=0.4,
-    shaft_length=0.8,
-    tip_length=0.2,
-    ambient=0.5,
-    label_size=(0.25, 0.1),
-):
-    """Create an axis actor.
-
-    Parameters
-    ----------
-    label_color : ColorLike, optional
-        Color of the label text.
-
-    x_color : ColorLike, optional
-        Color of the x-axis text.
-
-    y_color : ColorLike, optional
-        Color of the y-axis text.
-
-    z_color : ColorLike, optional
-        Color of the z-axis text.
-
-    xlabel : str, default: "X"
-        Text used for the x-axis.
-
-    ylabel : str, default: "Y"
-        Text used for the y-axis.
-
-    zlabel : str, default: "Z"
-        Text used for the z-axis.
-
-    labels_off : bool, default: False
-        Enable or disable the text labels for the axes.
-
-    line_width : float, default: 2
-        The width of the marker lines.
-
-    cone_radius : float, default: 0.4
-        The radius of the axes arrow tips.
-
-    shaft_length : float, default: 0.8
-        The length of the axes arrow shafts.
-
-    tip_length : float, default: 0.2
-        Length of the tip.
-
-    ambient : float, default: 0.5
-        The ambient of the axes arrows. Value should be between 0 and 1.
-
-    label_size : sequence[float], default: (0.25, 0.1)
-        The width and height of the axes label actors. Values should be between
-        0 and 1. For example ``(0.2, 0.1)``.
-
-    Returns
-    -------
-    vtk.vtkAxesActor
-        Axes actor.
-
-    Examples
-    --------
-    Create the default axes marker.
-
-    >>> import pyvista as pv
-    >>> marker = pv.create_axes_marker()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(marker)
-    >>> pl.show()
-
-    Create an axes marker at the origin with custom colors and axis labels.
-
-    >>> import pyvista as pv
-    >>> marker = pv.create_axes_marker(
-    ...     line_width=4,
-    ...     ambient=0.0,
-    ...     x_color="#378df0",
-    ...     y_color="#ab2e5d",
-    ...     z_color="#f7fb9a",
-    ...     xlabel="X Axis",
-    ...     ylabel="Y Axis",
-    ...     zlabel="Z Axis",
-    ...     label_size=(0.1, 0.1),
-    ... )
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(marker)
-    >>> pl.show()
+    .. deprecated:: 0.43.0
+       This method is deprecated. Use :func:`pyvista.AxesActor` instead.
 
     """
-    x_color = Color(x_color, default_color=pyvista.global_theme.axes.x_color)
-    y_color = Color(y_color, default_color=pyvista.global_theme.axes.y_color)
-    z_color = Color(z_color, default_color=pyvista.global_theme.axes.z_color)
-    axes_actor = _vtk.vtkAxesActor()
-    axes_actor.GetXAxisShaftProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetXAxisTipProperty().SetColor(x_color.float_rgb)
-    axes_actor.GetYAxisShaftProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetYAxisTipProperty().SetColor(y_color.float_rgb)
-    axes_actor.GetZAxisShaftProperty().SetColor(z_color.float_rgb)
-    axes_actor.GetZAxisTipProperty().SetColor(z_color.float_rgb)
-    # Set labels
-    axes_actor.SetXAxisLabelText(xlabel)
-    axes_actor.SetYAxisLabelText(ylabel)
-    axes_actor.SetZAxisLabelText(zlabel)
-    if labels_off:
-        axes_actor.AxisLabelsOff()
-    # Set Line width
-    axes_actor.GetXAxisShaftProperty().SetLineWidth(line_width)
-    axes_actor.GetYAxisShaftProperty().SetLineWidth(line_width)
-    axes_actor.GetZAxisShaftProperty().SetLineWidth(line_width)
+    # Avoid circular import
+    from pyvista.plotting.axes_actor import AxesActor
 
-    axes_actor.SetConeRadius(cone_radius)
-    axes_actor.SetNormalizedShaftLength([shaft_length] * 3)
-    axes_actor.SetNormalizedTipLength([tip_length] * 3)
-    axes_actor.GetXAxisShaftProperty().SetAmbient(ambient)
-    axes_actor.GetYAxisShaftProperty().SetAmbient(ambient)
-    axes_actor.GetZAxisShaftProperty().SetAmbient(ambient)
-    axes_actor.GetXAxisTipProperty().SetAmbient(ambient)
-    axes_actor.GetYAxisTipProperty().SetAmbient(ambient)
-    axes_actor.GetZAxisTipProperty().SetAmbient(ambient)
-
-    for label_actor in [
-        axes_actor.GetXAxisCaptionActor2D(),
-        axes_actor.GetYAxisCaptionActor2D(),
-        axes_actor.GetZAxisCaptionActor2D(),
-    ]:
-        label_actor.SetWidth(label_size[0])
-        label_actor.SetHeight(label_size[1])
-
-    _update_axes_label_color(axes_actor, label_color)
-
-    return axes_actor
+    # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+    warnings.warn(
+        '`create_axes_actor` has been deprecated. Use `pyvista.AxesActor` instead',
+        PyVistaDeprecationWarning,
+    )
+    return AxesActor(*args, **kwargs)
 
 
 def create_axes_orientation_box(
@@ -283,7 +148,7 @@ def create_axes_orientation_box(
     opacity=0.5,
     show_text_edges=False,
 ):
-    """Create a Box axes orientation widget with labels.
+    """Create a Box axes orientation actor with labels.
 
     Parameters
     ----------
@@ -345,6 +210,14 @@ def create_axes_orientation_box(
     -------
     vtk.vtkAnnotatedCubeActor
         Annotated cube actor.
+
+    See Also
+    --------
+    pyvista.Plotter.add_axes
+        Add an axes orientation widget to a scene.
+
+    pyvista.AxesActor
+        Create a regular (non-box) axes actor.
 
     Examples
     --------
@@ -444,7 +317,8 @@ def create_axes_orientation_box(
     else:
         actor = axes_actor
 
-    _update_axes_label_color(actor, label_color)
+    color = Color(label_color, default_color=pyvista.global_theme.font.color)
+    axes_actor.GetTextEdgesProperty().SetColor(color.float_rgb)
 
     return actor
 

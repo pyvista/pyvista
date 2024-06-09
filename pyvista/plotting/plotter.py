@@ -1405,6 +1405,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
+    @wraps(Renderer.add_axes_marker)
+    def add_axes_marker(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.add_axes_marker``."""
+        return self.renderer.add_axes_marker(*args, **kwargs)
+
     @wraps(Renderer.show_bounds)
     def show_bounds(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_bounds``."""
@@ -6351,7 +6356,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for renderer in self.renderers:
                 if not renderer.camera.is_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
+                    if any(isinstance(val, pyvista.AxesActor) for val in renderer.actors.values()):
+                        # Manually specify the camera bounds if AxesActor is present.
+                        # This is because AxesActor overrides GetBounds(), and the
+                        # override is not recognized by ResetCamera() (compiled c++),
+                        # but works as expected when computing bounds in python
+                        renderer.ResetCamera(renderer.bounds)
+                    else:
+                        renderer.ResetCamera()
             self._first_time = False
 
     def reset_camera_clipping_range(self):
