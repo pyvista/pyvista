@@ -3907,47 +3907,56 @@ def test_add_remove_scalar_bar(sphere):
 
 
 @skip_lesser_9_0_X
+def test_actor_properties():
+    from pyvista.plotting import _vtk
+
+    prop = pv.ActorProperties(_vtk.vtkProperty())
+
+    prop.color = (1, 1, 1)
+    assert prop.color == (1, 1, 1)
+
+    prop.metallic = 0.2
+    assert prop.metallic == 0.2
+
+    prop.roughness = 0.3
+    assert prop.roughness == 0.3
+
+    prop.anisotropy = 0.4
+    assert prop.anisotropy == 0.4
+
+    prop.anisotropy_rotation = 0.4
+    assert prop.anisotropy_rotation == 0.4
+
+    prop.lighting = False
+    assert not prop.lighting
+
+    prop.interpolation_model = InterpolationType.PHONG
+    assert prop.interpolation_model == InterpolationType.PHONG
+
+    prop.index_of_refraction = 1.5
+    assert prop.index_of_refraction == 1.5
+
+    prop.opacity = 0.6
+    assert prop.opacity == 0.6
+
+    prop.shading = False
+    assert not prop.shading
+
+    prop.representation = RepresentationType.POINTS
+    assert prop.representation == RepresentationType.POINTS
+
+
 def test_axes_actor_properties():
     axes = pv.Axes()
     axes_actor = axes.axes_actor
     axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
 
-    # x shaft
-    axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
-    assert axes_actor.x_axis_shaft_properties.color == (1.0, 1.0, 1.0)
-    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-
-    # y shaft
-    axes_actor.y_axis_shaft_properties.interpolation = InterpolationType.PBR
-    axes_actor.y_axis_shaft_properties.metallic = 0.2
-    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-
-    # z shaft
-    axes_actor.z_axis_shaft_properties.interpolation = InterpolationType.PBR
-    axes_actor.z_axis_shaft_properties.roughness = 0.3
-    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
-    axes_actor.z_axis_shaft_properties.shading = False
-    assert not axes_actor.z_axis_shaft_properties.shading
-
-    # x tip
-    axes_actor.x_axis_tip_properties.interpolation = InterpolationType.PBR
-    axes_actor.x_axis_tip_properties.anisotropy = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-    axes_actor.x_axis_tip_properties.style = RepresentationType.POINTS
-    assert axes_actor.x_axis_tip_properties.style == 'Points'
-
-    # y tip
-    axes_actor.y_axis_tip_properties.lighting = False
-    assert not axes_actor.y_axis_tip_properties.lighting
-
-    # z tip
-    axes_actor.z_axis_tip_properties.interpolation = InterpolationType.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation == InterpolationType.PHONG
+    axes_actor.x_axis_shaft_properties.color = (0.0, 1.0, 1.0)
+    axes_actor.x_axis_tip_properties.color = (0.0, 0.5, 0.5)
+    axes_actor.y_axis_shaft_properties.color = (1.0, 0.0, 1.0)
+    axes_actor.y_axis_tip_properties.color = (0.5, 0.0, 0.5)
+    axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 0.0)
+    axes_actor.z_axis_tip_properties.color = (0.5, 0.5, 0.0)
 
     pl = pv.Plotter()
     pl.add_actor(axes_actor)
