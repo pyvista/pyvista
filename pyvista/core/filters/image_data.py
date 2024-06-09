@@ -398,11 +398,7 @@ class ImageDataFilters(DataSetFilters):
             array_dtype := self.active_scalars.dtype,
             int,
         ) and array_dtype != np.dtype(np.uint8)
-        cast_dtype = (
-            has_int_dtype
-            and int(np.__version__.split('.')[0]) < 2
-            and platform.system() in ['Darwin', 'Linux']
-        )
+        cast_dtype = has_int_dtype and platform.system() in ['Darwin', 'Linux']
         if cast_dtype:
             self[scalars] = self[scalars].astype(float, casting='safe')
 
