@@ -405,15 +405,12 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Axes text labels.
+        """Return or set the axes labels.
 
-        This property can be used as an alternative to using :attr:`~x_axis_label`,
-        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately for setting or
-        getting the axes text labels.
-
-        A single string with exactly three characters can be used to set the labels
-        of the x, y, and z axes (respectively) to a single character. Alternatively.
-        a sequence of three strings can be used.
+        This property can be used as an alternative to :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label`. The labels can be a single
+        string with exactly three characters (one for each of the x, y, and z axes,
+        respectively), or a sequence of three strings.
 
         Examples
         --------
