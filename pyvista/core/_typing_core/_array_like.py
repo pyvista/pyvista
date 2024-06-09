@@ -23,7 +23,9 @@ Some key differences include:
 
 from __future__ import annotations
 
+from typing import List
 from typing import Sequence
+from typing import Tuple
 from typing import TypeVar
 from typing import Union
 
@@ -38,6 +40,19 @@ NumberType = TypeVar(
 NumberType.__doc__ = """Type variable for numeric data types."""
 
 NumpyArray = npt.NDArray[NumberType]
+
+_FiniteNestedList = Union[
+    List[NumberType],
+    List[List[NumberType]],
+    List[List[List[NumberType]]],
+    List[List[List[List[NumberType]]]],
+]
+_FiniteNestedTuple = Union[
+    Tuple[NumberType],
+    Tuple[Tuple[NumberType]],
+    Tuple[Tuple[Tuple[NumberType]]],
+    Tuple[Tuple[Tuple[Tuple[NumberType]]]],
+]
 
 _ArrayLike1D = Union[
     NumpyArray[NumberType],
