@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import Tuple
-from typing import Union
 
 import pyvista
 
@@ -29,7 +27,7 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> axes.axes_actor.z_axis_shaft_properties.color = (0, 1, 1)
+    >>> axes.axes_actor.z_axis_shaft_properties.color = (0.0, 1.0, 1.0)
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
@@ -45,9 +43,9 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor = axes.axes_actor
     >>> axes.axes_actor.shaft_type = 0
 
-    >>> axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.y_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.z_axis_shaft_properties.color = (1, 1, 1)
+    >>> axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.y_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 1.0)
 
     >>> axes_actor.x_axis_label = 'U'
     >>> axes_actor.y_axis_label = 'V'
@@ -79,22 +77,22 @@ class AxesActor(_vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
-        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
         self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
         self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
@@ -119,7 +117,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetVisibility(value)
 
     @property
-    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of all axes.
 
         Examples
@@ -146,7 +144,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTotalLength(length, length, length)
 
     @property
-    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
         Examples
@@ -173,7 +171,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
 
         Examples
@@ -200,7 +198,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedTipLength(length, length, length)
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label along the axes.
 
         Examples
@@ -370,7 +368,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: ShaftType | int):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -395,7 +393,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: TipType | int):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
