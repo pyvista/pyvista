@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
@@ -154,15 +156,10 @@ def test_axes_actor_labels_group(axes_actor):
     assert axes_actor.y_axis_label == new_labels[1]
     assert axes_actor.z_axis_label == new_labels[2]
 
-    new_labels = 'UVW'
-    axes_actor.labels = new_labels
-    assert axes_actor.labels == (new_labels[0], new_labels[1], new_labels[2])
-    assert axes_actor.x_axis_label == new_labels[0]
-    assert axes_actor.y_axis_label == new_labels[1]
-    assert axes_actor.z_axis_label == new_labels[2]
+    match = 'Labels must be a list or tuple with three items. Got abc instead.'
+    with pytest.raises(ValueError, match=match):
+        axes_actor.labels = 'abc'
 
-    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
-        axes_actor.labels = 'abcd'
-
-    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
+    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
         axes_actor.labels = ['1', '2']

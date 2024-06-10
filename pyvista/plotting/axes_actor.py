@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -407,25 +406,15 @@ class AxesActor(_vtk.vtkAxesActor):
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
-        This property can be used as an alternative to :attr:`~x_axis_label`,
-        :attr:`~y_axis_label`, and :attr:`~z_axis_label`. The labels can be a single
-        string with exactly three characters (one for each of the x, y, and z axes,
-        respectively), or a sequence of three strings.
+        This property may be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
 
         .. versionadded:: 0.44.0
 
         Examples
         --------
-        Set single-character axes labels.
-
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesActor()
-        >>> axes_actor.labels = 'UVW'
-        >>> axes_actor.labels
-        ('U', 'V', 'W')
-
-        Set multi-character axes labels.
-
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
@@ -433,9 +422,11 @@ class AxesActor(_vtk.vtkAxesActor):
         return self.x_axis_label, self.y_axis_label, self.z_axis_label
 
     @labels.setter
-    def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
-        if len(labels) != 3:
-            raise ValueError('Labels sequence must have exactly 3 items.')
+    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
+        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+            raise ValueError(
+                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+            )
         self.x_axis_label = labels[0]
         self.y_axis_label = labels[1]
         self.z_axis_label = labels[2]
