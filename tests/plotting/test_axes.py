@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
@@ -136,7 +138,7 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_axis_labels(axes_actor):
+def test_axes_actor_labels_individual(axes_actor):
     axes_actor.x_axis_label = 'Axis X'
     axes_actor.y_axis_label = 'Axis Y'
     axes_actor.z_axis_label = 'Axis Z'
@@ -144,3 +146,20 @@ def test_axes_actor_axis_labels(axes_actor):
     assert axes_actor.x_axis_label == 'Axis X'
     assert axes_actor.y_axis_label == 'Axis Y'
     assert axes_actor.z_axis_label == 'Axis Z'
+
+
+def test_axes_actor_labels_group(axes_actor):
+    new_labels = ['label1', 'label2', 'label3']
+    axes_actor.labels = new_labels
+    assert axes_actor.labels == tuple(new_labels)
+    assert axes_actor.x_axis_label == new_labels[0]
+    assert axes_actor.y_axis_label == new_labels[1]
+    assert axes_actor.z_axis_label == new_labels[2]
+
+    match = 'Labels must be a list or tuple with three items. Got abc instead.'
+    with pytest.raises(ValueError, match=match):
+        axes_actor.labels = 'abc'
+
+    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_actor.labels = ['1', '2']
