@@ -6,8 +6,10 @@ from collections.abc import Iterable
 from enum import Enum
 from typing import Tuple
 from typing import Union
+import warnings
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk
 from .actor_properties import ActorProperties
@@ -49,9 +51,9 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor.y_axis_shaft_properties.color = (1.0, 1.0, 1.0)
     >>> axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 1.0)
 
-    >>> axes_actor.x_axis_label = 'U'
-    >>> axes_actor.y_axis_label = 'V'
-    >>> axes_actor.z_axis_label = 'W'
+    >>> axes_actor.x_label = 'U'
+    >>> axes_actor.y_label = 'V'
+    >>> axes_actor.z_label = 'W'
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -406,57 +408,143 @@ class AxesActor(_vtk.vtkAxesActor):
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the x-axis.
 
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`x_label` instead.
+
+        """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
+        return self.GetXAxisLabelText()
+
+    @x_axis_label.setter
+    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
+        self.SetXAxisLabelText(label)
+
+    @property
+    def x_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the x-axis.
+
         Examples
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.x_axis_label = 'This axis'
-        >>> axes.axes_actor.x_axis_label
+        >>> axes.axes_actor.x_label = 'This axis'
+        >>> axes.axes_actor.x_label
         'This axis'
 
         """
         return self.GetXAxisLabelText()
 
-    @x_axis_label.setter
-    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
+    @x_label.setter
+    def x_label(self, label: str):  # numpydoc ignore=GL08
         self.SetXAxisLabelText(label)
 
     @property
     def y_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the y-axis.
 
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`y_label` instead.
+
+        """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
+        return self.GetYAxisLabelText()
+
+    @y_axis_label.setter
+    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
+        self.SetYAxisLabelText(label)
+
+    @property
+    def y_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the y-axis.
+
         Examples
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.y_axis_label = 'This axis'
-        >>> axes.axes_actor.y_axis_label
+        >>> axes.axes_actor.y_label = 'This axis'
+        >>> axes.axes_actor.y_label
         'This axis'
 
         """
         return self.GetYAxisLabelText()
 
-    @y_axis_label.setter
-    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
+    @y_label.setter
+    def y_label(self, label: str):  # numpydoc ignore=GL08
         self.SetYAxisLabelText(label)
 
     @property
     def z_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the z-axis.
 
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.Axes()
-        >>> axes.axes_actor.z_axis_label = 'This axis'
-        >>> axes.axes_actor.z_axis_label
-        'This axis'
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`z_label` instead.
 
         """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
         return self.GetZAxisLabelText()
 
     @z_axis_label.setter
     def z_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):
+            raise RuntimeError('Remove this deprecated property')
+        self.SetZAxisLabelText(label)
+
+    @property
+    def z_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the z-axis.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.Axes()
+        >>> axes.axes_actor.z_label = 'This axis'
+        >>> axes.axes_actor.z_label
+        'This axis'
+        """
+        return self.GetZAxisLabelText()
+
+    @z_label.setter
+    def z_label(self, label: str):  # numpydoc ignore=GL08
         self.SetZAxisLabelText(label)
 
     @property
