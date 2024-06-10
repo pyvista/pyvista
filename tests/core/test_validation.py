@@ -158,7 +158,7 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    match = "Data Range [1 0] must be sorted in ascending order."
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
     with pytest.raises(ValueError, match=escape(match)):
         validate_data_range((1, 0))
 
@@ -721,7 +721,7 @@ def test_check_length():
     with pytest.raises(ValueError, match=match):
         check_length((1,), min_length=2, name="_input")
 
-    match = "Range [4 2] must be sorted in ascending order."
+    match = 'Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(
             (
@@ -795,20 +795,20 @@ def test_check_sorted(shape, axis, ascending, strict):
     if strict and ascending:
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_ascending, arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict ascending order"):
+            with pytest.raises(ValueError, match="must be sorted in strict ascending order. Got:"):
                 _check_sorted_params(a)
 
     elif not strict and ascending:
         _check_sorted_params(arr_ascending)
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in ascending order"):
+            with pytest.raises(ValueError, match="must be sorted in ascending order. Got:"):
                 _check_sorted_params(a)
 
     elif strict and not ascending:
         _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending, arr_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict descending order"):
+            with pytest.raises(ValueError, match="must be sorted in strict descending order. Got:"):
                 _check_sorted_params(a)
 
     elif not strict and not ascending:

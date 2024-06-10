@@ -15,6 +15,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from collections.abc import Sequence
 from numbers import Number
+import reprlib
+from typing import TYPE_CHECKING
 from typing import Tuple
 from typing import Union
 from typing import get_args
@@ -23,6 +25,10 @@ from typing import get_origin
 import numpy as np
 
 from pyvista.core._validation._cast_array import _cast_to_numpy
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumberType
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
 
 def check_subdtype(arg1, arg2, /, *, name='Input'):
@@ -138,13 +144,21 @@ def check_real(arr, /, *, name="Array"):
         raise TypeError(f"{name} must have real numbers.") from e
 
 
-def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array"):
+def check_sorted(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    *,
+    ascending: bool = True,
+    strict: bool = False,
+    axis: int = -1,
+    name: str = "Array",
+):
     """Check if an array's values are sorted.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     ascending : bool, default: True
         If ``True``, check if the array's elements are in ascending order.
@@ -157,8 +171,9 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
         must be unique.
 
     axis : int | None, default: -1
-        Axis along which to sort. If ``None``, the array is flattened before
-        sorting. The default is ``-1``, which sorts along the last axis.
+        Axis along which to check sorting. If ``None``, the array is flattened
+        before checking. The default is ``-1``, which checks sorting along the
+        last axis.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -180,55 +195,57 @@ def check_sorted(arr, /, *, ascending=True, strict=False, axis=-1, name="Array")
     >>> _validation.check_sorted([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
 
-    if arr.ndim == 0:
-        # Indexing will fail for scalars, so return early
+    ndim = array.ndim
+    if ndim == 0:
+        # Scalars are always sorted
         return
 
     # Validate axis
-    if axis is None:
+    if axis not in [-1, None]:
+        check_number(axis, name="Axis")
+        check_integer(axis, name="Axis")
+        axis = int(axis)
+        try:
+            check_range(axis, rng=[-ndim, ndim - 1], name="Axis")
+        except ValueError:
+            raise ValueError(f"Axis {axis} is out of bounds for ndim {ndim}.")
+
+    if axis is None and ndim >= 1:
         # Emulate np.sort(), which flattens array when axis is None
-        arr = arr.flatten()
-        axis = -1
-    else:
-        if axis != -1:
-            # Validate axis
-            check_number(axis, name="Axis")
-            check_integer(axis, name="Axis")
-            axis = int(axis)
-            try:
-                check_range(axis, rng=[-arr.ndim, arr.ndim - 1], name="Axis")
-            except ValueError:
-                raise ValueError(f"Axis {axis} is out of bounds for ndim {arr.ndim}.")
-        if axis < 0:
-            # Convert to positive axis index
-            axis = arr.ndim + axis
+        array = array.ravel(order='A')
+        ndim = 1
+        axis = 0
 
     # Create slicers to get a view along an axis
     # Create two slicers to compare consecutive elements with each other
-    first = [slice(None)] * arr.ndim
-    first[axis] = slice(None, -1)
-    first = tuple(first)
+    first_slice = [slice(None)] * ndim
+    first_slice[axis] = slice(None, -1)
+    first_item = array[tuple(first_slice)]
 
-    second = [slice(None)] * arr.ndim
-    second[axis] = slice(1, None)
-    second = tuple(second)
+    second_slice = [slice(None)] * ndim
+    second_slice[axis] = slice(1, None)
+    second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(arr[first] <= arr[second])
+        is_sorted = np.all(first_item <= second_item)
     elif ascending and strict:
-        is_sorted = np.all(arr[first] < arr[second])
+        is_sorted = np.all(first_item < second_item)
     elif not ascending and not strict:
-        is_sorted = np.all(arr[first] >= arr[second])
+        is_sorted = np.all(first_item >= second_item)
     else:  # not ascending and strict
-        is_sorted = np.all(arr[first] > arr[second])
+        is_sorted = np.all(first_item > second_item)
+
     if not is_sorted:
         # Show the array's elements in error msg if array is small
-        msg_body = f"{arr}" if arr.size <= 4 else f"with {arr.size} elements"
+        msg_body = f"with {array.size} elements"
         order = "ascending" if ascending else "descending"
-        strict = "strict " if strict else ""
-        raise ValueError(f"{name} {msg_body} must be sorted in {strict}{order} order.")
+        strict_ = "strict " if strict else ""
+        raise ValueError(
+            f"{name} {msg_body} must be sorted in {strict_}{order} order. "
+            f"Got:\n    {reprlib.repr(array)}",
+        )
 
 
 def check_finite(arr, /, *, name="Array"):
