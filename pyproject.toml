@@ -9,7 +9,7 @@ authors = [
     {name = 'PyVista Developers', email = 'info@pyvista.org'},
 ]
 readme = 'README.rst'
-requires-python = '>=3.9'
+requires-python = '>=3.8'
 keywords = ['vtk', 'numpy', 'plotting', 'mesh']
 license = {text = 'MIT'}
 classifiers = [
