@@ -5820,7 +5820,7 @@ class DataSetFilters:
         pass_cellid=True,
         nonlinear_subdivision=1,
         progress_bar=False,
-    ):
+    ) -> pyvista.PolyData:
         """Extract surface mesh of the grid.
 
         Parameters

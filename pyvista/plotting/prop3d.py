@@ -212,7 +212,7 @@ class Prop3D(_vtk.vtkProp3D):
         ...     lighting=False,
         ... )
         >>> actor.orientation = (45, 0, 0)
-        >>> _ = pl.add_axes_at_origin()
+        >>> _ = pl.add_axes_marker()
         >>> pl.show()
 
         Repeat the last example, but this time reorient the actor about
@@ -231,7 +231,7 @@ class Prop3D(_vtk.vtkProp3D):
         ... )
         >>> actor.origin = actor.center
         >>> actor.orientation = (45, 0, 0)
-        >>> _ = pl.add_axes_at_origin()
+        >>> _ = pl.add_axes_marker()
         >>> pl.show()
 
         Show that the orientation changes with rotation.
@@ -254,7 +254,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property

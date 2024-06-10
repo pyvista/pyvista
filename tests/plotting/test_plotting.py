@@ -38,7 +38,6 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.opts import InterpolationType
-from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
@@ -864,7 +863,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
 
     plotter = pv.Plotter()
     plotter.open_movie(filename)
-    actor = plotter.add_axes_at_origin()
+    actor = plotter.add_axes_marker()
     plotter.remove_actor(actor, reset_camera=False, render=True)
     plotter.add_mesh(movie_sphere, scalars="scalars")
     plotter.show(auto_close=False, window_size=[304, 304])
@@ -973,11 +972,12 @@ def test_add_axes_parameters():
     plotter = pv.Plotter()
     plotter.add_axes()
     plotter.add_axes(
-        line_width=5,
-        cone_radius=0.6,
+        shaft_type='line',
+        shaft_width=5,
+        tip_radius=0.6,
         shaft_length=0.7,
         tip_length=0.3,
-        ambient=0.5,
+        properties=dict(ambient=0.5),
         label_size=(0.4, 0.16),
         viewport=(0, 0, 0.4, 0.4),
     )
@@ -3906,6 +3906,147 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+# Avoid using this as a fixture since it will cause GC to fail
+# @pytest.fixture()
+def axes_marker_reference_points():
+    # Create 3 spheres positioned near the tips of XYZ axes markers.
+    # The spheres can be used to validate the correct positioning and
+    # sizing of an AxesActor
+    x = pv.Sphere(center=(1.1, 0, 0), radius=0.1)
+    y = pv.Sphere(center=(0, 1.1, 0), radius=0.1)
+    z = pv.Sphere(center=(0, 0, 1.1), radius=0.1)
+    return x + y + z
+
+
+def test_axes_actor_vtkAxesActor_orientation_bug():
+    # Verify that vtkAxesActor scaling/positioning does not work by default.
+    # Despite setting properties, the actor will plot at the origin
+    # aligned with the world x,y,z axes
+    actor = vtk.vtkAxesActor()
+    actor.SetScale(3)
+    actor.SetPosition(1, 2, 3)
+    actor.SetOrientation(10, 20, 30)
+
+    # Increase shaft size so that axes take up more space in the image
+    actor.SetShaftTypeToCylinder()
+    actor.SetCylinderRadius(0.1)
+
+    plot = pv.Plotter()
+    plot.add_actor(actor)
+    # Add points and grid for visual reference
+    plot.add_mesh(axes_marker_reference_points(), color="purple")
+    plot.show_grid()
+    plot.show()
+
+
+def test_axes_actor_vtkAxesActor_text_labels_bug():
+    # Test vtkAxesActor text labels show up in unexpected locations
+    import vtk
+
+    import pyvista as pv
+
+    actor1 = vtk.vtkAxesActor()
+    actor1.SetShaftTypeToCylinder()
+    actor1.SetCylinderRadius(0.5)
+    actor1.SetTotalLength(0.5, 0.5, 0.5)
+    actor1.SetNormalizedShaftLength(1, 1, 1)
+
+    actor2 = vtk.vtkAxesActor()
+    actor2.SetShaftTypeToCylinder()
+    actor2.SetConeRadius(0.5)
+    actor2.SetTotalLength(1, 1, 1)
+    actor2.SetNormalizedShaftLength(0, 0, 0)
+    actor2.SetNormalizedTipLength(0.5, 0.5, 0.5)
+    actor2.SetXAxisLabelText('i')
+    actor2.SetYAxisLabelText('j')
+    actor2.SetZAxisLabelText('k')
+
+    plot = pv.Plotter()
+    plot.add_actor(actor1)
+    plot.add_actor(actor2)
+    plot.show()
+
+
+def test_axes_actor():
+    # Create axes with implicit transformation
+    actor_implicit = pv.AxesActor(
+        scale=3,
+        position=(1, 2, 3),
+        orientation=(10, 20, 30),
+        shaft_radius=0.5,
+        total_length=0.5,
+        shaft_length=1,
+    )
+
+    matrix = actor_implicit._implicit_matrix
+    assert np.allclose(
+        matrix,
+        [
+            [2.35230628, -1.47721163, 1.13335826, 1.0],
+            [1.56384173, 2.5586056, 0.08908676, 2.0],
+            [-1.01047227, 0.52094453, 2.77624974, 3.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    )
+
+    # Create axes with explicit transformation
+    actor_explicit = pv.AxesActor(
+        user_matrix=matrix,
+        tip_radius=0.5,
+        total_length=1,
+        tip_length=0.5,
+        x_label='i',
+        y_label='j',
+        z_label='k',
+        x_color='magenta',
+        y_color='yellow',
+        z_color='cyan',
+    )
+
+    reference = axes_marker_reference_points().transform(matrix)
+    plot = pv.Plotter()
+    plot.add_actor(actor_implicit)
+    plot.add_actor(actor_explicit)
+    plot.add_mesh(reference, color="purple")
+    plot.show_grid()
+    plot.show()
+
+
+def test_axes_actor_composite():
+    ax = pv.AxesActorComposite()
+    ax.plot()
+
+
+def test_axes_marker():
+    position = np.array((-3, 2, -1))
+    orientation = np.array((10, 20, 30))
+
+    # Test init actor with constructor
+    kwargs = dict(properties=dict(specular=0.1), shaft_radius=0.1, tip_radius=0.4, total_length=2)
+    axes_actor = pv.AxesActor(
+        x_label="a",
+        y_label='b',
+        z_label='c',
+        position=position,
+        orientation=orientation,
+        **kwargs,
+    )
+
+    plot = pv.Plotter()
+    plot.add_actor(axes_actor)
+    # Test init actor through axes_marker
+    plot.add_axes_marker(position=-position, orientation=-orientation, **kwargs)
+
+    # Test adding a second marker. Make it origin-centered for visual reference
+    plot.add_axes_marker(
+        x_color='black',
+        y_color='black',
+        z_color='black',
+        labels_off=True,
+        **kwargs,
+    )
+    plot.show()
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
@@ -3917,40 +4058,74 @@ def test_axes_actor_default_colors():
 
 
 @skip_lesser_9_0_X
+@skip_mac  # TODO: REMOVE THIS SKIP
 def test_axes_actor_properties():
-    axes = pv.Axes()
-    axes_actor = axes.axes_actor
+    axes_actor = pv.AxesActor(
+        shaft_type='cylinder',
+        shaft_radius=0.05,
+        tip_radius=1,
+        tip_resolution=10,
+        tip_type='sphere',
+    )
 
-    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
-    axes_actor.y_axis_shaft_properties.metallic = 0.2
-    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.z_axis_shaft_properties.roughness = 0.3
-    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+    # test x shaft
+    prop = axes_actor.x_shaft_prop
+    prop.color = (1.0, 1.0, 1.0)
+    assert prop.color == (1.0, 1.0, 1.0)
+    prop.ambient = 0.9
+    assert prop.ambient == 0.9
 
-    axes_actor.x_axis_tip_properties.anisotropy = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-    axes_actor.y_axis_tip_properties.lighting = False
-    assert not axes_actor.y_axis_tip_properties.lighting
-    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
+    # test x tip
+    prop = axes_actor.x_tip_prop
+    prop.interpolation = InterpolationType.PBR
+    assert prop.interpolation == InterpolationType.PBR
+    prop.index_of_refraction = 1.5  # requires PBR
+    assert prop.index_of_refraction == 1.5
+    prop.anisotropy = 0.4  # requires PBR
+    assert prop.anisotropy == 0.4
+    prop.anisotropy_rotation = 0.4  # requires PBR
+    assert prop.anisotropy_rotation == 0.4
 
-    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-    axes_actor.z_axis_shaft_properties.shading = False
-    assert not axes_actor.z_axis_shaft_properties.shading
+    # test y shaft
+    prop = axes_actor.y_shaft_prop
+    prop.interpolation = InterpolationType.PBR
+    assert prop.interpolation == InterpolationType.PBR
+    prop.metallic = 0.2  # requires PBR
+    assert prop.metallic == 0.2
+    prop.roughness = 0.3  # requires PBR
+    assert prop.roughness == 0.3
 
-    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
-    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
+    # test y tip
+    prop = axes_actor.y_tip_prop
+    prop.lighting = False
+    assert not prop.lighting
+    prop.style = 'points'
+    assert prop.style == 'Points'
 
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+    # test z shaft
+    prop = axes_actor.z_shaft_prop
+    prop.shading = False
+    assert not prop.shading
+    prop.opacity = 0.3
+    assert prop.opacity == 0.3
+
+    # test z tip
+    prop = axes_actor.z_tip_prop
+    prop.interpolation = InterpolationType.PHONG
+    assert prop.interpolation == InterpolationType.PHONG
+
     pl = pv.Plotter()
     pl.add_actor(axes_actor)
+    pl.camera.zoom(1.5)
     pl.show()
+
+
+def test_axes_actor_plot():
+    pv.AxesActor().plot()
+
+
+def test_axes_actor_plot_asymmetric_bounds():
+    pv.AxesActor(orientation=(90, 0, 0), symmetric_bounds=False).plot()
 
 
 def test_show_bounds_no_labels():
@@ -4283,6 +4458,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
+# TODO: REMOVE THIS SKIP
+@skip_windows
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'

@@ -67,6 +67,7 @@ try:
 except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
     vtkHardwarePicker = None
+
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_OFF
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_POLYGON_OFFSET
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_SHIFT_ZBUFFER
@@ -74,6 +75,8 @@ from vtkmodules.vtkRenderingCore import vtkAbstractMapper
 from vtkmodules.vtkRenderingCore import vtkActor
 from vtkmodules.vtkRenderingCore import vtkActor2D
 from vtkmodules.vtkRenderingCore import vtkAreaPicker
+from vtkmodules.vtkRenderingCore import vtkAssembly
+from vtkmodules.vtkRenderingCore import vtkBillboardTextActor3D
 from vtkmodules.vtkRenderingCore import vtkCamera
 from vtkmodules.vtkRenderingCore import vtkCellPicker
 from vtkmodules.vtkRenderingCore import vtkColorTransferFunction
@@ -92,6 +95,7 @@ from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper2D
 from vtkmodules.vtkRenderingCore import vtkProp3D
 from vtkmodules.vtkRenderingCore import vtkPropAssembly
+from vtkmodules.vtkRenderingCore import vtkPropCollection
 from vtkmodules.vtkRenderingCore import vtkProperty
 from vtkmodules.vtkRenderingCore import vtkPropPicker
 from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker
