@@ -1030,12 +1030,14 @@ def test_glyph_orient_and_scale():
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
 def test_glyph_color_mode(sphere, color_mode):
-    assert sphere.glyph(color_mode=color_mode)
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
 
 
 def test_glyph_raises(sphere):
     with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
-        sphere.glyph(color_mode="foo")
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
