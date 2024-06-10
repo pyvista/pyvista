@@ -83,7 +83,6 @@ _FiniteNestedList = Union[
     List[List[List[NumberType]]],
     List[List[List[List[NumberType]]]],
 ]
-
 _FiniteNestedTuple = Union[
     Tuple[NumberType],
     Tuple[Tuple[NumberType]],
