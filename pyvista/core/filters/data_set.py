@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 import warnings
 
 import matplotlib.pyplot as plt

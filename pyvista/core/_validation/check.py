@@ -13,8 +13,8 @@ A ``check`` function typically:
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Sequence
 from numbers import Number
+from typing import Sequence
 from typing import Union
 from typing import get_args
 from typing import get_origin

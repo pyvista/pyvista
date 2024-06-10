@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections import deque
-from typing import Sequence
 from typing import TYPE_CHECKING
+from typing import Sequence
 from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover

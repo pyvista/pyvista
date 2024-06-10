@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
 from typing import ClassVar
+from typing import Sequence
 from typing import cast
 import warnings
 
