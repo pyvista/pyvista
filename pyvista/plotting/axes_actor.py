@@ -29,7 +29,7 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> axes.axes_actor.z_axis_shaft_properties.color = (0, 1, 1)
+    >>> axes.axes_actor.z_axis_shaft_properties.color = (0.0, 1.0, 1.0)
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
@@ -45,9 +45,9 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor = axes.axes_actor
     >>> axes.axes_actor.shaft_type = 0
 
-    >>> axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.y_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.z_axis_shaft_properties.color = (1, 1, 1)
+    >>> axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.y_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 1.0)
 
     >>> axes_actor.x_axis_label = 'U'
     >>> axes_actor.y_axis_label = 'V'
@@ -79,22 +79,22 @@ class AxesActor(_vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
-        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
         self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
         self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
@@ -401,6 +401,35 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
+
+    @property
+    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        This property may be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+
+        .. versionadded:: 0.44.0
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_axis_label, self.y_axis_label, self.z_axis_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
+        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+            raise ValueError(
+                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+            )
+        self.x_axis_label = labels[0]
+        self.y_axis_label = labels[1]
+        self.z_axis_label = labels[2]
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01

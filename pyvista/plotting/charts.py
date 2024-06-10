@@ -2236,7 +2236,7 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
 
         """
         if len(x) > 1:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._table.update({"x": np.asarray(x), "y": np.asarray(y)})
             self.visible = True
         else:
             # Turn off visibility for fewer than 2 points as otherwise an error message is shown
@@ -2406,7 +2406,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
         """
         if len(x) > 0:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._table.update({"x": np.asarray(x), "y": np.asarray(y)})
             self.visible = True
         else:
             self.visible = False
@@ -2650,9 +2650,9 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 y2 = np.zeros_like(x)
             self._table.update(
                 {
-                    "x": np.array(x, copy=False),
-                    "y1": np.array(y1, copy=False),
-                    "y2": np.array(y2, copy=False),
+                    "x": np.asarray(x),
+                    "y1": np.asarray(y1),
+                    "y2": np.asarray(y2),
                 },
             )
             self.visible = True
@@ -2831,8 +2831,8 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         if len(x) > 0:
             if not isinstance(y[0], (Sequence, np.ndarray)):
                 y = (y,)
-            y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
-            self._table.update({"x": np.array(x, copy=False), **y_data})
+            y_data = {f"y{i}": np.asarray(y[i]) for i in range(len(y))}
+            self._table.update({"x": np.asarray(x), **y_data})
             self.visible = True
         else:
             self.visible = False
@@ -3030,8 +3030,8 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         if len(x) > 0:
             if not isinstance(ys[0], (Sequence, np.ndarray)):
                 ys = (ys,)
-            y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
-            self._table.update({"x": np.array(x, copy=False), **y_data})
+            y_data = {f"y{i}": np.asarray(ys[i]) for i in range(len(ys))}
+            self._table.update({"x": np.asarray(x), **y_data})
             self.visible = True
         else:
             self.visible = False
@@ -3915,7 +3915,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
-            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)},
+            {f"data_{i}": np.asarray(d) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
@@ -3993,7 +3993,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
            >>> chart.show()
 
         """
-        self._table.update({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
+        self._table.update({f"data_{i}": np.asarray(d) for i, d in enumerate(data)})
         self._quartiles.Update()
 
 
