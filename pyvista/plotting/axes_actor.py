@@ -401,6 +401,35 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToSphere()
 
     @property
+    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        This property may be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+
+        .. versionadded:: 0.44.0
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_axis_label, self.y_axis_label, self.z_axis_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
+        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+            raise ValueError(
+                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+            )
+        self.x_axis_label = labels[0]
+        self.y_axis_label = labels[1]
+        self.z_axis_label = labels[2]
+
+    @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
         """Return or set the label for the x-axis.
 
