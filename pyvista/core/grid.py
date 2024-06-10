@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Sequence
 from functools import wraps
 import pathlib
 from typing import TYPE_CHECKING

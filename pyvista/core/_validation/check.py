@@ -13,7 +13,7 @@ A ``check`` function typically:
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
+from typing import Sequence
 from numbers import Number
 from typing import Union
 from typing import get_args

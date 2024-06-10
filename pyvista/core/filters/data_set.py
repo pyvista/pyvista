@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
+from typing import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING

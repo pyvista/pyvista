@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable
-from collections.abc import Sequence
+from typing import Sequence
 import functools
 import os
 from pathlib import Path

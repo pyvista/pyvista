@@ -19,7 +19,7 @@ from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
+    from typing import Sequence
 
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike

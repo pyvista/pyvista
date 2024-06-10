@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Sequence
+from typing import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
 

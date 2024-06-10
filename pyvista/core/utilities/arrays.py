@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Sequence
+from typing import Sequence
 import enum
 from itertools import product
 import json
