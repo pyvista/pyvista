@@ -357,8 +357,8 @@ reset_pyvista = ResetPyVista()
 # skip building the osmnx example if osmnx is not installed
 has_osmnx = False
 try:
-    import fiona  # noqa: F401,I
-    import osmnx  # noqa: F401,I
+    import fiona  # noqa: F401
+    import osmnx  # noqa: F401
 
     has_osmnx = True
 except:
