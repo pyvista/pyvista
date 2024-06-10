@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 
 @pytest.fixture(autouse=True)
@@ -137,27 +136,11 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_labels(axes_actor):
-    axes_actor.x_label = 'Axis X'
-    axes_actor.y_label = 'Axis Y'
-    axes_actor.z_label = 'Axis Z'
+def test_axes_actor_axis_labels(axes_actor):
+    axes_actor.x_axis_label = 'Axis X'
+    axes_actor.y_axis_label = 'Axis Y'
+    axes_actor.z_axis_label = 'Axis Z'
 
-    assert axes_actor.x_label == 'Axis X'
-    assert axes_actor.y_label == 'Axis Y'
-    assert axes_actor.z_label == 'Axis Z'
-
-
-def test_axes_actor_axis_labels_deprecated(axes_actor):
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        axes_actor.z_axis_label = 'Axis Z'
-
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        axes_actor.x_axis_label = 'Axis X'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        axes_actor.y_axis_label = 'Axis Y'
-    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        axes_actor.z_axis_label = 'Axis Z'
+    assert axes_actor.x_axis_label == 'Axis X'
+    assert axes_actor.y_axis_label == 'Axis Y'
+    assert axes_actor.z_axis_label == 'Axis Z'
