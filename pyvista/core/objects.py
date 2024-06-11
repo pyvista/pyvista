@@ -6,9 +6,6 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
-from typing import Optional
-from typing import Tuple
-
 import numpy as np
 
 import pyvista
@@ -348,9 +345,9 @@ class Table(_vtk.vtkTable, DataObject):
 
     def get_data_range(
         self,
-        arr: Optional[str] = None,
+        arr: str | None = None,
         preference: str = 'row',
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
         Parameters
