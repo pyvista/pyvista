@@ -6,6 +6,9 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting import _vtk
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.opts import RepresentationType
 
 
 @pytest.fixture(autouse=True)
@@ -163,3 +166,41 @@ def test_axes_actor_labels_group(axes_actor):
     match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_actor.labels = ['1', '2']
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_axes_actor_properties():
+    prop = pv.ActorProperties(_vtk.vtkProperty())
+
+    prop.color = (1, 1, 1)
+    assert prop.color == (1, 1, 1)
+
+    prop.metallic = 0.2
+    assert prop.metallic == 0.2
+
+    prop.roughness = 0.3
+    assert prop.roughness == 0.3
+
+    prop.anisotropy = 0.4
+    assert prop.anisotropy == 0.4
+
+    prop.anisotropy_rotation = 0.4
+    assert prop.anisotropy_rotation == 0.4
+
+    prop.lighting = False
+    assert not prop.lighting
+
+    prop.interpolation_model = InterpolationType.PHONG
+    assert prop.interpolation_model == InterpolationType.PHONG
+
+    prop.index_of_refraction = 1.5
+    assert prop.index_of_refraction == 1.5
+
+    prop.opacity = 0.6
+    assert prop.opacity == 0.6
+
+    prop.shading = False
+    assert not prop.shading
+
+    prop.representation = RepresentationType.POINTS
+    assert prop.representation == RepresentationType.POINTS
