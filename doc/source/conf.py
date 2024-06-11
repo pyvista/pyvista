@@ -6,7 +6,6 @@ import locale
 import os
 from pathlib import Path
 import sys
-from typing import Dict
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -526,7 +525,7 @@ htmlhelp_basename = "pyvistadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements: Dict[str, str] = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
