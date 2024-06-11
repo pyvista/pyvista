@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
@@ -10,6 +9,7 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
+from typing import Sequence
 from typing import TypeVar
 import warnings
 

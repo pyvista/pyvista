@@ -27,7 +27,7 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
+    from typing import Sequence
 
     from pyvista.core._typing_core._array_like import NumpyArray
 

@@ -7,6 +7,7 @@ from functools import wraps
 import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Sequence
 
 import numpy as np
 

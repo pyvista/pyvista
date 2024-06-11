@@ -37,9 +37,11 @@ from collections.abc import Sequence
 import functools
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Protocol
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -51,6 +53,9 @@ from typing import runtime_checkable
 import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T

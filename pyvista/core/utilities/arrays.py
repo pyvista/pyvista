@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Sequence
 import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
+from typing import Sequence
 from typing import Union
 
 import numpy as np

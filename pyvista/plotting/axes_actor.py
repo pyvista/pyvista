@@ -401,7 +401,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToSphere()
 
     @property
-    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
         This property may be used as an alternative to using :attr:`~x_axis_label`,

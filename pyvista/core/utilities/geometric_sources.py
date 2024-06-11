@@ -22,7 +22,7 @@ from .arrays import _coerce_pointslike_arg
 from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
+    from typing import Sequence
 
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
