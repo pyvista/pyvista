@@ -30,7 +30,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
 
-
 def check_subdtype(
     input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
