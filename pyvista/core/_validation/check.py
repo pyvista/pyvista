@@ -33,7 +33,7 @@ if TYPE_CHECKING:  # pragma: no cover
 def check_subdtype(
     input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
-    base_dtype: Union[npt.DTypeLike, Tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
+    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
     *,
     name: str = 'Input',
 ):
