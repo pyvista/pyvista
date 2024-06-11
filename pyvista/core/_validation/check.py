@@ -13,10 +13,9 @@ A ``check`` function typically:
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 from numbers import Number
 from typing import TYPE_CHECKING
-from typing import Tuple
+from typing import Sequence
 from typing import Union
 from typing import get_args
 from typing import get_origin
@@ -1061,7 +1060,7 @@ def check_length(
             )
 
 
-def _validate_shape_value(shape: Union[int, Tuple[int, ...], Tuple[None]]):
+def _validate_shape_value(shape: int | tuple[int, ...] | tuple[None]):
     """Validate shape-like input and return its tuple representation."""
     if shape is None:
         # `None` is used to mean `any shape is allowed` by the array

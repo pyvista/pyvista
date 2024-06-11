@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Tuple
 
 import numpy as np
 
@@ -43,7 +42,7 @@ class Prop3D(_vtk.vtkProp3D):
         super().__init__()
 
     @property
-    def scale(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set entity scale.
 
         Examples
@@ -66,7 +65,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetScale(value)
 
     @property
-    def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity position.
 
         Examples
@@ -184,7 +183,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity orientation angles.
 
         Orientation angles of the axes which define rotations about the
@@ -254,11 +253,11 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, value: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
-    def origin(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity origin.
 
         This is the point about which all rotations take place.
@@ -291,7 +290,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples

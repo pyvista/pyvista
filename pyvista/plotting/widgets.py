@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import pathlib
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
@@ -31,6 +27,8 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
+
     from pyvista.core._typing_core._array_like import NumpyArray
 
 
@@ -2207,7 +2205,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        callback : Callable[[Tuple[float, float, float], [Tuple[float, float, float], int], float]
+        callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as cartesian coordinate tuples
@@ -2685,9 +2683,9 @@ class WidgetHelper:
 
     def add_logo_widget(
         self,
-        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
+        logo: pyvista.ImageData | str | pathlib.Path | None = None,
+        position: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.75, 0.8),
+        size: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.

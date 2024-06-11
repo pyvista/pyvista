@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 import warnings
 
 import matplotlib.pyplot as plt
@@ -35,6 +35,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
+
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
