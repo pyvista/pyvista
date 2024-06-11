@@ -6,8 +6,6 @@ from collections import deque
 from itertools import count
 from itertools import islice
 from typing import TYPE_CHECKING
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
@@ -47,7 +45,7 @@ def numpy_to_idarr(
     ind: MatrixLike[int],
     deep: bool = False,
     return_ind: bool = False,
-) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
-from typing import Union
 
 import numpy as np
 
@@ -53,7 +52,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     def __new__(
         cls,
-        array: Union[ArrayLike[float], _vtk.vtkAbstractArray],
+        array: ArrayLike[float] | _vtk.vtkAbstractArray,
         dataset=None,
         association=FieldAssociation.NONE,
     ):
@@ -96,7 +95,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, NumpyArray[int]], value):
+    def __setitem__(self, key: int | NumpyArray[int], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -112,14 +111,14 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return super().__array_wrap__(out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
