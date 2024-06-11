@@ -13,7 +13,7 @@ from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 

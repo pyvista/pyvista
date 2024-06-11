@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from itertools import product
+from typing import Sequence
 from weakref import proxy
 
 import numpy as np
