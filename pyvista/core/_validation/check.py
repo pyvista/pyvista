@@ -21,6 +21,7 @@ from typing import get_args
 from typing import get_origin
 
 import numpy as np
+import numpy.typing as npt
 
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
@@ -29,19 +30,25 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
 
-def check_subdtype(arg1, arg2, /, *, name='Input'):
-    """Check if a data-type is a subtype of another data-type(s).
+def check_subdtype(
+    input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
+    /,
+    base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
+    *,
+    name: str = 'Input',
+):
+    """Check if an input's data-type is a subtype of another data-type(s).
 
     Parameters
     ----------
-    arg1 : dtype_like | array_like
-        ``dtype`` or object coercible to one. If ``array_like``, the dtype
-        of the array is used.
+    input_obj : float | ArrayLike[float] | numpy.typing.DTypeLike
+        ``dtype`` object (or object coercible to one) or an array-like object.
+        If array-like, the dtype of the array is used.
 
-    arg2 : dtype_like | list[dtype_like]
-        ``dtype``-like object or a list of ``dtype``-like objects.
-        If a list, ``arg1`` must be a subtype of at least one of the
-        specified dtypes.
+    base_dtype : numpy.typing.DTypeLike | Sequence[numpy.typing.DTypeLike]
+        ``dtype``-like object or a sequence of ``dtype``-like objects. The ``input_obj``
+        must be a subtype of this value. If a sequence, ``input_obj`` must be a
+        subtype of at least one of the specified dtypes.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -49,7 +56,7 @@ def check_subdtype(arg1, arg2, /, *, name='Input'):
     Raises
     ------
     TypeError
-        If ``arg1`` is not a subtype of ``arg2``.
+        If ``input_obj`` is not a subtype of ``base_dtype``.
 
     See Also
     --------
@@ -58,7 +65,7 @@ def check_subdtype(arg1, arg2, /, *, name='Input'):
 
     Examples
     --------
-    Check if ``int`` is a subtype of ``np.integer``.
+    Check if ``float`` is a subtype of ``np.floating``.
 
     >>> import numpy as np
     >>> from pyvista import _validation
@@ -70,28 +77,27 @@ def check_subdtype(arg1, arg2, /, *, name='Input'):
 
     Check an array's dtype.
 
-    >>> arr = np.array([1, 2, 3], dtype='uint8')
-    >>> _validation.check_subdtype(arr, np.integer)
+    >>> array = np.array([1, 2, 3], dtype='uint8')
+    >>> _validation.check_subdtype(array, np.integer)
 
     """
-    if isinstance(arg1, np.dtype):
-        pass
-    elif isinstance(arg1, np.ndarray):
-        arg1 = arg1.dtype
-    else:
-        arg1 = np.dtype(arg1)
+    input_dtype: npt.DTypeLike
+    try:
+        input_dtype = np.dtype(input_obj)  # type: ignore[arg-type]
+    except TypeError:
+        input_dtype = np.asanyarray(input_obj).dtype
 
-    if not isinstance(arg2, (list, tuple)):
-        arg2 = [arg2]
-    for d in arg2:
-        if np.issubdtype(arg1, d):
-            return
-    msg = f"{name} has incorrect dtype of '{arg1}'. "
-    if len(arg2) == 1:
-        msg += f"The dtype must be a subtype of {arg2[0]}."
-    else:
-        msg += f"The dtype must be a subtype of at least one of \n{arg2}."
-    raise TypeError(msg)
+    if not isinstance(base_dtype, (tuple, list)):
+        base_dtype = [base_dtype]
+
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
+        # Not a subdtype, so raise error
+        msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
+        if len(base_dtype) == 1:
+            msg += f"The dtype must be a subtype of {base_dtype[0]}."
+        else:
+            msg += f"The dtype must be a subtype of at least one of \n{base_dtype}."
+        raise TypeError(msg)
 
 
 def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
