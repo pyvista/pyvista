@@ -32,8 +32,6 @@ downloading, reading, and processing files with a generic mapping:
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Callable
-from collections.abc import Sequence
 import functools
 import os
 from pathlib import Path
