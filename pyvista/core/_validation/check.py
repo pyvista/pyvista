@@ -31,6 +31,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
 
 
+
 def check_subdtype(
     input_obj: Union[npt.DTypeLike, _ArrayLikeOrScalar[NumberType]],
     /,
@@ -101,19 +102,20 @@ def check_subdtype(
         raise TypeError(msg)
 
 
-def check_real(arr, /, *, name="Array"):
+def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
     -----
-    Arrays with ``infinity`` or ``NaN`` values are considered real and
-    will not raise an error. Use :func:`check_finite` to check for
-    finite values.
+    -   Boolean data types are not considered real and will raise an error.
+    -   Arrays with ``infinity`` or ``NaN`` values are considered real and
+        will not raise an error. Use :func:`check_finite` to check for
+        finite values.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -125,7 +127,12 @@ def check_real(arr, /, *, name="Array"):
 
     See Also
     --------
+    check_integer
+        Similar function for integer arrays.
+    check_number
+        Similar function for scalar values.
     check_finite
+        Check for finite values.
 
     Examples
     --------
@@ -135,16 +142,16 @@ def check_real(arr, /, *, name="Array"):
     >>> _validation.check_real([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
 
     # Return early for common cases
-    if arr.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
+    if array.dtype.type in [np.int32, np.int64, np.float32, np.float64]:
         return
 
     # Do not use np.isreal as it will fail in some cases (e.g. scalars).
     # Check dtype directly instead
     try:
-        check_subdtype(arr, (np.floating, np.integer), name=name)
+        check_subdtype(array, (np.floating, np.integer), name=name)
     except TypeError as e:
         raise TypeError(f"{name} must have real numbers.") from e
 

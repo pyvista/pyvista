@@ -652,6 +652,8 @@ def test_check_real():
     match = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
+    with pytest.raises(TypeError, match=match):
+        check_real(True)
     match = '_input must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j, name="_input")
