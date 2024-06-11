@@ -14,9 +14,8 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from numbers import Number
-from typing import Sequence
 from typing import TYPE_CHECKING
-from typing import Tuple
+from typing import Sequence
 from typing import Union
 from typing import get_args
 from typing import get_origin
