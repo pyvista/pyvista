@@ -451,7 +451,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @x_axis_label.setter
     def x_axis_label(self, label: str):  # numpydoc ignore=GL08
-        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
             "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
@@ -499,7 +499,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @y_axis_label.setter
     def y_axis_label(self, label: str):  # numpydoc ignore=GL08
-        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
             "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
