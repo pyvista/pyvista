@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Tuple
 import warnings
 
 import pyvista
@@ -68,7 +67,7 @@ class ActorProperties:  # pragma:no cover
         return self.properties.GetColor()
 
     @color.setter
-    def color(self, color: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def color(self, color: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.properties.SetColor(color[0], color[1], color[2])
 
     @property
