@@ -447,7 +447,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        return self.GetXAxisLabelText()
+        return self.GetXAxisLabelText()  # pragma: no cover
 
     @x_axis_label.setter
     def x_axis_label(self, label: str):  # numpydoc ignore=GL08
@@ -458,7 +458,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        self.SetXAxisLabelText(label)
+        self.SetXAxisLabelText(label)  # pragma: no cover
 
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
@@ -495,7 +495,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        return self.GetYAxisLabelText()
+        return self.GetYAxisLabelText()  # pragma: no cover
 
     @y_axis_label.setter
     def y_axis_label(self, label: str):  # numpydoc ignore=GL08
@@ -506,7 +506,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        self.SetYAxisLabelText(label)
+        self.SetYAxisLabelText(label)  # pragma: no cover
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
@@ -543,7 +543,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        return self.GetZAxisLabelText()
+        return self.GetZAxisLabelText()  # pragma: no cover
 
     @z_axis_label.setter
     def z_axis_label(self, label: str):  # numpydoc ignore=GL08
@@ -554,7 +554,7 @@ class AxesActor(_vtk.vtkAxesActor):
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
-        self.SetZAxisLabelText(label)
+        self.SetZAxisLabelText(label)  # pragma: no cover
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
