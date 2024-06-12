@@ -480,20 +480,6 @@ def test_plotter_reset_key_events():
     pl.reset_key_events()
 
 
-def test_add_axes_marker(sphere):
-    pl = pv.Plotter()
-    pl.add_mesh(sphere)
-    actor = pl.add_axes_marker()
-    assert np.allclose(actor.position, (0, 0, 0))
-
-    actor = pl.add_axes_marker(position=(1, 2, 3))
-    assert np.allclose(actor.position, (1, 2, 3))
-
-    pl = pv.Plotter()
-    with pytest.raises(PyVistaDeprecationWarning):
-        pl.add_axes_at_origin()
-
-
 def test_plotter_update_coordinates(sphere):
     with pytest.warns(PyVistaDeprecationWarning):
         pl = pv.Plotter()

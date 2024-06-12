@@ -3,10 +3,7 @@ from __future__ import annotations
 import pytest
 
 import pyvista as pv
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting._property import _check_range
-from pyvista.plotting.actor_properties import ActorProperties
-from pyvista.plotting.opts import InterpolationType
 
 
 @pytest.fixture()
@@ -184,54 +181,3 @@ def test_property_anisotropy(prop):
     assert isinstance(prop.anisotropy, float)
     prop.anisotropy = value
     assert prop.anisotropy == value
-
-
-def test_property_anisotropy_rotation(prop):
-    value = 0.1
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.anisotropy_rotation = value
-        return
-
-    assert isinstance(prop.anisotropy_rotation, float)
-    prop.anisotropy_rotation = value
-    assert prop.anisotropy_rotation == value
-
-
-def test_property_index_of_refraction(prop):
-    value = 2
-    if pv.vtk_version_info < (9, 1, 0):
-        with pytest.raises(pv.core.errors.VTKVersionError):
-            prop.index_of_refraction = value
-        return
-
-    assert isinstance(prop.index_of_refraction, float)
-    prop.index_of_refraction = value
-    assert prop.index_of_refraction == value
-
-
-def test_property_shading(prop):
-    assert isinstance(prop.shading, bool)
-    value = True
-    prop.line_width = value
-    assert prop.line_width == value
-
-
-def test_property_deprecated(prop):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError('Convert this deprecation warning to an error.')
-    if pv._version.version_info >= (0, 47):
-        raise RuntimeError(
-            'Remove deprecated properties `interpolation_model` and '
-            '`representation`. Remove class `ActorProperties`.',
-        )
-    with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
-        prop.interpolation_model = InterpolationType.PHONG
-    with pytest.raises(PyVistaDeprecationWarning, match="Use `interpolation` instead."):
-        _ = prop.interpolation_model
-    with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
-        prop.representation = 'points'
-    with pytest.raises(PyVistaDeprecationWarning, match="Use `style` instead."):
-        _ = prop.representation
-    with pytest.raises(PyVistaDeprecationWarning, match="Use `pyvista.Property` instead."):
-        ActorProperties(prop)

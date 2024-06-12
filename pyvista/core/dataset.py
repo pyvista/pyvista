@@ -944,7 +944,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_marker()
+        >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
         """
@@ -1003,7 +1003,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_marker()
+        >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
         """
@@ -1063,7 +1063,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_marker()
+        >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
         """
@@ -1127,7 +1127,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(rot)
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_marker()
+        >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
         """
