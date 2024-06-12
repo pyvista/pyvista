@@ -419,7 +419,7 @@ class AxesActor(_vtk.vtkAxesActor):
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
         """
-        return self.x_axis_label, self.y_axis_label, self.z_axis_label
+        return self.x_label, self.y_label, self.z_label
 
     @labels.setter
     def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
