@@ -427,9 +427,9 @@ class AxesActor(_vtk.vtkAxesActor):
             raise ValueError(
                 f'Labels must be a list or tuple with three items. Got {labels} instead.',
             )
-        self.x_axis_label = labels[0]
-        self.y_axis_label = labels[1]
-        self.z_axis_label = labels[2]
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
