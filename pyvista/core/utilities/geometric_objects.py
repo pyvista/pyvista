@@ -150,6 +150,7 @@ def Cylinder(
     height=1.0,
     resolution=100,
     capping=True,
+    point_dtype='float32',
 ):
     """Create the surface of a cylinder.
 
@@ -179,6 +180,10 @@ def Cylinder(
 
     capping : bool, default: True
         Cap cylinder ends with polygons.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
 
     Returns
     -------
@@ -213,6 +218,7 @@ def Cylinder(
         height=height,
         capping=capping,
         resolution=resolution,
+        point_dtype=point_dtype,
     )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
