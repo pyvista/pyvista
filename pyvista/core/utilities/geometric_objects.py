@@ -1020,6 +1020,7 @@ def Plane(
     j_size=1,
     i_resolution=10,
     j_resolution=10,
+    point_dtype='float32',
 ):
     """Create a plane.
 
@@ -1043,6 +1044,10 @@ def Plane(
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+        .. versionadded:: 0.44.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1057,7 +1062,9 @@ def Plane(
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
     """
-    planeSource = PlaneSource(i_resolution=i_resolution, j_resolution=j_resolution)
+    planeSource = PlaneSource(
+        i_resolution=i_resolution, j_resolution=j_resolution, point_dtype=point_dtype
+    )
     surf = planeSource.output
 
     surf.points[:, 0] *= i_size

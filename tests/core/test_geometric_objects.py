@@ -365,6 +365,16 @@ def test_plane_size():
     assert np.array_equal(surf.bounds, (-i_sz / 2, i_sz / 2, -j_sz / 2, j_sz / 2, 0.0, 0.0))
 
 
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_plane_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        plane = pv.Plane(point_dtype=point_dtype)
+        assert plane.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.Plane(point_dtype=point_dtype)
+
+
 def test_line():
     pointa = (0, 0, 0)
     pointb = (10, 1.0, 3)
