@@ -445,7 +445,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         return self.GetXAxisLabelText()
 
@@ -456,7 +456,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         self.SetXAxisLabelText(label)
 
@@ -493,7 +493,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         return self.GetYAxisLabelText()
 
@@ -504,7 +504,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         self.SetYAxisLabelText(label)
 
@@ -541,7 +541,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         return self.GetZAxisLabelText()
 
@@ -552,7 +552,7 @@ class AxesActor(_vtk.vtkAxesActor):
             "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
             PyVistaDeprecationWarning,
         )
-        if pyvista._version.version_info >= (0, 47):
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
             raise RuntimeError('Remove this deprecated property')
         self.SetZAxisLabelText(label)
 
