@@ -19,10 +19,7 @@ import inspect
 from itertools import product
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
 from typing import Literal
-from typing import Tuple
-from typing import Union
 
 import numpy as np
 
@@ -575,8 +572,8 @@ def validate_transform3x3(transform, /, *, name="Transform"):
 
 
 def _array_from_vtkmatrix(
-    matrix: Union[vtkMatrix3x3, vtkMatrix4x4],
-    shape: Union[Tuple[Literal[3], Literal[3]], Tuple[Literal[4], Literal[4]]],
+    matrix: vtkMatrix3x3 | vtkMatrix4x4,
+    shape: tuple[Literal[3], Literal[3]] | tuple[Literal[4], Literal[4]],
 ) -> NumpyArray[float]:
     """Convert a vtk matrix to an array."""
     array = np.zeros(shape)
@@ -1014,7 +1011,7 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def _set_default_kwarg_mandatory(kwargs: Dict[str, Any], key: str, default: Any):
+def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any):
     """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:
