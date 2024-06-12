@@ -167,6 +167,7 @@ def test_axes_actor_axis_labels_deprecated(axes_actor):
     with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
         _ = axes_actor.z_axis_label
 
+
 def test_axes_actor_labels_individual(axes_actor):
     axes_actor.x_axis_label = 'Axis X'
     axes_actor.y_axis_label = 'Axis Y'
