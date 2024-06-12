@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 from collections import deque
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
+from typing import Sequence
 from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -26,8 +24,8 @@ from .fileio import is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, Trimesh, Mesh]],
-) -> Optional[Union[pyvista.DataSet, pyvista.pyvista_ndarray]]:
+    dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
+) -> pyvista.DataSet | pyvista.pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:

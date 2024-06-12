@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import Tuple
-from typing import Union
 import warnings
 
 import pyvista
@@ -121,7 +119,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetVisibility(value)
 
     @property
-    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of all axes.
 
         Examples
@@ -148,7 +146,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTotalLength(length, length, length)
 
     @property
-    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
         Examples
@@ -175,7 +173,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
 
         Examples
@@ -202,7 +200,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedTipLength(length, length, length)
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label along the axes.
 
         Examples
@@ -372,7 +370,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: ShaftType | int):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -397,12 +395,41 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: TipType | int):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
+
+    @property
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        This property may be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+
+        .. versionadded:: 0.44.0
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_axis_label, self.y_axis_label, self.z_axis_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
+        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+            raise ValueError(
+                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+            )
+        self.x_axis_label = labels[0]
+        self.y_axis_label = labels[1]
+        self.z_axis_label = labels[2]
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01

@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.plotting import _vtk
+from pyvista.plotting.opts import InterpolationType
+from pyvista.plotting.opts import RepresentationType
 
 
 @pytest.fixture(autouse=True)
@@ -156,8 +161,72 @@ def test_axes_actor_axis_labels_deprecated(axes_actor):
         axes_actor.z_axis_label = 'Axis Z'
 
     with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
-        axes_actor.x_axis_label = 'Axis X'
+        _ = axes_actor.x_axis_label
     with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
-        axes_actor.y_axis_label = 'Axis Y'
+        _ = axes_actor.y_axis_label
     with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
-        axes_actor.z_axis_label = 'Axis Z'
+        _ = axes_actor.z_axis_label
+
+def test_axes_actor_labels_individual(axes_actor):
+    axes_actor.x_axis_label = 'Axis X'
+    axes_actor.y_axis_label = 'Axis Y'
+    axes_actor.z_axis_label = 'Axis Z'
+
+    assert axes_actor.x_axis_label == 'Axis X'
+    assert axes_actor.y_axis_label == 'Axis Y'
+    assert axes_actor.z_axis_label == 'Axis Z'
+
+
+def test_axes_actor_labels_group(axes_actor):
+    new_labels = ['label1', 'label2', 'label3']
+    axes_actor.labels = new_labels
+    assert axes_actor.labels == tuple(new_labels)
+    assert axes_actor.x_axis_label == new_labels[0]
+    assert axes_actor.y_axis_label == new_labels[1]
+    assert axes_actor.z_axis_label == new_labels[2]
+
+    match = 'Labels must be a list or tuple with three items. Got abc instead.'
+    with pytest.raises(ValueError, match=match):
+        axes_actor.labels = 'abc'
+
+    match = "Labels must be a list or tuple with three items. Got ['1', '2'] instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_actor.labels = ['1', '2']
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_axes_actor_properties():
+    prop = pv.ActorProperties(_vtk.vtkProperty())
+
+    prop.color = (1, 1, 1)
+    assert prop.color == (1, 1, 1)
+
+    prop.metallic = 0.2
+    assert prop.metallic == 0.2
+
+    prop.roughness = 0.3
+    assert prop.roughness == 0.3
+
+    prop.anisotropy = 0.4
+    assert prop.anisotropy == 0.4
+
+    prop.anisotropy_rotation = 0.4
+    assert prop.anisotropy_rotation == 0.4
+
+    prop.lighting = False
+    assert not prop.lighting
+
+    prop.interpolation_model = InterpolationType.PHONG
+    assert prop.interpolation_model == InterpolationType.PHONG
+
+    prop.index_of_refraction = 1.5
+    assert prop.index_of_refraction == 1.5
+
+    prop.opacity = 0.6
+    assert prop.opacity == 0.6
+
+    prop.shading = False
+    assert not prop.shading
+
+    prop.representation = RepresentationType.POINTS
+    assert prop.representation == RepresentationType.POINTS
