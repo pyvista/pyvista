@@ -3920,9 +3920,9 @@ def test_axes_actor_properties():
     axes_actor = axes.axes_actor
     axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
     axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
-    axes_actor.x_axis_label = 'U'
-    axes_actor.y_axis_label = 'V'
-    axes_actor.z_axis_label = 'W'
+    axes_actor.x_label = 'U'
+    axes_actor.y_label = 'V'
+    axes_actor.z_label = 'W'
 
     # Test actor properties using color
     x_color = (1.0, 0.0, 1.0)  # magenta
