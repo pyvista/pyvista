@@ -1,18 +1,8 @@
-"""Module containing pyvista implementation of vtkProperty.
-
-.. deprecated:: 0.44.0
-
-    This class is deprecated. Use :class:`pyvista.Property` instead.
-"""
+"""Module containing pyvista implementation of vtkProperty."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Tuple
-import warnings
-
-import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .opts import InterpolationType
 from .opts import RepresentationType
@@ -21,7 +11,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from . import _vtk
 
 
-class ActorProperties:  # pragma:no cover
+class ActorProperties:
     """Properties wrapper for ``vtkProperty``.
 
     Contains the surface properties of the object.
@@ -54,21 +44,13 @@ class ActorProperties:  # pragma:no cover
         super().__init__()
         self.properties = properties
 
-        # Deprecated on v0.44.0, estimated removal on v0.47.0
-        warnings.warn(
-            "Use of `ActorProperties` is deprecated. Use `pyvista.Property` instead.",
-            PyVistaDeprecationWarning,
-        )
-        if pyvista._version.version_info >= (0, 47):
-            raise RuntimeError('Remove this deprecated function')
-
     @property
     def color(self):  # numpydoc ignore=RT01
         """Return or set the color of the actor."""
         return self.properties.GetColor()
 
     @color.setter
-    def color(self, color: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def color(self, color: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.properties.SetColor(color[0], color[1], color[2])
 
     @property
