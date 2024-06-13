@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _vtk
 from pyvista.plotting.opts import InterpolationType
 from pyvista.plotting.opts import RepresentationType
@@ -141,23 +142,39 @@ def test_axes_actor_tip_type(axes_actor):
     assert axes_actor.tip_type == pv.AxesActor.TipType.SPHERE
 
 
-def test_axes_actor_labels_individual(axes_actor):
-    axes_actor.x_axis_label = 'Axis X'
-    axes_actor.y_axis_label = 'Axis Y'
-    axes_actor.z_axis_label = 'Axis Z'
+def test_axes_actor_axis_labels_deprecated(axes_actor):
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
+        axes_actor.x_axis_label = 'Axis X'
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
+        axes_actor.y_axis_label = 'Axis Y'
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
+        axes_actor.z_axis_label = 'Axis Z'
 
-    assert axes_actor.x_axis_label == 'Axis X'
-    assert axes_actor.y_axis_label == 'Axis Y'
-    assert axes_actor.z_axis_label == 'Axis Z'
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `x_label` instead'):
+        _ = axes_actor.x_axis_label
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `y_label` instead'):
+        _ = axes_actor.y_axis_label
+    with pytest.raises(PyVistaDeprecationWarning, match='Use `z_label` instead'):
+        _ = axes_actor.z_axis_label
+
+
+def test_axes_actor_labels_individual(axes_actor):
+    axes_actor.x_label = 'Axis X'
+    axes_actor.y_label = 'Axis Y'
+    axes_actor.z_label = 'Axis Z'
+
+    assert axes_actor.x_label == 'Axis X'
+    assert axes_actor.y_label == 'Axis Y'
+    assert axes_actor.z_label == 'Axis Z'
 
 
 def test_axes_actor_labels_group(axes_actor):
     new_labels = ['label1', 'label2', 'label3']
     axes_actor.labels = new_labels
     assert axes_actor.labels == tuple(new_labels)
-    assert axes_actor.x_axis_label == new_labels[0]
-    assert axes_actor.y_axis_label == new_labels[1]
-    assert axes_actor.z_axis_label == new_labels[2]
+    assert axes_actor.x_label == new_labels[0]
+    assert axes_actor.y_label == new_labels[1]
+    assert axes_actor.z_label == new_labels[2]
 
     match = 'Labels must be a list or tuple with three items. Got abc instead.'
     with pytest.raises(ValueError, match=match):
