@@ -16,6 +16,9 @@ PyVista is:
 
 .. _Visualization Toolkit: https://vtk.org
 
+.. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
+
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
 through NumPy and direct array access through a variety of methods and classes.
 This package provides a Pythonic, well-documented interface exposing
@@ -80,10 +83,6 @@ Status badges
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
-  :target: https://github.com/psf/black
-  :alt: black
-
 .. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
   :target: https://github.com/prettier/prettier
   :alt: prettier
@@ -119,7 +118,7 @@ Status badges
 +----------------------+------------------------------------------------+
 | Community            | |slack| |discuss|                              |
 +----------------------+------------------------------------------------+
-| Formatter            | |black| |prettier|                             |
+| Formatter            | |prettier|                                     |
 +----------------------+------------------------------------------------+
 | Linter               | |Ruff|                                         |
 +----------------------+------------------------------------------------+

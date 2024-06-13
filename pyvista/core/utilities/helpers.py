@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import collections
+from collections import deque
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
+from typing import Sequence
 from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -25,8 +24,8 @@ from .fileio import is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, Trimesh, Mesh]],
-) -> Optional[Union[pyvista.DataSet, pyvista.pyvista_ndarray]]:
+    dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
+) -> pyvista.DataSet | pyvista.pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
@@ -131,7 +130,7 @@ def wrap(
             mesh = pyvista.ImageData(dimensions=dataset.shape)
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
-                dataset = np.array(dataset, copy=False)
+                dataset = np.asarray(dataset)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
@@ -286,16 +285,16 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
+    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
         point,
-        collections.deque,
+        deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')
-        point = collections.deque(point)
-        bounds = collections.deque(bounds)
+        point = deque(point)
+        bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
-    if not isinstance(point, collections.deque):
+    if not isinstance(point, deque):
         raise TypeError(f'Unknown input data type ({type(point)}).')
     if len(point) < 1:
         return True

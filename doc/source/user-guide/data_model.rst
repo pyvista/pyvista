@@ -295,7 +295,7 @@ in the same order as we defined earlier.
 
    ``[Number of elements, Number of faces, Face1NPoints, Point1, Point2, ..., PointN, Face2NPoints, ...]``.
 
-   Where `number of elements` is the total number of elements in the array that describe this cell.
+   Where ``number of elements`` is the total number of elements in the array that describe this cell.
 
 Now we have all the necessary pieces to assemble an instance of
 |PolyData| that contains a single triangle. To do

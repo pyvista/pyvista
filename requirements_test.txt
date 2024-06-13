@@ -4,7 +4,7 @@
 cmocean<4.0.4
 colorcet<3.2.0
 embreex<2.17.8
-hypothesis<6.103.1
+hypothesis<6.103.2
 imageio<2.35.0
 imageio-ffmpeg<0.6.0
 ipython<9.0.0
@@ -27,8 +27,8 @@ sphinx-gallery<0.17.0
 sphinx_design<0.7.0
 sympy<1.13.0
 tqdm<4.67.0
-trame>=2.5.2,<3.6.2
-trame-vtk>=2.5.8,<2.8.9
-trame-vuetify>=2.3.1,<2.5.1
+trame>=2.5.2,<3.6.3
+trame-vtk>=2.5.8,<2.8.10
+trame-vuetify>=2.3.1,<2.6.1
 trimesh<4.5.0
 typing-extensions<4.13.0

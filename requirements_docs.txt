@@ -3,9 +3,9 @@ cmocean==4.0.3
 colorcet==3.1.0
 enum-tools==0.12.0
 imageio==2.34.1
-imageio-ffmpeg==0.5.0
+imageio-ffmpeg==0.5.1
 jupyter_sphinx==0.5.3
-jupyterlab==4.2.1
+jupyterlab==4.2.2
 lxml==5.2.2
 meshio==5.3.5
 mypy==1.10.0
@@ -26,7 +26,7 @@ sphinx-toolbox==3.5.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==1.2.7
 sympy==1.12.1
-trame==3.6.1
-trame-vtk==2.8.8
-trame-vuetify==2.5.0
-trimesh==4.4.0
+trame==3.6.2
+trame-vtk==2.8.9
+trame-vuetify==2.6.0
+trimesh==4.4.1

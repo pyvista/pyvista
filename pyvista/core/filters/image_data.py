@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import collections.abc
+from collections.abc import Iterable
 import operator
 import platform
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Optional
-from typing import Union
 from typing import cast
 
 import numpy as np
@@ -101,11 +99,11 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-        if isinstance(radius_factor, collections.abc.Iterable):
+        if isinstance(radius_factor, Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
-        if isinstance(std_dev, collections.abc.Iterable):
+        if isinstance(std_dev, Iterable):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
@@ -432,11 +430,7 @@ class ImageDataFilters(DataSetFilters):
             array_dtype := self.active_scalars.dtype,
             int,
         ) and array_dtype != np.dtype(np.uint8)
-        cast_dtype = (
-            has_int_dtype
-            and int(np.__version__.split('.')[0]) < 2
-            and platform.system() in ['Darwin', 'Linux']
-        )
+        cast_dtype = has_int_dtype and platform.system() in ['Darwin', 'Linux']
         if cast_dtype:
             self[scalars] = self[scalars].astype(float, casting='safe')
 
@@ -662,13 +656,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation
@@ -742,13 +736,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation
@@ -841,14 +835,14 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labeled(
         self,
-        n_labels: Optional[int] = None,
+        n_labels: int | None = None,
         smoothing: bool = False,
         smoothing_num_iterations: int = 50,
         smoothing_relaxation_factor: float = 0.5,
         smoothing_constraint_distance: float = 1,
         output_mesh_type: Literal['quads', 'triangles'] = 'quads',
         output_style: Literal['default', 'boundary'] = 'default',
-        scalars: Optional[str] = None,
+        scalars: str | None = None,
         progress_bar: bool = False,
     ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
@@ -981,7 +975,7 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
-    def points_to_cells(self, scalars: Optional[str] = None, *, copy: bool = True):
+    def points_to_cells(self, scalars: str | None = None, *, copy: bool = True):
         """Re-mesh image data from a point-based to a cell-based representation.
 
         This filter changes how image data is represented. Data represented as points
@@ -1096,7 +1090,7 @@ class ImageDataFilters(DataSetFilters):
                 )
         return self._remesh_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
 
-    def cells_to_points(self, scalars: Optional[str] = None, *, copy: bool = True):
+    def cells_to_points(self, scalars: str | None = None, *, copy: bool = True):
         """Re-mesh image data from a cell-based to a point-based representation.
 
         This filter changes how image data is represented. Data represented as cells
@@ -1211,7 +1205,7 @@ class ImageDataFilters(DataSetFilters):
                 )
         return self._remesh_points_cells(points_to_cells=False, scalars=scalars, copy=copy)
 
-    def _remesh_points_cells(self, points_to_cells: bool, scalars: Optional[str], copy: bool):
+    def _remesh_points_cells(self, points_to_cells: bool, scalars: str | None, copy: bool):
         """Re-mesh points to cells or vice-versa.
 
         The active cell or point scalars at the input will be set as active point or
@@ -1292,11 +1286,11 @@ class ImageDataFilters(DataSetFilters):
 
     def pad_image(
         self,
-        pad_value: Union[float, VectorLike[float], Literal['wrap', 'mirror']] = 0.0,
+        pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
         pad_singleton_dims: bool = False,
-        scalars: Optional[str] = None,
+        scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
     ) -> pyvista.ImageData:

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import List
-from typing import Sequence
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
 
 
 @no_new_attr
@@ -254,7 +256,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(
         self,
@@ -401,7 +403,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(
         self,
@@ -588,7 +590,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
         super().__init__()

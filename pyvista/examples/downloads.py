@@ -27,7 +27,6 @@ import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
-from typing import Union
 import warnings
 
 import numpy as np
@@ -2201,6 +2200,11 @@ def download_frog_tissue(load=True):  # pragma: no cover
 
     This dataset contains tissue segmentation labels for the frog dataset.
 
+    .. deprecated:: 0.44.0
+
+        This example does not load correctly on some systems and has been deprecated.
+        Use :func:`~pyvista.examples.load_frog_tissues` instead.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2211,62 +2215,6 @@ def download_frog_tissue(load=True):  # pragma: no cover
     -------
     pyvista.ImageData | str
         DataSet or filename depending on ``load``.
-
-    Examples
-    --------
-    Load data
-
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> data = examples.download_frog_tissue()
-
-    Plot tissue labels as a volume
-
-    First, define plotting parameters
-
-    >>> # Configure colors / color bar
-    >>> clim = data.get_data_range()  # Set color bar limits to match data
-    >>> cmap = 'glasbey'  # Use a categorical colormap
-    >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
-    >>> opacity_unit_distance = 1
-
-    Set plotting resolution to half the image's spacing
-
-    >>> res = np.array(data.spacing) / 2
-
-    Define rendering parameters
-
-    >>> mapper = 'gpu'
-    >>> shade = True
-    >>> ambient = 0.3
-    >>> diffuse = 0.6
-    >>> specular = 0.5
-    >>> specular_power = 40
-
-    Make and show plot
-
-    >>> p = pv.Plotter()
-    >>> _ = p.add_volume(
-    ...     data,
-    ...     clim=clim,
-    ...     ambient=ambient,
-    ...     shade=shade,
-    ...     diffuse=diffuse,
-    ...     specular=specular,
-    ...     specular_power=specular_power,
-    ...     mapper=mapper,
-    ...     opacity=opacity,
-    ...     opacity_unit_distance=opacity_unit_distance,
-    ...     categories=categories,
-    ...     cmap=cmap,
-    ...     resolution=res,
-    ... )
-    >>> p.camera_position = 'yx'  # Set camera to provide a dorsal view
-    >>> p.show()
 
     .. seealso::
 
@@ -2279,6 +2227,14 @@ def download_frog_tissue(load=True):  # pragma: no cover
             Browse other medical datasets.
 
     """
+    # Deprecated on v0.44.0, estimated removal on v0.47.0
+    warnings.warn(
+        'This example is deprecated and will be removed in v0.47.0. Use `load_frog_tissues` instead.',
+        PyVistaDeprecationWarning,
+    )
+    if pyvista._version.version_info >= (0, 47):
+        raise RuntimeError('Remove this deprecated function')
+
     return _download_dataset(_dataset_frog_tissue, load=load)
 
 
@@ -5647,7 +5603,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData, str, or List[str]
+    pyvista.PolyData, str, or list[str]
         The example ParaView can DataSet or file path(s).
 
     Examples
@@ -5930,7 +5886,7 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> pyvista.ImageData | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
