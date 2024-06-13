@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Callable
+from collections.abc import Iterable
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import StrEnum
 from enum import auto
@@ -15,17 +18,8 @@ import re
 import textwrap
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
 from typing import ClassVar
-from typing import Dict
-from typing import Iterable
-from typing import Iterator
-from typing import List
 from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Type
-from typing import Union
 from typing import final
 
 import numpy as np
@@ -403,24 +397,24 @@ class ColorTable(DocTable):
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
 
 
-def _get_doc(func: Callable[[], Any]) -> Optional[str]:
+def _get_doc(func: Callable[[], Any]) -> str | None:
     """Return the first line of the callable's docstring."""
     doc = func.__doc__
     return doc.splitlines()[0] if doc else None
 
 
-def _get_fullname(typ: Type[Any]) -> str:
+def _get_fullname(typ: type[Any]) -> str:
     """Return the fully qualified name of the given type object."""
     return f"{typ.__module__}.{typ.__qualname__}"
 
 
-def _ljust_lines(lines: List[str], min_width=None) -> List[str]:
+def _ljust_lines(lines: list[str], min_width=None) -> list[str]:
     """Left-justify a list of lines."""
     min_width = min_width if min_width else _max_width(lines)
     return [line.ljust(min_width) for line in lines]
 
 
-def _max_width(lines: List[str]) -> int:
+def _max_width(lines: list[str]) -> int:
     """Compute the max line-width from a list of lines."""
     return max(map(len, lines))
 
@@ -431,7 +425,7 @@ def _repeat_string(string: str, num_repeat: int) -> str:
 
 
 def _pad_lines(
-    lines: Union[str, List[str]],
+    lines: str | list[str],
     *,
     pad_left: str = "",
     pad_right: str = "",
@@ -738,7 +732,7 @@ class DatasetCard:
     ):
         self.dataset_name = dataset_name
         self.loader = loader
-        self._badges: List[Optional[_BaseDatasetBadge]] = []
+        self._badges: list[_BaseDatasetBadge | None] = []
         self.card = None
         self.ref = None
 
@@ -905,7 +899,7 @@ class DatasetCard:
         return index_name, header, func_ref, func_doc, func_name
 
     @staticmethod
-    def _generate_carousel_badges(badges: List[_BaseDatasetBadge]):
+    def _generate_carousel_badges(badges: list[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         module_badges, datatype_badges, special_badges, category_badges = [], [], [], []
         for badge in badges:
@@ -925,7 +919,7 @@ class DatasetCard:
         return " ".join([badge.generate() for badge in all_badges])
 
     @staticmethod
-    def _generate_celltype_badges(badges: List[_BaseDatasetBadge]):
+    def _generate_celltype_badges(badges: list[_BaseDatasetBadge]):
         """Sort badges by type and join all badge rst into a single string."""
         celltype_badges = [badge for badge in badges if isinstance(badge, CellTypeBadge)]
         rst = "\n".join([badge.generate() for badge in celltype_badges])
@@ -983,7 +977,7 @@ class DatasetCard:
         return field
 
     @staticmethod
-    def _generate_field_block(fields: List[Tuple[str, Union[str, None]]], indent_level: int = 0):
+    def _generate_field_block(fields: list[tuple[str, str | None]], indent_level: int = 0):
         """Generate a grid for each field and combine the grids into an indented multi-line rst block.
 
         Any fields with a `None` value are completely excluded from the block.
@@ -1113,7 +1107,7 @@ class DatasetPropsGenerator:
         return "``" + str(num) + "``" if num else None
 
     @staticmethod
-    def generate_file_ext(loader: Union[_SingleFilePropsProtocol, _MultiFilePropsProtocol]):
+    def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
         file_ext = DatasetPropsGenerator._try_getattr(loader, "unique_extension")
@@ -1124,7 +1118,7 @@ class DatasetPropsGenerator:
         return None
 
     @staticmethod
-    def generate_reader_type(loader: Union[_SingleFilePropsProtocol, _MultiFilePropsProtocol]):
+    def generate_reader_type(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
         """Format reader type(s) with doc references to reader class(es)."""
         reader_type = DatasetPropsGenerator._try_getattr(loader, "unique_reader_type")
         if reader_type is None:
@@ -1166,7 +1160,7 @@ class DatasetPropsGenerator:
         return _indent_multi_line_string(dataset_repr, indent_size=3, indent_level=indent_level)
 
     @staticmethod
-    def generate_datasource_links(loader: _DatasetLoader) -> Optional[str]:
+    def generate_datasource_links(loader: _DatasetLoader) -> str | None:
         def _rst_link(name, url):
             return f"`{name} <{url}>`_"
 
@@ -1242,7 +1236,7 @@ class DatasetPropsGenerator:
             return None
 
     @staticmethod
-    def _generate_number(num: Optional[float], fmt: Optional[Literal["exp", "spaced"]] = None):
+    def _generate_number(num: float | None, fmt: Literal["exp", "spaced"] | None = None):
         """Format a number and add rst backticks."""
         if num is None:
             return None
@@ -1259,11 +1253,11 @@ class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
 
     # Dict of all card objects
-    DATASET_CARDS_OBJ: ClassVar[Dict[str, DatasetCard]] = {}
+    DATASET_CARDS_OBJ: ClassVar[dict[str, DatasetCard]] = {}
 
     # Dict of generated rst cards
-    DATASET_CARDS_RST_REF: ClassVar[Dict[str, str]] = {}
-    DATASET_CARDS_RST: ClassVar[Dict[str, str]] = {}
+    DATASET_CARDS_RST_REF: ClassVar[dict[str, str]] = {}
+    DATASET_CARDS_RST: ClassVar[dict[str, str]] = {}
 
     @classmethod
     def _add_dataset_card(cls, dataset_name: str, dataset_loader: _DatasetLoader):
@@ -1285,7 +1279,7 @@ class DatasetCardFetcher:
     @classmethod
     def _init_cards_from_module(cls, module: ModuleType):
         # Collect all `_dataset_<name>` file loaders from the module
-        module_members: Dict[str, FunctionType] = dict(inspect.getmembers(module))
+        module_members: dict[str, FunctionType] = dict(inspect.getmembers(module))
 
         for name, item in sorted(module_members.items()):
             # Extract data set name from loader name
@@ -1365,7 +1359,7 @@ class DatasetCardFetcher:
         return _generate_grid("\n".join(buttons))
 
     @classmethod
-    def add_badge_to_cards(cls, dataset_names: List[str], badge: Optional[_BaseDatasetBadge]):
+    def add_badge_to_cards(cls, dataset_names: list[str], badge: _BaseDatasetBadge | None):
         """Add a single badge to all specified datasets."""
         if badge:
             for dataset_name in dataset_names:
@@ -1391,19 +1385,19 @@ class DatasetCardFetcher:
                 yield name
 
     @classmethod
-    def fetch_all_dataset_objects(cls) -> Iterator[Tuple[str, Iterable[DatasetObject]]]:
+    def fetch_all_dataset_objects(cls) -> Iterator[tuple[str, Iterable[DatasetObject]]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader.dataset_iterable
 
     @classmethod
-    def fetch_all_dataset_loaders(cls) -> Iterator[Tuple[str, _DatasetLoader]]:
+    def fetch_all_dataset_loaders(cls) -> Iterator[tuple[str, _DatasetLoader]]:
         for name, card in DatasetCardFetcher.DATASET_CARDS_OBJ.items():
             yield name, card.loader
 
     @classmethod
-    def fetch_and_filter(cls, filter_func: Callable[..., bool]) -> List[str]:
+    def fetch_and_filter(cls, filter_func: Callable[..., bool]) -> list[str]:
         """Return dataset names where any dataset object returns 'True' for a given function."""
-        names_dict: Dict[str, None] = {}  # Use dict as an ordered set
+        names_dict: dict[str, None] = {}  # Use dict as an ordered set
         for name, dataset_iterable in cls.fetch_all_dataset_objects():
             for obj in dataset_iterable:
                 try:
@@ -1588,9 +1582,9 @@ class DatasetGalleryCarousel(DocTable):
 
     # Subclasses may optionally define a badge for the carousel
     # All datasets in the carousel will be given this badge.
-    badge: Optional[_BaseDatasetBadge] = None
+    badge: _BaseDatasetBadge | None = None
 
-    dataset_names: List[str] = None  # type: ignore[assignment]
+    dataset_names: list[str] = None  # type: ignore[assignment]
 
     @property
     @final
@@ -1605,7 +1599,7 @@ class DatasetGalleryCarousel(DocTable):
 
     @classmethod
     @abstractmethod
-    def fetch_dataset_names(cls) -> List[str]:
+    def fetch_dataset_names(cls) -> list[str]:
         """Return all dataset names to include in the gallery."""
 
     @classmethod
@@ -1970,7 +1964,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
-def make_all_carousels(carousels: List[DatasetGalleryCarousel]):
+def make_all_carousels(carousels: list[DatasetGalleryCarousel]):
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 
