@@ -28,85 +28,6 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 
-def _adjust_edge_curvatures(source, curvature_name, epsilon=1.0e-08):
-    """Adjust curvatures along the edges of the surface.
-
-    Parameters
-    ----------
-    source : pyvista.PolyData
-        A vtkPolyData object corresponding to the vtkCurvatures object.
-
-    curvature_name : str
-        The name of the curvature, 'Gauss_Curvature' or 'Mean_Curvature'.
-
-    epsilon : float, default: 1.0e-08
-        Absolute curvature values less than this will be set to zero.
-
-    Returns
-    -------
-    numpy.ndarray
-        Adjusted edge curvatures.
-
-    Notes
-    -----
-    This function adjusts curvatures along the edges of the surface by replacing
-    the value with the average value of the curvatures of points in the neighborhood.
-    Remember to update the vtkCurvatures object before calling this.
-
-    This function is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
-    """
-
-    def compute_distance(pt_id_a, pt_id_b):  # numpydoc ignore=PR01,RT01
-        """Compute the distance between two points given their ids."""
-        pt_a = np.array(source.GetPoint(pt_id_a))
-        pt_b = np.array(source.GetPoint(pt_id_b))
-        return np.linalg.norm(pt_a - pt_b)
-
-    # Get the active scalars
-    curvatures = source[curvature_name]
-
-    #  Get the boundary point IDs.
-    array_name = 'ids'
-    source[array_name] = range(source.n_points)
-
-    edges = source.extract_feature_edges(
-        boundary_edges=True, manifold_edges=False, non_manifold_edges=False, feature_edges=False
-    )
-
-    boundary_ids = edges[array_name]
-    # Remove duplicate Ids.
-    p_ids_set = set(boundary_ids)
-
-    # Iterate over the edge points and compute the curvature as the weighted
-    # average of the neighbours.
-    count_invalid = 0
-    for p_id in boundary_ids:
-        p_ids_neighbors = set(source.point_neighbors(p_id))
-        # Keep only interior points.
-        p_ids_neighbors -= p_ids_set
-        # Compute distances and extract curvature values.
-        curvs = [curvatures[p_id_n] for p_id_n in p_ids_neighbors]
-        dists = [compute_distance(p_id_n, p_id) for p_id_n in p_ids_neighbors]
-        curvs = np.array(curvs)
-        dists = np.array(dists)
-        curvs = curvs[dists > 0]
-        dists = dists[dists > 0]
-        if len(curvs) > 0:
-            weights = 1 / np.array(dists)
-            weights /= weights.sum()
-            new_curv = np.dot(curvs, weights)
-        else:
-            # Corner case.
-            count_invalid += 1
-            # Assuming the curvature of the point is planar.
-            new_curv = 0.0
-        # Set the new curvature value.
-        curvatures[p_id] = new_curv
-
-    if epsilon != 0.0:
-        source[curvature_name] = np.where(abs(curvatures) < epsilon, 0, curvatures)
-
-
 @abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for polydata datasets."""
@@ -777,6 +698,84 @@ class PolyDataFilters(DataSetFilters):
         curv = _get_output(curvefilter)
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
+    def _adjust_edge_curvatures(self, source, curvature_name, epsilon=1.0e-08):
+        """Adjust curvatures along the edges of the surface.
+
+        Parameters
+        ----------
+        source : pyvista.PolyData
+            A vtkPolyData object corresponding to the vtkCurvatures object.
+
+        curvature_name : str
+            The name of the curvature, 'Gauss_Curvature' or 'Mean_Curvature'.
+
+        epsilon : float, default: 1.0e-08
+            Absolute curvature values less than this will be set to zero.
+
+        Returns
+        -------
+        numpy.ndarray
+            Adjusted edge curvatures.
+
+        Notes
+        -----
+        This function adjusts curvatures along the edges of the surface by replacing
+        the value with the average value of the curvatures of points in the neighborhood.
+        Remember to update the vtkCurvatures object before calling this.
+
+        This function is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
+        """
+
+        def compute_distance(pt_id_a, pt_id_b):  # numpydoc ignore=PR01,RT01
+            """Compute the distance between two points given their ids."""
+            pt_a = np.array(source.GetPoint(pt_id_a))
+            pt_b = np.array(source.GetPoint(pt_id_b))
+            return np.linalg.norm(pt_a - pt_b)
+
+        # Get the active scalars
+        curvatures = source[curvature_name]
+
+        #  Get the boundary point IDs.
+        array_name = 'ids'
+        source[array_name] = range(source.n_points)
+
+        edges = source.extract_feature_edges(
+            boundary_edges=True, manifold_edges=False, non_manifold_edges=False, feature_edges=False
+        )
+
+        boundary_ids = edges[array_name]
+        # Remove duplicate Ids.
+        p_ids_set = set(boundary_ids)
+
+        # Iterate over the edge points and compute the curvature as the weighted
+        # average of the neighbours.
+        count_invalid = 0
+        for p_id in boundary_ids:
+            p_ids_neighbors = set(source.point_neighbors(p_id))
+            # Keep only interior points.
+            p_ids_neighbors -= p_ids_set
+            # Compute distances and extract curvature values.
+            curvs = [curvatures[p_id_n] for p_id_n in p_ids_neighbors]
+            dists = [compute_distance(p_id_n, p_id) for p_id_n in p_ids_neighbors]
+            curvs = np.array(curvs)
+            dists = np.array(dists)
+            curvs = curvs[dists > 0]
+            dists = dists[dists > 0]
+            if len(curvs) > 0:
+                weights = 1 / np.array(dists)
+                weights /= weights.sum()
+                new_curv = np.dot(curvs, weights)
+            else:
+                # Corner case.
+                count_invalid += 1
+                # Assuming the curvature of the point is planar.
+                new_curv = 0.0
+            # Set the new curvature value.
+            curvatures[p_id] = new_curv
+
+        if epsilon != 0.0:
+            source[curvature_name] = np.where(abs(curvatures) < epsilon, 0, curvatures)
+
     def adjusted_edge_curvature(self, curv_type='mean', epsilon=1.0e-08, progress_bar=False):
         """Return the pointwise adjusted edge curvature of a mesh.
 
@@ -813,14 +812,14 @@ class PolyDataFilters(DataSetFilters):
             curvefilter.SetCurvatureTypeToMean()
             _update_alg(curvefilter, progress_bar, 'Computing Curvature')
             curv = _get_output(curvefilter)
-            _adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
+            self._adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
         elif curv_type == 'gaussian':
             curvefilter = _vtk.vtkCurvatures()
             curvefilter.SetInputData(self)
             curvefilter.SetCurvatureTypeToGaussian()
             _update_alg(curvefilter, progress_bar, 'Computing Curvature')
             curv = _get_output(curvefilter)
-            _adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
+            self._adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
         else:
             raise ValueError(
                 '``curv_type`` must be either "Mean" or "Gaussian".',
