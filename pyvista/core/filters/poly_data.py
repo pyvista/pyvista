@@ -747,20 +747,22 @@ class PolyDataFilters(DataSetFilters):
         )
 
         boundary_ids = edges[array_name]
-        # Remove duplicate Ids.
-        p_ids_set = set(boundary_ids)
 
-        # Iterate over the edge points and compute the curvature as the weighted
-        # average of the neighbours.
+        # Iterate over the edge points and compute the curvature as the weighted average of the neighbours.
         for p_id in boundary_ids:
             # Compute distances and extract curvature values.
-            curvs = [curvatures[p_id_n] for p_id_n in set(self.point_neighbors(p_id)) - p_ids_set]
-            dists = [
-                compute_distance(p_id_n, p_id)
-                for p_id_n in set(self.point_neighbors(p_id)) - p_ids_set
-            ]
-            curvs = np.array(curvs)
-            dists = np.array(dists)
+            curvs = np.array(
+                [
+                    curvatures[p_id_n]
+                    for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
+                ]
+            )
+            dists = np.array(
+                [
+                    compute_distance(p_id_n, p_id)
+                    for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
+                ]
+            )
             curvs = curvs[dists > 0]
             dists = dists[dists > 0]
             if len(curvs) > 0:
