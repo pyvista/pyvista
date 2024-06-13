@@ -5,6 +5,7 @@ This base class defines methods to manipulate a PyVista Plotter.
 This base class does not define a `ui` method, but its derived classes do.
 See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived classes.
 """
+
 from __future__ import annotations
 
 import io
@@ -14,7 +15,7 @@ from trame.app import get_server
 
 import pyvista
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from trame_client.ui.core import AbstractLayout
 
 
