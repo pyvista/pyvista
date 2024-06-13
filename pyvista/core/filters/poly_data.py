@@ -732,12 +732,6 @@ class PolyDataFilters(DataSetFilters):
         """
         curvatures = self.curvature(curv_type=curv_type, progress_bar=progress_bar)
 
-        def compute_distance(pt_id_a, pt_id_b):  # numpydoc ignore=PR01,RT01
-            """Compute the distance between two points given their ids."""
-            pt_a = np.array(self.GetPoint(pt_id_a))
-            pt_b = np.array(self.GetPoint(pt_id_b))
-            return np.linalg.norm(pt_a - pt_b)
-
         #  Get the boundary point IDs.
         array_name = 'ids'
         self[array_name] = range(self.n_points)
@@ -750,7 +744,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Iterate over the edge points and compute the curvature as the weighted average of the neighbours.
         for p_id in boundary_ids:
-            # Compute distances and extract curvature values.
+            # Compute lengths and extract curvature values.
             curvs = np.array(
                 [
                     curvatures[p_id_n]
@@ -759,14 +753,14 @@ class PolyDataFilters(DataSetFilters):
             )
             dists = np.array(
                 [
-                    compute_distance(p_id_n, p_id)
+                    self.compute_points_length(p_id_n, p_id)
                     for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
                 ]
             )
             curvs = curvs[dists > 0]
             dists = dists[dists > 0]
             if len(curvs) > 0:
-                weights = 1 / np.array(dists)
+                weights = 1.0 / np.array(dists)
                 weights /= weights.sum()
                 curvatures[p_id] = np.dot(curvs, weights)
             else:
@@ -2843,6 +2837,36 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
+
+    def compute_points_length(self, point_id_a, point_id_b):
+        """Compute the length between two points given their ids.
+
+        Parameters
+        ----------
+        point_id_a : int
+            Index of the first point.
+
+        point_id_b : int
+            Index of the second point.
+
+        Examples
+        --------
+        Compute the length between two points on a line.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Line((0, 0, 0), (0, 0, 1))
+        >>> length = mesh.compute_points_length(0, 1)
+        >>> f'Length is {length:.3f}'
+        'Length is 1.000'
+
+        Returns
+        -------
+        float
+            Length between the two points.
+        """
+        return np.linalg.norm(
+            np.array(self.GetPoint(point_id_a)) - np.array(self.GetPoint(point_id_b))
+        )
 
     def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace=False):
         """Project points of this mesh to a plane.
