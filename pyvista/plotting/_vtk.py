@@ -49,6 +49,7 @@ from vtkmodules.vtkInteractionWidgets import vtkTexturedButtonRepresentation2D
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxisActor2D
+from vtkmodules.vtkRenderingAnnotation import vtkCaptionActor2D
 from vtkmodules.vtkRenderingAnnotation import vtkCornerAnnotation
 from vtkmodules.vtkRenderingAnnotation import vtkCubeAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkLegendBoxActor
@@ -84,6 +85,7 @@ from vtkmodules.vtkRenderingCore import vtkCompositeDataDisplayAttributes
 from vtkmodules.vtkRenderingCore import vtkCompositePolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkCoordinate
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper
+from vtkmodules.vtkRenderingCore import vtkFollower
 from vtkmodules.vtkRenderingCore import vtkImageActor
 from vtkmodules.vtkRenderingCore import vtkLight
 from vtkmodules.vtkRenderingCore import vtkLightActor

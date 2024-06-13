@@ -24,7 +24,6 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .actor import Actor
-from .axes_actor import AxesActor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
@@ -33,6 +32,7 @@ from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
 from .render_passes import RenderPasses
+from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
@@ -896,11 +896,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             This method is deprecated. Use :func:`add_axes_marker` instead.
 
         """
-        # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
-        warnings.warn(
-            "Use of `add_axes_at_origin` is deprecated. Use `add_axes_marker` instead.",
-            PyVistaDeprecationWarning,
-        )
+        # # deprecated 0.43.0, convert to error in 0.46.0, remove 0.47.0
+        # warnings.warn(
+        #     "Use of `add_axes_at_origin` is deprecated. Use `add_axes_marker` instead.",
+        #     PyVistaDeprecationWarning,
+        # )
         return self.add_axes_marker(*args, **kwargs)
 
     def add_axes_marker(
@@ -908,7 +908,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_label='X',
         y_label='Y',
         z_label='Z',
-        labels_off=False,
+        show_labels=True,
+        label_color='white',
+        show_label_edges=True,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -945,7 +947,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         z_label : str, default: "Z"
             Text label for the z-axis.
 
-        labels_off : bool, default: False
+        show_labels : bool, default: False
             Enable or disable the text labels for the axes.
 
         x_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.x_color`
@@ -1030,11 +1032,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         symmetric_bounds = kwargs.pop('symmetric_bounds', False)
-        self._marker_actor = AxesActor(
-            x_label=x_label,
-            y_label=y_label,
-            z_label=z_label,
-            labels_off=labels_off,
+        axes_assembly = pyvista.AxesAssembly(
+            show_labels=show_labels,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
@@ -1046,8 +1045,31 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             symmetric_bounds=symmetric_bounds,
             **kwargs,
         )
-        self.add_actor(self._marker_actor)
-        return self._marker_actor
+        self.add_actor(axes_assembly)
+
+        def _init_label_follower(label: str, position) -> _vtk.vtkFollower:
+            # Init follower with 3D text
+            text_poly = pyvista.Text3D(label, height=0.2, depth=0.0)
+            follower = _vtk.vtkFollower()
+            follower.SetPosition(position)
+
+            # Set mapper
+            mapper = _vtk.vtkPolyDataMapper()
+            mapper.SetInputData(text_poly)
+            follower.SetMapper(mapper)
+
+            # Set property
+            prop = pyvista.Property(show_edges=show_label_edges, color=label_color)
+            follower.SetProperty(prop)
+
+            # Required for follower to work
+            follower.SetCamera(self.camera)
+            return follower
+
+        self.add_actor(_init_label_follower(x_label, (1.11, 0, 0)))
+        self.add_actor(_init_label_follower(y_label, (0, 1.11, 0)))
+        self.add_actor(_init_label_follower(z_label, (0, 0, 1.11)))
+        return axes_assembly
 
     def add_orientation_widget(
         self,
@@ -1134,6 +1156,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_axes(
         self,
         interactive=None,
+        line_width=2,
         color=None,
         x_color=None,
         y_color=None,
@@ -1153,6 +1176,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ----------
         interactive : bool, optional
             Enable this orientation widget to be moved by the user.
+
+        line_width : int, default: 2
+            The width of the marker lines.
 
         color : ColorLike, optional
             Color of the labels.
@@ -1195,7 +1221,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         **kwargs : dict, optional
             Used for passing parameters for the orientation marker
-            widget. See the parameters of :func:`pyvista.AxesActor`.
+            widget. See the parameters of :func:`pyvista.create_axes_marker`.
 
         Returns
         -------
@@ -1208,17 +1234,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         show_axes
             Similar method which calls :func:`add_axes` without any parameters.
 
-        add_axes_marker
-            Add an :class:`pyvista.AxesActor` to a scene.
+        add_axes_at_origin
+            Add an :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
-        Show axes without labels and with thick axes shafts.
+        Show axes without labels and with thick lines.
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
-        >>> _ = pl.add_axes(shaft_radius=0.05, labels_off=True)
+        >>> _ = pl.add_axes(line_width=5, labels_off=True)
         >>> pl.show()
 
         Specify more parameters for the axes marker.
@@ -1227,12 +1253,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Box(), show_edges=True)
         >>> _ = pl.add_axes(
-        ...     shaft_radius=0.05,
-        ...     tip_radius=0.6,
+        ...     line_width=5,
+        ...     cone_radius=0.6,
         ...     shaft_length=0.7,
         ...     tip_length=0.3,
+        ...     ambient=0.5,
         ...     label_size=(0.4, 0.16),
-        ...     properties=dict(ambient=0.5),
         ... )
         >>> pl.show()
 
@@ -1254,6 +1280,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 box_args = {}
             self.axes_actor = create_axes_orientation_box(
                 label_color=color,
+                line_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,
@@ -1264,14 +1291,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 **box_args,
             )
         else:
-            self.axes_actor = AxesActor(
+            self.axes_actor = create_axes_marker(
                 label_color=color,
+                line_width=line_width,
                 x_color=x_color,
                 y_color=y_color,
                 z_color=z_color,
-                x_label=xlabel,
-                y_label=ylabel,
-                z_label=zlabel,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                zlabel=zlabel,
                 labels_off=labels_off,
                 **kwargs,
             )
@@ -1451,8 +1479,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         axes_enabled
             Check if the axes orientation widget is enabled.
 
-        add_axes_marker
-            Add a :class:`pyvista.AxesActor` to a scene.
+        add_axes_at_origin
+            Add a :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------

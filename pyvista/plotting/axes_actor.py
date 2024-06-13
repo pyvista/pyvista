@@ -4,11 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
+from typing import TYPE_CHECKING
+from typing import Sequence
 
 import pyvista
 
 from . import _vtk
+from ._property import _check_range
 from .actor_properties import ActorProperties
+from .colors import Color
+from .colors import _validate_color_sequence
+
+if TYPE_CHECKING:
+    from .colors import ColorLike
 
 
 class AxesActor(_vtk.vtkAxesActor):
@@ -94,6 +102,31 @@ class AxesActor(_vtk.vtkAxesActor):
         self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
+
+    @property
+    def _actors(
+        self,
+    ) -> tuple[
+        _vtk.vtkActor,
+        _vtk.vtkActor,
+        _vtk.vtkActor,
+        _vtk.vtkActor,
+        _vtk.vtkActor,
+        _vtk.vtkActor,
+    ]:
+        collection = _vtk.vtkPropCollection()
+        self.GetActors(collection)
+        return tuple([collection.GetItemAsObject(i) for i in range(6)])
+
+    @property
+    def _label_actors(
+        self,
+    ) -> tuple[_vtk.vtkCaptionActor2D, _vtk.vtkCaptionActor2D, _vtk.vtkCaptionActor2D]:
+        return (
+            self.GetXAxisCaptionActor2D(),
+            self.GetYAxisCaptionActor2D(),
+            self.GetZAxisCaptionActor2D(),
+        )
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -527,3 +560,82 @@ class AxesActor(_vtk.vtkAxesActor):
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.z_axis_tip_properties = properties
+
+    @property
+    def x_label_color(self) -> Color:
+        return Color(self.GetXAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
+
+    @x_label_color.setter
+    def x_label_color(self, val: Color):
+        color = Color(val).float_rgb
+        self.GetXAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
+
+    @property
+    def y_label_color(self) -> Color:
+        return Color(self.GetYAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
+
+    @y_label_color.setter
+    def y_label_color(self, val: Color):
+        color = Color(val).float_rgb
+        self.GetYAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
+
+    @property
+    def z_label_color(self) -> Color:
+        return Color(self.GetZAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
+
+    @z_label_color.setter
+    def z_label_color(self, val: Color):
+        color = Color(val).float_rgb
+        self.GetZAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
+
+    @property
+    def label_color(self) -> tuple[Color, Color, Color]:  # numpydoc ignore=RT01
+        """Color of the label text for all axes."""
+
+        return (self.x_label_color, self.y_label_color, self.z_label_color)
+
+    @label_color.setter
+    def label_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        if color is None:
+            color = pyvista.global_theme.font.color
+        colors = _validate_color_sequence(color, n_colors=3)
+        self.x_label_color = colors[0]
+        self.y_label_color = colors[1]
+        self.z_label_color = colors[2]
+
+    @property
+    def label_size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
+        """The width and height of the axes labels.
+
+        The width and height are expressed as a fraction of the viewport.
+        Values must be in range ``[0, 1]``.
+        """
+        # Get size from x actor
+        width, height = self._label_actors[0].GetWidth(), self._label_actors[0].GetHeight()
+        # Make sure y and z have the same size
+        self._label_actors[1].SetWidth(width), self._label_actors[1].SetHeight(height)
+        self._label_actors[2].SetWidth(width), self._label_actors[2].SetHeight(height)
+        return width, height
+
+    @label_size.setter
+    def label_size(self, size: Sequence[float]):  # numpydoc ignore=GL08
+        valid_range = [0, 1]
+        _check_range(size[0], valid_range, 'label width')
+        _check_range(size[1], valid_range, 'label height')
+        for actor in self._label_actors:
+            actor.SetWidth(size[0])
+            actor.SetHeight(size[1])
+
+    @property
+    def show_labels(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable the text labels for the axes."""
+        return bool(self.GetAxisLabels())
+
+    @show_labels.setter
+    def show_labels(self, value: bool):  # numpydoc ignore=GL08
+        self.SetAxisLabels(value)
+
+    def plot(self):
+        pl = pyvista.Plotter()
+        pl.add_actor(self)
+        pl.show()
