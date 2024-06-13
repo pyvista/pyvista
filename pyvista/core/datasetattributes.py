@@ -174,7 +174,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     dtype = 'str'
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
                     val = f'{array[:15]}...' if len(array) > 18 else array
-                    line = f'{name[:23]:<24}{dtype!s:<11}\"{val}\"'
+                    line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
                 else:
                     line = (
                         f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()

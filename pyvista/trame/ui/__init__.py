@@ -6,6 +6,7 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

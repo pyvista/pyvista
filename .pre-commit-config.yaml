@@ -5,16 +5,11 @@ ci:
   autoupdate_schedule: monthly
 
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
-    hooks:
-      - id: black
-        exclude: tests/core/typing
-
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
       - id: blackdoc
+        args: ["--skip-string-normalization"]
         files: '\.py$'
         exclude: pyvista/plotting/charts.py
 
@@ -109,6 +104,8 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
+        exclude: tests/core/typing
+      - id: ruff-format
         exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
