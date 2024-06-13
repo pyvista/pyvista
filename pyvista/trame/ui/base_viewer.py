@@ -1,4 +1,4 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Base Viewer class.
 
 This base class defines methods to manipulate a PyVista Plotter.
