@@ -556,7 +556,7 @@ following ``pre-commit install``. This will take a bit longer, but subsequent
 commits will only trigger the actual style checks.
 
 Even if you are not in a situation where you are not performing or able to
-perform the above tasks, you can comment `pre-commit.ci autofix` on a pull
+perform the above tasks, you can comment ``pre-commit.ci autofix`` on a pull
 request to manually trigger auto-fixing.
 
 Notes Regarding Image Regression Testing
@@ -706,7 +706,7 @@ package name ``numpy`` should also be omitted for tests where a ``numpy.ndarray`
 expected.)
 
 Any number of related test cases (one test case per line) may be written and
-included in a single `.py` file. The test cases are all stored in
+included in a single ``.py`` file. The test cases are all stored in
 ``tests/core/typing/validation_cases``.
 
 The tests can be executed with:
@@ -1000,7 +1000,7 @@ For example:
 .. note::
 
    The rst ``seealso`` directive must be used instead of the
-   ``See Also`` heading due to limitations with how `numpydoc` parses
+   ``See Also`` heading due to limitations with how ``numpydoc`` parses
    explicit references.
 
 Extending the Dataset Gallery
@@ -1104,7 +1104,7 @@ Preview the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have make a Pull Request. You can comment
-`@pyvista-bot preview` on a pull request to preview documentation.
+``@pyvista-bot preview`` on a pull request to preview documentation.
 Since this command is only available for
 `@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
 new contributors kindly request them to comment command.

@@ -237,7 +237,6 @@ from vtkmodules.vtkFiltersCore import vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
-from vtkmodules.vtkFiltersCore import vtkProbeFilter
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation
 from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet
 from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter

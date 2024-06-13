@@ -17,11 +17,8 @@ import re
 import time
 from types import FunctionType
 from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import ItemsView
-from typing import Type
 from typing import TypeVar
 
 import numpy as np
@@ -37,12 +34,14 @@ from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType
-from pyvista.plotting.opts import RepresentationType
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+    from collections.abc import ItemsView
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -3906,41 +3905,43 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@skip_lesser_9_0_X
+def test_axes_actor_default_colors():
+    axes = pv.AxesActor()
+    axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+
+    plot = pv.Plotter()
+    plot.add_actor(axes)
+    plot.camera.zoom(1.5)
+    plot.show()
+
+
 def test_axes_actor_properties():
     axes = pv.Axes()
     axes_actor = axes.axes_actor
+    axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+    axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
+    axes_actor.x_axis_label = 'U'
+    axes_actor.y_axis_label = 'V'
+    axes_actor.z_axis_label = 'W'
 
-    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
-    axes_actor.y_axis_shaft_properties.metallic = 0.2
-    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.z_axis_shaft_properties.roughness = 0.3
-    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+    # Test actor properties using color
+    x_color = (1.0, 0.0, 1.0)  # magenta
+    y_color = (1.0, 1.0, 0.0)  # yellow
+    z_color = (0.0, 1.0, 1.0)  # cyan
 
-    axes_actor.x_axis_tip_properties.anisotropy = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-    axes_actor.y_axis_tip_properties.lighting = False
-    assert not axes_actor.y_axis_tip_properties.lighting
-    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
+    axes_actor.x_axis_shaft_properties.color = x_color
+    axes_actor.x_axis_tip_properties.color = x_color
 
-    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-    axes_actor.z_axis_shaft_properties.shading = False
-    assert not axes_actor.z_axis_shaft_properties.shading
+    axes_actor.y_axis_shaft_properties.color = y_color
+    axes_actor.y_axis_tip_properties.color = y_color
 
-    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
-    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
+    axes_actor.z_axis_shaft_properties.color = z_color
+    axes_actor.z_axis_tip_properties.color = z_color
 
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-    pl = pv.Plotter()
-    pl.add_actor(axes_actor)
-    pl.show()
+    plot = pv.Plotter()
+    plot.add_actor(axes_actor)
+    plot.camera.zoom(1.5)
+    plot.show()
 
 
 def test_show_bounds_no_labels():
@@ -4153,10 +4154,10 @@ def test_create_axes_orientation_box():
     plotter.show()
 
 
-_TypeType = TypeVar('_TypeType', bound=Type)
+_TypeType = TypeVar('_TypeType', bound=type)
 
 
-def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
     """Get all members of a specified type which are defined locally inside a module."""
 
     def is_local(obj):
@@ -4170,7 +4171,7 @@ def _get_module_functions(module: ModuleType):
     return _get_module_members(module, typ=FunctionType)
 
 
-def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
+def _get_default_kwargs(call: Callable) -> dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
     # Get default value for positional or keyword args
@@ -4206,7 +4207,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param

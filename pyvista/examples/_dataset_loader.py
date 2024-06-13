@@ -35,15 +35,11 @@ from abc import abstractmethod
 import functools
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Dict
 from typing import Generic
-from typing import List
-from typing import Optional
 from typing import Protocol
 from typing import Sequence
-from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
@@ -56,15 +52,33 @@ import pyvista as pv
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.fileio import get_ext
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 # Define TypeVars for two main class definitions used by this module:
 #   1. classes for single file inputs: T -> T
 #   2. classes for multi-file inputs: (T, ...) -> (T, ...)
 # Any properties with these typevars should have a one-to-one mapping for all files
-_FilePropStrType_co = TypeVar('_FilePropStrType_co', str, Tuple[str, ...], covariant=True)
-_FilePropIntType_co = TypeVar('_FilePropIntType_co', int, Tuple[int, ...], covariant=True)
+_FilePropStrType_co = TypeVar(
+    '_FilePropStrType_co',
+    str,
+    Tuple[str, ...],
+    covariant=True,
+)
+_FilePropIntType_co = TypeVar(
+    '_FilePropIntType_co',
+    int,
+    Tuple[int, ...],
+    covariant=True,
+)
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
-DatasetType = Union[Type[pv.DataSet], Type[pv.Texture], Type[NumpyArray[Any]], Type[pv.MultiBlock]]
+DatasetType = Union[
+    Type[pv.DataSet],
+    Type[pv.Texture],
+    Type[NumpyArray[Any]],
+    Type[pv.MultiBlock],
+]
 
 
 class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
@@ -84,7 +98,7 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
         return sum(1 if os.path.isfile(p) else len(_get_all_nested_filepaths(p)) for p in paths)
 
     @property
-    def unique_extension(self) -> Union[str, Tuple[str, ...]]:
+    def unique_extension(self) -> str | tuple[str, ...]:
         """Return the unique file extension(s) from all files."""
         return _get_unique_extension(self.path)
 
@@ -112,13 +126,13 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
     @abstractmethod
     def _reader(
         self,
-    ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
+    ) -> pv.BaseReader | tuple[pv.BaseReader | None, ...] | None:
         """Return the base file reader(s) used to read the files."""
 
     @property
     def unique_reader_type(
         self,
-    ) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
+    ) -> type[pv.BaseReader] | tuple[type[pv.BaseReader], ...] | None:
         """Return unique reader type(s) from all file readers."""
         return _get_unique_reader_type(self._reader)
 
@@ -127,7 +141,9 @@ class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
     """Define file properties of a single file."""
 
 
-class _MultiFilePropsProtocol(_BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]]):
+class _MultiFilePropsProtocol(
+    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],
+):
     """Define file properties of multiple files."""
 
 
@@ -186,11 +202,11 @@ class _DatasetLoader:
 
     def __init__(self, load_func: Callable[..., DatasetObject]):
         self._load_func = load_func
-        self._dataset: Optional[DatasetObject] = None
+        self._dataset: DatasetObject | None = None
 
     @property
     @final
-    def dataset(self) -> Optional[DatasetObject]:
+    def dataset(self) -> DatasetObject | None:
         """Return the loaded dataset object(s)."""
         return self._dataset
 
@@ -213,7 +229,7 @@ class _DatasetLoader:
 
     @property
     @final
-    def dataset_iterable(self) -> Tuple[DatasetObject, ...]:
+    def dataset_iterable(self) -> tuple[DatasetObject, ...]:
         """Return a tuple of all dataset object(s), including any nested objects.
 
         If the dataset is a MultiBlock, the MultiBlock itself is also returned as the first
@@ -248,7 +264,7 @@ class _DatasetLoader:
     @final
     def unique_dataset_type(
         self,
-    ) -> Optional[Union[DatasetType, Tuple[DatasetType, ...]]]:
+    ) -> DatasetType | tuple[DatasetType, ...] | None:
         """Return unique dataset type(s) from all datasets."""
         return _get_unique_dataset_type(self.dataset_iterable)
 
@@ -256,9 +272,9 @@ class _DatasetLoader:
     @final
     def unique_cell_types(
         self,
-    ) -> Tuple[pv.CellType, ...]:
+    ) -> tuple[pv.CellType, ...]:
         """Return unique cell types from all datasets."""
-        cell_types: Dict[pv.CellType, None] = {}
+        cell_types: dict[pv.CellType, None] = {}
         for data in self.dataset_iterable:
             # Get the underlying dataset for the texture
             if isinstance(data, pv.Texture):
@@ -310,7 +326,7 @@ class _SingleFile(_SingleFilePropsProtocol):
         return self._filesize_format
 
     @property
-    def _reader(self) -> Optional[pv.BaseReader]:
+    def _reader(self) -> pv.BaseReader | None:
         return None
 
 
@@ -346,15 +362,15 @@ class _SingleFileDatasetLoader(_SingleFile, _DatasetLoader):
     def __init__(
         self,
         path: str,
-        read_func: Optional[Callable[[str], DatasetType]] = None,
-        load_func: Optional[Callable[[DatasetType], Any]] = None,
+        read_func: Callable[[str], DatasetType] | None = None,
+        load_func: Callable[[DatasetType], Any] | None = None,
     ):
         _SingleFile.__init__(self, path)
         _DatasetLoader.__init__(self, load_func)  # type: ignore[arg-type]
         self._read_func = pv.read if path and read_func is None else read_func
 
     @property
-    def _reader(self) -> Optional[pv.BaseReader]:
+    def _reader(self) -> pv.BaseReader | None:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         try:
@@ -402,7 +418,7 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
     def __init__(
         self,
         path: str,
-        target_file: Optional[str] = None,
+        target_file: str | None = None,
     ):
         _SingleFile.__init__(self, path)
 
@@ -482,9 +498,9 @@ class _SingleFileDownloadableDatasetLoader(_SingleFileDatasetLoader, _Downloadab
     def __init__(
         self,
         path: str,
-        read_func: Optional[Callable[[str], DatasetType]] = None,
-        load_func: Optional[Callable[[DatasetType], DatasetType]] = None,
-        target_file: Optional[str] = None,
+        read_func: Callable[[str], DatasetType] | None = None,
+        load_func: Callable[[DatasetType], DatasetType] | None = None,
+        target_file: str | None = None,
     ):
         _SingleFileDatasetLoader.__init__(self, path, read_func=read_func, load_func=load_func)
         _DownloadableFile.__init__(self, path, target_file=target_file)
@@ -524,11 +540,8 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     def __init__(
         self,
-        files_func: Union[
-            str,
-            Callable[[], Sequence[Union[_SingleFileDatasetLoader, _DownloadableFile]]],
-        ],
-        load_func: Optional[Callable[[Sequence[_SingleFileDatasetLoader]], Any]] = None,
+        files_func: str | Callable[[], Sequence[_SingleFileDatasetLoader | _DownloadableFile]],
+        load_func: Callable[[Sequence[_SingleFileDatasetLoader]], Any] | None = None,
     ):
         self._files_func = files_func
         self._file_loaders_ = None
@@ -544,11 +557,11 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         return self._file_loaders_
 
     @property
-    def path(self) -> Tuple[str, ...]:
+    def path(self) -> tuple[str, ...]:
         return tuple(_flatten_nested_sequence([file.path for file in self._file_objects]))
 
     @property
-    def path_loadable(self) -> Tuple[str, ...]:
+    def path_loadable(self) -> tuple[str, ...]:
 
         return tuple(
             [
@@ -559,13 +572,13 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         )
 
     @property
-    def _filesize_bytes(self) -> Tuple[int, ...]:
+    def _filesize_bytes(self) -> tuple[int, ...]:
         return tuple(
             _flatten_nested_sequence([file._filesize_bytes for file in self._file_objects]),
         )
 
     @property
-    def _filesize_format(self) -> Tuple[str, ...]:
+    def _filesize_format(self) -> tuple[str, ...]:
         return tuple([_format_file_size(size) for size in self._filesize_bytes])
 
     @property
@@ -579,12 +592,12 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
     @property
     def _reader(
         self,
-    ) -> Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]]:
+    ) -> pv.BaseReader | tuple[pv.BaseReader | None, ...] | None:
         # TODO: return the actual reader used, and not just a lookup
         #       (this will require an update to the 'read_func' API)
         reader = _flatten_nested_sequence([file._reader for file in self._file_objects])
         # flatten in case any file objects themselves are multifiles
-        reader_out: List[pv.BaseReader] = []
+        reader_out: list[pv.BaseReader] = []
         for r in reader:
             reader_out.extend(r) if isinstance(r, Sequence) else reader_out.append(r)
         return tuple(reader_out)
@@ -593,20 +606,23 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
         return self._load_func(self._file_objects)
 
 
-class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable[Tuple[str, ...]]):
+class _MultiFileDownloadableDatasetLoader(
+    _MultiFileDatasetLoader,
+    _Downloadable[Tuple[str, ...]],
+):
     """Wrap multiple files for downloading and loading."""
 
     @property
-    def source_name(self) -> Tuple[str, ...]:
+    def source_name(self) -> tuple[str, ...]:
         name = [file.source_name for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(name))
 
     @property
-    def base_url(self) -> Tuple[str, ...]:
+    def base_url(self) -> tuple[str, ...]:
         url = [file.base_url for file in self._file_objects if isinstance(file, _Downloadable)]
         return tuple(_flatten_nested_sequence(url))
 
-    def download(self) -> Tuple[str, ...]:
+    def download(self) -> tuple[str, ...]:
         path = [file.download() for file in self._file_objects if isinstance(file, _Downloadable)]
         # flatten paths in case any loaders have multiple files
         path_out = _flatten_nested_sequence(path)
@@ -617,9 +633,9 @@ class _MultiFileDownloadableDatasetLoader(_MultiFileDatasetLoader, _Downloadable
 _ScalarType = TypeVar('_ScalarType', int, str, pv.BaseReader)
 
 
-def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_ScalarType]]]):
+def _flatten_nested_sequence(nested: Sequence[_ScalarType | Sequence[_ScalarType]]):
     """Flatten nested sequences of objects."""
-    flat: List[_ScalarType] = []
+    flat: list[_ScalarType] = []
     for item in nested:
         if isinstance(item, Sequence) and not isinstance(item, str):
             flat.extend(item)
@@ -629,10 +645,7 @@ def _flatten_nested_sequence(nested: Sequence[Union[_ScalarType, Sequence[_Scala
 
 
 def _download_dataset(
-    dataset_loader: Union[
-        _SingleFileDownloadableDatasetLoader,
-        _MultiFileDownloadableDatasetLoader,
-    ],
+    dataset_loader: _SingleFileDownloadableDatasetLoader | _MultiFileDownloadableDatasetLoader,
     load: bool = True,
     metafiles: bool = False,
 ):
@@ -677,8 +690,8 @@ def _download_dataset(
 
 
 def _load_as_multiblock(
-    files: Sequence[Union[_SingleFileDatasetLoader, _MultiFileDatasetLoader]],
-    names: Optional[Sequence[str]] = None,
+    files: Sequence[_SingleFileDatasetLoader | _MultiFileDatasetLoader],
+    names: Sequence[str] | None = None,
 ) -> pv.MultiBlock:
     """Load multiple files as a MultiBlock.
 
@@ -709,7 +722,7 @@ def _load_as_multiblock(
     return multi
 
 
-def _load_as_cubemap(files: Union[str, _SingleFile, Sequence[_SingleFile]]) -> pv.Texture:
+def _load_as_cubemap(files: str | _SingleFile | Sequence[_SingleFile]) -> pv.Texture:
     """Load multiple files as a cubemap.
 
     Input may be a single directory with 6 cubemap files, or a sequence
@@ -781,7 +794,7 @@ def _get_all_nested_filepaths(filepath, exclude_readme=True):
     )
 
 
-def _get_unique_extension(path: Union[str, Sequence[str]]):
+def _get_unique_extension(path: str | Sequence[str]):
     """Return a file extension or unique set of file extensions from a path or paths."""
     ext_set = set()
     fname_sequence = [path] if isinstance(path, str) else path
@@ -797,12 +810,12 @@ def _get_unique_extension(path: Union[str, Sequence[str]]):
 
 
 def _get_unique_reader_type(
-    reader: Optional[Union[pv.BaseReader, Tuple[Optional[pv.BaseReader], ...]]],
-) -> Optional[Union[Type[pv.BaseReader], Tuple[Type[pv.BaseReader], ...]]]:
+    reader: pv.BaseReader | tuple[pv.BaseReader | None, ...] | None,
+) -> type[pv.BaseReader] | tuple[type[pv.BaseReader], ...] | None:
     """Return a reader type or tuple of unique reader types."""
     if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):
         return None
-    reader_set: Set[Type[pv.BaseReader]] = set()
+    reader_set: set[type[pv.BaseReader]] = set()
     reader_type = (
         [type(reader)]
         if not isinstance(reader, Sequence)
@@ -818,10 +831,10 @@ def _get_unique_reader_type(
 
 
 def _get_unique_dataset_type(
-    dataset_iterable: Tuple[DatasetObject, ...],
-) -> Union[DatasetType, Tuple[DatasetType, ...]]:
+    dataset_iterable: tuple[DatasetObject, ...],
+) -> DatasetType | tuple[DatasetType, ...]:
     """Return a dataset type or tuple of unique dataset types."""
-    dataset_types: Dict[DatasetType, None] = {}  # use dict as an ordered set
+    dataset_types: dict[DatasetType, None] = {}  # use dict as an ordered set
     for dataset in dataset_iterable:
         dataset_types[type(dataset)] = None
     output = tuple(dataset_types.keys())
