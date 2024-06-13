@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
 import warnings
@@ -16,6 +17,7 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
+from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -27,6 +29,7 @@ from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
+from .colors import _validate_color_sequence
 from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
@@ -37,6 +40,9 @@ from .tools import create_axes_orientation_box
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:
+    from ._typing import ColorLike
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -908,9 +914,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_label='X',
         y_label='Y',
         z_label='Z',
-        show_labels=True,
         label_color='white',
-        show_label_edges=True,
+        label_position=1.1,
+        label_size=0.1,
+        show_labels=True,
+        label_border=True,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -1033,7 +1041,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         symmetric_bounds = kwargs.pop('symmetric_bounds', False)
         axes_assembly = pyvista.AxesAssembly(
-            show_labels=show_labels,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
@@ -1047,29 +1054,136 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
         self.add_actor(axes_assembly)
 
-        def _init_label_follower(label: str, position) -> _vtk.vtkFollower:
-            # Init follower with 3D text
-            text_poly = pyvista.Text3D(label, height=0.2, depth=0.0)
-            follower = _vtk.vtkFollower()
-            follower.SetPosition(position)
+        if show_labels:
+            # Scale label position proportional to length of each axis
+            total_length = np.array(axes_assembly.total_length)
+            label_position = _validation.validate_array3(label_position, broadcast=True)
+            x_label_position, y_label_position, z_label_position = np.diag(
+                label_position * total_length,
+            )
 
-            # Set mapper
-            mapper = _vtk.vtkPolyDataMapper()
-            mapper.SetInputData(text_poly)
-            follower.SetMapper(mapper)
+            # Scale label size proportional to norm of axes lengths
+            size = np.linalg.norm(total_length) * label_size
 
-            # Set property
-            prop = pyvista.Property(show_edges=show_label_edges, color=label_color)
-            follower.SetProperty(prop)
+            x_label_color, y_label_color, z_label_color = _validate_color_sequence(
+                label_color,
+                n_colors=3,
+            )
 
-            # Required for follower to work
-            follower.SetCamera(self.camera)
-            return follower
+            common_kwargs = dict(
+                height=size,
+                show_border=label_border,
+                orientation=orientation,
+                origin=origin,
+                scale=scale,
+                user_matrix=user_matrix,
+            )
+            x_label_follower = self._add_text_follower(
+                text=x_label,
+                color=x_label_color,
+                position=x_label_position,
+                **common_kwargs,
+            )
+            y_label_follower = self._add_text_follower(
+                text=y_label,
+                color=y_label_color,
+                position=y_label_position,
+                **common_kwargs,
+            )
+            z_label_follower = self._add_text_follower(
+                text=z_label,
+                color=z_label_color,
+                position=z_label_position,
+                **common_kwargs,
+            )
 
-        self.add_actor(_init_label_follower(x_label, (1.11, 0, 0)))
-        self.add_actor(_init_label_follower(y_label, (0, 1.11, 0)))
-        self.add_actor(_init_label_follower(z_label, (0, 0, 1.11)))
+            return axes_assembly, x_label_follower, y_label_follower, z_label_follower
         return axes_assembly
+
+    def _add_text_follower(
+        self,
+        *,
+        text: str,
+        height=None,
+        show_border: bool = True,
+        color: ColorLike = 'white',
+        border_color: ColorLike = 'black',
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
+    ):
+
+        # Create text
+        text_poly = pyvista.Text3D(text, height=height, depth=0.0)
+        prop3d_kwargs = dict(
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+        )
+        text_follower = self._add_follower(text_poly, color=color, **prop3d_kwargs)
+        if show_border:
+            # NOTE: The text mesh is triangulated. If, instead, the mesh was closed
+            # polygon cells, the border could easily be shown by enabling
+            # 'show_edges'. But, the mesh is not well-defined, so using something
+            # like vtkContourLoopExtraction to generate polygon cells does not work.
+            # Instead, we create a second mesh and follower for the border.
+
+            # Extract boundary edges
+            border = text_poly.extract_feature_edges(
+                boundary_edges=True,
+                non_manifold_edges=False,
+                feature_edges=False,
+                manifold_edges=False,
+                clear_data=False,
+                progress_bar=False,
+            )
+            # border=border.ribbon(width=0.1)
+            border_follower = self._add_follower(
+                border,
+                color=border_color,
+                line_width=3,
+                **prop3d_kwargs,
+            )
+            return text_follower, border_follower
+        return text_follower
+
+    def _add_follower(
+        self,
+        dataset: pyvista.DataSet,
+        *,
+        color: ColorLike,
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
+        line_width=None,
+    ):
+        # Init follower
+        follower = _vtk.vtkFollower()
+        follower.SetPosition(position)
+        follower.SetOrigin(origin)
+        follower.SetOrientation(orientation)
+        follower.SetUserMatrix(user_matrix)
+        follower.SetScale(scale)
+
+        # Set mapper
+        mapper = _vtk.vtkPolyDataMapper()
+        mapper.SetInputData(dataset.extract_geometry())
+        follower.SetMapper(mapper)
+
+        # Set actor properties
+        prop = pyvista.Property(color=color, lighting=False, line_width=line_width)
+        follower.SetProperty(prop)
+
+        # Must set camera for follower to work
+        follower.SetCamera(self.camera)
+
+        self.add_actor(follower)
 
     def add_orientation_widget(
         self,

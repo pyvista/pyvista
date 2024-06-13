@@ -268,6 +268,7 @@ from vtkmodules.vtkFiltersGeneral import vtkDataSetTriangleFilter
 from vtkmodules.vtkFiltersGeneral import vtkGradientFilter
 from vtkmodules.vtkFiltersGeneral import vtkIntersectionPolyDataFilter
 from vtkmodules.vtkFiltersGeneral import vtkOBBTree
+from vtkmodules.vtkFiltersGeneral import vtkQuantizePolyDataPoints
 from vtkmodules.vtkFiltersGeneral import vtkRectilinearGridToPointSet
 from vtkmodules.vtkFiltersGeneral import vtkRectilinearGridToTetrahedra
 from vtkmodules.vtkFiltersGeneral import vtkShrinkFilter
@@ -286,6 +287,7 @@ from vtkmodules.vtkFiltersModeling import vtkAdaptiveSubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkBandedPolyDataContourFilter
 from vtkmodules.vtkFiltersModeling import vtkButterflySubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkCollisionDetectionFilter
+from vtkmodules.vtkFiltersModeling import vtkContourLoopExtraction
 from vtkmodules.vtkFiltersModeling import vtkDijkstraGraphGeodesicPath
 from vtkmodules.vtkFiltersModeling import vtkFillHolesFilter
 from vtkmodules.vtkFiltersModeling import vtkLinearExtrusionFilter

@@ -639,3 +639,35 @@ class AxesActor(_vtk.vtkAxesActor):
         pl = pyvista.Plotter()
         pl.add_actor(self)
         pl.show()
+
+    # @property
+    # def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    #     """Normalized position of the text label along each axis.
+    #
+    #     Values must be non-negative.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.label_position
+    #     (1.0, 1.0, 1.0)
+    #     >>> axes_actor.label_position = 0.3
+    #     >>> axes_actor.label_position
+    #     (0.3, 0.3, 0.3)
+    #     >>> axes_actor.label_position = (0.1, 0.4, 0.2)
+    #     >>> axes_actor.label_position
+    #     (0.1, 0.4, 0.2)
+    #
+    #     """
+    #     return self._label_position
+    #
+    # @label_position.setter
+    # def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+    #     if isinstance(position, (int, float)):
+    #         _check_range(position, (0, float('inf')), 'label_position')
+    #         position = [position, position, position]
+    #     _check_range(position[0], (0, float('inf')), 'x-axis label_position')
+    #     _check_range(position[1], (0, float('inf')), 'y-axis label_position')
+    #     _check_range(position[2], (0, float('inf')), 'z-axis label_position')
+    #     self._label_position = float(position[0]), float(position[1]), float(position[2])

@@ -16,8 +16,6 @@ def axes_assembly():
     return AxesAssembly()
 
 
-#
-#
 # def test_origin(axes):
 #     origin = np.random.default_rng().random(3)
 #     axes.origin = origin
@@ -81,15 +79,15 @@ def test_axes_assembly_tip_length_init():
     assert axes_assembly.tip_length == (0.9, 0.9, 0.9)
 
 
-def test_axes_assembly_label_position(axes_assembly):
-    assert axes_assembly.label_position == (1, 1, 1)
-    axes_assembly.label_position = (1, 2, 3)
-    assert axes_assembly.label_position == (1, 2, 3)
-
-
-def test_axes_assembly_label_position_init():
-    axes_assembly = AxesAssembly(label_position=2)
-    assert axes_assembly.label_position == (2, 2, 2)
+# def test_axes_assembly_label_position(axes_assembly):
+#     assert axes_assembly.label_position == (1, 1, 1)
+#     axes_assembly.label_position = (1, 2, 3)
+#     assert axes_assembly.label_position == (1, 2, 3)
+#
+#
+# def test_axes_assembly_label_position_init():
+#     axes_assembly = AxesAssembly(label_position=2)
+#     assert axes_assembly.label_position == (2, 2, 2)
 
 
 def test_axes_assembly_tip_radius(axes_assembly):
@@ -127,98 +125,98 @@ def test_axes_assembly_tip_type_init(tip_type):
     assert axes_assembly.tip_type == tip_type
 
 
-def test_axes_assembly_labels(axes_assembly):
-    assert axes_assembly.labels == ('X', 'Y', 'Z')
-    axes_assembly.labels = ('i', 'j', 'k')
-    assert axes_assembly.labels == ('i', 'j', 'k')
-
-    with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
-        axes_assembly.labels = 'abcd'
-
-
-def test_axes_assembly_labels_init():
-    axes_assembly = AxesAssembly(labels=('i', 'j', 'k'))
-    assert axes_assembly.labels == ('i', 'j', 'k')
-
-
-def test_axes_assembly_x_label(axes_assembly):
-    assert axes_assembly.x_label == 'X'
-    axes_assembly.x_label = 'label'
-    assert axes_assembly.x_label == 'label'
-
-
-def test_axes_assembly_x_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(x_label='label')
-    assert axes_assembly.x_label == 'label'
-
-
-def test_axes_assembly_y_label(axes_assembly):
-    assert axes_assembly.y_label == 'Y'
-    axes_assembly.y_label = 'label'
-    assert axes_assembly.y_label == 'label'
-
-
-def test_axes_assembly_y_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(y_label='label')
-    assert axes_assembly.y_label == 'label'
-
-
-def test_axes_assembly_z_label(axes_assembly):
-    assert axes_assembly.z_label == 'Z'
-    axes_assembly.z_label = 'label'
-    assert axes_assembly.z_label == 'label'
-
-
-def test_axes_assembly_z_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(z_label='label')
-    assert axes_assembly.z_label == 'label'
-
-
-def test_axes_assembly_labels_raises():
-    match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-    with pytest.raises(ValueError, match=match.format('x_label')):
-        AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
-    with pytest.raises(ValueError, match=match.format('y_label')):
-        AxesAssembly(y_label='B', z_label='C', labels='UVW')
-    with pytest.raises(ValueError, match=match.format('z_label')):
-        AxesAssembly(z_label='C', labels='UVW')
-
-
-def test_axes_assembly_label_color(axes_assembly):
-    assert axes_assembly.label_color[0].name == 'white'
-    assert axes_assembly.label_color[1].name == 'white'
-    assert axes_assembly.label_color[2].name == 'white'
-
-    axes_assembly.label_color = 'purple'
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'purple'
-    assert axes_assembly.label_color[1].name == 'purple'
-    assert axes_assembly.label_color[2].name == 'purple'
-
-    axes_assembly.label_color = 'r', 'g', 'b'
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'red'
-    assert axes_assembly.label_color[1].name == 'green'
-    assert axes_assembly.label_color[2].name == 'blue'
-
-    axes_assembly.label_color = ['red', 'green', 'blue']
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'red'
-    assert axes_assembly.label_color[1].name == 'green'
-    assert axes_assembly.label_color[2].name == 'blue'
-
-    axes_assembly.label_color = [1, 2, 3]
-    assert len(axes_assembly.label_color) == 3
-    assert np.array_equal(axes_assembly.label_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_assembly.label_color[1].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_assembly.label_color[2].int_rgb, [1, 2, 3])
-
-
-def test_axes_assembly_label_color_init():
-    axes_assembly = AxesAssembly(label_color='yellow')
-    assert axes_assembly.label_color[0].name == 'yellow'
-    assert axes_assembly.label_color[1].name == 'yellow'
-    assert axes_assembly.label_color[2].name == 'yellow'
+# def test_axes_assembly_labels(axes_assembly):
+#     assert axes_assembly.labels == ('X', 'Y', 'Z')
+#     axes_assembly.labels = ('i', 'j', 'k')
+#     assert axes_assembly.labels == ('i', 'j', 'k')
+#
+#     with pytest.raises(ValueError, match='Labels sequence must have exactly 3 items.'):
+#         axes_assembly.labels = 'abcd'
+#
+#
+# def test_axes_assembly_labels_init():
+#     axes_assembly = AxesAssembly(labels=('i', 'j', 'k'))
+#     assert axes_assembly.labels == ('i', 'j', 'k')
+#
+#
+# def test_axes_assembly_x_label(axes_assembly):
+#     assert axes_assembly.x_label == 'X'
+#     axes_assembly.x_label = 'label'
+#     assert axes_assembly.x_label == 'label'
+#
+#
+# def test_axes_assembly_x_label_init(axes_assembly):
+#     axes_assembly = AxesAssembly(x_label='label')
+#     assert axes_assembly.x_label == 'label'
+#
+#
+# def test_axes_assembly_y_label(axes_assembly):
+#     assert axes_assembly.y_label == 'Y'
+#     axes_assembly.y_label = 'label'
+#     assert axes_assembly.y_label == 'label'
+#
+#
+# def test_axes_assembly_y_label_init(axes_assembly):
+#     axes_assembly = AxesAssembly(y_label='label')
+#     assert axes_assembly.y_label == 'label'
+#
+#
+# def test_axes_assembly_z_label(axes_assembly):
+#     assert axes_assembly.z_label == 'Z'
+#     axes_assembly.z_label = 'label'
+#     assert axes_assembly.z_label == 'label'
+#
+#
+# def test_axes_assembly_z_label_init(axes_assembly):
+#     axes_assembly = AxesAssembly(z_label='label')
+#     assert axes_assembly.z_label == 'label'
+#
+#
+# def test_axes_assembly_labels_raises():
+#     match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+#     with pytest.raises(ValueError, match=match.format('x_label')):
+#         AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
+#     with pytest.raises(ValueError, match=match.format('y_label')):
+#         AxesAssembly(y_label='B', z_label='C', labels='UVW')
+#     with pytest.raises(ValueError, match=match.format('z_label')):
+#         AxesAssembly(z_label='C', labels='UVW')
+#
+#
+# def test_axes_assembly_label_color(axes_assembly):
+#     assert axes_assembly.label_color[0].name == 'white'
+#     assert axes_assembly.label_color[1].name == 'white'
+#     assert axes_assembly.label_color[2].name == 'white'
+#
+#     axes_assembly.label_color = 'purple'
+#     assert len(axes_assembly.label_color) == 3
+#     assert axes_assembly.label_color[0].name == 'purple'
+#     assert axes_assembly.label_color[1].name == 'purple'
+#     assert axes_assembly.label_color[2].name == 'purple'
+#
+#     axes_assembly.label_color = 'r', 'g', 'b'
+#     assert len(axes_assembly.label_color) == 3
+#     assert axes_assembly.label_color[0].name == 'red'
+#     assert axes_assembly.label_color[1].name == 'green'
+#     assert axes_assembly.label_color[2].name == 'blue'
+#
+#     axes_assembly.label_color = ['red', 'green', 'blue']
+#     assert len(axes_assembly.label_color) == 3
+#     assert axes_assembly.label_color[0].name == 'red'
+#     assert axes_assembly.label_color[1].name == 'green'
+#     assert axes_assembly.label_color[2].name == 'blue'
+#
+#     axes_assembly.label_color = [1, 2, 3]
+#     assert len(axes_assembly.label_color) == 3
+#     assert np.array_equal(axes_assembly.label_color[0].int_rgb, [1, 2, 3])
+#     assert np.array_equal(axes_assembly.label_color[1].int_rgb, [1, 2, 3])
+#     assert np.array_equal(axes_assembly.label_color[2].int_rgb, [1, 2, 3])
+#
+#
+# def test_axes_assembly_label_color_init():
+#     axes_assembly = AxesAssembly(label_color='yellow')
+#     assert axes_assembly.label_color[0].name == 'yellow'
+#     assert axes_assembly.label_color[1].name == 'yellow'
+#     assert axes_assembly.label_color[2].name == 'yellow'
 
 
 def test_axes_assembly_axis_color_init(axes_assembly):
@@ -274,27 +272,27 @@ def test_axes_assembly_shaft_radius(axes_assembly):
     assert axes_assembly.shaft_radius == 0.1
 
 
-def test_axes_assembly_show_labels(axes_assembly):
-    assert axes_assembly.show_labels is True
-    axes_assembly.show_labels = False
-    assert axes_assembly.show_labels is False
-
-
-def test_axes_assembly_show_labels_init():
-    axes_assembly = AxesAssembly(show_labels=False)
-    assert axes_assembly.show_labels is False
-
-
-def test_axes_assembly_label_size(axes_assembly):
-    assert axes_assembly.label_size == (0.25, 0.1)
-    size = (0.4, 0.5)
-    axes_assembly.label_size = size
-    assert axes_assembly.label_size == size
-
-
-def test_axes_assembly_label_size_init():
-    axes_assembly = AxesAssembly(label_size=(0.2, 0.3))
-    assert axes_assembly.label_size == (0.2, 0.3)
+# def test_axes_assembly_show_labels(axes_assembly):
+#     assert axes_assembly.show_labels is True
+#     axes_assembly.show_labels = False
+#     assert axes_assembly.show_labels is False
+#
+#
+# def test_axes_assembly_show_labels_init():
+#     axes_assembly = AxesAssembly(show_labels=False)
+#     assert axes_assembly.show_labels is False
+#
+#
+# def test_axes_assembly_label_size(axes_assembly):
+#     assert axes_assembly.label_size == (0.25, 0.1)
+#     size = (0.4, 0.5)
+#     axes_assembly.label_size = size
+#     assert axes_assembly.label_size == size
+#
+#
+# def test_axes_assembly_label_size_init():
+#     axes_assembly = AxesAssembly(label_size=(0.2, 0.3))
+#     assert axes_assembly.label_size == (0.2, 0.3)
 
 
 def test_axes_assemblyerties(axes_assembly):
@@ -576,11 +574,11 @@ def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
-        "  X label:                    'X'",
-        "  Y label:                    'Y'",
-        "  Z label:                    'Z'",
-        "  Show labels:                True",
-        "  Label position:             (1.0, 1.0, 1.0)",
+        # "  X label:                    'X'",
+        # "  Y label:                    'Y'",
+        # "  Z label:                    'Z'",
+        # "  Show labels:                True",
+        # "  Label position:             (1.0, 1.0, 1.0)",
         "  Shaft type:                 'cylinder'",
         "  Shaft radius:               0.05",
         "  Shaft length:               (0.8, 0.8, 0.8)",

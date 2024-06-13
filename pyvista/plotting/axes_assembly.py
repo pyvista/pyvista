@@ -17,7 +17,6 @@ from pyvista.core import _validation
 from pyvista.plotting import _vtk
 from pyvista.plotting._property import Property
 from pyvista.plotting._property import _check_range
-from pyvista.plotting.axes_actor import AxesActor
 from pyvista.plotting.colors import Color
 from pyvista.plotting.prop3d import Prop3D
 
@@ -75,14 +74,6 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
 
     def __init__(
         self,
-        x_label=None,
-        y_label=None,
-        z_label=None,
-        labels=None,
-        label_color=None,
-        show_labels=True,
-        label_position=1,
-        label_size=(0.25, 0.1),
         x_color=None,
         y_color=None,
         z_color=None,
@@ -112,8 +103,6 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
 
         # Add actors to assembly
         [self.AddPart(actor) for actor in self._actors]
-        self._labels_actor = AxesActor()
-        self.AddPart(self._labels_actor)
 
         # Init actor properties
         properties = {} if properties is None else properties
@@ -138,30 +127,30 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
         self.y_color = y_color
         self.z_color = z_color
 
-        # Set text labels
-        if labels is None:
-            self.x_label = _set_default(x_label, 'X')
-            self.y_label = _set_default(y_label, 'Y')
-            self.z_label = _set_default(z_label, 'Z')
-        else:
-            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-            if x_label is not None:
-                raise ValueError(msg.format('x_label'))
-            if y_label is not None:
-                raise ValueError(msg.format('y_label'))
-            if z_label is not None:
-                raise ValueError(msg.format('z_label'))
-            self.labels = labels
-        self.show_labels = show_labels
-        self.label_color = label_color  # Setter will auto-set theme val
-        self.label_size = label_size
+        # # Set text labels
+        # if labels is None:
+        #     self.x_label = _set_default(x_label, 'X')
+        #     self.y_label = _set_default(y_label, 'Y')
+        #     self.z_label = _set_default(z_label, 'Z')
+        # else:
+        #     msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+        #     if x_label is not None:
+        #         raise ValueError(msg.format('x_label'))
+        #     if y_label is not None:
+        #         raise ValueError(msg.format('y_label'))
+        #     if z_label is not None:
+        #         raise ValueError(msg.format('z_label'))
+        #     self.labels = labels
+        # self.show_labels = show_labels
+        # self.label_color = label_color  # Setter will auto-set theme val
+        # self.label_size = label_size
 
         # Set misc flag params
         self._symmetric_bounds = _set_default(symmetric_bounds, True)
         self._auto_length = _set_default(auto_length, True)
 
         # Set geometry-dependent params
-        self.label_position = _set_default(label_position, 1.0)
+        # self.label_position = _set_default(label_position, 1.0)
         self.shaft_type = shaft_type
         self.shaft_radius = _set_default(shaft_radius, 0.01)
         self.shaft_resolution = _set_default(shaft_resolution, 24)
@@ -215,11 +204,11 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
 
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
-            f"  X label:                    '{self.x_label}'",
-            f"  Y label:                    '{self.y_label}'",
-            f"  Z label:                    '{self.z_label}'",
-            f"  Show labels:                {self.show_labels}",
-            f"  Label position:             {self.label_position}",
+            # f"  X label:                    '{self.x_label}'",
+            # f"  Y label:                    '{self.y_label}'",
+            # f"  Z label:                    '{self.z_label}'",
+            # f"  Show labels:                {self.show_labels}",
+            # f"  Label position:             {self.label_position}",
             f"  Shaft type:                 '{self.shaft_type}'",
             f"  Shaft radius:               {self.shaft_radius}",
             f"  Shaft length:               {self.shaft_length}",
@@ -456,38 +445,6 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
         return tip[0] * total[0], tip[1] * total[1], tip[2] * total[2]
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Normalized position of the text label along each axis.
-
-        Values must be non-negative.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.label_position
-        (1.0, 1.0, 1.0)
-        >>> axes_actor.label_position = 0.3
-        >>> axes_actor.label_position
-        (0.3, 0.3, 0.3)
-        >>> axes_actor.label_position = (0.1, 0.4, 0.2)
-        >>> axes_actor.label_position
-        (0.1, 0.4, 0.2)
-
-        """
-        return self._label_position
-
-    @label_position.setter
-    def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-        if isinstance(position, (int, float)):
-            _check_range(position, (0, float('inf')), 'label_position')
-            position = [position, position, position]
-        _check_range(position[0], (0, float('inf')), 'x-axis label_position')
-        _check_range(position[1], (0, float('inf')), 'y-axis label_position')
-        _check_range(position[2], (0, float('inf')), 'z-axis label_position')
-        self._label_position = float(position[0]), float(position[1]), float(position[2])
-
-    @property
     def auto_length(self) -> bool:  # numpydoc ignore=RT01
         """Automatically set shaft length when setting tip length and vice-versa.
 
@@ -623,96 +580,96 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
             tip_type = pv.global_theme.axes.tip_type
         self._tip_type = self._set_geometry(part=1, geometry=tip_type)
 
-    @property
-    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Axes text labels.
-
-        This property can be used as an alternative to using :attr:`~x_label`,
-        :attr:`~y_label`, and :attr:`~z_label` separately for setting or
-        getting the axes text labels.
-
-        A single string with exactly three characters can be used to set the labels
-        of the x, y, and z axes (respectively) to a single character. Alternatively.
-        a sequence of three strings can be used.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.labels = 'UVW'
-        >>> axes_actor.labels
-        ('U', 'V', 'W')
-        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
-        >>> axes_actor.labels
-        ('X Axis', 'Y Axis', 'Z Axis')
-
-        """
-        return self.x_label, self.y_label, self.z_label
-
-    @labels.setter
-    def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
-        self.x_label = labels[0]
-        self.y_label = labels[1]
-        self.z_label = labels[2]
-        if len(labels) > 3:
-            raise ValueError('Labels sequence must have exactly 3 items.')
-
-    @property
-    def x_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the x-axis.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.x_label = 'This axis'
-        >>> axes_actor.x_label
-        'This axis'
-
-        """
-        return self._label_text_getters.x()
-
-    @x_label.setter
-    def x_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_text_setters.x(label)
-
-    @property
-    def y_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the y-axis.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.y_label = 'This axis'
-        >>> axes_actor.y_label
-        'This axis'
-
-        """
-        return self._label_text_getters.y()
-
-    @y_label.setter
-    def y_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_text_setters.y(label)
-
-    @property
-    def z_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the z-axis.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.z_label = 'This axis'
-        >>> axes_actor.z_label
-        'This axis'
-
-        """
-        return self._label_text_getters.z()
-
-    @z_label.setter
-    def z_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_text_setters.z(label)
+    # @property
+    # def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+    #     """Axes text labels.
+    #
+    #     This property can be used as an alternative to using :attr:`~x_label`,
+    #     :attr:`~y_label`, and :attr:`~z_label` separately for setting or
+    #     getting the axes text labels.
+    #
+    #     A single string with exactly three characters can be used to set the labels
+    #     of the x, y, and z axes (respectively) to a single character. Alternatively.
+    #     a sequence of three strings can be used.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.labels = 'UVW'
+    #     >>> axes_actor.labels
+    #     ('U', 'V', 'W')
+    #     >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+    #     >>> axes_actor.labels
+    #     ('X Axis', 'Y Axis', 'Z Axis')
+    #
+    #     """
+    #     return self.x_label, self.y_label, self.z_label
+    #
+    # @labels.setter
+    # def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
+    #     self.x_label = labels[0]
+    #     self.y_label = labels[1]
+    #     self.z_label = labels[2]
+    #     if len(labels) > 3:
+    #         raise ValueError('Labels sequence must have exactly 3 items.')
+    #
+    # @property
+    # def x_label(self) -> str:  # numpydoc ignore=RT01
+    #     """Text label for the x-axis.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.x_label = 'This axis'
+    #     >>> axes_actor.x_label
+    #     'This axis'
+    #
+    #     """
+    #     return self._label_text_getters.x()
+    #
+    # @x_label.setter
+    # def x_label(self, label: str):  # numpydoc ignore=GL08
+    #     self._label_text_setters.x(label)
+    #
+    # @property
+    # def y_label(self) -> str:  # numpydoc ignore=RT01
+    #     """Text label for the y-axis.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.y_label = 'This axis'
+    #     >>> axes_actor.y_label
+    #     'This axis'
+    #
+    #     """
+    #     return self._label_text_getters.y()
+    #
+    # @y_label.setter
+    # def y_label(self, label: str):  # numpydoc ignore=GL08
+    #     self._label_text_setters.y(label)
+    #
+    # @property
+    # def z_label(self) -> str:  # numpydoc ignore=RT01
+    #     """Text label for the z-axis.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.z_label = 'This axis'
+    #     >>> axes_actor.z_label
+    #     'This axis'
+    #
+    #     """
+    #     return self._label_text_getters.z()
+    #
+    # @z_label.setter
+    # def z_label(self, label: str):  # numpydoc ignore=GL08
+    #     self._label_text_setters.z(label)
 
     @property
     def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
@@ -940,58 +897,26 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
         self._shaft_color_setters[axis](colors[0])
         self._tip_color_setters[axis](colors[1])
 
-    @property
-    def label_x_color(self):
-        return self._labels_actor.label_x_color
-
-    @label_x_color.setter
-    def label_x_color(self, color):
-        self._labels_actor.label_x_color = color
-
-    @property
-    def label_y_color(self):
-        return self._labels_actor.label_y_color
-
-    @label_y_color.setter
-    def label_y_color(self, color):
-        self._labels_actor.label_y_color = color
-
-    @property
-    def label_z_color(self):
-        return self._labels_actor.label_z_color
-
-    @label_z_color.setter
-    def label_z_color(self, color):
-        self._labels_actor.label_z_color = color
-
-    @property
-    def label_color(self):
-        return self._labels_actor.label_color
-
-    @label_color.setter
-    def label_color(self, color):
-        self._labels_actor.label_color = color
-
     def plot(self):
         pl = pv.Plotter()
         pl.add_axes_marker()
         pl.show()
 
-    @property
-    def _label_text_getters(self) -> _Tuple3D:
-        return _Tuple3D(
-            x=lambda: self._labels_actor.x_axis_label,
-            y=lambda: self._labels_actor.y_axis_label,
-            z=lambda: self._labels_actor.z_axis_label,
-        )
-
-    @property
-    def _label_text_setters(self) -> _Tuple3D:
-        return _Tuple3D(
-            x=lambda val: setattr(self._labels_actor, 'x_axis_label', val),
-            y=lambda val: setattr(self._labels_actor, 'y_axis_label', val),
-            z=lambda val: setattr(self._labels_actor, 'z_axis_label', val),
-        )
+    # @property
+    # def _label_text_getters(self) -> _Tuple3D:
+    #     return _Tuple3D(
+    #         x=lambda: self._labels_actor.x_axis_label,
+    #         y=lambda: self._labels_actor.y_axis_label,
+    #         z=lambda: self._labels_actor.z_axis_label,
+    #     )
+    #
+    # @property
+    # def _label_text_setters(self) -> _Tuple3D:
+    #     return _Tuple3D(
+    #         x=lambda val: setattr(self._labels_actor, 'x_axis_label', val),
+    #         y=lambda val: setattr(self._labels_actor, 'y_axis_label', val),
+    #         z=lambda val: setattr(self._labels_actor, 'z_axis_label', val),
+    #     )
 
     @property
     def _shaft_color_getters(self) -> _Tuple3D:
