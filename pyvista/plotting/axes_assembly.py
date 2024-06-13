@@ -899,7 +899,7 @@ class AxesAssembly(_vtk.vtkAssembly, Prop3D):
 
     def plot(self):
         pl = pv.Plotter()
-        pl.add_axes_marker()
+        pl.add_actor(self)
         pl.show()
 
     # @property
