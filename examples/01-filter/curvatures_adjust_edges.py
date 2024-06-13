@@ -7,6 +7,8 @@ curvatures Adjust Edges
 This example is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
