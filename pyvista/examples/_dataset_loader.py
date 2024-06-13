@@ -562,7 +562,6 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
     @property
     def path_loadable(self) -> tuple[str, ...]:
-
         return tuple(
             [
                 file.path

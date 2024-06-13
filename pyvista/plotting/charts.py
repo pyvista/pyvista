@@ -180,16 +180,16 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES: ClassVar[dict[str, dict[str, int | str]]] = (
-        {  # descr is used in the documentation, set to None to hide it from the docs.
-            "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
-            "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
-            "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
-            ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
-            "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
-            "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
-        }
-    )
+    LINE_STYLES: ClassVar[
+        dict[str, dict[str, int | str]]
+    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
+        "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
+        "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
+        "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
+        ":": {"id": _vtk.vtkPen.DOT_LINE, "descr": "Dotted"},
+        "-.": {"id": _vtk.vtkPen.DASH_DOT_LINE, "descr": "Dash-dot"},
+        "-..": {"id": _vtk.vtkPen.DASH_DOT_DOT_LINE, "descr": "Dash-dot-dot"},
+    }
 
     def __init__(self, color="k", width=1, style="-"):
         """Initialize a new Pen instance."""
@@ -2294,16 +2294,16 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
 
     """
 
-    MARKER_STYLES: ClassVar[dict[str, dict[str, int | str]]] = (
-        {  # descr is used in the documentation, set to None to hide it from the docs.
-            "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
-            "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
-            "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
-            "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
-            "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
-            "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
-        }
-    )
+    MARKER_STYLES: ClassVar[
+        dict[str, dict[str, int | str]]
+    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
+        "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
+        "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
+        "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
+        "s": {"id": _vtk.vtkPlotPoints.SQUARE, "descr": "Square"},
+        "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
+        "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
+    }
     _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D scatter plot",
         "chart_init": "pv.Chart2D()",

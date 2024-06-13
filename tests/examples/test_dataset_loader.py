@@ -109,15 +109,15 @@ def _generate_dataset_loader_test_cases_from_module(
 def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
     if test_case.dataset_function is None:
         return (
-            f"A file loader:\n\t\'{test_case.dataset_loader[0]}\'\n\t{test_case.dataset_loader[1]}\n"
+            f"A file loader:\n\t'{test_case.dataset_loader[0]}'\n\t{test_case.dataset_loader[1]}\n"
             f"was found but is missing a corresponding download function.\n\n"
-            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.dataset_function}"
+            f"Expected to find a function named:\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
         )
     elif test_case.dataset_loader is None:
         return (
-            f"A download function:\n\t\'{test_case.dataset_function[0]}\'\n\t{test_case.dataset_function[1]}\n"
+            f"A download function:\n\t'{test_case.dataset_function[0]}'\n\t{test_case.dataset_function[1]}\n"
             f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.dataset_loader}"
+            f"Expected to find a loader named:\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
         )
     else:
         return None
@@ -202,7 +202,6 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test download
     if isinstance(file_loader, (_DownloadableFile, _SingleFileDownloadableDatasetLoader)):
-
         assert isinstance(file_loader, _Downloadable)
         path_download = file_loader.download()
         assert os.path.isfile(path_download)

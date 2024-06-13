@@ -35,7 +35,6 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -5125,11 +5124,13 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5284,11 +5285,13 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
