@@ -768,12 +768,10 @@ class PolyDataFilters(DataSetFilters):
             if len(curvs) > 0:
                 weights = 1 / np.array(dists)
                 weights /= weights.sum()
-                new_curv = np.dot(curvs, weights)
+                curvatures[p_id] = np.dot(curvs, weights)
             else:
                 # Assuming the curvature of the point is planar.
-                new_curv = 0.0
-            # Set the new curvature value.
-            curvatures[p_id] = new_curv
+                curvatures[p_id] = 0.0
         if epsilon != 0.0:
             curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
         return curvatures
