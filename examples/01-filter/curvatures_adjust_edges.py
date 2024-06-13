@@ -21,8 +21,8 @@ source = (
     .rotate_x(-90.0)
 )
 
-source['Gauss_Curvature'] = source.curvature("gaussian", adjust_edges=True)
-source['Mean_Curvature'] = source.curvature("mean", adjust_edges=True)
+source['Gauss_Curvature'] = source.adjusted_edge_curvature("gaussian")
+source['Mean_Curvature'] = source.adjusted_edge_curvature("mean")
 
 # Let's visualize what we have done.
 

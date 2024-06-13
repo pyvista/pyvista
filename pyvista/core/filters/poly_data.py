@@ -715,7 +715,7 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection, first, second
 
-    def curvature(self, curv_type='mean', progress_bar=False, adjust_edges=False, epsilon=1.0e-08):
+    def curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise curvature of a mesh.
 
         See :ref:`connectivity_example` for more examples using this
@@ -733,14 +733,6 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
-        adjust_edges : bool, default: False
-            Adjusts curvatures along the edges of the surface by replacing
-            the value with the average value of the curvatures of points
-            in the neighborhood.
-
-        epsilon : float, default: 1.0e-08
-            Absolute curvature values less than this will be set to zero.
 
         Returns
         -------
@@ -783,10 +775,56 @@ class PolyDataFilters(DataSetFilters):
 
         # Compute and return curvature
         curv = _get_output(curvefilter)
-        if adjust_edges and curv_type == 'mean':
+        return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
+
+    def adjusted_edge_curvature(self, curv_type='mean', epsilon=1.0e-08, progress_bar=False):
+        """Return the pointwise adjusted edge curvature of a mesh.
+
+        Parameters
+        ----------
+        curv_type : str, default: "mean"
+            Curvature type.  One of the following:
+
+            * ``"mean"``
+            * ``"gaussian"``
+
+        epsilon : float, default: 1.0e-08
+            Absolute curvature values less than this will be set to zero.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of curvature values.
+
+        Notes
+        -----
+        This method adjusts curvatures along the edges of the surface by replacing
+        the value with the average value of the curvatures of points in the neighborhood.
+        Remember to update the vtkCurvatures object before calling this.
+
+        This method is ported from `CurvaturesAdjustEdges <https://examples.vtk.org/site/Python/PolyData/CurvaturesAdjustEdges/>`_ .
+        """
+        if curv_type == 'mean':
+            curvefilter = _vtk.vtkCurvatures()
+            curvefilter.SetInputData(self)
+            curvefilter.SetCurvatureTypeToMean()
+            _update_alg(curvefilter, progress_bar, 'Computing Curvature')
+            curv = _get_output(curvefilter)
             _adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
-        if adjust_edges and curv_type == 'gaussian':
+        elif curv_type == 'gaussian':
+            curvefilter = _vtk.vtkCurvatures()
+            curvefilter.SetInputData(self)
+            curvefilter.SetCurvatureTypeToGaussian()
+            _update_alg(curvefilter, progress_bar, 'Computing Curvature')
+            curv = _get_output(curvefilter)
             _adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
+        else:
+            raise ValueError(
+                '``curv_type`` must be either "Mean" or "Gaussian".',
+            )
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
     def plot_curvature(self, curv_type='mean', **kwargs):
