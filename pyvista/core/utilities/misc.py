@@ -1,18 +1,22 @@
 """Miscellaneous core utilities."""
 
-from collections.abc import Sequence
+from __future__ import annotations
+
 import enum
 from functools import lru_cache
 import importlib
 import sys
 import threading
 import traceback
-from typing import Type, TypeVar, Union
+from typing import TYPE_CHECKING
+from typing import Sequence
+from typing import TypeVar
 import warnings
 
 import numpy as np
 
-from .._typing_core import VectorLike
+if TYPE_CHECKING:  # pragma: no cover
+    from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
@@ -44,10 +48,7 @@ def assert_empty_kwargs(**kwargs):
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
-    if n == 1:
-        grammar = "is an invalid keyword argument"
-    else:
-        grammar = "are invalid keyword arguments"
+    grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
     message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
@@ -77,7 +78,6 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
         if name == '':
             name = 'Vector'
         raise ValueError(f'{name} must be a length three iterable of floats.')
-    return None
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01
@@ -139,7 +139,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: T | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -203,7 +203,7 @@ def try_callback(func, *args):
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
-            traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
+            traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
         warnings.warn(formatted_exception)
 
@@ -261,7 +261,7 @@ def _check_range(value, rng, parm_name):
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
         raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
         )
 
 
@@ -281,7 +281,7 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
         else:
             raise AttributeError(
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
+                f'{self.__class__.__name__}',
             )
 
     cls.__setattr__ = __setattr__

@@ -6,16 +6,21 @@ The UI generated here is the default for rendering in Jupyter
 environments and provides a starting point for custom user-built
 applications.
 """
-from typing import Dict
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import warnings
 
 from trame.app import get_server
 
-from .base_viewer import BaseViewer
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
 
-_VIEWERS: Dict[str, BaseViewer] = {}
+if TYPE_CHECKING:  # pragma: no cover
+    from .base_viewer import BaseViewer
+
+_VIEWERS: dict[str, BaseViewer] = {}
 UI_TITLE = 'PyVista'
 
 
@@ -64,7 +69,12 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
 
 
 def plotter_ui(
-    plotter, mode=None, default_server_rendering=True, collapse_menu=False, add_menu=True, **kwargs
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    add_menu=True,
+    **kwargs,
 ):
     """Create a UI view for the given Plotter.
 

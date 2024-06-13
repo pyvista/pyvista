@@ -1,11 +1,21 @@
 """Tests for pyvista.core.dataset."""
 
+from __future__ import annotations
+
 import multiprocessing
 import pickle
+from typing import TYPE_CHECKING
 
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis.extra.numpy import array_shapes, arrays
-from hypothesis.strategies import composite, floats, integers, one_of
+from hypothesis import HealthCheck
+from hypothesis import assume
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.extra.numpy import array_shapes
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import composite
+from hypothesis.strategies import floats
+from hypothesis.strategies import integers
+from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -13,17 +23,18 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
-from pyvista.examples import (
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -539,7 +550,7 @@ def test_arrows():
 
     # make cool swirly pattern
     vectors = np.vstack(
-        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2]))
+        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2])),
     ).T
 
     # add and scales
@@ -567,7 +578,8 @@ def active_component_consistency_check(grid, component_type, field_association="
 
     pv_arr = getattr(grid, "active_" + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}"
+        getattr(grid, f"Get{vtk_field_association}Data")(),
+        f"Get{vtk_component_type}",
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -1190,8 +1202,8 @@ def test_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for res, dataset in zip(res, datasets):
-        assert res == dataset.n_points
+    for re, dataset in zip(res, datasets):
+        assert re == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1441,7 +1453,8 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1461,7 +1474,8 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
@@ -1608,8 +1622,8 @@ def test_point_cell_ids(grid: DataSet, i0):
     cell_ids = grid.point_cell_ids(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that the output cells contain the i0-th point but also that the
@@ -1629,8 +1643,8 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one point with the
@@ -1654,8 +1668,8 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one edge with the
@@ -1695,8 +1709,8 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one face with the
@@ -1732,7 +1746,9 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
 @pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
 @pytest.mark.parametrize(
-    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+    "connections",
+    ["points", "edges", "faces"],
+    ids=lambda x: f"connections={x}",
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
@@ -1753,8 +1769,8 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert len(list(cell_ids)) == n_levels
         for ids in cell_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_cells for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_cells for id_ in ids)
             assert len(ids) > 0
 
 
@@ -1777,8 +1793,8 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert len(list(point_ids)) == n_levels
         for ids in point_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_points for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_points for id_ in ids)
             assert len(ids) > 0
 
 

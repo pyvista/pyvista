@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import platform
 
 import numpy as np
@@ -8,7 +10,8 @@ import pyvista as pv
 from pyvista import examples
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -42,6 +45,24 @@ def test_actor_init_empty():
         actor.not_an_attribute = None
 
     assert actor.memory_address == actor.GetAddressAsString("")
+
+    actor.user_matrix = None
+    repr_ = repr(actor)
+    assert "User matrix:                Identity" in repr_
+
+    actor.user_matrix = np.eye(4) * 2
+    repr_ = repr(actor)
+    assert "User matrix:                Set" in repr_
+
+
+def test_actor_from_argument():
+    mapper = pv.DataSetMapper()
+    prop = pv.Property()
+    name = 'Actor'
+    actor = pv.Actor(mapper=mapper, prop=prop, name=name)
+    assert actor.mapper is mapper
+    assert actor.prop is prop
+    assert actor.name == name
 
 
 def test_actor_from_plotter():
@@ -103,6 +124,8 @@ def test_actor_scale(actor):
     scale = (2, 2, 2)
     actor.scale = scale
     assert actor.scale == scale
+    actor.scale = 3
+    assert actor.scale == (3, 3, 3)
 
 
 def test_actor_position(actor):
@@ -128,10 +151,38 @@ def test_actor_rotate_z(actor):
 
 
 def test_actor_orientation(actor):
-    actor.orientation == (0, 0, 0)
+    assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
     assert np.allclose(actor.orientation, orientation)
+
+
+def test_actor_rotation_order(actor):
+    orientation = (10, 20, 30)
+    dataset = pv.Cube()
+    dataset.rotate_y(orientation[1], inplace=True)
+    dataset.rotate_x(orientation[0], inplace=True)
+    dataset.rotate_z(orientation[2], inplace=True)
+
+    actor = pv.Actor(mapper=pv.DataSetMapper(pv.Cube()))
+    actor.orientation = orientation
+    assert np.allclose(dataset.bounds, actor.bounds)
+
+
+def test_actor_origin(actor):
+    assert actor.origin == (0, 0, 0)
+    origin = (1, 2, 3)
+    actor.origin = origin
+    assert np.allclose(actor.origin, origin)
+
+
+def test_actor_length(actor):
+    initial_length = 2**0.5  # sqrt(2)
+    scale_factor = 2
+
+    assert actor.length == initial_length
+    actor.scale = scale_factor
+    assert actor.length == initial_length * scale_factor
 
 
 def test_actor_unit_matrix(actor):
@@ -151,6 +202,14 @@ def test_actor_bounds(actor):
 
 def test_actor_center(actor):
     assert actor.center == (0.0, 0.0, 0.0)
+
+
+def test_actor_name(actor):
+    actor.name = 1
+    assert actor._name == 1
+
+    with pytest.raises(ValueError, match='Name must be truthy'):
+        actor.name = None
 
 
 def test_actor_backface_prop(actor):

@@ -1,5 +1,7 @@
 """Deprecated utilities subpackage."""
 
+from __future__ import annotations
+
 import importlib
 import inspect
 import warnings
@@ -52,7 +54,7 @@ def __getattr__(name):
             break
     else:
         raise AttributeError(
-            f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
+            f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.',
         ) from None  # pragma: no cover
 
     message = f'The `pyvista.errors` module has been deprecated. `{name}` is now imported as: `{import_path}`.'

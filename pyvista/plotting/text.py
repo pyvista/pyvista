@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-import os
 import pathlib
-from typing import Sequence
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pyvista
-from pyvista.core.utilities.misc import _check_range, no_new_attr
+from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
-from ._typing import ColorLike
 from .colors import Color
 from .themes import Theme
 from .tools import FONTS
+
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
+
+    from ._typing import ColorLike
 
 
 @no_new_attr
@@ -519,7 +524,7 @@ class TextProperty(_vtk.vtkTextProperty):
         """
         path = pathlib.Path(font_file)
         path = path.resolve()
-        if not os.path.isfile(path):
+        if not Path(path).is_file():
             raise FileNotFoundError(f'Unable to locate {path}')
         self.SetFontFamily(_vtk.VTK_FONT_FILE)
         self.SetFontFile(str(path))
@@ -550,7 +555,7 @@ class TextProperty(_vtk.vtkTextProperty):
         else:
             raise ValueError(
                 f'Invalid {justification} for justification_horizontal. '
-                'Should be either "left", "center" or "right".'
+                'Should be either "left", "center" or "right".',
             )
 
     @property
@@ -579,7 +584,7 @@ class TextProperty(_vtk.vtkTextProperty):
         else:
             raise ValueError(
                 f'Invalid {justification} for justification_vertical. '
-                'Should be either "bottom", "center" or "top".'
+                'Should be either "bottom", "center" or "top".',
             )
 
     @property

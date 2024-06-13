@@ -1,25 +1,31 @@
 """Core helper utilities."""
 
-import collections
-from typing import TYPE_CHECKING, Optional, Union, cast
+from __future__ import annotations
+
+from collections import deque
+from typing import TYPE_CHECKING
+from typing import Sequence
+from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
-    from trimesh import Trimesh
     from meshio import Mesh
+    from trimesh import Trimesh
+
+    from pyvista.core._typing_core import NumpyArray
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import NumpyArray
 
 from . import transformations
-from .fileio import from_meshio, is_meshio_mesh
+from .fileio import from_meshio
+from .fileio import is_meshio_mesh
 
 
 def wrap(
-    dataset: Optional[Union[NumpyArray[float], _vtk.vtkDataSet, 'Trimesh', 'Mesh']]
-) -> Optional[Union['pyvista.DataSet', 'pyvista.pyvista_ndarray']]:
+    dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
+) -> pyvista.DataSet | pyvista.pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:
@@ -124,7 +130,7 @@ def wrap(
             mesh = pyvista.ImageData(dimensions=dataset.shape)
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
-                dataset = np.array(dataset, copy=False)
+                dataset = np.asarray(dataset)
             mesh['values'] = dataset.ravel(order='F')
             mesh.active_scalars_name = 'values'
             return mesh
@@ -142,7 +148,7 @@ def wrap(
             return pyvista._wrappers[key](dataset)
         except KeyError:
             raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
-        return
+        return None  # pragma: no cover
 
     # wrap meshio
     if is_meshio_mesh(dataset):
@@ -153,7 +159,8 @@ def wrap(
         # trimesh doesn't pad faces
         dataset = cast('Trimesh', dataset)
         polydata = pyvista.PolyData.from_regular_faces(
-            np.asarray(dataset.vertices), faces=dataset.faces
+            np.asarray(dataset.vertices),
+            faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
         if hasattr(dataset.visual, 'uv'):
@@ -278,15 +285,16 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(
-        point, collections.deque
+    if isinstance(point, (np.ndarray, Sequence)) and not isinstance(
+        point,
+        deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise ValueError('Bounds mismatch point dimensionality')
-        point = collections.deque(point)
-        bounds = collections.deque(bounds)
+        point = deque(point)
+        bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
-    if not isinstance(point, collections.deque):
+    if not isinstance(point, deque):
         raise TypeError(f'Unknown input data type ({type(point)}).')
     if len(point) < 1:
         return True

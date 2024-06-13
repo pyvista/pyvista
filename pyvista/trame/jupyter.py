@@ -1,16 +1,16 @@
 """Trame utilities for running in Jupyter."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
 import warnings
 
-from trame.widgets import (
-    html as html_widgets,
-    vtk as vtk_widgets,
-    vuetify as vuetify2_widgets,
-    vuetify3 as vuetify3_widgets,
-)
+from trame.widgets import html as html_widgets
+from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vuetify as vuetify2_widgets
+from trame.widgets import vuetify3 as vuetify3_widgets
 
 try:
     from ipywidgets.widgets import HTML
@@ -19,8 +19,10 @@ except ImportError:
 
 
 import pyvista
-from pyvista.trame.ui import UI_TITLE, get_viewer
-from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
+from pyvista.trame.ui import UI_TITLE
+from pyvista.trame.ui import get_viewer
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR
+from pyvista.trame.views import get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -147,7 +149,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
 
     wslink_backend : str, optional
-        The the wslink backend that the server should use
+        The wslink backend that the server should use
         ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
 
     **kwargs : dict, optional
@@ -228,7 +230,12 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+    server,
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
@@ -446,7 +453,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-"""
+""",
         )
 
     async def launch_it():  # numpydoc ignore=GL08

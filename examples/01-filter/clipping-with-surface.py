@@ -14,6 +14,8 @@ but many folks leverage the ``clip_surface`` filter to triangulate/tessellate
 the mesh geometries along the clip.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4

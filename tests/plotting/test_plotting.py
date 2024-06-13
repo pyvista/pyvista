@@ -5,32 +5,43 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 """
 
+from __future__ import annotations
+
 import inspect
 import io
 import os
 import pathlib
+from pathlib import Path
 import platform
 import re
 import time
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from types import FunctionType
+from types import ModuleType
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.errors import InvalidCameraError
+from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+    from collections.abc import ItemsView
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -48,11 +59,11 @@ try:
         import imageio_ffmpeg
 
         imageio_ffmpeg.get_ffmpeg_exe()
-    except ImportError as err:
+    except ImportError:
         if HAS_IMAGEIO:
             imageio.plugins.ffmpeg.download()
         else:
-            raise err
+            raise
 except:
     ffmpeg_failed = True
 
@@ -75,24 +86,29 @@ def using_mesa():
 # These tests fail with mesa opengl on windows
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_windows_mesa = pytest.mark.skipif(
-    using_mesa() and os.name == 'nt', reason='Does not display correctly within OSMesa on Windows'
+    using_mesa() and os.name == 'nt',
+    reason='Does not display correctly within OSMesa on Windows',
 )
 skip_9_1_0 = pytest.mark.needs_vtk_version(9, 1, 0)
 skip_9_0_X = pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason="Flaky on 9.0.X")
 skip_lesser_9_0_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1), reason="Functions not implemented before 9.0.X"
+    pv.vtk_version_info < (9, 1),
+    reason="Functions not implemented before 9.0.X",
 )
 skip_lesser_9_3_X = pytest.mark.skipif(
-    pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X"
+    pv.vtk_version_info < (9, 3),
+    reason="Functions not implemented before 9.3.X",
 )
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 skip_mac_flaky = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='This is a flaky test on MacOS'
+    platform.system() == 'Darwin',
+    reason='This is a flaky test on MacOS',
 )
 skip_mesa = pytest.mark.skipif(using_mesa(), reason='Does not display correctly within OSMesa')
 
@@ -126,7 +142,7 @@ def test_import_gltf(verify_image_cache):
     # image cache created with 9.0.20210612.dev0
     verify_image_cache.high_variance_test = True
 
-    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.glb')
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.glb')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -157,7 +173,7 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 
 
 def test_import_vrml():
-    filename = os.path.join(THIS_PATH, '..', 'example_files', 'Box.wrl')
+    filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -182,6 +198,29 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
         pl_import.export_vrml(filename)
 
 
+def test_import_3ds():
+    filename = examples.download_3ds.download_iflamigm()
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_3ds('not a file')
+
+    pl.import_3ds(filename)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj():
+    download_obj_file = examples.download_room_surface_mesh(load=False)
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj('not a file')
+
+    pl.import_obj(download_obj_file)
+    pl.show()
+
+
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
@@ -194,7 +233,13 @@ def test_pbr(sphere, verify_image_cache):
     pl.set_environment_texture(texture)
     pl.add_light(pv.Light())
     pl.add_mesh(
-        sphere, color='w', pbr=True, metallic=0.8, roughness=0.2, smooth_shading=True, diffuse=1
+        sphere,
+        color='w',
+        pbr=True,
+        metallic=0.8,
+        roughness=0.2,
+        smooth_shading=True,
+        diffuse=1,
     )
     pl.add_mesh(
         pv.Sphere(center=(0, 0, 1)),
@@ -296,7 +341,7 @@ def test_plot(sphere, tmpdir, verify_image_cache, anti_aliasing):
     )
     assert isinstance(cpos, pv.CameraPosition)
     assert isinstance(img, np.ndarray)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     verify_image_cache.skip = True
     filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
@@ -588,7 +633,8 @@ def test_set_camera_position(cpos, sphere):
 
 
 @pytest.mark.parametrize(
-    'cpos', [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid']
+    'cpos',
+    [[(2.0, 5.0), (0.0, 0.0, 0.0), (-0.7, -0.5, 0.3)], [-1, 2], [(1, 2, 3)], 'notvalid'],
 )
 def test_set_camera_position_invalid(cpos, sphere):
     plotter = pv.Plotter()
@@ -759,7 +805,11 @@ def test_plot_add_scalar_bar(sphere, verify_image_cache):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(
-        label_font_size=10, title_font_size=20, title='woa', interactive=True, vertical=True
+        label_font_size=10,
+        title_font_size=20,
+        title='woa',
+        interactive=True,
+        vertical=True,
     )
     plotter.add_scalar_bar(background_color='white', n_colors=256)
     assert isinstance(plotter.scalar_bar, vtk.vtkScalarBarActor)
@@ -828,7 +878,7 @@ def test_make_movie(sphere, tmpdir, verify_image_cache):
 
     # remove file
     plotter.close()
-    os.remove(filename)  # verifies that the plotter has closed
+    Path(filename).unlink()  # verifies that the plotter has closed
 
 
 def test_add_legend(sphere):
@@ -849,7 +899,11 @@ def test_legend_circle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "circle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -860,7 +914,11 @@ def test_legend_rectangle_face(sphere):
     legend_labels = [['sphere', 'r']]
     face = "rectangle"
     _ = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        face=face,
     )
     plotter.show()
 
@@ -872,7 +930,11 @@ def test_legend_invalid_face(sphere):
     face = "invalid_face"
     with pytest.raises(ValueError):  # noqa: PT011
         plotter.add_legend(
-            labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], face=face
+            labels=legend_labels,
+            border=True,
+            bcolor=None,
+            size=[0.1, 0.1],
+            face=face,
         )
 
 
@@ -939,7 +1001,7 @@ def test_isometric_view_interactive(sphere):
     plotter_iso.camera_position = 'xy'
     cpos_old = plotter_iso.camera_position
     plotter_iso.isometric_view_interactive()
-    assert not plotter_iso.camera_position == cpos_old
+    assert plotter_iso.camera_position != cpos_old
 
 
 def test_add_point_labels():
@@ -954,7 +1016,11 @@ def test_add_point_labels():
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
     plotter.add_point_labels(
-        points - 1, range(n), show_points=False, point_color='r', point_size=10
+        points - 1,
+        range(n),
+        show_points=False,
+        point_color='r',
+        point_size=10,
     )
     plotter.show()
 
@@ -964,7 +1030,9 @@ def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
     plotter = pv.Plotter()
     plotter.add_point_labels(
-        np.array([[0.0, 0.0, 0.0]]), ['hello world'], always_visible=always_visible
+        np.array([[0.0, 0.0, 0.0]]),
+        ['hello world'],
+        always_visible=always_visible,
     )
     plotter.show()
 
@@ -997,7 +1065,7 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    plotter.background_color
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
@@ -1021,7 +1089,11 @@ def test_add_points():
     n = points.shape[0]
 
     plotter.add_points(
-        points, scalars=np.arange(n), cmap=None, flip_scalars=True, show_scalar_bar=False
+        points,
+        scalars=np.arange(n),
+        cmap=None,
+        flip_scalars=True,
+        show_scalar_bar=False,
     )
     plotter.show()
 
@@ -1258,7 +1330,7 @@ def test_save_screenshot(tmpdir, sphere, ext):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
     plotter.screenshot(filename)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
     assert pathlib.Path(filename).stat().st_size
 
 
@@ -1777,7 +1849,7 @@ def test_multiblock_volume_rendering(uniform):
             b=ds_b,
             c=ds_c,
             d=ds_d,
-        )
+        ),
     )
     data['a'].rename_array('Spatial Point Data', 'a')
     data['b'].rename_array('Spatial Point Data', 'b')
@@ -1936,6 +2008,31 @@ def test_opacity_transfer_functions():
     foo = [3, 5, 6, 10]
     mapping = pv.opacity_transfer_function(foo, n)
     assert len(mapping) == n
+
+
+@skip_windows_mesa
+@pytest.mark.parametrize(
+    'opacity',
+    [
+        'sigmoid',
+        'sigmoid_1',
+        'sigmoid_2',
+        'sigmoid_3',
+        'sigmoid_4',
+        'sigmoid_5',
+        'sigmoid_6',
+        'sigmoid_7',
+        'sigmoid_8',
+        'sigmoid_9',
+        'sigmoid_10',
+        'sigmoid_15',
+        'sigmoid_20',
+    ],
+)
+def test_plot_sigmoid_opacity_transfer_functions(uniform, opacity):
+    pl = pv.Plotter()
+    pl.add_volume(uniform, opacity=opacity)
+    pl.show()
 
 
 def test_closing_and_mem_cleanup(verify_image_cache):
@@ -2338,7 +2435,11 @@ def test_plot_shadows_enable_disable():
         plotter.add_mesh(screen, color='white')
 
     light = pv.Light(
-        position=(0, 0, 0), focal_point=(0, 1, 0), color='cyan', intensity=15, cone_angle=15
+        position=(0, 0, 0),
+        focal_point=(0, 1, 0),
+        color='cyan',
+        intensity=15,
+        cone_angle=15,
     )
     light.positional = True
     light.attenuation_values = (2, 0, 0)
@@ -2553,6 +2654,19 @@ def test_splitting():
     )
 
 
+@pytest.mark.parametrize('smooth_shading', [True, False])
+@pytest.mark.parametrize('use_custom_normals', [True, False])
+def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
+    sphere = pv.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere.clear_data()
+
+    if use_custom_normals:
+        normals = [[0, 0, -1]] * sphere.n_points
+        sphere.point_data.active_normals = normals
+
+    sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
+
+
 @skip_mac_flaky
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
@@ -2657,8 +2771,8 @@ def test_write_gif(sphere, tmpdir):
     pl.close()
 
     # assert file exists and is not empty
-    assert os.path.isfile(path)
-    assert os.path.getsize(path)
+    assert Path(path).is_file()
+    assert Path(path).stat().st_size
 
 
 def test_ruler():
@@ -2726,7 +2840,7 @@ def test_screenshot_notebook(tmpdir):
     pl.add_mesh(pv.Cone())
     pl.show(screenshot=filename)
 
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
 
 def test_culling_frontface(sphere):
@@ -2758,10 +2872,14 @@ def test_add_text_latex():
 
 def test_add_text_font_file():
     plotter = pv.Plotter()
-    font_file = os.path.join(os.path.dirname(__file__), "fonts/Mplus2-Regular.ttf")
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     plotter.add_text("左上", position='upper_left', font_size=25, color='blue', font_file=font_file)
     plotter.add_text(
-        "中央", position=(0.5, 0.5), viewport=True, orientation=-90, font_file=font_file
+        "中央",
+        position=(0.5, 0.5),
+        viewport=True,
+        orientation=-90,
+        font_file=font_file,
     )
     plotter.show()
 
@@ -3052,7 +3170,7 @@ def test_export_obj(tmpdir, sphere):
     pl.export_obj(filename)
 
     # Check that the object file has been written
-    assert os.path.exists(filename)
+    assert Path(filename).exists()
 
     # Check that when we close the plotter, the adequate error is raised
     pl.close()
@@ -3170,7 +3288,7 @@ def test_tight_direction(view, negative, colorful_tetrahedron):
 def test_tight_multiple_objects():
     pl = pv.Plotter()
     pl.add_mesh(
-        pv.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0)
+        pv.Cone(center=(0.0, -2.0, 0.0), direction=(0.0, -1.0, 0.0), height=1.0, radius=1.0),
     )
     pl.add_mesh(pv.Sphere(center=(0.0, 0.0, 0.0)))
     pl.camera.tight()
@@ -3273,7 +3391,10 @@ def test_plot_nan_color(uniform):
     # nan annotation should appear on scalar bar
     pl = pv.Plotter()
     pl.add_mesh(
-        uniform, nan_opacity=0.5, nan_color='green', scalar_bar_args=dict(nan_annotation=True)
+        uniform,
+        nan_opacity=0.5,
+        nan_color='green',
+        scalar_bar_args=dict(nan_annotation=True),
     )
     pl.enable_depth_peeling()
     pl.show()
@@ -3710,7 +3831,8 @@ def test_plot_cubemap_alone(cubemap):
 
 
 @pytest.mark.skipif(
-    uses_egl(), reason="Render window will be current with offscreen builds of VTK."
+    uses_egl(),
+    reason="Render window will be current with offscreen builds of VTK.",
 )
 def test_not_current(verify_image_cache):
     verify_image_cache.skip = True
@@ -3783,41 +3905,43 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@skip_lesser_9_0_X
+def test_axes_actor_default_colors():
+    axes = pv.AxesActor()
+    axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+
+    plot = pv.Plotter()
+    plot.add_actor(axes)
+    plot.camera.zoom(1.5)
+    plot.show()
+
+
 def test_axes_actor_properties():
     axes = pv.Axes()
     axes_actor = axes.axes_actor
+    axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+    axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
+    axes_actor.x_label = 'U'
+    axes_actor.y_label = 'V'
+    axes_actor.z_label = 'W'
 
-    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
-    axes_actor.y_axis_shaft_properties.metallic = 0.2
-    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.z_axis_shaft_properties.roughness = 0.3
-    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+    # Test actor properties using color
+    x_color = (1.0, 0.0, 1.0)  # magenta
+    y_color = (1.0, 1.0, 0.0)  # yellow
+    z_color = (0.0, 1.0, 1.0)  # cyan
 
-    axes_actor.x_axis_tip_properties.anisotropy = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-    axes_actor.y_axis_tip_properties.lighting = False
-    assert not axes_actor.y_axis_tip_properties.lighting
-    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
+    axes_actor.x_axis_shaft_properties.color = x_color
+    axes_actor.x_axis_tip_properties.color = x_color
 
-    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-    axes_actor.z_axis_shaft_properties.shading = False
-    assert not axes_actor.z_axis_shaft_properties.shading
+    axes_actor.y_axis_shaft_properties.color = y_color
+    axes_actor.y_axis_tip_properties.color = y_color
 
-    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
-    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
+    axes_actor.z_axis_shaft_properties.color = z_color
+    axes_actor.z_axis_tip_properties.color = z_color
 
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-    pl = pv.Plotter()
-    pl.add_actor(axes_actor)
-    pl.show()
+    plot = pv.Plotter()
+    plot.add_actor(axes_actor)
+    plot.camera.zoom(1.5)
+    plot.show()
 
 
 def test_show_bounds_no_labels():
@@ -4030,10 +4154,10 @@ def test_create_axes_orientation_box():
     plotter.show()
 
 
-_TypeType = TypeVar('_TypeType', bound=Type)
+_TypeType = TypeVar('_TypeType', bound=type)
 
 
-def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
     """Get all members of a specified type which are defined locally inside a module."""
 
     def is_local(obj):
@@ -4047,7 +4171,7 @@ def _get_module_functions(module: ModuleType):
     return _get_module_members(module, typ=FunctionType)
 
 
-def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
+def _get_default_kwargs(call: Callable) -> dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
     # Get default value for positional or keyword args
@@ -4068,13 +4192,11 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-            return True
         except BaseException as ex:
             # Param is not valid only if a kwarg TypeError is raised
-            if 'TypeError' in repr(ex) and 'unexpected keyword argument' in repr(ex):
-                return False
-            else:
-                return True
+            return not ("TypeError" in repr(ex) and "unexpected keyword argument" in repr(ex))
+        else:
+            return True
 
 
 def _get_default_param_value(call: Callable, param: str) -> Any:
@@ -4085,7 +4207,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param
@@ -4168,7 +4290,7 @@ def test_direction_objects(direction_obj_test_case):
         legacy_vtk = pv.vtk_version_info < (9, 3)
         if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
             pytest.xfail(
-                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.'
+                'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
             )
 
     direction_param_name = None
