@@ -2766,6 +2766,38 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
+    def compute_points_length(self, point_id_a, point_id_b):
+        """Compute the length between two points given their ids.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        point_id_a : int
+            Index of the first point.
+
+        point_id_b : int
+            Index of the second point.
+
+        Examples
+        --------
+        Compute the length between two points on a line.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Line((0, 0, 0), (0, 0, 1))
+        >>> length = mesh.compute_points_length(0, 1)
+        >>> f'Length is {length:.3f}'
+        'Length is 1.000'
+
+        Returns
+        -------
+        float
+            Length between the two points.
+        """
+        return np.linalg.norm(
+            np.array(self.GetPoint(point_id_a)) - np.array(self.GetPoint(point_id_b))
+        )
+
     def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace=False):
         """Project points of this mesh to a plane.
 

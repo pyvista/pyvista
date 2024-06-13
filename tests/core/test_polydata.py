@@ -1296,3 +1296,12 @@ def test_n_faces_etc_deprecated(cells: str):
             raise RuntimeError(f"Convert `PolyData` `{n_cells}` deprecation warning to error")
         if pv._version.version_info >= (0, 48):
             raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")
+
+
+def test_compute_points_length():
+    point_a = np.array([0, 0, 0])
+    point_b = np.array([1, 1, 1])
+    mesh = pv.Line(point_a, point_b)
+    assert np.isclose(
+        mesh.compute_points_length(0, 1), np.linalg.norm(point_b - point_a), rtol=1e-3
+    )
