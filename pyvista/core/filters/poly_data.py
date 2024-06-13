@@ -775,6 +775,7 @@ class PolyDataFilters(DataSetFilters):
 
         if epsilon != 0.0:
             source[curvature_name] = np.where(abs(curvatures) < epsilon, 0, curvatures)
+        return curvatures
 
     def adjusted_edge_curvature(self, curv_type='mean', epsilon=1.0e-08, progress_bar=False):
         """Return the pointwise adjusted edge curvature of a mesh.
@@ -812,19 +813,19 @@ class PolyDataFilters(DataSetFilters):
             curvefilter.SetCurvatureTypeToMean()
             _update_alg(curvefilter, progress_bar, 'Computing Curvature')
             curv = _get_output(curvefilter)
-            self._adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
+            curvatures = self._adjust_edge_curvatures(curv, 'Mean_Curvature', epsilon=epsilon)
         elif curv_type == 'gaussian':
             curvefilter = _vtk.vtkCurvatures()
             curvefilter.SetInputData(self)
             curvefilter.SetCurvatureTypeToGaussian()
             _update_alg(curvefilter, progress_bar, 'Computing Curvature')
             curv = _get_output(curvefilter)
-            self._adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
+            curvatures = self._adjust_edge_curvatures(curv, 'Gauss_Curvature', epsilon=epsilon)
         else:
             raise ValueError(
                 '``curv_type`` must be either "Mean" or "Gaussian".',
             )
-        return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
+        return curvatures
 
     def plot_curvature(self, curv_type='mean', **kwargs):
         """Plot the curvature.
