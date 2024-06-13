@@ -708,6 +708,8 @@ class PolyDataFilters(DataSetFilters):
 
             * ``"mean"``
             * ``"gaussian"``
+            * ``"maximum"``
+            * ``"minimum"``
 
         epsilon : float, default: 1.0e-08
             Absolute curvature values less than this will be set to zero.
@@ -750,7 +752,6 @@ class PolyDataFilters(DataSetFilters):
 
         # Iterate over the edge points and compute the curvature as the weighted
         # average of the neighbours.
-        count_invalid = 0
         for p_id in boundary_ids:
             p_ids_neighbors = set(self.point_neighbors(p_id))
             # Keep only interior points.
@@ -767,16 +768,12 @@ class PolyDataFilters(DataSetFilters):
                 weights /= weights.sum()
                 new_curv = np.dot(curvs, weights)
             else:
-                # Corner case.
-                count_invalid += 1
                 # Assuming the curvature of the point is planar.
                 new_curv = 0.0
             # Set the new curvature value.
             curvatures[p_id] = new_curv
-
         if epsilon != 0.0:
             curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
-
         return curvatures
 
     def plot_curvature(self, curv_type='mean', **kwargs):
