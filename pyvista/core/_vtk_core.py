@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 import contextlib
 from typing import NamedTuple
 import warnings
