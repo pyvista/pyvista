@@ -1076,6 +1076,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             position=position,
             scale=scale,
             user_matrix=user_matrix,
+            **kwargs,
         )
         axes_actor = axes_assembly.output_axes_actor
         self.add_actor(axes_actor)

@@ -934,15 +934,24 @@ class AxesAssembly:
 
     @property
     def transformation_matrix(self):
-        matrix = np.eye(4)
-        matrix[:3, :3] = self.direction_vectors
-        matrix[:3, 3] = self.position
-        return matrix
+        # Scale proportional to axis length
+        scale_matrix = np.eye(4)
+        scale_matrix[:3, :3] = np.diag(self._total_length)
 
-    @property
-    def tip_position(self):
-        tips = np.diag(np.array(self.total_length) * self.scale)
-        return apply_transformation_to_points(self.transformation_matrix, tips)
+        position_matrix = np.eye(4)
+        position_matrix[:3, 3] = self.position
+
+        rotation_matrix = np.eye(4)
+        rotation_matrix[:3, :3] = self.direction_vectors
+
+        # Scale first, then rotate, then move
+        return position_matrix @ rotation_matrix @ scale_matrix
+
+    #
+    # @property
+    # def tip_position(self):
+    #     tips = np.diag(np.array(self.total_length) * self.scale)
+    #     return apply_transformation_to_points(self.transformation_matrix, tips)
 
     @property
     def label_color(self):
@@ -1107,14 +1116,13 @@ class AxesAssembly:
         for group in [self._datasets['shafts'], self._datasets['tips']]:
             for block in group:
                 if block is not None:
-                    block.translate(self._position, inplace=True)
+                    block.transform(self.transformation_matrix, inplace=True)
 
     def _get_transformed_label_positions(self):
-        # Scale label position proportional to length of each axis
-        total_length, label_position = self._total_length, self._label_position
-        scale = total_length * label_position
-        x_pos, y_pos, z_pos = np.diag(scale) + self.position
-        return x_pos, y_pos, z_pos
+        # Initial position vectors
+        points = np.diag(self.label_position)
+        matrix = self.transformation_matrix
+        return apply_transformation_to_points(matrix, points)
 
     def _transform_labels(self):
         x_pos, y_pos, z_pos = self._get_transformed_label_positions()
@@ -1136,7 +1144,7 @@ class AxesAssembly:
 
         for block in self._datasets['labels']:
             if block is not None:
-                block.translate(self._position, inplace=True)
+                block.transform(self.transformation_matrix, inplace=True)
 
     @property
     def output_axes_dataset(self):

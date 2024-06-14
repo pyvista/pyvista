@@ -7,6 +7,7 @@ from typing import Tuple
 
 import numpy as np
 
+from pyvista.core import _validation
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
@@ -377,3 +378,12 @@ class Prop3D(_vtk.vtkProp3D):
         1.7272069317100354
         """
         return self.GetLength()
+
+    @staticmethod
+    def orientation_to_direction_vectors(orientation: VectorLike[float]) -> NumpyArray[float]:
+        orientation_ = _validation.validate_array3(orientation, must_be_integer=True, dtype_out=int)
+        prop = _vtk.vtkActor()
+        prop.SetOrientation(orientation_)
+        matrix = _vtk.vtkMatrix4x4()
+        prop.GetMatrix(matrix)
+        return array_from_vtkmatrix(matrix)[:3, :3]

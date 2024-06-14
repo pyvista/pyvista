@@ -29,6 +29,7 @@ from PIL import Image
 import pytest
 import vtk
 
+import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
@@ -3974,16 +3975,20 @@ def test_axes_assembly_plot():
     pl.show()
 
 
+def _direction_vectors():
+    return pyvista.Prop3D.orientation_to_direction_vectors((10, 20, 30))
+
+
 @pytest.mark.parametrize(
     'test_kwargs',
     [
         {},
         {'position': (-0.5, -0.5, 1)},
-        # {'orientation': (10, 20, 30)},
+        {'direction_vectors': _direction_vectors()},
         # {'scale': (1, 2, 3), 'position': (-0.5, -0.5, 1)},
         # {'origin': (0, 0, 0.5), 'orientation': (10, 20, 30)},
     ],
-    ids=['default', 'position'],  # , 'direction_vectors']
+    ids=['default', 'position', 'direction_vectors'],  # , 'direction_vectors']
 )
 def test_add_axes_marker(test_kwargs):
     plot = pv.Plotter(off_screen=False)
