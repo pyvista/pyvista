@@ -1396,7 +1396,7 @@ def get_cycler(color_cycler):
 def _validate_color_sequence(
     color: ColorLike | Sequence[ColorLike],
     n_colors: int | None = None,
-) -> Sequence[Color]:
+) -> tuple[Color, ...]:
     valid_color = None
     try:
         valid_color = [Color(color)]
@@ -1407,7 +1407,7 @@ def _validate_color_sequence(
             with contextlib.suppress(ValueError):
                 valid_color = [Color(c) for c in color]
     if valid_color:
-        return valid_color
+        return tuple(valid_color)
     else:
         raise ValueError(
             f"Invalid color(s):\n"

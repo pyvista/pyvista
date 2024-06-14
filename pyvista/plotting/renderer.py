@@ -20,8 +20,6 @@ from pyvista import vtk_version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import try_callback
@@ -925,8 +923,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         y_color=None,
         z_color=None,
         position=(0, 0, 0),
-        orientation=(0, 0, 0),
-        origin=(0, 0, 0),
         scale=(1, 1, 1),
         user_matrix=None,
         **kwargs,
@@ -1066,21 +1062,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             y_color=y_color,
             z_color=z_color,
             position=position,
-            orientation=orientation,
-            origin=origin,
             scale=scale,
             user_matrix=user_matrix,
             symmetric_bounds=symmetric_bounds,
             **kwargs,
         )
-        self.add_actor(axes_assembly)
+        out = axes_assembly.output
+        actor = pyvista.Actor(mapper=pyvista.DataSetMapper(dataset=out))
+        actor.mapper.set_scalars(
+            scalars=out.active_scalars,
+            scalars_name=out.active_scalars_name,
+            rgb=True,
+        )
+        self.add_actor(actor)
 
         if show_labels:
             # Scale label position proportional to length of each axis
             total_length = np.array(axes_assembly.total_length)
             label_position = _validation.validate_array3(label_position, broadcast=True)
-            position_array = np.diag(
-                label_position * total_length,
+            position_array = (
+                np.diag(
+                    label_position * total_length,
+                )
+                + position
             )
             x_label_position, y_label_position, z_label_position = position_array
 
@@ -1095,28 +1099,23 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             common_kwargs = dict(
                 height=size,
                 show_border=label_border,
-                position=position,
-                orientation=orientation,
-                origin=origin,
-                scale=scale,
-                user_matrix=user_matrix,
             )
             x_label_follower = self._add_text_follower(
                 text=x_label,
                 color=x_label_color,
-                relative_position=x_label_position,
+                position=x_label_position,
                 **common_kwargs,
             )
             y_label_follower = self._add_text_follower(
                 text=y_label,
                 color=y_label_color,
-                relative_position=y_label_position,
+                position=y_label_position,
                 **common_kwargs,
             )
             z_label_follower = self._add_text_follower(
                 text=z_label,
                 color=z_label_color,
-                relative_position=z_label_position,
+                position=z_label_position,
                 **common_kwargs,
             )
 
@@ -1131,25 +1130,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         show_border: bool = True,
         color: ColorLike = 'white',
         border_color: ColorLike = 'black',
-        relative_position=(0.0, 0.0, 0.0),
         position,
-        orientation,
-        origin,
-        scale,
-        user_matrix,
     ):
 
         # Create text
         text_poly = pyvista.Text3D(text, height=height, depth=0.0)  # , center=relative_position)
-        prop3d_kwargs = dict(
-            relative_position=relative_position,
-            position=position,
-            orientation=orientation,
-            origin=origin,
-            scale=scale,
-            user_matrix=user_matrix,
-        )
-        text_follower = self._add_follower(text_poly, color=color, **prop3d_kwargs)
+        text_follower = self._add_follower(text_poly, color=color, position=position)
         if show_border:
             # NOTE: The text mesh is triangulated. If, instead, the mesh was closed
             # polygon cells, the border could easily be shown by enabling
@@ -1171,7 +1157,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 border,
                 color=border_color,
                 line_width=3,
-                **prop3d_kwargs,
+                position=position,
             )
             return text_follower, border_follower
         return text_follower
@@ -1181,33 +1167,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         dataset: pyvista.DataSet,
         *,
         color: ColorLike,
-        relative_position,
         position,
-        orientation,
-        origin,
-        scale,
-        user_matrix,
         line_width=None,
     ):
         # Init follower
         follower = _vtk.vtkFollower()
         follower.SetPosition(position)
-        follower.SetOrigin(origin)
-        follower.SetOrientation(orientation)
-        # follower.SetUserMatrix(user_matrix)
-        follower.SetScale(scale)
-
-        # The follower will rotate with the orientation. To avoid this we compute
-        # the final location manually and only set follower's position
-        # implicit_matrix = array_from_vtkmatrix(follower.GetMatrix())
-
-        matrix = array_from_vtkmatrix(follower.GetMatrix())
-        offset = matrix[:3, :3] @ relative_position
-
-        user_matrix = np.eye(4) if user_matrix is None else user_matrix
-        user_matrix[:3, 3] += offset
-
-        follower.SetUserMatrix(vtkmatrix_from_array(user_matrix))
 
         # Set mapper
         mapper = _vtk.vtkPolyDataMapper()

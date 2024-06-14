@@ -3924,7 +3924,6 @@ def test_axes_assembly_orientation():
     actor_implicit = pv.AxesAssembly(
         scale=3,
         position=(1, 2, 3),
-        orientation=(10, 20, 30),
         shaft_radius=0.5,
         total_length=0.5,
         shaft_length=1,
@@ -3973,8 +3972,14 @@ def test_axes_assembly_plot():
 
 @pytest.mark.parametrize(
     'test_kwargs',
-    [{}, {'position': (-0.5, -0.5, 1)}, {'orientation': (10, 20, 30)}],
-    ids=['default', 'position', 'orientation'],
+    [
+        {},
+        {'position': (-0.5, -0.5, 1)},
+        # {'orientation': (10, 20, 30)},
+        # {'scale': (1, 2, 3), 'position': (-0.5, -0.5, 1)},
+        # {'origin': (0, 0, 0.5), 'orientation': (10, 20, 30)},
+    ],
+    ids=['default', 'position'],  # , 'direction_vectors']
 )
 def test_add_axes_marker(test_kwargs):
     plot = pv.Plotter()

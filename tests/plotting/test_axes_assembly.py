@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 import numpy as np
 import pytest
 import vtk
@@ -33,17 +31,6 @@ def axes_assembly():
 #     assert axes.GetSymmetric()
 #     axes.hide_symmetric()
 #     assert not axes.GetSymmetric()
-
-
-def test_axes_assembly_visibility(axes_assembly):
-    assert axes_assembly.visibility
-    axes_assembly.visibility = False
-    assert not axes_assembly.visibility
-
-
-def test_axes_assembly_visibility_init():
-    axes_assembly = AxesAssembly(visibility=False)
-    assert not axes_assembly.visibility
 
 
 def test_axes_assembly_total_length(axes_assembly):
@@ -295,43 +282,43 @@ def test_axes_assembly_shaft_radius(axes_assembly):
 #     assert axes_assembly.label_size == (0.2, 0.3)
 
 
-def test_axes_assemblyerties(axes_assembly):
-    axes_assembly.x_shaft_prop.ambient = 0.1
-    assert axes_assembly.x_shaft_prop.ambient == 0.1
-    axes_assembly.x_tip_prop.ambient = 0.11
-    assert axes_assembly.x_tip_prop.ambient == 0.11
-
-    axes_assembly.y_shaft_prop.ambient = 0.2
-    assert axes_assembly.y_shaft_prop.ambient == 0.2
-    axes_assembly.y_tip_prop.ambient = 0.12
-    assert axes_assembly.y_tip_prop.ambient == 0.12
-
-    axes_assembly.z_shaft_prop.ambient = 0.3
-    assert axes_assembly.z_shaft_prop.ambient == 0.3
-    axes_assembly.z_tip_prop.ambient = 0.13
-    assert axes_assembly.z_tip_prop.ambient == 0.13
-
-    # Test init
-    prop = pv.Property(ambient=0.42)
-    axes_assembly = AxesAssembly(properties=prop)
-    assert axes_assembly.x_shaft_prop.ambient == 0.42
-    assert axes_assembly.x_shaft_prop is not prop
-    assert axes_assembly.x_tip_prop.ambient == 0.42
-    assert axes_assembly.y_shaft_prop is not prop
-
-    assert axes_assembly.y_shaft_prop.ambient == 0.42
-    assert axes_assembly.y_shaft_prop is not prop
-    assert axes_assembly.y_tip_prop.ambient == 0.42
-    assert axes_assembly.y_shaft_prop is not prop
-
-    assert axes_assembly.z_shaft_prop.ambient == 0.42
-    assert axes_assembly.z_shaft_prop is not prop
-    assert axes_assembly.z_tip_prop.ambient == 0.42
-    assert axes_assembly.z_shaft_prop is not prop
-
-    msg = '`properties` must be a property object or a dictionary.'
-    with pytest.raises(TypeError, match=msg):
-        pv.AxesAssembly(properties="not_a_dict")
+# def test_axes_assembly_properties(axes_assembly):
+#     axes_assembly.x_shaft_prop.ambient = 0.1
+#     assert axes_assembly.x_shaft_prop.ambient == 0.1
+#     axes_assembly.x_tip_prop.ambient = 0.11
+#     assert axes_assembly.x_tip_prop.ambient == 0.11
+#
+#     axes_assembly.y_shaft_prop.ambient = 0.2
+#     assert axes_assembly.y_shaft_prop.ambient == 0.2
+#     axes_assembly.y_tip_prop.ambient = 0.12
+#     assert axes_assembly.y_tip_prop.ambient == 0.12
+#
+#     axes_assembly.z_shaft_prop.ambient = 0.3
+#     assert axes_assembly.z_shaft_prop.ambient == 0.3
+#     axes_assembly.z_tip_prop.ambient = 0.13
+#     assert axes_assembly.z_tip_prop.ambient == 0.13
+#
+#     # Test init
+#     prop = pv.Property(ambient=0.42)
+#     axes_assembly = AxesAssembly(properties=prop)
+#     assert axes_assembly.x_shaft_prop.ambient == 0.42
+#     assert axes_assembly.x_shaft_prop is not prop
+#     assert axes_assembly.x_tip_prop.ambient == 0.42
+#     assert axes_assembly.y_shaft_prop is not prop
+#
+#     assert axes_assembly.y_shaft_prop.ambient == 0.42
+#     assert axes_assembly.y_shaft_prop is not prop
+#     assert axes_assembly.y_tip_prop.ambient == 0.42
+#     assert axes_assembly.y_shaft_prop is not prop
+#
+#     assert axes_assembly.z_shaft_prop.ambient == 0.42
+#     assert axes_assembly.z_shaft_prop is not prop
+#     assert axes_assembly.z_tip_prop.ambient == 0.42
+#     assert axes_assembly.z_shaft_prop is not prop
+#
+#     msg = '`properties` must be a property object or a dictionary.'
+#     with pytest.raises(TypeError, match=msg):
+#         pv.AxesAssembly(properties="not_a_dict")
 
 
 # def test_axes_assembly_user_matrix():
@@ -570,114 +557,114 @@ def get_matrix_cases():
 #     assert np.allclose(actual_bounds, default_bounds)
 
 
-def test_axes_assembly_repr(axes_assembly):
-    repr_ = repr(axes_assembly)
-    actual_lines = repr_.splitlines()[1:]
-    expected_lines = [
-        # "  X label:                    'X'",
-        # "  Y label:                    'Y'",
-        # "  Z label:                    'Z'",
-        # "  Show labels:                True",
-        # "  Label position:             (1.0, 1.0, 1.0)",
-        "  Shaft type:                 'cylinder'",
-        "  Shaft radius:               0.05",
-        "  Shaft length:               (0.8, 0.8, 0.8)",
-        "  Tip type:                   'cone'",
-        "  Tip radius:                 0.2",
-        "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Total length:               (1.0, 1.0, 1.0)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  Visible:                    True",
-        "  X Bounds                    -1.000E-01, 1.000E+00",
-        "  Y Bounds                    -1.000E-01, 1.000E+00",
-        "  Z Bounds                    -1.000E-01, 1.000E+00",
-    ]
-    assert len(actual_lines) == len(expected_lines)
-    assert actual_lines == expected_lines
-
-    axes_assembly.shaft_type = 'cuboid'
-    repr_ = repr(axes_assembly)
-    assert "'cuboid'" in repr_
-
-    # axes_assembly.user_matrix = np.eye(4) * 2
-    # repr_ = repr(axes_assembly)
-    # assert "User matrix:                Set" in repr_
-
-
-@pytest.mark.parametrize('use_axis_num', [True, False])
-def test_axes_assembly_set_get_prop(axes_assembly, use_axis_num):
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0, 0, 0, 0, 0, 0)
-
-    axes_assembly.set_prop_values('ambient', 1.0)
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.5, axis=0 if use_axis_num else 'x')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val.x_shaft == 0.5
-    assert val.x_tip == 0.5
-    assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.0, part='shaft')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
-
-    axes_assembly.set_prop_values('ambient', 0.0, part='tip')
-    val = axes_assembly.get_prop_values('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-
-    msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        axes_assembly.set_prop_values('ambient', 0.0, part=2)
-
-    msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        axes_assembly.set_prop_values('ambient', 0.0, axis='a')
+# def test_axes_assembly_repr(axes_assembly):
+#     repr_ = repr(axes_assembly)
+#     actual_lines = repr_.splitlines()[1:]
+#     expected_lines = [
+#         # "  X label:                    'X'",
+#         # "  Y label:                    'Y'",
+#         # "  Z label:                    'Z'",
+#         # "  Show labels:                True",
+#         # "  Label position:             (1.0, 1.0, 1.0)",
+#         "  Shaft type:                 'cylinder'",
+#         "  Shaft radius:               0.05",
+#         "  Shaft length:               (0.8, 0.8, 0.8)",
+#         "  Tip type:                   'cone'",
+#         "  Tip radius:                 0.2",
+#         "  Tip length:                 (0.2, 0.2, 0.2)",
+#         "  Total length:               (1.0, 1.0, 1.0)",
+#         "  Position:                   (0.0, 0.0, 0.0)",
+#         "  Scale:                      (1.0, 1.0, 1.0)",
+#         "  User matrix:                Identity",
+#         "  Visible:                    True",
+#         "  X Bounds                    -1.000E-01, 1.000E+00",
+#         "  Y Bounds                    -1.000E-01, 1.000E+00",
+#         "  Z Bounds                    -1.000E-01, 1.000E+00",
+#     ]
+#     assert len(actual_lines) == len(expected_lines)
+#     assert actual_lines == expected_lines
+#
+#     axes_assembly.shaft_type = 'cuboid'
+#     repr_ = repr(axes_assembly)
+#     assert "'cuboid'" in repr_
+#
+#     # axes_assembly.user_matrix = np.eye(4) * 2
+#     # repr_ = repr(axes_assembly)
+#     # assert "User matrix:                Set" in repr_
 
 
-def test_axes_assemblys(axes_assembly):
-    # test prop objects are distinct
-    props = axes_assembly._props
-    for i in range(6):
-        for j in range(6):
-            if i == j:
-                assert props[i] is props[j]
-            else:
-                assert props[i] is not props[j]
+# @pytest.mark.parametrize('use_axis_num', [True, False])
+# def test_axes_assembly_set_get_prop(axes_assembly, use_axis_num):
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0, 0, 0, 0, 0, 0)
+#
+#     axes_assembly.set_prop_values('ambient', 1.0)
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.5, axis=0 if use_axis_num else 'x')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val.x_shaft == 0.5
+#     assert val.x_tip == 0.5
+#     assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.0, part='shaft')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
+#
+#     axes_assembly.set_prop_values('ambient', 0.0, part='tip')
+#     val = axes_assembly.get_prop_values('ambient')
+#     assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+#
+#     msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
+#     with pytest.raises(ValueError, match=re.escape(msg)):
+#         axes_assembly.set_prop_values('ambient', 0.0, part=2)
+#
+#     msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
+#     with pytest.raises(ValueError, match=re.escape(msg)):
+#         axes_assembly.set_prop_values('ambient', 0.0, axis='a')
 
-    # test setting new prop
-    new_prop = pv.Property()
-    axes_assembly.x_shaft_prop = new_prop
-    assert axes_assembly.x_shaft_prop is new_prop
-    axes_assembly.y_shaft_prop = new_prop
-    assert axes_assembly.y_shaft_prop is new_prop
-    axes_assembly.z_shaft_prop = new_prop
-    assert axes_assembly.z_shaft_prop is new_prop
-    axes_assembly.x_tip_prop = new_prop
-    assert axes_assembly.x_tip_prop is new_prop
-    axes_assembly.y_tip_prop = new_prop
-    assert axes_assembly.y_tip_prop is new_prop
-    axes_assembly.z_tip_prop = new_prop
-    assert axes_assembly.z_tip_prop is new_prop
 
-    msg = "Prop must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
-    with pytest.raises(TypeError, match=msg):
-        axes_assembly.x_shaft_prop = 0
+# def test_axes_assemblys(axes_assembly):
+#     # test prop objects are distinct
+#     props = axes_assembly._props
+#     for i in range(6):
+#         for j in range(6):
+#             if i == j:
+#                 assert props[i] is props[j]
+#             else:
+#                 assert props[i] is not props[j]
+#
+#     # test setting new prop
+#     new_prop = pv.Property()
+#     axes_assembly.x_shaft_prop = new_prop
+#     assert axes_assembly.x_shaft_prop is new_prop
+#     axes_assembly.y_shaft_prop = new_prop
+#     assert axes_assembly.y_shaft_prop is new_prop
+#     axes_assembly.z_shaft_prop = new_prop
+#     assert axes_assembly.z_shaft_prop is new_prop
+#     axes_assembly.x_tip_prop = new_prop
+#     assert axes_assembly.x_tip_prop is new_prop
+#     axes_assembly.y_tip_prop = new_prop
+#     assert axes_assembly.y_tip_prop is new_prop
+#     axes_assembly.z_tip_prop = new_prop
+#     assert axes_assembly.z_tip_prop is new_prop
+#
+#     msg = "Prop must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
+#     with pytest.raises(TypeError, match=msg):
+#         axes_assembly.x_shaft_prop = 0
 
 
 @pytest.fixture()
