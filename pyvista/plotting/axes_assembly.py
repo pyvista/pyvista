@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import ClassVar
-from typing import NamedTuple
 from typing import Sequence
 from typing import Tuple
 from typing import Union
@@ -26,35 +24,6 @@ from .colors import _validate_color_sequence
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
-
-
-class _AxesTuple(NamedTuple):
-    x_shaft: Any
-    y_shaft: Any
-    z_shaft: Any
-    x_tip: Any
-    y_tip: Any
-    z_tip: Any
-
-
-# class _AxisPartTuple(NamedTuple):
-#     shaft: Actor
-#     tip: Actor
-
-
-# class _Tuple3D(NamedTuple):
-#     x: Any
-#     y: Any
-#     z: Any
-
-
-# def _as_nested(obj: Sequence[Any]) -> _Tuple3D:
-#     """Reshape length-6 shaft and tip sequence as a 3D tuple with nested shaft and tip items."""
-#     return _Tuple3D(
-#         x=_AxisPartTuple(shaft=obj[0], tip=obj[3]),
-#         y=_AxisPartTuple(shaft=obj[1], tip=obj[4]),
-#         z=_AxisPartTuple(shaft=obj[2], tip=obj[5]),
-#     )
 
 
 class AxesAssembly:
@@ -102,27 +71,15 @@ class AxesAssembly:
     ):
         super().__init__()
 
+        # Init datasets
+        shaft_blocks = pv.MultiBlock(dict(x=None, y=None, z=None))
+        tip_blocks = pv.MultiBlock(dict(x=None, y=None, z=None))
+        label_blocks = pv.MultiBlock(dict(x=None, y=None, z=None))
         self._datasets = pv.MultiBlock(
-            {
-                'shafts': pv.MultiBlock(
-                    {
-                        'x': None,
-                        'y': None,
-                        'z': None,
-                    },
-                ),
-                'tips': pv.MultiBlock(
-                    {
-                        'x': None,
-                        'y': None,
-                        'z': None,
-                    },
-                ),
-                'labels': pv.MultiBlock({'x': None, 'y': None, 'z': None}),
-            },
+            dict(shafts=shaft_blocks, tips=tip_blocks, labels=label_blocks),
         )
 
-        # Set shaft and tip color. The setters will auto-set theme vals
+        # Set shaft and tip color
         self.x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
         self.y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
         self.z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
@@ -966,54 +923,6 @@ class AxesAssembly:
         pl.add_mesh(self)
         pl.show()
 
-    # @property
-    # def _label_text_getters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda: self._labels_actor.x_axis_label,
-    #         y=lambda: self._labels_actor.y_axis_label,
-    #         z=lambda: self._labels_actor.z_axis_label,
-    #     )
-    #
-    # @property
-    # def _label_text_setters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda val: setattr(self._labels_actor, 'x_axis_label', val),
-    #         y=lambda val: setattr(self._labels_actor, 'y_axis_label', val),
-    #         z=lambda val: setattr(self._labels_actor, 'z_axis_label', val),
-    #     )
-
-    # @property
-    # def _shaft_color_getters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda: self._actors.x_shaft.prop.color,
-    #         y=lambda: self._actors.y_shaft.prop.color,
-    #         z=lambda: self._actors.z_shaft.prop.color,
-    #     )
-
-    # @property
-    # def _shaft_color_setters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda c: setattr(self._actors.x_shaft.prop, 'color', c),
-    #         y=lambda c: setattr(self._actors.y_shaft.prop, 'color', c),
-    #         z=lambda c: setattr(self._actors.z_shaft.prop, 'color', c),
-    #     )
-
-    # @property
-    # def _tip_color_getters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda: self._actors.x_tip.prop.color,
-    #         y=lambda: self._actors.y_tip.prop.color,
-    #         z=lambda: self._actors.z_tip.prop.color,
-    #     )
-
-    # @property
-    # def _tip_color_setters(self) -> _Tuple3D:
-    #     return _Tuple3D(
-    #         x=lambda c: setattr(self._actors.x_tip.prop, 'color', c),
-    #         y=lambda c: setattr(self._actors.y_tip.prop, 'color', c),
-    #         z=lambda c: setattr(self._actors.z_tip.prop, 'color', c),
-    #     )
-
     @property
     def include_labels(self) -> bool:  # numpydoc ignore=RT01
         """Enable or disable the text labels for the axes."""
@@ -1022,16 +931,6 @@ class AxesAssembly:
     @include_labels.setter
     def include_labels(self, value: bool):  # numpydoc ignore=GL08
         self._include_labels = value
-
-    # @property
-    # def _props(self):
-    #     props = [actor.prop for actor in self._actors]
-    #     return _AxesTuple(*props)
-
-    # @property
-    # def _datasets(self):
-    #     datasets = [actor.mapper.dataset for actor in self._actors]
-    #     return _AxesTuple(*datasets)
 
     @property
     def label_size(self):
