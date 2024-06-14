@@ -1302,6 +1302,4 @@ def test_compute_line_length():
     point_a = np.array([0, 0, 0])
     point_b = np.array([1, 1, 1])
     mesh = pv.Line(point_a, point_b)
-    assert np.isclose(
-        mesh.compute_line_length(0, 1), np.linalg.norm(point_b - point_a), rtol=1e-3
-    )
+    assert np.isclose(mesh.compute_line_length(0, 1), np.linalg.norm(point_b - point_a), rtol=1e-3)
