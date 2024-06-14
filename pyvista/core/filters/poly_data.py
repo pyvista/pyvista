@@ -2766,7 +2766,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
-    def compute_points_length(self, point_id_a, point_id_b):
+    def compute_line_length(self, point_id_a, point_id_b):
         """Compute the length between two points given their ids.
 
         .. versionadded:: 0.44.0
@@ -2785,7 +2785,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> mesh = pv.Line((0, 0, 0), (0, 0, 1))
-        >>> length = mesh.compute_points_length(0, 1)
+        >>> length = mesh.compute_line_length(0, 1)
         >>> f'Length is {length:.3f}'
         'Length is 1.000'
 
