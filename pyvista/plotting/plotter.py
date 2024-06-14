@@ -2952,7 +2952,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_vertices=None,
         edge_opacity=None,
         **kwargs,
-    ):
+    ) -> Actor:
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -3728,7 +3728,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop = Property(**prop_kwargs)
         actor.SetProperty(prop)
 
-        if style == 'points_gaussian':
+        if style == 'points_gaussian' and self.mapper.dataset is not None:
             self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
             if not render_points_as_spheres and not self.mapper.emissive:
                 if prop.opacity >= 1.0:
