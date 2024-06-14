@@ -117,7 +117,7 @@ def make_legend_face(face):
         If the provided face value is invalid.
     """
     if face is None or face == "none":
-        legendface = pyvista.PolyData([np.nan, np.nan, np.nan])
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -3600,8 +3600,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
+
+            You may set it to one of the following:
 
             * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
