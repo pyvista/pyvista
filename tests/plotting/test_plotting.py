@@ -2783,6 +2783,14 @@ def test_ruler():
     plotter.show()
 
 
+def test_ruler_number_labels():
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
+    plotter.view_xy()
+    plotter.show()
+
+
 def test_legend_scale(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
