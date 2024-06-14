@@ -2766,18 +2766,18 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
-    def compute_line_length(self, point_id_a, point_id_b):
+    def compute_line_length(self, start_vertex, end_vertex):
         """Compute the length between two points given their ids.
 
         .. versionadded:: 0.44.0
 
         Parameters
         ----------
-        point_id_a : int
-            Index of the first point.
+        start_vertex : int
+            Vertex index indicating the start point.
 
-        point_id_b : int
-            Index of the second point.
+        end_vertex : int
+            Vertex index indicating the end point.
 
         Examples
         --------
@@ -2795,7 +2795,7 @@ class PolyDataFilters(DataSetFilters):
             Length between the two points.
         """
         return np.linalg.norm(
-            np.array(self.GetPoint(point_id_a)) - np.array(self.GetPoint(point_id_b))
+            np.array(self.GetPoint(start_vertex)) - np.array(self.GetPoint(end_vertex))
         )
 
     def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace=False):
