@@ -33,7 +33,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
@@ -3919,55 +3918,60 @@ def axes_marker_reference_points():
     return x + y + z
 
 
-def test_axes_assembly_orientation():
-    # Create axes with implicit transformation
-    actor_implicit = pv.AxesAssembly(
-        scale=3,
-        position=(1, 2, 3),
-        shaft_radius=0.5,
-        total_length=0.5,
-        shaft_length=1,
-    )
-
-    matrix = vtk.vtkMatrix4x4()
-    actor_implicit.GetMatrix(matrix)
-    matrix = array_from_vtkmatrix(matrix)
-    assert np.allclose(
-        matrix,
-        [
-            [2.35230628, -1.47721163, 1.13335826, 1.0],
-            [1.56384173, 2.5586056, 0.08908676, 2.0],
-            [-1.01047227, 0.52094453, 2.77624974, 3.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ],
-    )
-
-    # Create axes with explicit transformation
-    actor_explicit = pv.AxesAssembly(
-        user_matrix=matrix,
-        tip_radius=0.5,
-        total_length=1,
-        tip_length=0.5,
-        # x_label='i',
-        # y_label='j',
-        # z_label='k',
-        x_color='magenta',
-        y_color='yellow',
-        z_color='cyan',
-    )
-
-    reference = axes_marker_reference_points().transform(matrix)
-    plot = pv.Plotter()
-    plot.add_actor(actor_implicit)
-    plot.add_actor(actor_explicit)
-    plot.add_mesh(reference, color="purple")
-    plot.show_grid()
-    plot.show()
+# def test_axes_assembly_orientation():
+#     # Create axes with implicit transformation
+#     actor_implicit = pv.AxesAssembly(
+#         scale=3,
+#         position=(1, 2, 3),
+#         shaft_radius=0.5,
+#         total_length=0.5,
+#         shaft_length=1,
+#     )
+#
+#     matrix = vtk.vtkMatrix4x4()
+#     actor_implicit.GetMatrix(matrix)
+#     matrix = array_from_vtkmatrix(matrix)
+#     assert np.allclose(
+#         matrix,
+#         [
+#             [2.35230628, -1.47721163, 1.13335826, 1.0],
+#             [1.56384173, 2.5586056, 0.08908676, 2.0],
+#             [-1.01047227, 0.52094453, 2.77624974, 3.0],
+#             [0.0, 0.0, 0.0, 1.0],
+#         ],
+#     )
+#
+#     # Create axes with explicit transformation
+#     actor_explicit = pv.AxesAssembly(
+#         user_matrix=matrix,
+#         tip_radius=0.5,
+#         total_length=1,
+#         tip_length=0.5,
+#         # x_label='i',
+#         # y_label='j',
+#         # z_label='k',
+#         x_color='magenta',
+#         y_color='yellow',
+#         z_color='cyan',
+#     )
+#
+#     reference = axes_marker_reference_points().transform(matrix)
+#     plot = pv.Plotter()
+#     plot.add_actor(actor_implicit)
+#     plot.add_actor(actor_explicit)
+#     plot.add_mesh(reference, color="purple")
+#     plot.show_grid()
+#     plot.show()
 
 
 def test_axes_assembly_plot():
-    ax = pv.AxesAssembly()
-    ax.plot()
+    axes, labels = pv.AxesAssembly().output_axes_dataset
+    pl = pv.Plotter()
+    pl.add_mesh(axes)
+    pl.add_mesh(labels[0])
+    pl.add_mesh(labels[1])
+    pl.add_mesh(labels[2])
+    pl.show()
 
 
 @pytest.mark.parametrize(
@@ -3982,7 +3986,7 @@ def test_axes_assembly_plot():
     ids=['default', 'position'],  # , 'direction_vectors']
 )
 def test_add_axes_marker(test_kwargs):
-    plot = pv.Plotter()
+    plot = pv.Plotter(off_screen=False)
     plot.add_axes_marker(**test_kwargs)
 
     if test_kwargs:

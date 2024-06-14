@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
-from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import cast
 import warnings
@@ -17,7 +16,6 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
-from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsLike
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
@@ -29,7 +27,6 @@ from .actor import Actor
 from .camera import Camera
 from .charts import Charts
 from .colors import Color
-from .colors import _validate_color_sequence
 from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
@@ -40,9 +37,6 @@ from .tools import create_axes_orientation_box
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
-
-if TYPE_CHECKING:
-    from ._typing import ColorLike
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -865,6 +859,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
+        if isinstance(actor, _vtk.vtkFollower):
+            actor.SetCamera(self.camera)
 
         if reset_camera or not self.camera_set and reset_camera is None and not rv:
             self.reset_camera(render)
@@ -1039,154 +1035,174 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        labels = kwargs.pop('labels', None)
-        # Set text labels
-        if labels is None:
-            x_label = 'X' if x_label is None else x_label
-            y_label = 'Y' if y_label is None else y_label
-            z_label = 'Z' if z_label is None else z_label
-        else:
-            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-            if x_label is not None:
-                raise ValueError(msg.format('x_label'))
-            if y_label is not None:
-                raise ValueError(msg.format('y_label'))
-            if z_label is not None:
-                raise ValueError(msg.format('z_label'))
-            if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
-                raise ValueError('Labels sequence must have exactly 3 items.')
-            x_label, y_label, z_label = labels
-        symmetric_bounds = kwargs.pop('symmetric_bounds', False)
+        # def _actor_from_rgb_dataset(dataset):
+        #     actor = pyvista.Actor(mapper=pyvista.DataSetMapper(dataset=dataset))
+        #     actor.mapper.set_scalars(
+        #         scalars=dataset.active_scalars,
+        #         scalars_name=dataset.active_scalars_name,
+        #         rgb=True,
+        #     )
+        #     return actor
+        # labels = kwargs.pop('labels', None)
+        # # Set text labels
+        # if labels is None:
+        #     x_label = 'X' if x_label is None else x_label
+        #     y_label = 'Y' if y_label is None else y_label
+        #     z_label = 'Z' if z_label is None else z_label
+        # else:
+        #     msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+        #     if x_label is not None:
+        #         raise ValueError(msg.format('x_label'))
+        #     if y_label is not None:
+        #         raise ValueError(msg.format('y_label'))
+        #     if z_label is not None:
+        #         raise ValueError(msg.format('z_label'))
+        #     if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+        #         raise ValueError('Labels sequence must have exactly 3 items.')
+        #     x_label, y_label, z_label = labels
+        # symmetric_bounds = kwargs.pop('symmetric_bounds', False)
         axes_assembly = pyvista.AxesAssembly(
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            label_color=label_color,
+            label_position=label_position,
+            label_size=label_size,
+            include_labels=True,
+            label_border=label_border,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
             position=position,
             scale=scale,
             user_matrix=user_matrix,
-            symmetric_bounds=symmetric_bounds,
-            **kwargs,
         )
-        out = axes_assembly.output
-        actor = pyvista.Actor(mapper=pyvista.DataSetMapper(dataset=out))
-        actor.mapper.set_scalars(
-            scalars=out.active_scalars,
-            scalars_name=out.active_scalars_name,
-            rgb=True,
-        )
-        self.add_actor(actor)
+        axes_actor = axes_assembly.output_axes_actor
+        self.add_actor(axes_actor)
 
         if show_labels:
-            # Scale label position proportional to length of each axis
-            total_length = np.array(axes_assembly.total_length)
-            label_position = _validation.validate_array3(label_position, broadcast=True)
-            position_array = (
-                np.diag(
-                    label_position * total_length,
-                )
-                + position
-            )
-            x_label_position, y_label_position, z_label_position = position_array
+            x_follower, y_follower, z_follower = axes_assembly.output_label_followers
+            self.add_actor(x_follower)
+            self.add_actor(y_follower)
+            self.add_actor(z_follower)
+            # # Scale label position proportional to length of each axis
+            # total_length = np.array(axes_assembly.total_length)
+            # label_position = _validation.validate_array3(label_position, broadcast=True)
+            # position_array = (
+            #     np.diag(
+            #         label_position * total_length,
+            #     )
+            #     + position
+            # )
+            # x_label_position, y_label_position, z_label_position = position_array
+            #
+            # # Scale label size proportional to norm of axes lengths
+            # size = np.linalg.norm(total_length) * label_size
+            #
+            # x_label_color, y_label_color, z_label_color = _validate_color_sequence(
+            #     label_color,
+            #     n_colors=3,
+            # )
 
-            # Scale label size proportional to norm of axes lengths
-            size = np.linalg.norm(total_length) * label_size
+            # common_kwargs = dict(
+            #     height=size,
+            #     show_border=label_border,
+            # )
+            # x_label_follower = self._add_text_follower(
+            #     text=x_label,
+            #     color=x_label_color,
+            #     position=x_label_position,
+            #     **common_kwargs,
+            # )
+            # y_label_follower = self._add_text_follower(
+            #     text=y_label,
+            #     color=y_label_color,
+            #     position=y_label_position,
+            #     **common_kwargs,
+            # )
+            # z_label_follower = self._add_text_follower(
+            #     text=z_label,
+            #     color=z_label_color,
+            #     position=z_label_position,
+            #     **common_kwargs,
+            # )
 
-            x_label_color, y_label_color, z_label_color = _validate_color_sequence(
-                label_color,
-                n_colors=3,
-            )
+            # x_actor = _actor_from_rgb_dataset(labels3D[0])
+            # y_actor = _actor_from_rgb_dataset(labels3D[1])
+            # z_actor = _actor_from_rgb_dataset(labels3D[2])
+            # x_follower = self._add_follower(x_actor)
+            # y_follower = self._add_follower(y_actor)
+            # z_follower = self._add_follower(z_actor)
 
-            common_kwargs = dict(
-                height=size,
-                show_border=label_border,
-            )
-            x_label_follower = self._add_text_follower(
-                text=x_label,
-                color=x_label_color,
-                position=x_label_position,
-                **common_kwargs,
-            )
-            y_label_follower = self._add_text_follower(
-                text=y_label,
-                color=y_label_color,
-                position=y_label_position,
-                **common_kwargs,
-            )
-            z_label_follower = self._add_text_follower(
-                text=z_label,
-                color=z_label_color,
-                position=z_label_position,
-                **common_kwargs,
-            )
+            return axes_actor, x_follower, y_follower, z_follower
+        return axes_actor
 
-            return axes_assembly, x_label_follower, y_label_follower, z_label_follower
-        return axes_assembly
+    # def _add_text_follower(
+    #     self,
+    #     *,
+    #     text: str,
+    #     height=None,
+    #     # show_border: bool = True,
+    #     color: ColorLike = 'white',
+    #     # border_color: ColorLike = 'black',
+    #     position,
+    # ):
+    #
+    #     # Create text
+    #     text_poly = pyvista.Text3D(text, height=height, depth=0.0)  # , center=relative_position)
+    #     text_follower = self._add_follower(text_poly, color=color, position=position)
+    # if show_border:
+    #     # NOTE: The text mesh is triangulated. If, instead, the mesh was closed
+    #     # polygon cells, the border could easily be shown by enabling
+    #     # 'show_edges'. But, the mesh is not well-defined, so using something
+    #     # like vtkContourLoopExtraction to generate polygon cells does not work.
+    #     # Instead, we create a second mesh and follower for the border.
+    #
+    #     # Extract boundary edges
+    #     border = text_poly.extract_feature_edges(
+    #         boundary_edges=True,
+    #         non_manifold_edges=False,
+    #         feature_edges=False,
+    #         manifold_edges=False,
+    #         clear_data=False,
+    #         progress_bar=False,
+    #     )
+    #     # border=border.ribbon(width=0.1)
+    #     border_follower = self._add_follower(
+    #         border,
+    #         color=border_color,
+    #         line_width=3,
+    #         position=position,
+    #     )
+    #     return text_follower, border_follower
+    # return text_follower
 
-    def _add_text_follower(
-        self,
-        *,
-        text: str,
-        height=None,
-        show_border: bool = True,
-        color: ColorLike = 'white',
-        border_color: ColorLike = 'black',
-        position,
-    ):
-
-        # Create text
-        text_poly = pyvista.Text3D(text, height=height, depth=0.0)  # , center=relative_position)
-        text_follower = self._add_follower(text_poly, color=color, position=position)
-        if show_border:
-            # NOTE: The text mesh is triangulated. If, instead, the mesh was closed
-            # polygon cells, the border could easily be shown by enabling
-            # 'show_edges'. But, the mesh is not well-defined, so using something
-            # like vtkContourLoopExtraction to generate polygon cells does not work.
-            # Instead, we create a second mesh and follower for the border.
-
-            # Extract boundary edges
-            border = text_poly.extract_feature_edges(
-                boundary_edges=True,
-                non_manifold_edges=False,
-                feature_edges=False,
-                manifold_edges=False,
-                clear_data=False,
-                progress_bar=False,
-            )
-            # border=border.ribbon(width=0.1)
-            border_follower = self._add_follower(
-                border,
-                color=border_color,
-                line_width=3,
-                position=position,
-            )
-            return text_follower, border_follower
-        return text_follower
-
-    def _add_follower(
-        self,
-        dataset: pyvista.DataSet,
-        *,
-        color: ColorLike,
-        position,
-        line_width=None,
-    ):
-        # Init follower
-        follower = _vtk.vtkFollower()
-        follower.SetPosition(position)
-
-        # Set mapper
-        mapper = _vtk.vtkPolyDataMapper()
-        mapper.SetInputData(dataset.extract_geometry())
-        follower.SetMapper(mapper)
-
-        # Set actor properties
-        prop = pyvista.Property(color=color, lighting=False, line_width=line_width)
-        follower.SetProperty(prop)
-
-        # Must set camera for follower to work
-        follower.SetCamera(self.camera)
-
-        self.add_actor(follower)
+    # def _add_follower(
+    #     self,
+    #     obj: pyvista.DataSet | pyvista.Actor,
+    # ):
+    #     if isinstance(obj, pyvista.Actor):
+    #         mapper = obj.mapper
+    #         prop = obj.prop
+    #     elif isinstance(obj, pyvista.DataSet):
+    #         mapper = pyvista.DataSetMapper(dataset=obj)
+    #         prop = pyvista.Property()
+    #     else:
+    #         _validation.check_instance(obj, (pyvista.Actor, pyvista.DataSet))
+    #
+    #     if mapper.dataset is None:
+    #         raise ValueError('A dataset is required.')
+    #     mapper.dataset.translate(-np.array(mapper.dataset.center))
+    #
+    #     follower = _vtk.vtkFollower()
+    #     follower.SetMapper(mapper)
+    #     prop.lighting = False
+    #     follower.SetProperty(prop)
+    #
+    #     # Must set camera for follower to work
+    #     follower.SetCamera(self.camera)
+    #
+    #     self.add_actor(follower)
 
     def add_orientation_widget(
         self,

@@ -39,7 +39,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     ...     center=(10, 10, 0),
     ...     radius=(3, 4, 5),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output_axes_dataset.plot(cpos="xy")
     """
 
     def __init__(self, whole_extent=None, center=None, radius=None) -> None:
@@ -153,7 +153,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maxiter=100,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output_axes_dataset.plot(cpos="xy")
     """
 
     def __init__(self, whole_extent=None, maxiter=None) -> None:
@@ -251,7 +251,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     maximum=255,
     ...     seed=0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output_axes_dataset.plot(cpos="xy")
     """
 
     _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
@@ -398,7 +398,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     ...     amplitude=255,
     ...     direction=(1.0, 0.0, 0.0),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output_axes_dataset.plot(cpos="xy")
     """
 
     _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
@@ -585,7 +585,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     maximum=255,
     ...     std=100.0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output_axes_dataset.plot(cpos="xy")
     """
 
     _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']

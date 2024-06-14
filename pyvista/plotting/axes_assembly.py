@@ -12,9 +12,13 @@ from typing import Union
 
 import numpy as np
 
+import pyvista
 import pyvista as pv
 from pyvista.core import _validation
+from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting._property import _check_range
+from pyvista.plotting.actor import Actor
+from pyvista.plotting.actor import Follower
 from pyvista.plotting.colors import Color
 
 from .colors import _validate_color_sequence
@@ -22,7 +26,6 @@ from .colors import _validate_color_sequence
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
-    from pyvista.plotting.actor import Actor
 
 
 class _AxesTuple(NamedTuple):
@@ -34,24 +37,24 @@ class _AxesTuple(NamedTuple):
     z_tip: Any
 
 
-class _AxisPartTuple(NamedTuple):
-    shaft: Actor
-    tip: Actor
+# class _AxisPartTuple(NamedTuple):
+#     shaft: Actor
+#     tip: Actor
 
 
-class _Tuple3D(NamedTuple):
-    x: Any
-    y: Any
-    z: Any
+# class _Tuple3D(NamedTuple):
+#     x: Any
+#     y: Any
+#     z: Any
 
 
-def _as_nested(obj: Sequence[Any]) -> _Tuple3D:
-    """Reshape length-6 shaft and tip sequence as a 3D tuple with nested shaft and tip items."""
-    return _Tuple3D(
-        x=_AxisPartTuple(shaft=obj[0], tip=obj[3]),
-        y=_AxisPartTuple(shaft=obj[1], tip=obj[4]),
-        z=_AxisPartTuple(shaft=obj[2], tip=obj[5]),
-    )
+# def _as_nested(obj: Sequence[Any]) -> _Tuple3D:
+#     """Reshape length-6 shaft and tip sequence as a 3D tuple with nested shaft and tip items."""
+#     return _Tuple3D(
+#         x=_AxisPartTuple(shaft=obj[0], tip=obj[3]),
+#         y=_AxisPartTuple(shaft=obj[1], tip=obj[4]),
+#         z=_AxisPartTuple(shaft=obj[2], tip=obj[5]),
+#     )
 
 
 class AxesAssembly:
@@ -71,6 +74,15 @@ class AxesAssembly:
 
     def __init__(
         self,
+        x_label=None,
+        y_label=None,
+        z_label=None,
+        labels=None,
+        label_color='white',
+        include_labels=True,
+        label_position=1.1,
+        label_size=0.1,
+        label_border=True,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -90,14 +102,23 @@ class AxesAssembly:
     ):
         super().__init__()
 
-        self._composite = pv.MultiBlock(
+        self._datasets = pv.MultiBlock(
             {
-                'x_shaft': None,
-                'y_shaft': None,
-                'z_shaft': None,
-                'x_tip': None,
-                'y_tip': None,
-                'z_tip': None,
+                'shafts': pv.MultiBlock(
+                    {
+                        'x': None,
+                        'y': None,
+                        'z': None,
+                    },
+                ),
+                'tips': pv.MultiBlock(
+                    {
+                        'x': None,
+                        'y': None,
+                        'z': None,
+                    },
+                ),
+                'labels': pv.MultiBlock({'x': None, 'y': None, 'z': None}),
             },
         )
 
@@ -106,40 +127,40 @@ class AxesAssembly:
         self.y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
         self.z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
 
-        # # Set text labels
-        # if labels is None:
-        #     self.x_label = _set_default(x_label, 'X')
-        #     self.y_label = _set_default(y_label, 'Y')
-        #     self.z_label = _set_default(z_label, 'Z')
-        # else:
-        #     msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-        #     if x_label is not None:
-        #         raise ValueError(msg.format('x_label'))
-        #     if y_label is not None:
-        #         raise ValueError(msg.format('y_label'))
-        #     if z_label is not None:
-        #         raise ValueError(msg.format('z_label'))
-        #     self.labels = labels
-        # self.show_labels = show_labels
-        # self.label_color = label_color  # Setter will auto-set theme val
-        # self.label_size = label_size
+        # Set text labels
+        if labels is None:
+            self.x_label = _set_default(x_label, 'X')
+            self.y_label = _set_default(y_label, 'Y')
+            self.z_label = _set_default(z_label, 'Z')
+        else:
+            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+            if x_label is not None:
+                raise ValueError(msg.format('x_label'))
+            if y_label is not None:
+                raise ValueError(msg.format('y_label'))
+            if z_label is not None:
+                raise ValueError(msg.format('z_label'))
+            self.labels = labels
+        self.include_labels = include_labels
+        self.label_color = label_color
+        self.label_size = label_size
 
         # Set misc flag params
         self._symmetric_bounds = symmetric_bounds
         self._auto_length = auto_length
 
         # Set geometry-dependent params
-        # self.label_position = _set_default(label_position, 1.0)
+        self.label_position = label_position
         self.shaft_type = shaft_type
         self.shaft_radius = shaft_radius
         self.tip_type = tip_type
         self.tip_radius = tip_radius
         self.total_length = total_length
 
-        self._position = position
-        self._direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
-        self._scale = scale
-        self._user_matrix = _set_default(user_matrix, np.eye(4))
+        self.position = position
+        self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
+        self.scale = scale
+        self.user_matrix = _set_default(user_matrix, np.eye(4))
 
         # Check auto-length
         # Disable flag temporarily and restore later
@@ -306,17 +327,16 @@ class AxesAssembly:
         (1.0, 0.9, 0.5)
 
         """
-        return self._total_length
+        return tuple(self._total_length)
 
     @total_length.setter
-    def total_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, (int, float)):
-            _check_range(length, (0, float('inf')), 'total_length')
-            length = (length, length, length)
-        _check_range(length[0], (0, float('inf')), 'x-axis total_length')
-        _check_range(length[1], (0, float('inf')), 'y-axis total_length')
-        _check_range(length[2], (0, float('inf')), 'z-axis total_length')
-        self._total_length = float(length[0]), float(length[1]), float(length[2])
+    def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._total_length = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0, np.inf],
+            name='Total length',
+        )
 
     @property
     def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -417,6 +437,37 @@ class AxesAssembly:
         tip = self._tip_length
         total = self._total_length
         return tip[0] * total[0], tip[1] * total[1], tip[2] * total[2]
+
+    @property
+    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Normalized position of the text label along each axis.
+
+        Values must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.label_position
+        (1.0, 1.0, 1.0)
+        >>> axes_actor.label_position = 0.3
+        >>> axes_actor.label_position
+        (0.3, 0.3, 0.3)
+        >>> axes_actor.label_position = (0.1, 0.4, 0.2)
+        >>> axes_actor.label_position
+        (0.1, 0.4, 0.2)
+
+        """
+        return tuple(self._label_position)
+
+    @label_position.setter
+    def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+        self._label_position = _validation.validate_array3(
+            position,
+            broadcast=True,
+            must_be_in_range=[0, np.inf],
+            name='Label position',
+        )
 
     @property
     def auto_length(self) -> bool:  # numpydoc ignore=RT01
@@ -554,96 +605,99 @@ class AxesAssembly:
             tip_type = pv.global_theme.axes.tip_type
         self._tip_type = self._set_geometry(part=1, geometry=tip_type)
 
-    # @property
-    # def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
-    #     """Axes text labels.
-    #
-    #     This property can be used as an alternative to using :attr:`~x_label`,
-    #     :attr:`~y_label`, and :attr:`~z_label` separately for setting or
-    #     getting the axes text labels.
-    #
-    #     A single string with exactly three characters can be used to set the labels
-    #     of the x, y, and z axes (respectively) to a single character. Alternatively.
-    #     a sequence of three strings can be used.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.labels = 'UVW'
-    #     >>> axes_actor.labels
-    #     ('U', 'V', 'W')
-    #     >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
-    #     >>> axes_actor.labels
-    #     ('X Axis', 'Y Axis', 'Z Axis')
-    #
-    #     """
-    #     return self.x_label, self.y_label, self.z_label
-    #
-    # @labels.setter
-    # def labels(self, labels: Union[str, Sequence[str]]):  # numpydoc ignore=GL08
-    #     self.x_label = labels[0]
-    #     self.y_label = labels[1]
-    #     self.z_label = labels[2]
-    #     if len(labels) > 3:
-    #         raise ValueError('Labels sequence must have exactly 3 items.')
-    #
-    # @property
-    # def x_label(self) -> str:  # numpydoc ignore=RT01
-    #     """Text label for the x-axis.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.x_label = 'This axis'
-    #     >>> axes_actor.x_label
-    #     'This axis'
-    #
-    #     """
-    #     return self._label_text_getters.x()
-    #
-    # @x_label.setter
-    # def x_label(self, label: str):  # numpydoc ignore=GL08
-    #     self._label_text_setters.x(label)
-    #
-    # @property
-    # def y_label(self) -> str:  # numpydoc ignore=RT01
-    #     """Text label for the y-axis.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.y_label = 'This axis'
-    #     >>> axes_actor.y_label
-    #     'This axis'
-    #
-    #     """
-    #     return self._label_text_getters.y()
-    #
-    # @y_label.setter
-    # def y_label(self, label: str):  # numpydoc ignore=GL08
-    #     self._label_text_setters.y(label)
-    #
-    # @property
-    # def z_label(self) -> str:  # numpydoc ignore=RT01
-    #     """Text label for the z-axis.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.z_label = 'This axis'
-    #     >>> axes_actor.z_label
-    #     'This axis'
-    #
-    #     """
-    #     return self._label_text_getters.z()
-    #
-    # @z_label.setter
-    # def z_label(self, label: str):  # numpydoc ignore=GL08
-    #     self._label_text_setters.z(label)
+    @property
+    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Axes text labels.
+
+        This property can be used as an alternative to using :attr:`~x_label`,
+        :attr:`~y_label`, and :attr:`~z_label` separately for setting or
+        getting the axes text labels.
+
+        A single string with exactly three characters can be used to set the labels
+        of the x, y, and z axes (respectively) to a single character. Alternatively.
+        a sequence of three strings can be used.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.labels = 'UVW'
+        >>> axes_actor.labels
+        ('U', 'V', 'W')
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+
+        """
+        return self.x_label, self.y_label, self.z_label
+
+    @labels.setter
+    def labels(self, labels: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_iterable_items(labels, str)
+        _validation.check_length(labels, exact_length=3)
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
+
+    @property
+    def x_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the x-axis.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.x_label = 'This axis'
+        >>> axes_actor.x_label
+        'This axis'
+
+        """
+        return self._x_label
+
+    @x_label.setter
+    def x_label(self, label: str):  # numpydoc ignore=GL08
+        _validation.check_string(label, name='x label')
+        self._x_label = label
+
+    @property
+    def y_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the y-axis.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.y_label = 'This axis'
+        >>> axes_actor.y_label
+        'This axis'
+
+        """
+        return self._y_label
+
+    @y_label.setter
+    def y_label(self, label: str):  # numpydoc ignore=GL08
+        _validation.check_string(label, name='y label')
+        self._y_label = label
+
+    @property
+    def z_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the z-axis.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.z_label = 'This axis'
+        >>> axes_actor.z_label
+        'This axis'
+
+        """
+        return self._z_label
+
+    @z_label.setter
+    def z_label(self, label: str):  # numpydoc ignore=GL08
+        _validation.check_string(label, name='z label')
+        self._z_label = label
 
     # @property
     # def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
@@ -854,6 +908,50 @@ class AxesAssembly:
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._z_color = _validate_color_sequence(color, n_colors=2)
 
+    @property
+    def position(self) -> tuple[float, float, float]:
+        return tuple(self._position)
+
+    @position.setter
+    def position(self, xyz):
+        self._position = _validation.validate_array3(xyz)
+
+    @property
+    def scale(self) -> tuple[float, float, float]:
+        return tuple(self._scale)
+
+    @scale.setter
+    def scale(self, xyz):
+        self._scale = _validation.validate_array3(xyz, broadcast=True, name='Scale')
+
+    @property
+    def direction_vectors(self):
+        return self._direction_vectors
+
+    @direction_vectors.setter
+    def direction_vectors(self, vectors):
+        self._direction_vectors = vectors
+
+    @property
+    def transformation_matrix(self):
+        matrix = np.eye(4)
+        matrix[:3, :3] = self.direction_vectors
+        matrix[:3, 3] = self.position
+        return matrix
+
+    @property
+    def tip_position(self):
+        tips = np.diag(np.array(self.total_length) * self.scale)
+        return apply_transformation_to_points(self.transformation_matrix, tips)
+
+    @property
+    def label_color(self):
+        return self._label_color
+
+    @label_color.setter
+    def label_color(self, color: ColorLike | Sequence[ColorLike]):
+        self._label_color = _validate_color_sequence(color, n_colors=3)
+
     def plot(self):
         pl = pv.Plotter()
         pl.add_mesh(self)
@@ -931,80 +1029,175 @@ class AxesAssembly:
         return self._label_size
 
     @label_size.setter
-    def label_size(self, size: tuple[float, float]):
-        self._label_size = size
+    def label_size(self, size: float):
+        self._label_size = _validation.validate_number(size)
 
     def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
         # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
         geometry_name, datasets = AxesAssembly._make_axes_parts(geometry)
-        if part == 0:
-            self._composite['x_shaft'] = datasets.x
-            self._composite['y_shaft'] = datasets.y
-            self._composite['z_shaft'] = datasets.z
-        elif part == 1:
-            self._composite['x_tip'] = datasets.x
-            self._composite['y_tip'] = datasets.y
-            self._composite['z_tip'] = datasets.z
-        else:
-            raise ValueError
+        assert part in [0, 1]
+        blocks = self._datasets['shafts'] if part == 0 else self._datasets['tips']
+        blocks['x'] = datasets[0]
+        blocks['y'] = datasets[1]
+        blocks['z'] = datasets[2]
         return geometry_name
 
-    def _apply_colors(self):
-        def set_rgb_array(dataset: pv.PolyData, color: Color):
-            array = np.broadcast_to(color.int_rgb, (dataset.n_cells, 3))
-            dataset.cell_data['_rgb'] = array
-
-        x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip = self._composite
+    def _apply_axes_colors(self):
+        x_shaft, y_shaft, z_shaft = self._datasets['shafts']
+        x_tip, y_tip, z_tip = self._datasets['tips']
         x_color, y_color, z_color = self.x_color, self.y_color, self.z_color
 
-        set_rgb_array(x_shaft, x_color[0])
-        set_rgb_array(x_tip, x_color[1])
-        set_rgb_array(y_shaft, y_color[0])
-        set_rgb_array(y_tip, y_color[1])
-        set_rgb_array(z_shaft, z_color[0])
-        set_rgb_array(z_tip, z_color[1])
+        AxesAssembly._set_rgb_array(x_shaft, x_color[0])
+        AxesAssembly._set_rgb_array(x_tip, x_color[1])
+        AxesAssembly._set_rgb_array(y_shaft, y_color[0])
+        AxesAssembly._set_rgb_array(y_tip, y_color[1])
+        AxesAssembly._set_rgb_array(z_shaft, z_color[0])
+        AxesAssembly._set_rgb_array(z_tip, z_color[1])
 
-    def _update_labels(self): ...
+    def _apply_label_colors(self):
+        x_label, y_label, z_label = self._datasets['labels']
+        x_color, y_color, z_color = self.label_color
+        AxesAssembly._set_rgb_array(x_label, x_color)
+        AxesAssembly._set_rgb_array(y_label, y_color)
+        AxesAssembly._set_rgb_array(z_label, z_color)
 
-    def _reset_geometry(self):
+    def _reset_label_geometry(self):
+        # Scale label size proportional to norm of axes lengths
+        size = np.linalg.norm(self.total_length) * self.label_size
+
+        x_label = pyvista.Text3D(self.x_label, height=size, depth=0.0)
+        y_label = pyvista.Text3D(self.y_label, height=size, depth=0.0)
+        z_label = pyvista.Text3D(self.z_label, height=size, depth=0.0)
+
+        blocks = self._datasets['labels']
+        blocks['x'] = x_label
+        blocks['y'] = y_label
+        blocks['z'] = z_label
+
+    def _reset_axes_geometry(self):
         shaft_radius, shaft_length = self.shaft_radius, self._true_shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
             self._true_tip_length,
         )
 
-        parts = _as_nested(self._composite)
-        for axis in range(3):
-            for part_num in range(2):
+        datasets = self._datasets
+        for part_type in ['shafts', 'tips']:
+            for axis_num, axis_name in enumerate(['x', 'y', 'z']):
                 # Reset geometry
-                part = AxesAssembly._normalize_part(parts[axis][part_num])
+                part = AxesAssembly._normalize_part(datasets[part_type][axis_name])
 
                 # Offset so axis bounds are [0, 1]
-                part.points[:, axis] += 0.5
+                part.points[:, axis_num] += 0.5
 
                 # Scale by length along axis, scale by radius off-axis
-                if part_num == 0:  # shaft
+                if part_type == 'shafts':
                     scale = [shaft_radius] * 3
-                    scale[axis] = shaft_length[axis]
+                    scale[axis_num] = shaft_length[axis_num]
                     part.scale(scale, inplace=True)
-                else:  # tip
+                else:  # tips
                     scale = [tip_radius] * 3
-                    scale[axis] = tip_length[axis]
+                    scale[axis_num] = tip_length[axis_num]
                     part.scale(scale, inplace=True)
 
                     # Move tip to end of shaft
-                    part.points[:, axis] += shaft_length[axis]
+                    part.points[:, axis_num] += shaft_length[axis_num]
 
-    def _apply_transformations(self):
-        for block in self._composite:
-            block.translate(self._position, inplace=True)
+    def _transform_axes(self):
+        for group in [self._datasets['shafts'], self._datasets['tips']]:
+            for block in group:
+                if block is not None:
+                    block.translate(self._position, inplace=True)
+
+    def _get_transformed_label_positions(self):
+        # Scale label position proportional to length of each axis
+        total_length, label_position = self._total_length, self._label_position
+        scale = total_length * label_position
+        x_pos, y_pos, z_pos = np.diag(scale) + self.position
+        return x_pos, y_pos, z_pos
+
+    def _transform_labels(self):
+        x_pos, y_pos, z_pos = self._get_transformed_label_positions()
+        x_label, y_label, z_label = self._datasets['labels']
+
+        # Face +x, with +z up
+        x_label.rotate_y(90, inplace=True)
+        x_label.rotate_x(90, inplace=True)
+        x_label.translate(x_pos, inplace=True)
+
+        # Face +y, with +z up
+        y_label.rotate_z(180, inplace=True)
+        y_label.rotate_x(-90, inplace=True)
+        y_label.translate(y_pos, inplace=True)
+
+        # Face +z, with (-0.5, -0.5, 0) up
+        z_label.rotate_z(135, inplace=True)
+        z_label.translate(z_pos, inplace=True)
+
+        for block in self._datasets['labels']:
+            if block is not None:
+                block.translate(self._position, inplace=True)
 
     @property
-    def output(self):
-        self._reset_geometry()
-        self._apply_colors()
-        self._apply_transformations()
-        return pv.merge(self._composite)
+    def output_axes_dataset(self):
+        self._reset_axes_geometry()
+        self._apply_axes_colors()
+        self._transform_axes()
+
+        shafts, tips = self._datasets['shafts'], self._datasets['tips']
+        # TODO: Return composite as-is without merging once RGB MultiBlock
+        #  plotting is fixed (pyvista #6012)
+        return pv.merge((*shafts, *tips))
+
+    @property
+    def output_axes_actor(self):
+        dataset = self.output_axes_dataset
+        mapper = AxesAssembly._create_rgb_mapper(dataset)
+        return Actor(mapper=mapper)
+
+    @property
+    def output_label_followers(self):
+        self._reset_label_geometry()
+        self._apply_label_colors()
+        x_label, y_label, z_label = self._datasets['labels']
+        x_pos, y_pos, z_pos = self._get_transformed_label_positions()
+
+        x_follower = AxesAssembly._create_label_follower(dataset=x_label, position=x_pos)
+        y_follower = AxesAssembly._create_label_follower(dataset=y_label, position=y_pos)
+        z_follower = AxesAssembly._create_label_follower(dataset=z_label, position=z_pos)
+        return x_follower, y_follower, z_follower
+
+    # @property
+    # def output_label_dataset(self):
+    #     self._reset_label_geometry()
+    #     self._apply_label_colors()
+    #     self._transform_labels()
+    #
+    #     labels = self._datasets['labels']
+    #     return labels['x'], labels['y'], labels['z']
+
+    @staticmethod
+    def _set_rgb_array(dataset: pv.PolyData, color: Color):
+        array = np.broadcast_to(color.int_rgb, (dataset.n_cells, 3)).copy()
+        dataset.cell_data['_rgb'] = array
+
+    @staticmethod
+    def _create_rgb_mapper(dataset: pv.DataSet):
+        mapper = pyvista.DataSetMapper(dataset=dataset)
+        mapper.set_scalars(
+            scalars=dataset.active_scalars,
+            scalars_name=dataset.active_scalars_name,
+            rgb=True,
+        )
+        return mapper
+
+    @staticmethod
+    def _create_label_follower(dataset, position):
+        mapper = AxesAssembly._create_rgb_mapper(dataset)
+        follower = Follower(mapper=mapper)
+        follower.position = position
+        follower.prop.lighting = False
+        return follower
 
     @staticmethod
     def _make_default_part(geometry: str) -> pv.PolyData:
@@ -1029,7 +1222,7 @@ class AxesAssembly:
             raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
 
     @staticmethod
-    def _make_any_part(geometry: Union[str, pv.DataSet]):
+    def _make_any_part(geometry: Union[str, pv.DataSet]) -> tuple[str, pv.PolyData]:
         if isinstance(geometry, str):
             name = geometry
             part = AxesAssembly._make_default_part(
@@ -1038,7 +1231,7 @@ class AxesAssembly:
         elif isinstance(geometry, pv.DataSet):
             name = 'custom'
             if not isinstance(geometry, pv.PolyData):
-                part = geometry.cast_to_unstructured_grid().extract_surface()
+                part = geometry.extract_geometry()
 
         else:
             raise TypeError(
@@ -1066,14 +1259,14 @@ class AxesAssembly:
     def _make_axes_parts(
         geometry: str | pv.DataSet,
         right_handed: bool = True,
-    ) -> Tuple[str, _Tuple3D]:
+    ) -> tuple[str, tuple[pv.PolyData, pv.PolyData, pv.PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesAssembly._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         if not right_handed:
             part_z.points *= -1
-        return name, _Tuple3D(part_x, part_y, part_z)
+        return name, (part_x, part_y, part_z)
 
 
 def _set_default(val, default):

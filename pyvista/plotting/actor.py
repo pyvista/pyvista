@@ -397,3 +397,13 @@ class Actor(Prop3D, _vtk.vtkActor):
     @backface_prop.setter
     def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)
+
+
+class Follower(Actor, _vtk.vtkFollower):
+    @property
+    def camera(self):
+        return self.GetCamera()
+
+    @camera.setter
+    def camera(self, cam: pyvista.Camera):
+        self.SetCamera(cam)
