@@ -698,7 +698,7 @@ class PolyDataFilters(DataSetFilters):
         curv = _get_output(curvefilter)
         return _vtk.vtk_to_numpy(curv.GetPointData().GetScalars())
 
-    def adjusted_edge_curvature(self, curv_type='mean', epsilon=1.0e-08, progress_bar=False):
+    def adjusted_edge_curvature(self, curv_type='mean', progress_bar=False):
         """Return the pointwise adjusted edge curvature of a mesh.
 
         Parameters
@@ -710,9 +710,6 @@ class PolyDataFilters(DataSetFilters):
             * ``"gaussian"``
             * ``"maximum"``
             * ``"minimum"``
-
-        epsilon : float, default: 1.0e-08
-            Absolute curvature values less than this will be set to zero.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -751,23 +748,21 @@ class PolyDataFilters(DataSetFilters):
                     for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
                 ]
             )
-            dists = np.array(
+            ditances = np.array(
                 [
                     np.linalg.norm(self.points[p_id_n] - self.points[p_id])
                     for p_id_n in set(self.point_neighbors(p_id)) - set(boundary_ids)
                 ]
             )
-            curvs = curvs[dists > 0]
-            dists = dists[dists > 0]
+            curvs = curvs[ditances > 0]
+            ditances = ditances[ditances > 0]
             if len(curvs) > 0:
-                weights = 1.0 / np.array(dists)
+                weights = 1.0 / np.array(ditances)
                 weights /= weights.sum()
                 curvatures[p_id] = np.dot(curvs, weights)
             else:
                 # Assuming the curvature of the point is planar.
                 curvatures[p_id] = 0.0
-        if epsilon != 0.0:
-            curvatures = np.where(abs(curvatures) < epsilon, 0, curvatures)
         return curvatures
 
     def plot_curvature(self, curv_type='mean', **kwargs):

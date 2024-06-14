@@ -24,6 +24,16 @@ source = (
 source['Gauss_Curvature'] = source.adjusted_edge_curvature("gaussian")
 source['Mean_Curvature'] = source.adjusted_edge_curvature("mean")
 
+# Absolute curvature values less than 1.0e-08 will be set to zero.
+
+epsilon = 1.0e-08
+source['Gauss_Curvature'] = np.where(
+    abs(source['Gauss_Curvature']) < epsilon, 0, source['Gauss_Curvature']
+)
+source['Mean_Curvature'] = np.where(
+    abs(source['Mean_Curvature']) < epsilon, 0, source['Mean_Curvature']
+)
+
 # Let's visualize what we have done.
 
 plotter = pv.Plotter(shape=(1, 2), window_size=(1024, 512))
