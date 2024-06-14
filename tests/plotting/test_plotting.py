@@ -2783,6 +2783,35 @@ def test_ruler():
     plotter.show()
 
 
+@skip_windows  # due to opacity
+@skip_9_0_X
+def test_dimension_line():
+    pointa = [1.0, 0.0, 0.0]
+    pointb = [1.0, 1.0, 0.0]
+    pointc = [0.0, 1.0, 0.0]
+    rectangle = pv.Rectangle([pointa, pointb, pointc])
+    plotter = pv.Plotter()
+    plotter.set_background("white")
+    plotter.add_mesh(rectangle, show_edges=True, line_width=5, color="tan")
+    plotter.add_dimension_line(
+        pointa,
+        pointb,
+        [0.1, 0.0, 0.0],
+        text_color="black",
+        shape_color="white",
+        font_size=8,
+    )
+    plotter.add_dimension_line(
+        pointb,
+        pointc,
+        [0.0, 0.1, 0.0],
+        text_color="black",
+        shape_color="white",
+        font_size=8,
+    )
+    plotter.show()
+
+
 def test_legend_scale(sphere):
     plotter = pv.Plotter()
     plotter.add_mesh(sphere)
