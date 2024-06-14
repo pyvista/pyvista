@@ -34,6 +34,7 @@ from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
+from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
@@ -1198,6 +1199,81 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
+
+    def add_north_arrow_widget(
+        self,
+        interactive=None,
+        color="#4169E1",
+        opacity=1.0,
+        line_width=2,
+        edge_color=None,
+        lighting=False,
+        viewport=(0, 0, 0.1, 0.1),
+    ):
+        """Add a geographic north arrow to the scene.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Control if the orientation widget is interactive.  By
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.plotting.themes.Theme.interactive>`.
+
+        color : ColorLike, optional
+            Color of the north arrow.
+
+        opacity : float, optional
+            Opacity of the north arrow.
+
+        line_width : float, optional
+            Width of the north edge arrow lines.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        lighting : bool, optional
+            Enable or disable lighting on north arrow.
+
+        viewport : sequence[float], default: (0, 0, 0.1, 0.1)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkOrientationMarkerWidget
+            Orientation marker widget.
+
+        Examples
+        --------
+        Use an north arrow as the orientation widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> terrain = examples.download_st_helens().warp_by_scalar()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(terrain)
+        >>> widget = pl.add_north_arrow_widget()
+        >>> pl.enable_terrain_style(True)
+        >>> pl.show()
+
+        """
+        marker = create_north_arrow()
+        mapper = pyvista.DataSetMapper(marker)
+        actor = pyvista.Actor(mapper)
+        actor.prop.show_edges = True
+        if edge_color is not None:
+            actor.prop.edge_color = edge_color
+        actor.prop.line_width = line_width
+        actor.prop.color = color
+        actor.prop.opacity = opacity
+        actor.prop.lighting = lighting
+        return self.add_orientation_widget(
+            actor,
+            interactive=interactive,
+            viewport=viewport,
+        )
 
     def add_box_axes(
         self,
