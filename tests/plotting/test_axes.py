@@ -144,15 +144,3 @@ def test_axes_actor_axis_labels(axes_actor):
     assert axes_actor.x_axis_label == 'Axis X'
     assert axes_actor.y_axis_label == 'Axis Y'
     assert axes_actor.z_axis_label == 'Axis Z'
-
-
-def test_axes_actor_label_size(axes_actor):
-    w, h = 0.1, 0.2
-    axes_actor.label_size = (w, h)
-    assert axes_actor.label_size == (w, h)
-    assert axes_actor.GetXAxisCaptionActor2D().GetWidth() == w
-    assert axes_actor.GetXAxisCaptionActor2D().GetHeight() == h
-    assert axes_actor.GetYAxisCaptionActor2D().GetWidth() == w
-    assert axes_actor.GetYAxisCaptionActor2D().GetHeight() == h
-    assert axes_actor.GetZAxisCaptionActor2D().GetWidth() == w
-    assert axes_actor.GetZAxisCaptionActor2D().GetHeight() == h

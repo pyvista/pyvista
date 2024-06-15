@@ -49,16 +49,18 @@ import warnings
 
 import pyvista  # noqa: TCH001
 from pyvista.core.utilities.misc import _check_range
-from pyvista.plotting.colors import Color
-from pyvista.plotting.colors import get_cmap_safe
-from pyvista.plotting.colors import get_cycler
-from pyvista.plotting.opts import InterpolationType
-from pyvista.plotting.tools import parse_font_family
+
+from .colors import Color
+from .colors import get_cmap_safe
+from .colors import get_cycler
+from .opts import InterpolationType
+from .tools import parse_font_family
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
-    from pyvista.plotting._typing import ColorLike
+
+    from ._typing import ColorLike
 
 
 def _set_plot_theme_from_env() -> None:
@@ -808,12 +810,6 @@ class _AxesConfig(_ThemeConfig):
     >>> pv.global_theme.axes.z_color
     Color(name='blue', hex='#0000ffff', opacity=255)
 
-    >>> pv.global_theme.axes.shaft_type
-    'cylinder'
-
-    >>> pv.global_theme.axes.tip_type
-    'cone'
-
     >>> pv.global_theme.axes.box
     False
 
@@ -834,26 +830,22 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color', '_y_color', '_z_color', '_shaft_type', '_tip_type', '_box', '_show']
+    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
     def __init__(self):
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
-        self._shaft_type = 'cylinder'
-        self._tip_type = 'cone'
         self._box = False
         self._show = True
 
     def __repr__(self):
         txt = ['Axes configuration']
         parm = {
-            'X color': 'x_color',
-            'Y color': 'y_color',
-            'Z color': 'z_color',
-            'Shaft type': 'shaft_type',
-            'Tip type': 'tip_type',
-            'Use box': 'box',
+            'X Color': 'x_color',
+            'Y Color': 'y_color',
+            'Z Color': 'z_color',
+            'Use Box': 'box',
             'Show': 'show',
         }
         for name, attr in parm.items():
@@ -924,43 +916,6 @@ class _AxesConfig(_ThemeConfig):
     @z_color.setter
     def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._z_color = Color(color)
-
-    @property
-    def shaft_type(self) -> str:  # numpydoc ignore=RT01
-        """Return or set axes shaft type.
-
-        Examples
-        --------
-        Get the default shaft type.
-
-        >>> import pyvista as pv
-        >>> pv.global_theme.axes.shaft_type
-        'cylinder'
-
-        Set the default to 'line'.
-
-        >>> pv.global_theme.axes.shaft_type = 'line'
-        """
-        return self._shaft_type
-
-    @shaft_type.setter
-    def shaft_type(self, shaft_type: str):  # numpydoc ignore=GL08
-        self._shaft_type = shaft_type
-
-    @property
-    def tip_type(self) -> str:  # numpydoc ignore=RT01
-        """Return or set axes tip type.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pv.global_theme.axes.tip_type = 'sphere'
-        """
-        return self._tip_type
-
-    @tip_type.setter
-    def tip_type(self, tip_type: str):  # numpydoc ignore=GL08
-        self._tip_type = tip_type
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01

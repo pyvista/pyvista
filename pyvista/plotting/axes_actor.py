@@ -4,19 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import TYPE_CHECKING
-from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import pyvista
 
 from . import _vtk
-from ._property import _check_range
 from .actor_properties import ActorProperties
-from .colors import Color
-from .colors import _validate_color_sequence
-
-if TYPE_CHECKING:
-    from .colors import ColorLike
 
 
 class AxesActor(_vtk.vtkAxesActor):
@@ -104,31 +98,6 @@ class AxesActor(_vtk.vtkAxesActor):
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
-    def _actors(
-        self,
-    ) -> tuple[
-        _vtk.vtkActor,
-        _vtk.vtkActor,
-        _vtk.vtkActor,
-        _vtk.vtkActor,
-        _vtk.vtkActor,
-        _vtk.vtkActor,
-    ]:
-        collection = _vtk.vtkPropCollection()
-        self.GetActors(collection)
-        return tuple([collection.GetItemAsObject(i) for i in range(6)])
-
-    @property
-    def _label_actors(
-        self,
-    ) -> tuple[_vtk.vtkCaptionActor2D, _vtk.vtkCaptionActor2D, _vtk.vtkCaptionActor2D]:
-        return (
-            self.GetXAxisCaptionActor2D(),
-            self.GetYAxisCaptionActor2D(),
-            self.GetZAxisCaptionActor2D(),
-        )
-
-    @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
         """Return or set AxesActor visibility.
 
@@ -150,7 +119,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetVisibility(value)
 
     @property
-    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of all axes.
 
         Examples
@@ -177,7 +146,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTotalLength(length, length, length)
 
     @property
-    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
         Examples
@@ -204,7 +173,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
 
         Examples
@@ -231,7 +200,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedTipLength(length, length, length)
 
     @property
-    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label along the axes.
 
         Examples
@@ -401,7 +370,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: ShaftType | int):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -426,41 +395,12 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: TipType | int):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
         elif tip_type == AxesActor.TipType.SPHERE:
             self.SetTipTypeToSphere()
-
-    @property
-    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Return or set the axes labels.
-
-        This property may be used as an alternative to using :attr:`~x_axis_label`,
-        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
-
-        .. versionadded:: 0.44.0
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor()
-        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
-        >>> axes_actor.labels
-        ('X Axis', 'Y Axis', 'Z Axis')
-        """
-        return self.x_axis_label, self.y_axis_label, self.z_axis_label
-
-    @labels.setter
-    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
-        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
-            raise ValueError(
-                f'Labels must be a list or tuple with three items. Got {labels} instead.',
-            )
-        self.x_axis_label = labels[0]
-        self.y_axis_label = labels[1]
-        self.z_axis_label = labels[2]
 
     @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
@@ -560,114 +500,3 @@ class AxesActor(_vtk.vtkAxesActor):
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.z_axis_tip_properties = properties
-
-    @property
-    def x_label_color(self) -> Color:
-        return Color(self.GetXAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
-
-    @x_label_color.setter
-    def x_label_color(self, val: Color):
-        color = Color(val).float_rgb
-        self.GetXAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
-
-    @property
-    def y_label_color(self) -> Color:
-        return Color(self.GetYAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
-
-    @y_label_color.setter
-    def y_label_color(self, val: Color):
-        color = Color(val).float_rgb
-        self.GetYAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
-
-    @property
-    def z_label_color(self) -> Color:
-        return Color(self.GetZAxisCaptionActor2D().GetCaptionTextProperty().GetColor())
-
-    @z_label_color.setter
-    def z_label_color(self, val: Color):
-        color = Color(val).float_rgb
-        self.GetZAxisCaptionActor2D().GetCaptionTextProperty().SetColor(color)
-
-    @property
-    def label_color(self) -> tuple[Color, Color, Color]:  # numpydoc ignore=RT01
-        """Color of the label text for all axes."""
-
-        return (self.x_label_color, self.y_label_color, self.z_label_color)
-
-    @label_color.setter
-    def label_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        if color is None:
-            color = pyvista.global_theme.font.color
-        colors = _validate_color_sequence(color, n_colors=3)
-        self.x_label_color = colors[0]
-        self.y_label_color = colors[1]
-        self.z_label_color = colors[2]
-
-    @property
-    def label_size(self) -> tuple[float, float]:  # numpydoc ignore=RT01
-        """The width and height of the axes labels.
-
-        The width and height are expressed as a fraction of the viewport.
-        Values must be in range ``[0, 1]``.
-        """
-        # Get size from x actor
-        width, height = self._label_actors[0].GetWidth(), self._label_actors[0].GetHeight()
-        # Make sure y and z have the same size
-        self._label_actors[1].SetWidth(width), self._label_actors[1].SetHeight(height)
-        self._label_actors[2].SetWidth(width), self._label_actors[2].SetHeight(height)
-        return width, height
-
-    @label_size.setter
-    def label_size(self, size: Sequence[float]):  # numpydoc ignore=GL08
-        valid_range = [0, 1]
-        _check_range(size[0], valid_range, 'label width')
-        _check_range(size[1], valid_range, 'label height')
-        for actor in self._label_actors:
-            actor.SetWidth(size[0])
-            actor.SetHeight(size[1])
-
-    @property
-    def show_labels(self) -> bool:  # numpydoc ignore=RT01
-        """Enable or disable the text labels for the axes."""
-        return bool(self.GetAxisLabels())
-
-    @show_labels.setter
-    def show_labels(self, value: bool):  # numpydoc ignore=GL08
-        self.SetAxisLabels(value)
-
-    def plot(self):
-        pl = pyvista.Plotter()
-        pl.add_actor(self)
-        pl.show()
-
-    # @property
-    # def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Normalized position of the text label along each axis.
-    #
-    #     Values must be non-negative.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.label_position
-    #     (1.0, 1.0, 1.0)
-    #     >>> axes_actor.label_position = 0.3
-    #     >>> axes_actor.label_position
-    #     (0.3, 0.3, 0.3)
-    #     >>> axes_actor.label_position = (0.1, 0.4, 0.2)
-    #     >>> axes_actor.label_position
-    #     (0.1, 0.4, 0.2)
-    #
-    #     """
-    #     return self._label_position
-    #
-    # @label_position.setter
-    # def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-    #     if isinstance(position, (int, float)):
-    #         _check_range(position, (0, float('inf')), 'label_position')
-    #         position = [position, position, position]
-    #     _check_range(position[0], (0, float('inf')), 'x-axis label_position')
-    #     _check_range(position[1], (0, float('inf')), 'y-axis label_position')
-    #     _check_range(position[2], (0, float('inf')), 'z-axis label_position')
-    #     self._label_position = float(position[0]), float(position[1]), float(position[2])
