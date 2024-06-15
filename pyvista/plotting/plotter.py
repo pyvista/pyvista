@@ -19,7 +19,8 @@ import sys
 import textwrap
 from threading import Thread
 import time
-from typing import TYPE_CHECKING, Generator
+from typing import TYPE_CHECKING
+from typing import Generator
 import uuid
 import warnings
 import weakref
@@ -125,7 +126,7 @@ log.setLevel('CRITICAL')
 log.addHandler(logging.StreamHandler())
 
 
-def _warn_xserver() -> None:  # pragma: no cover
+def _warn_xserver():  # pragma: no cover
     """Check if plotting is supported and persist this state.
 
     Check once and cache this value between calls.  Warn the user if
@@ -261,7 +262,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         theme=None,
         image_scale=None,
         **kwargs,
-    ) -> None:
+    ):
         """Initialize base plotter."""
         super().__init__(**kwargs)  # cooperative multiple inheritance
         log.debug('BasePlotter init start')
@@ -574,7 +575,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def export_html(self, filename) -> io.StringIO:
+    def export_html(self, filename) -> io.StringIO | None:
         """Export this plotter as an interactive scene to a HTML file.
 
         Parameters
@@ -1165,7 +1166,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True) -> None:
+    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True):
         """Enable anti-aliasing.
 
         This tends to make edges appear softer and less pixelated.
@@ -1251,7 +1252,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.enable_anti_aliasing(aa_type)
 
-    def disable_anti_aliasing(self, all_renderers=True) -> None:
+    def disable_anti_aliasing(self, all_renderers=True):
         """Disable anti-aliasing.
 
         Parameters
@@ -1303,7 +1304,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.render()
 
     @wraps(Renderer.add_orientation_widget)
-    def add_orientation_widget(self, *args, **kwargs) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
+    def add_orientation_widget(
+        self, *args, **kwargs
+    ) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_orientation_widget``."""
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
@@ -1318,7 +1321,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.add_box_axes(*args, **kwargs)
 
     @wraps(Renderer.add_north_arrow_widget)
-    def add_north_arrow_widget(self, *args, **kwargs) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
+    def add_north_arrow_widget(
+        self, *args, **kwargs
+    ) -> _vtk.vtkOrientationMarkerWidget:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_north_arrow_widget``."""
         return self.renderer.add_north_arrow_widget(*args, **kwargs)
 
@@ -1348,12 +1353,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.remove_chart(*args, **kwargs)
 
     @wraps(Renderers.set_chart_interaction)
-    def set_chart_interaction(self, *args, **kwargs) -> list:  # numpydoc ignore=PR01,RT01
+    def set_chart_interaction(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderers.set_chart_interaction``."""
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
     @wraps(Renderer.add_actor)
-    def add_actor(self, *args, **kwargs) -> tuple[_vtk.vtkActor, _vtk.vtkProperty | None] :  # numpydoc ignore=PR01,RT01
+    def add_actor(
+        self, *args, **kwargs
+    ) -> tuple[_vtk.vtkActor, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
@@ -1406,7 +1413,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
-    def add_axes_at_origin(self, *args, **kwargs)-> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes_at_origin(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
@@ -1550,7 +1557,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return None  # pragma: no cover
 
     @wraps(Renderer.get_default_cam_pos)
-    def get_default_cam_pos(self, *args, **kwargs) -> list:  # numpydoc ignore=PR01,RT01
+    def get_default_cam_pos(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
@@ -1586,7 +1593,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.actors
 
     @property
-    def camera(self) -> Camera:  # numpydoc ignore=RT01
+    def camera(self):  # numpydoc ignore=RT01
         """Return the active camera of the active renderer.
 
         Returns
@@ -1758,7 +1765,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.set_background(color)
 
     @property
-    def window_size(self) -> list[int]:  # numpydoc ignore=RT01
+    def window_size(self):  # numpydoc ignore=RT01
         """Return the render window size in ``(width, height)``.
 
         Examples
@@ -1777,7 +1784,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return list(self.render_window.GetSize())
 
     @window_size.setter
-    def window_size(self, window_size) -> None:  # numpydoc ignore=GL08
+    def window_size(self, window_size):  # numpydoc ignore=GL08
         self.render_window.SetSize(window_size[0], window_size[1])
         self._window_size_unset = False
         self.render()
@@ -2010,13 +2017,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'iren'):
             self.iren.clear_events_for_key(*args, **kwargs)
 
-    def store_mouse_position(self, *args) -> None:
+    def store_mouse_position(self, *args):
         """Store mouse position."""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interactive.")
         self.mouse_position = self.iren.get_event_position()
 
-    def store_click_position(self, *args) -> None:
+    def store_click_position(self, *args):
         """Store click position in viewport coordinates."""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interactive.")
@@ -2156,7 +2163,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.camera.zoom(value)
         self.render()
 
-    def reset_key_events(self) -> None:
+    def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
         if not hasattr(self, 'iren'):
             return
@@ -2181,7 +2188,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap RenderWindowInteractor.key_press_event."""
         self.iren.key_press_event(*args, **kwargs)
 
-    def left_button_down(self, *args) -> None:
+    def left_button_down(self, *args):
         """Register the event for a left button down click."""
         if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
             if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
@@ -3806,7 +3813,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color) -> None:
+    def _add_legend_label(self, actor, label, scalars, color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
@@ -3860,7 +3867,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         user_matrix=None,
         log_scale=False,
         **kwargs,
-    ) -> Actor:
+    ):
         """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D data type like :class:`numpy.ndarray`,
@@ -4453,7 +4460,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity=None,
         feature_angle=None,
         decimate=None,
-    ) -> Actor:
+    ):
         """Add a silhouette of a PyVista or VTK dataset to the scene.
 
         A silhouette can also be generated directly in
@@ -4704,7 +4711,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError(f'Expected type is None, int, list or tuple: {type(views)} is given')
 
     @wraps(ScalarBars.add_scalar_bar)
-    def add_scalar_bar(self, *args, **kwargs) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
+    def add_scalar_bar(
+        self, *args, **kwargs
+    ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
         render = kwargs.get('render', None)
@@ -4863,7 +4872,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.Finalize()
             del self.ren_win
 
-    def close(self) -> None:
+    def close(self):
         """Close the render window."""
         # optionally run just prior to exiting the plotter
         if self._before_close_callback is not None:
@@ -4940,7 +4949,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_file=None,
         *,
         render=True,
-    ) -> _vtk.vtkTextActor | _vtk.vtkCornerAnnotation:
+    ):
         """Add text to plot object in the top left corner by default.
 
         Parameters
@@ -5218,7 +5227,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.update()
         self.mwriter.append_data(self.image)
 
-    def get_image_depth(self, fill_value=np.nan, reset_camera_clipping_range=True) -> pyvista.pyvista_ndarray:
+    def get_image_depth(
+        self, fill_value=np.nan, reset_camera_clipping_range=True
+    ) -> pyvista.pyvista_ndarray:
         """Return a depth image representing current render window.
 
         Parameters
@@ -5289,7 +5300,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False) -> _vtk.vtkActor:
+    def add_lines(
+        self, lines, color='w', width=5, label=None, name=None, connected=False
+    ) -> _vtk.vtkActor:
         """Add lines to the plotting object.
 
         Parameters
@@ -5417,7 +5430,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         justification_vertical=None,
         background_color=None,
         background_opacity=None,
-    ) -> _vtk.vtkActor2D:
+    ):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -5685,7 +5698,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(label_actor, reset_camera=False, name=f'{name}-labels', pickable=False)
         return label_actor
 
-    def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs) -> _vtk.vtkActor2D:
+    def add_point_scalar_labels(
+        self, points, labels, fmt=None, preamble='', **kwargs
+    ) -> _vtk.vtkActor2D:
         """Label the points from a dataset with the values of their scalars.
 
         Wrapper for :func:`pyvista.Plotter.add_point_labels`.
@@ -5850,7 +5865,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
-    def _save_image(image, filename, return_img) -> pyvista.ArrayLike |None:
+    def _save_image(image, filename, return_img) -> pyvista.ArrayLike | None:
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -6051,7 +6066,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderers.set_color_cycler``."""
         self.renderers.set_color_cycler(*args, **kwargs)
 
-    def generate_orbital_path(self, factor=3.0, n_points=20, viewup=None, shift=0.0) -> pyvista.PolyData:
+    def generate_orbital_path(
+        self, factor=3.0, n_points=20, viewup=None, shift=0.0
+    ) -> pyvista.PolyData:
         """Generate an orbital path around the data scene.
 
         Parameters
@@ -6100,7 +6117,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
-    def fly_to(self, point) -> None:
+    def fly_to(self, point):
         """Move the current camera's focal point to a position point.
 
         The movement is animated over the number of frames specified in
@@ -6287,7 +6304,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             del self.renderers
 
-    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True) -> None:
+    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):
         """Add a background image to a plot.
 
         Parameters
@@ -6561,7 +6578,7 @@ class Plotter(BasePlotter):
         lighting='light kit',
         theme=None,
         image_scale=None,
-    ) -> None:
+    ):
         """Initialize a vtk plotting object."""
         super().__init__(
             shape=shape,
@@ -6995,7 +7012,9 @@ class Plotter(BasePlotter):
             return return_values[0]
         return return_values or None
 
-    def add_title(self, title, font_size=18, color=None, font=None, shadow=False) -> _vtk.vtkTextActor:
+    def add_title(
+        self, title, font_size=18, color=None, font=None, shadow=False
+    ) -> _vtk.vtkTextActor:
         """Add text to the top center of the plot.
 
         This is merely a convenience method that calls ``add_text``
@@ -7059,7 +7078,7 @@ class Plotter(BasePlotter):
         bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         focal_point=(0.0, 0.0, 0.0),
         color=None,
-    ) -> _vtk.vtkActor:
+    ):
         """Add a cursor of a PyVista or VTK dataset to the scene.
 
         Parameters
