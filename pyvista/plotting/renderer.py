@@ -1078,14 +1078,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             user_matrix=user_matrix,
             **kwargs,
         )
-        axes_actor = axes_assembly.output_axes_actor
-        self.add_actor(axes_actor)
+        self.add_actor(axes_assembly)
 
         if show_labels:
-            x_follower, y_follower, z_follower = axes_assembly.output_label_followers
-            self.add_actor(x_follower)
-            self.add_actor(y_follower)
-            self.add_actor(z_follower)
+            self.add_actor(axes_assembly._x_follower)
+            self.add_actor(axes_assembly._y_follower)
+            self.add_actor(axes_assembly._z_follower)
             # # Scale label position proportional to length of each axis
             # total_length = np.array(axes_assembly.total_length)
             # label_position = _validation.validate_array3(label_position, broadcast=True)
@@ -1135,8 +1133,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # y_follower = self._add_follower(y_actor)
             # z_follower = self._add_follower(z_actor)
 
-            return axes_actor, x_follower, y_follower, z_follower
-        return axes_actor
+            return axes_assembly
+        return axes_assembly
 
     # def _add_text_follower(
     #     self,

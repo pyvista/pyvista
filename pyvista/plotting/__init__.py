@@ -11,10 +11,12 @@ from ._property import Property
 from ._typing import Chart
 from ._typing import ColorLike
 from .actor import Actor
+from .actor import TextFollower
 from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
 from .axes_assembly import AxesAssembly
+from .axes_assembly import AxesGeometry
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox

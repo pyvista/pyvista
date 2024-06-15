@@ -923,10 +923,10 @@ def test_axes_assembly_auto_length_raises():
 
 
 def test_axes_assembly_output():
-    out = AxesAssembly(include_labels=False).output_axes_dataset
+    out = AxesAssembly(include_labels=False).output
     assert isinstance(out, pv.PolyData)
     assert out.array_names == ['_rgb']
-    out = AxesAssembly(include_labels=True).output_axes_dataset
+    out = AxesAssembly(include_labels=True).output
     assert isinstance(out, tuple)
     assert len(out) == 2
     assert isinstance(out[0], pv.PolyData)

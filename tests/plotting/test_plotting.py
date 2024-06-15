@@ -3965,13 +3965,17 @@ def axes_marker_reference_points():
 #     plot.show()
 
 
-def test_axes_assembly_plot():
-    axes, labels = pv.AxesAssembly().output_axes_dataset
+def test_axes_geometry():
+    pv.AxesGeometry().output.plot()
+    # pl = pv.Plotter()
+    # pl.add_mesh(axes)
+    # pl.show()
+
+
+def test_axes_assembly():
     pl = pv.Plotter()
-    pl.add_mesh(axes)
-    pl.add_mesh(labels[0])
-    pl.add_mesh(labels[1])
-    pl.add_mesh(labels[2])
+    axes = pv.AxesAssembly()
+    pl.add_actor(axes)
     pl.show()
 
 
@@ -3983,15 +3987,20 @@ def _direction_vectors():
     'test_kwargs',
     [
         {},
-        {'position': (-0.5, -0.5, 1)},
-        {'direction_vectors': _direction_vectors()},
-        # {'scale': (1, 2, 3), 'position': (-0.5, -0.5, 1)},
+        dict(position=(-0.5, -0.5, 1)),
+        dict(direction_vectors=_direction_vectors()),
+        dict(position=(-0.5, -0.5, 1), direction_vectors=_direction_vectors()),
         # {'origin': (0, 0, 0.5), 'orientation': (10, 20, 30)},
     ],
-    ids=['default', 'position', 'direction_vectors'],  # , 'direction_vectors']
+    ids=[
+        'default',
+        'position',
+        'direction_vectors',
+        'position_and_direction',
+    ],  # , 'direction_vectors']
 )
 def test_add_axes_marker(test_kwargs):
-    plot = pv.Plotter(off_screen=False)
+    plot = pv.Plotter()
     plot.add_axes_marker(**test_kwargs)
 
     if test_kwargs:

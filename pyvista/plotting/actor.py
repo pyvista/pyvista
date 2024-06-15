@@ -399,7 +399,22 @@ class Actor(Prop3D, _vtk.vtkActor):
         self.SetBackfaceProperty(value)
 
 
-class Follower(Actor, _vtk.vtkFollower):
+class TextFollower(Actor, _vtk.vtkFollower):
+    _new_attr_exceptions: ClassVar[List[str]] = ['_text_source']
+
+    def __init__(self, string: str = "", position=None, prop=None, name=None):
+        super().__init__(prop=prop, name=name)
+        text_source = pyvista.Text3DSource(string=string, depth=0.0)
+        text_source.update()
+        out = text_source.output
+        mapper = _vtk.vtkPolyDataMapper()
+        mapper.SetInputData(out)
+
+        self._text_source = text_source
+        self.mapper = mapper
+        self.prop.lighting = False
+        self.position = (0, 0, 0) if position is None else position
+
     @property
     def camera(self):
         return self.GetCamera()
@@ -407,3 +422,30 @@ class Follower(Actor, _vtk.vtkFollower):
     @camera.setter
     def camera(self, cam: pyvista.Camera):
         self.SetCamera(cam)
+
+    @property
+    def string(self):
+        return self._text_source.string
+
+    @string.setter
+    def string(self, string: str):
+        self._text_source.string = string
+        self._text_source.update()
+
+    @property
+    def depth(self):
+        return self._text_source.depth
+
+    @depth.setter
+    def depth(self, depth: float):
+        self._text_source.depth = depth
+        self._text_source.update()
+
+    @property
+    def height(self):
+        return self._text_source.height
+
+    @height.setter
+    def height(self, height: float):
+        self._text_source.height = height
+        self._text_source.update()
