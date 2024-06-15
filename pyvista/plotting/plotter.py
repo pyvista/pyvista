@@ -6039,7 +6039,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Plotter hasn't been rendered or was improperly closed
                 raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
-            if self._first_time and not self.off_screen:
+            if self._first_time and (hasattr(self, "off_screen") and not self.off_screen):
                 raise RuntimeError(
                     "Nothing to screenshot - call .show first or use the off_screen argument",
                 )
@@ -6231,7 +6231,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     self.render()
                 sleep_time = step - (time.time() - tstart)
-                if sleep_time > 0 and not self.off_screen:
+                if sleep_time > 0 and (hasattr(self, "off_screen") and not self.off_screen):
                     time.sleep(sleep_time)
             if write_frames:
                 self.mwriter.close()
