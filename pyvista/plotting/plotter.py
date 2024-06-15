@@ -422,7 +422,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         self._theme.load_theme(theme)
 
-    def import_gltf(self, filename, set_camera=True) -> None:
+    def import_gltf(self, filename, set_camera=True):
         """Import a glTF file into the plotter.
 
         See https://www.khronos.org/gltf/ for more information.
@@ -4584,7 +4584,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear actors from all renderers."""
         self.renderers.clear_actors()
 
-    def clear(self) -> None:
+    def clear(self):
         """Clear plot by removing all actors and properties.
 
         Examples
@@ -4925,7 +4925,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # this helps managing closed plotters
         self._closed = True
 
-    def deep_clean(self) -> None:
+    def deep_clean(self):
         """Clean the plotter of the memory."""
         self.disable_picking()
         if hasattr(self, 'renderers'):
@@ -5865,7 +5865,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
-    def _save_image(image, filename, return_img) -> pyvista.ArrayLike | None:
+    def _save_image(image, filename, return_img):
         """Save to file and/or return a NumPy image array.
 
         This is an internal helper.
@@ -5976,7 +5976,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return_img=True,
         window_size=None,
         scale=None,
-    ) -> pyvista.pyvista_ndarray:
+    ):
         """Take screenshot at current camera position.
 
         Parameters
