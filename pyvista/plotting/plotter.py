@@ -1358,9 +1358,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.set_chart_interaction(*args, **kwargs)
 
     @wraps(Renderer.add_actor)
-    def add_actor(
-        self, *args, **kwargs
-    ) -> tuple[_vtk.vtkActor, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
+    def add_actor(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
@@ -6140,7 +6138,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         write_frames=False,
         threaded=False,
         progress_bar=False,
-    ) -> None:
+    ):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
