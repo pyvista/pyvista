@@ -1693,7 +1693,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.set_scale(*scale)
 
     @property
-    def camera_position(self) -> pyvista.CameraPosition:  # numpydoc ignore=RT01
+    def camera_position(self):  # numpydoc ignore=RT01
         """Return camera position of the active render window.
 
         Examples
