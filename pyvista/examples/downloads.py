@@ -2393,6 +2393,9 @@ _dataset_filled_contours = _SingleFileDownloadableDatasetLoader('filledContours.
 def download_doorman(load=True):  # pragma: no cover
     """Download doorman dataset.
 
+    .. versionchanged:: 0.44.0
+        Add support for downloading the texture images.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2419,11 +2422,36 @@ def download_doorman(load=True):  # pragma: no cover
             Example using this dataset.
 
     """
-    # TODO: download textures as well
     return _download_dataset(_dataset_doorman, load=load)
 
 
-_dataset_doorman = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
+def _doorman_files_func():
+    # Multiple files needed for read, but only one gets loaded
+    doorman_obj = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
+    doorman_mtl = _DownloadableFile('doorman/doorman.mtl')
+    t_doorMan_d = _DownloadableFile('doorman/t_doorMan_d.png')
+    t_doorMan_n = _DownloadableFile('doorman/t_doorMan_n.png')
+    t_doorMan_s = _DownloadableFile('doorman/t_doorMan_s.png')
+    t_doorMan_teeth_d = _DownloadableFile('doorman/t_doorMan_teeth_d.png')
+    t_doorMan_teeth_n = _DownloadableFile('doorman/t_doorMan_teeth_n.png')
+    t_eye_d = _DownloadableFile('doorman/t_eye_d.png')
+    t_eye_n = _DownloadableFile('doorman/t_eye_n.png')
+    return (
+        doorman_obj,
+        doorman_mtl,
+        t_doorMan_d,
+        t_doorMan_n,
+        t_doorMan_s,
+        t_doorMan_teeth_d,
+        t_doorMan_teeth_n,
+        t_eye_d,
+        t_eye_n,
+    )
+
+
+_dataset_doorman = _MultiFileDownloadableDatasetLoader(
+    files_func=_doorman_files_func,
+)
 
 
 def download_mug(load=True):  # pragma: no cover
