@@ -598,7 +598,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             importer.SetFileNameMTL(filename_mtl)
         if texture_path is not None:
             texture_path = str(Path(str(texture_path)).expanduser().resolve())
-            if not Path(texture_path).is_file():
+            if not Path(texture_path).is_dir():
                 raise FileNotFoundError(f'Unable to locate {texture_path}')
             importer.SetTexturePath(texture_path)
         importer.SetRenderWindow(self.render_window)
