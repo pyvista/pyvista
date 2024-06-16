@@ -221,6 +221,20 @@ def test_import_obj():
     pl.show()
 
 
+@skip_9_0_X
+def test_import_obj_with_texture():
+    filename = examples.download_doorman(load=False)
+    filename_mtl = str(Path(filename).with_suffix('.mtl'))
+    texture_path = str(Path(filename).parent)
+    pl = pv.Plotter()
+    pl.import_obj(
+        filename,
+        filename_mtl=filename_mtl,
+        texture_path=texture_path,
+    )
+    pl.show(cpos="xy")
+
+
 @skip_windows
 @pytest.mark.skipif(CI_WINDOWS, reason="Windows CI testing segfaults on pbr")
 def test_pbr(sphere, verify_image_cache):
