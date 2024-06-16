@@ -227,6 +227,10 @@ def test_import_obj_with_texture():
     filename_mtl = str(Path(filename).with_suffix('.mtl'))
     texture_path = str(Path(filename).parent)
     pl = pv.Plotter()
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj(filename, filename_mtl='not a file')
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj(filename, texture_path='not a file')
     pl.import_obj(
         filename,
         filename_mtl=filename_mtl,
