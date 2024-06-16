@@ -3469,7 +3469,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointa,
         pointb,
         flip_range=False,
-        number_labels=5,
+        number_labels=None,
         show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -3508,8 +3508,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int, default: 5
+        number_labels : int, optional
             Number of labels to place on ruler.
+            If not supplied, the number will be adjusted for "nice" values.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -3607,7 +3608,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
+        if number_labels is not None:
+            ruler.AdjustLabelsOff()
+            ruler.SetNumberOfLabels(number_labels)
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)
