@@ -592,8 +592,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
         if filename_mtl is not None:
+            filename_mtl = str(Path(str(filename_mtl)).expanduser().resolve())
+            if not Path(filename_mtl).is_file():
+                raise FileNotFoundError(f'Unable to locate {filename_mtl}')
             importer.SetFileNameMTL(filename_mtl)
         if texture_path is not None:
+            texture_path = str(Path(str(texture_path)).expanduser().resolve())
+            if not Path(texture_path).is_file():
+                raise FileNotFoundError(f'Unable to locate {texture_path}')
             importer.SetTexturePath(texture_path)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
