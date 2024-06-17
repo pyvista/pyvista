@@ -1237,7 +1237,9 @@ class MultiBlock(
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
-            scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
+            if dtype != np.uint8:
+                # uint8 is required by the mapper to display correctly
+                scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
