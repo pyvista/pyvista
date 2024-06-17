@@ -3215,6 +3215,7 @@ def make_composite_mesh_rgb_point_cloud(dtype):
     return pv.MultiBlock([white_point, black_point, red_point, green_point, blue_point])
 
 
+@skip_lesser_9_0_X
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 @pytest.mark.parametrize('as_composite', [True, False])
 def test_plot_composite_plot_mesh_implicit_rgb(dtype, as_composite):
