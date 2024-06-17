@@ -243,7 +243,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             List of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        return np.meshgrid(self.x, self.y, self.z, indexing='ij')  # type: ignore
 
     @property  # type: ignore
     def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01

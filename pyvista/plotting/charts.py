@@ -3843,9 +3843,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     def __init__(self, chart, data, colors=None, labels=None):
         """Initialize a new box plot instance."""
         super().__init__(chart)
-        self._table = pyvista.Table(
-            {f"data_{i}": np.asarray(d) for i, d in enumerate(data)}
-        )
+        self._table = pyvista.Table({f"data_{i}": np.asarray(d) for i, d in enumerate(data)})
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
         self.SetInputData(self._quartiles.GetOutput())
