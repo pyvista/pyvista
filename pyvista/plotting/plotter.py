@@ -1583,7 +1583,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self) -> dict[str, Actor]:  # numpydoc ignore=RT01
+    def actors(self) -> dict[str, _vtk.vtkActor]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
         Returns
@@ -2066,7 +2066,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[pyvista.Actor]
+        list[vtk.vtkActor]
             List of actors.
 
         Examples
