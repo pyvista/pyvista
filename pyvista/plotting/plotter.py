@@ -1409,7 +1409,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value) -> None:  # numpydoc ignore=GL08
+    def parallel_scale(self, value: float) -> None:  # numpydoc ignore=GL08
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
