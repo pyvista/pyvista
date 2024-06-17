@@ -19,6 +19,7 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -1236,6 +1237,7 @@ class MultiBlock(
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+            scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
@@ -1271,6 +1273,28 @@ class MultiBlock(
                     dattr[f'{scalars_name}-real'] = scalars
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
+
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
+        """Convert rgb float or int scalars to uint8."""
+        new_scalars_name = f'{scalars_name}-uint8'
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    if np.issubdtype(scalars.dtype, np.floating):
+                        _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
+                        scalars = np.array(scalars, dtype=np.uint8) * 255
+                    elif np.issubdtype(scalars.dtype, np.integer):
+                        _validation.check_range(scalars, [0, 255], name='rgb int scalars')
+                        scalars = np.array(scalars, dtype=np.uint8)
+                    else:
+                        _validation.check_subdtype(scalars, (np.floating, np.integer))
+                    dattr = getattr(block, data_attr)
+                    dattr[new_scalars_name] = scalars
+                    dattr.active_scalars_name = new_scalars_name
+        return new_scalars_name
 
     def _convert_to_single_component(
         self,

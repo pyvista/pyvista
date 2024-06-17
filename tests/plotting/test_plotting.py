@@ -52,7 +52,6 @@ try:
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
-
 ffmpeg_failed = False
 try:
     try:
@@ -3158,6 +3157,78 @@ def test_plot_composite_rgba(multiblock_poly):
         pl.add_composite(multiblock_poly, scalars='all_data', rgba=True)
     pl.add_composite(multiblock_poly, scalars='data', rgba=True)
     pl.show()
+
+
+def _make_rgb_points_and_colors(dtype):
+    BLACK = (0.0, 0.0, 0.0)
+    WHITE = (1.0, 1.0, 1.0)
+    RED = (1.0, 0.0, 0.0)
+    GREEN = (0.0, 1.0, 0.0)
+    BLUE = (0.0, 0.0, 1.0)
+
+    if dtype == 'float':
+
+        def as_dtype(color: tuple[float, float, float]):
+            return pv.Color(color).float_rgb
+    elif dtype == 'int':
+
+        def as_dtype(color: tuple[float, float, float]):
+            return pv.Color(color).int_rgb
+    elif dtype == 'uint8':
+
+        def as_dtype(color: tuple[float, float, float]):
+            return np.array(pv.Color(color).int_rgb, dtype=np.uint8)
+    else:
+        raise NotImplementedError
+
+    colors = as_dtype(BLACK), as_dtype(WHITE), as_dtype(RED), as_dtype(GREEN), as_dtype(BLUE)
+
+    rng = np.random.default_rng(seed=1)
+    points = rng.random((5, 3))
+    return points, colors
+
+
+def make_single_mesh_rgb_point_cloud(dtype):
+    points, (WHITE, BLACK, RED, GREEN, BLUE) = _make_rgb_points_and_colors(dtype)
+
+    # Single mesh point cloud
+    point_cloud = pv.PointSet(points)
+    point_cloud['_rgb'] = [WHITE, BLACK, RED, GREEN, BLUE]
+    return point_cloud
+
+
+def make_composite_mesh_rgb_point_cloud(dtype):
+    points, (WHITE, BLACK, RED, GREEN, BLUE) = _make_rgb_points_and_colors(dtype)
+
+    # Composite point cloud
+    white_point = pv.PointSet(points[0])
+    white_point['_rgb'] = [WHITE]
+    black_point = pv.PointSet(points[1])
+    black_point['_rgb'] = [BLACK]
+    red_point = pv.PointSet(points[2])
+    red_point['_rgb'] = [RED]
+    green_point = pv.PointSet(points[3])
+    green_point['_rgb'] = [GREEN]
+    blue_point = pv.PointSet(points[4])
+    blue_point['_rgb'] = [BLUE]
+
+    return pv.MultiBlock([white_point, black_point, red_point, green_point, blue_point])
+
+
+@pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_plot_composite_plot_mesh_implicit_rgb(dtype, as_composite):
+    # Setup test
+    if as_composite:
+        dataset = make_composite_mesh_rgb_point_cloud(dtype)
+        assert isinstance(dataset, pv.MultiBlock)
+        assert all(np.dtype(block['_rgb'].dtype) == np.dtype(dtype) for block in dataset)
+    else:
+        dataset = make_single_mesh_rgb_point_cloud(dtype)
+        assert isinstance(dataset, pv.PointSet)
+        assert np.dtype(dataset['_rgb'].dtype) == np.dtype(dtype)
+
+    dataset.plot(render_points_as_spheres=True, point_size=100, zoom=0.8)
 
 
 def test_plot_composite_bool(multiblock_poly, verify_image_cache):
