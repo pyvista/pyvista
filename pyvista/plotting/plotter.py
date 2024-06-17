@@ -1790,7 +1790,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.render()
 
     @contextmanager
-    def window_size_context(self, window_size=None) -> Generator[BasePlotter, None, None]:
+    def window_size_context(self, window_size=None) -> Iterator[BasePlotter]:
         """Set the render window size in an isolated context.
 
         Parameters
