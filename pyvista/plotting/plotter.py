@@ -1050,7 +1050,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.remove_legend(*args, **kwargs)
 
     @property
-    def legend(self) -> _vtk.vtkLegendBoxActor:  # numpydoc ignore=RT01
+    def legend(self) -> _vtk.vtkLegendBoxActor | None:  # numpydoc ignore=RT01
         """Legend actor.
 
         There can only be one legend actor per renderer.  If
@@ -1415,7 +1415,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
-    def add_axes_at_origin(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes_at_origin(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
@@ -1541,7 +1541,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.enable(*args, **kwarg)
 
     @wraps(Renderer.enable_depth_peeling)
-    def enable_depth_peeling(self, *args, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def enable_depth_peeling(self, *args, **kwargs) -> bool | None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.enable_depth_peeling``."""
         if self.render_window is not None:
             result = self.renderer.enable_depth_peeling(*args, **kwargs)
