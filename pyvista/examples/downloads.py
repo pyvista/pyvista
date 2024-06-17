@@ -7990,3 +7990,37 @@ def _prostar_files_func():  # pragma: no cover
 
 
 _dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
+
+
+def download_3gqp(load=True):  # pragma: no cover
+    """Download a 3GQP dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_3gqp()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`3GQP Dataset <3gqp_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_3gqp, load=load)
+
+
+_dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
