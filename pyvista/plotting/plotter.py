@@ -1400,7 +1400,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state) -> None:  # numpydoc ignore=GL08
+    def parallel_projection(self, state: bool) -> None:  # numpydoc ignore=GL08
         self.renderer.parallel_projection = state
 
     @property
