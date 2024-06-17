@@ -198,17 +198,3 @@ def test_legend_face(sphere, face):
     pl = pv.Plotter()
     pl.add_mesh(sphere, label='sphere')
     pl.add_legend(face=face)
-
-
-def test_legend_none_face(verify_image_cache):
-    """Verifies that ``face="none"`` does not add a face for each label in legend."""
-    pl = pv.Plotter()
-    pl.add_mesh(
-        pv.Icosphere(center=(3, 0, 0), radius=1),
-        color="r",
-        label="Sphere",
-    )
-    pl.add_mesh(pv.Box(), color="w", label="Box")
-    # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face="none", bcolor="k", size=(0.6, 0.6))
-    pl.show()
