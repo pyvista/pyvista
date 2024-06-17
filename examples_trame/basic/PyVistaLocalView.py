@@ -4,8 +4,8 @@ This is a full-fledged example on building your own user interface
 with client-side rendering.
 """
 from trame.app import get_server
-from trame.ui.vuetify3 import SinglePageLayout
-from trame.widgets import vuetify3
+from trame.ui.vuetify import SinglePageLayout
+from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
@@ -34,10 +34,10 @@ with SinglePageLayout(server) as layout:
     layout.title.set_text("PyVistaLocalView")
 
     with layout.toolbar:
-        vuetify3.VSpacer()
+        vuetify.VSpacer()
 
     with layout.content:
-        with vuetify3.VContainer(
+        with vuetify.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):

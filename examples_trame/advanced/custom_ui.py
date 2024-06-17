@@ -6,8 +6,8 @@ This example demonstrates how to use ``plotter_ui`` to add a PyVista
 
 import matplotlib.pyplot as plt
 from trame.app import get_server
-from trame.ui.vuetify3 import SinglePageLayout
-from trame.widgets import vuetify3
+from trame.ui.vuetify import SinglePageLayout
+from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
@@ -48,14 +48,14 @@ with SinglePageLayout(server) as layout:
         # Make sure `mode` matches
         viewer.ui_controls(mode='trame')
 
-        vuetify3.VSpacer()
+        vuetify.VSpacer()
 
-        vuetify3.VSelect(
+        vuetify.VSelect(
             label="Color map",
             v_model=("cmap", "viridis"),
             items=("array_list", plt.colormaps()),
             hide_details=True,
-            density="compact",
+            dense=True,
             outlined=True,
             classes="pt-1 ml-2",
             style="max-width: 250px",

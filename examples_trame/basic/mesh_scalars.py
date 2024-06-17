@@ -1,6 +1,6 @@
 from trame.app import get_server
-from trame.ui.vuetify3 import SinglePageLayout
-from trame.widgets import vuetify3
+from trame.ui.vuetify import SinglePageLayout
+from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista import examples
@@ -58,28 +58,28 @@ with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
 
     with layout.toolbar:
-        vuetify3.VSpacer()
-        vuetify3.VCheckbox(
+        vuetify.VSpacer()
+        vuetify.VCheckbox(
             label="Log Scale",
             v_model=("log_scale", False),
             hide_details=True,
-            density="compact",
+            dense=True,
             outlined=True,
-            classes="pt-1 ml-2",
+            # classes="pt-1 ml-2",
         )
-        vuetify3.VSelect(
+        vuetify.VSelect(
             label="Scalars",
             v_model=("scalars", mesh.active_scalars_name),
             items=("array_list", list(mesh.point_data.keys())),
             hide_details=True,
-            density="compact",
+            dense=True,
             outlined=True,
             classes="pt-1 ml-2",
             style="max-width: 250px",
         )
 
     with layout.content:
-        with vuetify3.VContainer(
+        with vuetify.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):

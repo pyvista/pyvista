@@ -1,6 +1,6 @@
 from trame.app import get_server
-from trame.ui.vuetify3 import SinglePageLayout
-from trame.widgets import vuetify3
+from trame.ui.vuetify import SinglePageLayout
+from trame.widgets import vuetify
 
 import pyvista as pv
 from pyvista.plotting.colors import hexcolors
@@ -50,20 +50,20 @@ with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
 
     with layout.toolbar:
-        vuetify3.VSpacer()
-        vuetify3.VSelect(
+        vuetify.VSpacer()
+        vuetify.VSelect(
             label="Color",
             v_model=("color", "seagreen"),
             items=("array_list", list(hexcolors.keys())),
             hide_details=True,
-            density="compact",
+            dense=True,
             outlined=True,
             classes="pt-1 ml-2",
             style="max-width: 250px",
         )
 
     with layout.content:
-        with vuetify3.VContainer(
+        with vuetify.VContainer(
             fluid=True,
             classes="pa-0 fill-height",
         ):
