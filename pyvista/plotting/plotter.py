@@ -1028,12 +1028,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.set_active_renderer(index_row, index_column)
 
     @wraps(Renderer.add_ruler)
-    def add_ruler(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
+    def add_ruler(self, *args, **kwargs) -> _vtk.vtkAxisActor2D:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_ruler``."""
         return self.renderer.add_ruler(*args, **kwargs)
 
     @wraps(Renderer.add_legend_scale)
-    def add_legend_scale(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
+    def add_legend_scale(
+        self, *args, **kwargs
+    ) -> tuple[_vtk.vtkActor, _vtk.vtkProperty | None]:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
@@ -2055,7 +2057,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.iren.untrack_click_position(*args, **kwargs)
 
     @property
-    def pickable_actors(self) -> list[Actor]:  # numpydoc ignore=RT01
+    def pickable_actors(self) -> list[_vtk.vtkActor]:  # numpydoc ignore=RT01
         """Return or set the pickable actors.
 
         When setting, this will be the list of actors to make
@@ -2104,10 +2106,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @pickable_actors.setter
     def pickable_actors(self, actors=None) -> None:  # numpydoc ignore=GL08
         actors = [] if actors is None else actors
-        if isinstance(actors, Actor):
+        if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
 
-        if not all(isinstance(actor, Actor) for actor in actors):
+        if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
             raise TypeError(
                 f'Expected a vtkActor instance or a list of vtkActors, got '
                 f'{[type(actor) for actor in actors]} instead.',
