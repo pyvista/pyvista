@@ -1898,7 +1898,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             kwargs = locals()
             kwargs.pop('self')
             self._floor_kwargs.append(kwargs)
-        ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
+        ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
