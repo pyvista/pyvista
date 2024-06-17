@@ -1,6 +1,7 @@
 """Axes actor module."""
 
 from __future__ import annotations
+from weakref import proxy
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
@@ -1058,7 +1059,7 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._y_label
+        return self._y_follower.string
 
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
@@ -1077,7 +1078,7 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._z_label
+        return self._z_follower.string
 
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08

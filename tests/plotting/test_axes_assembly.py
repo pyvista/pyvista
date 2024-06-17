@@ -6,12 +6,16 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.plotting.axes_assembly import AxesAssembly
+from pyvista.plotting.axes_assembly import AxesAssembly,AxesGeometry
 
 
 @pytest.fixture()
 def axes_assembly():
     return AxesAssembly()
+
+@pytest.fixture()
+def axes_geometry():
+    return AxesGeometry()
 
 
 # def test_origin(axes):
