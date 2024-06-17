@@ -178,6 +178,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import vtkIterativeClosestPointTransform
+from vtkmodules.vtkCommonDataModel import vtkMolecule
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
@@ -345,6 +346,7 @@ from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import vtkSurfaceReconstructionFilter
+from vtkmodules.vtkIOChemistry import vtkCMLMoleculeReader
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter
