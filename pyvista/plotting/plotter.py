@@ -90,6 +90,8 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
+    from pyvista.plotting.axes_actor import AxesActor
+    from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
@@ -944,7 +946,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._scalar_bars
 
     @property
-    def _before_close_callback(self) -> None:
+    def _before_close_callback(self):
         """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
@@ -1026,12 +1028,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderers.set_active_renderer(index_row, index_column)
 
     @wraps(Renderer.add_ruler)
-    def add_ruler(self, *args, **kwargs) -> _vtk.vtkActor:  # numpydoc ignore=PR01,RT01
+    def add_ruler(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_ruler``."""
         return self.renderer.add_ruler(*args, **kwargs)
 
     @wraps(Renderer.add_legend_scale)
-    def add_legend_scale(self, *args, **kwargs) -> _vtk.vtkActor:  # numpydoc ignore=PR01,RT01
+    def add_legend_scale(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_legend_scale``."""
         return self.renderer.add_legend_scale(*args, **kwargs)
 
@@ -1061,7 +1063,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.legend
 
     @wraps(Renderer.add_floor)
-    def add_floor(self, *args, **kwargs) -> _vtk.vtkActor:  # numpydoc ignore=PR01,RT01
+    def add_floor(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_floor``."""
         return self.renderer.add_floor(*args, **kwargs)
 
@@ -1311,12 +1313,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
     @wraps(Renderer.add_axes)
-    def add_axes(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
     @wraps(Renderer.add_box_axes)
-    def add_box_axes(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
+    def add_box_axes(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
 
@@ -1411,17 +1413,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
-    def add_axes_at_origin(self, *args, **kwargs) -> _vtk.vtkAxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes_at_origin(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
     @wraps(Renderer.show_bounds)
-    def show_bounds(self, *args, **kwargs) -> _vtk.vtkCubeAxesActor:  # numpydoc ignore=PR01,RT01
+    def show_bounds(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
     @wraps(Renderer.add_bounding_box)
-    def add_bounding_box(self, *args, **kwargs) -> _vtk.vtkActor:  # numpydoc ignore=PR01,RT01
+    def add_bounding_box(self, *args, **kwargs) -> Actor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_bounding_box``."""
         return self.renderer.add_bounding_box(*args, **kwargs)
 
@@ -1436,7 +1438,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.remove_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.show_grid)
-    def show_grid(self, *args, **kwargs) -> _vtk.vtkCubeAxesActor:  # numpydoc ignore=PR01,RT01
+    def show_grid(self, *args, **kwargs) -> CubeAxesActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.show_grid``."""
         return self.renderer.show_grid(*args, **kwargs)
 
@@ -1579,7 +1581,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self) -> dict[str, _vtk.vtkActor]:  # numpydoc ignore=RT01
+    def actors(self) -> dict[str, Actor]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
         Returns
@@ -2102,10 +2104,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @pickable_actors.setter
     def pickable_actors(self, actors=None) -> None:  # numpydoc ignore=GL08
         actors = [] if actors is None else actors
-        if isinstance(actors, _vtk.vtkActor):
+        if isinstance(actors, Actor):
             actors = [actors]
 
-        if not all(isinstance(actor, _vtk.vtkActor) for actor in actors):
+        if not all(isinstance(actor, Actor) for actor in actors):
             raise TypeError(
                 f'Expected a vtkActor instance or a list of vtkActors, got '
                 f'{[type(actor) for actor in actors]} instead.',
@@ -5298,9 +5300,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(
-        self, lines, color='w', width=5, label=None, name=None, connected=False
-    ) -> _vtk.vtkActor:
+    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False) -> Actor:
         """Add lines to the plotting object.
 
         Parameters
