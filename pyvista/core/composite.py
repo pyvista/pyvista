@@ -1287,10 +1287,10 @@ class MultiBlock(
                 if scalars is not None:
                     if np.issubdtype(scalars.dtype, np.floating):
                         _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
-                        scalars = np.array(scalars, dtype=np.uint8) * 255
+                        scalars = np.array(scalars.astype(np.uint8)) * 255
                     elif np.issubdtype(scalars.dtype, np.integer):
                         _validation.check_range(scalars, [0, 255], name='rgb int scalars')
-                        scalars = np.array(scalars, dtype=np.uint8)
+                        scalars = np.array(scalars.astype(np.uint8))
                     else:
                         _validation.check_subdtype(scalars, (np.floating, np.integer))
                     dattr = getattr(block, data_attr)
