@@ -20,7 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
-from typing import Generator
+from typing import Iterator
 import uuid
 import warnings
 import weakref
