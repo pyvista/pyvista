@@ -1,4 +1,5 @@
 """Module containing the wrapping of CubeAxesActor."""
+
 from typing import List, Tuple
 
 import numpy as np

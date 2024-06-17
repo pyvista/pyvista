@@ -7,6 +7,7 @@ Load and Plot from a File
 Read a dataset from a known file type.
 
 """
+
 ###############################################################################
 # Loading a mesh is trivial - if your data is in one of the many supported
 # file formats, simply use :func:`pyvista.read` to load your spatially

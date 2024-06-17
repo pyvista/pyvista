@@ -1,4 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+
 from functools import wraps
 import pathlib
 from typing import Sequence, Tuple, Union
@@ -243,7 +244,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
             List of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        return np.meshgrid(self.x, self.y, self.z, indexing='ij')  # type: ignore
 
     @property  # type: ignore
     def points(self) -> np.ndarray:  # type: ignore  # numpydoc ignore=RT01

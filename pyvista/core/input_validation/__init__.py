@@ -1,4 +1,5 @@
 """Input validation functions."""
+
 from .check import (  # noqa: F401
     check_has_length,
     check_has_shape,

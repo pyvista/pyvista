@@ -1,6 +1,7 @@
 """
 Tests for text objects
 """
+
 import os
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Conftest for jupyter tests."""
+
 import pytest
 
 

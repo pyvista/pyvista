@@ -10,6 +10,7 @@ This demonstrates how to use
 function that projects points to a plane.
 
 """
+
 import numpy as np
 
 import pyvista as pv

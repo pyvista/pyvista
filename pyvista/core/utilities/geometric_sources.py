@@ -3,6 +3,7 @@
 Also includes some pure-python helpers.
 
 """
+
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -761,9 +762,11 @@ class Text3DSource(vtkVectorText):
 
     @height.setter
     def height(self, height: float):  # numpydoc ignore=GL08
-        _check_range(
-            height, rng=(0, float('inf')), parm_name='height'
-        ) if height is not None else None
+        (
+            _check_range(height, rng=(0, float('inf')), parm_name='height')
+            if height is not None
+            else None
+        )
         self._height = height
 
     @property

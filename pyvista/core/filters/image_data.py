@@ -1,4 +1,5 @@
 """Filters with a class to manage filters/algorithms for uniform grid datasets."""
+
 import collections.abc
 import platform
 from typing import Literal, Optional, cast
