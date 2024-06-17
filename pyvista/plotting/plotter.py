@@ -1618,7 +1618,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set) -> None:  # numpydoc ignore=GL08
+    def camera_set(self, is_set: bool) -> None:  # numpydoc ignore=GL08
         self.renderer.camera.is_set = is_set
 
     @property
