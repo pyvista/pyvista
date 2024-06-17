@@ -334,7 +334,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         return pdata
 
     @wraps(DataSet.plot)  # type: ignore
-    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self):
         """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
 
         A deep copy of the points and point data is made.
