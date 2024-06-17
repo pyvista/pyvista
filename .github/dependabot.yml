@@ -30,6 +30,9 @@ updates:
         patterns:
           - "actions/upload-artifact"
           - "actions/download-artifact"
+      github-actions:
+        patterns:
+          - "*"
     labels:
       - "maintenance"
       - "dependencies"
