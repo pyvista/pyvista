@@ -16,10 +16,10 @@ from pyvista.core import _validation
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting._property import _check_range
-from pyvista.plotting.actor import TextFollower
 from pyvista.plotting.colors import Color
 
 from .colors import _validate_color_sequence
+from .text3d_follower import Text3DFollower
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
@@ -954,12 +954,12 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         # Init label datasets and actors
 
         self._x_follower = (
-            TextFollower()
+            Text3DFollower()
         )  # AxesAssembly._create_label_follower(dataset=self._label_sources[0].output)
         self._y_follower = (
-            TextFollower()
+            Text3DFollower()
         )  # AxesAssembly._create_label_follower(dataset=self._label_sources[1].output)
-        self._z_follower = TextFollower()
+        self._z_follower = Text3DFollower()
         # NOTE: Adding the followers to the assembly does *not* work
         # Instead, the followers must be added to a plot separately
         # self.AddPart(self._x_follower)
@@ -1394,7 +1394,7 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
     @staticmethod
     def _create_label_follower(dataset, position=(0, 0, 0)):
         mapper = AxesAssembly._create_rgb_mapper(dataset)
-        follower = TextFollower(mapper=mapper)
+        follower = Text3DFollower(mapper=mapper)
         follower.position = position
         follower.prop.lighting = False
         return follower

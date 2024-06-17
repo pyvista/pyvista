@@ -11,7 +11,6 @@ from ._property import Property
 from ._typing import Chart
 from ._typing import ColorLike
 from .actor import Actor
-from .actor import TextFollower
 from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
@@ -58,6 +57,7 @@ from .renderer import scale_point
 from .text import CornerAnnotation
 from .text import Text
 from .text import TextProperty
+from .text3d_follower import Text3DFollower
 from .texture import Texture
 from .texture import image_to_texture
 from .texture import numpy_to_texture
