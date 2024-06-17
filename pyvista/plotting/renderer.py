@@ -89,10 +89,10 @@ def make_legend_face(face):
 
     Parameters
     ----------
-    face : str | None | pyvista.PolyData
+    face : str | pyvista.PolyData | NoneType
         The shape of the legend face. Valid strings are:
-        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
-        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle', 'none'.
+        Also accepts ``None`` or instances of ``pyvista.PolyData``.
 
     Returns
     -------
@@ -104,8 +104,8 @@ def make_legend_face(face):
     ValueError
         If the provided face value is invalid.
     """
-    if face is None:
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
+    if face is None or face == "none":
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -122,7 +122,7 @@ def make_legend_face(face):
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
-            '\tNone'
+            '\t"none"\n'
             '\tpyvista.PolyData'
         )
     return legendface
@@ -3304,9 +3304,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             - :func:`add_points <Plotter.add_points>`
 
             List containing one entry for each item to be added to the
-            legend.  Each entry must contain two strings, [label,
-            color], where label is the name of the item to add, and
-            color is the color of the label to add.
+            legend. Each entry can contain one of the following:
+
+            * Two strings ([label, color]), where ``label`` is the name of the
+              item to add, and ``color`` is the color of the label to add.
+            * Three strings ([label, color, face]) where ``label`` is the name
+              of the item to add, ``color`` is the color of the label to add,
+              and ``face`` is a string which defines the face (i.e. ``circle``,
+              ``triangle``, ``box``, etc.).
+              ``face`` could be also ``"none"`` (no face shown for the entry),
+              or a :class:`pyvista.PolyData`.
+            * A dict with the key ``label``. Optionally you can add the
+              keys ``color`` and ``face``. The values of these keys can be
+              strings. For the ``face`` key, it can be also a
+              :class:`pyvista.PolyData`.
 
         bcolor : ColorLike, default: (0.5, 0.5, 0.5)
             Background color, either a three item 0 to 1 RGB color
@@ -3341,17 +3352,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData | NoneType, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
 
-            * None: ``None``
+            You may set it to one of the following:
+
+            * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
             * Triangle: ``"^"`` or ``'triangle'``
             * Circle: ``"o"`` or ``'circle'``
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``None`` removes the legend face.  A custom face can be
+            Passing ``"none"`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
 
