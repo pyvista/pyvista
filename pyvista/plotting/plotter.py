@@ -1938,7 +1938,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._image_scale = value
 
     @contextmanager
-    def image_scale_context(self, scale: int | None = None) -> Generator[BasePlotter, None, None]:
+    def image_scale_context(self, scale: int | None = None) -> Iterator[BasePlotter]:
         """Set the image scale in an isolated context.
 
         Parameters
