@@ -13,6 +13,7 @@ from typing import List
 from typing import Sequence
 from typing import Tuple
 from typing import Union
+import weakref
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -906,11 +907,11 @@ class Text3DSource(vtkVectorText):
         extrude.SetInputConnection(self.GetOutputPort())
         extrude.SetExtrusionTypeToNormalExtrusion()
         extrude.SetVector(0, 0, 1)
-        self._extrude_filter = extrude
+        self._extrude_filter = weakref.ref(extrude)
 
         tri_filter = _vtk.vtkTriangleFilter()
         tri_filter.SetInputConnection(extrude.GetOutputPort())
-        self._tri_filter = tri_filter
+        self._tri_filter = weakref.ref(tri_filter)
 
         self._output = pyvista.PolyData()
 
@@ -944,11 +945,6 @@ class Text3DSource(vtkVectorText):
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}',
                 )
-
-    def __del__(self):
-        """Delete filters."""
-        self._tri_filter = None
-        self._extrude_filter = None
 
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
