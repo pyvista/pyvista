@@ -19,7 +19,6 @@ from typing import overload
 import numpy as np
 
 import pyvista
-from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -1239,7 +1238,7 @@ class MultiBlock(
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
             if dtype != np.uint8:
                 # uint8 is required by the mapper to display correctly
-                _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
+                # _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
                 scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
@@ -1283,7 +1282,6 @@ class MultiBlock(
             if isinstance(block, MultiBlock):
                 block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
             elif block is not None:
-                new_scalars_name = f'{scalars_name}-uint8'
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     if np.issubdtype(scalars.dtype, np.floating):
@@ -1293,9 +1291,9 @@ class MultiBlock(
                         # _validation.check_range(scalars, [0, 255], name='rgb int scalars')
                         scalars = np.array(scalars, dtype=np.uint8)
                     dattr = getattr(block, data_attr)
-                    dattr[new_scalars_name] = scalars
-                    dattr.active_scalars_name = new_scalars_name
-        return new_scalars_name
+                    dattr[f'{scalars_name}-uint8'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-uint8'
+        return f'{scalars_name}-uint8'
 
     def _convert_to_single_component(
         self,
