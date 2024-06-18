@@ -1239,6 +1239,7 @@ class MultiBlock(
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
             if dtype != np.uint8:
                 # uint8 is required by the mapper to display correctly
+                _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
                 scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
@@ -1291,8 +1292,6 @@ class MultiBlock(
                     elif np.issubdtype(scalars.dtype, np.integer):
                         _validation.check_range(scalars, [0, 255], name='rgb int scalars')
                         scalars = np.array(scalars.astype(np.uint8))
-                    else:
-                        _validation.check_subdtype(scalars, (np.floating, np.integer))
                     dattr = getattr(block, data_attr)
                     dattr[new_scalars_name] = scalars
                     dattr.active_scalars_name = new_scalars_name
