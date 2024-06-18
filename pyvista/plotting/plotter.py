@@ -428,7 +428,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | os.PathLike
             Path to the glTF file.
 
         set_camera : bool, default: True
@@ -454,8 +454,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -480,7 +480,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | os.PathLike
             Path to the VRML file.
 
         Examples
@@ -499,8 +499,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkVRMLImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
@@ -516,7 +516,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | os.PathLike
             Path to the 3DS file.
 
         Examples
@@ -531,7 +531,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtk3DSImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
+        filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
@@ -548,7 +548,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | os.PathLike
             Path to the .obj file.
 
         Examples
@@ -564,8 +564,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
