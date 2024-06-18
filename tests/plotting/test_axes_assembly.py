@@ -6,8 +6,8 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.plotting.axes_assembly import AxesAssembly
-from pyvista.plotting.axes_assembly import AxesGeometrySource
 
 
 @pytest.fixture()
@@ -94,25 +94,37 @@ def test_axes_assembly_tip_radius_init():
     assert axes_assembly.tip_radius == 9
 
 
-@pytest.mark.parametrize('shaft_type', pv.AxesGeometrySource.GEOMETRY_OPTIONS)
+@pytest.mark.parametrize(
+    'shaft_type',
+    AxesGeometrySource.GEOMETRY_OPTIONS,
+)
 def test_axes_assembly_shaft_type(shaft_type, axes_source):
     axes_source.shaft_type = shaft_type
     assert axes_source.shaft_type == shaft_type
 
 
-@pytest.mark.parametrize('shaft_type', pv.AxesGeometrySource.GEOMETRY_OPTIONS)
+@pytest.mark.parametrize(
+    'shaft_type',
+    AxesGeometrySource.GEOMETRY_OPTIONS,
+)
 def test_axes_assembly_shaft_type_init(shaft_type):
     axes_assembly = AxesGeometrySource(shaft_type=shaft_type)
     assert axes_assembly.shaft_type == shaft_type
 
 
-@pytest.mark.parametrize('tip_type', pv.AxesGeometrySource.GEOMETRY_OPTIONS)
+@pytest.mark.parametrize(
+    'tip_type',
+    AxesGeometrySource.GEOMETRY_OPTIONS,
+)
 def test_axes_assembly_tip_type(tip_type, axes_source):
     axes_source.tip_type = tip_type
     assert axes_source.tip_type == tip_type
 
 
-@pytest.mark.parametrize('tip_type', pv.AxesGeometrySource.GEOMETRY_OPTIONS)
+@pytest.mark.parametrize(
+    'tip_type',
+    AxesGeometrySource.GEOMETRY_OPTIONS,
+)
 def test_axes_assembly_tip_type_init(tip_type):
     axes_assembly = AxesGeometrySource(tip_type=tip_type)
     assert axes_assembly.tip_type == tip_type
@@ -695,7 +707,7 @@ def test_axes_assembly_theme(axes_source):
     pv.global_theme.axes.y_color = 'white'
     pv.global_theme.axes.z_color = 'gray'
 
-    axes_source = pv.AxesGeometrySource()
+    axes_source = AxesGeometrySource()
     assert axes_source.x_color[0].name == 'black'
     assert axes_source.x_color[1].name == 'black'
     assert axes_source.y_color[0].name == 'white'

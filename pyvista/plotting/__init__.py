@@ -6,6 +6,7 @@ from __future__ import annotations
 from pyvista import MAX_N_COLOR_BARS
 from pyvista._plot import plot
 
+from ..core.utilities.geometric_sources import AxesGeometrySource
 from . import _vtk
 from ._property import Property
 from ._typing import Chart
@@ -15,7 +16,6 @@ from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
 from .axes_assembly import AxesAssembly
-from .axes_assembly import AxesGeometrySource
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox

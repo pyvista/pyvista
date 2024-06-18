@@ -6,6 +6,7 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Dict
@@ -19,6 +20,8 @@ import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+import pyvista as pv
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
@@ -32,6 +35,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting.colors import Color
+    from pyvista.plotting.colors import ColorLike
+
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -2811,3 +2817,746 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+class _AxisEnum(IntEnum):
+    x = 0
+    y = 1
+    z = 2
+
+
+class AxesGeometrySource:
+    """Abstract base class for axes-like scene props.
+
+    This class defines a common interface for manipulating the
+    geometry and properties of six Prop3D Actors representing
+    the axes (three for the shafts, three for the tips) and three
+    Caption Actors for the text labels (one for each axis).
+
+    This class is designed to be a superclass for vtkAxesActor
+    but is abstracted to interface with similar axes-like
+    representations.
+    """
+
+    GEOMETRY_OPTIONS: ClassVar[list[str]] = ['cylinder', 'sphere', 'cone', 'pyramid', 'cuboid']
+
+    def __init__(
+        self,
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        rgb_scalars: bool = True,
+        shaft_type='cylinder',
+        shaft_radius=0.05,
+        shaft_length=None,
+        tip_type='cone',
+        tip_radius=0.2,
+        tip_length=None,
+        total_length=(1, 1, 1),
+        position=(0, 0, 0),
+        direction_vectors=None,
+        scale=(1, 1, 1),
+        user_matrix=None,
+        symmetric_bounds=True,
+        auto_length=True,
+    ):
+        super().__init__()
+        # Init datasets
+        self._shaft_datasets = (pv.PolyData(), pv.PolyData(), pv.PolyData())
+        self._tip_datasets = (pv.PolyData(), pv.PolyData(), pv.PolyData())
+
+        # Set shaft and tip color
+        if x_color is None:
+            x_color = pv.global_theme.axes.x_color
+        if y_color is None:
+            y_color = pv.global_theme.axes.y_color
+        if z_color is None:
+            z_color = pv.global_theme.axes.z_color
+        self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
+        self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
+        self.x_color = x_color
+        self.y_color = y_color
+        self.z_color = z_color
+        self._rgb_scalars = rgb_scalars
+
+        # Set misc flag params
+        self._symmetric_bounds = symmetric_bounds
+        self._auto_length = auto_length
+
+        # Set geometry-dependent params
+        self.shaft_type = shaft_type
+        self.shaft_radius = shaft_radius
+        self.tip_type = tip_type
+        self.tip_radius = tip_radius
+        self.total_length = total_length
+
+        self.position = position
+        self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
+        self.scale = scale
+        self.user_matrix = np.eye(4) if user_matrix is None else user_matrix
+
+        # Check auto-length
+        # Disable flag temporarily and restore later
+        auto_length_set = self.auto_length
+        self.auto_length = False
+
+        shaft_length_set = shaft_length is not None
+        tip_length_set = tip_length is not None
+
+        self.shaft_length = 0.8 if shaft_length is None else shaft_length
+        self.tip_length = 0.2 if tip_length is None else tip_length
+
+        if auto_length_set:
+            lengths_sum_to_one = all(
+                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length),
+            )
+            if shaft_length_set and tip_length_set and not lengths_sum_to_one:
+                raise ValueError(
+                    "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
+                    "Set either `shaft_length` or `tip_length`, but not both.",
+                )
+            # Set property again, this time with auto-length enabled
+            self.auto_length = True
+            if shaft_length_set and not tip_length_set:
+                self.shaft_length = shaft_length
+            elif tip_length_set and not shaft_length_set:
+                self.tip_length = tip_length
+        else:
+            self.auto_length = False
+
+    # def __repr__(self):
+    #     """Representation of the axes actor."""
+    #     matrix_not_set = self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4))
+    #     mat_info = 'Identity' if matrix_not_set else 'Set'
+    #     bnds = self.bounds
+    #
+    #     attr = [
+    #         f"{type(self).__name__} ({hex(id(self))})",
+    #         # f"  X label:                    '{self.x_label}'",
+    #         # f"  Y label:                    '{self.y_label}'",
+    #         # f"  Z label:                    '{self.z_label}'",
+    #         # f"  Show labels:                {self.show_labels}",
+    #         # f"  Label position:             {self.label_position}",
+    #         f"  Shaft type:                 '{self.shaft_type}'",
+    #         f"  Shaft radius:               {self.shaft_radius}",
+    #         f"  Shaft length:               {self.shaft_length}",
+    #         f"  Tip type:                   '{self.tip_type}'",
+    #         f"  Tip radius:                 {self.tip_radius}",
+    #         f"  Tip length:                 {self.tip_length}",
+    #         f"  Total length:               {self.total_length}",
+    #         f"  Position:                   {self.position}",
+    #         f"  Scale:                      {self.scale}",
+    #         f"  User matrix:                {mat_info}",
+    #         f"  Visible:                    {self.visibility}",
+    #         f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+    #         f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+    #         f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+    #     ]
+    #     return '\n'.join(attr)
+
+    @property
+    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable symmetry in the axes bounds calculation.
+
+        Calculate the axes bounds as though the axes were symmetric,
+        i.e. extended along -X, -Y, and -Z directions. Setting this
+        parameter primarily affects camera positioning in a scene.
+
+        - If ``True``, the axes :attr:`bounds` are symmetric about
+          its :attr:`position`. Symmetric bounds allow for the axes to rotate
+          about its origin, which is useful in cases where the actor
+          is used as an orientation widget.
+
+        - If ``False``, the axes :attr:`bounds` are calculated as-is.
+          Asymmetric bounds are useful in cases where the axes are
+          placed in a scene with other actors, since the symmetry
+          could otherwise lead to undesirable camera positioning
+          (e.g. camera may be positioned further away than necessary).
+
+        Examples
+        --------
+        Get the symmetric bounds of the axes.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor(symmetric_bounds=True)
+        >>> axes_actor.bounds
+        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        >>> axes_actor.center
+        (0.0, 0.0, 0.0)
+
+        Get the asymmetric bounds.
+
+        >>> axes_actor.symmetric_bounds = False
+        >>> axes_actor.bounds  # doctest:+SKIP
+        (-0.08, 1.0, -0.08, 1.0, -0.08, 1.0)
+        >>> axes_actor.center  # doctest:+SKIP
+        (0.46, 0.46, 0.46)
+
+        Show the difference in camera positioning with and without
+        symmetric bounds. Orientation is added for visualization.
+
+        >>> # Create actors
+        >>> axes_actor_sym = pv.AxesActor(
+        ...     orientation=(90, 0, 0), symmetric_bounds=True
+        ... )
+        >>> axes_actor_asym = pv.AxesActor(
+        ...     orientation=(90, 0, 0), symmetric_bounds=False
+        ... )
+        >>>
+        >>> # Show multi-window plot
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_text("Symmetric axes")
+        >>> _ = pl.add_actor(axes_actor_sym)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text("Asymmetric axes")
+        >>> _ = pl.add_actor(axes_actor_asym)
+        >>> pl.show()
+
+        """
+        return self._symmetric_bounds
+
+    @symmetric_bounds.setter
+    def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
+        self._symmetric_bounds = bool(value)
+
+    # @property
+    # def visibility(self) -> bool:  # numpydoc ignore=RT01
+    #     """Enable or disable the visibility of the axes.
+    #
+    #     Examples
+    #     --------
+    #     Create an AxesAssembly and check its visibility
+    #
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.visibility
+    #     True
+    #
+    #     """
+    #     return bool(self.GetVisibility())
+    #
+    # @visibility.setter
+    # def visibility(self, value: bool):  # numpydoc ignore=GL08
+    #     self.SetVisibility(value)
+
+    @property
+    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Total length of each axis (shaft plus tip).
+
+        Values must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.total_length
+        (1.0, 1.0, 1.0)
+        >>> axes_actor.total_length = 1.2
+        >>> axes_actor.total_length
+        (1.2, 1.2, 1.2)
+        >>> axes_actor.total_length = (1.0, 0.9, 0.5)
+        >>> axes_actor.total_length
+        (1.0, 0.9, 0.5)
+
+        """
+        return tuple(self._total_length)
+
+    @total_length.setter
+    def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._total_length = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0, np.inf],
+            name='Total length',
+        )
+
+    @property
+    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Normalized length of the shaft for each axis.
+
+        Values must be in range ``[0, 1]``.
+
+        Notes
+        -----
+        Setting this property will automatically change the :attr:`tip_length` to
+        ``1 - shaft_length`` if :attr:`auto_shaft_type` is ``True``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.shaft_length
+        (0.8, 0.8, 0.8)
+        >>> axes_actor.shaft_length = 0.7
+        >>> axes_actor.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_actor.shaft_length = (1.0, 0.9, 0.5)
+        >>> axes_actor.shaft_length
+        (1.0, 0.9, 0.5)
+
+        """
+        return self._shaft_length
+
+    @shaft_length.setter
+    def shaft_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
+            _check_range(length, (0, 1), 'shaft_length')
+            length = (length, length, length)
+        _check_range(length[0], (0, 1), 'x-axis shaft_length')
+        _check_range(length[1], (0, 1), 'y-axis shaft_length')
+        _check_range(length[2], (0, 1), 'z-axis shaft_length')
+        self._shaft_length = float(length[0]), float(length[1]), float(length[2])
+
+        if self.auto_length:
+            # Calc 1-length and round to nearest 1e-8
+            def calc(x):
+                return round(1.0 - x, 8)
+
+            self._tip_length = calc(length[0]), calc(length[1]), calc(length[2])
+
+    @property
+    def _true_shaft_length(self):
+        shaft = self._shaft_length
+        total = self._total_length
+        return shaft[0] * total[0], shaft[1] * total[1], shaft[2] * total[2]
+
+    @property
+    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Normalized length of the tip for each axis.
+
+        Values must be in range ``[0, 1]``.
+
+        Notes
+        -----
+        Setting this property will automatically change the :attr:`shaft_length` to
+        ``1 - tip_length`` if :attr:`auto_shaft_type` is ``True``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.tip_length
+        (0.2, 0.2, 0.2)
+        >>> axes_actor.tip_length = 0.3
+        >>> axes_actor.tip_length
+        (0.3, 0.3, 0.3)
+        >>> axes_actor.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_actor.tip_length
+        (0.1, 0.4, 0.2)
+
+        """
+        return self._tip_length
+
+    @tip_length.setter
+    def tip_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+        if isinstance(length, (int, float)):
+            _check_range(length, (0, 1), 'tip_length')
+            length = (length, length, length)
+        _check_range(length[0], (0, 1), 'x-axis tip_length')
+        _check_range(length[1], (0, 1), 'y-axis tip_length')
+        _check_range(length[2], (0, 1), 'z-axis tip_length')
+        self._tip_length = float(length[0]), float(length[1]), float(length[2])
+
+        if self.auto_length:
+            # Calc 1 minus length and round to nearest 1e-8
+            def calc(x):
+                return round(1.0 - x, 8)
+
+            self._shaft_length = calc(length[0]), calc(length[1]), calc(length[2])
+
+    @property
+    def _true_tip_length(self):
+        tip = self._tip_length
+        total = self._total_length
+        return tip[0] * total[0], tip[1] * total[1], tip[2] * total[2]
+
+    @property
+    def auto_length(self) -> bool:  # numpydoc ignore=RT01
+        """Automatically set shaft length when setting tip length and vice-versa.
+
+        If ``True``:
+
+        - Setting :attr:`shaft_length` will also set :attr:`tip_length`
+          to ``1 - shaft_length``.
+        - Setting :attr:`tip_length` will also set :attr:`shaft_length`
+          to ``1 - tip_length``.
+
+        Examples
+        --------
+        Create an axes actor with a specific shaft length.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly(
+        ...     shaft_length=0.7, auto_length=True
+        ... )
+        >>> axes_actor.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_actor.tip_length
+        (0.3, 0.3, 0.3)
+
+        The tip lengths are adjusted dynamically.
+
+        >>> axes_actor.tip_length = (0.1, 0.2, 0.4)
+        >>> axes_actor.tip_length
+        (0.1, 0.2, 0.4)
+        >>> axes_actor.shaft_length
+        (0.9, 0.8, 0.6)
+
+        """
+        return self._auto_length
+
+    @auto_length.setter
+    def auto_length(self, value: bool):  # numpydoc ignore=GL08
+        self._auto_length = bool(value)
+
+    @property
+    def tip_radius(self) -> float:  # numpydoc ignore=RT01
+        """Radius of the axes tips.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.tip_radius
+        0.4
+        >>> axes_actor.tip_radius = 0.8
+        >>> axes_actor.tip_radius
+        0.8
+
+        """
+        return self._tip_radius
+
+    @tip_radius.setter
+    def tip_radius(self, radius: float):  # numpydoc ignore=GL08
+        _check_range(radius, (0, float('inf')), 'tip_radius')
+        self._tip_radius = radius
+
+    @property
+    def shaft_radius(self):  # numpydoc ignore=RT01
+        """Cylinder radius of the axes shafts.
+
+        Value must be non-negative.
+
+        Notes
+        -----
+        Setting this property will automatically change the ``shaft_type`` to
+        ``'cylinder'`` if :attr:`auto_shaft_type` is ``True``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.shaft_radius
+        0.01
+        >>> axes_actor.shaft_radius = 0.03
+        >>> axes_actor.shaft_radius
+        0.03
+
+        """
+        return self._shaft_radius
+
+    @shaft_radius.setter
+    def shaft_radius(self, radius):  # numpydoc ignore=GL08
+        _check_range(radius, (0, float('inf')), 'shaft_radius')
+        self._shaft_radius = radius
+
+    @property
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Tip type for all axes.
+
+        Can be a cylinder (``0`` or ``'cylinder'``) or a line (``1`` or ``'line'``).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.shaft_type = "line"
+        >>> axes_actor.shaft_type
+        'line'
+
+        """
+        return self._shaft_type
+
+    @shaft_type.setter
+    def shaft_type(self, shaft_type: str):
+        self._shaft_type = self._set_geometry(part=0, geometry=shaft_type)
+
+    @property
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Tip type for all axes.
+
+        Can be a cone (``0`` or ``'cone'``) or a sphere (``1`` or ``'sphere'``).
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.tip_type = 'sphere'
+        >>> axes_actor.tip_type
+        'sphere'
+
+        """
+        return self._tip_type
+
+    @tip_type.setter
+    def tip_type(self, tip_type: Union[str, pv.DataSet]):
+        if tip_type is None:
+            tip_type = pv.global_theme.axes.tip_type
+        self._tip_type = self._set_geometry(part=1, geometry=tip_type)
+
+    @property
+    def rgb_scalars(self) -> bool:
+        return self._rgb_scalars
+
+    @rgb_scalars.setter
+    def rgb_scalars(self, value: bool):
+        self._rgb_scalars = value
+
+    def _update_axis_rgb_scalars(self, axis: _AxisEnum):
+        SCALARS = 'axes_rgb'
+
+        def _set_rgb_scalars(dataset: pv.PolyData, color: Color):
+            # TODO: modify to allow any dtype once #6272 is merged
+            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
+            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
+
+        def _clear_rgb_scalars(dataset):
+            if SCALARS in dataset.cell_data:
+                dataset.cell_data.remove(SCALARS)
+
+        if self.rgb_scalars:
+            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
+            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
+        else:
+            _clear_rgb_scalars(self._shaft_datasets[axis])
+            _clear_rgb_scalars(self._tip_datasets[axis])
+
+    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
+        # Local import to only import from plotting module as needed
+        from pyvista.plotting.colors import _validate_color_sequence
+
+        self._shaft_color[axis], self._tip_color[axis] = _validate_color_sequence(color, n_colors=2)
+
+    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
+        return self._shaft_color[axis], self._tip_color[axis]
+
+    @property
+    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the x-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.x)
+
+    @x_color.setter
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.x, color)
+
+    @property
+    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the y-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.y)
+
+    @y_color.setter
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.y, color)
+
+    @property
+    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the z-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.z)
+
+    @z_color.setter
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.z, color)
+
+    @property
+    def position(self) -> tuple[float, float, float]:
+        return tuple(self._position)
+
+    @position.setter
+    def position(self, xyz):
+        self._position = _validation.validate_array3(xyz)
+
+    @property
+    def scale(self) -> tuple[float, float, float]:
+        return tuple(self._scale)
+
+    @scale.setter
+    def scale(self, xyz):
+        self._scale = _validation.validate_array3(xyz, broadcast=True, name='Scale')
+
+    @property
+    def direction_vectors(self):
+        return self._direction_vectors
+
+    @direction_vectors.setter
+    def direction_vectors(self, vectors):
+        self._direction_vectors = vectors
+
+    @property
+    def transformation_matrix(self):
+        # Scale proportional to axis length
+        scale_matrix = np.eye(4)
+        scale_matrix[:3, :3] = np.diag(self._total_length)
+
+        position_matrix = np.eye(4)
+        position_matrix[:3, 3] = self.position
+
+        rotation_matrix = np.eye(4)
+        rotation_matrix[:3, :3] = self.direction_vectors
+
+        # Scale first, then rotate, then move
+        return position_matrix @ rotation_matrix @ scale_matrix
+
+    def plot(self):
+        pl = pv.Plotter()
+        pl.add_mesh(self)
+        pl.show()
+
+    def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
+        # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
+        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
+        assert part in [0, 1]
+        datasets = self._shaft_datasets if part == 0 else self._tip_datasets
+        datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
+        datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
+        datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
+        return geometry_name
+
+    # def _apply_axes_colors(self):
+    #     x_shaft, y_shaft, z_shaft = self._datasets['shafts']
+    #     x_tip, y_tip, z_tip = self._datasets['tips']
+    #     x_color, y_color, z_color = self.x_color, self.y_color, self.z_color
+    #
+    #     AxesAssembly._set_rgb_array(x_shaft, x_color[0])
+    #     AxesAssembly._set_rgb_array(x_tip, x_color[1])
+    #     AxesAssembly._set_rgb_array(y_shaft, y_color[0])
+    #     AxesAssembly._set_rgb_array(y_tip, y_color[1])
+    #     AxesAssembly._set_rgb_array(z_shaft, z_color[0])
+    #     AxesAssembly._set_rgb_array(z_tip, z_color[1])
+
+    # TODO: refactor as _reset_geometry and make child class override method
+    def _reset_shaft_and_tip_geometry(self):
+        shaft_radius, shaft_length = self.shaft_radius, self._true_shaft_length
+        tip_radius, tip_length = (
+            self.tip_radius,
+            self._true_tip_length,
+        )
+
+        nested_datasets = [self._shaft_datasets, self._tip_datasets]
+        SHAFT, TIP = 0, 1
+        for part_type in [SHAFT, TIP]:
+            for axis in _AxisEnum.x, _AxisEnum.y, _AxisEnum.z:
+                # Reset geometry
+                part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
+
+                # Offset so axis bounds are [0, 1]
+                part.points[:, axis] += 0.5
+
+                # Scale by length along axis, scale by radius off-axis
+                if part_type == SHAFT:
+                    scale = [shaft_radius] * 3
+                    scale[axis] = shaft_length[axis]
+                    part.scale(scale, inplace=True)
+                else:  # tip
+                    scale = [tip_radius] * 3
+                    scale[axis] = tip_length[axis]
+                    part.scale(scale, inplace=True)
+
+                    # Move tip to end of shaft
+                    part.points[:, axis] += shaft_length[axis]
+
+    def _transform_shafts_and_tips(self):
+        for dataset in [*self._shaft_datasets, *self._tip_datasets]:
+            dataset.transform(self.transformation_matrix, inplace=True)
+
+    def _update_axes_shaft_and_tip_geometry(self):
+        self._reset_shaft_and_tip_geometry()
+        self._transform_shafts_and_tips()
+
+    def _update_rgb_arrays(self):
+        self._update_axis_rgb_scalars(_AxisEnum.x)
+        self._update_axis_rgb_scalars(_AxisEnum.y)
+        self._update_axis_rgb_scalars(_AxisEnum.z)
+
+    def update(self):
+        self._update_axes_shaft_and_tip_geometry()
+        self._update_rgb_arrays()
+
+    @property
+    def output(self):
+        self.update()
+        # TODO: Return MultiBlock of meshes without merging once RGB MultiBlock
+        #  plotting is fixed (pyvista #6012)
+        # pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
+        return pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
+
+    @staticmethod
+    def _make_default_part(geometry: str) -> pv.PolyData:
+        """Create part geometry with its length axis pointing in the +z direction."""
+        resolution = 50
+        if geometry == 'cylinder':
+            return pv.Cylinder(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'sphere':
+            return pv.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+        elif geometry == 'cone':
+            return pv.Cone(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'pyramid':
+            return pv.Pyramid().extract_surface()
+        elif geometry == 'cuboid':
+            return pv.Cube()
+        else:
+            _validation.check_contains(
+                item=geometry,
+                container=AxesGeometrySource.GEOMETRY_OPTIONS,
+                name='Geometry',
+            )
+            raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
+
+    @staticmethod
+    def _make_any_part(geometry: Union[str, pv.DataSet]) -> tuple[str, pv.PolyData]:
+        if isinstance(geometry, str):
+            name = geometry
+            part = AxesGeometrySource._make_default_part(
+                geometry,
+            )
+        elif isinstance(geometry, pv.DataSet):
+            name = 'custom'
+            if not isinstance(geometry, pv.PolyData):
+                part = geometry.extract_geometry()
+
+        else:
+            raise TypeError(
+                f"Geometry must be a string, PolyData, or castable as UnstructuredGrid. Got {type(geometry)}.",
+            )
+        part = AxesGeometrySource._normalize_part(part)
+        return name, part
+
+    @staticmethod
+    def _normalize_part(part: pv.PolyData) -> pv.PolyData:
+        """Scale and translate part to have origin-centered bounding box with edge length one."""
+        # Center points at origin
+        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
+        part.points -= part.center  # type: ignore[misc]
+
+        # Scale so bounding box edges have length one
+        bnds = part.bounds
+        axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
+        if np.any(axis_length < 1e-8):
+            raise ValueError("Part must be 3D.")
+        part.scale(np.reciprocal(axis_length), inplace=True)
+        return part
+
+    @staticmethod
+    def _make_axes_parts(
+        geometry: str | pv.DataSet,
+        right_handed: bool = True,
+    ) -> tuple[str, tuple[pv.PolyData, pv.PolyData, pv.PolyData]]:
+        """Return three axis-aligned normalized parts centered at the origin."""
+        name, part_z = AxesGeometrySource._make_any_part(geometry)
+        part_x = part_z.copy().rotate_y(90)
+        part_y = part_z.copy().rotate_x(-90)
+        if not right_handed:
+            part_z.points *= -1  # type: ignore[misc]
+        return name, (part_x, part_y, part_z)
