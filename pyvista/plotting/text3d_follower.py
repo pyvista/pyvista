@@ -45,6 +45,9 @@ class Text3DFollower(Actor, _vtk.vtkFollower):
         self.prop.lighting = False
         self.position = (0, 0, 0) if position is None else position
 
+    def __del__(self):
+        del self._text_source
+
     @property
     def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
         """Return or set the depth of the text."""

@@ -1,10 +1,11 @@
 """Axes actor module."""
 
 from __future__ import annotations
-from weakref import proxy
 
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Final
+from typing import Literal
 from typing import Sequence
 from typing import Tuple
 from typing import Union
@@ -17,7 +18,6 @@ from pyvista.core import _validation
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting._property import _check_range
-from pyvista.plotting.colors import Color
 
 from .colors import _validate_color_sequence
 from .text3d_follower import Text3DFollower
@@ -25,11 +25,14 @@ from .text3d_follower import Text3DFollower
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
+    from pyvista.plotting.colors import Color
 
-X_AXIS, Y_AXIS, Z_AXIS = 0, 1, 2
+X_AXIS: Final[Literal[0]] = 0
+Y_AXIS: Final[Literal[1]] = 1
+Z_AXIS: Final[Literal[2]] = 2
 
 
-class AxesGeometry:
+class AxesGeometrySource:
     """Abstract base class for axes-like scene props.
 
     This class defines a common interface for manipulating the
@@ -49,6 +52,7 @@ class AxesGeometry:
         x_color=None,
         y_color=None,
         z_color=None,
+        rgb_scalars: bool = True,
         shaft_type='cylinder',
         shaft_radius=0.05,
         shaft_length=None,
@@ -69,9 +73,18 @@ class AxesGeometry:
         self._tip_datasets = (pv.PolyData(), pv.PolyData(), pv.PolyData())
 
         # Set shaft and tip color
-        self.x_color = Color(x_color, default_color=pv.global_theme.axes.x_color)
-        self.y_color = Color(y_color, default_color=pv.global_theme.axes.y_color)
-        self.z_color = Color(z_color, default_color=pv.global_theme.axes.z_color)
+        if x_color is None:
+            x_color = pv.global_theme.axes.x_color
+        if y_color is None:
+            y_color = pv.global_theme.axes.y_color
+        if z_color is None:
+            z_color = pv.global_theme.axes.z_color
+        self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
+        self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
+        self.x_color = x_color
+        self.y_color = y_color
+        self.z_color = z_color
+        self._rgb_scalars = rgb_scalars
 
         # Set misc flag params
         self._symmetric_bounds = symmetric_bounds
@@ -117,8 +130,6 @@ class AxesGeometry:
                 self.tip_length = tip_length
         else:
             self.auto_length = False
-
-        self._camera = None
 
     # def __repr__(self):
     #     """Representation of the axes actor."""
@@ -503,232 +514,65 @@ class AxesGeometry:
             tip_type = pv.global_theme.axes.tip_type
         self._tip_type = self._set_geometry(part=1, geometry=tip_type)
 
-    # @property
-    # def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the x-axis shaft."""
-    #     return self._props.x_shaft
-    #
-    # @x_shaft_prop.setter
-    # def x_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=0, part=0)
-    #
-    # @property
-    # def y_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the y-axis shaft."""
-    #     return self._props.y_shaft
-    #
-    # @y_shaft_prop.setter
-    # def y_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=1, part=0)
-    #
-    # @property
-    # def z_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the z-axis shaft."""
-    #     return self._props.z_shaft
-    #
-    # @z_shaft_prop.setter
-    # def z_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=2, part=0)
-    #
-    # @property
-    # def x_tip_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the x-axis tip."""
-    #     return self._props.x_tip
-    #
-    # @x_tip_prop.setter
-    # def x_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=0, part=1)
-    #
-    # @property
-    # def y_tip_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the y-axis tip."""
-    #     return self._props.y_tip
-    #
-    # @y_tip_prop.setter
-    # def y_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=1, part=1)
-    #
-    # @property
-    # def z_tip_prop(self) -> Property:  # numpydoc ignore=RT01
-    #     """Return or set the property object of the z-axis tip."""
-    #     return self._props.z_tip
-    #
-    # @z_tip_prop.setter
-    # def z_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
-    #     self._set_prop_obj(prop, axis=2, part=1)
-    #
-    # def _set_prop_obj(self, prop: Property, axis: int, part: int):
-    #     """Set actor property objects."""
-    #     if not isinstance(prop, Property):
-    #         raise TypeError(f'Prop must have type {Property}, got {type(prop)} instead.')
-    #     _as_nested(self._actors)[axis][part].SetProperty(prop)
-    #
-    # def set_prop_values(self, name, value, axis='all', part='all'):
-    #     """Set the axes shaft and tip properties.
-    #
-    #     This is a generalized setter method which sets the value of
-    #     a specific property for any combination of axis shaft or tip
-    #     :class:`pyvista.Property` objects.
-    #
-    #     Parameters
-    #     ----------
-    #     name : str
-    #         Name of the property to set.
-    #
-    #     value : Any
-    #         Value to set the property to.
-    #
-    #     axis : str | int, default: 'all'
-    #         Set the property for a specific part of the axes. Specify one of:
-    #
-    #         - ``'x'`` or ``0``: only set the property for the x-axis.
-    #         - ``'y'`` or ``1``: only set the property for the y-axis.
-    #         - ``'z'`` or ``2``: only set the property for the z-axis.
-    #         - ``'all'``: set the property for all three axes.
-    #
-    #     part : str | int, default: 'all'
-    #         Set the property for a specific part of the axes. Specify one of:
-    #
-    #         - ``'shaft'`` or ``0``: only set the property for the axes shafts.
-    #         - ``'tip'`` or ``1``: only set the property for the axes tips.
-    #         - ``'all'``: set the property for axes shafts and tips.
-    #
-    #     Examples
-    #     --------
-    #     Set the ambient property for all axes shafts and tips.
-    #
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.set_prop_values('ambient', 0.7)
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
-    #
-    #     Set a property for the x-axis only. The property is set for
-    #     both the axis shaft and tip by default.
-    #
-    #     >>> axes_actor.set_prop_values('ambient', 0.3, axis='x')
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
-    #
-    #     Set a property for the axes tips only. The property is set for
-    #     all axes by default.
-    #
-    #     >>> axes_actor.set_prop_values('ambient', 0.1, part='tip')
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
-    #
-    #     Set a property for a single axis and specific part.
-    #
-    #     >>> axes_actor.set_prop_values(
-    #     ...     'ambient', 0.9, axis='z', part='shaft'
-    #     ... )
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
-    #
-    #     The last example is equivalent to setting the property directly.
-    #
-    #     >>> axes_actor.z_shaft_prop.ambient = 0.9
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
-    #
-    #     """
-    #     props_dict = self._filter_prop_objects(axis=axis, part=part)
-    #     for prop in props_dict.values():
-    #         setattr(prop, name, value)
-    #
-    # def get_prop_values(self, name):
-    #     """Get the values of a Property attribute for all axes shafts and tips.
-    #
-    #     This is a generalized getter method which returns the value of
-    #     a specific property for all shaft and tip :class:`pyvista.Property` objects.
-    #
-    #     Parameters
-    #     ----------
-    #     name : str
-    #         Name of the property to set.
-    #
-    #     Returns
-    #     -------
-    #     _AxesTuple
-    #         Named tuple with the requested property value for the axes shafts and tips.
-    #
-    #     Examples
-    #     --------
-    #     Get the ambient property of the axes shafts and tips.
-    #
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.get_prop_values('ambient')
-    #     _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
-    #
-    #     """
-    #     values = [getattr(prop, name) for prop in self._props]
-    #     return _AxesTuple(*values)
-    #
-    # def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: Union[str, int] = 'all'):
-    #     valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
-    #     if axis not in valid_axis:
-    #         raise ValueError(f"Axis must be one of {valid_axis}.")
-    #     valid_part = [0, 1, 'shaft', 'tip', 'all']
-    #     if part not in valid_part:
-    #         raise ValueError(f"Part must be one of {valid_part}.")
-    #
-    #     props = {}
-    #     for num, char in enumerate(['x', 'y', 'z']):
-    #         if axis in [num, char, 'all']:
-    #             if part in [0, 'shaft', 'all']:
-    #                 key = char + '_shaft'
-    #                 props[key] = getattr(self._props, key)
-    #             if part in [1, 'tip', 'all']:
-    #                 key = char + '_tip'
-    #                 props[key] = getattr(self._props, key)
-    #
-    #     return props
+    @property
+    def rgb_scalars(self) -> bool:
+        return self._rgb_scalars
+
+    @rgb_scalars.setter
+    def rgb_scalars(self, value: bool):
+        self._rgb_scalars = value
+
+    def _update_axis_rgb_scalars(self, axis: Literal[0, 1, 2]):
+        SCALARS = 'axes_rgb'
+
+        def _set_rgb_scalars(dataset: pv.PolyData, color: Color):
+            # TODO: modify to allow any dtype once #6272 is merged
+            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
+            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
+
+        def _clear_rgb_scalars(dataset):
+            if SCALARS in dataset.cell_data:
+                dataset.cell_data.remove(SCALARS)
+
+        if self.rgb_scalars:
+            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
+            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
+        else:
+            _clear_rgb_scalars(self._shaft_datasets[axis])
+            _clear_rgb_scalars(self._tip_datasets[axis])
+
+    def _set_axis_color(self, axis: Literal[0, 1, 2], color: ColorLike | Sequence[ColorLike]):
+        self._shaft_color[axis], self._tip_color[axis] = _validate_color_sequence(color, n_colors=2)
+
+    def _get_axis_color(self, axis: Literal[0, 1, 2]) -> tuple[Color, Color]:
+        return self._shaft_color[axis], self._tip_color[axis]
 
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
-        return self._x_color  # type: ignore[return-value]
+        return self._get_axis_color(X_AXIS)
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._x_color = _validate_color_sequence(color, n_colors=2)
-        # self._update_x_color() if self._is_init else None
-
-    def _update_x_color(self):
-        shaft_color, tip_color = self.x_color
-        AxesAssembly._set_rgb_array(self._shaft_datasets[X_AXIS], shaft_color)
-        AxesAssembly._set_rgb_array(self._tip_datasets[X_AXIS], tip_color)
+        self._set_axis_color(X_AXIS, color)
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        return self._y_color  # type: ignore[return-value]
+        return self._get_axis_color(Y_AXIS)
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._y_color = _validate_color_sequence(color, n_colors=2)
-        # self._update_x_color()
-
-    def _update_y_color(self):
-        shaft_color, tip_color = self.y_color
-        AxesAssembly._set_rgb_array(self._shaft_datasets[Y_AXIS], shaft_color)
-        AxesAssembly._set_rgb_array(self._tip_datasets[Y_AXIS], tip_color)
+        self._set_axis_color(Y_AXIS, color)
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        return self._z_color  # type: ignore[return-value]
+        return self._get_axis_color(Z_AXIS)
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._z_color = _validate_color_sequence(color, n_colors=2)
-        # self._update_z_color()
-
-    def _update_z_color(self):
-        shaft_color, tip_color = self.z_color
-        AxesAssembly._set_rgb_array(self._shaft_datasets[Z_AXIS], shaft_color)
-        AxesAssembly._set_rgb_array(self._tip_datasets[Z_AXIS], tip_color)
+        self._set_axis_color(Z_AXIS, color)
 
     @property
     def position(self) -> tuple[float, float, float]:
@@ -776,7 +620,7 @@ class AxesGeometry:
 
     def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
         # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
-        geometry_name, new_datasets = AxesAssembly._make_axes_parts(geometry)
+        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         assert part in [0, 1]
         datasets = self._shaft_datasets if part == 0 else self._tip_datasets
         datasets[X_AXIS].copy_from(new_datasets[X_AXIS])
@@ -809,7 +653,7 @@ class AxesGeometry:
         for part_type in [SHAFT, TIP]:
             for axis in X_AXIS, Y_AXIS, Z_AXIS:
                 # Reset geometry
-                part = AxesAssembly._normalize_part(nested_datasets[part_type][axis])
+                part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
 
                 # Offset so axis bounds are [0, 1]
                 part.points[:, axis] += 0.5
@@ -835,18 +679,22 @@ class AxesGeometry:
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
 
-    def _update_colors(self):
-        self._update_x_color()
-        self._update_y_color()
-        self._update_z_color()
+    def _update_rgb_arrays(self):
+        self._update_axis_rgb_scalars(X_AXIS)
+        self._update_axis_rgb_scalars(Y_AXIS)
+        self._update_axis_rgb_scalars(Z_AXIS)
+
+    def update(self):
+        self._update_axes_shaft_and_tip_geometry()
+        self._update_rgb_arrays()
 
     @property
     def output(self):
-        self._update_axes_shaft_and_tip_geometry()
-        self._update_colors()
+        self.update()
         # TODO: Return MultiBlock of meshes without merging once RGB MultiBlock
         #  plotting is fixed (pyvista #6012)
-        return pv.merge((*self._shaft_datasets, *self._tip_datasets))
+        # pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
+        return pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
 
     @staticmethod
     def _make_default_part(geometry: str) -> pv.PolyData:
@@ -865,7 +713,7 @@ class AxesGeometry:
         else:
             _validation.check_contains(
                 item=geometry,
-                container=AxesAssembly.GEOMETRY_OPTIONS,
+                container=AxesGeometrySource.GEOMETRY_OPTIONS,
                 name='Geometry',
             )
             raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
@@ -874,7 +722,7 @@ class AxesGeometry:
     def _make_any_part(geometry: Union[str, pv.DataSet]) -> tuple[str, pv.PolyData]:
         if isinstance(geometry, str):
             name = geometry
-            part = AxesAssembly._make_default_part(
+            part = AxesGeometrySource._make_default_part(
                 geometry,
             )
         elif isinstance(geometry, pv.DataSet):
@@ -886,7 +734,7 @@ class AxesGeometry:
             raise TypeError(
                 f"Geometry must be a string, PolyData, or castable as UnstructuredGrid. Got {type(geometry)}.",
             )
-        part = AxesAssembly._normalize_part(part)
+        part = AxesGeometrySource._normalize_part(part)
         return name, part
 
     @staticmethod
@@ -910,7 +758,7 @@ class AxesGeometry:
         right_handed: bool = True,
     ) -> tuple[str, tuple[pv.PolyData, pv.PolyData, pv.PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
-        name, part_z = AxesAssembly._make_any_part(geometry)
+        name, part_z = AxesGeometrySource._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         if not right_handed:
@@ -918,7 +766,7 @@ class AxesGeometry:
         return name, (part_x, part_y, part_z)
 
 
-class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
+class AxesAssembly(_vtk.vtkPropAssembly):
     def __init__(
         self,
         x_label=None,
@@ -935,16 +783,28 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         z_color=None,
         **kwargs,
     ):
-        # Init
+        super().__init__()
 
         self._actors_shafts = [pv.Actor(), pv.Actor(), pv.Actor()]
         self._actors_tips = [pv.Actor(), pv.Actor(), pv.Actor()]
         actors = (*self._actors_shafts, *self._actors_tips)
         [self.AddPart(actor) for actor in actors]
 
-        super().__init__(x_color, y_color, z_color, **kwargs)
+        if x_color is None:
+            x_color = pv.global_theme.axes.x_color
+        if y_color is None:
+            y_color = pv.global_theme.axes.y_color
+        if z_color is None:
+            z_color = pv.global_theme.axes.z_color
 
-        datasets = (*self._shaft_datasets, *self._tip_datasets)
+        self.x_color = x_color
+        self.y_color = y_color
+        self.z_color = z_color
+
+        axes_geometry = AxesGeometrySource(**kwargs, rgb_scalars=False)
+        self._axes_geometry = axes_geometry
+
+        datasets = (*axes_geometry._shaft_datasets, *axes_geometry._tip_datasets)
         [
             setattr(actor, 'mapper', pv.DataSetMapper(dataset=dataset))
             for actor, dataset in zip(actors, datasets)
@@ -990,8 +850,17 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         self.label_size = label_size
         self.label_position = label_position
         self._is_init = True
-        self._update_axes_shaft_and_tip_geometry()
-        self._update_label_positions()
+        self._update()
+
+    def __getattr__(self, item: str):
+        try:
+            return self.__getattribute__(item)
+        except AttributeError as e:
+            if not item.startswith('_'):
+                try:
+                    return getattr(self._axes_geometry, item)
+                except AttributeError:
+                    raise AttributeError(str(e)) from e
 
     @property
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -1315,7 +1184,7 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
     def _get_transformed_label_positions(self):
         # Initial position vectors
         points = np.diag(self.label_position)
-        matrix = self.transformation_matrix
+        matrix = self._axes_geometry.transformation_matrix
         return apply_transformation_to_points(matrix, points)
 
     # def _transform_labels(self):
@@ -1368,6 +1237,13 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
         self._y_follower.position = y_pos
         self._z_follower.position = z_pos
 
+    def _update_axes_geometry(self):
+        self._axes_geometry._update_axes_shaft_and_tip_geometry()
+
+    def _update(self):
+        self._update_axes_geometry()
+        self._update_label_positions()
+
     # @property
     # def output_label_dataset(self):
     #     self._reset_label_geometry()
@@ -1376,11 +1252,6 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
     #
     #     labels = self._datasets['labels']
     #     return labels['x'], labels['y'], labels['z']
-
-    @staticmethod
-    def _set_rgb_array(dataset: pv.PolyData, color: Color):
-        array = np.broadcast_to(color.int_rgb, (dataset.n_cells, 3)).copy()
-        dataset.cell_data['_rgb'] = array
 
     @staticmethod
     def _create_rgb_mapper(dataset: pv.DataSet):
@@ -1403,3 +1274,185 @@ class AxesAssembly(AxesGeometry, _vtk.vtkPropAssembly):
 
 def _set_default(val, default):
     return default if val is None else val
+
+    # @property
+    # def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the x-axis shaft."""
+    #     return self._props.x_shaft
+    #
+    # @x_shaft_prop.setter
+    # def x_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=0, part=0)
+    #
+    # @property
+    # def y_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the y-axis shaft."""
+    #     return self._props.y_shaft
+    #
+    # @y_shaft_prop.setter
+    # def y_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=1, part=0)
+    #
+    # @property
+    # def z_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the z-axis shaft."""
+    #     return self._props.z_shaft
+    #
+    # @z_shaft_prop.setter
+    # def z_shaft_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=2, part=0)
+    #
+    # @property
+    # def x_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the x-axis tip."""
+    #     return self._props.x_tip
+    #
+    # @x_tip_prop.setter
+    # def x_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=0, part=1)
+    #
+    # @property
+    # def y_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the y-axis tip."""
+    #     return self._props.y_tip
+    #
+    # @y_tip_prop.setter
+    # def y_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=1, part=1)
+    #
+    # @property
+    # def z_tip_prop(self) -> Property:  # numpydoc ignore=RT01
+    #     """Return or set the property object of the z-axis tip."""
+    #     return self._props.z_tip
+    #
+    # @z_tip_prop.setter
+    # def z_tip_prop(self, prop: Property):  # numpydoc ignore=RT01,GL08
+    #     self._set_prop_obj(prop, axis=2, part=1)
+    #
+    # def _set_prop_obj(self, prop: Property, axis: int, part: int):
+    #     """Set actor property objects."""
+    #     if not isinstance(prop, Property):
+    #         raise TypeError(f'Prop must have type {Property}, got {type(prop)} instead.')
+    #     _as_nested(self._actors)[axis][part].SetProperty(prop)
+    #
+    # def set_prop_values(self, name, value, axis='all', part='all'):
+    #     """Set the axes shaft and tip properties.
+    #
+    #     This is a generalized setter method which sets the value of
+    #     a specific property for any combination of axis shaft or tip
+    #     :class:`pyvista.Property` objects.
+    #
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of the property to set.
+    #
+    #     value : Any
+    #         Value to set the property to.
+    #
+    #     axis : str | int, default: 'all'
+    #         Set the property for a specific part of the axes. Specify one of:
+    #
+    #         - ``'x'`` or ``0``: only set the property for the x-axis.
+    #         - ``'y'`` or ``1``: only set the property for the y-axis.
+    #         - ``'z'`` or ``2``: only set the property for the z-axis.
+    #         - ``'all'``: set the property for all three axes.
+    #
+    #     part : str | int, default: 'all'
+    #         Set the property for a specific part of the axes. Specify one of:
+    #
+    #         - ``'shaft'`` or ``0``: only set the property for the axes shafts.
+    #         - ``'tip'`` or ``1``: only set the property for the axes tips.
+    #         - ``'all'``: set the property for axes shafts and tips.
+    #
+    #     Examples
+    #     --------
+    #     Set the ambient property for all axes shafts and tips.
+    #
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.set_prop_values('ambient', 0.7)
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+    #
+    #     Set a property for the x-axis only. The property is set for
+    #     both the axis shaft and tip by default.
+    #
+    #     >>> axes_actor.set_prop_values('ambient', 0.3, axis='x')
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
+    #
+    #     Set a property for the axes tips only. The property is set for
+    #     all axes by default.
+    #
+    #     >>> axes_actor.set_prop_values('ambient', 0.1, part='tip')
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+    #
+    #     Set a property for a single axis and specific part.
+    #
+    #     >>> axes_actor.set_prop_values(
+    #     ...     'ambient', 0.9, axis='z', part='shaft'
+    #     ... )
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+    #
+    #     The last example is equivalent to setting the property directly.
+    #
+    #     >>> axes_actor.z_shaft_prop.ambient = 0.9
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+    #
+    #     """
+    #     props_dict = self._filter_prop_objects(axis=axis, part=part)
+    #     for prop in props_dict.values():
+    #         setattr(prop, name, value)
+    #
+    # def get_prop_values(self, name):
+    #     """Get the values of a Property attribute for all axes shafts and tips.
+    #
+    #     This is a generalized getter method which returns the value of
+    #     a specific property for all shaft and tip :class:`pyvista.Property` objects.
+    #
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         Name of the property to set.
+    #
+    #     Returns
+    #     -------
+    #     _AxesTuple
+    #         Named tuple with the requested property value for the axes shafts and tips.
+    #
+    #     Examples
+    #     --------
+    #     Get the ambient property of the axes shafts and tips.
+    #
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.get_prop_values('ambient')
+    #     _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
+    #
+    #     """
+    #     values = [getattr(prop, name) for prop in self._props]
+    #     return _AxesTuple(*values)
+    #
+    # def _filter_prop_objects(self, axis: Union[str, int] = 'all', part: Union[str, int] = 'all'):
+    #     valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
+    #     if axis not in valid_axis:
+    #         raise ValueError(f"Axis must be one of {valid_axis}.")
+    #     valid_part = [0, 1, 'shaft', 'tip', 'all']
+    #     if part not in valid_part:
+    #         raise ValueError(f"Part must be one of {valid_part}.")
+    #
+    #     props = {}
+    #     for num, char in enumerate(['x', 'y', 'z']):
+    #         if axis in [num, char, 'all']:
+    #             if part in [0, 'shaft', 'all']:
+    #                 key = char + '_shaft'
+    #                 props[key] = getattr(self._props, key)
+    #             if part in [1, 'tip', 'all']:
+    #                 key = char + '_tip'
+    #                 props[key] = getattr(self._props, key)
+    #
+    #     return props

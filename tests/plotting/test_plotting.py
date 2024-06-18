@@ -3966,10 +3966,7 @@ def axes_marker_reference_points():
 
 
 def test_axes_geometry():
-    pv.AxesGeometry().output.plot()
-    # pl = pv.Plotter()
-    # pl.add_mesh(axes)
-    # pl.show()
+    pv.AxesGeometrySource().output.plot()
 
 
 def test_axes_assembly():
