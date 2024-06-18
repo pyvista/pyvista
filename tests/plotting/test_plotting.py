@@ -224,17 +224,13 @@ def test_import_obj():
 @skip_9_0_X
 def test_import_obj_with_texture():
     filename = examples.download_doorman(load=False)
-    filename_mtl = str(Path(filename).with_suffix('.mtl'))
-    texture_path = str(Path(filename).parent)
+    filename_mtl = Path(filename).with_suffix('.mtl')
     pl = pv.Plotter()
     with pytest.raises(FileNotFoundError, match='Unable to locate'):
         pl.import_obj(filename, filename_mtl='not a file')
-    with pytest.raises(FileNotFoundError, match='Unable to locate'):
-        pl.import_obj(filename, texture_path='not a file')
     pl.import_obj(
         filename,
         filename_mtl=filename_mtl,
-        texture_path=texture_path,
     )
     pl.show(cpos="xy")
 
