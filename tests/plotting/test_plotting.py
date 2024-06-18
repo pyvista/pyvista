@@ -3187,7 +3187,7 @@ def _make_rgb_points_and_colors(dtype):
     points = rng.random((5, 3))
     return points, colors
 
-
+@pytest.mark.usefixtures('skip_check_gc')
 @skip_lesser_9_0_X
 @pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
 @pytest.mark.parametrize('as_composite', [True, False])
