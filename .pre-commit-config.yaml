@@ -90,12 +90,12 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.5
+    rev: 0.28.4
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.9
+    rev: v0.4.7
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -104,7 +104,7 @@ repos:
         exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+    rev: v3.1.0
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
