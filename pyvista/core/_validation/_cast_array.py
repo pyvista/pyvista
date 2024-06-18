@@ -121,8 +121,9 @@ def _cast_to_numpy(
     # check for removal when support for vtk 9.0.3 is removed
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
-    except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+    except ImportError:
+        # typing with newer versions of numpy
+        VisibleDeprecationWarning = np.VisibleDeprecationWarning  # type: ignore[attr-defined]
 
     try:
         out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)

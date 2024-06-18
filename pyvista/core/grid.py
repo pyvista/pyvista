@@ -255,7 +255,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> list[NumpyArray[float]]:
+    def meshgrid(self) -> tuple[NumpyArray[float], ...]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -264,10 +264,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        list[numpy.ndarray]
+        tuple[numpy.ndarray]
             List of numpy arrays representing the points of this mesh.
 
         """
+        # numpy doesn't type shape of tuple
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property  # type: ignore[explicit-override, override]
