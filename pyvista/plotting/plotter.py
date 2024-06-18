@@ -1315,12 +1315,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.add_orientation_widget(*args, **kwargs)
 
     @wraps(Renderer.add_axes)
-    def add_axes(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
+    def add_axes(
+        self, *args, **kwargs
+    ) -> (
+        _vtk.vtkAxesActor | _vtk.vtkPropAssembly | _vtk.vtkAnnotatedCubeActor
+    ):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
     @wraps(Renderer.add_box_axes)
-    def add_box_axes(self, *args, **kwargs) -> AxesActor:  # numpydoc ignore=PR01,RT01
+    def add_box_axes(
+        self, *args, **kwargs
+    ) -> _vtk.vtkAnnotatedCubeActor:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
 
@@ -3313,7 +3319,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        pyvista.plotting.actor.Actor
+        pyvista.Actor
             Actor of the mesh.
 
         Examples
@@ -5342,7 +5348,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkActor
+        pyvista.Actor
             Lines actor.
 
         Examples
