@@ -1360,7 +1360,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        vtk.vtkAnnotatedCubeActor
             Axes actor.
 
         Examples
