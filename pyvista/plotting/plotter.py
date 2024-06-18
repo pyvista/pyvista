@@ -7119,7 +7119,7 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
+        list[pyvista.DataSet | pyvista.MultiBlock]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
         return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
