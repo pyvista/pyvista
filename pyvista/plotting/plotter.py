@@ -90,7 +90,6 @@ from .widgets import WidgetHelper
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
-    from pyvista.plotting.axes_actor import AxesActor
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
