@@ -1296,7 +1296,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         opacity=0.5,
         show_text_edges=False,
         viewport=(0, 0, 0.2, 0.2),
-    ):
+    ) -> pyvista.AxesActor:
         """Add an interactive color box axes widget in the bottom left corner.
 
         Parameters
