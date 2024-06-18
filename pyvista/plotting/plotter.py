@@ -541,7 +541,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def import_obj(self, filename, filename_mtl=None, texture_path=None):
+    def import_obj(self, filename, filename_mtl=None):
         """Import from .obj wavefront files.
 
         .. versionadded:: 0.44.0
