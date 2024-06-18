@@ -462,7 +462,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOImport import vtkGLTFImporter
 
         importer = vtkGLTFImporter()
-        if pyvista.vtk_version_info < (9.2):
+        if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
         else:
             importer.SetFileName(filename)
@@ -508,7 +508,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkVRMLImporter()
-        if pyvista.vtk_version_info < (9.2):
+        if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
         else:
             importer.SetFileName(filename)
@@ -543,7 +543,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtk3DSImporter()
-        if pyvista.vtk_version_info < (9.2):
+        if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
         else:
             importer.SetFileName(filename)
@@ -579,7 +579,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        if pyvista.vtk_version_info < (9.2):
+        if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
         else:
             importer.SetFileName(filename)
