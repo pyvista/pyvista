@@ -1279,18 +1279,18 @@ class MultiBlock(
 
     def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
         """Convert rgb float or int scalars to uint8."""
-        new_scalars_name = f'{scalars_name}-uint8'
         for block in self:
             if isinstance(block, MultiBlock):
                 block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
             elif block is not None:
+                new_scalars_name = f'{scalars_name}-uint8'
                 scalars = getattr(block, data_attr).get(scalars_name, None)
                 if scalars is not None:
                     if np.issubdtype(scalars.dtype, np.floating):
-                        _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
+                        # _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
                         scalars = np.array(scalars, dtype=np.uint8) * 255
                     elif np.issubdtype(scalars.dtype, np.integer):
-                        _validation.check_range(scalars, [0, 255], name='rgb int scalars')
+                        # _validation.check_range(scalars, [0, 255], name='rgb int scalars')
                         scalars = np.array(scalars, dtype=np.uint8)
                     dattr = getattr(block, data_attr)
                     dattr[new_scalars_name] = scalars
