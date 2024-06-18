@@ -579,8 +579,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
-        filename = Path(str(filename)).expanduser().resolve()
-        if not filename.is_file():
+        filename = str(Path(str(filename)).expanduser().resolve())
+        if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
