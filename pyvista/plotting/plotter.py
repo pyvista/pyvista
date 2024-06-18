@@ -554,9 +554,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename_mtl : str, optional
             Path to the .mtl file.
 
-        texture_path : str, optional
-            Path to the texture file.
-
         Examples
         --------
         >>> import pyvista as pv
@@ -572,35 +569,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> from pathlib import Path
         >>> filename = examples.download_doorman(load=False)
-        >>> filename_mtl = str(Path(filename).with_suffix('.mtl'))
-        >>> texture_path = str(Path(filename).parent)
+        >>> filename_mtl = Path(filename).with_suffix('.mtl')
         >>> pl = pv.Plotter()
         >>> pl.import_obj(
         ...     filename,
         ...     filename_mtl=filename_mtl,
-        ...     texture_path=texture_path,
         ... )
         >>> pl.show(cpos="xy")
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
+        filename = Path(str(filename)).expanduser().resolve()
         if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(filename)
+        importer.SetFileName(str(filename))
         if filename_mtl is not None:
-            filename_mtl = str(Path(str(filename_mtl)).expanduser().resolve())
-            if not Path(filename_mtl).is_file():
+            filename_mtl = Path(filename_mtl).expanduser().resolve()
+            if not filename_mtl.is_file():
                 raise FileNotFoundError(f'Unable to locate {filename_mtl}')
-            importer.SetFileNameMTL(filename_mtl)
-        if texture_path is not None:
-            texture_path = str(Path(str(texture_path)).expanduser().resolve())
-            if not Path(texture_path).is_dir():
-                raise FileNotFoundError(f'Unable to locate {texture_path}')
-            importer.SetTexturePath(texture_path)
+            texture_path = filename_mtl.parents[0]
+            importer.SetFileNameMTL(str(filename_mtl))
+            importer.SetTexturePath(str(texture_path))
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
