@@ -569,12 +569,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> from pathlib import Path
         >>> filename = examples.download_doorman(load=False)
-        >>> filename_mtl = Path(filename).with_suffix('.mtl')
         >>> pl = pv.Plotter()
-        >>> pl.import_obj(
-        ...     filename,
-        ...     filename_mtl=filename_mtl,
-        ... )
+        >>> pl.import_obj(filename)
         >>> pl.show(cpos="xy")
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
@@ -585,14 +581,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        importer.SetFileName(str(filename))
-        if filename_mtl is not None:
-            filename_mtl = Path(filename_mtl).expanduser().resolve()
-            if not filename_mtl.is_file():
-                raise FileNotFoundError(f'Unable to locate {filename_mtl}')
-            texture_path = filename_mtl.parents[0]
+        importer.SetFileName(filename)
+        filename_mtl = Path(filename).with_suffix('.mtl')
+        if filename_mtl.is_file():
             importer.SetFileNameMTL(str(filename_mtl))
-            importer.SetTexturePath(str(texture_path))
+            importer.SetTexturePath(str(filename_mtl.parents[0]))
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
