@@ -2866,12 +2866,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if scalars is not None:
-                # enable rgb if the scalars name ends with rgb or rgba
-                if rgb is None:
-                    if scalars.endswith(('_rgb', '_rgba')):
-                        rgb = True
-                        show_scalar_bar = False
-
                 scalar_bar_args = self.mapper.set_scalars(
                     scalars,
                     preference,
