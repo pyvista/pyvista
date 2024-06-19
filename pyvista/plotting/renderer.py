@@ -1074,7 +1074,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             y_color=y_color,
             z_color=z_color,
             position=position,
-            scale=scale,
             user_matrix=user_matrix,
             **kwargs,
         )

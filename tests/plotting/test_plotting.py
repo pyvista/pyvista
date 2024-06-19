@@ -3965,8 +3965,23 @@ def axes_marker_reference_points():
 #     plot.show()
 
 
-def test_axes_geometry():
+def test_axes_geometry_default():
     pv.AxesGeometrySource().output.plot()
+
+
+@pytest.mark.parametrize('normalized_mode', [True, False])
+def test_axes_geometry_normalized_mode(normalized_mode):
+    mesh = pv.AxesGeometrySource(
+        normalized_mode=normalized_mode,
+        tip_length=0.5,
+        total_length=1.5,
+    ).output
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.enable_parallel_projection()
+    pl.show_bounds()
+    pl.view_xy()
+    pl.show()
 
 
 def test_axes_assembly():
