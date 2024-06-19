@@ -579,10 +579,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
-        if pyvista.vtk_version_info < (9, 2, 2):
-            importer.SetFileName(str(filename))
-        else:
-            importer.SetFileName(filename)
+        importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
