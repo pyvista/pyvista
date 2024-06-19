@@ -6,18 +6,11 @@ import vtk
 
 import pyvista as pv
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.geometric_sources import AxesGeometrySource
-from pyvista.plotting.axes_assembly import AxesAssembly
-
-
-@pytest.fixture()
-def axes_geometry_source():
-    return AxesGeometrySource()
 
 
 @pytest.fixture()
 def axes_assembly():
-    return AxesAssembly()
+    return pv.AxesAssembly()
 
 
 # def test_origin(axes):
@@ -39,39 +32,6 @@ def axes_assembly():
 #     assert not axes.GetSymmetric()
 
 
-def test_axes_geometry_source_total_length(axes_geometry_source):
-    assert axes_geometry_source.total_length == (1, 1, 1)
-    axes_geometry_source.total_length = (1, 2, 3)
-    assert axes_geometry_source.total_length == (1, 2, 3)
-
-
-def test_axes_geometry_source_total_length_init():
-    axes_geometry_source = AxesGeometrySource(total_length=2)
-    assert axes_geometry_source.total_length == (2, 2, 2)
-
-
-def test_axes_geometry_source_shaft_length(axes_geometry_source):
-    assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
-    axes_geometry_source.shaft_length = (0.1, 0.2, 0.3)
-    assert axes_geometry_source.shaft_length == (0.1, 0.2, 0.3)
-
-
-def test_axes_geometry_source_shaft_length_init(axes_geometry_source):
-    axes_geometry_source = AxesGeometrySource(shaft_length=0.9)
-    assert axes_geometry_source.shaft_length == (0.9, 0.9, 0.9)
-
-
-def test_axes_geometry_source_tip_length(axes_geometry_source):
-    assert axes_geometry_source.tip_length == (0.2, 0.2, 0.2)
-    axes_geometry_source.tip_length = (0.1, 0.2, 0.3)
-    assert axes_geometry_source.tip_length == (0.1, 0.2, 0.3)
-
-
-def test_axes_geometry_source_tip_length_init():
-    axes_geometry_source = AxesGeometrySource(tip_length=0.9)
-    assert axes_geometry_source.tip_length == (0.9, 0.9, 0.9)
-
-
 def test_axes_assembly_label_position(axes_assembly):
     assert axes_assembly.label_position == (1.1, 1.1, 1.1)
     axes_assembly.label_position = (1, 2, 3)
@@ -79,55 +39,8 @@ def test_axes_assembly_label_position(axes_assembly):
 
 
 def test_axes_assembly_label_position_init():
-    axes_assembly = AxesAssembly(label_position=2)
+    axes_assembly = pv.AxesAssembly(label_position=2)
     assert axes_assembly.label_position == (2, 2, 2)
-
-
-def test_axes_geometry_source_tip_radius(axes_geometry_source):
-    assert axes_geometry_source.tip_radius == 0.2
-    axes_geometry_source.tip_radius = 0.8
-    assert axes_geometry_source.tip_radius == 0.8
-
-
-def test_axes_geometry_source_tip_radius_init():
-    axes_geometry_source = AxesGeometrySource(tip_radius=9)
-    assert axes_geometry_source.tip_radius == 9
-
-
-@pytest.mark.parametrize(
-    'shaft_type',
-    AxesGeometrySource.GEOMETRY_OPTIONS,
-)
-def test_axes_geometry_source_shaft_type(shaft_type, axes_geometry_source):
-    axes_geometry_source.shaft_type = shaft_type
-    assert axes_geometry_source.shaft_type == shaft_type
-
-
-@pytest.mark.parametrize(
-    'shaft_type',
-    AxesGeometrySource.GEOMETRY_OPTIONS,
-)
-def test_axes_geometry_source_shaft_type_init(shaft_type):
-    axes_geometry_source = AxesGeometrySource(shaft_type=shaft_type)
-    assert axes_geometry_source.shaft_type == shaft_type
-
-
-@pytest.mark.parametrize(
-    'tip_type',
-    AxesGeometrySource.GEOMETRY_OPTIONS,
-)
-def test_axes_geometry_source_tip_type(tip_type, axes_geometry_source):
-    axes_geometry_source.tip_type = tip_type
-    assert axes_geometry_source.tip_type == tip_type
-
-
-@pytest.mark.parametrize(
-    'tip_type',
-    AxesGeometrySource.GEOMETRY_OPTIONS,
-)
-def test_axes_geometry_source_tip_type_init(tip_type):
-    axes_geometry_source = AxesGeometrySource(tip_type=tip_type)
-    assert axes_geometry_source.tip_type == tip_type
 
 
 def test_axes_assembly_labels(axes_assembly):
@@ -137,7 +50,7 @@ def test_axes_assembly_labels(axes_assembly):
 
 
 def test_axes_assembly_labels_init():
-    axes_assembly = AxesAssembly(labels=('i', 'j', 'k'))
+    axes_assembly = pv.AxesAssembly(labels=('i', 'j', 'k'))
     assert axes_assembly.labels == ('i', 'j', 'k')
 
 
@@ -148,7 +61,7 @@ def test_axes_assembly_x_label(axes_assembly):
 
 
 def test_axes_assembly_x_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(x_label='label')
+    axes_assembly = pv.AxesAssembly(x_label='label')
     assert axes_assembly.x_label == 'label'
 
 
@@ -159,7 +72,7 @@ def test_axes_assembly_y_label(axes_assembly):
 
 
 def test_axes_assembly_y_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(y_label='label')
+    axes_assembly = pv.AxesAssembly(y_label='label')
     assert axes_assembly.y_label == 'label'
 
 
@@ -170,18 +83,18 @@ def test_axes_assembly_z_label(axes_assembly):
 
 
 def test_axes_assembly_z_label_init(axes_assembly):
-    axes_assembly = AxesAssembly(z_label='label')
+    axes_assembly = pv.AxesAssembly(z_label='label')
     assert axes_assembly.z_label == 'label'
 
 
 def test_axes_assembly_labels_raises():
     match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
     with pytest.raises(ValueError, match=match.format('x_label')):
-        AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
+        pv.AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
     with pytest.raises(ValueError, match=match.format('y_label')):
-        AxesAssembly(y_label='B', z_label='C', labels='UVW')
+        pv.AxesAssembly(y_label='B', z_label='C', labels='UVW')
     with pytest.raises(ValueError, match=match.format('z_label')):
-        AxesAssembly(z_label='C', labels='UVW')
+        pv.AxesAssembly(z_label='C', labels='UVW')
 
 
 def test_axes_assembly_label_color(axes_assembly):
@@ -215,63 +128,10 @@ def test_axes_assembly_label_color(axes_assembly):
 
 
 def test_axes_assembly_label_color_init():
-    axes_assembly = AxesAssembly(label_color='yellow')
+    axes_assembly = pv.AxesAssembly(label_color='yellow')
     assert axes_assembly.label_color[0].name == 'yellow'
     assert axes_assembly.label_color[1].name == 'yellow'
     assert axes_assembly.label_color[2].name == 'yellow'
-
-
-def test_axes_geometry_source_axis_color_init():
-    axes_geometry_source = AxesGeometrySource(x_color='yellow', y_color='orange', z_color='purple')
-    assert axes_geometry_source.x_color[0].name == 'yellow'
-    assert axes_geometry_source.x_color[1].name == 'yellow'
-    assert axes_geometry_source.y_color[0].name == 'orange'
-    assert axes_geometry_source.y_color[1].name == 'orange'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-
-
-def test_axes_geometry_source_axis_color(axes_geometry_source):
-    assert axes_geometry_source.x_color[0].name == 'tomato'
-    assert axes_geometry_source.x_color[1].name == 'tomato'
-    assert axes_geometry_source.y_color[0].name == 'seagreen'
-    assert axes_geometry_source.y_color[1].name == 'seagreen'
-    assert axes_geometry_source.z_color[0].name == 'mediumblue'
-    assert axes_geometry_source.z_color[1].name == 'mediumblue'
-
-    axes_geometry_source.x_color = 'purple'
-    assert len(axes_geometry_source.x_color) == 2
-    assert axes_geometry_source.x_color[0].name == 'purple'
-    assert axes_geometry_source.x_color[1].name == 'purple'
-
-    axes_geometry_source.x_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.x_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.x_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.y_color = 'purple'
-    assert axes_geometry_source.y_color[0].name == 'purple'
-    assert axes_geometry_source.y_color[1].name == 'purple'
-    axes_geometry_source.y_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.y_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.y_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.z_color = 'purple'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-    axes_geometry_source.z_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.z_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.z_color[1].int_rgb, [1, 2, 3])
-
-
-def test_axes_geometry_source_shaft_radius_init():
-    axes_geometry_source = AxesGeometrySource(shaft_radius=3)
-    assert axes_geometry_source.shaft_radius == 3
-
-
-def test_axes_geometry_source_shaft_radius(axes_geometry_source):
-    assert axes_geometry_source.shaft_radius == 0.05
-    axes_geometry_source.shaft_radius = 0.1
-    assert axes_geometry_source.shaft_radius == 0.1
 
 
 def test_axes_assembly_include_labels(axes_assembly):
@@ -281,7 +141,7 @@ def test_axes_assembly_include_labels(axes_assembly):
 
 
 def test_axes_assembly_include_labels_init():
-    axes_assembly = AxesAssembly(include_labels=False)
+    axes_assembly = pv.AxesAssembly(include_labels=False)
     assert axes_assembly.include_labels is False
 
 
@@ -292,7 +152,7 @@ def test_axes_assembly_label_size(axes_assembly):
 
 
 def test_axes_assembly_label_size_init():
-    axes_assembly = AxesAssembly(label_size=0.3)
+    axes_assembly = pv.AxesAssembly(label_size=0.3)
     assert axes_assembly.label_size == 0.3
 
 
@@ -314,7 +174,7 @@ def test_axes_assembly_label_size_init():
 #
 #     # Test init
 #     prop = pv.Property(ambient=0.42)
-#     axes_assembly = AxesAssembly(properties=prop)
+#     axes_assembly = pv.AxesAssembly(properties=prop)
 #     assert axes_assembly.x_shaft_prop.ambient == 0.42
 #     assert axes_assembly.x_shaft_prop is not prop
 #     assert axes_assembly.x_tip_prop.ambient == 0.42
@@ -332,7 +192,7 @@ def test_axes_assembly_label_size_init():
 #
 #     msg = '`properties` must be a property object or a dictionary.'
 #     with pytest.raises(TypeError, match=msg):
-#         pv.AxesAssembly(properties="not_a_dict")
+#         pv.pv.AxesAssembly(properties="not_a_dict")
 
 
 # def test_axes_assembly_user_matrix():
@@ -695,19 +555,19 @@ def _config_axes_theme():
 
 
 @pytest.mark.usefixtures('_config_axes_theme')
-def test_axes_geometry_source_theme(axes_geometry_source):
-    assert axes_geometry_source.x_color[0].name == 'tomato'
-    assert axes_geometry_source.x_color[1].name == 'tomato'
-    assert axes_geometry_source.y_color[0].name == 'seagreen'
-    assert axes_geometry_source.y_color[1].name == 'seagreen'
-    assert axes_geometry_source.z_color[0].name == 'mediumblue'
-    assert axes_geometry_source.z_color[1].name == 'mediumblue'
+def test_axes_geometry_source_theme(axes_assembly):
+    assert axes_assembly.x_color[0].name == 'tomato'
+    assert axes_assembly.x_color[1].name == 'tomato'
+    assert axes_assembly.y_color[0].name == 'seagreen'
+    assert axes_assembly.y_color[1].name == 'seagreen'
+    assert axes_assembly.z_color[0].name == 'mediumblue'
+    assert axes_assembly.z_color[1].name == 'mediumblue'
 
     pv.global_theme.axes.x_color = 'black'
     pv.global_theme.axes.y_color = 'white'
     pv.global_theme.axes.z_color = 'gray'
 
-    axes_geometry_source = AxesGeometrySource()
+    axes_geometry_source = pv.AxesAssembly()
     assert axes_geometry_source.x_color[0].name == 'black'
     assert axes_geometry_source.x_color[1].name == 'black'
     assert axes_geometry_source.y_color[0].name == 'white'
@@ -866,84 +726,6 @@ def test_axes_geometry_source_theme(axes_geometry_source):
 #     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
 
 
-@pytest.mark.parametrize(
-    'test_prop_other_prop',
-    [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')],
-)
-@pytest.mark.parametrize('decimals', list(range(8)))
-@pytest.mark.parametrize('auto_length', [True, False])
-def test_axes_geometry_source_auto_length(test_prop_other_prop, decimals, auto_length):
-    test_prop, other_prop = test_prop_other_prop
-
-    # Get default value
-    axes_geometry_source = AxesGeometrySource()
-    other_prop_default = np.array(getattr(axes_geometry_source, other_prop))
-
-    # Initialize actor with a random length for test prop
-    random_length = np.round(np.random.default_rng().random(), decimals=decimals)
-    var_kwargs = {}
-    var_kwargs[test_prop] = random_length
-    axes_geometry_source = AxesGeometrySource(auto_length=auto_length, **var_kwargs)
-
-    actual_test_prop = np.array(getattr(axes_geometry_source, test_prop))
-    actual_other_prop = np.array(getattr(axes_geometry_source, other_prop))
-
-    expected = np.array([random_length] * 3)
-    assert np.array_equal(actual_test_prop, expected)
-    if auto_length:
-        # Test lengths sum to 1
-        actual = actual_test_prop + actual_other_prop
-        expected = (1, 1, 1)
-        assert np.array_equal(actual, expected)
-    else:
-        # Test other length is unchanged
-        actual = actual_other_prop
-        expected = other_prop_default
-        assert np.array_equal(actual, expected)
-
-    # Test setting both does not raise error if they sum to one
-    _ = AxesGeometrySource(shaft_length=random_length, tip_length=1 - random_length)
-    _ = AxesGeometrySource(shaft_length=1 - random_length, tip_length=random_length)
-
-    # test enabling auto_length after object has been created
-    axes_geometry_source.auto_length = True
-    setattr(axes_geometry_source, test_prop, 0.9)
-    expected = (0.9, 0.9, 0.9)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    value_unchanged = (0.1, 0.1, 0.1)
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-    # test disabling auto_length after object has been created
-    axes_geometry_source.auto_length = False
-    setattr(axes_geometry_source, test_prop, 0.7)
-    expected = (0.7, 0.7, 0.7)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-
-def test_axes_geometry_source_auto_length_raises():
-    msg = (
-        "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
-        "Set either `shaft_length` or `tip_length`, but not both."
-    )
-    with pytest.raises(ValueError, match=msg):
-        AxesGeometrySource(shaft_length=0.6, tip_length=0.6, auto_length=True)
-
-
-def test_axes_geometry_source_output():
-    out = AxesGeometrySource().output
-    assert isinstance(out, pv.MultiBlock)
-    assert all('axes_rgb' in block.array_names for block in out)
-
-
 def test_axes_assembly_output():
-    out = AxesAssembly()
+    out = pv.AxesAssembly()
     assert isinstance(out, pv.AxesAssembly)
