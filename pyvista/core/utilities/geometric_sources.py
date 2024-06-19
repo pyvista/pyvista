@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Sequence
 from typing import Tuple
 from typing import Union
@@ -2848,7 +2849,7 @@ class AxesGeometrySource:
         position=(0, 0, 0),
         direction_vectors=None,
         user_matrix=None,
-        symmetric_bounds=True,
+        symmetric=False,
         normalized_mode=False,
         x_color=None,
         y_color=None,
@@ -2876,7 +2877,7 @@ class AxesGeometrySource:
 
         # Set misc flag params
         self._normalized_mode = normalized_mode
-        self._symmetric_bounds = symmetric_bounds
+        self._symmetric = symmetric
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type
@@ -2965,70 +2966,12 @@ class AxesGeometrySource:
     #     return '\n'.join(attr)
 
     @property
-    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
-        """Enable or disable symmetry in the axes bounds calculation.
+    def symmetric(self) -> bool:
+        return self._symmetric
 
-        Calculate the axes bounds as though the axes were symmetric,
-        i.e. extended along -X, -Y, and -Z directions. Setting this
-        parameter primarily affects camera positioning in a scene.
-
-        - If ``True``, the axes :attr:`bounds` are symmetric about
-          its :attr:`position`. Symmetric bounds allow for the axes to rotate
-          about its origin, which is useful in cases where the actor
-          is used as an orientation widget.
-
-        - If ``False``, the axes :attr:`bounds` are calculated as-is.
-          Asymmetric bounds are useful in cases where the axes are
-          placed in a scene with other actors, since the symmetry
-          could otherwise lead to undesirable camera positioning
-          (e.g. camera may be positioned further away than necessary).
-
-        Examples
-        --------
-        Get the symmetric bounds of the axes.
-
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor(symmetric_bounds=True)
-        >>> axes_actor.bounds
-        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        >>> axes_actor.center
-        (0.0, 0.0, 0.0)
-
-        Get the asymmetric bounds.
-
-        >>> axes_actor.symmetric_bounds = False
-        >>> axes_actor.bounds  # doctest:+SKIP
-        (-0.08, 1.0, -0.08, 1.0, -0.08, 1.0)
-        >>> axes_actor.center  # doctest:+SKIP
-        (0.46, 0.46, 0.46)
-
-        Show the difference in camera positioning with and without
-        symmetric bounds. Orientation is added for visualization.
-
-        >>> # Create actors
-        >>> axes_actor_sym = pv.AxesActor(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_actor_asym = pv.AxesActor(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
-        >>>
-        >>> # Show multi-window plot
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> _ = pl.add_text("Symmetric axes")
-        >>> _ = pl.add_actor(axes_actor_sym)
-        >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text("Asymmetric axes")
-        >>> _ = pl.add_actor(axes_actor_asym)
-        >>> pl.show()
-
-        """
-        return self._symmetric_bounds
-
-    @symmetric_bounds.setter
-    def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
-        self._symmetric_bounds = bool(value)
+    @symmetric.setter
+    def symmetric(self, val: bool):
+        self._symmetric = val
 
     @property
     def _total_length(self) -> NumpyArray[float]:
@@ -3124,7 +3067,7 @@ class AxesGeometrySource:
         return tuple(self._shaft_length)
 
     @shaft_length.setter
-    def shaft_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+    def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
         self._shaft_length = length  # type: ignore[assignment]
 
         if self.normalized_mode:
@@ -3157,7 +3100,7 @@ class AxesGeometrySource:
         )
 
     @property
-    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the tip for each axis.
 
         Values must be in range ``[0, 1]``.
@@ -3184,7 +3127,7 @@ class AxesGeometrySource:
         return tuple(self._tip_length)
 
     @tip_length.setter
-    def tip_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+    def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
         self._tip_length = length  # type: ignore[assignment]
 
         if self.normalized_mode:
@@ -3327,7 +3270,7 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[str, pv.DataSet]):
+    def tip_type(self, tip_type: str | pv.DataSet):
         if tip_type is None:
             tip_type = pv.global_theme.axes.tip_type
         self._tip_type = self._set_geometry(part=1, geometry=tip_type)
@@ -3339,25 +3282,6 @@ class AxesGeometrySource:
     @rgb_scalars.setter
     def rgb_scalars(self, value: bool):
         self._rgb_scalars = value
-
-    def _update_axis_rgb_scalars(self, axis: _AxisEnum):
-        SCALARS = 'axes_rgb'
-
-        def _set_rgb_scalars(dataset: pv.PolyData, color: Color):
-            # TODO: modify to allow any dtype once #6272 is merged
-            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
-            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
-
-        def _clear_rgb_scalars(dataset):
-            if SCALARS in dataset.cell_data:
-                dataset.cell_data.remove(SCALARS)
-
-        if self.rgb_scalars:
-            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
-            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
-        else:
-            _clear_rgb_scalars(self._shaft_datasets[axis])
-            _clear_rgb_scalars(self._tip_datasets[axis])
 
     def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
         # Local import to only import from plotting module as needed
@@ -3401,7 +3325,7 @@ class AxesGeometrySource:
 
     @position.setter
     def position(self, xyz):
-        self._position = _validation.validate_array3(xyz)
+        self._position = _validation.validate_array3(xyz, dtype_out=float)
 
     @property
     def direction_vectors(self):
@@ -3427,10 +3351,9 @@ class AxesGeometrySource:
         # Scale first, then rotate, then move
         return position_matrix @ rotation_matrix @ scale_matrix
 
-    def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
+    def _set_geometry(self, part: Literal[0, 1], geometry: str | pv.DataSet):
         # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
-        assert part in [0, 1]
         datasets = self._shaft_datasets if part == 0 else self._tip_datasets
         datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
         datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
@@ -3467,22 +3390,50 @@ class AxesGeometrySource:
                     # Move tip to end of shaft
                     part.points[:, axis] += shaft_length[axis]
 
+                if self.symmetric:
+                    # Flip and append to part
+                    origin = [0, 0, 0]
+                    normal = [0, 0, 0]
+                    normal[axis] = 1
+                    flipped = part.flip_normal(normal=normal, point=origin)
+                    part.append_polydata(flipped, inplace=True)
+
     def _transform_shafts_and_tips(self):
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
             dataset.transform(self.transformation_matrix, inplace=True)
 
-    def _update_axes_shaft_and_tip_geometry(self):
+    def _update_axis_rgb_scalars(self, axis: _AxisEnum):
+        SCALARS = 'axes_rgb'
+
+        def _set_rgb_scalars(dataset: pv.PolyData, color: Color):
+            # TODO: modify to allow any dtype once #6272 is merged
+            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
+            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
+
+        def _clear_rgb_scalars(dataset):
+            if SCALARS in dataset.cell_data:
+                dataset.cell_data.remove(SCALARS)
+
+        if self.rgb_scalars:
+            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
+            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
+        else:
+            _clear_rgb_scalars(self._shaft_datasets[axis])
+            _clear_rgb_scalars(self._tip_datasets[axis])
+
+    def _make_symmetric(self):
+        if self.symmetric:
+            for dataset in [*self._shaft_datasets, *self._tip_datasets]:
+                dataset.transform(self.transformation_matrix, inplace=True)
+
+    def update(self):
         self._reset_shaft_and_tip_geometry()
+        self._make_symmetric()
         self._transform_shafts_and_tips()
 
-    def _update_rgb_arrays(self):
         self._update_axis_rgb_scalars(_AxisEnum.x)
         self._update_axis_rgb_scalars(_AxisEnum.y)
         self._update_axis_rgb_scalars(_AxisEnum.z)
-
-    def update(self):
-        self._update_axes_shaft_and_tip_geometry()
-        self._update_rgb_arrays()
 
     @property
     def output(self):
@@ -3514,7 +3465,7 @@ class AxesGeometrySource:
             raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
 
     @staticmethod
-    def _make_any_part(geometry: Union[str, pv.DataSet]) -> tuple[str, pv.PolyData]:
+    def _make_any_part(geometry: str | pv.DataSet) -> tuple[str, pv.PolyData]:
         if isinstance(geometry, str):
             name = geometry
             part = AxesGeometrySource._make_default_part(

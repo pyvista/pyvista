@@ -3965,8 +3965,13 @@ def axes_marker_reference_points():
 #     plot.show()
 
 
-def test_axes_geometry_default():
-    pv.AxesGeometrySource().output.plot()
+@pytest.mark.parametrize('rgb_scalars', [True, False])
+def test_axes_geometry_source_rgb_scalars(rgb_scalars):
+    pv.AxesGeometrySource(rgb_scalars=rgb_scalars).output.plot()
+
+
+def test_axes_geometry_source_symmetric():
+    pv.AxesGeometrySource(symmetric=True).output.plot()
 
 
 @pytest.mark.parametrize('normalized_mode', [True, False])

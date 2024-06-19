@@ -472,17 +472,38 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
 
     if part == 'x_shaft':
         actual_bounds = x_shaft.bounds
-        expected_bounds = (0, x_shaft_len, -shaft_radius, shaft_radius, -shaft_radius, shaft_radius)
+        expected_bounds = (
+            0,
+            x_shaft_len,
+            -shaft_radius,
+            shaft_radius,
+            -shaft_radius,
+            shaft_radius,
+        )
         assert np.allclose(actual_bounds, expected_bounds)
 
     elif part == 'y_shaft':
         actual_bounds = y_shaft.bounds
-        expected_bounds = (-shaft_radius, shaft_radius, 0, y_shaft_len, -shaft_radius, shaft_radius)
+        expected_bounds = (
+            -shaft_radius,
+            shaft_radius,
+            0,
+            y_shaft_len,
+            -shaft_radius,
+            shaft_radius,
+        )
         assert np.allclose(actual_bounds, expected_bounds)
 
     elif part == 'z_shaft':
         actual_bounds = z_shaft.bounds
-        expected_bounds = (-shaft_radius, shaft_radius, -shaft_radius, shaft_radius, 0, z_shaft_len)
+        expected_bounds = (
+            -shaft_radius,
+            shaft_radius,
+            -shaft_radius,
+            shaft_radius,
+            0,
+            z_shaft_len,
+        )
         assert np.allclose(actual_bounds, expected_bounds)
 
     elif part == 'x_tip':
