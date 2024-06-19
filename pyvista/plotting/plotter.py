@@ -464,7 +464,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer = vtkGLTFImporter()
         if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
-        else:
+        else:  # pragma no cover
             importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -510,7 +510,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer = vtkVRMLImporter()
         if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
-        else:
+        else:  # pragma no cover
             importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
@@ -545,7 +545,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer = vtk3DSImporter()
         if pyvista.vtk_version_info < (9, 2, 2):
             importer.SetFileName(str(filename))
-        else:
+        else:  # pragma no cover
             importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
