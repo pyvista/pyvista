@@ -58,3 +58,4 @@ PyVista has the following mesh types:
    misc
    typing
    partitioned
+   _validation

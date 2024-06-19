@@ -541,7 +541,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def import_obj(self, filename):
+    def import_obj(self, filename, filename_mtl=None):
         """Import from .obj wavefront files.
 
         .. versionadded:: 0.44.0
@@ -550,6 +550,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         filename : str
             Path to the .obj file.
+
+        filename_mtl : str, optional
+            Path to the .mtl file.
 
         Examples
         --------
@@ -561,6 +564,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> pl.import_obj(download_obj_file)
         >>> pl.show()
+
+        Import an .obj file with a texture.
+
+        >>> from pathlib import Path
+        >>> filename = examples.download_doorman(load=False)
+        >>> pl = pv.Plotter()
+        >>> pl.import_obj(filename)
+        >>> pl.show(cpos="xy")
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
@@ -571,6 +582,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
+        filename_mtl = Path(filename).with_suffix('.mtl')
+        if filename_mtl.is_file():
+            importer.SetFileNameMTL(str(filename_mtl))
+            importer.SetTexturePath(str(filename_mtl.parents[0]))
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -1316,6 +1331,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_box_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.add_box_axes``."""
         return self.renderer.add_box_axes(*args, **kwargs)
+
+    @wraps(Renderer.add_north_arrow_widget)
+    def add_north_arrow_widget(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
+        """Wrap ``Renderer.add_north_arrow_widget``."""
+        return self.renderer.add_north_arrow_widget(*args, **kwargs)
 
     @wraps(Renderer.hide_axes)
     def hide_axes(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
@@ -7119,7 +7139,7 @@ class Plotter(BasePlotter):
 
         Returns
         -------
-        List[Union[pyvista.DataSet, PyVista.MultiBlock]]
+        list[pyvista.DataSet | pyvista.MultiBlock]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
         """
         return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]

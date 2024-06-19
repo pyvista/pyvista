@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
 from typing import ClassVar
+from typing import Sequence
 from typing import cast
 import warnings
 
@@ -34,6 +34,7 @@ from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
+from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
@@ -101,10 +102,10 @@ def make_legend_face(face):
 
     Parameters
     ----------
-    face : str | None | pyvista.PolyData
+    face : str | pyvista.PolyData | NoneType
         The shape of the legend face. Valid strings are:
-        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
-        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle', 'none'.
+        Also accepts ``None`` or instances of ``pyvista.PolyData``.
 
     Returns
     -------
@@ -116,8 +117,8 @@ def make_legend_face(face):
     ValueError
         If the provided face value is invalid.
     """
-    if face is None:
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
+    if face is None or face == "none":
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -134,7 +135,7 @@ def make_legend_face(face):
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
-            '\tNone'
+            '\t"none"\n'
             '\tpyvista.PolyData',
         )
     return legendface
@@ -1441,6 +1442,81 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
         axes_widget.SetViewport(viewport)
         return self.axes_actor
+
+    def add_north_arrow_widget(
+        self,
+        interactive=None,
+        color="#4169E1",
+        opacity=1.0,
+        line_width=2,
+        edge_color=None,
+        lighting=False,
+        viewport=(0, 0, 0.1, 0.1),
+    ):
+        """Add a geographic north arrow to the scene.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Control if the orientation widget is interactive.  By
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.plotting.themes.Theme.interactive>`.
+
+        color : ColorLike, optional
+            Color of the north arrow.
+
+        opacity : float, optional
+            Opacity of the north arrow.
+
+        line_width : float, optional
+            Width of the north edge arrow lines.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        lighting : bool, optional
+            Enable or disable lighting on north arrow.
+
+        viewport : sequence[float], default: (0, 0, 0.1, 0.1)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkOrientationMarkerWidget
+            Orientation marker widget.
+
+        Examples
+        --------
+        Use an north arrow as the orientation widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> terrain = examples.download_st_helens().warp_by_scalar()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(terrain)
+        >>> widget = pl.add_north_arrow_widget()
+        >>> pl.enable_terrain_style(True)
+        >>> pl.show()
+
+        """
+        marker = create_north_arrow()
+        mapper = pyvista.DataSetMapper(marker)
+        actor = pyvista.Actor(mapper)
+        actor.prop.show_edges = True
+        if edge_color is not None:
+            actor.prop.edge_color = edge_color
+        actor.prop.line_width = line_width
+        actor.prop.color = color
+        actor.prop.opacity = opacity
+        actor.prop.lighting = lighting
+        return self.add_orientation_widget(
+            actor,
+            interactive=interactive,
+            viewport=viewport,
+        )
 
     def add_box_axes(
         self,
@@ -3803,8 +3879,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
               of the item to add, ``color`` is the color of the label to add,
               and ``face`` is a string which defines the face (i.e. ``circle``,
               ``triangle``, ``box``, etc.).
-              ``face`` could be also ``None`` (there is no face then), or a
-              :class:`pyvista.PolyData`.
+              ``face`` could be also ``"none"`` (no face shown for the entry),
+              or a :class:`pyvista.PolyData`.
             * A dict with the key ``label``. Optionally you can add the
               keys ``color`` and ``face``. The values of these keys can be
               strings. For the ``face`` key, it can be also a
@@ -3843,17 +3919,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData | NoneType, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
 
-            * None: ``None``
+            You may set it to one of the following:
+
+            * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
             * Triangle: ``"^"`` or ``'triangle'``
             * Circle: ``"o"`` or ``'circle'``
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``None`` removes the legend face.  A custom face can be
+            Passing ``"none"`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
 
@@ -4020,7 +4100,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointa,
         pointb,
         flip_range=False,
-        number_labels=5,
+        number_labels=None,
         show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -4060,8 +4140,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int, default: 5
+        number_labels : int, optional
             Number of labels to place on ruler.
+            If not supplied, the number will be adjusted for "nice" values.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -4164,7 +4245,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
+        if number_labels is not None:
+            ruler.AdjustLabelsOff()
+            ruler.SetNumberOfLabels(number_labels)
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

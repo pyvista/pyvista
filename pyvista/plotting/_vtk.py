@@ -8,7 +8,7 @@ the entire library.
 
 """
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 from vtkmodules.vtkChartsCore import vtkAxis
