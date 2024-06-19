@@ -593,8 +593,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetFileName(filename)
         filename_mtl = Path(filename).with_suffix('.mtl')
         if filename_mtl.is_file():
-            importer.SetFileNameMTL(str(filename_mtl))
-            importer.SetTexturePath(str(filename_mtl.parents[0]))
+            importer.SetFileNameMTL(filename_mtl)
+            importer.SetTexturePath(filename_mtl.parents[0])
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
