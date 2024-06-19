@@ -2838,23 +2838,22 @@ class AxesGeometrySource:
 
     def __init__(
         self,
-        x_color=None,
-        y_color=None,
-        z_color=None,
-        rgb_scalars: bool = True,
         shaft_type='cylinder',
         shaft_radius=0.05,
         shaft_length=None,
         tip_type='cone',
         tip_radius=0.2,
         tip_length=None,
-        total_length=(1, 1, 1),
+        total_length=None,
         position=(0, 0, 0),
         direction_vectors=None,
-        scale=(1, 1, 1),
         user_matrix=None,
         symmetric_bounds=True,
-        auto_length=True,
+        normalized_mode=False,
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        rgb_scalars: bool = True,
     ):
         super().__init__()
         # Init datasets
@@ -2876,49 +2875,64 @@ class AxesGeometrySource:
         self._rgb_scalars = rgb_scalars
 
         # Set misc flag params
+        self._normalized_mode = normalized_mode
         self._symmetric_bounds = symmetric_bounds
-        self._auto_length = auto_length
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type
         self.shaft_radius = shaft_radius
         self.tip_type = tip_type
         self.tip_radius = tip_radius
-        self.total_length = total_length
 
         self.position = position
         self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
-        self.scale = scale
         self.user_matrix = np.eye(4) if user_matrix is None else user_matrix
 
         # Check auto-length
-        # Disable flag temporarily and restore later
-        auto_length_set = self.auto_length
-        self.auto_length = False
-
+        normalized_mode_set = normalized_mode
         shaft_length_set = shaft_length is not None
         tip_length_set = tip_length is not None
+        total_length_set = total_length is not None
 
-        self.shaft_length = 0.8 if shaft_length is None else shaft_length
-        self.tip_length = 0.2 if tip_length is None else tip_length
+        self._shaft_length = 0.8 if shaft_length is None else shaft_length
+        self._tip_length = 0.2 if tip_length is None else tip_length
+        self._total_length = 1.0 if total_length is None else total_length
 
-        if auto_length_set:
-            lengths_sum_to_one = all(
-                map(lambda x, y: (x + y) == 1.0, self.shaft_length, self.tip_length),
-            )
+        if normalized_mode_set:
+            # Disable flag temporarily and restore later
+            self.normalized_mode = False
+
+            lengths_sum_to_one = np.array_equal(self._shaft_length + self._tip_length, (1, 1, 1))
             if shaft_length_set and tip_length_set and not lengths_sum_to_one:
                 raise ValueError(
-                    "Cannot set both `shaft_length` and `tip_length` when `auto_length` is `True`.\n"
+                    "Cannot set both `shaft_length` and `tip_length` with `normalized_mode` enabled'.\n"
                     "Set either `shaft_length` or `tip_length`, but not both.",
                 )
-            # Set property again, this time with auto-length enabled
-            self.auto_length = True
+            # Values are valid, set properties with normalized mode enabled
+            self.normalized_mode = True
             if shaft_length_set and not tip_length_set:
                 self.shaft_length = shaft_length
             elif tip_length_set and not shaft_length_set:
                 self.tip_length = tip_length
         else:
-            self.auto_length = False
+            # Enable flag temporarily and restore later
+            self.normalized_mode = True
+
+            lengths_sum_to_total = np.array_equal(
+                self._shaft_length + self._tip_length,
+                self._total_length,
+            )
+            if shaft_length_set and total_length_set and not lengths_sum_to_total:
+                raise ValueError(
+                    "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
+                    "Set either `shaft_length` or `total_length`, but not both.",
+                )
+            # Values are valid, set properties with normalized mode enabled
+            self.normalized_mode = False
+            if shaft_length_set and not total_length_set:
+                self.shaft_length = shaft_length
+            elif total_length_set and not shaft_length_set:
+                self.total_length = total_length
 
     # def __repr__(self):
     #     """Representation of the axes actor."""
@@ -3035,9 +3049,21 @@ class AxesGeometrySource:
     # @visibility.setter
     # def visibility(self, value: bool):  # numpydoc ignore=GL08
     #     self.SetVisibility(value)
+    @property
+    def _total_length(self) -> NumpyArray[float]:
+        return self.__total_length
+
+    @_total_length.setter
+    def _total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self.__total_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name='Total length',
+        )
 
     @property
-    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Total length of each axis (shaft plus tip).
 
         Values must be non-negative.
@@ -3060,15 +3086,37 @@ class AxesGeometrySource:
 
     @total_length.setter
     def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._total_length = _validation.validate_array3(
+        self._total_length = length  # type: ignore[assignment]
+        if not self.normalized_mode:
+            # Total length cannot be less than each tip length
+            if np.any(self._total_length < self._tip_length):
+                raise ValueError(
+                    f"Total length {tuple(self._total_length)} cannot be less than the tip length {tuple(self._tip_length)} when normalized mode is disabled.",
+                )
+            self._shaft_length = self._total_length - self._tip_length
+
+    @property
+    def _shaft_length(self) -> NumpyArray[float]:
+        return self.__shaft_length
+
+    @_shaft_length.setter
+    def _shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        if self.normalized_mode:
+            upper_range = 1.0
+            name_suffix = ' with normalized mode'
+        else:
+            upper_range = np.inf
+            name_suffix = ''
+
+        self.__shaft_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
-            must_be_in_range=[0, np.inf],
-            name='Total length',
+            must_be_in_range=[0.0, upper_range],
+            name=f"Shaft length{name_suffix}",
         )
 
     @property
-    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized length of the shaft for each axis.
 
         Values must be in range ``[0, 1]``.
@@ -3092,30 +3140,40 @@ class AxesGeometrySource:
         (1.0, 0.9, 0.5)
 
         """
-        return self._shaft_length
+        return tuple(self._shaft_length)
 
     @shaft_length.setter
     def shaft_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, (int, float)):
-            _check_range(length, (0, 1), 'shaft_length')
-            length = (length, length, length)
-        _check_range(length[0], (0, 1), 'x-axis shaft_length')
-        _check_range(length[1], (0, 1), 'y-axis shaft_length')
-        _check_range(length[2], (0, 1), 'z-axis shaft_length')
-        self._shaft_length = float(length[0]), float(length[1]), float(length[2])
+        self._shaft_length = length  # type: ignore[assignment]
 
-        if self.auto_length:
+        if self.normalized_mode:
             # Calc 1-length and round to nearest 1e-8
-            def calc(x):
-                return round(1.0 - x, 8)
+            def calc_one_minus(vector):
+                return tuple(round(1.0 - x, 8) for x in vector)
 
-            self._tip_length = calc(length[0]), calc(length[1]), calc(length[2])
+            self._tip_length = calc_one_minus(self._shaft_length)
+        else:
+            self._total_length = self._shaft_length + self._tip_length
 
     @property
-    def _true_shaft_length(self):
-        shaft = self._shaft_length
-        total = self._total_length
-        return shaft[0] * total[0], shaft[1] * total[1], shaft[2] * total[2]
+    def _tip_length(self) -> NumpyArray[float]:
+        return self.__tip_length
+
+    @_tip_length.setter
+    def _tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        if self.normalized_mode:
+            upper_range = 1.0
+            name_suffix = ' with normalized mode'
+        else:
+            upper_range = np.inf
+            name_suffix = ''
+
+        self.__tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, upper_range],
+            name=f"Tip length{name_suffix}",
+        )
 
     @property
     def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -3142,33 +3200,23 @@ class AxesGeometrySource:
         (0.1, 0.4, 0.2)
 
         """
-        return self._tip_length
+        return tuple(self._tip_length)
 
     @tip_length.setter
     def tip_length(self, length: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-        if isinstance(length, (int, float)):
-            _check_range(length, (0, 1), 'tip_length')
-            length = (length, length, length)
-        _check_range(length[0], (0, 1), 'x-axis tip_length')
-        _check_range(length[1], (0, 1), 'y-axis tip_length')
-        _check_range(length[2], (0, 1), 'z-axis tip_length')
-        self._tip_length = float(length[0]), float(length[1]), float(length[2])
+        self._tip_length = length  # type: ignore[assignment]
 
-        if self.auto_length:
-            # Calc 1 minus length and round to nearest 1e-8
-            def calc(x):
-                return round(1.0 - x, 8)
+        if self.normalized_mode:
+            # Calc 1-length and round to nearest 1e-8
+            def calc_one_minus(vector):
+                return tuple(round(1.0 - x, 8) for x in vector)
 
-            self._shaft_length = calc(length[0]), calc(length[1]), calc(length[2])
+            self._shaft_length = calc_one_minus(self._tip_length)
+        else:
+            self._total_length = self._shaft_length + self._tip_length
 
     @property
-    def _true_tip_length(self):
-        tip = self._tip_length
-        total = self._total_length
-        return tip[0] * total[0], tip[1] * total[1], tip[2] * total[2]
-
-    @property
-    def auto_length(self) -> bool:  # numpydoc ignore=RT01
+    def normalized_mode(self) -> bool:  # numpydoc ignore=RT01
         """Automatically set shaft length when setting tip length and vice-versa.
 
         If ``True``:
@@ -3200,11 +3248,11 @@ class AxesGeometrySource:
         (0.9, 0.8, 0.6)
 
         """
-        return self._auto_length
+        return self._normalized_mode
 
-    @auto_length.setter
-    def auto_length(self, value: bool):  # numpydoc ignore=GL08
-        self._auto_length = bool(value)
+    @normalized_mode.setter
+    def normalized_mode(self, value: bool):  # numpydoc ignore=GL08
+        self._normalized_mode = bool(value)
 
     @property
     def tip_radius(self) -> float:  # numpydoc ignore=RT01
@@ -3375,14 +3423,6 @@ class AxesGeometrySource:
         self._position = _validation.validate_array3(xyz)
 
     @property
-    def scale(self) -> tuple[float, float, float]:
-        return tuple(self._scale)
-
-    @scale.setter
-    def scale(self, xyz):
-        self._scale = _validation.validate_array3(xyz, broadcast=True, name='Scale')
-
-    @property
     def direction_vectors(self):
         return self._direction_vectors
 
@@ -3392,9 +3432,10 @@ class AxesGeometrySource:
 
     @property
     def transformation_matrix(self):
-        # Scale proportional to axis length
         scale_matrix = np.eye(4)
-        scale_matrix[:3, :3] = np.diag(self._total_length)
+        if self.normalized_mode:
+            # Scale proportional to axis length
+            scale_matrix[:3, :3] = np.diag(self.total_length)
 
         position_matrix = np.eye(4)
         position_matrix[:3, 3] = self.position
@@ -3432,18 +3473,17 @@ class AxesGeometrySource:
     #     AxesAssembly._set_rgb_array(z_shaft, z_color[0])
     #     AxesAssembly._set_rgb_array(z_tip, z_color[1])
 
-    # TODO: refactor as _reset_geometry and make child class override method
     def _reset_shaft_and_tip_geometry(self):
-        shaft_radius, shaft_length = self.shaft_radius, self._true_shaft_length
+        shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
-            self._true_tip_length,
+            self.tip_length,
         )
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
         SHAFT, TIP = 0, 1
         for part_type in [SHAFT, TIP]:
-            for axis in _AxisEnum.x, _AxisEnum.y, _AxisEnum.z:
+            for axis in _AxisEnum:
                 # Reset geometry
                 part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
 
@@ -3467,7 +3507,10 @@ class AxesGeometrySource:
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
             dataset.transform(self.transformation_matrix, inplace=True)
 
+    # def _validate_shaft_and_tip_lengths(self):
+    #
     def _update_axes_shaft_and_tip_geometry(self):
+        # self._validate_shaft_and_tip_lengths()
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
 
