@@ -123,6 +123,26 @@ class AxesAssembly(_vtk.vtkPropAssembly):
                     raise AttributeError(str(e)) from e
 
     @property
+    def visibility(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable the visibility of the axes.
+
+        Examples
+        --------
+        Create an AxesAssembly and check its visibility
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.visibility
+        True
+
+        """
+        return bool(self.GetVisibility())
+
+    @visibility.setter
+    def visibility(self, value: bool):  # numpydoc ignore=GL08
+        self.SetVisibility(value)
+
+    @property
     def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
         """Axes text labels.
 

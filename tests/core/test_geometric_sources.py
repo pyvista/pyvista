@@ -422,20 +422,11 @@ def test_box_source():
     assert algo.quads
 
 
-def test_axes_geometry_source_total_length(axes_geometry_source):
-    initial_length = (1, 1, 1)
-    assert axes_geometry_source.total_length == initial_length
-    initial_bounds = axes_geometry_source.output.bounds
-    assert np.allclose(
-        initial_bounds,
-        (-0.1, initial_length[0], -0.1, initial_length[1], -0.1, initial_length[2]),
-    )
-
-    new_length = (1.0, 2.0, 3.0)
+def test_axes_geometry_source_total_length_set_get(axes_geometry_source):
+    assert axes_geometry_source.total_length == (1, 1, 1)
+    new_length = (1.1, 2.2, 3.3)
     axes_geometry_source.total_length = new_length
     assert axes_geometry_source.total_length == new_length
-    new_bounds = axes_geometry_source.output.bounds
-    assert np.allclose(new_bounds, (-0.1, new_length[0], -0.1, new_length[1], -0.1, new_length[2]))
 
 
 def test_axes_geometry_source_total_length_init():
@@ -443,18 +434,98 @@ def test_axes_geometry_source_total_length_init():
     assert axes_geometry_source.total_length == (2, 2, 2)
 
 
-def test_axes_geometry_source_shaft_length(axes_geometry_source):
+def test_axes_geometry_source_total_length_bounds(axes_geometry_source):
+    x_len, y_len, z_len = 1.5, 2.5, 3.5
+    axes_geometry_source.total_length = x_len, y_len, z_len
+    actual_bounds = axes_geometry_source.output.bounds
+
+    tip_radius = 0.1  # default value
+    expected_bounds = (-tip_radius, x_len, -tip_radius, y_len, -tip_radius, z_len)
+    assert np.allclose(actual_bounds, expected_bounds)
+
+
+def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
-    axes_geometry_source.shaft_length = (0.1, 0.2, 0.3)
-    assert axes_geometry_source.shaft_length == (0.1, 0.2, 0.3)
+    new_length = (0.1, 0.2, 0.3)
+    axes_geometry_source.shaft_length = new_length
+    assert axes_geometry_source.shaft_length == new_length
 
 
-def test_axes_geometry_source_shaft_length_init(axes_geometry_source):
+def test_axes_geometry_source_shaft_length_init():
     axes_geometry_source = pv.AxesGeometrySource(shaft_length=0.9)
     assert axes_geometry_source.shaft_length == (0.9, 0.9, 0.9)
 
 
-def test_axes_geometry_source_tip_length(axes_geometry_source):
+@pytest.mark.parametrize('part', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
+def test_axes_geometry_source_bounds(axes_geometry_source, part):
+    x_shaft_len, y_shaft_len, z_shaft_len = 0.5, 0.6, 0.7
+    shaft_radius = 0.05
+    axes_geometry_source.shaft_length = x_shaft_len, y_shaft_len, z_shaft_len
+    axes_geometry_source.shaft_radius = shaft_radius
+
+    x_tip_len, y_tip_len, z_tip_len = 0.2, 0.3, 0.4
+    tip_radius = 0.2
+    axes_geometry_source.tip_length = x_tip_len, y_tip_len, z_tip_len
+    axes_geometry_source.tip_radius = tip_radius
+
+    x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip = axes_geometry_source.output
+
+    if part == 'x_shaft':
+        actual_bounds = x_shaft.bounds
+        expected_bounds = (0, x_shaft_len, -shaft_radius, shaft_radius, -shaft_radius, shaft_radius)
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'y_shaft':
+        actual_bounds = y_shaft.bounds
+        expected_bounds = (-shaft_radius, shaft_radius, 0, y_shaft_len, -shaft_radius, shaft_radius)
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'z_shaft':
+        actual_bounds = z_shaft.bounds
+        expected_bounds = (-shaft_radius, shaft_radius, -shaft_radius, shaft_radius, 0, z_shaft_len)
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'x_tip':
+        actual_bounds = x_tip.bounds
+        expected_bounds = (
+            x_shaft_len,
+            x_shaft_len + x_tip_len,
+            -tip_radius,
+            tip_radius,
+            -tip_radius,
+            tip_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'y_tip':
+        actual_bounds = y_tip.bounds
+        expected_bounds = (
+            -tip_radius,
+            tip_radius,
+            y_shaft_len,
+            y_shaft_len + y_tip_len,
+            -tip_radius,
+            tip_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'z_tip':
+        actual_bounds = z_tip.bounds
+        expected_bounds = (
+            -tip_radius,
+            tip_radius,
+            -tip_radius,
+            tip_radius,
+            z_shaft_len,
+            z_shaft_len + z_tip_len,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    else:
+        raise NotImplementedError
+
+
+def test_axes_geometry_source_tip_length_set_get(axes_geometry_source):
     assert axes_geometry_source.tip_length == (0.2, 0.2, 0.2)
     axes_geometry_source.tip_length = (0.1, 0.2, 0.3)
     assert axes_geometry_source.tip_length == (0.1, 0.2, 0.3)
@@ -465,8 +536,8 @@ def test_axes_geometry_source_tip_length_init():
     assert axes_geometry_source.tip_length == (0.9, 0.9, 0.9)
 
 
-def test_axes_geometry_source_tip_radius(axes_geometry_source):
-    assert axes_geometry_source.tip_radius == 0.2
+def test_axes_geometry_source_tip_radius_set_get(axes_geometry_source):
+    assert axes_geometry_source.tip_radius == 0.1
     axes_geometry_source.tip_radius = 0.8
     assert axes_geometry_source.tip_radius == 0.8
 
@@ -480,7 +551,7 @@ def test_axes_geometry_source_tip_radius_init():
     'shaft_type',
     pv.AxesGeometrySource.GEOMETRY_OPTIONS,
 )
-def test_axes_geometry_source_shaft_type(shaft_type, axes_geometry_source):
+def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_source):
     axes_geometry_source.shaft_type = shaft_type
     assert axes_geometry_source.shaft_type == shaft_type
 
@@ -498,7 +569,7 @@ def test_axes_geometry_source_shaft_type_init(shaft_type):
     'tip_type',
     pv.AxesGeometrySource.GEOMETRY_OPTIONS,
 )
-def test_axes_geometry_source_tip_type(tip_type, axes_geometry_source):
+def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
     axes_geometry_source.tip_type = tip_type
     assert axes_geometry_source.tip_type == tip_type
 
@@ -512,21 +583,7 @@ def test_axes_geometry_source_tip_type_init(tip_type):
     assert axes_geometry_source.tip_type == tip_type
 
 
-def test_axes_geometry_source_axis_color_init():
-    axes_geometry_source = pv.AxesGeometrySource(
-        x_color='yellow',
-        y_color='orange',
-        z_color='purple',
-    )
-    assert axes_geometry_source.x_color[0].name == 'yellow'
-    assert axes_geometry_source.x_color[1].name == 'yellow'
-    assert axes_geometry_source.y_color[0].name == 'orange'
-    assert axes_geometry_source.y_color[1].name == 'orange'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-
-
-def test_axes_geometry_source_axis_color(axes_geometry_source):
+def test_axes_geometry_source_axis_color_set_get(axes_geometry_source):
     assert axes_geometry_source.x_color[0].name == 'tomato'
     assert axes_geometry_source.x_color[1].name == 'tomato'
     assert axes_geometry_source.y_color[0].name == 'seagreen'
@@ -558,15 +615,29 @@ def test_axes_geometry_source_axis_color(axes_geometry_source):
     assert np.array_equal(axes_geometry_source.z_color[1].int_rgb, [1, 2, 3])
 
 
+def test_axes_geometry_source_axis_color_init():
+    axes_geometry_source = pv.AxesGeometrySource(
+        x_color='yellow',
+        y_color='orange',
+        z_color='purple',
+    )
+    assert axes_geometry_source.x_color[0].name == 'yellow'
+    assert axes_geometry_source.x_color[1].name == 'yellow'
+    assert axes_geometry_source.y_color[0].name == 'orange'
+    assert axes_geometry_source.y_color[1].name == 'orange'
+    assert axes_geometry_source.z_color[0].name == 'purple'
+    assert axes_geometry_source.z_color[1].name == 'purple'
+
+
+def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
+    assert axes_geometry_source.shaft_radius == 0.025
+    axes_geometry_source.shaft_radius = 0.1
+    assert axes_geometry_source.shaft_radius == 0.1
+
+
 def test_axes_geometry_source_shaft_radius_init():
     axes_geometry_source = pv.AxesGeometrySource(shaft_radius=3)
     assert axes_geometry_source.shaft_radius == 3
-
-
-def test_axes_geometry_source_shaft_radius(axes_geometry_source):
-    assert axes_geometry_source.shaft_radius == 0.05
-    axes_geometry_source.shaft_radius = 0.1
-    assert axes_geometry_source.shaft_radius == 0.1
 
 
 @pytest.mark.parametrize(
@@ -664,4 +735,5 @@ def test_axes_geometry_source_normalized_mode_raises():
 def test_axes_geometry_source_output():
     out = pv.AxesGeometrySource().output
     assert isinstance(out, pv.MultiBlock)
+    assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
     assert all('axes_rgb' in block.array_names for block in out)

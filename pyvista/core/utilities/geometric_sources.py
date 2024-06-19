@@ -2839,10 +2839,10 @@ class AxesGeometrySource:
     def __init__(
         self,
         shaft_type='cylinder',
-        shaft_radius=0.05,
+        shaft_radius=0.025,
         shaft_length=None,
         tip_type='cone',
-        tip_radius=0.2,
+        tip_radius=0.1,
         tip_length=None,
         total_length=None,
         position=(0, 0, 0),
@@ -3030,25 +3030,6 @@ class AxesGeometrySource:
     def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
         self._symmetric_bounds = bool(value)
 
-    # @property
-    # def visibility(self) -> bool:  # numpydoc ignore=RT01
-    #     """Enable or disable the visibility of the axes.
-    #
-    #     Examples
-    #     --------
-    #     Create an AxesAssembly and check its visibility
-    #
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.visibility
-    #     True
-    #
-    #     """
-    #     return bool(self.GetVisibility())
-    #
-    # @visibility.setter
-    # def visibility(self, value: bool):  # numpydoc ignore=GL08
-    #     self.SetVisibility(value)
     @property
     def _total_length(self) -> NumpyArray[float]:
         return self.__total_length
@@ -3446,11 +3427,6 @@ class AxesGeometrySource:
         # Scale first, then rotate, then move
         return position_matrix @ rotation_matrix @ scale_matrix
 
-    def plot(self):
-        pl = pv.Plotter()
-        pl.add_mesh(self)
-        pl.show()
-
     def _set_geometry(self, part: int, geometry: Union[str, pv.DataSet]):
         # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
@@ -3460,18 +3436,6 @@ class AxesGeometrySource:
         datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
         datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
         return geometry_name
-
-    # def _apply_axes_colors(self):
-    #     x_shaft, y_shaft, z_shaft = self._datasets['shafts']
-    #     x_tip, y_tip, z_tip = self._datasets['tips']
-    #     x_color, y_color, z_color = self.x_color, self.y_color, self.z_color
-    #
-    #     AxesAssembly._set_rgb_array(x_shaft, x_color[0])
-    #     AxesAssembly._set_rgb_array(x_tip, x_color[1])
-    #     AxesAssembly._set_rgb_array(y_shaft, y_color[0])
-    #     AxesAssembly._set_rgb_array(y_tip, y_color[1])
-    #     AxesAssembly._set_rgb_array(z_shaft, z_color[0])
-    #     AxesAssembly._set_rgb_array(z_tip, z_color[1])
 
     def _reset_shaft_and_tip_geometry(self):
         shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
@@ -3491,15 +3455,15 @@ class AxesGeometrySource:
                 part.points[:, axis] += 0.5
 
                 # Scale by length along axis, scale by radius off-axis
-                if part_type == SHAFT:
-                    scale = [shaft_radius] * 3
-                    scale[axis] = shaft_length[axis]
-                    part.scale(scale, inplace=True)
-                else:  # tip
-                    scale = [tip_radius] * 3
-                    scale[axis] = tip_length[axis]
-                    part.scale(scale, inplace=True)
+                radius, length = (
+                    (shaft_radius, shaft_length) if part_type == SHAFT else (tip_radius, tip_length)
+                )
+                diameter = radius * 2
+                scale = [diameter] * 3
+                scale[axis] = length[axis]
+                part.scale(scale, inplace=True)
 
+                if part_type == TIP:
                     # Move tip to end of shaft
                     part.points[:, axis] += shaft_length[axis]
 
@@ -3507,10 +3471,7 @@ class AxesGeometrySource:
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
             dataset.transform(self.transformation_matrix, inplace=True)
 
-    # def _validate_shaft_and_tip_lengths(self):
-    #
     def _update_axes_shaft_and_tip_geometry(self):
-        # self._validate_shaft_and_tip_lengths()
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
 
@@ -3526,10 +3487,9 @@ class AxesGeometrySource:
     @property
     def output(self):
         self.update()
-        # TODO: Return MultiBlock of meshes without merging once RGB MultiBlock
-        #  plotting is fixed (pyvista #6012)
-        # pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
-        return pv.MultiBlock((*self._shaft_datasets, *self._tip_datasets))
+        keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        values = (*self._shaft_datasets, *self._tip_datasets)
+        return pv.MultiBlock(dict(zip(keys, values)))
 
     @staticmethod
     def _make_default_part(geometry: str) -> pv.PolyData:
