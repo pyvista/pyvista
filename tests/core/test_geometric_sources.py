@@ -757,7 +757,14 @@ def test_axes_geometry_source_output():
     out = pv.AxesGeometrySource().output
     assert isinstance(out, pv.MultiBlock)
     assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+
+
+def test_axes_geometry_source_rgb_scalars():
+    out = pv.AxesGeometrySource(rgb_scalars=True).output
     assert all('axes_rgb' in block.array_names for block in out)
+
+    out = pv.AxesGeometrySource(rgb_scalars=False).output
+    assert all('axes_rgb' not in block.array_names for block in out)
 
 
 def test_axes_geometry_source_repr(axes_geometry_source):
