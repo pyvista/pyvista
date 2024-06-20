@@ -3424,14 +3424,8 @@ class AxesGeometrySource:
             _clear_rgb_scalars(self._shaft_datasets[axis])
             _clear_rgb_scalars(self._tip_datasets[axis])
 
-    def _make_symmetric(self):
-        if self.symmetric:
-            for dataset in [*self._shaft_datasets, *self._tip_datasets]:
-                dataset.transform(self.transformation_matrix, inplace=True)
-
     def update(self):
         self._reset_shaft_and_tip_geometry()
-        self._make_symmetric()
         self._transform_shafts_and_tips()
 
         self._update_axis_rgb_scalars(_AxisEnum.x)
