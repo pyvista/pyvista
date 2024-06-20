@@ -2916,6 +2916,7 @@ class AxesGeometrySource:
     GeometryTypes = Literal[
         'cylinder',
         'sphere',
+        'hemisphere',
         'cone',
         'pyramid',
         'cube',
@@ -3406,7 +3407,7 @@ class AxesGeometrySource:
 
         >>> import pyvista as pv
         >>> pv.AxesGeometrySource.GEOMETRY_TYPES
-        ('cylinder', 'sphere', 'cone', 'pyramid', 'cube', 'octahedron')
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
 
         Show the default shaft type and modify it.
 
@@ -3445,7 +3446,7 @@ class AxesGeometrySource:
 
         >>> import pyvista as pv
         >>> pv.AxesGeometrySource.GEOMETRY_TYPES
-        ('cylinder', 'sphere', 'cone', 'pyramid', 'cube', 'octahedron')
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
 
         Show the default tip type and modify it.
 
@@ -3737,6 +3738,8 @@ class AxesGeometrySource:
             return pv.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
             return pv.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+        elif geometry == 'hemisphere':
+            return pv.SolidSphere(end_phi=90).extract_geometry()
         elif geometry == 'cone':
             return pv.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
