@@ -28,6 +28,7 @@ from .helpers import wrap
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
+    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -2836,21 +2837,21 @@ class AxesGeometrySource:
 
     def __init__(
         self,
-        shaft_type='cylinder',
-        shaft_radius=0.025,
-        shaft_length=None,
-        tip_type='cone',
-        tip_radius=0.1,
-        tip_length=None,
-        total_length=None,
-        position=(0, 0, 0),
-        direction_vectors=None,
-        symmetric=False,
-        normalized_mode=False,
+        shaft_type: str = 'cylinder',
+        shaft_radius: float = 0.025,
+        shaft_length: float | None = None,
+        tip_type: str = 'cone',
+        tip_radius: float = 0.1,
+        tip_length: float | VectorLike[float] | None = None,
+        total_length: float | VectorLike[float] | None = None,
+        position: VectorLike[float] = (0, 0, 0),
+        direction_vectors: ArrayLike[float] | None = None,
+        symmetric: bool = False,
+        normalized_mode: bool = False,
         rgb_scalars: bool = True,
-        x_color=None,
-        y_color=None,
-        z_color=None,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
     ):
         super().__init__()
         # Init datasets
@@ -2866,9 +2867,9 @@ class AxesGeometrySource:
             z_color = pv.global_theme.axes.z_color
         self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
         self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
-        self.x_color = x_color
-        self.y_color = y_color
-        self.z_color = z_color
+        self.x_color = x_color  # type:ignore[assignment]
+        self.y_color = y_color  # type:ignore[assignment]
+        self.z_color = z_color  # type:ignore[assignment]
         self._rgb_scalars = rgb_scalars
 
         # Set misc flag params
@@ -2881,7 +2882,7 @@ class AxesGeometrySource:
         self.tip_type = tip_type
         self.tip_radius = tip_radius
 
-        self.position = position
+        self.position = position  # type: ignore[assignment]
         self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
 
         # Check auto-length
@@ -2890,9 +2891,9 @@ class AxesGeometrySource:
         tip_length_set = tip_length is not None
         total_length_set = total_length is not None
 
-        self._shaft_length = 0.8 if shaft_length is None else shaft_length
-        self._tip_length = 0.2 if tip_length is None else tip_length
-        self._total_length = 1.0 if total_length is None else total_length
+        self._shaft_length = 0.8 if shaft_length is None else shaft_length  # type: ignore[assignment]
+        self._tip_length = 0.2 if tip_length is None else tip_length  # type: ignore[assignment]
+        self._total_length = 1.0 if total_length is None else total_length  # type: ignore[assignment]
 
         if normalized_mode_set:
             # Disable flag temporarily and restore later
@@ -2907,9 +2908,9 @@ class AxesGeometrySource:
             # Values are valid, set properties with normalized mode enabled
             self.normalized_mode = True
             if shaft_length_set and not tip_length_set:
-                self.shaft_length = shaft_length
+                self.shaft_length = shaft_length  # type: ignore[assignment]
             elif tip_length_set and not shaft_length_set:
-                self.tip_length = tip_length
+                self.tip_length = tip_length  # type: ignore[assignment]
         else:
             # Enable flag temporarily and restore later
             self.normalized_mode = True
@@ -2926,9 +2927,9 @@ class AxesGeometrySource:
             # Values are valid, set properties with normalized mode enabled
             self.normalized_mode = False
             if shaft_length_set and not total_length_set:
-                self.shaft_length = shaft_length
+                self.shaft_length = shaft_length  # type: ignore[assignment]
             elif total_length_set and not shaft_length_set:
-                self.total_length = total_length
+                self.total_length = total_length  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes actor."""
@@ -3324,7 +3325,7 @@ class AxesGeometrySource:
         return tuple(self._position)
 
     @position.setter
-    def position(self, xyz):
+    def position(self, xyz: VectorLike[float]):
         self._position = _validation.validate_array3(xyz, dtype_out=float)
 
     @property
