@@ -784,6 +784,12 @@ def test_axes_geometry_source_rgb_scalars():
     assert all('axes_rgb' not in block.array_names for block in out)
 
 
+def test_axes_geometry_source_rgb_scalars_set_get(axes_geometry_source):
+    assert axes_geometry_source.rgb_scalars is True
+    axes_geometry_source.rgb_scalars = False
+    assert axes_geometry_source.rgb_scalars is False
+
+
 def test_axes_geometry_source_repr(axes_geometry_source):
     repr_ = repr(axes_geometry_source)
     actual_lines = repr_.splitlines()[1:]
