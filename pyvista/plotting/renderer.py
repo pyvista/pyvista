@@ -1062,6 +1062,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         #         raise ValueError('Labels sequence must have exactly 3 items.')
         #     x_label, y_label, z_label = labels
         # symmetric_bounds = kwargs.pop('symmetric_bounds', False)
+
+        # TODO: Add support for themed tip and shaft type
+        # if tip_type is None:
+        #     tip_type = pv.global_theme.axes.tip_type
+
         axes_assembly = pyvista.AxesAssembly(
             x_label=x_label,
             y_label=y_label,

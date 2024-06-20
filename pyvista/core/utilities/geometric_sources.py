@@ -9,7 +9,6 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Literal
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -2820,6 +2819,11 @@ class _AxisEnum(IntEnum):
     z = 2
 
 
+class _PartEnum(IntEnum):
+    shaft = 0
+    tip = 1
+
+
 class AxesGeometrySource:
     """Abstract base class for axes-like scene props.
 
@@ -3251,7 +3255,7 @@ class AxesGeometrySource:
 
     @shaft_type.setter
     def shaft_type(self, shaft_type: str):
-        self._shaft_type = self._set_geometry(part=0, geometry=shaft_type)
+        self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
     def tip_type(self) -> str:  # numpydoc ignore=RT01
@@ -3272,9 +3276,7 @@ class AxesGeometrySource:
 
     @tip_type.setter
     def tip_type(self, tip_type: str | pv.DataSet):
-        if tip_type is None:
-            tip_type = pv.global_theme.axes.tip_type
-        self._tip_type = self._set_geometry(part=1, geometry=tip_type)
+        self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
     @property
     def rgb_scalars(self) -> bool:
@@ -3352,10 +3354,9 @@ class AxesGeometrySource:
         # Scale first, then rotate, then move
         return position_matrix @ rotation_matrix @ scale_matrix
 
-    def _set_geometry(self, part: Literal[0, 1], geometry: str | pv.DataSet):
-        # resolution = self._shaft_resolution if part == 0 else self._tip_resolution
+    def _set_geometry(self, part: _PartEnum, geometry: str | pv.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
-        datasets = self._shaft_datasets if part == 0 else self._tip_datasets
+        datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
         datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
         datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
         datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
@@ -3369,8 +3370,7 @@ class AxesGeometrySource:
         )
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
-        SHAFT, TIP = 0, 1
-        for part_type in [SHAFT, TIP]:
+        for part_type in _PartEnum:
             for axis in _AxisEnum:
                 # Reset geometry
                 part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
@@ -3380,14 +3380,16 @@ class AxesGeometrySource:
 
                 # Scale by length along axis, scale by radius off-axis
                 radius, length = (
-                    (shaft_radius, shaft_length) if part_type == SHAFT else (tip_radius, tip_length)
+                    (shaft_radius, shaft_length)
+                    if part_type == _PartEnum.shaft
+                    else (tip_radius, tip_length)
                 )
                 diameter = radius * 2
                 scale = [diameter] * 3
                 scale[axis] = length[axis]
                 part.scale(scale, inplace=True)
 
-                if part_type == TIP:
+                if part_type == _PartEnum.tip:
                     # Move tip to end of shaft
                     part.points[:, axis] += shaft_length[axis]
 
