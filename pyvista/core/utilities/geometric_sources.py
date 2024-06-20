@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
@@ -17,12 +19,11 @@ import pyvista
 import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
-
-from .arrays import _coerce_pointslike_arg
-from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
@@ -2835,9 +2836,84 @@ class AxesGeometrySource:
     This class is designed to be a superclass for vtkAxesActor
     but is abstracted to interface with similar axes-like
     representations.
+
+    Parameters
+    ----------
+    shaft_type : str, default: 'cylinder',
+        Shaft type for all axes.
+
+        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+    shaft_radius : float, default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str, default: 'cone'
+        Tip type for all axes.
+
+    tip_radius : float, default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    total_length : float | VectorLike[float], default 1.0,
+        Total length of each axis (shaft plus tip).
+
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    direction_vectors : ArrayLike[float]
+        Direction vectors of the axes. By default, this is a 3x3 identity matrix.
+        The vectors are used as a 3x3 rotation matrix to orient the axes in space.
+
+    symmetric : bool, default: False
+        Mirror the axes such that they extend to negative values.
+
+    normalized_mode : bool, default: False,
+        Normalize the shaft and tip lengths relative to the total length.
+
+        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
+        normalized lengths the range ``[0, 1]``, and are scaled proportional to
+        the :attr:`total_length`.
+
+        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
+        normalized and will be true to scale, i.e. the actual lengths of the shafts and
+        tips will match their specified value(s).
+
+    rgb_scalars : bool, default: True,
+        Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
+        cell data of the axes datasets. The arrays have rgb values specified by
+        :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
+
+        Set this property to ``False`` to not add scalar arrays to the output and
+        remove coloring from the dataset.
+
+    x_color : ColorLike | Sequence[ColorLike]
+        Color of the x-axis shaft and tip.
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
+
+    y_color : ColorLike | Sequence[ColorLike]
+        Color of the y-axis shaft and tip.
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
+
+    z_color : ColorLike | Sequence[ColorLike]
+        Color of the z-axis shaft and tip.
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
-    GEOMETRY_OPTIONS: ClassVar[list[str]] = [
+    GeometryTypes = Literal[
         'cylinder',
         'sphere',
         'cone',
@@ -2845,17 +2921,18 @@ class AxesGeometrySource:
         'cube',
         'octahedron',
     ]
+    GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
 
     def __init__(
         self,
-        shaft_type: str = 'cylinder',
+        shaft_type: GeometryTypes = 'cylinder',
         shaft_radius: float = 0.025,
-        shaft_length: float | None = None,
-        tip_type: str = 'cone',
+        shaft_length: float | VectorLike[float] | None = None,
+        tip_type: GeometryTypes = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] | None = None,
         total_length: float | VectorLike[float] | None = None,
-        position: VectorLike[float] = (0, 0, 0),
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
         direction_vectors: ArrayLike[float] | None = None,
         symmetric: bool = False,
         normalized_mode: bool = False,
@@ -2978,11 +3055,19 @@ class AxesGeometrySource:
         return '\n'.join(attr)
 
     @property
-    def symmetric(self) -> bool:
+    def symmetric(self) -> bool:  # numpydoc ignore=RT01
+        """Mirror the axes such that they extend to negative values.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+        >>> axes_geometry_source.output.plot()
+        """
         return self._symmetric
 
     @symmetric.setter
-    def symmetric(self, val: bool):
+    def symmetric(self, val: bool):  # numpydoc ignore=GL08
         self._symmetric = val
 
     @property
@@ -2990,7 +3075,7 @@ class AxesGeometrySource:
         return self.__total_length
 
     @_total_length.setter
-    def _total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+    def _total_length(self, length: float | VectorLike[float]):
         self.__total_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
@@ -3002,19 +3087,24 @@ class AxesGeometrySource:
     def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Total length of each axis (shaft plus tip).
 
+        When :attr:`normalized_mode` is ``False``, setting this value will also modify
+        :attr:`shaft_length` such that:
+
+            :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
+
         Values must be non-negative.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.total_length
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.total_length
         (1.0, 1.0, 1.0)
-        >>> axes_actor.total_length = 1.2
-        >>> axes_actor.total_length
+        >>> axes_geometry_source.total_length = 1.2
+        >>> axes_geometry_source.total_length
         (1.2, 1.2, 1.2)
-        >>> axes_actor.total_length = (1.0, 0.9, 0.5)
-        >>> axes_actor.total_length
+        >>> axes_geometry_source.total_length = (1.0, 0.9, 0.5)
+        >>> axes_geometry_source.total_length
         (1.0, 0.9, 0.5)
 
         """
@@ -3036,7 +3126,7 @@ class AxesGeometrySource:
         return self.__shaft_length
 
     @_shaft_length.setter
-    def _shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+    def _shaft_length(self, length: float | VectorLike[float]):
         if self.normalized_mode:
             upper_range = 1.0
             name_suffix = ' with normalized mode'
@@ -3053,26 +3143,39 @@ class AxesGeometrySource:
 
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Normalized length of the shaft for each axis.
+        """Length of the shaft for each axis.
 
-        Values must be in range ``[0, 1]``.
+        When :attr:`normalized_mode` is ``False``:
 
-        Notes
-        -----
-        Setting this property will automatically change the :attr:`tip_length` to
-        ``1 - shaft_length`` if :attr:`auto_shaft_type` is ``True``.
+            - The shaft length(s) of the axes will be true to scale, i.e. the actual
+              lengths of the shafts will match the specified value(s).
+            - Setting this value will also modify :attr:`shaft_length` such that:
+
+                :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
+
+            - Values must be non-negative.
+
+        When :attr:`normalized_mode` is ``True``:
+
+            - The shaft length(s) of the axes are scaled proportional to the
+              :attr:`total_length`.
+            - Setting this value will also modify :attr:`shaft_length` such that:
+
+                :attr:`shaft_length` + :attr:`tip_length` = 1.0
+
+            - Values must be in range ``[0, 1]``.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.shaft_length
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_length
         (0.8, 0.8, 0.8)
-        >>> axes_actor.shaft_length = 0.7
-        >>> axes_actor.shaft_length
+        >>> axes_geometry_source.shaft_length = 0.7
+        >>> axes_geometry_source.shaft_length
         (0.7, 0.7, 0.7)
-        >>> axes_actor.shaft_length = (1.0, 0.9, 0.5)
-        >>> axes_actor.shaft_length
+        >>> axes_geometry_source.shaft_length = (1.0, 0.9, 0.5)
+        >>> axes_geometry_source.shaft_length
         (1.0, 0.9, 0.5)
 
         """
@@ -3113,26 +3216,35 @@ class AxesGeometrySource:
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Normalized length of the tip for each axis.
+        """Length of the tip for each axis.
 
-        Values must be in range ``[0, 1]``.
+        When :attr:`normalized_mode` is ``False``:
 
-        Notes
-        -----
-        Setting this property will automatically change the :attr:`shaft_length` to
-        ``1 - tip_length`` if :attr:`auto_shaft_type` is ``True``.
+            - The tip length(s) of the axes will be true to scale, i.e. the actual
+              lengths of the tips will match the specified value(s).
+            - Values must be non-negative.
+
+        When :attr:`normalized_mode` is ``True``:
+
+            - The tip length(s) of the axes are scaled proportional to the
+              :attr:`total_length`.
+            - Setting this value will also modify :attr:`shaft_length` such that:
+
+                :attr:`shaft_length` + :attr:`tip_length` = 1.0
+
+            - Values must be in range ``[0, 1]``.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.tip_length
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_length
         (0.2, 0.2, 0.2)
-        >>> axes_actor.tip_length = 0.3
-        >>> axes_actor.tip_length
+        >>> axes_geometry_source.tip_length = 0.3
+        >>> axes_geometry_source.tip_length
         (0.3, 0.3, 0.3)
-        >>> axes_actor.tip_length = (0.1, 0.4, 0.2)
-        >>> axes_actor.tip_length
+        >>> axes_geometry_source.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_geometry_source.tip_length
         (0.1, 0.4, 0.2)
 
         """
@@ -3153,35 +3265,76 @@ class AxesGeometrySource:
 
     @property
     def normalized_mode(self) -> bool:  # numpydoc ignore=RT01
-        """Automatically set shaft length when setting tip length and vice-versa.
+        """Normalize the shaft and tip lengths relative to the total length.
 
-        If ``True``:
+        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
+        normalized lengths the range ``[0, 1]``, and are scaled proportional to
+        the :attr:`total_length`.
 
-        - Setting :attr:`shaft_length` will also set :attr:`tip_length`
-          to ``1 - shaft_length``.
-        - Setting :attr:`tip_length` will also set :attr:`shaft_length`
-          to ``1 - tip_length``.
+        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
+        normalized and will be true to scale, i.e. the actual lengths of the shafts and
+        tips will match their specified value(s).
 
         Examples
         --------
-        Create an axes actor with a specific shaft length.
+        Create an axes geometry source with a specific shaft length. The tip lengths are
+        automatically adjusted so that the lengths for each axis sum to 1.0.
 
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly(
-        ...     shaft_length=0.7, auto_length=True
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     shaft_length=0.7, normalized_mode=True
         ... )
-        >>> axes_actor.shaft_length
+        >>> axes_geometry_source.shaft_length
         (0.7, 0.7, 0.7)
-        >>> axes_actor.tip_length
+        >>> axes_geometry_source.tip_length
         (0.3, 0.3, 0.3)
 
-        The tip lengths are adjusted dynamically.
+        Similarly, the shaft lengths are updated when setting the tip lengths.
 
-        >>> axes_actor.tip_length = (0.1, 0.2, 0.4)
-        >>> axes_actor.tip_length
+        >>> axes_geometry_source.tip_length = (0.1, 0.2, 0.4)
+        >>> axes_geometry_source.tip_length
         (0.1, 0.2, 0.4)
-        >>> axes_actor.shaft_length
+        >>> axes_geometry_source.shaft_length
         (0.9, 0.8, 0.6)
+
+        The total length can be adjusted independently without impacting the shaft
+        or tip lengths.
+
+        >>> axes_geometry_source.total_length = (1.2, 1.4, 1.6)
+        >>> axes_geometry_source.total_length
+        (1.2, 1.4, 1.6)
+        >>> axes_geometry_source.tip_length
+        (0.1, 0.2, 0.4)
+        >>> axes_geometry_source.shaft_length
+        (0.9, 0.8, 0.6)
+
+        When ``normalized_mode`` is disabled, the shaft and tip lengths represent actual
+        lengths.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     shaft_length=2.0, tip_length=0.5, normalized_mode=False
+        ... )
+        >>> axes_geometry_source.shaft_length
+        (2.0, 2.0, 2.0)
+        >>> axes_geometry_source.tip_length
+        (0.5, 0.5, 0.5)
+
+        The total length is automatically updated as the sum of the shaft and
+        tip lengths.
+
+        >>> axes_geometry_source.total_length
+        (2.5, 2.5, 2.5)
+
+        If the total length is modified, the shaft length is also updated by
+        subtracting the tip length from the total length.
+
+        >>> axes_geometry_source.total_length = 1.5
+        >>> axes_geometry_source.total_length
+        (1.5, 1.5, 1.5)
+        >>> axes_geometry_source.shaft_length
+        (1.0, 1.0, 1.0)
+        >>> axes_geometry_source.tip_length
+        (0.5, 0.5, 0.5)
 
         """
         return self._normalized_mode
@@ -3199,98 +3352,141 @@ class AxesGeometrySource:
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.tip_radius
-        0.4
-        >>> axes_actor.tip_radius = 0.8
-        >>> axes_actor.tip_radius
-        0.8
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_radius
+        0.1
+        >>> axes_geometry_source.tip_radius = 0.2
+        >>> axes_geometry_source.tip_radius
+        0.2
 
         """
         return self._tip_radius
 
     @tip_radius.setter
     def tip_radius(self, radius: float):  # numpydoc ignore=GL08
-        _check_range(radius, (0, float('inf')), 'tip_radius')
+        _validation.check_range(radius, (0, float('inf')), name='tip radius')
         self._tip_radius = radius
 
     @property
     def shaft_radius(self):  # numpydoc ignore=RT01
-        """Cylinder radius of the axes shafts.
+        """Radius of the axes shafts.
 
         Value must be non-negative.
-
-        Notes
-        -----
-        Setting this property will automatically change the ``shaft_type`` to
-        ``'cylinder'`` if :attr:`auto_shaft_type` is ``True``.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.shaft_radius
-        0.01
-        >>> axes_actor.shaft_radius = 0.03
-        >>> axes_actor.shaft_radius
-        0.03
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_radius
+        0.025
+        >>> axes_geometry_source.shaft_radius = 0.05
+        >>> axes_geometry_source.shaft_radius
+        0.05
 
         """
         return self._shaft_radius
 
     @shaft_radius.setter
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
-        _check_range(radius, (0, float('inf')), 'shaft_radius')
+        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
         self._shaft_radius = radius
 
     @property
     def shaft_type(self) -> str:  # numpydoc ignore=RT01
-        """Tip type for all axes.
+        """Shaft type for all axes.
 
-        Can be a cylinder (``0`` or ``'cylinder'``) or a line (``1`` or ``'line'``).
+        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
 
         Examples
         --------
+        Show a list of all shaft type options.
+
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.shaft_type = "line"
-        >>> axes_actor.shaft_type
-        'line'
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default shaft type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_type
+        'cylinder'
+        >>> axes_geometry_source.shaft_type = 'cube'
+        >>> axes_geometry_source.shaft_type
+        'cube'
+
+        Set the shaft type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.shaft_type = pv.Superquadric()
+        >>> axes_geometry_source.shaft_type
+        'custom'
 
         """
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: str | pv.DataSet):
+    def shaft_type(self, shaft_type: GeometryTypes | pv.DataSet):  # numpydoc ignore=GL08
         self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
     def tip_type(self) -> str:  # numpydoc ignore=RT01
         """Tip type for all axes.
 
-        Can be a cone (``0`` or ``'cone'``) or a sphere (``1`` or ``'sphere'``).
+        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
 
         Examples
         --------
+        Show a list of all shaft type options.
+
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.tip_type = 'sphere'
-        >>> axes_actor.tip_type
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default tip type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_type
+        'cone'
+        >>> axes_geometry_source.tip_type = 'sphere'
+        >>> axes_geometry_source.tip_type
         'sphere'
+
+        Set the tip type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.tip_type = pv.Text3D('O')
+        >>> axes_geometry_source.tip_type
+        'custom'
+
+        >>> axes_geometry_source.output.plot(cpos='xy')
 
         """
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self, tip_type: str | pv.DataSet):
+    def tip_type(self, tip_type: str | pv.DataSet):  # numpydoc ignore=GL08
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
     @property
-    def rgb_scalars(self) -> bool:
+    def rgb_scalars(self) -> bool:  # numpydoc ignore=RT01
+        """Add rgb scalars to the axes.
+
+        The scalar array ``'axes_rgb'`` is added to the cell data of the axes datasets.
+        The arrays have rgb values specified by :attr:`x_color`, :attr:`y_color`, and
+        :attr:`z_color`.
+
+        Set this property to ``False`` to not add scalar arrays to the output and
+        remove coloring from the dataset.
+
+        """
         return self._rgb_scalars
 
     @rgb_scalars.setter
-    def rgb_scalars(self, value: bool):
+    def rgb_scalars(self, value: bool):  # numpydoc ignore=GL08
         self._rgb_scalars = value
 
     def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
@@ -3304,7 +3500,12 @@ class AxesGeometrySource:
 
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the x-axis shaft and tip."""
+        """Color of the x-axis shaft and tip.
+
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
+        """
         return self._get_axis_color(_AxisEnum.x)
 
     @x_color.setter
@@ -3313,7 +3514,12 @@ class AxesGeometrySource:
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the y-axis shaft and tip."""
+        """Color of the y-axis shaft and tip.
+
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
+        """
         return self._get_axis_color(_AxisEnum.y)
 
     @y_color.setter
@@ -3322,7 +3528,12 @@ class AxesGeometrySource:
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the z-axis shaft and tip."""
+        """Color of the z-axis shaft and tip.
+
+        A single color or separate colors for the shaft and tip may be specified.
+        The axes are colored by adding a rgb scalar array to the dataset.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
+        """
         return self._get_axis_color(_AxisEnum.z)
 
     @z_color.setter
@@ -3330,23 +3541,74 @@ class AxesGeometrySource:
         self._set_axis_color(_AxisEnum.z, color)
 
     @property
-    def position(self) -> tuple[float, float, float]:
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the axes in space.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.position
+        (0.0, 0.0, 0.0)
+        >>> axes_geometry_source.position = (1, 2, 3)
+        >>> axes_geometry_source.position
+        (1.0, 2.0, 3.0)
+
+        """
         return tuple(self._position)
 
     @position.setter
-    def position(self, xyz: VectorLike[float]):
-        self._position = _validation.validate_array3(xyz, dtype_out=float)
+    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        self._position = _validation.validate_array3(value, dtype_out=float)
 
     @property
-    def direction_vectors(self):
+    def direction_vectors(self):  # numpydoc ignore=RT01
+        """Direction vectors of the axes.
+
+        The direction vectors are used as a 3x3 rotation matrix to orient the
+        axes in space.
+
+        Examples
+        --------
+        By default, the direction vectors align with the XYZ axes of the world
+        coordinates.
+
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.direction_vectors
+        array([[1., 0., 0.],
+               [0., 1., 0.],
+               [0., 0., 1.]])
+
+        Orient the axes in space.
+
+        >>> vectors = pv.Prop3D.orientation_to_direction_vectors(
+        ...     (10, 20, 30)
+        ... )
+
+        >>> axes_geometry_source.direction_vectors = vectors
+        >>> axes_geometry_source.direction_vectors
+        array([[ 0.78410209, -0.49240388,  0.37778609],
+               [ 0.52128058,  0.85286853,  0.02969559],
+               [-0.33682409,  0.17364818,  0.92541658]])
+
+        """
         return self._direction_vectors
 
     @direction_vectors.setter
-    def direction_vectors(self, vectors):
-        self._direction_vectors = vectors
+    def direction_vectors(self, vectors):  # numpydoc ignore=GL08
+        self._direction_vectors = _validation.validate_axes(vectors, name='direction_vectors')
 
     @property
-    def transformation_matrix(self):
+    def transformation_matrix(self) -> NumpyArray[float]:
+        """Transformation matrix used to orient the axes in space.
+
+        Returns
+        -------
+        numpy.ndarray
+            4x4 transformation matrix.
+
+        """
         scale_matrix = np.eye(4)
         if self.normalized_mode:
             # Scale proportional to axis length
@@ -3432,6 +3694,7 @@ class AxesGeometrySource:
             _clear_rgb_scalars(self._tip_datasets[axis])
 
     def update(self):
+        """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
 
@@ -3440,7 +3703,27 @@ class AxesGeometrySource:
         self._update_axis_rgb_scalars(_AxisEnum.z)
 
     @property
-    def output(self):
+    def output(self) -> pv.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
+        of the axes. The blocks are ordered and named as follows:
+            - ``'x_shaft'``
+            - ``'y_shaft'``
+            - ``'z_shaft'``
+            - ``'x_tip'``
+            - ``'y_tip'``
+            - ``'z_tip'``
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with separate shaft and tip datasets.
+
+        """
         self.update()
         keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         values = (*self._shaft_datasets, *self._tip_datasets)
@@ -3467,7 +3750,7 @@ class AxesGeometrySource:
         else:
             _validation.check_contains(
                 item=geometry,
-                container=AxesGeometrySource.GEOMETRY_OPTIONS,
+                container=AxesGeometrySource.GEOMETRY_TYPES,
                 name='Geometry',
             )
             raise NotImplementedError(f"Geometry '{geometry}' is not implemented")

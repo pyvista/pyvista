@@ -4086,7 +4086,7 @@ def test_axes_geometry_normalized_mode(normalized_mode):
     pl.show()
 
 
-@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_OPTIONS, 'custom'])
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
 def test_axes_geometry_shaft_type_tip_type(geometry_type):
     if geometry_type == 'custom':
         geometry_type = pv.ParametricConicSpiral()

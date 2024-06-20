@@ -570,7 +570,7 @@ def test_axes_geometry_source_tip_radius_init():
 
 @pytest.mark.parametrize(
     'shaft_type',
-    pv.AxesGeometrySource.GEOMETRY_OPTIONS,
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_source):
     axes_geometry_source.shaft_type = shaft_type
@@ -579,7 +579,7 @@ def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_sourc
 
 @pytest.mark.parametrize(
     'shaft_type',
-    pv.AxesGeometrySource.GEOMETRY_OPTIONS,
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_shaft_type_init(shaft_type):
     axes_geometry_source = pv.AxesGeometrySource(shaft_type=shaft_type)
@@ -588,7 +588,7 @@ def test_axes_geometry_source_shaft_type_init(shaft_type):
 
 @pytest.mark.parametrize(
     'tip_type',
-    pv.AxesGeometrySource.GEOMETRY_OPTIONS,
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
     axes_geometry_source.tip_type = tip_type
@@ -597,7 +597,7 @@ def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
 
 @pytest.mark.parametrize(
     'tip_type',
-    pv.AxesGeometrySource.GEOMETRY_OPTIONS,
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_tip_type_init(tip_type):
     axes_geometry_source = pv.AxesGeometrySource(tip_type=tip_type)
