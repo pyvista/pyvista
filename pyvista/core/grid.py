@@ -254,8 +254,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         # Ensure dimensions are properly set
         self._update_dimensions()
 
+    # typing depends on numpy version
     @property
-    def meshgrid(self) -> tuple[NumpyArray[float], ...]:
+    def meshgrid(self) -> list[NumpyArray[float]] | tuple[NumpyArray[float], ...]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
