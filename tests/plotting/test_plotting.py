@@ -26,7 +26,6 @@ from PIL import Image
 import pytest
 import vtk
 
-import pyvista
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
@@ -3993,64 +3992,6 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-# Avoid using this as a fixture since it will cause GC to fail
-# @pytest.fixture()
-def axes_marker_reference_points():
-    # Create 3 spheres positioned near the tips of XYZ axes markers.
-    # The spheres can be used to validate the correct positioning and
-    # sizing of an AxesActor
-    x = pv.Sphere(center=(1.1, 0, 0), radius=0.1)
-    y = pv.Sphere(center=(0, 1.1, 0), radius=0.1)
-    z = pv.Sphere(center=(0, 0, 1.1), radius=0.1)
-    return x + y + z
-
-
-# def test_axes_assembly_orientation():
-#     # Create axes with implicit transformation
-#     actor_implicit = pv.AxesAssembly(
-#         scale=3,
-#         position=(1, 2, 3),
-#         shaft_radius=0.5,
-#         total_length=0.5,
-#         shaft_length=1,
-#     )
-#
-#     matrix = vtk.vtkMatrix4x4()
-#     actor_implicit.GetMatrix(matrix)
-#     matrix = array_from_vtkmatrix(matrix)
-#     assert np.allclose(
-#         matrix,
-#         [
-#             [2.35230628, -1.47721163, 1.13335826, 1.0],
-#             [1.56384173, 2.5586056, 0.08908676, 2.0],
-#             [-1.01047227, 0.52094453, 2.77624974, 3.0],
-#             [0.0, 0.0, 0.0, 1.0],
-#         ],
-#     )
-#
-#     # Create axes with explicit transformation
-#     actor_explicit = pv.AxesAssembly(
-#         user_matrix=matrix,
-#         tip_radius=0.5,
-#         total_length=1,
-#         tip_length=0.5,
-#         # x_label='i',
-#         # y_label='j',
-#         # z_label='k',
-#         x_color='magenta',
-#         y_color='yellow',
-#         z_color='cyan',
-#     )
-#
-#     reference = axes_marker_reference_points().transform(matrix)
-#     plot = pv.Plotter()
-#     plot.add_actor(actor_implicit)
-#     plot.add_actor(actor_explicit)
-#     plot.add_mesh(reference, color="purple")
-#     plot.show_grid()
-#     plot.show()
-
-
 @pytest.mark.parametrize('rgb_scalars', [True, False])
 def test_axes_geometry_source_rgb_scalars(rgb_scalars):
     x_shaft_color = 'cyan'
@@ -4107,7 +4048,7 @@ def test_axes_assembly():
 
 
 def _direction_vectors():
-    return pyvista.Prop3D.orientation_to_direction_vectors((10, 20, 30))
+    return pv.Prop3D.orientation_to_direction_vectors((10, 20, 30))
 
 
 @pytest.mark.parametrize(
@@ -4117,14 +4058,13 @@ def _direction_vectors():
         dict(position=(-0.5, -0.5, 1)),
         dict(direction_vectors=_direction_vectors()),
         dict(position=(-0.5, -0.5, 1), direction_vectors=_direction_vectors()),
-        # {'origin': (0, 0, 0.5), 'orientation': (10, 20, 30)},
     ],
     ids=[
         'default',
         'position',
         'direction_vectors',
         'position_and_direction',
-    ],  # , 'direction_vectors']
+    ],
 )
 def test_add_axes_marker(test_kwargs):
     plot = pv.Plotter()
@@ -4510,8 +4450,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('direction_obj_test_case', test_cases, ids=ids)
 
 
-# TODO: REMOVE THIS SKIP
-@skip_windows
 def test_direction_objects(direction_obj_test_case):
     name, func, direction = direction_obj_test_case
     positive_dir = direction == 'pos'
