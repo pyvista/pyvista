@@ -2630,9 +2630,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this.  Opacity (the A) is optional.  If
-            a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
-            parameter to ``False``.
+            a scalars array ending with ``"_rgb"`` or ``"_rgba"`` is passed,
+            the default becomes ``True``.  This can be overridden by setting
+            this parameter to ``False``.
 
         below_color : ColorLike, optional
             Solid color for values below the scalars range
@@ -2870,6 +2870,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if scalars is not None:
+                # enable rgb if the scalars name ends with rgb or rgba
+                if rgb is None and scalars.endswith(('_rgb', '_rgba')):
+                    rgb = True
+                    show_scalar_bar = False
+
                 scalar_bar_args = self.mapper.set_scalars(
                     scalars,
                     preference,
