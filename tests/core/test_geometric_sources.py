@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 import vtk
@@ -438,6 +440,10 @@ def test_axes_geometry_source_total_length_set_get(axes_geometry_source):
     new_length = (1.1, 2.2, 3.3)
     axes_geometry_source.total_length = new_length
     assert axes_geometry_source.total_length == new_length
+
+    match = 'Total length (0.1, 0.1, 0.1) cannot be less than the tip length (0.2, 0.2, 0.2) when normalized mode is disabled.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.total_length = 0.1
 
 
 def test_axes_geometry_source_total_length_init():
