@@ -53,7 +53,6 @@ try:
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
-
 ffmpeg_failed = False
 try:
     try:
@@ -1410,27 +1409,92 @@ def test_read_texture_from_numpy():
     plotter.show()
 
 
-def test_plot_rgb():
-    """Test adding a texture to a plot"""
-    cube = pv.Cube()
-    cube.clear_data()
-    x_face_color = (255, 0, 0)
-    y_face_color = (0, 255, 0)
-    z_face_color = (0, 0, 255)
-    face_colors = np.array(
-        [
-            x_face_color,
-            x_face_color,
-            y_face_color,
-            y_face_color,
-            z_face_color,
-            z_face_color,
-        ],
-        dtype=np.uint8,
-    )
-    cube.cell_data['face_colors'] = face_colors
+def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
+    def _dtype_convert_func(dtype):
+        # Convert color to the specified dtype
+        if dtype == 'float':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).float_rgb
+        elif dtype == 'int':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).int_rgb
+        elif dtype == 'uint8':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return np.array(pv.Color(color).int_rgb, dtype=np.uint8)
+        else:
+            raise NotImplementedError
+
+        return as_dtype
+
+    def _make_polys():
+        # Create 3 separate PolyData with one quad cell each
+        faces = [4, 0, 1, 2, 3]
+        poly1 = pv.PolyData(
+            [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        poly2 = pv.PolyData(
+            [[0.0, 1.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]], faces
+        )
+        poly3 = pv.PolyData(
+            [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        return poly1, poly2, poly3
+
+    poly1, poly2, poly3 = _make_polys()
+    dtype_convert_func = _dtype_convert_func(dtype)
+
+    RED = dtype_convert_func((1.0, 0.0, 0.0))
+    GREEN = dtype_convert_func((0.0, 1.0, 0.0))
+    BLUE = dtype_convert_func((0.0, 0.0, 1.0))
+
+    # Color the polydata cells
+    poly1[scalars] = [RED]
+    poly2[scalars] = [GREEN]
+    poly3[scalars] = [BLUE]
+
+    dataset = pv.MultiBlock((poly1, poly2, poly3))
+
+    # Make sure the dataset is as expected
+    if return_composite:
+        assert isinstance(dataset, pv.MultiBlock)
+        assert all(np.dtype(block[scalars].dtype) == np.dtype(dtype) for block in dataset)
+        assert all(block.array_names == [scalars] for block in dataset)
+    else:
+        # Merge and return
+        dataset = pv.merge(dataset)
+        assert isinstance(dataset, pv.PolyData)
+        assert np.dtype(dataset[scalars].dtype) == np.dtype(dtype)
+        assert dataset.array_names == [scalars]
+    return dataset
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+@pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
+def test_plot_rgb(composite, dtype):
+    scalars = 'face_colors'
+    dataset = _make_rgb_dataset(dtype, return_composite=composite, scalars=scalars)
+
     plotter = pv.Plotter()
-    plotter.add_mesh(cube, scalars='face_colors', rgb=True)
+    actor = plotter.add_mesh(dataset, scalars=scalars, rgb=True)
+    actor.prop.lighting = False
+    plotter.show()
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+def test_plot_rgb_implicit(composite, scalars):
+    dataset = _make_rgb_dataset(dtype='uint8', return_composite=composite, scalars=scalars)
+
+    plotter = pv.Plotter()
+    actor = plotter.add_mesh(dataset)
+    actor.prop.lighting = False
     plotter.show()
 
 
