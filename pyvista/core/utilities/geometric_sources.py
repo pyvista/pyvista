@@ -2837,7 +2837,14 @@ class AxesGeometrySource:
     representations.
     """
 
-    GEOMETRY_OPTIONS: ClassVar[list[str]] = ['cylinder', 'sphere', 'cone', 'pyramid', 'cuboid']
+    GEOMETRY_OPTIONS: ClassVar[list[str]] = [
+        'cylinder',
+        'sphere',
+        'cone',
+        'pyramid',
+        'cube',
+        'octahedron',
+    ]
 
     def __init__(
         self,
@@ -3254,7 +3261,7 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: str):
+    def shaft_type(self, shaft_type: str | pv.DataSet):
         self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3451,8 +3458,12 @@ class AxesGeometrySource:
             return pv.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
             return pv.Pyramid().extract_surface()
-        elif geometry == 'cuboid':
+        elif geometry == 'cube':
             return pv.Cube()
+        elif geometry == 'octahedron':
+            mesh = pv.Octahedron()
+            mesh.cell_data.remove('FaceIndex')
+            return mesh
         else:
             _validation.check_contains(
                 item=geometry,
@@ -3463,6 +3474,8 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_any_part(geometry: str | pv.DataSet) -> tuple[str, pv.PolyData]:
+        part: pv.DataSet
+        part_poly: pv.PolyData
         if isinstance(geometry, str):
             name = geometry
             part = AxesGeometrySource._make_default_part(
@@ -3470,15 +3483,14 @@ class AxesGeometrySource:
             )
         elif isinstance(geometry, pv.DataSet):
             name = 'custom'
-            if not isinstance(geometry, pv.PolyData):
-                part = geometry.extract_geometry()
-
+            part = geometry
         else:
             raise TypeError(
-                f"Geometry must be a string, PolyData, or castable as UnstructuredGrid. Got {type(geometry)}.",
+                f"Geometry must be a string, or pyvista.DataSet. Got {type(geometry)}.",
             )
-        part = AxesGeometrySource._normalize_part(part)
-        return name, part
+        part_poly = part if isinstance(part, pv.PolyData) else part.extract_geometry()
+        part_poly = AxesGeometrySource._normalize_part(part_poly)
+        return name, part_poly
 
     @staticmethod
     def _normalize_part(part: pv.PolyData) -> pv.PolyData:

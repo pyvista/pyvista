@@ -792,6 +792,6 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
-    axes_geometry_source.shaft_type = 'cuboid'
+    axes_geometry_source.shaft_type = pv.ParametricTorus()
     repr_ = repr(axes_geometry_source)
-    assert "'cuboid'" in repr_
+    assert "Shaft type:                 'custom'" in repr_

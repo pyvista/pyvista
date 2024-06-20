@@ -4053,7 +4053,18 @@ def axes_marker_reference_points():
 
 @pytest.mark.parametrize('rgb_scalars', [True, False])
 def test_axes_geometry_source_rgb_scalars(rgb_scalars):
-    pv.AxesGeometrySource(rgb_scalars=rgb_scalars).output.plot()
+    x_shaft_color = 'cyan'
+    x_tip_color = (0.0, 0.0, 1.0)  # blue
+    y_shaft_color = 'magenta'
+    y_tip_color = (255, 0, 0)  # red
+    z_color = 'yellow'
+
+    pv.AxesGeometrySource(
+        x_color=[x_shaft_color, x_tip_color],
+        y_color=(y_shaft_color, y_tip_color),
+        z_color=z_color,
+        rgb_scalars=rgb_scalars,
+    ).output.plot()
 
 
 def test_axes_geometry_source_symmetric():
@@ -4073,6 +4084,19 @@ def test_axes_geometry_normalized_mode(normalized_mode):
     pl.show_bounds()
     pl.view_xy()
     pl.show()
+
+
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_OPTIONS, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
 
 
 def test_axes_assembly():
