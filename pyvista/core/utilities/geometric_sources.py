@@ -3788,7 +3788,7 @@ class AxesGeometrySource:
         bnds = part.bounds
         axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
         if np.any(axis_length < 1e-8):
-            raise ValueError("Part must be 3D.")
+            raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part
 

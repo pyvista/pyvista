@@ -594,6 +594,18 @@ def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_sourc
     assert axes_geometry_source.shaft_type == shaft_type
 
 
+def test_axes_geometry_source_custom_part(axes_geometry_source):
+    axes_geometry_source.shaft_type = pv.ParametricKlein()
+    assert axes_geometry_source.shaft_type == 'custom'
+
+    axes_geometry_source.tip_type = pv.ParametricKlein()
+    assert axes_geometry_source.tip_type == 'custom'
+
+    match = 'Custom axes part must be 3D. Got bounds: (-0.5, 0.5, -0.5, 0.5, 0.0, 0.0).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = pv.Plane()
+
+
 @pytest.mark.parametrize(
     'shaft_type',
     pv.AxesGeometrySource.GEOMETRY_TYPES,
@@ -776,18 +788,15 @@ def test_axes_geometry_source_output():
     assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
 
 
-def test_axes_geometry_source_rgb_scalars():
-    out = pv.AxesGeometrySource(rgb_scalars=True).output
+def test_axes_geometry_source_rgb_scalars(axes_geometry_source):
+    assert axes_geometry_source.rgb_scalars is True
+    out = axes_geometry_source.output
     assert all('axes_rgb' in block.array_names for block in out)
 
-    out = pv.AxesGeometrySource(rgb_scalars=False).output
-    assert all('axes_rgb' not in block.array_names for block in out)
-
-
-def test_axes_geometry_source_rgb_scalars_set_get(axes_geometry_source):
-    assert axes_geometry_source.rgb_scalars is True
     axes_geometry_source.rgb_scalars = False
     assert axes_geometry_source.rgb_scalars is False
+    axes_geometry_source.update()
+    assert all('axes_rgb' not in block.array_names for block in out)
 
 
 def test_axes_geometry_source_repr(axes_geometry_source):
