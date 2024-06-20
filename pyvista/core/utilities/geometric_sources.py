@@ -16,7 +16,6 @@ import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
-import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
@@ -2944,16 +2943,16 @@ class AxesGeometrySource:
     ):
         super().__init__()
         # Init datasets
-        self._shaft_datasets = (pv.PolyData(), pv.PolyData(), pv.PolyData())
-        self._tip_datasets = (pv.PolyData(), pv.PolyData(), pv.PolyData())
+        self._shaft_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
+        self._tip_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
 
         # Set shaft and tip color
         if x_color is None:
-            x_color = pv.global_theme.axes.x_color
+            x_color = pyvista.global_theme.axes.x_color
         if y_color is None:
-            y_color = pv.global_theme.axes.y_color
+            y_color = pyvista.global_theme.axes.y_color
         if z_color is None:
-            z_color = pv.global_theme.axes.z_color
+            z_color = pyvista.global_theme.axes.z_color
         self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
         self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
         self.x_color = x_color  # type:ignore[assignment]
@@ -3428,7 +3427,7 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: GeometryTypes | pv.DataSet):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet):  # numpydoc ignore=GL08
         self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3469,7 +3468,7 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self, tip_type: str | pv.DataSet):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
     @property
@@ -3624,7 +3623,7 @@ class AxesGeometrySource:
         # Scale first, then rotate, then move
         return position_matrix @ rotation_matrix @ scale_matrix
 
-    def _set_geometry(self, part: _PartEnum, geometry: str | pv.DataSet):
+    def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
         datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
@@ -3678,7 +3677,7 @@ class AxesGeometrySource:
     def _update_axis_rgb_scalars(self, axis: _AxisEnum):
         SCALARS = 'axes_rgb'
 
-        def _set_rgb_scalars(dataset: pv.PolyData, color: Color):
+        def _set_rgb_scalars(dataset: pyvista.PolyData, color: Color):
             # TODO: modify to allow any dtype once #6272 is merged
             color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
             dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
@@ -3704,7 +3703,7 @@ class AxesGeometrySource:
         self._update_axis_rgb_scalars(_AxisEnum.z)
 
     @property
-    def output(self) -> pv.MultiBlock:
+    def output(self) -> pyvista.MultiBlock:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
@@ -3728,26 +3727,26 @@ class AxesGeometrySource:
         self.update()
         keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         values = (*self._shaft_datasets, *self._tip_datasets)
-        return pv.MultiBlock(dict(zip(keys, values)))
+        return pyvista.MultiBlock(dict(zip(keys, values)))
 
     @staticmethod
-    def _make_default_part(geometry: str) -> pv.PolyData:
+    def _make_default_part(geometry: str) -> pyvista.PolyData:
         """Create part geometry with its length axis pointing in the +z direction."""
         resolution = 50
         if geometry == 'cylinder':
-            return pv.Cylinder(direction=(0, 0, 1), resolution=resolution)
+            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'sphere':
-            return pv.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
         elif geometry == 'hemisphere':
-            return pv.SolidSphere(end_phi=90).extract_geometry()
+            return pyvista.SolidSphere(end_phi=90).extract_geometry()
         elif geometry == 'cone':
-            return pv.Cone(direction=(0, 0, 1), resolution=resolution)
+            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pv.Pyramid().extract_surface()
+            return pyvista.Pyramid().extract_surface()
         elif geometry == 'cube':
-            return pv.Cube()
+            return pyvista.Cube()
         elif geometry == 'octahedron':
-            mesh = pv.Octahedron()
+            mesh = pyvista.Octahedron()
             mesh.cell_data.remove('FaceIndex')
             return mesh
         else:
@@ -3759,27 +3758,27 @@ class AxesGeometrySource:
             raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
 
     @staticmethod
-    def _make_any_part(geometry: str | pv.DataSet) -> tuple[str, pv.PolyData]:
-        part: pv.DataSet
-        part_poly: pv.PolyData
+    def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
+        part: pyvista.DataSet
+        part_poly: pyvista.PolyData
         if isinstance(geometry, str):
             name = geometry
             part = AxesGeometrySource._make_default_part(
                 geometry,
             )
-        elif isinstance(geometry, pv.DataSet):
+        elif isinstance(geometry, pyvista.DataSet):
             name = 'custom'
             part = geometry
         else:
             raise TypeError(
                 f"Geometry must be a string, or pyvista.DataSet. Got {type(geometry)}.",
             )
-        part_poly = part if isinstance(part, pv.PolyData) else part.extract_geometry()
+        part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
         return name, part_poly
 
     @staticmethod
-    def _normalize_part(part: pv.PolyData) -> pv.PolyData:
+    def _normalize_part(part: pyvista.PolyData) -> pyvista.PolyData:
         """Scale and translate part to have origin-centered bounding box with edge length one."""
         # Center points at origin
         # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
@@ -3795,9 +3794,9 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | pv.DataSet,
+        geometry: str | pyvista.DataSet,
         right_handed: bool = True,
-    ) -> tuple[str, tuple[pv.PolyData, pv.PolyData, pv.PolyData]]:
+    ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)

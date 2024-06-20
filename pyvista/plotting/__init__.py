@@ -6,7 +6,6 @@ from __future__ import annotations
 from pyvista import MAX_N_COLOR_BARS
 from pyvista._plot import plot
 
-from ..core.utilities.geometric_sources import AxesGeometrySource
 from . import _vtk
 from ._property import Property
 from ._typing import Chart
