@@ -1205,13 +1205,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetStrips(CellArray(strips))
 
     @property
-    def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
+    def is_all_triangles(self) -> np.bool_:  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
         Returns
         -------
-        bool
-            ``True`` if all the faces of the :class:`pyvista.PolyData`
+        np.bool_
+            ``np.True_`` if all the faces of the :class:`pyvista.PolyData`
             are triangles and does not contain any vertices or lines.
 
         Examples
@@ -1222,23 +1222,23 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import pyvista as pv
         >>> plane = pv.Plane()
         >>> plane.is_all_triangles
-        False
+        np.False_
 
         Show that the mesh from :func:`pyvista.Sphere` contains only
         triangles.
 
         >>> sphere = pv.Sphere()
         >>> sphere.is_all_triangles
-        True
+        np.True_
 
         """
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces_strict or self.n_lines or self.n_verts:
-            return False
+            return np.bool_(False)
 
         # early return if not all triangular
         if self._connectivity_array.size % 3:
-            return False
+            return np.bool_(False)
 
         # next, check if there are three points per face
         return (np.diff(self._offset_array) == 3).all()
@@ -3091,7 +3091,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_id((3, 4, 0))
-        19
+        np.int64(19)
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
         >>> grid.cell_id(coords)
@@ -3141,7 +3141,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_coords(19)
-        (3, 4, 0)
+        (np.int64(3), np.int64(4), np.int64(0))
 
         >>> grid.cell_coords((19, 31, 41, 54))
         array([[3, 4, 0],

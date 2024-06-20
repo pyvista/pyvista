@@ -318,7 +318,7 @@ class Renderers:
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
-            return index
+            return np.int64(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
             raise IndexError(f'Index ({index}) is out of range.')

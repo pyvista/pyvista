@@ -190,7 +190,7 @@ class MultiBlock(
         ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
+        (np.float64(-0.5), np.float64(2.5), np.float64(-0.5), np.float64(2.5), np.float64(-0.5), np.float64(0.5))
 
         """
         # apply reduction of min and max over each block
