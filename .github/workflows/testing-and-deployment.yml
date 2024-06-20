@@ -206,7 +206,7 @@ jobs:
         run: pip install -r requirements_test.txt
 
       - name: Set up numpy
-        if: ${{ matrix.numpy-version != 'latest' }}
+        if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
         run: pip install 'numpy${{ matrix.numpy-version }}'
 
       - name: Limit Matplotlib for VTK<9.2.2
