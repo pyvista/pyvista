@@ -2845,13 +2845,12 @@ class AxesGeometrySource:
         total_length=None,
         position=(0, 0, 0),
         direction_vectors=None,
-        user_matrix=None,
         symmetric=False,
         normalized_mode=False,
+        rgb_scalars: bool = True,
         x_color=None,
         y_color=None,
         z_color=None,
-        rgb_scalars: bool = True,
     ):
         super().__init__()
         # Init datasets
@@ -2884,7 +2883,6 @@ class AxesGeometrySource:
 
         self.position = position
         self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
-        self.user_matrix = np.eye(4) if user_matrix is None else user_matrix
 
         # Check auto-length
         normalized_mode_set = normalized_mode
@@ -2932,35 +2930,40 @@ class AxesGeometrySource:
             elif total_length_set and not shaft_length_set:
                 self.total_length = total_length
 
-    # def __repr__(self):
-    #     """Representation of the axes actor."""
-    #     matrix_not_set = self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4))
-    #     mat_info = 'Identity' if matrix_not_set else 'Set'
-    #     bnds = self.bounds
-    #
-    #     attr = [
-    #         f"{type(self).__name__} ({hex(id(self))})",
-    #         # f"  X label:                    '{self.x_label}'",
-    #         # f"  Y label:                    '{self.y_label}'",
-    #         # f"  Z label:                    '{self.z_label}'",
-    #         # f"  Show labels:                {self.show_labels}",
-    #         # f"  Label position:             {self.label_position}",
-    #         f"  Shaft type:                 '{self.shaft_type}'",
-    #         f"  Shaft radius:               {self.shaft_radius}",
-    #         f"  Shaft length:               {self.shaft_length}",
-    #         f"  Tip type:                   '{self.tip_type}'",
-    #         f"  Tip radius:                 {self.tip_radius}",
-    #         f"  Tip length:                 {self.tip_length}",
-    #         f"  Total length:               {self.total_length}",
-    #         f"  Position:                   {self.position}",
-    #         f"  Scale:                      {self.scale}",
-    #         f"  User matrix:                {mat_info}",
-    #         f"  Visible:                    {self.visibility}",
-    #         f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-    #         f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-    #         f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
-    #     ]
-    #     return '\n'.join(attr)
+    def __repr__(self):
+        """Representation of the axes actor."""
+
+        def _format_color(color: tuple[Color, Color]) -> tuple[str, str]:
+            color1 = color[0].name if color[0].name else str(color[0].float_rgb)
+            color2 = color[1].name if color[1].name else str(color[1].float_rgb)
+            return color1, color2
+
+        def _format_vectors(vectors: NumpyArray[float]):
+            blank_spaces = " " * 30
+            vectors_split = str(vectors).splitlines()
+            vectors_split[1] = f'{blank_spaces}{vectors_split[1]}'
+            vectors_split[2] = f'{blank_spaces}{vectors_split[2]}'
+            return '\n'.join(vectors_split)
+
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  Shaft type:                 '{self.shaft_type}'",
+            f"  Shaft radius:               {self.shaft_radius}",
+            f"  Shaft length:               {self.shaft_length}",
+            f"  Tip type:                   '{self.tip_type}'",
+            f"  Tip radius:                 {self.tip_radius}",
+            f"  Tip length:                 {self.tip_length}",
+            f"  Total length:               {self.total_length}",
+            f"  Position:                   {self.position}",
+            f"  Direction vectors:          {_format_vectors(self.direction_vectors)}",
+            f"  Symmetric:                  {self.symmetric}",
+            f"  Normalized mode:            {self.normalized_mode}",
+            f"  RGB scalars:                {self.rgb_scalars}",
+            f"  X color:                    {_format_color(self.x_color)}",
+            f"  Y color:                    {_format_color(self.y_color)}",
+            f"  Z color:                    {_format_color(self.z_color)}",
+        ]
+        return '\n'.join(attr)
 
     @property
     def symmetric(self) -> bool:

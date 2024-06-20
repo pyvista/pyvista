@@ -758,3 +758,33 @@ def test_axes_geometry_source_output():
     assert isinstance(out, pv.MultiBlock)
     assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
     assert all('axes_rgb' in block.array_names for block in out)
+
+
+def test_axes_geometry_source_repr(axes_geometry_source):
+    repr_ = repr(axes_geometry_source)
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  Shaft type:                 'cylinder'",
+        '  Shaft radius:               0.025',
+        '  Shaft length:               (0.8, 0.8, 0.8)',
+        "  Tip type:                   'cone'",
+        '  Tip radius:                 0.1',
+        '  Tip length:                 (0.2, 0.2, 0.2)',
+        '  Total length:               (1.0, 1.0, 1.0)',
+        '  Position:                   (0.0, 0.0, 0.0)',
+        '  Direction vectors:          [[1. 0. 0.]',
+        '                               [0. 1. 0.]',
+        '                               [0. 0. 1.]]',
+        '  Symmetric:                  False',
+        '  Normalized mode:            False',
+        '  RGB scalars:                True',
+        "  X color:                    ('tomato', 'tomato')",
+        "  Y color:                    ('seagreen', 'seagreen')",
+        "  Z color:                    ('blue', 'blue')",
+    ]
+    assert len(actual_lines) == len(expected_lines)
+    assert actual_lines == expected_lines
+
+    axes_geometry_source.shaft_type = 'cuboid'
+    repr_ = repr(axes_geometry_source)
+    assert "'cuboid'" in repr_
