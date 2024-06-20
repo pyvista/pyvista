@@ -3109,7 +3109,7 @@ class AxesGeometrySource:
         (1.0, 0.9, 0.5)
 
         """
-        return tuple(self._total_length)
+        return tuple(self._total_length.tolist())
 
     @total_length.setter
     def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
@@ -3180,7 +3180,7 @@ class AxesGeometrySource:
         (1.0, 0.9, 0.5)
 
         """
-        return tuple(self._shaft_length)
+        return tuple(self._shaft_length.tolist())
 
     @shaft_length.setter
     def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
@@ -3249,7 +3249,7 @@ class AxesGeometrySource:
         (0.1, 0.4, 0.2)
 
         """
-        return tuple(self._tip_length)
+        return tuple(self._tip_length.tolist())
 
     @tip_length.setter
     def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
@@ -3556,7 +3556,7 @@ class AxesGeometrySource:
         (1.0, 2.0, 3.0)
 
         """
-        return tuple(self._position)
+        return tuple(self._position.tolist())
 
     @position.setter
     def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
