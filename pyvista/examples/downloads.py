@@ -7472,7 +7472,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+    (0, 117)
 
     Create a surface mesh of the segmentation labels
 
@@ -7616,7 +7616,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
+    (0, 117)
 
     Create a surface mesh of the segmentation labels
 

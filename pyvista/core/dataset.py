@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from copy import deepcopy
 from functools import partial
+import math
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -879,7 +880,7 @@ class DataSet(DataSetFilters, DataObject):
         if arr_var is None:  # use active scalars array
             _, arr_var = self.active_scalars_info
             if arr_var is None:
-                return (np.nan, np.nan)
+                return (math.nan, math.nan)
 
         if isinstance(arr_var, str):
             name = arr_var
@@ -889,11 +890,11 @@ class DataSet(DataSetFilters, DataObject):
 
         # If array has no tuples return a NaN range
         if arr is None:
-            return (np.nan, np.nan)
+            return (math.nan, math.nan)
         if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
-            return (np.nan, np.nan)
+            return (math.nan, math.nan)
         # Use the array range
-        return np.nanmin(arr), np.nanmax(arr)
+        return np.nanmin(arr).item(), np.nanmax(arr).item()
 
     def rotate_x(
         self,
