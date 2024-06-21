@@ -40,11 +40,6 @@ import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
 import warnings
 
 import pyvista  # noqa: TCH001
@@ -57,6 +52,8 @@ from .opts import InterpolationType
 from .tools import parse_font_family
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+
     from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
 
@@ -164,7 +161,7 @@ class _ForceSlots(type):
 class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
-    __slots__: List[str] = []
+    __slots__: list[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
@@ -178,7 +175,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 setattr(inst, key, value)
         return inst
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return theme config parameters as a dictionary.
 
         Returns
@@ -302,7 +299,7 @@ class _LightingConfig(_ThemeConfig):
     @interpolation.setter
     def interpolation(
         self,
-        interpolation: Union[str, int, InterpolationType],
+        interpolation: str | int | InterpolationType,
     ):  # numpydoc ignore=GL08
         self._interpolation = InterpolationType.from_any(interpolation).value
 
@@ -642,7 +639,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
-    def feature_angle(self) -> Union[float, None]:  # numpydoc ignore=RT01
+    def feature_angle(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the silhouette feature angle.
 
         Examples
@@ -654,7 +651,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: Union[float, None]):  # numpydoc ignore=GL08
+    def feature_angle(self, feature_angle: float | None):  # numpydoc ignore=GL08
         self._feature_angle = feature_angle
 
     @property
@@ -798,16 +795,33 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x axis color to black.
+    Show the default axes configuration values.
 
     >>> import pyvista as pv
+    >>> pv.global_theme.axes.x_color
+    Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+    >>> pv.global_theme.axes.y_color
+    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+    >>> pv.global_theme.axes.z_color
+    Color(name='blue', hex='#0000ffff', opacity=255)
+
+    >>> pv.global_theme.axes.box
+    False
+
+    >>> pv.global_theme.axes.show
+    True
+
+    Set the x-axis color to black.
+
     >>> pv.global_theme.axes.x_color = 'black'
 
-    Show axes by default.
+    Show the axes orientation widget by default.
 
     >>> pv.global_theme.axes.show = True
 
-    Use the ``vtk.vtkCubeAxesActor``.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
     >>> pv.global_theme.axes.box = True
 
@@ -839,11 +853,17 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set x axis color.
+        """Return or set x-axis color.
 
         Examples
         --------
+        Get the default x-axis color
+
         >>> import pyvista as pv
+        >>> pv.global_theme.axes.x_color
+        Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+        Change the default color.
         >>> pv.global_theme.axes.x_color = 'red'
         """
         return self._x_color
@@ -854,12 +874,18 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def y_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set y axis color.
+        """Return or set y-axis color.
 
         Examples
         --------
+        Get the default y-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.y_color = 'red'
+        >>> pv.global_theme.axes.y_color
+        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
 
@@ -869,12 +895,18 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def z_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set z axis color.
+        """Return or set z-axis color.
 
         Examples
         --------
+        Get the default z-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.z_color = 'red'
+        >>> pv.global_theme.axes.z_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color
 
@@ -884,7 +916,10 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use the ``vtk.vtkCubeAxesActor`` instead of the default ``vtk.vtkAxesActor``.
+        """Use a box axes orientation widget.
+
+        If ``True``, Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        instead of the :class:`pyvista.AxesActor` as the orientation widget for plots.
 
         Examples
         --------
@@ -2159,7 +2194,7 @@ class Theme(_ThemeConfig):
             )
 
     @property
-    def notebook(self) -> Union[bool, None]:  # numpydoc ignore=RT01
+    def notebook(self) -> bool | None:  # numpydoc ignore=RT01
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -2177,11 +2212,11 @@ class Theme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: Union[bool, None]):  # numpydoc ignore=GL08
+    def notebook(self, value: bool | None):  # numpydoc ignore=GL08
         self._notebook = value
 
     @property
-    def window_size(self) -> List[int]:  # numpydoc ignore=RT01
+    def window_size(self) -> list[int]:  # numpydoc ignore=RT01
         """Return or set the default render window size.
 
         Examples
@@ -2195,7 +2230,7 @@ class Theme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: List[int]):  # numpydoc ignore=GL08
+    def window_size(self, window_size: list[int]):  # numpydoc ignore=GL08
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
@@ -2683,7 +2718,7 @@ class Theme(_ThemeConfig):
         self._title = title
 
     @property
-    def anti_aliasing(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def anti_aliasing(self) -> str | None:  # numpydoc ignore=RT01
         """Enable or disable anti-aliasing.
 
         Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
@@ -2709,7 +2744,7 @@ class Theme(_ThemeConfig):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: Union[str, None]):  # numpydoc ignore=GL08
+    def anti_aliasing(self, anti_aliasing: str | None):  # numpydoc ignore=GL08
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
@@ -2876,16 +2911,16 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Set the x axis color to black.
+        Set the x-axis color to black.
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.x_color = 'black'
 
-        Show axes by default.
+        Show the axes orientation widget by default.
 
         >>> pv.global_theme.axes.show = True
 
-        Use the ``vtk.vtkCubeAxesActor``.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
@@ -3005,7 +3040,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme: Union[str, Theme]) -> None:
+    def load_theme(self, theme: str | Theme) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -3140,7 +3175,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
     @property
-    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def logo_file(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the logo file.
 
         .. note::
@@ -3168,7 +3203,7 @@ class Theme(_ThemeConfig):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+    def logo_file(self, logo_file: str | pathlib.Path | None):  # numpydoc ignore=GL08
         if logo_file is None:
             path = None
         else:
