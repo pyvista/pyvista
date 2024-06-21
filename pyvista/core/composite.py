@@ -23,7 +23,7 @@ from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import BoundsLike
     from ._typing_core import NumpyArray
 from .dataset import DataObject
