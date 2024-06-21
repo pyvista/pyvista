@@ -7,6 +7,7 @@ Also includes some pure-python helpers.
 from __future__ import annotations
 
 from enum import IntEnum
+import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
@@ -2833,7 +2834,7 @@ class AxesGeometrySource:
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
     such as spheres and cubes are directly supported. The use of an arbitrary dataset
-     for the shafts and/or tips is also supported.
+    for the shafts and/or tips is also supported.
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
@@ -2845,7 +2846,8 @@ class AxesGeometrySource:
     Parameters
     ----------
     shaft_type : str | pyvista.DataSet, default: 'cylinder'
-        Shaft type for all axes. Can be one of the following:
+        Shaft type for all axes. Recommended values are ``'cylinder'`` or ``'cube'``.
+        but can be any of the following:
 
             - ``'cylinder'``
             - ``'sphere'``
@@ -2866,7 +2868,7 @@ class AxesGeometrySource:
         Length of the shaft for each axis.
 
     tip_type : str | pyvista.DataSet, default: 'cone'
-        Cone type for all axes. Can be one of the following:
+        Tip type for all axes. Can be any of the following:
 
             - ``'cylinder'``
             - ``'sphere'``
@@ -2910,7 +2912,7 @@ class AxesGeometrySource:
         normalized and will be true to scale, i.e. the actual lengths of the shafts and
         tips will match their specified value(s).
 
-    rgb_scalars : bool, default: True,
+    rgb_scalars : bool, default: True
         Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
         cell data of the output datasets. The arrays have rgb values specified by
         :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
@@ -2921,17 +2923,20 @@ class AxesGeometrySource:
     x_color : ColorLike | Sequence[ColorLike]
         Color of the x-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.x_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
 
     y_color : ColorLike | Sequence[ColorLike]
         Color of the y-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.y_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
 
     z_color : ColorLike | Sequence[ColorLike]
         Color of the z-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.z_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
     GeometryTypes = Literal[
@@ -2947,6 +2952,7 @@ class AxesGeometrySource:
 
     def __init__(
         self,
+        *,
         shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
         shaft_length: float | VectorLike[float] | None = None,
@@ -3034,7 +3040,7 @@ class AxesGeometrySource:
                     "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
                     "Set either `shaft_length` or `total_length`, but not both.",
                 )
-            # Values are valid, set properties with normalized mode enabled
+            # Values are valid, set properties with normalized mode disabled
             self.normalized_mode = False
             if shaft_length_set and not total_length_set:
                 self.shaft_length = shaft_length  # type: ignore[assignment]
@@ -3042,7 +3048,7 @@ class AxesGeometrySource:
                 self.total_length = total_length  # type: ignore[assignment]
 
     def __repr__(self):
-        """Representation of the axes actor."""
+        """Representation of the axes."""
 
         def _format_color(color: tuple[Color, Color]) -> tuple[str, str]:
             color1 = color[0].name if color[0].name else str(color[0].float_rgb)
@@ -3138,7 +3144,7 @@ class AxesGeometrySource:
             # Total length cannot be less than each tip length
             if np.any(self._total_length < self._tip_length):
                 raise ValueError(
-                    f"Total length {tuple(self._total_length)} cannot be less than the tip length {tuple(self._tip_length)} when normalized mode is disabled.",
+                    f"Total length {self.total_length} cannot be less than the tip length {self.tip_length} when normalized mode is disabled.",
                 )
             self._shaft_length = self._total_length - self._tip_length
 
@@ -3170,7 +3176,7 @@ class AxesGeometrySource:
 
             - The shaft length(s) of the axes will be true to scale, i.e. the actual
               lengths of the shafts will match the specified value(s).
-            - Setting this value will also modify :attr:`shaft_length` such that:
+            - Setting this value will also modify :attr:`total_length` such that:
 
                 :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
 
@@ -3180,7 +3186,7 @@ class AxesGeometrySource:
 
             - The shaft length(s) of the axes are scaled proportional to the
               :attr:`total_length`.
-            - Setting this value will also modify :attr:`shaft_length` such that:
+            - Setting this value will also modify :attr:`total_length` such that:
 
                 :attr:`shaft_length` + :attr:`tip_length` = 1.0
 
@@ -3287,8 +3293,8 @@ class AxesGeometrySource:
         """Normalize the shaft and tip lengths relative to the total length.
 
         If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths the range ``[0, 1]``, and are scaled proportional to
-        the :attr:`total_length`.
+        normalized lengths in range ``[0, 1]``. The shaft length plus tip length always
+        sum to one, and the axes are scaled proportional to the :attr:`total_length`.
 
         If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
         normalized and will be true to scale, i.e. the actual lengths of the shafts and
@@ -3625,6 +3631,7 @@ class AxesGeometrySource:
 
         Examples
         --------
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource()
         >>> axes_geometry_source.direction_vectors
@@ -3634,15 +3641,19 @@ class AxesGeometrySource:
 
         Orient the axes in space.
 
-        >>> vectors = pv.Prop3D.orientation_to_direction_vectors(
-        ...     (10, 20, 30)
+        >>> vectors = np.array(
+        ...     [
+        ...         [0.36, 0.48, -0.80],
+        ...         [-0.80, 0.60, 0.00],
+        ...         [0.48, 0.64, 0.60],
+        ...     ]
         ... )
 
         >>> axes_geometry_source.direction_vectors = vectors
         >>> axes_geometry_source.direction_vectors
-        array([[ 0.78410209, -0.49240388,  0.37778609],
-               [ 0.52128058,  0.85286853,  0.02969559],
-               [-0.33682409,  0.17364818,  0.92541658]])
+        array([[ 0.36,  0.48, -0.8 ],
+               [-0.8 ,  0.6 ,  0.  ],
+               [ 0.48,  0.64,  0.6 ]])
         """
         return self._direction_vectors
 
@@ -3659,19 +3670,10 @@ class AxesGeometrySource:
         numpy.ndarray
             4x4 transformation matrix.
         """
-        scale_matrix = np.eye(4)
-        if self.normalized_mode:
-            # Scale proportional to axis length
-            scale_matrix[:3, :3] = np.diag(self.total_length)
-
-        position_matrix = np.eye(4)
-        position_matrix[:3, 3] = self.position
-
-        rotation_matrix = np.eye(4)
-        rotation_matrix[:3, :3] = self.direction_vectors
-
-        # Scale first, then rotate, then move
-        return position_matrix @ rotation_matrix @ scale_matrix
+        matrix = np.eye(4)
+        matrix[:3, 3] = self.position
+        matrix[:3, :3] = self.direction_vectors
+        return matrix
 
     def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
@@ -3682,43 +3684,49 @@ class AxesGeometrySource:
         return geometry_name
 
     def _reset_shaft_and_tip_geometry(self):
+        # Store
         shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
             self.tip_length,
         )
+        total_length = self.total_length
+        normalized_mode = self.normalized_mode
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
-        for part_type in _PartEnum:
-            for axis in _AxisEnum:
-                # Reset geometry
-                part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
+            # Reset geometry
+            part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
 
-                # Offset so axis bounds are [0, 1]
-                part.points[:, axis] += 0.5
+            # Offset so axis bounds are [0, 1]
+            part.points[:, axis] += 0.5
 
-                # Scale by length along axis, scale by radius off-axis
-                radius, length = (
-                    (shaft_radius, shaft_length)
-                    if part_type == _PartEnum.shaft
-                    else (tip_radius, tip_length)
-                )
-                diameter = radius * 2
-                scale = [diameter] * 3
-                scale[axis] = length[axis]
-                part.scale(scale, inplace=True)
+            # Scale by length along axis, scale by radius off-axis
+            radius, length = (
+                (shaft_radius, shaft_length)
+                if part_type == _PartEnum.shaft
+                else (tip_radius, tip_length)
+            )
+            diameter = radius * 2
+            scale = [diameter] * 3
+            scale[axis] = length[axis]
+            part.scale(scale, inplace=True)
 
-                if part_type == _PartEnum.tip:
-                    # Move tip to end of shaft
-                    part.points[:, axis] += shaft_length[axis]
+            if part_type == _PartEnum.tip:
+                # Move tip to end of shaft
+                part.points[:, axis] += shaft_length[axis]
 
-                if self.symmetric:
-                    # Flip and append to part
-                    origin = [0, 0, 0]
-                    normal = [0, 0, 0]
-                    normal[axis] = 1
-                    flipped = part.flip_normal(normal=normal, point=origin)
-                    part.append_polydata(flipped, inplace=True)
+            if self.symmetric:
+                # Flip and append to part
+                origin = [0, 0, 0]
+                normal = [0, 0, 0]
+                normal[axis] = 1
+                flipped = part.flip_normal(normal=normal, point=origin)
+                part.append_polydata(flipped, inplace=True)
+
+            if normalized_mode:
+                # Scale part proportional to total length
+                part.scale(total_length, inplace=True)
 
     def _transform_shafts_and_tips(self):
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
@@ -3791,7 +3799,7 @@ class AxesGeometrySource:
         elif geometry == 'cone':
             return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pyvista.Pyramid().extract_surface()
+            return pyvista.Pyramid().extract_geometry()
         elif geometry == 'cube':
             return pyvista.Cube()
         elif geometry == 'octahedron':
@@ -3804,7 +3812,9 @@ class AxesGeometrySource:
                 container=AxesGeometrySource.GEOMETRY_TYPES,
                 name='Geometry',
             )
-            raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
+            raise NotImplementedError(
+                f"Geometry '{geometry}' is not implemented"
+            )  # pragma: no cover
 
     @staticmethod
     def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
@@ -3820,7 +3830,7 @@ class AxesGeometrySource:
             part = geometry
         else:
             raise TypeError(
-                f"Geometry must be a string, or pyvista.DataSet. Got {type(geometry)}.",
+                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
             )
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
@@ -3844,12 +3854,9 @@ class AxesGeometrySource:
     @staticmethod
     def _make_axes_parts(
         geometry: str | pyvista.DataSet,
-        right_handed: bool = True,
     ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
-        if not right_handed:
-            part_z.points *= -1  # type: ignore[misc]
         return name, (part_x, part_y, part_z)

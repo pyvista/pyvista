@@ -605,6 +605,14 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
+    match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = 'foo'
+
+    match = "Geometry must be a string or pyvista.DataSet. Got <class 'int'>."
+    with pytest.raises(TypeError, match=match):
+        axes_geometry_source.shaft_type = 42
+
 
 @pytest.mark.parametrize(
     'shaft_type',
