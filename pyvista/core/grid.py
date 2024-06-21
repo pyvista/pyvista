@@ -86,7 +86,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, vtk.vtkRectilinearGrid, numpy.ndarray, optional
+    uinput : str | os.PathLike | vtk.vtkRectilinearGrid | numpy.ndarray, optional
         Filename, dataset, or array to initialize the rectilinear grid from. If a
         filename is passed, pyvista will attempt to load it as a
         :class:`RectilinearGrid`. If passed a ``vtk.vtkRectilinearGrid``, it
