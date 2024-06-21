@@ -3992,6 +3992,58 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.parametrize('rgb_scalars', [True, False])
+def test_axes_geometry_source_rgb_scalars(rgb_scalars):
+    x_shaft_color = 'cyan'
+    x_tip_color = (0.0, 0.0, 1.0)  # blue
+    y_shaft_color = 'magenta'
+    y_tip_color = (255, 0, 0)  # red
+    z_color = 'yellow'
+
+    pv.AxesGeometrySource(
+        x_color=[x_shaft_color, x_tip_color],
+        y_color=(y_shaft_color, y_tip_color),
+        z_color=z_color,
+        rgb_scalars=rgb_scalars,
+    ).output.plot()
+
+
+def test_axes_geometry_source_symmetric():
+    pv.AxesGeometrySource(symmetric=True).output.plot()
+
+
+@pytest.mark.parametrize('normalized_mode', [True, False])
+def test_axes_geometry_normalized_mode(normalized_mode):
+    mesh = pv.AxesGeometrySource(
+        normalized_mode=normalized_mode,
+        tip_length=0.5,
+        total_length=1.5,
+    ).output
+    pl = pv.Plotter()
+    pl.add_mesh(mesh)
+    pl.enable_parallel_projection()
+    pl.show_bounds()
+    pl.view_xy()
+    pl.show()
+
+
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
+
+
+def _direction_vectors():
+    return pv.Prop3D.orientation_to_direction_vectors((10, 20, 30))
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER

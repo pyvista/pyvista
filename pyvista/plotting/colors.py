@@ -181,8 +181,10 @@ except ImportError:  # pragma: no cover
     from matplotlib import cm as colormaps
     from matplotlib import colors
 
+import contextlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Sequence
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -1386,3 +1388,27 @@ def get_cycler(color_cycler):
         return color_cycler
     else:
         raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')
+
+
+def _validate_color_sequence(
+    color: ColorLike | Sequence[ColorLike],
+    n_colors: int | None = None,
+) -> tuple[Color, ...]:
+    valid_color = None
+    try:
+        valid_color = [Color(color)]
+        n_colors = 1 if n_colors is None else n_colors
+        valid_color *= n_colors
+    except ValueError:
+        if isinstance(color, Sequence) and (n_colors is None or len(color) == n_colors):
+            with contextlib.suppress(ValueError):
+                valid_color = [Color(c) for c in color]
+    if valid_color:
+        return tuple(valid_color)
+    else:
+        raise ValueError(
+            f"Invalid color(s):\n"
+            f"\t{color}\n"
+            f"Input must be a single ColorLike color \n"
+            f"or a sequence of {n_colors} ColorLike colors.",
+        )
