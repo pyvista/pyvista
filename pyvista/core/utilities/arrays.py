@@ -13,6 +13,7 @@ from typing import Union
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -934,3 +935,32 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
     def setdefault(self, *args, **kwargs):
         super().setdefault(*args, **kwargs)
         self._update_string()
+
+
+def orientation_angles_to_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
+    """Convert orientation angles to a rotation matrix.
+
+    The angles are specified in degrees and in x-y-z order. However, the actual
+    rotations are applied first around the y-axis, then the x-axis, then the z-axis.
+    This conversion is consistent with how transformations are applied by
+    :attr:`pyvista.Prop3D.orientation`.
+
+    Parameters
+    ----------
+    orientation : VectorLike[float]
+        Orientation angles in degrees and in x-y-z order.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 rotation matrix.
+    """
+    # Local import from plotting module
+    from pyvista.plotting import _vtk
+
+    orientation_ = _validation.validate_array3(orientation, must_be_integer=True, dtype_out=int)
+    prop = _vtk.vtkActor()
+    prop.SetOrientation(orientation_)
+    matrix = _vtk.vtkMatrix4x4()
+    prop.GetMatrix(matrix)
+    return array_from_vtkmatrix(matrix)[:3, :3]

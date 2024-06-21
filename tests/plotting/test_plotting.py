@@ -4041,7 +4041,7 @@ def test_axes_geometry_shaft_type_tip_type(geometry_type):
 
 
 def _direction_vectors():
-    return pv.Prop3D.orientation_to_direction_vectors((10, 20, 30))
+    return pv.Prop3D.orientation_angles_to_matrix((10, 20, 30))
 
 
 def test_axes_actor_default_colors():

@@ -3642,9 +3642,7 @@ class AxesGeometrySource:
 
         Orient the axes in space.
 
-        >>> vectors = pv.Prop3D.orientation_to_direction_vectors(
-        ...     (10, 20, 30)
-        ... )
+        >>> vectors = pv.orientation_angles_to_matrix((10, 20, 30))
 
         >>> axes_geometry_source.direction_vectors = vectors
         >>> axes_geometry_source.direction_vectors
