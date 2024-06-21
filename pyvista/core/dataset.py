@@ -1815,13 +1815,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.volume
-        np.float64(64.0)
+        64.0
 
         A mesh with 2D cells has no volume.
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.volume
-        np.float64(0.0)
+        0.0
 
         :class:`pyvista.PolyData` is special as a 2D surface can
         enclose a 3D volume. This case uses a different methodology,
@@ -1833,7 +1833,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return sizes.cell_data['Volume'].sum()
+        return sizes.cell_data['Volume'].sum().item()
 
     @property
     def area(self) -> float:
@@ -1854,7 +1854,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.area
-        np.float64(16.0)
+        16.0
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
@@ -1862,18 +1862,18 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
-        np.float64(0.0)
+        0.0
 
         Get the area of a sphere. Discretization error results
         in slight difference from ``pi``.
 
         >>> mesh = pv.Sphere()
         >>> mesh.area
-        np.float64(3.13)
+        3.13
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return sizes.cell_data['Area'].sum()
+        return sizes.cell_data['Area'].sum().item()
 
     def get_array(
         self,
@@ -3351,7 +3351,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.get_cell(0).bounds
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
-        np.True_
+        True
 
         """
         if not isinstance(ind, (int, np.integer)):
@@ -3381,7 +3381,7 @@ class DataSet(DataSetFilters, DataObject):
             in_cell[i] = bool(is_inside)
 
         if singular:
-            return in_cell[0]
+            return in_cell[0].item()
         return in_cell
 
     @property
