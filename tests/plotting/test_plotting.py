@@ -3992,24 +3992,8 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@pytest.mark.parametrize('rgb_scalars', [True, False])
-def test_axes_geometry_source_rgb_scalars(rgb_scalars):
-    x_shaft_color = 'cyan'
-    x_tip_color = (0.0, 0.0, 1.0)  # blue
-    y_shaft_color = 'magenta'
-    y_tip_color = (255, 0, 0)  # red
-    z_color = 'yellow'
-
-    pv.AxesGeometrySource(
-        x_color=[x_shaft_color, x_tip_color],
-        y_color=(y_shaft_color, y_tip_color),
-        z_color=z_color,
-        rgb_scalars=rgb_scalars,
-    ).output.plot()
-
-
 def test_axes_geometry_source_symmetric():
-    pv.AxesGeometrySource(symmetric=True).output.plot()
+    pv.AxesGeometrySource(symmetric=True).output.plot(zoom=1.8)
 
 
 @pytest.mark.parametrize('normalized_mode', [True, False])

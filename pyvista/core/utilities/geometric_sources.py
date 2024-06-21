@@ -33,8 +33,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.plotting.colors import Color
-    from pyvista.plotting.colors import ColorLike
 
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
@@ -2837,7 +2835,7 @@ class AxesGeometrySource:
     """Create axes geometry source.
 
     Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
-    may be arbitrarily oriented in space, and the length, radius, and color of the axis
+    may be arbitrarily oriented in space, and the length and radius of the axis
     parts (shaft or tip) may be customized.
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
@@ -2920,31 +2918,6 @@ class AxesGeometrySource:
         normalized and will be true to scale, i.e. the actual lengths of the shafts and
         tips will match their specified value(s).
 
-    rgb_scalars : bool, default: True
-        Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
-        cell data of the output datasets. The arrays have rgb values specified by
-        :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
-
-        Set this property to ``False`` to disable any coloring and remove the arrays
-        from the output.
-
-    x_color : ColorLike | Sequence[ColorLike]
-        Color of the x-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.x_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-    y_color : ColorLike | Sequence[ColorLike]
-        Color of the y-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.y_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-    z_color : ColorLike | Sequence[ColorLike]
-        Color of the z-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.z_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
     GeometryTypes = Literal[
@@ -2960,6 +2933,7 @@ class AxesGeometrySource:
 
     def __init__(
         self,
+        *,
         shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
         shaft_length: float | VectorLike[float] | None = None,
@@ -2971,29 +2945,11 @@ class AxesGeometrySource:
         direction_vectors: ArrayLike[float] | None = None,
         symmetric: bool = False,
         normalized_mode: bool = False,
-        rgb_scalars: bool = True,
-        x_color: ColorLike | Sequence[ColorLike] | None = None,
-        y_color: ColorLike | Sequence[ColorLike] | None = None,
-        z_color: ColorLike | Sequence[ColorLike] | None = None,
     ):
         super().__init__()
         # Init datasets
         self._shaft_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
         self._tip_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
-
-        # Set shaft and tip color
-        if x_color is None:
-            x_color = pyvista.global_theme.axes.x_color
-        if y_color is None:
-            y_color = pyvista.global_theme.axes.y_color
-        if z_color is None:
-            z_color = pyvista.global_theme.axes.z_color
-        self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
-        self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
-        self.x_color = x_color  # type:ignore[assignment]
-        self.y_color = y_color  # type:ignore[assignment]
-        self.z_color = z_color  # type:ignore[assignment]
-        self._rgb_scalars = rgb_scalars
 
         # Set misc flag params
         self._normalized_mode = normalized_mode
@@ -3057,11 +3013,6 @@ class AxesGeometrySource:
     def __repr__(self):
         """Representation of the axes."""
 
-        def _format_color(color: tuple[Color, Color]) -> tuple[str, str]:
-            color1 = color[0].name if color[0].name else str(color[0].float_rgb)
-            color2 = color[1].name if color[1].name else str(color[1].float_rgb)
-            return color1, color2
-
         def _format_vectors(vectors: NumpyArray[float]):
             blank_spaces = " " * 30
             vectors_split = str(vectors).splitlines()
@@ -3082,10 +3033,6 @@ class AxesGeometrySource:
             f"  Direction vectors:          {_format_vectors(self.direction_vectors)}",
             f"  Symmetric:                  {self.symmetric}",
             f"  Normalized mode:            {self.normalized_mode}",
-            f"  RGB scalars:                {self.rgb_scalars}",
-            f"  X color:                    {_format_color(self.x_color)}",
-            f"  Y color:                    {_format_color(self.y_color)}",
-            f"  Z color:                    {_format_color(self.z_color)}",
         ]
         return '\n'.join(attr)
 
@@ -3499,116 +3446,6 @@ class AxesGeometrySource:
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
     @property
-    def rgb_scalars(self) -> bool:  # numpydoc ignore=RT01
-        """Add rgb scalars to the axes.
-
-        The scalar array ``'axes_rgb'`` is added to the cell data of the output.
-        The arrays have rgb values specified by :attr:`x_color`, :attr:`y_color`, and
-        :attr:`z_color`.
-
-        Set this property to ``False`` to disable any coloring and remove the arrays
-        from the output.
-        """
-        return self._rgb_scalars
-
-    @rgb_scalars.setter
-    def rgb_scalars(self, value: bool):  # numpydoc ignore=GL08
-        self._rgb_scalars = value
-
-    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
-        # Local import to only import from plotting module as needed
-        from pyvista.plotting.colors import _validate_color_sequence
-
-        self._shaft_color[axis], self._tip_color[axis] = _validate_color_sequence(color, n_colors=2)
-
-    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
-        return self._shaft_color[axis], self._tip_color[axis]
-
-    @property
-    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the x-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.x_color
-        (Color(name='tomato', hex='#ff6347ff', opacity=255), Color(name='tomato', hex='#ff6347ff', opacity=255))
-
-        >>> axes_geometry_source.x_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.x_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.x)
-
-    @x_color.setter
-    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.x, color)
-
-    @property
-    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the y-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.y_color
-        (Color(name='seagreen', hex='#2e8b57ff', opacity=255), Color(name='seagreen', hex='#2e8b57ff', opacity=255))
-
-        >>> axes_geometry_source.y_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.y_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.y)
-
-    @y_color.setter
-    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.y, color)
-
-    @property
-    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the z-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.z_color
-        (Color(name='blue', hex='#0000ffff', opacity=255), Color(name='blue', hex='#0000ffff', opacity=255))
-
-        >>> axes_geometry_source.z_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.z_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.z)
-
-    @z_color.setter
-    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.z, color)
-
-    @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the axes in space.
 
@@ -3741,33 +3578,10 @@ class AxesGeometrySource:
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
             dataset.transform(self.transformation_matrix, inplace=True)
 
-    def _update_axis_rgb_scalars(self, axis: _AxisEnum):
-        SCALARS = 'axes_rgb'
-
-        def _set_rgb_scalars(dataset: pyvista.PolyData, color: Color):
-            # TODO: modify to allow any dtype once #6272 is merged
-            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
-            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
-
-        def _clear_rgb_scalars(dataset):
-            if SCALARS in dataset.cell_data:
-                dataset.cell_data.remove(SCALARS)
-
-        if self.rgb_scalars:
-            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
-            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
-        else:
-            _clear_rgb_scalars(self._shaft_datasets[axis])
-            _clear_rgb_scalars(self._tip_datasets[axis])
-
     def update(self):
         """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
-
-        self._update_axis_rgb_scalars(_AxisEnum.x)
-        self._update_axis_rgb_scalars(_AxisEnum.y)
-        self._update_axis_rgb_scalars(_AxisEnum.z)
 
     @property
     def output(self) -> pyvista.MultiBlock:

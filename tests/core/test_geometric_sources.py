@@ -633,52 +633,6 @@ def test_axes_geometry_source_tip_type_init(tip_type):
     assert axes_geometry_source.tip_type == tip_type
 
 
-def test_axes_geometry_source_axis_color_set_get(axes_geometry_source):
-    assert axes_geometry_source.x_color[0].name == 'tomato'
-    assert axes_geometry_source.x_color[1].name == 'tomato'
-    assert axes_geometry_source.y_color[0].name == 'seagreen'
-    assert axes_geometry_source.y_color[1].name == 'seagreen'
-    assert axes_geometry_source.z_color[0].name == 'blue'
-    assert axes_geometry_source.z_color[1].name == 'blue'
-
-    axes_geometry_source.x_color = 'purple'
-    assert len(axes_geometry_source.x_color) == 2
-    assert axes_geometry_source.x_color[0].name == 'purple'
-    assert axes_geometry_source.x_color[1].name == 'purple'
-
-    axes_geometry_source.x_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.x_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.x_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.y_color = 'purple'
-    assert axes_geometry_source.y_color[0].name == 'purple'
-    assert axes_geometry_source.y_color[1].name == 'purple'
-    axes_geometry_source.y_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.y_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.y_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.z_color = 'purple'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-    axes_geometry_source.z_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.z_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.z_color[1].int_rgb, [1, 2, 3])
-
-
-def test_axes_geometry_source_axis_color_init():
-    axes_geometry_source = pv.AxesGeometrySource(
-        x_color='yellow',
-        y_color='orange',
-        z_color='purple',
-    )
-    assert axes_geometry_source.x_color[0].name == 'yellow'
-    assert axes_geometry_source.x_color[1].name == 'yellow'
-    assert axes_geometry_source.y_color[0].name == 'orange'
-    assert axes_geometry_source.y_color[1].name == 'orange'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-
-
 def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_radius == 0.025
     axes_geometry_source.shaft_radius = 0.1
@@ -788,17 +742,6 @@ def test_axes_geometry_source_output():
     assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
 
 
-def test_axes_geometry_source_rgb_scalars(axes_geometry_source):
-    assert axes_geometry_source.rgb_scalars is True
-    out = axes_geometry_source.output
-    assert all('axes_rgb' in block.array_names for block in out)
-
-    axes_geometry_source.rgb_scalars = False
-    assert axes_geometry_source.rgb_scalars is False
-    axes_geometry_source.update()
-    assert all('axes_rgb' not in block.array_names for block in out)
-
-
 def test_axes_geometry_source_repr(axes_geometry_source):
     repr_ = repr(axes_geometry_source)
     actual_lines = repr_.splitlines()[1:]
@@ -816,10 +759,6 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         '                               [0. 0. 1.]]',
         '  Symmetric:                  False',
         '  Normalized mode:            False',
-        '  RGB scalars:                True',
-        "  X color:                    ('tomato', 'tomato')",
-        "  Y color:                    ('seagreen', 'seagreen')",
-        "  Z color:                    ('blue', 'blue')",
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
