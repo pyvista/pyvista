@@ -3699,36 +3699,35 @@ class AxesGeometrySource:
         )
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
-        for part_type in _PartEnum:
-            for axis in _AxisEnum:
-                # Reset geometry
-                part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
+            # Reset geometry
+            part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
 
-                # Offset so axis bounds are [0, 1]
-                part.points[:, axis] += 0.5
+            # Offset so axis bounds are [0, 1]
+            part.points[:, axis] += 0.5
 
-                # Scale by length along axis, scale by radius off-axis
-                radius, length = (
-                    (shaft_radius, shaft_length)
-                    if part_type == _PartEnum.shaft
-                    else (tip_radius, tip_length)
-                )
-                diameter = radius * 2
-                scale = [diameter] * 3
-                scale[axis] = length[axis]
-                part.scale(scale, inplace=True)
+            # Scale by length along axis, scale by radius off-axis
+            radius, length = (
+                (shaft_radius, shaft_length)
+                if part_type == _PartEnum.shaft
+                else (tip_radius, tip_length)
+            )
+            diameter = radius * 2
+            scale = [diameter] * 3
+            scale[axis] = length[axis]
+            part.scale(scale, inplace=True)
 
-                if part_type == _PartEnum.tip:
-                    # Move tip to end of shaft
-                    part.points[:, axis] += shaft_length[axis]
+            if part_type == _PartEnum.tip:
+                # Move tip to end of shaft
+                part.points[:, axis] += shaft_length[axis]
 
-                if self.symmetric:
-                    # Flip and append to part
-                    origin = [0, 0, 0]
-                    normal = [0, 0, 0]
-                    normal[axis] = 1
-                    flipped = part.flip_normal(normal=normal, point=origin)
-                    part.append_polydata(flipped, inplace=True)
+            if self.symmetric:
+                # Flip and append to part
+                origin = [0, 0, 0]
+                normal = [0, 0, 0]
+                normal[axis] = 1
+                flipped = part.flip_normal(normal=normal, point=origin)
+                part.append_polydata(flipped, inplace=True)
 
     def _transform_shafts_and_tips(self):
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
