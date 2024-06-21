@@ -39,7 +39,7 @@ tests/.coverage
 tests/htmlcov/
 
 # doctest generated
-ant.vtk  # DataObject.user_dict
+ant.vtk
 
 # windows
 test.bat
