@@ -2920,7 +2920,7 @@ class AxesGeometrySource:
         normalized and will be true to scale, i.e. the actual lengths of the shafts and
         tips will match their specified value(s).
 
-    rgb_scalars : bool, default: True,
+    rgb_scalars : bool, default: True
         Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
         cell data of the output datasets. The arrays have rgb values specified by
         :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
@@ -3183,7 +3183,7 @@ class AxesGeometrySource:
 
             - The shaft length(s) of the axes will be true to scale, i.e. the actual
               lengths of the shafts will match the specified value(s).
-            - Setting this value will also modify :attr:`shaft_length` such that:
+            - Setting this value will also modify :attr:`total_length` such that:
 
                 :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
 
@@ -3193,7 +3193,7 @@ class AxesGeometrySource:
 
             - The shaft length(s) of the axes are scaled proportional to the
               :attr:`total_length`.
-            - Setting this value will also modify :attr:`shaft_length` such that:
+            - Setting this value will also modify :attr:`total_length` such that:
 
                 :attr:`shaft_length` + :attr:`tip_length` = 1.0
 
@@ -3300,8 +3300,8 @@ class AxesGeometrySource:
         """Normalize the shaft and tip lengths relative to the total length.
 
         If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths the range ``[0, 1]``, and are scaled proportional to
-        the :attr:`total_length`.
+        normalized lengths in range ``[0, 1]``. The shaft length plus tip length always
+        sum to one, and the axes are scaled proportional to the :attr:`total_length`.
 
         If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
         normalized and will be true to scale, i.e. the actual lengths of the shafts and
