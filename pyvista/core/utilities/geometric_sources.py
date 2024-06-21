@@ -3488,7 +3488,7 @@ class AxesGeometrySource:
         elif geometry == 'cone':
             return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
         elif geometry == 'pyramid':
-            return pyvista.Pyramid().extract_surface()
+            return pyvista.Pyramid().extract_geometry()
         elif geometry == 'cube':
             return pyvista.Cube()
         elif geometry == 'octahedron':
