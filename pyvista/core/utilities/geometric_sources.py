@@ -3638,6 +3638,7 @@ class AxesGeometrySource:
 
         Examples
         --------
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource()
         >>> axes_geometry_source.direction_vectors
@@ -3647,13 +3648,19 @@ class AxesGeometrySource:
 
         Orient the axes in space.
 
-        >>> vectors = pv.orientation_angles_to_matrix((10, 20, 30))
+        >>> vectors = np.array(
+        ...     [
+        ...         [0.36, 0.48, -0.80],
+        ...         [-0.80, 0.60, 0.00],
+        ...         [0.48, 0.64, 0.60],
+        ...     ]
+        ... )
 
         >>> axes_geometry_source.direction_vectors = vectors
         >>> axes_geometry_source.direction_vectors
-        array([[ 0.78410209, -0.49240388,  0.37778609],
-               [ 0.52128058,  0.85286853,  0.02969559],
-               [-0.33682409,  0.17364818,  0.92541658]])
+        array([[ 0.36,  0.48, -0.8 ],
+               [-0.8 ,  0.6 ,  0.  ],
+               [ 0.48,  0.64,  0.6 ]])
         """
         return self._direction_vectors
 

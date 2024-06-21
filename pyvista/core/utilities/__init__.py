@@ -14,7 +14,6 @@ from .arrays import field_array
 from .arrays import get_array
 from .arrays import get_array_association
 from .arrays import get_vtk_type
-from .arrays import orientation_angles_to_matrix
 from .arrays import parse_field_choice
 from .arrays import point_array
 from .arrays import raise_has_duplicates

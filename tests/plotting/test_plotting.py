@@ -4040,10 +4040,6 @@ def test_axes_geometry_shaft_type_tip_type(geometry_type):
     ).output.plot()
 
 
-def _direction_vectors():
-    return pv.Prop3D.orientation_angles_to_matrix((10, 20, 30))
-
-
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
