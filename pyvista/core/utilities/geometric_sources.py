@@ -3501,7 +3501,9 @@ class AxesGeometrySource:
                 container=AxesGeometrySource.GEOMETRY_TYPES,
                 name='Geometry',
             )
-            raise NotImplementedError(f"Geometry '{geometry}' is not implemented")
+            raise NotImplementedError(
+                f"Geometry '{geometry}' is not implemented"
+            )  # pragma: no cover
 
     @staticmethod
     def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
@@ -3517,7 +3519,7 @@ class AxesGeometrySource:
             part = geometry
         else:
             raise TypeError(
-                f"Geometry must be a string, or pyvista.DataSet. Got {type(geometry)}.",
+                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
             )
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
@@ -3541,12 +3543,9 @@ class AxesGeometrySource:
     @staticmethod
     def _make_axes_parts(
         geometry: str | pyvista.DataSet,
-        right_handed: bool = True,
     ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
-        if not right_handed:
-            part_z.points *= -1  # type: ignore[misc]
         return name, (part_x, part_y, part_z)
