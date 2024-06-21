@@ -2934,8 +2934,13 @@ class AxesGeometrySource:
     ):
         super().__init__()
         # Init datasets
-        self._shaft_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
-        self._tip_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+
+        # Store shaft/tip references in separate vars for convenience
+        self._shaft_datasets = (polys[0], polys[1], polys[2])
+        self._tip_datasets = (polys[3], polys[4], polys[5])
 
         # Set misc flag params
         self._normalized_mode = normalized_mode
@@ -3063,6 +3068,7 @@ class AxesGeometrySource:
 
     @_shaft_length.setter
     def _shaft_length(self, length: float | VectorLike[float]):
+        # Internal property used for input validation
         if self.normalized_mode:
             upper_range = 1.0
             name_suffix = ' with normalized mode'
@@ -3134,7 +3140,8 @@ class AxesGeometrySource:
         return self.__tip_length
 
     @_tip_length.setter
-    def _tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+    def _tip_length(self, length: float | VectorLike[float]):
+        # Internal property used for input validation
         if self.normalized_mode:
             upper_range = 1.0
             name_suffix = ' with normalized mode'
@@ -3409,7 +3416,7 @@ class AxesGeometrySource:
         return geometry_name
 
     def _reset_shaft_and_tip_geometry(self):
-        # Store
+        # Store local copies of properties for iterating
         shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
@@ -3471,9 +3478,7 @@ class AxesGeometrySource:
             Composite mesh with separate shaft and tip datasets.
         """
         self.update()
-        keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
-        values = (*self._shaft_datasets, *self._tip_datasets)
-        return pyvista.MultiBlock(dict(zip(keys, values)))
+        return self._output
 
     @staticmethod
     def _make_default_part(geometry: str) -> pyvista.PolyData:

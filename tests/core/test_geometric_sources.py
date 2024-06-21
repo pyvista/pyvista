@@ -733,10 +733,28 @@ def test_axes_geometry_source_normalized_mode_raises():
         )
 
 
-def test_axes_geometry_source_output():
-    out = pv.AxesGeometrySource().output
-    assert isinstance(out, pv.MultiBlock)
-    assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+def test_axes_geometry_source_update_output(axes_geometry_source):
+    out1 = axes_geometry_source.output
+    assert isinstance(out1, pv.MultiBlock)
+    assert out1.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+
+    # Test output object references are unchanged when updating
+    out2 = axes_geometry_source.output
+    assert out1 is out2
+
+    assert out1[0] is out2[0]
+    assert out1[1] is out2[1]
+    assert out1[2] is out2[2]
+    assert out1[3] is out2[3]
+    assert out1[4] is out2[4]
+    assert out1[5] is out2[5]
+
+    assert out1['x_shaft'] is out2['x_shaft']
+    assert out1['y_shaft'] is out2['y_shaft']
+    assert out1['z_shaft'] is out2['z_shaft']
+    assert out1['x_tip'] is out2['x_tip']
+    assert out1['y_tip'] is out2['y_tip']
+    assert out1['z_tip'] is out2['z_tip']
 
 
 def test_axes_geometry_source_repr(axes_geometry_source):
