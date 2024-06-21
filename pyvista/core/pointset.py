@@ -1210,8 +1210,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Returns
         -------
-        np.bool_
-            ``np.True_`` if all the faces of the :class:`pyvista.PolyData`
+        bool
+            ``True`` if all the faces of the :class:`pyvista.PolyData`
             are triangles and does not contain any vertices or lines.
 
         Examples
