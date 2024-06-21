@@ -1205,7 +1205,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             self.SetStrips(CellArray(strips))
 
     @property
-    def is_all_triangles(self) -> np.bool_:  # numpydoc ignore=RT01
+    def is_all_triangles(self) -> bool:  # numpydoc ignore=RT01
         """Return if all the faces of the :class:`pyvista.PolyData` are triangles.
 
         Returns
@@ -1222,26 +1222,26 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> import pyvista as pv
         >>> plane = pv.Plane()
         >>> plane.is_all_triangles
-        np.False_
+        False
 
         Show that the mesh from :func:`pyvista.Sphere` contains only
         triangles.
 
         >>> sphere = pv.Sphere()
         >>> sphere.is_all_triangles
-        np.True_
+        True
 
         """
         # Need to make sure there are only face cells and no lines/verts
         if not self.n_faces_strict or self.n_lines or self.n_verts:
-            return np.bool_(False)
+            return False
 
         # early return if not all triangular
         if self._connectivity_array.size % 3:
-            return np.bool_(False)
+            return False
 
         # next, check if there are three points per face
-        return (np.diff(self._offset_array) == 3).all()
+        return bool((np.diff(self._offset_array) == 3).all())
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
