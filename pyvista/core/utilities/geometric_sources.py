@@ -28,7 +28,6 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
-    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -2897,16 +2896,6 @@ class AxesGeometrySource:
     total_length : float | VectorLike[float], default 1.0,
         Total length of each axis (shaft plus tip).
 
-    position : VectorLike[float], default: (0.0, 0.0, 0.0)
-        Position of the axes in space.
-
-    direction_vectors : ArrayLike[float]
-        Direction vectors of the axes. By default, this is a 3x3 identity matrix.
-        The vectors are used as a 3x3 rotation matrix to orient the axes in space.
-
-    symmetric : bool, default: False
-        Mirror the axes such that they extend to negative values.
-
     normalized_mode : bool, default: False,
         Normalize the shaft and tip lengths relative to the total length.
 
@@ -2941,9 +2930,6 @@ class AxesGeometrySource:
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] | None = None,
         total_length: float | VectorLike[float] | None = None,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        direction_vectors: ArrayLike[float] | None = None,
-        symmetric: bool = False,
         normalized_mode: bool = False,
     ):
         super().__init__()
@@ -2953,16 +2939,12 @@ class AxesGeometrySource:
 
         # Set misc flag params
         self._normalized_mode = normalized_mode
-        self._symmetric = symmetric
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
         self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
-
-        self.position = position  # type: ignore[assignment]
-        self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
 
         # Check auto-length
         normalized_mode_set = normalized_mode
@@ -3029,28 +3011,9 @@ class AxesGeometrySource:
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
             f"  Total length:               {self.total_length}",
-            f"  Position:                   {self.position}",
-            f"  Direction vectors:          {_format_vectors(self.direction_vectors)}",
-            f"  Symmetric:                  {self.symmetric}",
             f"  Normalized mode:            {self.normalized_mode}",
         ]
         return '\n'.join(attr)
-
-    @property
-    def symmetric(self) -> bool:  # numpydoc ignore=RT01
-        """Mirror the axes such that they extend to negative values.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
-        >>> axes_geometry_source.output.plot()
-        """
-        return self._symmetric
-
-    @symmetric.setter
-    def symmetric(self, val: bool):  # numpydoc ignore=GL08
-        self._symmetric = val
 
     @property
     def _total_length(self) -> NumpyArray[float]:
@@ -3445,89 +3408,6 @@ class AxesGeometrySource:
     def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the axes in space.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.position
-        (0.0, 0.0, 0.0)
-        >>> axes_geometry_source.position = (1, 2, 3)
-        >>> axes_geometry_source.position
-        (1.0, 2.0, 3.0)
-        """
-        return tuple(self._position.tolist())
-
-    @position.setter
-    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self._position = _validation.validate_array3(value, dtype_out=float)
-
-    @property
-    def direction_vectors(self):  # numpydoc ignore=RT01
-        """Direction vectors of the axes.
-
-        The direction vectors are used as a 3x3 rotation matrix to orient the axes in
-        space. By default, the direction vectors align with the XYZ axes of the world
-        coordinates.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.direction_vectors
-        array([[1., 0., 0.],
-               [0., 1., 0.],
-               [0., 0., 1.]])
-
-        Orient the axes in space.
-
-        >>> vectors = np.array(
-        ...     [
-        ...         [0.36, 0.48, -0.80],
-        ...         [-0.80, 0.60, 0.00],
-        ...         [0.48, 0.64, 0.60],
-        ...     ]
-        ... )
-
-        >>> axes_geometry_source.direction_vectors = vectors
-        >>> axes_geometry_source.direction_vectors
-        array([[ 0.36,  0.48, -0.8 ],
-               [-0.8 ,  0.6 ,  0.  ],
-               [ 0.48,  0.64,  0.6 ]])
-        """
-        return self._direction_vectors
-
-    @direction_vectors.setter
-    def direction_vectors(self, vectors):  # numpydoc ignore=GL08
-        self._direction_vectors = _validation.validate_axes(vectors, name='direction_vectors')
-
-    @property
-    def transformation_matrix(self) -> NumpyArray[float]:
-        """Transformation matrix used to orient the axes in space.
-
-        Returns
-        -------
-        numpy.ndarray
-            4x4 transformation matrix.
-        """
-        scale_matrix = np.eye(4)
-        if self.normalized_mode:
-            # Scale proportional to axis length
-            scale_matrix[:3, :3] = np.diag(self.total_length)
-
-        position_matrix = np.eye(4)
-        position_matrix[:3, 3] = self.position
-
-        rotation_matrix = np.eye(4)
-        rotation_matrix[:3, :3] = self.direction_vectors
-
-        # Scale first, then rotate, then move
-        return position_matrix @ rotation_matrix @ scale_matrix
-
     def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
@@ -3537,11 +3417,14 @@ class AxesGeometrySource:
         return geometry_name
 
     def _reset_shaft_and_tip_geometry(self):
+        # Store
         shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
             self.tip_length,
         )
+        total_length = self.total_length
+        normalized_mode = self.normalized_mode
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
         for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
@@ -3566,22 +3449,13 @@ class AxesGeometrySource:
                 # Move tip to end of shaft
                 part.points[:, axis] += shaft_length[axis]
 
-            if self.symmetric:
-                # Flip and append to part
-                origin = [0, 0, 0]
-                normal = [0, 0, 0]
-                normal[axis] = 1
-                flipped = part.flip_normal(normal=normal, point=origin)
-                part.append_polydata(flipped, inplace=True)
-
-    def _transform_shafts_and_tips(self):
-        for dataset in [*self._shaft_datasets, *self._tip_datasets]:
-            dataset.transform(self.transformation_matrix, inplace=True)
+            if normalized_mode:
+                # Scale part proportional to total length
+                part.scale(total_length, inplace=True)
 
     def update(self):
         """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
-        self._transform_shafts_and_tips()
 
     @property
     def output(self) -> pyvista.MultiBlock:

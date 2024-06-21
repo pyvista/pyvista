@@ -3992,17 +3992,21 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-def test_axes_geometry_source_symmetric():
-    pv.AxesGeometrySource(symmetric=True).output.plot(zoom=1.8)
-
-
 @pytest.mark.parametrize('normalized_mode', [True, False])
 def test_axes_geometry_normalized_mode(normalized_mode):
+    total_length = 1.5
+    tip_length = 0.5
     mesh = pv.AxesGeometrySource(
         normalized_mode=normalized_mode,
-        tip_length=0.5,
-        total_length=1.5,
+        tip_length=tip_length,
+        total_length=total_length,
     ).output
+
+    _, x_max, _, y_max, _, z_max = mesh.bounds
+    assert x_max == total_length
+    assert y_max == total_length
+    assert z_max == total_length
+
     pl = pv.Plotter()
     pl.add_mesh(mesh)
     pl.enable_parallel_projection()
