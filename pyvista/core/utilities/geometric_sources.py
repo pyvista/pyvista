@@ -2825,26 +2825,39 @@ class _PartEnum(IntEnum):
 
 
 class AxesGeometrySource:
-    """Abstract base class for axes-like scene props.
+    """Create axes geometry source.
 
-    This class defines a common interface for manipulating the
-    geometry and properties of six Prop3D Actors representing
-    the axes (three for the shafts, three for the tips) and three
-    Caption Actors for the text labels (one for each axis).
+    Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
+    may be arbitrarily oriented in space, and the length, radius, and color of the axis
+    parts (shaft or tip) may be customized.
 
-    This class is designed to be a superclass for vtkAxesActor
-    but is abstracted to interface with similar axes-like
-    representations.
+    By default, the shafts are cylinders and the tips are cones, though other geometries
+    such as spheres and cubes are directly supported. The use of an arbitrary dataset
+     for the shafts and/or tips is also supported.
+
+    Unlike :class:`pyvista.AxesActor`, the output from this source is a
+    :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
+    addition, the generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    radius of 0.1 will truly have a radius of 0.1 (this is not the case for
+    :class:`pyvista.AxesActor`). This behavior can be controlled with
+    :attr:`normalized_mode`.
 
     Parameters
     ----------
-    shaft_type : str, default: 'cylinder',
-        Shaft type for all axes.
+    shaft_type : str | pyvista.DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be one of the following:
 
-        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
-        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
-        may also be specified. In this case, the dataset must be oriented such that it
-        "points" in the positive z direction.
+            - ``'cylinder'``
+            - ``'sphere'``
+            - ``'hemisphere'``
+            - ``'cone'``
+            - ``'pyramid'``
+            - ``'cube'``
+            - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
 
     shaft_radius : float, default: 0.025
         Radius of the axes shafts.
@@ -2852,8 +2865,20 @@ class AxesGeometrySource:
     shaft_length : float | VectorLike[float], default: 0.8
         Length of the shaft for each axis.
 
-    tip_type : str, default: 'cone'
-        Tip type for all axes.
+    tip_type : str | pyvista.DataSet, default: 'cone'
+        Cone type for all axes. Can be one of the following:
+
+            - ``'cylinder'``
+            - ``'sphere'``
+            - ``'hemisphere'``
+            - ``'cone'``
+            - ``'pyramid'``
+            - ``'cube'``
+            - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
 
     tip_radius : float, default: 0.1
         Radius of the axes tips.
@@ -2887,29 +2912,26 @@ class AxesGeometrySource:
 
     rgb_scalars : bool, default: True,
         Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
-        cell data of the axes datasets. The arrays have rgb values specified by
+        cell data of the output datasets. The arrays have rgb values specified by
         :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
 
-        Set this property to ``False`` to not add scalar arrays to the output and
-        remove coloring from the dataset.
+        Set this property to ``False`` to disable any coloring and remove the arrays
+        from the output.
 
     x_color : ColorLike | Sequence[ColorLike]
-        Color of the x-axis shaft and tip.
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
+        Color of the x-axis shaft and tip. Specify a single color or separate colors for
+        the shaft and tip. The axes are colored by adding a rgb scalar array to the
+        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
 
     y_color : ColorLike | Sequence[ColorLike]
-        Color of the y-axis shaft and tip.
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
+        Color of the y-axis shaft and tip. Specify a single color or separate colors for
+        the shaft and tip. The axes are colored by adding a rgb scalar array to the
+        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
 
     z_color : ColorLike | Sequence[ColorLike]
-        Color of the z-axis shaft and tip.
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
+        Color of the z-axis shaft and tip. Specify a single color or separate colors for
+        the shaft and tip. The axes are colored by adding a rgb scalar array to the
+        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
     GeometryTypes = Literal[
@@ -2925,10 +2947,10 @@ class AxesGeometrySource:
 
     def __init__(
         self,
-        shaft_type: GeometryTypes = 'cylinder',
+        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
         shaft_length: float | VectorLike[float] | None = None,
-        tip_type: GeometryTypes = 'cone',
+        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] | None = None,
         total_length: float | VectorLike[float] | None = None,
@@ -2965,9 +2987,9 @@ class AxesGeometrySource:
         self._symmetric = symmetric
 
         # Set geometry-dependent params
-        self.shaft_type = shaft_type
+        self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
-        self.tip_type = tip_type
+        self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
 
         self.position = position  # type: ignore[assignment]
@@ -3106,7 +3128,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.total_length = (1.0, 0.9, 0.5)
         >>> axes_geometry_source.total_length
         (1.0, 0.9, 0.5)
-
         """
         return tuple(self._total_length.tolist())
 
@@ -3177,7 +3198,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.shaft_length = (1.0, 0.9, 0.5)
         >>> axes_geometry_source.shaft_length
         (1.0, 0.9, 0.5)
-
         """
         return tuple(self._shaft_length.tolist())
 
@@ -3246,7 +3266,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.tip_length = (0.1, 0.4, 0.2)
         >>> axes_geometry_source.tip_length
         (0.1, 0.4, 0.2)
-
         """
         return tuple(self._tip_length.tolist())
 
@@ -3335,7 +3354,6 @@ class AxesGeometrySource:
         (1.0, 1.0, 1.0)
         >>> axes_geometry_source.tip_length
         (0.5, 0.5, 0.5)
-
         """
         return self._normalized_mode
 
@@ -3358,7 +3376,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.tip_radius = 0.2
         >>> axes_geometry_source.tip_radius
         0.2
-
         """
         return self._tip_radius
 
@@ -3382,7 +3399,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.shaft_radius = 0.05
         >>> axes_geometry_source.shaft_radius
         0.05
-
         """
         return self._shaft_radius
 
@@ -3422,7 +3438,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.shaft_type = pv.Superquadric()
         >>> axes_geometry_source.shaft_type
         'custom'
-
         """
         return self._shaft_type
 
@@ -3463,7 +3478,6 @@ class AxesGeometrySource:
         'custom'
 
         >>> axes_geometry_source.output.plot(cpos='xy')
-
         """
         return self._tip_type
 
@@ -3475,13 +3489,12 @@ class AxesGeometrySource:
     def rgb_scalars(self) -> bool:  # numpydoc ignore=RT01
         """Add rgb scalars to the axes.
 
-        The scalar array ``'axes_rgb'`` is added to the cell data of the axes datasets.
+        The scalar array ``'axes_rgb'`` is added to the cell data of the output.
         The arrays have rgb values specified by :attr:`x_color`, :attr:`y_color`, and
         :attr:`z_color`.
 
-        Set this property to ``False`` to not add scalar arrays to the output and
-        remove coloring from the dataset.
-
+        Set this property to ``False`` to disable any coloring and remove the arrays
+        from the output.
         """
         return self._rgb_scalars
 
@@ -3505,6 +3518,20 @@ class AxesGeometrySource:
         A single color or separate colors for the shaft and tip may be specified.
         The axes are colored by adding a rgb scalar array to the dataset.
         Has no effect if :attr:`rgb_scalars` is ``False``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.x_color
+        (Color(name='tomato', hex='#ff6347ff', opacity=255), Color(name='tomato', hex='#ff6347ff', opacity=255))
+
+        >>> axes_geometry_source.x_color = (
+        ...     (1.0, 1.0, 1.0),
+        ...     (0.0, 0.0, 0.0),
+        ... )
+        >>> axes_geometry_source.x_color
+        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
         """
         return self._get_axis_color(_AxisEnum.x)
 
@@ -3519,6 +3546,20 @@ class AxesGeometrySource:
         A single color or separate colors for the shaft and tip may be specified.
         The axes are colored by adding a rgb scalar array to the dataset.
         Has no effect if :attr:`rgb_scalars` is ``False``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.y_color
+        (Color(name='seagreen', hex='#2e8b57ff', opacity=255), Color(name='seagreen', hex='#2e8b57ff', opacity=255))
+
+        >>> axes_geometry_source.y_color = (
+        ...     (1.0, 1.0, 1.0),
+        ...     (0.0, 0.0, 0.0),
+        ... )
+        >>> axes_geometry_source.y_color
+        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
         """
         return self._get_axis_color(_AxisEnum.y)
 
@@ -3533,6 +3574,20 @@ class AxesGeometrySource:
         A single color or separate colors for the shaft and tip may be specified.
         The axes are colored by adding a rgb scalar array to the dataset.
         Has no effect if :attr:`rgb_scalars` is ``False``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.z_color
+        (Color(name='blue', hex='#0000ffff', opacity=255), Color(name='blue', hex='#0000ffff', opacity=255))
+
+        >>> axes_geometry_source.z_color = (
+        ...     (1.0, 1.0, 1.0),
+        ...     (0.0, 0.0, 0.0),
+        ... )
+        >>> axes_geometry_source.z_color
+        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
         """
         return self._get_axis_color(_AxisEnum.z)
 
@@ -3553,7 +3608,6 @@ class AxesGeometrySource:
         >>> axes_geometry_source.position = (1, 2, 3)
         >>> axes_geometry_source.position
         (1.0, 2.0, 3.0)
-
         """
         return tuple(self._position.tolist())
 
@@ -3565,14 +3619,12 @@ class AxesGeometrySource:
     def direction_vectors(self):  # numpydoc ignore=RT01
         """Direction vectors of the axes.
 
-        The direction vectors are used as a 3x3 rotation matrix to orient the
-        axes in space.
+        The direction vectors are used as a 3x3 rotation matrix to orient the axes in
+        space. By default, the direction vectors align with the XYZ axes of the world
+        coordinates.
 
         Examples
         --------
-        By default, the direction vectors align with the XYZ axes of the world
-        coordinates.
-
         >>> import pyvista as pv
         >>> axes_geometry_source = pv.AxesGeometrySource()
         >>> axes_geometry_source.direction_vectors
@@ -3591,7 +3643,6 @@ class AxesGeometrySource:
         array([[ 0.78410209, -0.49240388,  0.37778609],
                [ 0.52128058,  0.85286853,  0.02969559],
                [-0.33682409,  0.17364818,  0.92541658]])
-
         """
         return self._direction_vectors
 
@@ -3607,7 +3658,6 @@ class AxesGeometrySource:
         -------
         numpy.ndarray
             4x4 transformation matrix.
-
         """
         scale_matrix = np.eye(4)
         if self.normalized_mode:
@@ -3722,7 +3772,6 @@ class AxesGeometrySource:
         -------
         pyvista.MultiBlock
             Composite mesh with separate shaft and tip datasets.
-
         """
         self.update()
         keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
