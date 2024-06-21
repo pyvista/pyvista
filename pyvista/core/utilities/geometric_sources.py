@@ -2853,7 +2853,8 @@ class AxesGeometrySource:
     Parameters
     ----------
     shaft_type : str | pyvista.DataSet, default: 'cylinder'
-        Shaft type for all axes. Can be one of the following:
+        Shaft type for all axes. Recommended values are ``'cylinder'`` or ``'cube'``.
+        but can be any of the following:
 
             - ``'cylinder'``
             - ``'sphere'``
@@ -2874,7 +2875,7 @@ class AxesGeometrySource:
         Length of the shaft for each axis.
 
     tip_type : str | pyvista.DataSet, default: 'cone'
-        Cone type for all axes. Can be one of the following:
+        Tip type for all axes. Can be any of the following:
 
             - ``'cylinder'``
             - ``'sphere'``
@@ -2929,17 +2930,20 @@ class AxesGeometrySource:
     x_color : ColorLike | Sequence[ColorLike]
         Color of the x-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.x_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
 
     y_color : ColorLike | Sequence[ColorLike]
         Color of the y-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.y_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
 
     z_color : ColorLike | Sequence[ColorLike]
         Color of the z-axis shaft and tip. Specify a single color or separate colors for
         the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Has no effect if :attr:`rgb_scalars` is ``False``.
+        dataset. Defaults to :attr:`pyvista.global_theme.axes.z_color`.
+        Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
     GeometryTypes = Literal[
@@ -3042,7 +3046,7 @@ class AxesGeometrySource:
                     "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
                     "Set either `shaft_length` or `total_length`, but not both.",
                 )
-            # Values are valid, set properties with normalized mode enabled
+            # Values are valid, set properties with normalized mode disabled
             self.normalized_mode = False
             if shaft_length_set and not total_length_set:
                 self.shaft_length = shaft_length  # type: ignore[assignment]
@@ -3050,7 +3054,7 @@ class AxesGeometrySource:
                 self.total_length = total_length  # type: ignore[assignment]
 
     def __repr__(self):
-        """Representation of the axes actor."""
+        """Representation of the axes."""
 
         def _format_color(color: tuple[Color, Color]) -> tuple[str, str]:
             color1 = color[0].name if color[0].name else str(color[0].float_rgb)
@@ -3146,7 +3150,7 @@ class AxesGeometrySource:
             # Total length cannot be less than each tip length
             if np.any(self._total_length < self._tip_length):
                 raise ValueError(
-                    f"Total length {tuple(self._total_length)} cannot be less than the tip length {tuple(self._tip_length)} when normalized mode is disabled.",
+                    f"Total length {self.total_length} cannot be less than the tip length {self.tip_length} when normalized mode is disabled.",
                 )
             self._shaft_length = self._total_length - self._tip_length
 
