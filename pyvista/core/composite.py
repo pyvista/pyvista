@@ -22,8 +22,10 @@ import pyvista
 from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import NumpyArray
+
+if TYPE_CHECKING:
+    from ._typing_core import BoundsLike
+    from ._typing_core import NumpyArray
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -190,7 +192,7 @@ class MultiBlock(
         ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        (np.float64(-0.5), np.float64(2.5), np.float64(-0.5), np.float64(2.5), np.float64(-0.5), np.float64(0.5))
+        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
 
         """
         # apply reduction of min and max over each block
@@ -201,13 +203,11 @@ class MultiBlock(
             minima = np.array([0.0, 0.0, 0.0])
             maxima = np.array([0.0, 0.0, 0.0])
         else:
-            minima = np.minimum.reduce(all_bounds)[::2]
-            maxima = np.maximum.reduce(all_bounds)[1::2]
+            minima = np.minimum.reduce(all_bounds)[::2].tolist()
+            maxima = np.maximum.reduce(all_bounds)[1::2].tolist()
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
-
-        return cast(BoundsLike, tuple(the_bounds))
+        return (minima[0], maxima[0], minima[1], maxima[1], minima[2], maxima[2])
 
     @property
     def center(self) -> NumpyArray[float]:
