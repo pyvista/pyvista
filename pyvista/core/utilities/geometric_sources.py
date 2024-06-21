@@ -7,6 +7,7 @@ Also includes some pure-python helpers.
 from __future__ import annotations
 
 from enum import IntEnum
+import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
