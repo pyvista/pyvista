@@ -2994,14 +2994,6 @@ class AxesGeometrySource:
 
     def __repr__(self):
         """Representation of the axes."""
-
-        def _format_vectors(vectors: NumpyArray[float]):
-            blank_spaces = " " * 30
-            vectors_split = str(vectors).splitlines()
-            vectors_split[1] = f'{blank_spaces}{vectors_split[1]}'
-            vectors_split[2] = f'{blank_spaces}{vectors_split[2]}'
-            return '\n'.join(vectors_split)
-
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
             f"  Shaft type:                 '{self.shaft_type}'",
