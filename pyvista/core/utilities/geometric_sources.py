@@ -2842,7 +2842,7 @@ class AxesGeometrySource:
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
     such as spheres and cubes are directly supported. The use of an arbitrary dataset
-     for the shafts and/or tips is also supported.
+    for the shafts and/or tips is also supported.
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
