@@ -2874,7 +2874,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     def save(
         self,
-        filename: str | Path,
+        filename: Path | str,
         binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
