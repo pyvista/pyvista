@@ -344,7 +344,7 @@ def read_exodus(
         from vtk import vtkExodusIIReader
 
     reader = vtkExodusIIReader()
-    if pyvista.vtk_version_info < (9, 0, 0):
+    if pyvista.vtk_version_info < (9, 1, 0):  # pragma no cover
         reader.SetFileName(str(filename))
     else:
         reader.SetFileName(filename)
