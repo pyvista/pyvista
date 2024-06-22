@@ -6,6 +6,8 @@ from . import _vtk
 from .actor import Actor
 from .axes_actor import AxesActor
 
+a: float = []
+
 
 class Axes(_vtk.vtkAxes):
     """PyVista wrapper for the VTK Axes class.
