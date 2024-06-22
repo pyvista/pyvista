@@ -903,17 +903,6 @@ class Text3DSource(vtkVectorText):
         """Initialize source."""
         super().__init__()
 
-        # Create output filters to make text 3D
-        extrude = _vtk.vtkLinearExtrusionFilter()
-        extrude.SetInputConnection(self.GetOutputPort())
-        extrude.SetExtrusionTypeToNormalExtrusion()
-        extrude.SetVector(0, 0, 1)
-        self._extrude_filter = extrude
-
-        tri_filter = _vtk.vtkTriangleFilter()
-        tri_filter.SetInputConnection(extrude.GetOutputPort())
-        self._tri_filter = tri_filter
-
         self._output = pyvista.PolyData()
 
         # Set params
@@ -946,11 +935,6 @@ class Text3DSource(vtkVectorText):
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}',
                 )
-
-    def __del__(self):
-        """Delete filters."""
-        self._tri_filter = None
-        self._extrude_filter = None
 
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
@@ -1049,8 +1033,16 @@ class Text3DSource(vtkVectorText):
                 out = self.GetOutput()
             else:
                 # 3D case, apply filters
-                self._tri_filter.Update()
-                out = self._tri_filter.GetOutput()
+                # Create output filters to make text 3D
+                extrude = _vtk.vtkLinearExtrusionFilter()
+                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetExtrusionTypeToNormalExtrusion()
+                extrude.SetVector(0, 0, 1)
+
+                tri_filter = _vtk.vtkTriangleFilter()
+                tri_filter.SetInputConnection(extrude.GetOutputPort())
+                tri_filter.Update()
+                out = tri_filter.GetOutput()
 
             # Modify output object
             self._output.copy_from(out)
