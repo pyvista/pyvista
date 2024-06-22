@@ -100,7 +100,7 @@ class DataObject:
 
     def save(
         self,
-        filename: str | Path,
+        filename: Path | str,
         binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
@@ -108,7 +108,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str | os.PathLike
+        filename : str, pathlib.Path
             Filename of output file. Writer type is inferred from
             the extension of the filename.
 
