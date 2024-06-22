@@ -1360,7 +1360,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        vtk.vtkAnnotatedCubeActor
             Axes actor.
 
         Examples
@@ -1660,7 +1660,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkCubeAxesActor
+        pyvista.CubeAxesActor
             Bounds actor.
 
         Examples
@@ -1929,7 +1929,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        pyvista.CubeAxesActor
             Bounds actor.
 
         Examples
