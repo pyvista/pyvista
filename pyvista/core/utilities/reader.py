@@ -171,7 +171,7 @@ def get_reader(filename, force_ext=None):
 
     Parameters
     ----------
-    filename : str | os.PathLike
+    filename : str | Path
         The string path to the file to read.
 
     force_ext : str, optional
@@ -205,7 +205,7 @@ def get_reader(filename, force_ext=None):
     except KeyError:
         if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
-                pathlib.Path(f).suffix == '.dcm' for f in files
+                Path(f).suffix == '.dcm' for f in files
             ):
                 Reader = DICOMReader
             else:
@@ -276,7 +276,7 @@ class BaseReader:
 
     Parameters
     ----------
-    path : str | os.PathLike
+    path : str | Path
         Path of the file to read.
     """
 
@@ -372,7 +372,7 @@ class BaseReader:
         return self.__directory
 
     @path.setter
-    def path(self, path: str | pathlib.Path):  # numpydoc ignore=GL08
+    def path(self, path: str | Path):  # numpydoc ignore=GL08
         if Path(path).is_dir():
             self._set_directory(path)
         elif Path(path).is_file():
@@ -1504,7 +1504,7 @@ class MultiBlockPlot3DReader(BaseReader):
         """
         # files may be a list or a single filename
         if files:
-            if isinstance(files, (str, pathlib.Path)):
+            if isinstance(files, (str, Path)):
                 files = [files]
         files = [_process_filename(f) for f in files]
 
