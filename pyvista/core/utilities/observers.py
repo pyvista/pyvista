@@ -20,7 +20,7 @@ def set_error_output_file(filename):
 
     Parameters
     ----------
-    filename : str | os.PathLike
+    filename : str | Path
         Path to the file to write VTK errors to.
 
     Returns
