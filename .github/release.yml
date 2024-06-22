@@ -6,9 +6,9 @@ changelog:
       - ignore-for-release
     authors:
       - dependabot
+      - github-actions
       - pre-commit-ci
       - pyvista-bot
-      - github-actions
   categories:
     - title: Breaking Changes
       labels:
