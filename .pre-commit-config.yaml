@@ -59,9 +59,10 @@ repos:
             --warn-redundant-casts,
             --enable-error-code,
             ignore-without-code,
-            pyvista,  # Run mypy on entire project directory
+            pyvista,  # Run mypy on pyvista directory
           ]
         pass_filenames: false  # Do not run on individual modified files
+        always_run: true  # Need this to ensure mypy runs for config-only changes
         exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
           [
