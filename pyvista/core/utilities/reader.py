@@ -171,7 +171,7 @@ def get_reader(filename, force_ext=None):
 
     Parameters
     ----------
-    filename : str | Path
+    filename : str, Path
         The string path to the file to read.
 
     force_ext : str, optional
@@ -276,7 +276,7 @@ class BaseReader:
 
     Parameters
     ----------
-    path : str | Path
+    path : str, Path
         Path of the file to read.
     """
 

@@ -53,7 +53,7 @@ def get_ext(filename):
 
     Parameters
     ----------
-    filename : str | Path
+    filename : str, Path
         The filename from which to extract the extension.
 
     Returns
@@ -124,7 +124,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
 
     Parameters
     ----------
-    filename : str | Path
+    filename : str, Path
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
@@ -297,7 +297,7 @@ def read_exodus(
 
     Parameters
     ----------
-    filename : str | Path
+    filename : str, Path
         The path to the exodus file to read.
 
     animate_mode_shapes : bool, default: True
@@ -636,7 +636,7 @@ def _try_imageio_imread(filename):
 
     Parameters
     ----------
-    filename : str | Path
+    filename : str, Path
         Name of the file to read using ``imageio``.
 
     Returns
