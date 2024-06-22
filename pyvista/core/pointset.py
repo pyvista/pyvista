@@ -2882,7 +2882,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        filename : str | os.Pathlike
+        filename : Path | str
             Output file name. VTU and VTK extensions are supported.
 
         binary : bool, default: True
