@@ -3463,7 +3463,7 @@ class AxesGeometrySource:
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
         of the axes. The blocks are ordered by shafts first then tips, and in x-y-z order.
         Specifically, they are named as follows:
-        
+
             (``'x_shaft'``, ``'y_shaft'``, ``'z_shaft'``, ``'x_tip'``, ``'y_tip'``, ``'z_tip'``)
 
         The source is automatically updated by :meth:`update` prior to returning
