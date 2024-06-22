@@ -9,7 +9,6 @@ import enum
 from functools import wraps
 import importlib
 import os
-import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
