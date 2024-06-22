@@ -345,7 +345,10 @@ def read_exodus(
         from vtk import vtkExodusIIReader
 
     reader = vtkExodusIIReader()
-    reader.SetFileName(filename)
+    if pyvista.vtk_version_info() < (9, 0, 0):
+        reader.SetFileName(str(filename))
+    else:
+        reader.SetFileName(filename)
     reader.UpdateInformation()
     reader.SetAnimateModeShapes(animate_mode_shapes)
     reader.SetApplyDisplacements(apply_displacements)
