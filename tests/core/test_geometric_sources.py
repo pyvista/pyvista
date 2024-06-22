@@ -424,32 +424,6 @@ def test_box_source():
     assert algo.quads
 
 
-def test_axes_geometry_source_total_length_set_get(axes_geometry_source):
-    assert axes_geometry_source.total_length == (1, 1, 1)
-    new_length = (1.1, 2.2, 3.3)
-    axes_geometry_source.total_length = new_length
-    assert axes_geometry_source.total_length == new_length
-
-    match = 'Total length (0.1, 0.1, 0.1) cannot be less than the tip length (0.2, 0.2, 0.2) when normalized mode is disabled.'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        axes_geometry_source.total_length = 0.1
-
-
-def test_axes_geometry_source_total_length_init():
-    axes_geometry_source = pv.AxesGeometrySource(total_length=2)
-    assert axes_geometry_source.total_length == (2, 2, 2)
-
-
-def test_axes_geometry_source_total_length_bounds(axes_geometry_source):
-    x_len, y_len, z_len = 1.5, 2.5, 3.5
-    axes_geometry_source.total_length = x_len, y_len, z_len
-    actual_bounds = axes_geometry_source.output.bounds
-
-    tip_radius = 0.1  # default value
-    expected_bounds = (-tip_radius, x_len, -tip_radius, y_len, -tip_radius, z_len)
-    assert np.allclose(actual_bounds, expected_bounds)
-
-
 def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
     new_length = (0.1, 0.2, 0.3)
@@ -641,98 +615,6 @@ def test_axes_geometry_source_shaft_radius_init():
     assert axes_geometry_source.shaft_radius == 3
 
 
-@pytest.mark.parametrize(
-    'test_prop_other_prop',
-    [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')],
-)
-@pytest.mark.parametrize('decimals', list(range(8)))
-@pytest.mark.parametrize('normalized_mode', [True, False])
-def test_axes_geometry_source_normalized_mode(test_prop_other_prop, decimals, normalized_mode):
-    test_prop, other_prop = test_prop_other_prop
-
-    # Get default value
-    axes_geometry_source = pv.AxesGeometrySource()
-    other_prop_default = np.array(getattr(axes_geometry_source, other_prop))
-
-    # Initialize actor with a random length for test prop
-    random_length = np.round(np.random.default_rng().random(), decimals=decimals)
-    var_kwargs = {}
-    var_kwargs[test_prop] = random_length
-    axes_geometry_source = pv.AxesGeometrySource(normalized_mode=normalized_mode, **var_kwargs)
-
-    actual_test_prop = np.array(getattr(axes_geometry_source, test_prop))
-    actual_other_prop = np.array(getattr(axes_geometry_source, other_prop))
-
-    expected = np.array([random_length] * 3)
-    assert np.array_equal(actual_test_prop, expected)
-    if normalized_mode:
-        # Test lengths sum to 1
-        actual = actual_test_prop + actual_other_prop
-        expected = (1, 1, 1)
-        assert np.array_equal(actual, expected)
-    else:
-        # Test other length is unchanged
-        actual = actual_other_prop
-        expected = other_prop_default
-        assert np.array_equal(actual, expected)
-
-    # Test setting both does not raise error if they sum to one
-    _ = pv.AxesGeometrySource(shaft_length=random_length, tip_length=1 - random_length)
-    _ = pv.AxesGeometrySource(shaft_length=1 - random_length, tip_length=random_length)
-
-    # test enabling auto_length after object has been created
-    axes_geometry_source.normalized_mode = True
-    setattr(axes_geometry_source, test_prop, 0.9)
-    expected = (0.9, 0.9, 0.9)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    value_unchanged = (0.1, 0.1, 0.1)
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-    # test disabling auto_length after object has been created
-    axes_geometry_source.normalized_mode = False
-    setattr(axes_geometry_source, test_prop, 0.7)
-    expected = (0.7, 0.7, 0.7)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-
-def test_axes_geometry_source_normalized_mode_raises():
-    ## normalized_mode=True
-    # test no error when lengths sum to one
-    pv.AxesGeometrySource(shaft_length=0.8, tip_length=0.2, normalized_mode=True)
-    # test error raised otherwise
-    match = (
-        "Cannot set both `shaft_length` and `tip_length` with `normalized_mode` enabled'.\n"
-        "Set either `shaft_length` or `tip_length`, but not both."
-    )
-    with pytest.raises(ValueError, match=match):
-        pv.AxesGeometrySource(shaft_length=0.6, tip_length=0.6, normalized_mode=True)
-
-    ## normalized_mode=False
-    # test no error when lengths sum to total length
-    pv.AxesGeometrySource(shaft_length=0.9, tip_length=0.2, total_length=1.1, normalized_mode=False)
-    # test error raised otherwise
-    match = (
-        "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
-        "Set either `shaft_length` or `total_length`, but not both."
-    )
-    with pytest.raises(ValueError, match=match):
-        pv.AxesGeometrySource(
-            shaft_length=0.6,
-            tip_length=0.2,
-            total_length=1.1,
-            normalized_mode=False,
-        )
-
-
 def test_axes_geometry_source_update_output(axes_geometry_source):
     out1 = axes_geometry_source.output
     assert isinstance(out1, pv.MultiBlock)
@@ -767,8 +649,6 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         "  Tip type:                   'cone'",
         '  Tip radius:                 0.1',
         '  Tip length:                 (0.2, 0.2, 0.2)',
-        '  Total length:               (1.0, 1.0, 1.0)',
-        '  Normalized mode:            False',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines

@@ -2893,20 +2893,6 @@ class AxesGeometrySource:
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
 
-    total_length : float | VectorLike[float], default 1.0,
-        Total length of each axis (shaft plus tip).
-
-    normalized_mode : bool, default: False,
-        Normalize the shaft and tip lengths relative to the total length.
-
-        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths the range ``[0, 1]``, and are scaled proportional to
-        the :attr:`total_length`.
-
-        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
-        normalized and will be true to scale, i.e. the actual lengths of the shafts and
-        tips will match their specified value(s).
-
     """
 
     GeometryTypes = Literal[
@@ -2929,8 +2915,6 @@ class AxesGeometrySource:
         tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] | None = None,
-        total_length: float | VectorLike[float] | None = None,
-        normalized_mode: bool = False,
     ):
         super().__init__()
         # Init datasets
@@ -2942,60 +2926,14 @@ class AxesGeometrySource:
         self._shaft_datasets = (polys[0], polys[1], polys[2])
         self._tip_datasets = (polys[3], polys[4], polys[5])
 
-        # Set misc flag params
-        self._normalized_mode = normalized_mode
-
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
         self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
 
-        # Check auto-length
-        normalized_mode_set = normalized_mode
-        shaft_length_set = shaft_length is not None
-        tip_length_set = tip_length is not None
-        total_length_set = total_length is not None
-
-        self._shaft_length = 0.8 if shaft_length is None else shaft_length  # type: ignore[assignment]
-        self._tip_length = 0.2 if tip_length is None else tip_length  # type: ignore[assignment]
-        self._total_length = 1.0 if total_length is None else total_length  # type: ignore[assignment]
-
-        if normalized_mode_set:
-            # Disable flag temporarily and restore later
-            self.normalized_mode = False
-
-            lengths_sum_to_one = np.array_equal(self._shaft_length + self._tip_length, (1, 1, 1))
-            if shaft_length_set and tip_length_set and not lengths_sum_to_one:
-                raise ValueError(
-                    "Cannot set both `shaft_length` and `tip_length` with `normalized_mode` enabled'.\n"
-                    "Set either `shaft_length` or `tip_length`, but not both.",
-                )
-            # Values are valid, set properties with normalized mode enabled
-            self.normalized_mode = True
-            if shaft_length_set and not tip_length_set:
-                self.shaft_length = shaft_length  # type: ignore[assignment]
-            elif tip_length_set and not shaft_length_set:
-                self.tip_length = tip_length  # type: ignore[assignment]
-        else:
-            # Enable flag temporarily and restore later
-            self.normalized_mode = True
-
-            lengths_sum_to_total = np.array_equal(
-                self._shaft_length + self._tip_length,
-                self._total_length,
-            )
-            if shaft_length_set and total_length_set and not lengths_sum_to_total:
-                raise ValueError(
-                    "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
-                    "Set either `shaft_length` or `total_length`, but not both.",
-                )
-            # Values are valid, set properties with normalized mode disabled
-            self.normalized_mode = False
-            if shaft_length_set and not total_length_set:
-                self.shaft_length = shaft_length  # type: ignore[assignment]
-            elif total_length_set and not shaft_length_set:
-                self.total_length = total_length  # type: ignore[assignment]
+        self.shaft_length = 0.8 if shaft_length is None else shaft_length  # type: ignore[assignment]
+        self.tip_length = 0.2 if tip_length is None else tip_length  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes."""
@@ -3007,105 +2945,12 @@ class AxesGeometrySource:
             f"  Tip type:                   '{self.tip_type}'",
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
-            f"  Total length:               {self.total_length}",
-            f"  Normalized mode:            {self.normalized_mode}",
         ]
         return '\n'.join(attr)
 
     @property
-    def _total_length(self) -> NumpyArray[float]:
-        return self.__total_length
-
-    @_total_length.setter
-    def _total_length(self, length: float | VectorLike[float]):
-        self.__total_length: NumpyArray[float] = _validation.validate_array3(
-            length,
-            broadcast=True,
-            must_be_in_range=[0.0, np.inf],
-            name='Total length',
-        )
-
-    @property
-    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Total length of each axis (shaft plus tip).
-
-        When :attr:`normalized_mode` is ``False``, setting this value will also modify
-        :attr:`shaft_length` such that:
-
-            :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
-
-        Values must be non-negative.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.total_length
-        (1.0, 1.0, 1.0)
-        >>> axes_geometry_source.total_length = 1.2
-        >>> axes_geometry_source.total_length
-        (1.2, 1.2, 1.2)
-        >>> axes_geometry_source.total_length = (1.0, 0.9, 0.5)
-        >>> axes_geometry_source.total_length
-        (1.0, 0.9, 0.5)
-        """
-        return tuple(self._total_length.tolist())
-
-    @total_length.setter
-    def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._total_length = length  # type: ignore[assignment]
-        if not self.normalized_mode:
-            # Total length cannot be less than each tip length
-            if np.any(self._total_length < self._tip_length):
-                raise ValueError(
-                    f"Total length {self.total_length} cannot be less than the tip length {self.tip_length} when normalized mode is disabled.",
-                )
-            self._shaft_length = self._total_length - self._tip_length
-
-    @property
-    def _shaft_length(self) -> NumpyArray[float]:
-        return self.__shaft_length
-
-    @_shaft_length.setter
-    def _shaft_length(self, length: float | VectorLike[float]):
-        # Internal property used for input validation
-        if self.normalized_mode:
-            upper_range = 1.0
-            name_suffix = ' with normalized mode'
-        else:
-            upper_range = np.inf
-            name_suffix = ''
-
-        self.__shaft_length: NumpyArray[float] = _validation.validate_array3(
-            length,
-            broadcast=True,
-            must_be_in_range=[0.0, upper_range],
-            name=f"Shaft length{name_suffix}",
-        )
-
-    @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the shaft for each axis.
-
-        When :attr:`normalized_mode` is ``False``:
-
-            - The shaft length(s) of the axes will be true to scale, i.e. the actual
-              lengths of the shafts will match the specified value(s).
-            - Setting this value will also modify :attr:`total_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
-
-            - Values must be non-negative.
-
-        When :attr:`normalized_mode` is ``True``:
-
-            - The shaft length(s) of the axes are scaled proportional to the
-              :attr:`total_length`.
-            - Setting this value will also modify :attr:`total_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = 1.0
-
-            - Values must be in range ``[0, 1]``.
 
         Examples
         --------
@@ -3124,57 +2969,16 @@ class AxesGeometrySource:
 
     @shaft_length.setter
     def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._shaft_length = length  # type: ignore[assignment]
-
-        if self.normalized_mode:
-            # Calc 1-length and round to nearest 1e-8
-            def calc_one_minus(vector):
-                return tuple(round(1.0 - x, 8) for x in vector)
-
-            self._tip_length = calc_one_minus(self._shaft_length)
-        else:
-            self._total_length = self._shaft_length + self._tip_length
-
-    @property
-    def _tip_length(self) -> NumpyArray[float]:
-        return self.__tip_length
-
-    @_tip_length.setter
-    def _tip_length(self, length: float | VectorLike[float]):
-        # Internal property used for input validation
-        if self.normalized_mode:
-            upper_range = 1.0
-            name_suffix = ' with normalized mode'
-        else:
-            upper_range = np.inf
-            name_suffix = ''
-
-        self.__tip_length: NumpyArray[float] = _validation.validate_array3(
+        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
-            must_be_in_range=[0.0, upper_range],
-            name=f"Tip length{name_suffix}",
+            must_be_in_range=[0.0, np.inf],
+            name="Shaft length",
         )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the tip for each axis.
-
-        When :attr:`normalized_mode` is ``False``:
-
-            - The tip length(s) of the axes will be true to scale, i.e. the actual
-              lengths of the tips will match the specified value(s).
-            - Values must be non-negative.
-
-        When :attr:`normalized_mode` is ``True``:
-
-            - The tip length(s) of the axes are scaled proportional to the
-              :attr:`total_length`.
-            - Setting this value will also modify :attr:`shaft_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = 1.0
-
-            - Values must be in range ``[0, 1]``.
 
         Examples
         --------
@@ -3193,95 +2997,12 @@ class AxesGeometrySource:
 
     @tip_length.setter
     def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._tip_length = length  # type: ignore[assignment]
-
-        if self.normalized_mode:
-            # Calc 1-length and round to nearest 1e-8
-            def calc_one_minus(vector):
-                return tuple(round(1.0 - x, 8) for x in vector)
-
-            self._shaft_length = calc_one_minus(self._tip_length)
-        else:
-            self._total_length = self._shaft_length + self._tip_length
-
-    @property
-    def normalized_mode(self) -> bool:  # numpydoc ignore=RT01
-        """Normalize the shaft and tip lengths relative to the total length.
-
-        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths in range ``[0, 1]``. The shaft length plus tip length always
-        sum to one, and the axes are scaled proportional to the :attr:`total_length`.
-
-        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
-        normalized and will be true to scale, i.e. the actual lengths of the shafts and
-        tips will match their specified value(s).
-
-        Examples
-        --------
-        Create an axes geometry source with a specific shaft length. The tip lengths are
-        automatically adjusted so that the lengths for each axis sum to 1.0.
-
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     shaft_length=0.7, normalized_mode=True
-        ... )
-        >>> axes_geometry_source.shaft_length
-        (0.7, 0.7, 0.7)
-        >>> axes_geometry_source.tip_length
-        (0.3, 0.3, 0.3)
-
-        Similarly, the shaft lengths are updated when setting the tip lengths.
-
-        >>> axes_geometry_source.tip_length = (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.tip_length
-        (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.shaft_length
-        (0.9, 0.8, 0.6)
-
-        The total length can be adjusted independently without impacting the shaft
-        or tip lengths.
-
-        >>> axes_geometry_source.total_length = (1.2, 1.4, 1.6)
-        >>> axes_geometry_source.total_length
-        (1.2, 1.4, 1.6)
-        >>> axes_geometry_source.tip_length
-        (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.shaft_length
-        (0.9, 0.8, 0.6)
-
-        When ``normalized_mode`` is disabled, the shaft and tip lengths represent actual
-        lengths.
-
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     shaft_length=2.0, tip_length=0.5, normalized_mode=False
-        ... )
-        >>> axes_geometry_source.shaft_length
-        (2.0, 2.0, 2.0)
-        >>> axes_geometry_source.tip_length
-        (0.5, 0.5, 0.5)
-
-        The total length is automatically updated as the sum of the shaft and
-        tip lengths.
-
-        >>> axes_geometry_source.total_length
-        (2.5, 2.5, 2.5)
-
-        If the total length is modified, the shaft length is also updated by
-        subtracting the tip length from the total length.
-
-        >>> axes_geometry_source.total_length = 1.5
-        >>> axes_geometry_source.total_length
-        (1.5, 1.5, 1.5)
-        >>> axes_geometry_source.shaft_length
-        (1.0, 1.0, 1.0)
-        >>> axes_geometry_source.tip_length
-        (0.5, 0.5, 0.5)
-        """
-        return self._normalized_mode
-
-    @normalized_mode.setter
-    def normalized_mode(self, value: bool):  # numpydoc ignore=GL08
-        self._normalized_mode = bool(value)
+        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Tip length",
+        )
 
     @property
     def tip_radius(self) -> float:  # numpydoc ignore=RT01
@@ -3422,8 +3143,6 @@ class AxesGeometrySource:
             self.tip_radius,
             self.tip_length,
         )
-        total_length = self.total_length
-        normalized_mode = self.normalized_mode
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
         for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
@@ -3447,10 +3166,6 @@ class AxesGeometrySource:
             if part_type == _PartEnum.tip:
                 # Move tip to end of shaft
                 part.points[:, axis] += shaft_length[axis]
-
-            if normalized_mode:
-                # Scale part proportional to total length
-                part.scale(total_length, inplace=True)
 
     def update(self):
         """Update the output of the source."""
