@@ -2,6 +2,8 @@
 PyVista
 #######
 
+trivial change
+
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
 
 .. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
