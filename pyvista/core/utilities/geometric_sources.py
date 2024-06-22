@@ -2833,34 +2833,30 @@ class _PartEnum(IntEnum):
 class AxesGeometrySource:
     """Create axes geometry source.
 
-    Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
-    may be arbitrarily oriented in space, and the length and radius of the axis
-    parts (shaft or tip) may be customized.
+    Source for generating fully 3-dimensional axes shaft and tip geometry.
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
-    such as spheres and cubes are directly supported. The use of an arbitrary dataset
+    such as spheres and cubes are also supported. The use of an arbitrary dataset
     for the shafts and/or tips is also supported.
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
-    :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
-    addition, the generated axes are "true-to-scale" by default, i.e. a  shaft with a
-    radius of 0.1 will truly have a radius of 0.1 (this is not the case for
-    :class:`pyvista.AxesActor`). This behavior can be controlled with
-    :attr:`normalized_mode`.
+    :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
+    The generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
+    arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
 
     Parameters
     ----------
     shaft_type : str | pyvista.DataSet, default: 'cylinder'
-        Shaft type for all axes. Recommended values are ``'cylinder'`` or ``'cube'``.
-        but can be any of the following:
+        Shaft type for all axes. Can be any of the following:
 
-            - ``'cylinder'``
-            - ``'sphere'``
-            - ``'hemisphere'``
-            - ``'cone'``
-            - ``'pyramid'``
-            - ``'cube'``
-            - ``'octahedron'``
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
 
         Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
         specified. In this case, the dataset must be oriented such that it "points" in
@@ -2875,13 +2871,13 @@ class AxesGeometrySource:
     tip_type : str | pyvista.DataSet, default: 'cone'
         Tip type for all axes. Can be any of the following:
 
-            - ``'cylinder'``
-            - ``'sphere'``
-            - ``'hemisphere'``
-            - ``'cone'``
-            - ``'pyramid'``
-            - ``'cube'``
-            - ``'octahedron'``
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
 
         Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
         specified. In this case, the dataset must be oriented such that it "points" in
@@ -2911,10 +2907,10 @@ class AxesGeometrySource:
         *,
         shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
-        shaft_length: float | VectorLike[float] | None = None,
+        shaft_length: float | VectorLike[float] = 0.8,
         tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
-        tip_length: float | VectorLike[float] | None = None,
+        tip_length: float | VectorLike[float] = 0.2,
     ):
         super().__init__()
         # Init datasets
@@ -2932,8 +2928,8 @@ class AxesGeometrySource:
         self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
 
-        self.shaft_length = 0.8 if shaft_length is None else shaft_length  # type: ignore[assignment]
-        self.tip_length = 0.2 if tip_length is None else tip_length  # type: ignore[assignment]
+        self.shaft_length = shaft_length  # type: ignore[assignment]
+        self.tip_length = tip_length  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes."""
@@ -2951,6 +2947,8 @@ class AxesGeometrySource:
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the shaft for each axis.
+
+        Value must be non-negative.
 
         Examples
         --------
@@ -2979,6 +2977,8 @@ class AxesGeometrySource:
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the tip for each axis.
+
+        Value must be non-negative.
 
         Examples
         --------
