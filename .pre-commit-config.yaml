@@ -52,6 +52,7 @@ repos:
       - id: mypy
         args:
           [
+            --strict,
             --disallow-any-generics,
             --pretty,
             --show-error-context,
