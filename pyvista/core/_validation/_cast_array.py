@@ -122,7 +122,7 @@ def _cast_to_numpy(
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+        VisibleDeprecationWarning = np.VisibleDeprecationWarning  # type: ignore[attr-defined]
 
     try:
         out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)

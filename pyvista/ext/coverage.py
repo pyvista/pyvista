@@ -39,12 +39,12 @@ logger = logging.getLogger(__name__)
 
 
 # utility
-def write_header(f: IO, text: str, char: str = '-') -> None:
+def write_header(f: IO[Any], text: str, char: str = '-') -> None:
     f.write(text + '\n')
     f.write(char * len(text) + '\n')
 
 
-def compile_regex_list(name: str, exps: str) -> list[Pattern]:
+def compile_regex_list(name: str, exps: str) -> list[Pattern[Any]]:
     lst = []
     for exp in exps:
         try:
@@ -82,14 +82,14 @@ class CoverageBuilder(Builder):
             pattern = path.join(self.srcdir, pattern)  # noqa: PTH118
             self.c_sourcefiles.extend(glob.glob(pattern))  # noqa: PTH207
 
-        self.c_regexes: list[tuple[str, Pattern]] = []
+        self.c_regexes: list[tuple[str, Pattern[Any]]] = []
         for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
-        self.c_ignorexps: dict[str, list[Pattern]] = {}
+        self.c_ignorexps: dict[str, list[Pattern[Any]]] = {}
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
