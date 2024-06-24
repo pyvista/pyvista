@@ -1645,7 +1645,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        (np.float64(-0.5), np.float64(0.5), np.float64(-0.5), np.float64(0.5), np.float64(-0.5), np.float64(0.5))
+        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
         return self.renderer.bounds

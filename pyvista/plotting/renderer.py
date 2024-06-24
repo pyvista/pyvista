@@ -476,7 +476,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds.tolist()))
 
     @property
     def length(self):  # numpydoc ignore=RT01
