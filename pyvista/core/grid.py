@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 import pathlib
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
 from typing import cast
@@ -11,7 +12,9 @@ from typing import cast
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -269,10 +272,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         # Converting to tuple needed to be consistent type across numpy version
         # Remove when support is dropped for numpy 1.x
         # We also know this is 3-length so make it so in typing
-        return cast(
-            tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]],
-            tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij')),
-        )
+        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        # Python 3.8 does not allow subscripting tuple, but only used for type checking
+        if TYPE_CHECKING:
+            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+        return out
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
