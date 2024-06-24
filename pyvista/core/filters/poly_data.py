@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Sequence
 import warnings
 
 import numpy as np
@@ -3852,4 +3852,33 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
         _update_alg(alg, progress_bar, 'Triangulating Contours')
+        return _get_output(alg)
+
+    def protein_ribbon(self, progress_bar=False):
+        """Generate protein ribbon.
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Generated protein ribbon.
+
+        Examples
+        --------
+        Generate protein ribbon.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> tgqp = examples.download_3gqp()
+        >>> ribbon = tgqp.protein_ribbon()
+        >>> ribbon.plot()
+
+        """
+        alg = _vtk.vtkRibbonFilter()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)

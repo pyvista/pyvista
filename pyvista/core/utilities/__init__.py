@@ -1,6 +1,6 @@
 """Utilities routines."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 import contextlib
@@ -84,6 +84,7 @@ from .geometric_objects import Tube
 from .geometric_objects import Wavelet
 from .geometric_objects import translate
 from .geometric_sources import ArrowSource
+from .geometric_sources import AxesGeometrySource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
 from .geometric_sources import CubeSource
