@@ -973,12 +973,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self):  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int, int]:  # numpydoc ignore=RT01
         """Return the shape of the plotter.
 
         Returns
         -------
-        tuple[numpy.int32, numpy.int32]
+        tuple[int, int]
             Shape of the plotter.
 
         Examples
@@ -988,10 +988,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
-        (np.int64(2), np.int64(2))
+        (2, 2)
 
         """
-        return self.renderers._shape
+        return self.renderers.shape
 
     @property
     def renderer(self):  # numpydoc ignore=RT01
