@@ -3992,6 +3992,19 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
