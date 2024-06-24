@@ -6457,7 +6457,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[tuple[numpy.int64, numpy.int64]]
+        list[tuple[int, int]]
             A list with the subplot coordinates of the actor.
 
         Examples
@@ -6473,13 +6473,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.subplot(1, 1)
         >>> _ = plotter.add_mesh(pv.Cone(), name='cone')
         >>> plotter.where_is('box')
-        [(np.int64(0), np.int64(0)), (np.int64(1), np.int64(0))]
+        [(0, 0), (1, 0)]
 
         >>> plotter.show()
 
         """
         return [
-            tuple(self.renderers.index_to_loc(index))
+            tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors
         ]
