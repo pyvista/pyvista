@@ -490,12 +490,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
         -------
-        list
+        tuple[float, float, float]
             Cartesian coordinates of the center.
 
         """
@@ -503,7 +503,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x = (bounds[1] + bounds[0]) / 2
         y = (bounds[3] + bounds[2]) / 2
         z = (bounds[5] + bounds[4]) / 2
-        return [x, y, z]
+        return x, y, z
 
     @property
     def background_color(self):  # numpydoc ignore=RT01

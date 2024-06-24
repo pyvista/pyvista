@@ -1656,7 +1656,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the active renderer.
 
         Returns
@@ -1670,7 +1670,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.center
-        [np.float64(0.0), np.float64(0.0), np.float64(0.0)]
+        (0.0, 0.0, 0.0)
 
         """
         return self.renderer.center

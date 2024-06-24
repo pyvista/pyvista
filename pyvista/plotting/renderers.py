@@ -312,7 +312,7 @@ class Renderers:
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray or numpy.int64
             2D location on the plotting grid.
         """
         if not isinstance(index, (int, np.integer)):
