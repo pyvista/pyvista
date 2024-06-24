@@ -5461,7 +5461,7 @@ class DataSetFilters:
         values other than ``0`` are included in the output.
 
         >>> extracted.get_data_range()
-        (0.0, 81.0)
+        (np.float64(0.0), np.float64(81.0))
         >>> extracted.plot()
 
         Set ``include_cells=False`` to only extract points. The output scalars now
@@ -5469,7 +5469,7 @@ class DataSetFilters:
 
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
-        (0.0, 0.0)
+        (np.float64(0.0), np.float64(0.0))
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
         Use ``ranges`` to extract values from a grid's point data in range.
@@ -7253,7 +7253,7 @@ class DataSetFilters:
         Show range of labels
 
         >>> image_labels.get_data_range()
-        (0, 29)
+        (np.uint8(0), np.uint8(29))
 
         Find 'gaps' in the labels
 
@@ -7270,7 +7270,7 @@ class DataSetFilters:
         Show range of packed labels
 
         >>> packed_labels.get_data_range()
-        (0, 25)
+        (np.uint8(0), np.uint8(25))
 
         """
         # Set a input scalars
