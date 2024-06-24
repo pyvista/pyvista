@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from functools import wraps
 import pathlib
-from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
+from typing import cast
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -20,9 +21,6 @@ from .filters import _get_output
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -270,7 +268,11 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         """
         # Converting to tuple needed to be consistent type across numpy version
         # Remove when support is dropped for numpy 1.x
-        return tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        # We also know this is 3-length so make it so in typing
+        return cast(
+            tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]],
+            tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij')),
+        )
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
