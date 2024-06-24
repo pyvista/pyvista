@@ -336,15 +336,15 @@ class Renderers:
         return self._renderers[self._active_index]
 
     @property
-    def shape(self) -> tuple[int, int]:  # numpydoc ignore=RT01
+    def shape(self):  # numpydoc ignore=RT01
         """Return the shape of the renderers.
 
         Returns
         -------
-        tuple[int, int]
+        tuple
             Shape of the renderers.
         """
-        return tuple(s.item() for s in self._shape)
+        return self._shape
 
     def set_active_renderer(self, index_row, index_column=None):
         """Set the index of the active renderer.

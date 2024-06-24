@@ -547,14 +547,3 @@ def test_add_ruler_scale():
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
-
-
-def test_plotter_shape():
-    pl = pv.Plotter()
-    assert isinstance(pl.shape, tuple)
-    assert pl.shape == (1, 1)
-    assert isinstance(pl.shape[0], int)
-
-    pl = pv.Plotter(shape=(1, 2))
-    assert isinstance(pl.shape, tuple)
-    assert pl.shape == (1, 2)
