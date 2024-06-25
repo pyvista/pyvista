@@ -16,9 +16,8 @@ from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
-
-from .colors import _validate_color_sequence
-from .text3d_follower import Text3DFollower
+from pyvista.plotting.colors import _validate_color_sequence
+from pyvista.plotting.text import TextLabel
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
@@ -34,10 +33,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         z_label=None,
         labels=None,
         label_color='white',
-        include_labels=True,
+        show_labels=True,
         label_position=1.1,
-        label_size=0.1,
-        label_border=True,
+        label_size=50,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -49,7 +47,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         self._shaft_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
         self._tip_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
-        actors = (*self._shaft_actors, *self._tip_actors)
+        self._label_actors = (TextLabel(), TextLabel(), TextLabel())
+        actors = (*self._shaft_actors, *self._tip_actors, *self._label_actors)
         [self.AddPart(actor) for actor in actors]
 
         if x_color is None:
@@ -75,14 +74,17 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._is_init = False
 
         # Init label datasets and actors
+        for actor in self._label_actors:
+            prop = actor.prop
+            prop.bold = True
+            prop.italic = True
+            prop.enable_shadow()
+            prop.justification_horizontal = 'center'
+            prop.justification_vertical = 'center'
 
-        self._label_actors = (Text3DFollower(), Text3DFollower(),Text3DFollower())
-
-        # NOTE: Adding the followers to the assembly does *not* work
-        # Instead, the followers must be added to a plot separately
-        # self.AddPart(self._x_follower)
-        # self.AddPart(self._y_follower)
-        # self.AddPart(self._z_follower)
+        self.AddPart(self._label_actors[0])
+        self.AddPart(self._label_actors[1])
+        self.AddPart(self._label_actors[2])
 
         # dataset = self.output
         # mapper = AxesAssembly._create_rgb_mapper(dataset)
@@ -102,7 +104,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             if z_label is not None:
                 raise ValueError(msg.format('z_label'))
             self.labels = labels
-        self.include_labels = include_labels
+        self.show_labels = show_labels
         self.label_color = label_color
         self.label_size = label_size
         self.label_position = label_position
@@ -284,11 +286,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[0].string
+        return self._label_actors[0].input
 
     @x_label.setter
     def x_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[0].string = label
+        self._label_actors[0].input = label
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
@@ -303,11 +305,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[1].string
+        return self._label_actors[1].input
 
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[1].string = label
+        self._label_actors[1].input = label
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
@@ -322,20 +324,23 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[2].string
+        return self._label_actors[2].input
 
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[2].string = label
+        self._label_actors[2].input = label
 
     @property
-    def include_labels(self) -> bool:  # numpydoc ignore=RT01
+    def show_labels(self) -> bool:  # numpydoc ignore=RT01
         """Enable or disable the text labels for the axes."""
-        return self._include_labels
+        return self._show_labels
 
-    @include_labels.setter
-    def include_labels(self, value: bool):  # numpydoc ignore=GL08
-        self._include_labels = value
+    @show_labels.setter
+    def show_labels(self, value: bool):  # numpydoc ignore=GL08
+        self._show_labels = value
+        self._label_actors[0].SetVisibility(value)
+        self._label_actors[1].SetVisibility(value)
+        self._label_actors[2].SetVisibility(value)
 
     @property
     def label_size(self):
@@ -343,12 +348,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @label_size.setter
     def label_size(self, size: float):
-        self._label_size = _validation.validate_number(size)
-        # Scale text height proportional to norm of axes lengths
-        height = np.linalg.norm(self.total_length) * size
-        self._label_actors[0].height = height
-        self._label_actors[1].height = height
-        self._label_actors[2].height = height
+        self._label_actors[0].size = size
+        self._label_actors[1].size = size
+        self._label_actors[2].size = size
         # x_label = pyvista.Text3D(self.x_label, height=true_size, depth=0.0)
         # y_label = pyvista.Text3D(self.y_label, height=true_size, depth=0.0)
         # z_label = pyvista.Text3D(self.z_label, height=true_size, depth=0.0)
@@ -646,14 +648,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             rgb=True,
         )
         return mapper
-
-    @staticmethod
-    def _create_label_follower(dataset, position=(0, 0, 0)):
-        mapper = AxesAssembly._create_rgb_mapper(dataset)
-        follower = Text3DFollower(mapper=mapper)
-        follower.position = position
-        follower.prop.lighting = False
-        return follower
 
 
 def _set_default(val, default):

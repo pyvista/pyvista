@@ -911,11 +911,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_label=None,
         y_label=None,
         z_label=None,
-        label_color='white',
+        label_color='black',
         label_position=1.1,
-        label_size=0.1,
+        label_size=50,
         show_labels=True,
-        label_border=True,
         x_color=None,
         y_color=None,
         z_color=None,
@@ -1074,8 +1073,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             label_color=label_color,
             label_position=label_position,
             label_size=label_size,
-            include_labels=True,
-            label_border=label_border,
+            show_labels=show_labels,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
@@ -1085,60 +1083,60 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
         self.add_actor(axes_assembly)
 
-        if show_labels:
-            self.add_actor(axes_assembly._label_actors[0])
-            self.add_actor(axes_assembly._label_actors[1])
-            self.add_actor(axes_assembly._label_actors[2])
-            # # Scale label position proportional to length of each axis
-            # total_length = np.array(axes_assembly.total_length)
-            # label_position = _validation.validate_array3(label_position, broadcast=True)
-            # position_array = (
-            #     np.diag(
-            #         label_position * total_length,
-            #     )
-            #     + position
-            # )
-            # x_label_position, y_label_position, z_label_position = position_array
-            #
-            # # Scale label size proportional to norm of axes lengths
-            # size = np.linalg.norm(total_length) * label_size
-            #
-            # x_label_color, y_label_color, z_label_color = _validate_color_sequence(
-            #     label_color,
-            #     n_colors=3,
-            # )
+        # if show_labels:
+        #     self.add_actor(axes_assembly._label_actors[0])
+        #     self.add_actor(axes_assembly._label_actors[1])
+        #     self.add_actor(axes_assembly._label_actors[2])
+        # # Scale label position proportional to length of each axis
+        # total_length = np.array(axes_assembly.total_length)
+        # label_position = _validation.validate_array3(label_position, broadcast=True)
+        # position_array = (
+        #     np.diag(
+        #         label_position * total_length,
+        #     )
+        #     + position
+        # )
+        # x_label_position, y_label_position, z_label_position = position_array
+        #
+        # # Scale label size proportional to norm of axes lengths
+        # size = np.linalg.norm(total_length) * label_size
+        #
+        # x_label_color, y_label_color, z_label_color = _validate_color_sequence(
+        #     label_color,
+        #     n_colors=3,
+        # )
 
-            # common_kwargs = dict(
-            #     height=size,
-            #     show_border=label_border,
-            # )
-            # x_label_follower = self._add_text_follower(
-            #     text=x_label,
-            #     color=x_label_color,
-            #     position=x_label_position,
-            #     **common_kwargs,
-            # )
-            # y_label_follower = self._add_text_follower(
-            #     text=y_label,
-            #     color=y_label_color,
-            #     position=y_label_position,
-            #     **common_kwargs,
-            # )
-            # z_label_follower = self._add_text_follower(
-            #     text=z_label,
-            #     color=z_label_color,
-            #     position=z_label_position,
-            #     **common_kwargs,
-            # )
+        # common_kwargs = dict(
+        #     height=size,
+        #     show_border=label_border,
+        # )
+        # x_label_follower = self._add_text_follower(
+        #     text=x_label,
+        #     color=x_label_color,
+        #     position=x_label_position,
+        #     **common_kwargs,
+        # )
+        # y_label_follower = self._add_text_follower(
+        #     text=y_label,
+        #     color=y_label_color,
+        #     position=y_label_position,
+        #     **common_kwargs,
+        # )
+        # z_label_follower = self._add_text_follower(
+        #     text=z_label,
+        #     color=z_label_color,
+        #     position=z_label_position,
+        #     **common_kwargs,
+        # )
 
-            # x_actor = _actor_from_rgb_dataset(labels3D[0])
-            # y_actor = _actor_from_rgb_dataset(labels3D[1])
-            # z_actor = _actor_from_rgb_dataset(labels3D[2])
-            # x_follower = self._add_follower(x_actor)
-            # y_follower = self._add_follower(y_actor)
-            # z_follower = self._add_follower(z_actor)
+        # x_actor = _actor_from_rgb_dataset(labels3D[0])
+        # y_actor = _actor_from_rgb_dataset(labels3D[1])
+        # z_actor = _actor_from_rgb_dataset(labels3D[2])
+        # x_follower = self._add_follower(x_actor)
+        # y_follower = self._add_follower(y_actor)
+        # z_follower = self._add_follower(z_actor)
 
-            return axes_assembly
+        # return axes_assembly
         return axes_assembly
 
     # def _add_text_follower(

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+from typing import Sequence
 
 import pyvista
 from pyvista.core.utilities.misc import _check_range
@@ -16,8 +17,6 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
-
     from ._typing import ColorLike
 
 
@@ -224,6 +223,54 @@ class Text(_vtk.vtkTextActor):
     @position.setter
     def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
         self.SetPosition(position[0], position[1])
+
+
+class TextLabel(Text):
+    def __init__(self, text=None, position=(0, 0, 0), size=100, prop=None):
+        super().__init__(text=text, prop=prop)
+        self.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        self.SetTextScaleModeToNone()
+        self.position = position
+        self.size = size
+
+        # self.height = height
+
+        # # # text.SetWidth(0.5)
+        # # text.GetPosition2Coordinate()
+        # # # text.prop.font_size=1000
+        # text.SetMinimumSize(100,100)
+        # # text.SetMaximumLineHeight(10)
+        # # # text.SetNonLinearFontScale(0.7,10)
+
+    @property
+    def position(self):
+        """Position coordinate in xyz space.
+
+        Returns
+        -------
+        Sequence[float]
+            Position coordinate.
+        """
+        return self.GetPositionCoordinate().GetValue()
+
+    @position.setter
+    def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
+        self.GetPositionCoordinate().SetValue(position)
+
+    @property
+    def size(self) -> float:
+        """Height of text a percentage of the vertical area allocated to this scaled text actor. Defaults to 1.0
+
+        Returns
+        -------
+        Sequence[float]
+            Position coordinate.
+        """
+        return self.prop.font_size
+
+    @size.setter
+    def size(self, size: int):  # numpydoc ignore=GL08
+        self.prop.font_size = size
 
 
 @no_new_attr
