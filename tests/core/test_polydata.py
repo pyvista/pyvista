@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from math import pi
 import pathlib
 from pathlib import Path
 import re
-from typing import Dict, List
 from unittest.mock import patch
 import warnings
 
@@ -11,7 +12,9 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -218,9 +221,9 @@ def test_lines_on_init(lines_is_cell_array):
 
 def _assert_verts_equal(
     mesh: pv.PolyData,
-    verts: List[int],
+    verts: list[int],
     n_verts: int,
-    cell_types: Dict[int, pv.CellType],
+    cell_types: dict[int, pv.CellType],
 ):
     assert np.array_equal(mesh.verts, verts)
     assert mesh.n_verts == n_verts
@@ -614,11 +617,19 @@ def test_save(sphere, extension, binary, tmpdir):
     else:
         with Path(filename).open() as f:
             fst = f.read(100).lower()
-            assert 'ascii' in fst or 'xml' in fst or 'solid' in fst
+            assert (
+                'ascii' in fst
+                or 'xml' in fst
+                or 'solid' in fst
+                or 'pgeometry' in fst
+                or '# generated' in fst
+                or '#inventor' in fst
+            )
 
-    mesh = pv.PolyData(filename)
-    assert mesh.faces.shape == sphere.faces.shape
-    assert mesh.points.shape == sphere.points.shape
+    if extension not in ('.geo', '.iv'):
+        mesh = pv.PolyData(filename)
+        assert mesh.faces.shape == sphere.faces.shape
+        assert mesh.points.shape == sphere.points.shape
 
 
 def test_pathlib_read_write(tmpdir, sphere):
@@ -775,34 +786,61 @@ def test_compute_normals_split_vertices(cube):
     assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
 
 
-def test_point_normals(sphere):
-    sphere = sphere.compute_normals(cell_normals=False, point_normals=True)
+@pytest.fixture()
+def ant_with_normals(ant):
+    ant['Scalars'] = range(ant.n_points)
+    point_normals = [[0, 0, 1]] * ant.n_points
+    ant.point_data['PointNormals'] = point_normals
+    ant.point_data.active_normals_name = 'PointNormals'
 
-    # when `Normals` already exist, make sure they are returned
-    normals = sphere.point_normals
-    assert normals.shape[0] == sphere.n_points
-    assert np.all(normals == sphere.point_data['Normals'])
-    assert np.shares_memory(normals, sphere.point_data['Normals'])
-
-    # when they don't, compute them
-    sphere.point_data.pop('Normals')
-    normals = sphere.point_normals
-    assert normals.shape[0] == sphere.n_points
+    cell_normals = [[1, 0, 0]] * ant.n_cells
+    ant.cell_data['CellNormals'] = cell_normals
+    ant.cell_data.active_normals_name = 'CellNormals'
+    return ant
 
 
-def test_cell_normals(sphere):
-    sphere = sphere.compute_normals(cell_normals=True, point_normals=False)
+def test_point_normals_returns_active_normals(ant_with_normals):
+    ant = ant_with_normals
+    expected_point_normals = ant['PointNormals']
 
-    # when `Normals` already exist, make sure they are returned
-    normals = sphere.cell_normals
-    assert normals.shape[0] == sphere.n_cells
-    assert np.all(normals == sphere.cell_data['Normals'])
-    assert np.shares_memory(normals, sphere.cell_data['Normals'])
+    actual_point_normals = ant.point_normals
+    assert actual_point_normals.shape[0] == ant.n_points
+    assert np.array_equal(actual_point_normals, ant.point_data.active_normals)
+    assert np.shares_memory(actual_point_normals, ant.point_data.active_normals)
+    assert np.array_equal(actual_point_normals, expected_point_normals)
 
-    # when they don't, compute them
-    sphere.cell_data.pop('Normals')
-    normals = sphere.cell_normals
-    assert normals.shape[0] == sphere.n_cells
+
+def test_point_normals_computes_new_normals(ant):
+    expected_point_normals = ant.copy().compute_normals().point_data['Normals']
+    ant.point_data.clear()
+    assert ant.array_names == []
+    assert ant.point_data.active_normals is None
+
+    actual_point_normals = ant.point_normals
+    assert actual_point_normals.shape[0] == ant.n_points
+    assert np.array_equal(actual_point_normals, expected_point_normals)
+
+
+def test_cell_normals_returns_active_normals(ant_with_normals):
+    ant = ant_with_normals
+    expected_cell_normals = ant['CellNormals']
+
+    actual_cell_normals = ant.cell_normals
+    assert actual_cell_normals.shape[0] == ant.n_cells
+    assert np.array_equal(actual_cell_normals, ant.cell_data.active_normals)
+    assert np.shares_memory(actual_cell_normals, ant.cell_data.active_normals)
+    assert np.array_equal(actual_cell_normals, expected_cell_normals)
+
+
+def test_cell_normals_computes_new_normals(ant):
+    expected_cell_normals = ant.copy().compute_normals().cell_data['Normals']
+    ant.cell_data.clear()
+    assert ant.array_names == []
+    assert ant.cell_data.active_normals is None
+
+    actual_cell_normals = ant.cell_normals
+    assert actual_cell_normals.shape[0] == ant.n_cells
+    assert np.array_equal(actual_cell_normals, expected_cell_normals)
 
 
 def test_face_normals(sphere):
@@ -1108,7 +1146,11 @@ def test_n_lines():
 
 def test_n_faces_strict():
     # Mesh with one face and one line
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
     assert mesh.n_cells == 2  # n_faces + n_lines
     assert mesh.n_faces_strict == 1
 
@@ -1129,7 +1171,11 @@ def test_n_faces(default_n_faces):
     if pv._version.version_info >= (0, 49):
         raise RuntimeError("Convert default n_faces behavior to strict")
 
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
 
     # Should raise a warning the first time
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -1148,7 +1194,11 @@ def test_n_faces(default_n_faces):
 
 def test_opt_in_n_faces_strict(default_n_faces):
     pv.PolyData.use_strict_n_faces(True)
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
     assert mesh.n_faces == mesh.n_faces_strict
 
 
@@ -1173,7 +1223,7 @@ def test_tetrahedron_regular_faces():
 
 @pytest.mark.parametrize('deep', [False, True])
 def test_regular_faces(deep):
-    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    points = np.array([[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]], dtype=float)
     faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
     mesh = pv.PolyData.from_regular_faces(points, faces, deep=deep)
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
@@ -1194,7 +1244,7 @@ def test_empty_regular_faces():
 
 
 def test_regular_faces_mutable():
-    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    points = [[1.0, 1.0, 1.0], [-1.0, 1.0, -1.0], [1.0, -1.0, -1.0], [-1.0, -1.0, 1.0]]
     faces = [[0, 1, 2]]
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3

@@ -5,6 +5,8 @@ Plot data in spherical coordinates
 Generate and visualize meshes from data in longitude-latitude coordinates.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -40,9 +42,11 @@ def _cell_bounds(points, bound_position=0.5):
         raise ValueError("Only 1D points are allowed.")
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
-    bounds = np.concatenate([[points[0] - delta], points + delta])
-    return bounds
+    return np.concatenate([[points[0] - delta], points + delta])
 
+
+# Seed random number generator for reproducible plots
+rng = np.random.default_rng(seed=0)
 
 # First, create some dummy data
 
@@ -88,7 +92,7 @@ p.show()
 ###############################################################################
 # Visualize vectors in spherical coordinates
 # Vertical wind
-w_vec = np.random.default_rng().random(u_vec.shape)
+w_vec = rng.random(u_vec.shape)
 
 wind_level = [RADIUS * 1.2]
 

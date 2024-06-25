@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import importlib
 from pathlib import Path
 
@@ -53,30 +55,28 @@ def test_common_utilities_import_paths():
     # These are `pyvista.utilities` imports found via search on GitHub
     # across multiple public repositories
     with pytest.warns(PyVistaDeprecationWarning):
-        from pyvista.utilities import (  # noqa: F401
-            NORMALS,
-            abstract_class,
-            assert_empty_kwargs,
-            conditional_decorator,
-            convert_string_array,
-            generate_plane,
-            get_array,
-            get_array_association,
-            get_vtk_type,
-            threaded,
-            try_callback,
-            xvfb,
-        )
-        from pyvista.utilities.algorithms import (  # noqa: F401
-            add_ids_algorithm,
-            algorithm_to_mesh_handler,
-            crinkle_algorithm,
-            outline_algorithm,
-            pointset_to_polydata_algorithm,
-            set_algorithm_input,
-        )
+        from pyvista.utilities import NORMALS  # noqa: F401
+        from pyvista.utilities import abstract_class  # noqa: F401
+        from pyvista.utilities import assert_empty_kwargs  # noqa: F401
+        from pyvista.utilities import conditional_decorator  # noqa: F401
+        from pyvista.utilities import convert_string_array  # noqa: F401
+        from pyvista.utilities import generate_plane  # noqa: F401
+        from pyvista.utilities import get_array  # noqa: F401
+        from pyvista.utilities import get_array_association  # noqa: F401
+        from pyvista.utilities import get_vtk_type  # noqa: F401
+        from pyvista.utilities import threaded  # noqa: F401
+        from pyvista.utilities import try_callback  # noqa: F401
+        from pyvista.utilities import xvfb  # noqa: F401
+        from pyvista.utilities.algorithms import add_ids_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import algorithm_to_mesh_handler  # noqa: F401
+        from pyvista.utilities.algorithms import crinkle_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import outline_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import pointset_to_polydata_algorithm  # noqa: F401
+        from pyvista.utilities.algorithms import set_algorithm_input  # noqa: F401
         from pyvista.utilities.errors import GPUInfo  # noqa: F401
-        from pyvista.utilities.geometric_objects import Arrow, Cylinder, PlatonicSolid  # noqa: F401
+        from pyvista.utilities.geometric_objects import Arrow  # noqa: F401
+        from pyvista.utilities.geometric_objects import Cylinder  # noqa: F401
+        from pyvista.utilities.geometric_objects import PlatonicSolid  # noqa: F401
         from pyvista.utilities.helpers import vtk_id_list_to_array  # noqa: F401
         from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper  # noqa: F401
         from pyvista.utilities.xvfb import start_xvfb  # noqa: F401
@@ -88,4 +88,4 @@ def test_failure_to_find():
         AttributeError,
         match=r'Module `pyvista\.utilities` has been deprecated and we could not automatically find',
     ):
-        module.this_does_not_exist
+        _ = module.this_does_not_exist

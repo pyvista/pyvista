@@ -17,6 +17,7 @@ https://asa.scitation.org/doi/10.1121/1.401643
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
+from __future__ import annotations
 
 from itertools import product
 

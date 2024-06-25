@@ -1,16 +1,22 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Base Viewer class.
 
 This base class defines methods to manipulate a PyVista Plotter.
 This base class does not define a `ui` method, but its derived classes do.
 See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived classes.
 """
+
+from __future__ import annotations
+
 import io
+from typing import TYPE_CHECKING
 
 from trame.app import get_server
-from trame_client.ui.core import AbstractLayout
 
 import pyvista
+
+if TYPE_CHECKING:  # pragma: no cover
+    from trame_client.ui.core import AbstractLayout
 
 
 class BaseViewer:
@@ -169,7 +175,7 @@ class BaseViewer:
         """
         value = kwargs[self.EDGES]
         for renderer in self.plotter.renderers:
-            for _, actor in renderer.actors.items():
+            for actor in renderer.actors.values():
                 if isinstance(actor, pyvista.Actor):
                     actor.prop.show_edges = value
         self.update()

@@ -3,30 +3,32 @@
 from __future__ import annotations
 
 import pathlib
-from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.arrays import get_array, get_array_association
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
-from pyvista.core.utilities.misc import assert_empty_kwargs, try_callback
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .affine_widget import AffineWidget3D
 from .colors import Color
 from .opts import PickerType
-from .utilities.algorithms import (
-    add_ids_algorithm,
-    algorithm_to_mesh_handler,
-    crinkle_algorithm,
-    outline_algorithm,
-    pointset_to_polydata_algorithm,
-    set_algorithm_input,
-)
+from .utilities.algorithms import add_ids_algorithm
+from .utilities.algorithms import algorithm_to_mesh_handler
+from .utilities.algorithms import crinkle_algorithm
+from .utilities.algorithms import outline_algorithm
+from .utilities.algorithms import pointset_to_polydata_algorithm
+from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
+
     from pyvista.core._typing_core._array_like import NumpyArray
 
 
@@ -2203,7 +2205,7 @@ class WidgetHelper:
 
         Parameters
         ----------
-        callback : Callable[[Tuple[float, float, float], [Tuple[float, float, float], int], float]
+        callback : Callable[[tuple[float, float, float], [tuple[float, float, float], int], float]
             The method called every time the widget calculates a
             distance measurement. This callback receives the start
             point and end point as cartesian coordinate tuples
@@ -2681,9 +2683,9 @@ class WidgetHelper:
 
     def add_logo_widget(
         self,
-        logo: Optional[Union[pyvista.ImageData, str, pathlib.Path]] = None,
-        position: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.75, 0.8),
-        size: Union[Tuple[float, float], Sequence[float], NumpyArray[float]] = (0.2, 0.2),
+        logo: pyvista.ImageData | str | pathlib.Path | None = None,
+        position: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.75, 0.8),
+        size: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
@@ -2780,10 +2782,8 @@ class WidgetHelper:
 
         """
         try:
-            from vtkmodules.vtkInteractionWidgets import (
-                vtkCamera3DRepresentation,
-                vtkCamera3DWidget,
-            )
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DRepresentation
+            from vtkmodules.vtkInteractionWidgets import vtkCamera3DWidget
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 

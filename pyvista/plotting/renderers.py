@@ -1,7 +1,9 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 
-import collections
+from __future__ import annotations
+
 from itertools import product
+from typing import Sequence
 from weakref import proxy
 
 import numpy as np
@@ -108,7 +110,7 @@ class Renderers:
             self._render_idxs = np.arange(n + m)
 
         else:
-            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(shape, (np.ndarray, Sequence)):
                 raise TypeError('"shape" should be a list, tuple or string descriptor')
             if len(shape) != 2:
                 raise ValueError('"shape" must have length 2.')
@@ -152,12 +154,12 @@ class Renderers:
             # top left cell)
 
             if groups is not None:
-                if not isinstance(groups, collections.abc.Sequence):
+                if not isinstance(groups, Sequence):
                     raise TypeError(
                         f'"groups" should be a list or tuple, not {type(groups).__name__}.',
                     )
                 for group in groups:
-                    if not isinstance(group, collections.abc.Sequence):
+                    if not isinstance(group, Sequence):
                         raise TypeError(
                             'Each group entry should be a list or '
                             f'tuple, not {type(group).__name__}.',
@@ -264,7 +266,7 @@ class Renderers:
         """
         if isinstance(loc, (int, np.integer)):
             return loc
-        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(loc, (np.ndarray, Sequence)):
             if not len(loc) == 2:
                 raise ValueError('"loc" must contain two items')
             index_row = loc[0]

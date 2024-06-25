@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from importlib import metadata
 import re
 

@@ -1,10 +1,15 @@
 """Utilities for using pyvista with sphinx-gallery."""
 
+from __future__ import annotations
+
 from pathlib import Path
 import shutil
-from typing import Iterator, List
+from typing import TYPE_CHECKING
 
 import pyvista
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterator
 
 BUILDING_GALLERY_ERROR_MSG = (
     "pyvista.BUILDING_GALLERY must be set to True in your conf.py to capture "
@@ -33,7 +38,8 @@ def html_rst(
     srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st, figure_rst
+    from sphinx_gallery.scrapers import _get_srcset_st
+    from sphinx_gallery.scrapers import figure_rst
 
     if srcsetpaths is None:
         # this should never happen, but figure_rst is public, so
@@ -78,7 +84,7 @@ def _process_events_before_scraping(plotter):
         plotter.update()
 
 
-def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> List[str]:
+def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -> list[str]:
     """Generate images from the current plotters.
 
     The file names are taken from the ``image_path_iterator`` iterator.

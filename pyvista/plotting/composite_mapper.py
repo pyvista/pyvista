@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from itertools import cycle
 import sys
-from typing import Optional
 import weakref
 
 import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
 
 from . import _vtk
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .mapper import _BaseMapper
 
 
@@ -136,7 +137,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def visible(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -169,7 +170,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
+    def opacity(self) -> float | None:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -211,7 +212,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def pickable(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -312,6 +314,20 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     legend_entries = ["label 1", "label 2"]
 
     pl.add_legend(legend_entries, size=(0.5, 0.5))
+    pl.show()
+
+
+def test_legend_none_face(verify_image_cache):
+    """Verifies that ``face="none"`` does not add a face for each label in legend."""
+    pl = pv.Plotter()
+    pl.add_mesh(
+        pv.Icosphere(center=(3, 0, 0), radius=1),
+        color="r",
+        label="Sphere",
+    )
+    pl.add_mesh(pv.Box(), color="w", label="Box")
+    # add a large legend to ensure test fails if face="none" not configured right
+    pl.add_legend(face="none", bcolor="k", size=(0.6, 0.6))
     pl.show()
 
 

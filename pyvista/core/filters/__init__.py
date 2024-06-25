@@ -23,7 +23,8 @@ Examples
 
 """
 
-# flake8: noqa: F401
+# ruff: noqa: F401
+from __future__ import annotations
 
 import pyvista
 from pyvista.core.utilities.helpers import wrap

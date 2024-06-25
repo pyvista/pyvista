@@ -5,6 +5,8 @@ See the image regression notes in doc/extras/developer_notes.rst
 
 """
 
+from __future__ import annotations
+
 import inspect
 import io
 import os
@@ -13,25 +15,33 @@ from pathlib import Path
 import platform
 import re
 import time
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, ItemsView, Type, TypeVar
+from types import FunctionType
+from types import ModuleType
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import TypeVar
 
-from PIL import Image
 import numpy as np
+from PIL import Image
 import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import DeprecationError, PyVistaDeprecationWarning
+from pyvista.core.errors import DeprecationError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import check_math_text_support
 from pyvista.plotting.colors import matplotlib_default_colors
-from pyvista.plotting.errors import InvalidCameraError, RenderWindowUnavailable
-from pyvista.plotting.opts import InterpolationType, RepresentationType
+from pyvista.plotting.errors import InvalidCameraError
+from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+    from collections.abc import ItemsView
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -41,7 +51,6 @@ try:
     import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
-
 
 ffmpeg_failed = False
 try:
@@ -186,6 +195,37 @@ def test_export_vrml(tmpdir, sphere, airplane, hexbeam):
 
     with pytest.raises(RuntimeError, match="This plotter has been closed"):
         pl_import.export_vrml(filename)
+
+
+def test_import_3ds():
+    filename = examples.download_3ds.download_iflamigm()
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_3ds('not a file')
+
+    pl.import_3ds(filename)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj():
+    download_obj_file = examples.download_room_surface_mesh(load=False)
+    pl = pv.Plotter()
+
+    with pytest.raises(FileNotFoundError, match='Unable to locate'):
+        pl.import_obj('not a file')
+
+    pl.import_obj(download_obj_file)
+    pl.show()
+
+
+@skip_9_0_X
+def test_import_obj_with_texture():
+    filename = examples.download_doorman(load=False)
+    pl = pv.Plotter()
+    pl.import_obj(filename)
+    pl.show(cpos="xy")
 
 
 @skip_windows
@@ -1032,7 +1072,7 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    plotter.background_color
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
@@ -1191,6 +1231,13 @@ def test_add_box_axes():
     plotter.add_orientation_widget(pv.Sphere(), color='b')
     plotter.add_box_axes()
     plotter.add_mesh(pv.Sphere())
+    plotter.show()
+
+
+def test_add_north_arrow():
+    plotter = pv.Plotter()
+    plotter.add_north_arrow_widget(viewport=(0, 0, 0.5, 0.5))
+    plotter.add_mesh(pv.Arrow(direction=(0, 1, 0)))
     plotter.show()
 
 
@@ -1361,27 +1408,92 @@ def test_read_texture_from_numpy():
     plotter.show()
 
 
-def test_plot_rgb():
-    """Test adding a texture to a plot"""
-    cube = pv.Cube()
-    cube.clear_data()
-    x_face_color = (255, 0, 0)
-    y_face_color = (0, 255, 0)
-    z_face_color = (0, 0, 255)
-    face_colors = np.array(
-        [
-            x_face_color,
-            x_face_color,
-            y_face_color,
-            y_face_color,
-            z_face_color,
-            z_face_color,
-        ],
-        dtype=np.uint8,
-    )
-    cube.cell_data['face_colors'] = face_colors
+def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
+    def _dtype_convert_func(dtype):
+        # Convert color to the specified dtype
+        if dtype == 'float':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).float_rgb
+        elif dtype == 'int':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).int_rgb
+        elif dtype == 'uint8':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return np.array(pv.Color(color).int_rgb, dtype=np.uint8)
+        else:
+            raise NotImplementedError
+
+        return as_dtype
+
+    def _make_polys():
+        # Create 3 separate PolyData with one quad cell each
+        faces = [4, 0, 1, 2, 3]
+        poly1 = pv.PolyData(
+            [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        poly2 = pv.PolyData(
+            [[0.0, 1.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]], faces
+        )
+        poly3 = pv.PolyData(
+            [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        return poly1, poly2, poly3
+
+    poly1, poly2, poly3 = _make_polys()
+    dtype_convert_func = _dtype_convert_func(dtype)
+
+    RED = dtype_convert_func((1.0, 0.0, 0.0))
+    GREEN = dtype_convert_func((0.0, 1.0, 0.0))
+    BLUE = dtype_convert_func((0.0, 0.0, 1.0))
+
+    # Color the polydata cells
+    poly1[scalars] = [RED]
+    poly2[scalars] = [GREEN]
+    poly3[scalars] = [BLUE]
+
+    dataset = pv.MultiBlock((poly1, poly2, poly3))
+
+    # Make sure the dataset is as expected
+    if return_composite:
+        assert isinstance(dataset, pv.MultiBlock)
+        assert all(np.dtype(block[scalars].dtype) == np.dtype(dtype) for block in dataset)
+        assert all(block.array_names == [scalars] for block in dataset)
+    else:
+        # Merge and return
+        dataset = pv.merge(dataset)
+        assert isinstance(dataset, pv.PolyData)
+        assert np.dtype(dataset[scalars].dtype) == np.dtype(dtype)
+        assert dataset.array_names == [scalars]
+    return dataset
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+@pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
+def test_plot_rgb(composite, dtype):
+    scalars = 'face_colors'
+    dataset = _make_rgb_dataset(dtype, return_composite=composite, scalars=scalars)
+
     plotter = pv.Plotter()
-    plotter.add_mesh(cube, scalars='face_colors', rgb=True)
+    actor = plotter.add_mesh(dataset, scalars=scalars, rgb=True)
+    actor.prop.lighting = False
+    plotter.show()
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+def test_plot_rgb_implicit(composite, scalars):
+    dataset = _make_rgb_dataset(dtype='uint8', return_composite=composite, scalars=scalars)
+
+    plotter = pv.Plotter()
+    actor = plotter.add_mesh(dataset)
+    actor.prop.lighting = False
     plotter.show()
 
 
@@ -2621,6 +2733,19 @@ def test_splitting():
     )
 
 
+@pytest.mark.parametrize('smooth_shading', [True, False])
+@pytest.mark.parametrize('use_custom_normals', [True, False])
+def test_plot_normals_smooth_shading(sphere, use_custom_normals, smooth_shading):
+    sphere = pv.Sphere(phi_resolution=5, theta_resolution=5)
+    sphere.clear_data()
+
+    if use_custom_normals:
+        normals = [[0, 0, -1]] * sphere.n_points
+        sphere.point_data.active_normals = normals
+
+    sphere.plot_normals(show_mesh=True, color='red', smooth_shading=smooth_shading)
+
+
 @skip_mac_flaky
 def test_splitting_active_cells(cube):
     cube.cell_data['cell_id'] = range(cube.n_cells)
@@ -2733,6 +2858,14 @@ def test_ruler():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
     plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show()
+
+
+def test_ruler_number_labels():
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
     plotter.view_xy()
     plotter.show()
 
@@ -3859,41 +3992,56 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
-@skip_lesser_9_0_X
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
+
+
+def test_axes_actor_default_colors():
+    axes = pv.AxesActor()
+    axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+
+    plot = pv.Plotter()
+    plot.add_actor(axes)
+    plot.camera.zoom(1.5)
+    plot.show()
+
+
 def test_axes_actor_properties():
     axes = pv.Axes()
     axes_actor = axes.axes_actor
+    axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
+    axes_actor.tip_type = pv.AxesActor.TipType.SPHERE
+    axes_actor.x_label = 'U'
+    axes_actor.y_label = 'V'
+    axes_actor.z_label = 'W'
 
-    axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    assert axes_actor.x_axis_shaft_properties.color == (1, 1, 1)
-    axes_actor.y_axis_shaft_properties.metallic = 0.2
-    assert axes_actor.y_axis_shaft_properties.metallic == 0.2
-    axes_actor.z_axis_shaft_properties.roughness = 0.3
-    assert axes_actor.z_axis_shaft_properties.roughness == 0.3
+    # Test actor properties using color
+    x_color = (1.0, 0.0, 1.0)  # magenta
+    y_color = (1.0, 1.0, 0.0)  # yellow
+    z_color = (0.0, 1.0, 1.0)  # cyan
 
-    axes_actor.x_axis_tip_properties.anisotropy = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy == 0.4
-    axes_actor.x_axis_tip_properties.anisotropy_rotation = 0.4
-    assert axes_actor.x_axis_tip_properties.anisotropy_rotation == 0.4
-    axes_actor.y_axis_tip_properties.lighting = False
-    assert not axes_actor.y_axis_tip_properties.lighting
-    axes_actor.z_axis_tip_properties.interpolation_model = InterpolationType.PHONG
-    assert axes_actor.z_axis_tip_properties.interpolation_model == InterpolationType.PHONG
+    axes_actor.x_axis_shaft_properties.color = x_color
+    axes_actor.x_axis_tip_properties.color = x_color
 
-    axes_actor.x_axis_shaft_properties.index_of_refraction = 1.5
-    assert axes_actor.x_axis_shaft_properties.index_of_refraction == 1.5
-    axes_actor.y_axis_shaft_properties.opacity = 0.6
-    assert axes_actor.y_axis_shaft_properties.opacity == 0.6
-    axes_actor.z_axis_shaft_properties.shading = False
-    assert not axes_actor.z_axis_shaft_properties.shading
+    axes_actor.y_axis_shaft_properties.color = y_color
+    axes_actor.y_axis_tip_properties.color = y_color
 
-    axes_actor.x_axis_tip_properties.representation = RepresentationType.POINTS
-    assert axes_actor.x_axis_tip_properties.representation == RepresentationType.POINTS
+    axes_actor.z_axis_shaft_properties.color = z_color
+    axes_actor.z_axis_tip_properties.color = z_color
 
-    axes.axes_actor.shaft_type = pv.AxesActor.ShaftType.CYLINDER
-    pl = pv.Plotter()
-    pl.add_actor(axes_actor)
-    pl.show()
+    plot = pv.Plotter()
+    plot.add_actor(axes_actor)
+    plot.camera.zoom(1.5)
+    plot.show()
 
 
 def test_show_bounds_no_labels():
@@ -4106,10 +4254,10 @@ def test_create_axes_orientation_box():
     plotter.show()
 
 
-_TypeType = TypeVar('_TypeType', bound=Type)
+_TypeType = TypeVar('_TypeType', bound=type)
 
 
-def _get_module_members(module: ModuleType, typ: _TypeType) -> Dict[str, _TypeType]:
+def _get_module_members(module: ModuleType, typ: _TypeType) -> dict[str, _TypeType]:
     """Get all members of a specified type which are defined locally inside a module."""
 
     def is_local(obj):
@@ -4123,7 +4271,7 @@ def _get_module_functions(module: ModuleType):
     return _get_module_members(module, typ=FunctionType)
 
 
-def _get_default_kwargs(call: Callable) -> Dict[str, Any]:
+def _get_default_kwargs(call: Callable) -> dict[str, Any]:
     """Get all args/kwargs and their default value"""
     params = dict(inspect.signature(call).parameters)
     # Get default value for positional or keyword args
@@ -4144,10 +4292,11 @@ def _has_param(call: Callable, param: str) -> bool:
         kwargs[param] = None
         try:
             call(**kwargs)
-            return True
         except BaseException as ex:
             # Param is not valid only if a kwarg TypeError is raised
             return not ("TypeError" in repr(ex) and "unexpected keyword argument" in repr(ex))
+        else:
+            return True
 
 
 def _get_default_param_value(call: Callable, param: str) -> Any:
@@ -4158,7 +4307,7 @@ def _generate_direction_object_functions() -> ItemsView[str, FunctionType]:
     """Generate a list of geometric or parametric object functions which have a direction."""
     geo_functions = _get_module_functions(pv.core.geometric_objects)
     para_functions = _get_module_functions(pv.core.parametric_objects)
-    functions: Dict[str, FunctionType] = {**geo_functions, **para_functions}
+    functions: dict[str, FunctionType] = {**geo_functions, **para_functions}
 
     # Only keep functions with capitalized first letter
     # Only keep functions which accept `normal` or `direction` param

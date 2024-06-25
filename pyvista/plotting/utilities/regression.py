@@ -1,14 +1,20 @@
 """Image regression module."""
 
-from typing import Optional, cast
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import cast
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
 
 def remove_alpha(img):
@@ -199,7 +205,10 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData, Plotter, read, wrap
+    from pyvista import ImageData
+    from pyvista import Plotter
+    from pyvista import read
+    from pyvista import wrap
 
     def to_img(img):  # numpydoc ignore=GL08
         if isinstance(img, ImageData):  # pragma: no cover

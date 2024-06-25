@@ -1,6 +1,8 @@
 """Wrap vtk.vtkRenderWindowInteractor."""
 
-import collections.abc
+from __future__ import annotations
+
+from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
 from inspect import signature
@@ -91,7 +93,7 @@ class RenderWindowInteractor:
 
         # Map of observers to events
         self._observers = {}
-        self._key_press_event_callbacks = collections.defaultdict(list)
+        self._key_press_event_callbacks = defaultdict(list)
         self._click_event_callbacks = {
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ("LeftButtonPressEvent", "RightButtonPressEvent")
@@ -1391,36 +1393,6 @@ class RenderWindowInteractor:
     def initialized(self):  # numpydoc ignore=RT01
         """Return if the interactor has been initialized."""
         return self.interactor.GetInitialized()
-
-    def get_picker(self):
-        """Get the picker.
-
-        Returns
-        -------
-        vtk.vtkAbstractPicker
-            VTK picker.
-        """
-        # Deprecated on v0.39.0, estimated removal on v0.41.0
-        warnings.warn(
-            "Use of `get_picker` is deprecated. Use `picker` property instead.",
-            PyVistaDeprecationWarning,
-        )
-        return self.picker
-
-    def set_picker(self, picker):
-        """Set the picker for the interactor.
-
-        Parameters
-        ----------
-        picker : vtk.vtkAbstractPicker
-            The picker to set for the interactor.
-        """
-        # Deprecated on v0.39.0, estimated removal on v0.41.0
-        warnings.warn(
-            "Use of `get_picker` is deprecated. Use `picker` property instead.",
-            PyVistaDeprecationWarning,
-        )
-        self.picker = picker
 
     @property
     def picker(self):  # numpydoc ignore=RT01

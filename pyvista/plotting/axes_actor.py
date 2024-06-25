@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum
-from typing import Tuple, Union
+import warnings
 
 import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 from . import _vtk
 from .actor_properties import ActorProperties
@@ -28,7 +29,7 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> import pyvista as pv
 
     >>> axes = pv.Axes()
-    >>> axes.axes_actor.z_axis_shaft_properties.color = (0, 1, 1)
+    >>> axes.axes_actor.z_axis_shaft_properties.color = (0.0, 1.0, 1.0)
     >>> axes.axes_actor.shaft_type = axes.axes_actor.ShaftType.CYLINDER
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes.axes_actor)
@@ -44,13 +45,13 @@ class AxesActor(_vtk.vtkAxesActor):
     >>> axes_actor = axes.axes_actor
     >>> axes.axes_actor.shaft_type = 0
 
-    >>> axes_actor.x_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.y_axis_shaft_properties.color = (1, 1, 1)
-    >>> axes_actor.z_axis_shaft_properties.color = (1, 1, 1)
+    >>> axes_actor.x_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.y_axis_shaft_properties.color = (1.0, 1.0, 1.0)
+    >>> axes_actor.z_axis_shaft_properties.color = (1.0, 1.0, 1.0)
 
-    >>> axes_actor.x_axis_label = 'U'
-    >>> axes_actor.y_axis_label = 'V'
-    >>> axes_actor.z_axis_label = 'W'
+    >>> axes_actor.x_label = 'U'
+    >>> axes_actor.y_label = 'V'
+    >>> axes_actor.z_label = 'W'
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -78,22 +79,22 @@ class AxesActor(_vtk.vtkAxesActor):
         """Initialize actor."""
         super().__init__()
 
-        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.int_rgb
-        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
-        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.int_rgba[3]
+        self.x_axis_shaft_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_tip_properties.color = pyvista.global_theme.axes.x_color.float_rgb
+        self.x_axis_shaft_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
+        self.x_axis_tip_properties.opacity = pyvista.global_theme.axes.x_color.float_rgba[3]
         self.x_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.int_rgb
-        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
-        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.int_rgba[3]
+        self.y_axis_shaft_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_tip_properties.color = pyvista.global_theme.axes.y_color.float_rgb
+        self.y_axis_shaft_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
+        self.y_axis_tip_properties.opacity = pyvista.global_theme.axes.y_color.float_rgba[3]
         self.y_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
-        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.int_rgb
-        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
-        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.int_rgba[3]
+        self.z_axis_shaft_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_tip_properties.color = pyvista.global_theme.axes.z_color.float_rgb
+        self.z_axis_shaft_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
+        self.z_axis_tip_properties.opacity = pyvista.global_theme.axes.z_color.float_rgba[3]
         self.z_axis_shaft_properties.lighting = pyvista.global_theme.lighting
 
     @property
@@ -118,7 +119,7 @@ class AxesActor(_vtk.vtkAxesActor):
         self.SetVisibility(value)
 
     @property
-    def total_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of all axes.
 
         Examples
@@ -145,7 +146,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTotalLength(length, length, length)
 
     @property
-    def shaft_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the axes shaft.
 
         Examples
@@ -172,7 +173,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedShaftLength(length, length, length)
 
     @property
-    def tip_length(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the length of the tip.
 
         Examples
@@ -199,7 +200,7 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetNormalizedTipLength(length, length, length)
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label along the axes.
 
         Examples
@@ -369,7 +370,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.ShaftType(self.GetShaftType())
 
     @shaft_type.setter
-    def shaft_type(self, shaft_type: Union[ShaftType, int]):  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: ShaftType | int):  # numpydoc ignore=GL08
         shaft_type = AxesActor.ShaftType(shaft_type)
         if shaft_type == AxesActor.ShaftType.CYLINDER:
             self.SetShaftTypeToCylinder()
@@ -394,7 +395,7 @@ class AxesActor(_vtk.vtkAxesActor):
         return AxesActor.TipType(self.GetTipType())
 
     @tip_type.setter
-    def tip_type(self, tip_type: Union[TipType, int]):  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: TipType | int):  # numpydoc ignore=GL08
         tip_type = AxesActor.TipType(tip_type)
         if tip_type == AxesActor.TipType.CONE:
             self.SetTipTypeToCone()
@@ -402,80 +403,195 @@ class AxesActor(_vtk.vtkAxesActor):
             self.SetTipTypeToSphere()
 
     @property
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        This property may be used as an alternative to using :attr:`~x_axis_label`,
+        :attr:`~y_axis_label`, and :attr:`~z_axis_label` separately.
+
+        .. versionadded:: 0.44.0
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_label, self.y_label, self.z_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
+        if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
+            raise ValueError(
+                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+            )
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
+
+    @property
     def x_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the X axis.
+        """Return or set the label for the x-axis.
+
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`x_label` instead.
+
+        """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        return self.GetXAxisLabelText()  # pragma: no cover
+
+    @x_axis_label.setter
+    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        self.SetXAxisLabelText(label)  # pragma: no cover
+
+    @property
+    def x_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the x-axis.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.x_axis_label = 'This axis'
-        >>> axes.axes_actor.x_axis_label
+        >>> axes.axes_actor.x_label = 'This axis'
+        >>> axes.axes_actor.x_label
         'This axis'
 
         """
         return self.GetXAxisLabelText()
 
-    @x_axis_label.setter
-    def x_axis_label(self, label: str):  # numpydoc ignore=GL08
+    @x_label.setter
+    def x_label(self, label: str):  # numpydoc ignore=GL08
         self.SetXAxisLabelText(label)
 
     @property
     def y_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Y axis.
+        """Return or set the label for the y-axis.
+
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`y_label` instead.
+
+        """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        return self.GetYAxisLabelText()  # pragma: no cover
+
+    @y_axis_label.setter
+    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        self.SetYAxisLabelText(label)  # pragma: no cover
+
+    @property
+    def y_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the y-axis.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.y_axis_label = 'This axis'
-        >>> axes.axes_actor.y_axis_label
+        >>> axes.axes_actor.y_label = 'This axis'
+        >>> axes.axes_actor.y_label
         'This axis'
 
         """
         return self.GetYAxisLabelText()
 
-    @y_axis_label.setter
-    def y_axis_label(self, label: str):  # numpydoc ignore=GL08
+    @y_label.setter
+    def y_label(self, label: str):  # numpydoc ignore=GL08
         self.SetYAxisLabelText(label)
 
     @property
     def z_axis_label(self) -> str:  # numpydoc ignore=RT01
-        """Return or set the label for the Z axis.
+        """Return or set the label for the z-axis.
+
+        .. deprecated:: 0.44.0
+
+            This parameter is deprecated. Use :attr:`z_label` instead.
+
+        """
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        return self.GetZAxisLabelText()  # pragma: no cover
+
+    @z_axis_label.setter
+    def z_axis_label(self, label: str):  # numpydoc ignore=GL08
+        # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
+        warnings.warn(
+            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            PyVistaDeprecationWarning,
+        )
+        if pyvista._version.version_info >= (0, 47):  # pragma: no cover
+            raise RuntimeError('Remove this deprecated property')
+        self.SetZAxisLabelText(label)  # pragma: no cover
+
+    @property
+    def z_label(self) -> str:  # numpydoc ignore=RT01
+        """Return or set the label for the z-axis.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes = pv.Axes()
-        >>> axes.axes_actor.z_axis_label = 'This axis'
-        >>> axes.axes_actor.z_axis_label
+        >>> axes.axes_actor.z_label = 'This axis'
+        >>> axes.axes_actor.z_label
         'This axis'
-
         """
         return self.GetZAxisLabelText()
 
-    @z_axis_label.setter
-    def z_axis_label(self, label: str):  # numpydoc ignore=GL08
+    @z_label.setter
+    def z_label(self, label: str):  # numpydoc ignore=GL08
         self.SetZAxisLabelText(label)
 
     @property
     def x_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis shaft."""
+        """Return or set the properties of the x-axis shaft."""
         return ActorProperties(self.GetXAxisShaftProperty())
 
     @property
     def y_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis shaft."""
+        """Return or set the properties of the y-axis shaft."""
         return ActorProperties(self.GetYAxisShaftProperty())
 
     @property
     def z_axis_shaft_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis shaft."""
+        """Return or set the properties of the z-axis shaft."""
         return ActorProperties(self.GetZAxisShaftProperty())
 
     @property
     def x_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the X axis tip."""
+        """Return or set the properties of the x-axis tip."""
         return ActorProperties(self.GetXAxisTipProperty())
 
     @x_axis_tip_properties.setter
@@ -484,7 +600,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def y_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Y axis tip."""
+        """Return or set the properties of the y-axis tip."""
         return ActorProperties(self.GetYAxisTipProperty())
 
     @y_axis_tip_properties.setter
@@ -493,7 +609,7 @@ class AxesActor(_vtk.vtkAxesActor):
 
     @property
     def z_axis_tip_properties(self):  # numpydoc ignore=RT01
-        """Return or set the properties of the Z axis tip."""
+        """Return or set the properties of the z-axis tip."""
         return ActorProperties(self.GetZAxisTipProperty())
 
     @z_axis_tip_properties.setter

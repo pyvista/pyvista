@@ -1,8 +1,9 @@
 """Test pyvista core utilities."""
 
+from __future__ import annotations
+
 import json
 import os
-import pathlib
 from pathlib import Path
 import pickle
 import shutil
@@ -15,27 +16,26 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples as ex
-from pyvista.core.utilities import cells, fileio, fit_plane_to_points, transformations
-from pyvista.core.utilities.arrays import (
-    _coerce_pointslike_arg,
-    _coerce_transformlike_arg,
-    _SerializedDictArray,
-    copy_vtk_array,
-    get_array,
-    has_duplicates,
-    raise_has_duplicates,
-    vtk_id_list_to_array,
-    vtkmatrix_from_array,
-)
+from pyvista.core.utilities import cells
+from pyvista.core.utilities import fileio
+from pyvista.core.utilities import fit_plane_to_points
+from pyvista.core.utilities import transformations
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.arrays import _coerce_transformlike_arg
+from pyvista.core.utilities.arrays import _SerializedDictArray
+from pyvista.core.utilities.arrays import copy_vtk_array
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import has_duplicates
+from pyvista.core.utilities.arrays import raise_has_duplicates
+from pyvista.core.utilities.arrays import vtk_id_list_to_array
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
-from pyvista.core.utilities.misc import (
-    assert_empty_kwargs,
-    check_valid_vector,
-    has_module,
-    no_new_attr,
-)
+from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.misc import check_valid_vector
+from pyvista.core.utilities.misc import has_module
+from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 
@@ -95,7 +95,7 @@ def test_get_ext(path, target_ext):
 def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
     if use_pathlib:
-        fnames = [pathlib.Path(fname) for fname in fnames]
+        fnames = [Path(fname) for fname in fnames]
     types = (
         pv.PolyData,
         pv.PolyData,
@@ -193,7 +193,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
     pv.read(ex.globefile, force_ext='.e')
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
-    assert filename == ex.globefile
+    assert filename == Path(ex.globefile)
 
 
 def test_get_array_cell(hexbeam):

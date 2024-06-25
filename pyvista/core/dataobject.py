@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections import UserDict
-import collections.abc
+from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import ClassVar
 
 import numpy as np
 
@@ -15,8 +17,11 @@ import pyvista
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities.arrays import FieldAssociation, _JSONValueType, _SerializedDictArray
-from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import _JSONValueType
+from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import read
+from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
@@ -41,17 +46,17 @@ class DataObject:
 
     """
 
-    _WRITERS: ClassVar[Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]]] = {}
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_bitarray_names: defaultdict[Any, Any] = defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -79,7 +84,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self, filename: Union[str, Path], **kwargs):
+    def _from_file(self, filename: str | Path, **kwargs):
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
@@ -95,9 +100,9 @@ class DataObject:
 
     def save(
         self,
-        filename: Union[Path, str],
+        filename: Path | str,
         binary: bool = True,
-        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+        texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
 
@@ -245,10 +250,11 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import HTML, display as _display
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
-                return
+                return None
             return fmt
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -415,7 +421,7 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -563,9 +569,8 @@ class DataObject:
     @user_dict.setter
     def user_dict(
         self,
-        dict_: Union[Dict[str, _JSONValueType], UserDict],  # type: ignore[type-arg]
+        dict_: dict[str, _JSONValueType] | UserDict,  # type: ignore[type-arg]
     ):  # numpydoc ignore=GL08
-
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
             del self.field_data['_PYVISTA_USER_DICT']
@@ -612,7 +617,7 @@ class DataObject:
         field_data.VTKObject.Modified()
 
     @property
-    def memory_address(self) -> str:  # numpydoc ignore=RT01
+    def memory_address(self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -631,7 +636,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns

@@ -5,35 +5,20 @@ ci:
   autoupdate_schedule: monthly
 
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.4.1
-    hooks:
-      - id: black
-
   - repo: https://github.com/keewis/blackdoc
     rev: v0.3.9
     hooks:
       - id: blackdoc
+        args: ["--skip-string-normalization"]
         files: '\.py$'
         exclude: pyvista/plotting/charts.py
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        additional_dependencies:
-          ["flake8-black==0.3.6", "flake8-isort==6.1.1", "flake8-quotes==3.3.2"]
-
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.6
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
+        exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
   - repo: https://github.com/pycqa/pydocstyle
@@ -62,7 +47,7 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: mypy
         args:
@@ -71,6 +56,7 @@ repos:
             --pretty,
             --show-error-context,
             --warn-unused-ignores,
+            --warn-redundant-casts,
             --enable-error-code,
             ignore-without-code,
           ]
@@ -83,14 +69,8 @@ repos:
             "npt-promote==0.1",
           ]
 
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.2
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus, --keep-runtime-typing]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-merge-conflict
       - id: debug-statements
@@ -109,18 +89,28 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.1
+    rev: 0.28.4
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.5
+    rev: v0.4.7
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --show-fixes]
+        exclude: tests/core/typing
+      - id: ruff-format
+        exclude: tests/core/typing
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: rst-backticks
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal

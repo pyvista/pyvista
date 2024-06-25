@@ -8,6 +8,8 @@ This example shows you how to plot point clouds using PyVista using both the
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -23,8 +25,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's create a sample point cloud using :func:`numpy.random.random`.
 
-
-rng = np.random.default_rng()
+# Seed rng for reproducibility
+rng = np.random.default_rng(seed=0)
 points = rng.random((1000, 3))
 points
 

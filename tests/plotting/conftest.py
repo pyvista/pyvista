@@ -2,6 +2,8 @@
 memory leaks for all plotting tests
 """
 
+from __future__ import annotations
+
 import gc
 import inspect
 
@@ -88,7 +90,7 @@ def check_gc():
             else:
                 referrers[ri] = repr(referrer)
             del ri, referrer
-        msg += f'{cn}: {referrers}\n'
+        msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
         del cn, referrers
     assert len(after) == 0, msg
 
