@@ -274,7 +274,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         # We also know this is 3-length so make it so in typing
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
-        if TYPE_CHECKING:
+        if TYPE_CHECKING:  # pragma: no cover
             out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
         return out
 
