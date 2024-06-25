@@ -100,7 +100,10 @@ if KILL_DISPLAY:  # pragma: no cover
         X11 = ctypes.CDLL("libX11.so")
         X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
     except OSError:
-        warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
+        warnings.warn(
+            'PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland',
+            stacklevel=2,
+        )
         KILL_DISPLAY = False
 
 
@@ -163,6 +166,7 @@ def _warn_xserver():  # pragma: no cover
             'PyVista will likely segfault when rendering.\n\n'
             'Try starting a virtual frame buffer with xvfb, or using\n '
             ' ``pyvista.start_xvfb()``\n',
+            stacklevel=2,
         )
 
 
@@ -786,6 +790,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     'Plotter contains non-PolyData datasets. These have been '
                                     'overwritten with PolyData surfaces and are internally '
                                     'copies of the original datasets.',
+                                    stacklevel=2,
                                 )
 
                                 try:
@@ -796,6 +801,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                         'During gLTF export, failed to convert some '
                                         'datasets to PolyData. Exported scene will not have '
                                         'all datasets.',
+                                        stacklevel=2,
                                     )
 
                             if 'Normals' in dataset.point_data:
@@ -1836,7 +1842,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
         # If render window is not current
         if self.render_window is None:
-            warnings.warn('Attempting to set window_size on an unavailable render widow.')
+            warnings.warn(
+                'Attempting to set window_size on an unavailable render widow.',
+                stacklevel=2,
+            )
             yield self
             return
         size_before = self.window_size
@@ -3449,6 +3458,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             warnings.warn(
                 '`show_edges=True` not supported when `render_lines_as_tubes=True`. Ignoring `show_edges`.',
                 UserWarning,
+                stacklevel=2,
             )
             show_edges = False
 
@@ -4353,7 +4363,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
             if opacity != 'linear':
                 opacity = 'linear'
-                warnings.warn('Ignoring custom opacity due to RGBA scalars.')
+                warnings.warn('Ignoring custom opacity due to RGBA scalars.', stacklevel=2)
 
         # Define mapper, volume, and add the correct properties
         mappers_lookup = {
@@ -4796,6 +4806,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             "This method is deprecated and will be removed in a future version of "
             "PyVista. Directly modify the scalars of a mesh in-place instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
 
         if mesh is None:
@@ -4872,6 +4883,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             "This method is deprecated and will be removed in a future version of "
             "PyVista. Directly modify the points of a mesh in-place instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         if mesh is None:
             mesh = self.mesh
@@ -6050,6 +6062,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     if scale is not None:
                         warnings.warn(
                             'This plotter is closed and cannot be scaled. Using the last saved image. Try using the `image_scale` property directly.',
+                            stacklevel=2,
                         )
                     return self._save_image(self.last_image, filename, return_img)
                 # Plotter hasn't been rendered or was improperly closed
@@ -6882,6 +6895,7 @@ class Plotter(BasePlotter):
                     interact with the plotter interactively.
                     """,
                 ).strip(),
+                stacklevel=2,
             )
         elif auto_close is None:
             auto_close = self._theme.auto_close
@@ -6910,6 +6924,7 @@ class Plotter(BasePlotter):
         if jupyter_backend and not self.notebook:
             warnings.warn(
                 'Not within a jupyter notebook environment.\nIgnoring ``jupyter_backend``.',
+                stacklevel=2,
             )
 
         jupyter_disp = None
@@ -6977,11 +6992,13 @@ class Plotter(BasePlotter):
                     "`auto_close` ignored: by clicking the exit button, "
                     "you have destroyed the render window and we have to "
                     "close it out.",
+                    stacklevel=2,
                 )
             self.close()
             if screenshot:
                 warnings.warn(
                     "A screenshot is unable to be taken as the render window is not current or rendering is suppressed.",
+                    stacklevel=2,
                 )
         if _is_current:
             if pyvista.ON_SCREENSHOT:

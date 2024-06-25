@@ -843,6 +843,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 warnings.warn(
                     f"`PolyData` constructor parameter `{k}` is deprecated and no longer used.",
                     PyVistaDeprecationWarning,
+                    stacklevel=2,
                 )
 
         self._glyph_geom = None
@@ -1367,6 +1368,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 Use `pv.PolyData.n_cells` or `pv.PolyData.n_faces_strict` instead.
                 See the documentation in '`pv.PolyData.n_faces` for more information.""",
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
 
         return self.n_cells

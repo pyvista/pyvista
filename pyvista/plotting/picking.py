@@ -473,6 +473,7 @@ class PickingInterface:  # numpydoc ignore=PR01
             warnings.warn(
                 '`use_mesh` is deprecated. See `use_picker` instead.',
                 PyVistaDeprecationWarning,
+                stacklevel=2,
             )
             use_mesh = kwargs.pop('use_mesh')
         else:
@@ -1032,7 +1033,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # pragma: no cover
-                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e), stacklevel=2)
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -1283,6 +1284,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
                             "Display representations other than `surface` will result in incorrect results.",
+                            stacklevel=2,
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()

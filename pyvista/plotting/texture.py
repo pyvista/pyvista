@@ -683,6 +683,7 @@ def numpy_to_texture(image):
             'Expected `image` dtype to be ``np.uint8``. `image` has been copied '
             'and converted to np.uint8.',
             UserWarning,
+            stacklevel=2,
         )
 
     return Texture(image)

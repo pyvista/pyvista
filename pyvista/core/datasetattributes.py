@@ -408,6 +408,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         return self.active_texture_coordinates
 
@@ -427,6 +428,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
@@ -446,6 +448,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         return self.active_texture_coordinates_name
 
@@ -465,6 +468,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         warnings.warn(
             "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
             PyVistaDeprecationWarning,
+            stacklevel=2,
         )
         self.active_texture_coordinates_name = name
 
