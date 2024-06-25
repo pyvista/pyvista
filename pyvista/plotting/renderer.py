@@ -1086,9 +1086,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.add_actor(axes_assembly)
 
         if show_labels:
-            self.add_actor(axes_assembly._x_follower)
-            self.add_actor(axes_assembly._y_follower)
-            self.add_actor(axes_assembly._z_follower)
+            self.add_actor(axes_assembly._label_actors[0])
+            self.add_actor(axes_assembly._label_actors[1])
+            self.add_actor(axes_assembly._label_actors[2])
             # # Scale label position proportional to length of each axis
             # total_length = np.array(axes_assembly.total_length)
             # label_position = _validation.validate_array3(label_position, broadcast=True)

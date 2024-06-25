@@ -47,9 +47,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ):
         super().__init__()
 
-        self._actors_shafts = [pv.Actor(), pv.Actor(), pv.Actor()]
-        self._actors_tips = [pv.Actor(), pv.Actor(), pv.Actor()]
-        actors = (*self._actors_shafts, *self._actors_tips)
+        self._shaft_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
+        self._tip_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
+        actors = (*self._shaft_actors, *self._tip_actors)
         [self.AddPart(actor) for actor in actors]
 
         if x_color is None:
@@ -76,13 +76,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         # Init label datasets and actors
 
-        self._x_follower = (
-            Text3DFollower()
-        )  # AxesAssembly._create_label_follower(dataset=self._label_sources[0].output)
-        self._y_follower = (
-            Text3DFollower()
-        )  # AxesAssembly._create_label_follower(dataset=self._label_sources[1].output)
-        self._z_follower = Text3DFollower()
+        self._label_actors = (Text3DFollower(), Text3DFollower(),Text3DFollower())
+
         # NOTE: Adding the followers to the assembly does *not* work
         # Instead, the followers must be added to a plot separately
         # self.AddPart(self._x_follower)
@@ -289,11 +284,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._x_follower.string
+        return self._label_actors[0].string
 
     @x_label.setter
     def x_label(self, label: str):  # numpydoc ignore=GL08
-        self._x_follower.string = label
+        self._label_actors[0].string = label
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
@@ -308,11 +303,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._y_follower.string
+        return self._label_actors[1].string
 
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
-        self._y_follower.string = label
+        self._label_actors[1].string = label
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
@@ -327,11 +322,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._z_follower.string
+        return self._label_actors[2].string
 
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
-        self._z_follower.string = label
+        self._label_actors[2].string = label
 
     @property
     def include_labels(self) -> bool:  # numpydoc ignore=RT01
@@ -351,9 +346,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_size = _validation.validate_number(size)
         # Scale text height proportional to norm of axes lengths
         height = np.linalg.norm(self.total_length) * size
-        self._x_follower.height = height
-        self._y_follower.height = height
-        self._z_follower.height = height
+        self._label_actors[0].height = height
+        self._label_actors[1].height = height
+        self._label_actors[2].height = height
         # x_label = pyvista.Text3D(self.x_label, height=true_size, depth=0.0)
         # y_label = pyvista.Text3D(self.y_label, height=true_size, depth=0.0)
         # z_label = pyvista.Text3D(self.z_label, height=true_size, depth=0.0)
@@ -408,43 +403,43 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     def x_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
         return (
-            self._actors_shafts[_AxisEnum.x].prop.color,
-            self._actors_tips[_AxisEnum.x].prop.color,
+            self._shaft_actors[_AxisEnum.x].prop.color,
+            self._tip_actors[_AxisEnum.x].prop.color,
         )
 
     @x_color.setter
     def x_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._actors_shafts[_AxisEnum.x].prop.color = shaft_color
-        self._actors_tips[_AxisEnum.x].prop.color = tip_color
+        self._shaft_actors[_AxisEnum.x].prop.color = shaft_color
+        self._tip_actors[_AxisEnum.x].prop.color = tip_color
 
     @property
     def y_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
         return (
-            self._actors_shafts[_AxisEnum.y].prop.color,
-            self._actors_tips[_AxisEnum.y].prop.color,
+            self._shaft_actors[_AxisEnum.y].prop.color,
+            self._tip_actors[_AxisEnum.y].prop.color,
         )
 
     @y_color.setter
     def y_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._actors_shafts[_AxisEnum.y].prop.color = shaft_color
-        self._actors_tips[_AxisEnum.y].prop.color = tip_color
+        self._shaft_actors[_AxisEnum.y].prop.color = shaft_color
+        self._tip_actors[_AxisEnum.y].prop.color = tip_color
 
     @property
     def z_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
         return (
-            self._actors_shafts[_AxisEnum.z].prop.color,
-            self._actors_tips[_AxisEnum.z].prop.color,
+            self._shaft_actors[_AxisEnum.z].prop.color,
+            self._tip_actors[_AxisEnum.z].prop.color,
         )
 
     @z_color.setter
     def z_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._actors_shafts[_AxisEnum.z].prop.color = shaft_color
-        self._actors_tips[_AxisEnum.z].prop.color = tip_color
+        self._shaft_actors[_AxisEnum.z].prop.color = shaft_color
+        self._tip_actors[_AxisEnum.z].prop.color = tip_color
 
     def set_prop(self, name, value, axis='all', part='all'):
         """Set the axes shaft and tip properties.
@@ -622,9 +617,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     def _update_label_positions(self):
         # self._apply_label_colors()
         x_pos, y_pos, z_pos = self._get_transformed_label_positions()
-        self._x_follower.position = x_pos
-        self._y_follower.position = y_pos
-        self._z_follower.position = z_pos
+        self._label_actors[0].position = x_pos
+        self._label_actors[1].position = y_pos
+        self._label_actors[2].position = z_pos
 
     # def _update_axes_geometry(self):
     #     self._axes_geometry._update_axes_shaft_and_tip_geometry()
