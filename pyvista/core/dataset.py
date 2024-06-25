@@ -1814,16 +1814,17 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.volume
-        64.0
+        np.float64(64.0)
 
         A mesh with 2D cells has no volume.
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.volume
-        0.0
+        np.float64(0.0)
 
         :class:`pyvista.PolyData` is special as a 2D surface can
-        enclose a 3D volume.
+        enclose a 3D volume. This case uses a different methodology,
+        see :method:`pyvista.PolyData.volume`.
 
         >>> mesh = pv.Sphere()
         >>> mesh.volume
@@ -1852,7 +1853,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.ImageData(dimensions=(5, 5, 1))
         >>> mesh.area
-        16.0
+        np.float64(16.0)
 
         A mesh with 3D cells does not have an area.  To get
         the outer surface area, first extract the surface using
@@ -1860,13 +1861,14 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> mesh = pv.ImageData(dimensions=(5, 5, 5))
         >>> mesh.area
-        0.0
+        np.float64(0.0)
 
-        Get the area of a sphere.
+        Get the area of a sphere. Discretization error results
+        in slight difference from ``pi``.
 
         >>> mesh = pv.Sphere()
-        >>> mesh.volume
-        0.51825
+        >>> mesh.area
+        np.float64(3.13)
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
@@ -2443,7 +2445,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> relative_position = cell_centers.points - point
         >>> distance = np.linalg.norm(relative_position, axis=1)
         >>> np.argmin(distance)
-        338
+        np.int64(338)
 
         Find the nearest cells to several random points that
         are centered on the origin.
@@ -3348,7 +3350,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.get_cell(0).bounds
         (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
-        True
+        np.True_
 
         """
         if not isinstance(ind, (int, np.integer)):

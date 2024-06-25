@@ -997,7 +997,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
-        (2, 2)
+        (np.int64(2), np.int64(2))
+
         """
         return self.renderers._shape
 
@@ -1653,7 +1654,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        (np.float64(-0.5), np.float64(0.5), np.float64(-0.5), np.float64(0.5), np.float64(-0.5), np.float64(0.5))
 
         """
         return self.renderer.bounds
@@ -1678,7 +1679,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.center
-        [0.0, 0.0, 0.0]
+        [np.float64(0.0), np.float64(0.0), np.float64(0.0)]
 
         """
         return self.renderer.center
@@ -6481,9 +6482,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter.subplot(1, 1)
         >>> _ = plotter.add_mesh(pv.Cone(), name='cone')
         >>> plotter.where_is('box')
-        [(0, 0), (1, 0)]
+        [(np.int64(0), np.int64(0)), (np.int64(1), np.int64(0))]
 
         >>> plotter.show()
+
         """
         return [
             tuple(self.renderers.index_to_loc(index))

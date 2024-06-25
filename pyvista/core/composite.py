@@ -205,7 +205,7 @@ class MultiBlock(
             maxima = np.maximum.reduce(all_bounds)[1::2]
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
+        the_bounds = np.stack([minima, maxima]).ravel('F').tolist()
 
         return cast(BoundsLike, tuple(the_bounds))
 
