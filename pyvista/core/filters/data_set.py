@@ -2309,6 +2309,7 @@ class DataSetFilters:
         if geom is None:
             arrow = pyvista.ArrowSource()
             geom = arrow.output
+            del arrow
         # Check if a table of geometries was passed
         if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
             if indices is None:
