@@ -136,3 +136,17 @@ def test_image_sinusolid_source():
     assert source.amplitude == amplitude
     assert source.direction == direction
     assert isinstance(source.output, pv.ImageData)
+
+
+def test_image_grid_source():
+    extent = (-10, 10, -10, 10, -10, 10)
+    spacing = (1, 1, 1)
+    source = pv.ImageGridSource(extent=extent, spacing=spacing)
+    assert source.extent == extent
+    assert source.spacing == spacing
+    extent = (-5, 5, -5, 5, -5, 5)
+    spacing = (0.5, 0.5, 0.5)
+    source.extent = extent
+    assert source.extent == extent
+    source.spacing = spacing
+    assert isinstance(source.output, pv.ImageData)
