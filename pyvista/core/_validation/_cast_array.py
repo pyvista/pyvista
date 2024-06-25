@@ -99,7 +99,7 @@ def _cast_to_numpy(
             * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
 
     must_be_real : bool, default: True
-        Raise a TypeError if the array does not have real numbers, i.e.
+        Raise a ``TypeError`` if the array does not have real numbers, i.e.
         its data type is not integer or floating.
 
     Raises
@@ -125,15 +125,14 @@ def _cast_to_numpy(
         VisibleDeprecationWarning = np.VisibleDeprecationWarning
 
     try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
+        out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
+
+        if copy and out is arr:
+            # we requested a copy but didn't end up with one
+            out = out.copy()
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
+    if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
         raise TypeError("Object arrays are not supported.")

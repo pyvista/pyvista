@@ -1030,12 +1030,14 @@ def test_glyph_orient_and_scale():
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
 def test_glyph_color_mode(sphere, color_mode):
-    assert sphere.glyph(color_mode=color_mode)
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
 
 
 def test_glyph_raises(sphere):
     with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
-        sphere.glyph(color_mode="foo")
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
@@ -2470,10 +2472,13 @@ def test_extract_values_split_ranges_values(labeled_data):
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
 values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
-values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
-    'val0',
-    'val1',
-]
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
 
 
 @pytest.mark.parametrize(

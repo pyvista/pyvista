@@ -9,12 +9,9 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from itertools import zip_longest
 import pathlib
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
 from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
 from typing import Union
 from typing import cast
 from typing import overload
@@ -22,6 +19,7 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -34,6 +32,9 @@ from .utilities.arrays import FieldAssociation
 from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterable
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
@@ -318,7 +319,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore[explicit-override, override]
+    def get_data_range(self, name: str, allow_missing: bool = False) -> tuple[float, float]:  # type: ignore[explicit-override, override]
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -387,8 +388,8 @@ class MultiBlock(
     @overload
     def __getitem__(
         self,
-        index: Union[int, str],
-    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
+        index: int | str,
+    ) -> _TypeMultiBlockLeaf | None:  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -416,7 +417,7 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
+    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -501,8 +502,8 @@ class MultiBlock(
     def get(
         self,
         index: str,
-        default: Optional[_TypeMultiBlockLeaf] = None,
-    ) -> Optional[_TypeMultiBlockLeaf]:
+        default: _TypeMultiBlockLeaf | None = None,
+    ) -> _TypeMultiBlockLeaf | None:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -537,7 +538,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: Optional[str]):
+    def set_block_name(self, index: int, name: str | None):
         """Set a block's string name at the specified index.
 
         Parameters
@@ -569,7 +570,7 @@ class MultiBlock(
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self, index: int) -> Optional[str]:
+    def get_block_name(self, index: int) -> str | None:
         """Return the string name of the block at the given index.
 
         Parameters
@@ -600,7 +601,7 @@ class MultiBlock(
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self) -> List[Optional[str]]:
+    def keys(self) -> list[str | None]:
         """Get all the block names in the dataset.
 
         Returns
@@ -622,10 +623,10 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self) -> List[Optional[str]]:
+    def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -658,8 +659,8 @@ class MultiBlock(
     @overload
     def __setitem__(
         self,
-        index: Union[int, str],
-        data: Optional[_TypeMultiBlockLeaf],
+        index: int | str,
+        data: _TypeMultiBlockLeaf | None,
     ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -667,13 +668,13 @@ class MultiBlock(
     def __setitem__(
         self,
         index: slice,
-        data: Iterable[Optional[_TypeMultiBlockLeaf]],
+        data: Iterable[_TypeMultiBlockLeaf | None],
     ):  # noqa: D105  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
         self,
-        index: Union[int, str, slice],
+        index: int | str | slice,
         data,
     ):
         """Set a block with a VTK data object.
@@ -695,7 +696,7 @@ class MultiBlock(
 
         """
         i: int = 0
-        name: Optional[str] = None
+        name: str | None = None
         if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
@@ -739,7 +740,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
+    def __delitem__(self, index: int | str | slice) -> None:
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
@@ -784,7 +785,7 @@ class MultiBlock(
 
         return True
 
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
+    def __next__(self) -> _TypeMultiBlockLeaf | None:
         """Get the next block from the iterator."""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
@@ -792,7 +793,7 @@ class MultiBlock(
             return result
         raise StopIteration
 
-    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: Optional[str] = None) -> None:
+    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Insert data before index.
 
         Parameters
@@ -832,7 +833,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: Union[int, str] = -1) -> Optional[_TypeMultiBlockLeaf]:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
         """Pop off a block at the specified index.
 
         Parameters
@@ -1057,10 +1058,10 @@ class MultiBlock(
 
     def set_active_scalars(
         self,
-        name: Optional[str],
+        name: str | None,
         preference: str = 'cell',
         allow_missing: bool = False,
-    ) -> Tuple[FieldAssociation, NumpyArray[float]]:
+    ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -1094,7 +1095,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
@@ -1135,8 +1136,8 @@ class MultiBlock(
                     break
 
         # Verify array consistency
-        dims: Set[int] = set()
-        dtypes: Set[np.dtype[Any]] = set()
+        dims: set[int] = set()
+        dtypes: set[np.dtype[Any]] = set()
         for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association
@@ -1236,6 +1237,10 @@ class MultiBlock(
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+            if dtype != np.uint8:
+                # uint8 is required by the mapper to display correctly
+                _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
+                scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
@@ -1272,11 +1277,30 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
+        """Convert rgb float or int scalars to uint8."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    if np.issubdtype(scalars.dtype, np.floating):
+                        _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
+                        scalars = np.array(scalars, dtype=np.uint8) * 255
+                    elif np.issubdtype(scalars.dtype, np.integer):
+                        _validation.check_range(scalars, [0, 255], name='rgb int scalars')
+                        scalars = np.array(scalars, dtype=np.uint8)
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-uint8'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-uint8'
+        return f'{scalars_name}-uint8'
+
     def _convert_to_single_component(
         self,
         data_attr: str,
         scalars_name: str,
-        component: Union[None, str],
+        component: None | str,
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:
