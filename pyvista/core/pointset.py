@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 from functools import wraps
 import numbers
-import pathlib
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Sequence
 from typing import cast
 import warnings
 
@@ -750,7 +749,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     def __init__(
         self,
-        var_inp: _vtk.vtkPolyData | str | pathlib.Path | MatrixLike[float] | None = None,
+        var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
         faces: CellArrayLike | None = None,
         n_faces: int | None = None,
         lines: CellArrayLike | None = None,
@@ -773,7 +772,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # filename
         opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
-        if isinstance(var_inp, (str, pathlib.Path)):
+        if isinstance(var_inp, (str, Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
@@ -1404,7 +1403,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Parameters
         ----------
-        filename : str
+        filename : str, Path
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
@@ -1480,7 +1479,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
-        filename = str(Path(str(filename)).expanduser().resolve())
+        filename = Path(filename).expanduser().resolve()
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
@@ -1807,7 +1806,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
@@ -2334,7 +2333,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, vtk.vtkStructuredGrid, numpy.ndarray, optional
+    uinput : str, Path, vtk.vtkStructuredGrid, numpy.ndarray, optional
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
         :class:`StructuredGrid`. If passed a ``vtk.vtkStructuredGrid``, it will
@@ -2415,7 +2414,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 self.deep_copy(uinput)
             else:
                 self.shallow_copy(uinput)
-        elif isinstance(uinput, (str, pathlib.Path)):
+        elif isinstance(uinput, (str, Path)):
             self._from_file(uinput, **kwargs)
         elif (
             isinstance(uinput, np.ndarray)
@@ -2761,7 +2760,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
                 grid = arg0.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
-            elif isinstance(arg0, (str, pathlib.Path)):
+            elif isinstance(arg0, (str, Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
@@ -2875,7 +2874,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     def save(
         self,
-        filename: pathlib.Path | str,
+        filename: Path | str,
         binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
@@ -2883,7 +2882,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Parameters
         ----------
-        filename : str
+        filename : Path, str
             Output file name. VTU and VTK extensions are supported.
 
         binary : bool, default: True

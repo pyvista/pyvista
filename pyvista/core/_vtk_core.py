@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 import contextlib
 from typing import NamedTuple
 import warnings
@@ -212,6 +212,7 @@ from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
 from vtkmodules.vtkCommonMath import vtkMatrix3x3
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkDomainsChemistry import vtkProteinRibbonFilter
 from vtkmodules.vtkFiltersCore import VTK_BEST_FITTING_PLANE
 from vtkmodules.vtkFiltersCore import vtkAppendArcLength
 from vtkmodules.vtkFiltersCore import vtkAppendFilter
@@ -237,7 +238,6 @@ from vtkmodules.vtkFiltersCore import vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
-from vtkmodules.vtkFiltersCore import vtkProbeFilter
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation
 from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet
 from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter
