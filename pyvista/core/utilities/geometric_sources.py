@@ -6,20 +6,24 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
+from enum import IntEnum
+import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
+from typing import get_args
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
-
-from .arrays import _coerce_pointslike_arg
-from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
@@ -28,6 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -898,17 +903,6 @@ class Text3DSource(vtkVectorText):
         """Initialize source."""
         super().__init__()
 
-        # Create output filters to make text 3D
-        extrude = _vtk.vtkLinearExtrusionFilter()
-        extrude.SetInputConnection(self.GetOutputPort())
-        extrude.SetExtrusionTypeToNormalExtrusion()
-        extrude.SetVector(0, 0, 1)
-        self._extrude_filter = extrude
-
-        tri_filter = _vtk.vtkTriangleFilter()
-        tri_filter.SetInputConnection(extrude.GetOutputPort())
-        self._tri_filter = tri_filter
-
         self._output = pyvista.PolyData()
 
         # Set params
@@ -941,11 +935,6 @@ class Text3DSource(vtkVectorText):
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}',
                 )
-
-    def __del__(self):
-        """Delete filters."""
-        self._tri_filter = None
-        self._extrude_filter = None
 
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
@@ -1044,8 +1033,16 @@ class Text3DSource(vtkVectorText):
                 out = self.GetOutput()
             else:
                 # 3D case, apply filters
-                self._tri_filter.Update()
-                out = self._tri_filter.GetOutput()
+                # Create output filters to make text 3D
+                extrude = _vtk.vtkLinearExtrusionFilter()
+                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetExtrusionTypeToNormalExtrusion()
+                extrude.SetVector(0, 0, 1)
+
+                tri_filter = _vtk.vtkTriangleFilter()
+                tri_filter.SetInputConnection(extrude.GetOutputPort())
+                tri_filter.Update()
+                out = tri_filter.GetOutput()
 
             # Modify output object
             self._output.copy_from(out)
@@ -2812,3 +2809,452 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+class _AxisEnum(IntEnum):
+    x = 0
+    y = 1
+    z = 2
+
+
+class _PartEnum(IntEnum):
+    shaft = 0
+    tip = 1
+
+
+class AxesGeometrySource:
+    """Create axes geometry source.
+
+    Source for generating fully 3-dimensional axes shaft and tip geometry.
+
+    By default, the shafts are cylinders and the tips are cones, though other geometries
+    such as spheres and cubes are also supported. The use of an arbitrary dataset
+    for the shafts and/or tips is also supported.
+
+    Unlike :class:`pyvista.AxesActor`, the output from this source is a
+    :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
+    The generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
+    arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
+
+    Parameters
+    ----------
+    shaft_type : str | pyvista.DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    shaft_radius : float, default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str | pyvista.DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    tip_radius : float, default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    """
+
+    GeometryTypes = Literal[
+        'cylinder',
+        'sphere',
+        'hemisphere',
+        'cone',
+        'pyramid',
+        'cube',
+        'octahedron',
+    ]
+    GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
+
+    def __init__(
+        self,
+        *,
+        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
+        shaft_radius: float = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
+        tip_radius: float = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+    ):
+        super().__init__()
+        # Init datasets
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+
+        # Store shaft/tip references in separate vars for convenience
+        self._shaft_datasets = (polys[0], polys[1], polys[2])
+        self._tip_datasets = (polys[3], polys[4], polys[5])
+
+        # Set geometry-dependent params
+        self.shaft_type = shaft_type  # type: ignore[assignment]
+        self.shaft_radius = shaft_radius
+        self.tip_type = tip_type  # type: ignore[assignment]
+        self.tip_radius = tip_radius
+
+        self.shaft_length = shaft_length  # type: ignore[assignment]
+        self.tip_length = tip_length  # type: ignore[assignment]
+
+    def __repr__(self):
+        """Representation of the axes."""
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  Shaft type:                 '{self.shaft_type}'",
+            f"  Shaft radius:               {self.shaft_radius}",
+            f"  Shaft length:               {self.shaft_length}",
+            f"  Tip type:                   '{self.tip_type}'",
+            f"  Tip radius:                 {self.tip_radius}",
+            f"  Tip length:                 {self.tip_length}",
+        ]
+        return '\n'.join(attr)
+
+    @property
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the shaft for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_length
+        (0.8, 0.8, 0.8)
+        >>> axes_geometry_source.shaft_length = 0.7
+        >>> axes_geometry_source.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_geometry_source.shaft_length = (1.0, 0.9, 0.5)
+        >>> axes_geometry_source.shaft_length
+        (1.0, 0.9, 0.5)
+        """
+        return tuple(self._shaft_length.tolist())
+
+    @shaft_length.setter
+    def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Shaft length",
+        )
+
+    @property
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the tip for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_length
+        (0.2, 0.2, 0.2)
+        >>> axes_geometry_source.tip_length = 0.3
+        >>> axes_geometry_source.tip_length
+        (0.3, 0.3, 0.3)
+        >>> axes_geometry_source.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_geometry_source.tip_length
+        (0.1, 0.4, 0.2)
+        """
+        return tuple(self._tip_length.tolist())
+
+    @tip_length.setter
+    def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Tip length",
+        )
+
+    @property
+    def tip_radius(self) -> float:  # numpydoc ignore=RT01
+        """Radius of the axes tips.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_radius
+        0.1
+        >>> axes_geometry_source.tip_radius = 0.2
+        >>> axes_geometry_source.tip_radius
+        0.2
+        """
+        return self._tip_radius
+
+    @tip_radius.setter
+    def tip_radius(self, radius: float):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='tip radius')
+        self._tip_radius = radius
+
+    @property
+    def shaft_radius(self):  # numpydoc ignore=RT01
+        """Radius of the axes shafts.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_radius
+        0.025
+        >>> axes_geometry_source.shaft_radius = 0.05
+        >>> axes_geometry_source.shaft_radius
+        0.05
+        """
+        return self._shaft_radius
+
+    @shaft_radius.setter
+    def shaft_radius(self, radius):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
+        self._shaft_radius = radius
+
+    @property
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Shaft type for all axes.
+
+        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default shaft type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_type
+        'cylinder'
+        >>> axes_geometry_source.shaft_type = 'cube'
+        >>> axes_geometry_source.shaft_type
+        'cube'
+
+        Set the shaft type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.shaft_type = pv.Superquadric()
+        >>> axes_geometry_source.shaft_type
+        'custom'
+        """
+        return self._shaft_type
+
+    @shaft_type.setter
+    def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
+
+    @property
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Tip type for all axes.
+
+        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default tip type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_type
+        'cone'
+        >>> axes_geometry_source.tip_type = 'sphere'
+        >>> axes_geometry_source.tip_type
+        'sphere'
+
+        Set the tip type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.tip_type = pv.Text3D('O')
+        >>> axes_geometry_source.tip_type
+        'custom'
+
+        >>> axes_geometry_source.output.plot(cpos='xy')
+        """
+        return self._tip_type
+
+    @tip_type.setter
+    def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
+
+    def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
+        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
+        datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
+        datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
+        datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
+        datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
+        return geometry_name
+
+    def _reset_shaft_and_tip_geometry(self):
+        # Store local copies of properties for iterating
+        shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
+        tip_radius, tip_length = (
+            self.tip_radius,
+            self.tip_length,
+        )
+
+        nested_datasets = [self._shaft_datasets, self._tip_datasets]
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
+            # Reset geometry
+            part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
+
+            # Offset so axis bounds are [0, 1]
+            part.points[:, axis] += 0.5
+
+            # Scale by length along axis, scale by radius off-axis
+            radius, length = (
+                (shaft_radius, shaft_length)
+                if part_type == _PartEnum.shaft
+                else (tip_radius, tip_length)
+            )
+            diameter = radius * 2
+            scale = [diameter] * 3
+            scale[axis] = length[axis]
+            part.scale(scale, inplace=True)
+
+            if part_type == _PartEnum.tip:
+                # Move tip to end of shaft
+                part.points[:, axis] += shaft_length[axis]
+
+    def update(self):
+        """Update the output of the source."""
+        self._reset_shaft_and_tip_geometry()
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
+        of the axes. The blocks are ordered by shafts first then tips, and in x-y-z order.
+        Specifically, they are named as follows:
+
+            (``'x_shaft'``, ``'y_shaft'``, ``'z_shaft'``, ``'x_tip'``, ``'y_tip'``, ``'z_tip'``)
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with separate shaft and tip datasets.
+        """
+        self.update()
+        return self._output
+
+    @staticmethod
+    def _make_default_part(geometry: str) -> pyvista.PolyData:
+        """Create part geometry with its length axis pointing in the +z direction."""
+        resolution = 50
+        if geometry == 'cylinder':
+            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'sphere':
+            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+        elif geometry == 'hemisphere':
+            return pyvista.SolidSphere(end_phi=90).extract_geometry()
+        elif geometry == 'cone':
+            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'pyramid':
+            return pyvista.Pyramid().extract_geometry()
+        elif geometry == 'cube':
+            return pyvista.Cube()
+        elif geometry == 'octahedron':
+            mesh = pyvista.Octahedron()
+            mesh.cell_data.remove('FaceIndex')
+            return mesh
+        else:
+            _validation.check_contains(
+                item=geometry,
+                container=AxesGeometrySource.GEOMETRY_TYPES,
+                name='Geometry',
+            )
+            raise NotImplementedError(
+                f"Geometry '{geometry}' is not implemented"
+            )  # pragma: no cover
+
+    @staticmethod
+    def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
+        part: pyvista.DataSet
+        part_poly: pyvista.PolyData
+        if isinstance(geometry, str):
+            name = geometry
+            part = AxesGeometrySource._make_default_part(
+                geometry,
+            )
+        elif isinstance(geometry, pyvista.DataSet):
+            name = 'custom'
+            part = geometry
+        else:
+            raise TypeError(
+                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
+            )
+        part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
+        part_poly = AxesGeometrySource._normalize_part(part_poly)
+        return name, part_poly
+
+    @staticmethod
+    def _normalize_part(part: pyvista.PolyData) -> pyvista.PolyData:
+        """Scale and translate part to have origin-centered bounding box with edge length one."""
+        # Center points at origin
+        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
+        part.points -= part.center  # type: ignore[misc]
+
+        # Scale so bounding box edges have length one
+        bnds = part.bounds
+        axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
+        if np.any(axis_length < 1e-8):
+            raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
+        part.scale(np.reciprocal(axis_length), inplace=True)
+        return part
+
+    @staticmethod
+    def _make_axes_parts(
+        geometry: str | pyvista.DataSet,
+    ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
+        """Return three axis-aligned normalized parts centered at the origin."""
+        name, part_z = AxesGeometrySource._make_any_part(geometry)
+        part_x = part_z.copy().rotate_y(90)
+        part_y = part_z.copy().rotate_x(-90)
+        return name, (part_x, part_y, part_z)

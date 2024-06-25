@@ -103,8 +103,11 @@ Status badges
 .. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
    :target: https://github.com/nschloe/awesome-scientific-computing
 
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
+
 +----------------------+------------------------------------------------+
-| Deployment           | |pypi| |conda|                                 |
+| Deployment           | |pypi| |conda| |Packaging status|              |
 +----------------------+------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
