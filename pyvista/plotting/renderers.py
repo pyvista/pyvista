@@ -117,8 +117,8 @@ class Renderers:
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
                 raise ValueError('"shape" must contain only positive integers.')
-            # always assign shape as a tuple
-            self._shape = tuple(shape)
+            # always assign shape as a tuple of native ints
+            self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
             # or initialize them to defaults (equally weighted).
@@ -344,7 +344,7 @@ class Renderers:
         tuple[int, int]
             Shape of the renderers.
         """
-        return tuple(s.item() for s in self._shape)
+        return self._shape
 
     def set_active_renderer(self, index_row, index_column=None):
         """Set the index of the active renderer.

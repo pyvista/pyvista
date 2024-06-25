@@ -558,3 +558,4 @@ def test_plotter_shape():
     pl = pv.Plotter(shape=(1, 2))
     assert isinstance(pl.shape, tuple)
     assert pl.shape == (1, 2)
+    assert isinstance(pl.shape[0], int)
