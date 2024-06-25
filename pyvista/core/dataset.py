@@ -1824,7 +1824,7 @@ class DataSet(DataSetFilters, DataObject):
 
         :class:`pyvista.PolyData` is special as a 2D surface can
         enclose a 3D volume. This case uses a different methodology,
-        see :method:`pyvista.PolyData.volume`.
+        see :func:`pyvista.PolyData.volume`.
 
         >>> mesh = pv.Sphere()
         >>> mesh.volume
