@@ -32,7 +32,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         y_label=None,
         z_label=None,
         labels=None,
-        label_color='white',
+        label_color='black',
         show_labels=True,
         label_position=1.1,
         label_size=50,
@@ -73,24 +73,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         self._is_init = False
 
-        # Init label datasets and actors
-        for actor in self._label_actors:
-            actor.size = label_size
-            prop = actor.prop
-            prop.bold = True
-            prop.italic = True
-            prop.enable_shadow()
-            prop.justification_horizontal = 'center'
-            prop.justification_vertical = 'center'
-
-        self.AddPart(self._label_actors[0])
-        self.AddPart(self._label_actors[1])
-        self.AddPart(self._label_actors[2])
-
-        # dataset = self.output
-        # mapper = AxesAssembly._create_rgb_mapper(dataset)
-        # return Actor(mapper=mapper)
-
         # Set text labels
         if labels is None:
             self.x_label = _set_default(x_label, 'X')
@@ -109,6 +91,14 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self.label_color = label_color
         self.label_size = label_size
         self.label_position = label_position
+
+        # Set default text properties
+        for actor in self._label_actors:
+            prop = actor.prop
+            prop.bold = True
+            prop.italic = True
+            prop.justification_horizontal = 'center'
+            prop.justification_vertical = 'center'
 
         self.user_matrix = np.eye(4) if user_matrix is None else user_matrix
         self._is_init = True

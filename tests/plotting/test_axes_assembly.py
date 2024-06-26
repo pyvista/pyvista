@@ -98,9 +98,9 @@ def test_axes_assembly_labels_raises():
 
 
 def test_axes_assembly_label_color(axes_assembly):
-    assert axes_assembly.label_color[0].name == 'white'
-    assert axes_assembly.label_color[1].name == 'white'
-    assert axes_assembly.label_color[2].name == 'white'
+    assert axes_assembly.label_color[0].name == 'black'
+    assert axes_assembly.label_color[1].name == 'black'
+    assert axes_assembly.label_color[2].name == 'black'
 
     axes_assembly.label_color = 'purple'
     assert len(axes_assembly.label_color) == 3
