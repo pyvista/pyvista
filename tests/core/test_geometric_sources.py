@@ -435,32 +435,6 @@ def test_axes_geometry_source_symmetric_init():
     assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
 
-def test_axes_geometry_source_total_length_set_get(axes_geometry_source):
-    assert axes_geometry_source.total_length == (1, 1, 1)
-    new_length = (1.1, 2.2, 3.3)
-    axes_geometry_source.total_length = new_length
-    assert axes_geometry_source.total_length == new_length
-
-    match = 'Total length (0.1, 0.1, 0.1) cannot be less than the tip length (0.2, 0.2, 0.2) when normalized mode is disabled.'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        axes_geometry_source.total_length = 0.1
-
-
-def test_axes_geometry_source_total_length_init():
-    axes_geometry_source = pv.AxesGeometrySource(total_length=2)
-    assert axes_geometry_source.total_length == (2, 2, 2)
-
-
-def test_axes_geometry_source_total_length_bounds(axes_geometry_source):
-    x_len, y_len, z_len = 1.5, 2.5, 3.5
-    axes_geometry_source.total_length = x_len, y_len, z_len
-    actual_bounds = axes_geometry_source.output.bounds
-
-    tip_radius = 0.1  # default value
-    expected_bounds = (-tip_radius, x_len, -tip_radius, y_len, -tip_radius, z_len)
-    assert np.allclose(actual_bounds, expected_bounds)
-
-
 def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
     new_length = (0.1, 0.2, 0.3)
@@ -641,52 +615,6 @@ def test_axes_geometry_source_tip_type_init(tip_type):
     assert axes_geometry_source.tip_type == tip_type
 
 
-def test_axes_geometry_source_axis_color_set_get(axes_geometry_source):
-    assert axes_geometry_source.x_color[0].name == 'tomato'
-    assert axes_geometry_source.x_color[1].name == 'tomato'
-    assert axes_geometry_source.y_color[0].name == 'seagreen'
-    assert axes_geometry_source.y_color[1].name == 'seagreen'
-    assert axes_geometry_source.z_color[0].name == 'blue'
-    assert axes_geometry_source.z_color[1].name == 'blue'
-
-    axes_geometry_source.x_color = 'purple'
-    assert len(axes_geometry_source.x_color) == 2
-    assert axes_geometry_source.x_color[0].name == 'purple'
-    assert axes_geometry_source.x_color[1].name == 'purple'
-
-    axes_geometry_source.x_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.x_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.x_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.y_color = 'purple'
-    assert axes_geometry_source.y_color[0].name == 'purple'
-    assert axes_geometry_source.y_color[1].name == 'purple'
-    axes_geometry_source.y_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.y_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.y_color[1].int_rgb, [1, 2, 3])
-
-    axes_geometry_source.z_color = 'purple'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-    axes_geometry_source.z_color = [1, 2, 3]
-    assert np.array_equal(axes_geometry_source.z_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_geometry_source.z_color[1].int_rgb, [1, 2, 3])
-
-
-def test_axes_geometry_source_axis_color_init():
-    axes_geometry_source = pv.AxesGeometrySource(
-        x_color='yellow',
-        y_color='orange',
-        z_color='purple',
-    )
-    assert axes_geometry_source.x_color[0].name == 'yellow'
-    assert axes_geometry_source.x_color[1].name == 'yellow'
-    assert axes_geometry_source.y_color[0].name == 'orange'
-    assert axes_geometry_source.y_color[1].name == 'orange'
-    assert axes_geometry_source.z_color[0].name == 'purple'
-    assert axes_geometry_source.z_color[1].name == 'purple'
-
-
 def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_radius == 0.025
     axes_geometry_source.shaft_radius = 0.1
@@ -698,113 +626,34 @@ def test_axes_geometry_source_shaft_radius_init():
     assert axes_geometry_source.shaft_radius == 3
 
 
-@pytest.mark.parametrize(
-    'test_prop_other_prop',
-    [('shaft_length', 'tip_length'), ('tip_length', 'shaft_length')],
-)
-@pytest.mark.parametrize('decimals', list(range(8)))
-@pytest.mark.parametrize('normalized_mode', [True, False])
-def test_axes_geometry_source_normalized_mode(test_prop_other_prop, decimals, normalized_mode):
-    test_prop, other_prop = test_prop_other_prop
-
-    # Get default value
-    axes_geometry_source = pv.AxesGeometrySource()
-    other_prop_default = np.array(getattr(axes_geometry_source, other_prop))
-
-    # Initialize actor with a random length for test prop
-    random_length = np.round(np.random.default_rng().random(), decimals=decimals)
-    var_kwargs = {}
-    var_kwargs[test_prop] = random_length
-    axes_geometry_source = pv.AxesGeometrySource(normalized_mode=normalized_mode, **var_kwargs)
-
-    actual_test_prop = np.array(getattr(axes_geometry_source, test_prop))
-    actual_other_prop = np.array(getattr(axes_geometry_source, other_prop))
-
-    expected = np.array([random_length] * 3)
-    assert np.array_equal(actual_test_prop, expected)
-    if normalized_mode:
-        # Test lengths sum to 1
-        actual = actual_test_prop + actual_other_prop
-        expected = (1, 1, 1)
-        assert np.array_equal(actual, expected)
-    else:
-        # Test other length is unchanged
-        actual = actual_other_prop
-        expected = other_prop_default
-        assert np.array_equal(actual, expected)
-
-    # Test setting both does not raise error if they sum to one
-    _ = pv.AxesGeometrySource(shaft_length=random_length, tip_length=1 - random_length)
-    _ = pv.AxesGeometrySource(shaft_length=1 - random_length, tip_length=random_length)
-
-    # test enabling auto_length after object has been created
-    axes_geometry_source.normalized_mode = True
-    setattr(axes_geometry_source, test_prop, 0.9)
-    expected = (0.9, 0.9, 0.9)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    value_unchanged = (0.1, 0.1, 0.1)
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-    # test disabling auto_length after object has been created
-    axes_geometry_source.normalized_mode = False
-    setattr(axes_geometry_source, test_prop, 0.7)
-    expected = (0.7, 0.7, 0.7)
-    actual = getattr(axes_geometry_source, test_prop)
-    assert np.array_equal(actual, expected)
-
-    expected = value_unchanged
-    actual = getattr(axes_geometry_source, other_prop)
-    assert np.array_equal(actual, expected)
-
-
-def test_axes_geometry_source_normalized_mode_raises():
-    ## normalized_mode=True
-    # test no error when lengths sum to one
-    pv.AxesGeometrySource(shaft_length=0.8, tip_length=0.2, normalized_mode=True)
-    # test error raised otherwise
-    match = (
-        "Cannot set both `shaft_length` and `tip_length` with `normalized_mode` enabled'.\n"
-        "Set either `shaft_length` or `tip_length`, but not both."
-    )
-    with pytest.raises(ValueError, match=match):
-        pv.AxesGeometrySource(shaft_length=0.6, tip_length=0.6, normalized_mode=True)
-
-    ## normalized_mode=False
-    # test no error when lengths sum to total length
-    pv.AxesGeometrySource(shaft_length=0.9, tip_length=0.2, total_length=1.1, normalized_mode=False)
-    # test error raised otherwise
-    match = (
-        "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
-        "Set either `shaft_length` or `total_length`, but not both."
-    )
-    with pytest.raises(ValueError, match=match):
-        pv.AxesGeometrySource(
-            shaft_length=0.6,
-            tip_length=0.2,
-            total_length=1.1,
-            normalized_mode=False,
-        )
-
-
 def test_axes_geometry_source_output():
     out = pv.AxesGeometrySource().output
     assert isinstance(out, pv.MultiBlock)
     assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
 
 
-def test_axes_geometry_source_rgb_scalars(axes_geometry_source):
-    assert axes_geometry_source.rgb_scalars is True
-    out = axes_geometry_source.output
-    assert all('axes_rgb' in block.array_names for block in out)
+def test_axes_geometry_source_update_output(axes_geometry_source):
+    out1 = axes_geometry_source.output
+    assert isinstance(out1, pv.MultiBlock)
+    assert out1.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
 
-    axes_geometry_source.rgb_scalars = False
-    assert axes_geometry_source.rgb_scalars is False
-    axes_geometry_source.update()
-    assert all('axes_rgb' not in block.array_names for block in out)
+    # Test output object references are unchanged when updating
+    out2 = axes_geometry_source.output
+    assert out1 is out2
+
+    assert out1[0] is out2[0]
+    assert out1[1] is out2[1]
+    assert out1[2] is out2[2]
+    assert out1[3] is out2[3]
+    assert out1[4] is out2[4]
+    assert out1[5] is out2[5]
+
+    assert out1['x_shaft'] is out2['x_shaft']
+    assert out1['y_shaft'] is out2['y_shaft']
+    assert out1['z_shaft'] is out2['z_shaft']
+    assert out1['x_tip'] is out2['x_tip']
+    assert out1['y_tip'] is out2['y_tip']
+    assert out1['z_tip'] is out2['z_tip']
 
 
 def test_axes_geometry_source_repr(axes_geometry_source):
@@ -817,17 +666,11 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         "  Tip type:                   'cone'",
         '  Tip radius:                 0.1',
         '  Tip length:                 (0.2, 0.2, 0.2)',
-        '  Total length:               (1.0, 1.0, 1.0)',
         '  Position:                   (0.0, 0.0, 0.0)',
         '  Direction vectors:          [[1. 0. 0.]',
         '                               [0. 1. 0.]',
         '                               [0. 0. 1.]]',
         '  Symmetric:                  False',
-        '  Normalized mode:            False',
-        '  RGB scalars:                True',
-        "  X color:                    ('tomato', 'tomato')",
-        "  Y color:                    ('seagreen', 'seagreen')",
-        "  Z color:                    ('blue', 'blue')",
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines

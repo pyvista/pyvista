@@ -34,7 +34,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting.colors import Color
-    from pyvista.plotting.colors import ColorLike
 
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
@@ -2826,34 +2825,46 @@ class _PartEnum(IntEnum):
 class AxesGeometrySource:
     """Create axes geometry source.
 
-    Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
-    may be arbitrarily oriented in space, and the length, radius, and color of the axis
-    parts (shaft or tip) may be customized.
+    # Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
+    # may be arbitrarily oriented in space, and the length, radius, and color of the axis
+    # parts (shaft or tip) may be customized.
+    #
+    # By default, the shafts are cylinders and the tips are cones, though other geometries
+    # such as spheres and cubes are directly supported. The use of an arbitrary dataset
+    # for the shafts and/or tips is also supported.
+    #
+    # Unlike :class:`pyvista.AxesActor`, the output from this source is a
+    # :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
+    # addition, the generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    # radius of 0.1 will truly have a radius of 0.1 (this is not the case for
+    # :class:`pyvista.AxesActor`). This behavior can be controlled with
+    # :attr:`normalized_mode`.
+
+    Source for generating fully 3-dimensional axes shaft and tip geometry.
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
-    such as spheres and cubes are directly supported. The use of an arbitrary dataset
+    such as spheres and cubes are also supported. The use of an arbitrary dataset
     for the shafts and/or tips is also supported.
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
-    :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
-    addition, the generated axes are "true-to-scale" by default, i.e. a  shaft with a
-    radius of 0.1 will truly have a radius of 0.1 (this is not the case for
-    :class:`pyvista.AxesActor`). This behavior can be controlled with
-    :attr:`normalized_mode`.
+    :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
+    The generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
+    arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
+
 
     Parameters
     ----------
     shaft_type : str | pyvista.DataSet, default: 'cylinder'
-        Shaft type for all axes. Recommended values are ``'cylinder'`` or ``'cube'``.
-        but can be any of the following:
+        Shaft type for all axes. Can be any of the following:
 
-            - ``'cylinder'``
-            - ``'sphere'``
-            - ``'hemisphere'``
-            - ``'cone'``
-            - ``'pyramid'``
-            - ``'cube'``
-            - ``'octahedron'``
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
 
         Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
         specified. In this case, the dataset must be oriented such that it "points" in
@@ -2868,13 +2879,13 @@ class AxesGeometrySource:
     tip_type : str | pyvista.DataSet, default: 'cone'
         Tip type for all axes. Can be any of the following:
 
-            - ``'cylinder'``
-            - ``'sphere'``
-            - ``'hemisphere'``
-            - ``'cone'``
-            - ``'pyramid'``
-            - ``'cube'``
-            - ``'octahedron'``
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
 
         Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
         specified. In this case, the dataset must be oriented such that it "points" in
@@ -2886,9 +2897,6 @@ class AxesGeometrySource:
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
 
-    total_length : float | VectorLike[float], default 1.0,
-        Total length of each axis (shaft plus tip).
-
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
         Position of the axes in space.
 
@@ -2899,42 +2907,6 @@ class AxesGeometrySource:
     symmetric : bool, default: False
         Mirror the axes such that they extend to negative values.
 
-    normalized_mode : bool, default: False,
-        Normalize the shaft and tip lengths relative to the total length.
-
-        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths the range ``[0, 1]``, and are scaled proportional to
-        the :attr:`total_length`.
-
-        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
-        normalized and will be true to scale, i.e. the actual lengths of the shafts and
-        tips will match their specified value(s).
-
-    rgb_scalars : bool, default: True
-        Add rgb scalars to the axes. The scalar array ``'axes_rgb'`` is added to the
-        cell data of the output datasets. The arrays have rgb values specified by
-        :attr:`x_color`, :attr:`y_color`, and :attr:`z_color`.
-
-        Set this property to ``False`` to disable any coloring and remove the arrays
-        from the output.
-
-    x_color : ColorLike | Sequence[ColorLike]
-        Color of the x-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.x_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-    y_color : ColorLike | Sequence[ColorLike]
-        Color of the y-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.y_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-    z_color : ColorLike | Sequence[ColorLike]
-        Color of the z-axis shaft and tip. Specify a single color or separate colors for
-        the shaft and tip. The axes are colored by adding a rgb scalar array to the
-        dataset. Defaults to :attr:`pyvista.global_theme.axes.z_color`.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
     """
 
     GeometryTypes = Literal[
@@ -2953,97 +2925,37 @@ class AxesGeometrySource:
         *,
         shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
-        shaft_length: float | VectorLike[float] | None = None,
+        shaft_length: float | VectorLike[float] = 0.8,
         tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
-        tip_length: float | VectorLike[float] | None = None,
-        total_length: float | VectorLike[float] | None = None,
+        tip_length: float | VectorLike[float] = 0.2,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         direction_vectors: ArrayLike[float] | None = None,
         symmetric: bool = False,
-        normalized_mode: bool = False,
-        rgb_scalars: bool = True,
-        x_color: ColorLike | Sequence[ColorLike] | None = None,
-        y_color: ColorLike | Sequence[ColorLike] | None = None,
-        z_color: ColorLike | Sequence[ColorLike] | None = None,
     ):
         super().__init__()
         # Init datasets
-        self._shaft_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
-        self._tip_datasets = (pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData())
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
 
-        # Set shaft and tip color
-        if x_color is None:
-            x_color = pyvista.global_theme.axes.x_color
-        if y_color is None:
-            y_color = pyvista.global_theme.axes.y_color
-        if z_color is None:
-            z_color = pyvista.global_theme.axes.z_color
-        self._shaft_color: list[Color] = [None, None, None]  # type: ignore[list-item]
-        self._tip_color: list[Color] = [None, None, None]  # type: ignore[list-item]
-        self.x_color = x_color  # type:ignore[assignment]
-        self.y_color = y_color  # type:ignore[assignment]
-        self.z_color = z_color  # type:ignore[assignment]
-        self._rgb_scalars = rgb_scalars
+        # Store shaft/tip references in separate vars for convenience
+        self._shaft_datasets = (polys[0], polys[1], polys[2])
+        self._tip_datasets = (polys[3], polys[4], polys[5])
 
         # Set misc flag params
-        self._normalized_mode = normalized_mode
         self._symmetric = symmetric
 
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
+        self.shaft_length = shaft_length  # type: ignore[assignment]
         self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
+        self.tip_length = tip_length  # type: ignore[assignment]
 
         self.position = position  # type: ignore[assignment]
         self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
-
-        # Check auto-length
-        normalized_mode_set = normalized_mode
-        shaft_length_set = shaft_length is not None
-        tip_length_set = tip_length is not None
-        total_length_set = total_length is not None
-
-        self._shaft_length = 0.8 if shaft_length is None else shaft_length  # type: ignore[assignment]
-        self._tip_length = 0.2 if tip_length is None else tip_length  # type: ignore[assignment]
-        self._total_length = 1.0 if total_length is None else total_length  # type: ignore[assignment]
-
-        if normalized_mode_set:
-            # Disable flag temporarily and restore later
-            self.normalized_mode = False
-
-            lengths_sum_to_one = np.array_equal(self._shaft_length + self._tip_length, (1, 1, 1))
-            if shaft_length_set and tip_length_set and not lengths_sum_to_one:
-                raise ValueError(
-                    "Cannot set both `shaft_length` and `tip_length` with `normalized_mode` enabled'.\n"
-                    "Set either `shaft_length` or `tip_length`, but not both.",
-                )
-            # Values are valid, set properties with normalized mode enabled
-            self.normalized_mode = True
-            if shaft_length_set and not tip_length_set:
-                self.shaft_length = shaft_length  # type: ignore[assignment]
-            elif tip_length_set and not shaft_length_set:
-                self.tip_length = tip_length  # type: ignore[assignment]
-        else:
-            # Enable flag temporarily and restore later
-            self.normalized_mode = True
-
-            lengths_sum_to_total = np.array_equal(
-                self._shaft_length + self._tip_length,
-                self._total_length,
-            )
-            if shaft_length_set and total_length_set and not lengths_sum_to_total:
-                raise ValueError(
-                    "Cannot set both `shaft_length` and `total_length` with `normalized_mode` disabled'.\n"
-                    "Set either `shaft_length` or `total_length`, but not both.",
-                )
-            # Values are valid, set properties with normalized mode disabled
-            self.normalized_mode = False
-            if shaft_length_set and not total_length_set:
-                self.shaft_length = shaft_length  # type: ignore[assignment]
-            elif total_length_set and not shaft_length_set:
-                self.total_length = total_length  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes."""
@@ -3068,15 +2980,9 @@ class AxesGeometrySource:
             f"  Tip type:                   '{self.tip_type}'",
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
-            f"  Total length:               {self.total_length}",
             f"  Position:                   {self.position}",
             f"  Direction vectors:          {_format_vectors(self.direction_vectors)}",
             f"  Symmetric:                  {self.symmetric}",
-            f"  Normalized mode:            {self.normalized_mode}",
-            f"  RGB scalars:                {self.rgb_scalars}",
-            f"  X color:                    {_format_color(self.x_color)}",
-            f"  Y color:                    {_format_color(self.y_color)}",
-            f"  Z color:                    {_format_color(self.z_color)}",
         ]
         return '\n'.join(attr)
 
@@ -3097,98 +3003,10 @@ class AxesGeometrySource:
         self._symmetric = val
 
     @property
-    def _total_length(self) -> NumpyArray[float]:
-        return self.__total_length
-
-    @_total_length.setter
-    def _total_length(self, length: float | VectorLike[float]):
-        self.__total_length: NumpyArray[float] = _validation.validate_array3(
-            length,
-            broadcast=True,
-            must_be_in_range=[0.0, np.inf],
-            name='Total length',
-        )
-
-    @property
-    def total_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Total length of each axis (shaft plus tip).
-
-        When :attr:`normalized_mode` is ``False``, setting this value will also modify
-        :attr:`shaft_length` such that:
-
-            :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
-
-        Values must be non-negative.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.total_length
-        (1.0, 1.0, 1.0)
-        >>> axes_geometry_source.total_length = 1.2
-        >>> axes_geometry_source.total_length
-        (1.2, 1.2, 1.2)
-        >>> axes_geometry_source.total_length = (1.0, 0.9, 0.5)
-        >>> axes_geometry_source.total_length
-        (1.0, 0.9, 0.5)
-        """
-        return tuple(self._total_length.tolist())
-
-    @total_length.setter
-    def total_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._total_length = length  # type: ignore[assignment]
-        if not self.normalized_mode:
-            # Total length cannot be less than each tip length
-            if np.any(self._total_length < self._tip_length):
-                raise ValueError(
-                    f"Total length {self.total_length} cannot be less than the tip length {self.tip_length} when normalized mode is disabled.",
-                )
-            self._shaft_length = self._total_length - self._tip_length
-
-    @property
-    def _shaft_length(self) -> NumpyArray[float]:
-        return self.__shaft_length
-
-    @_shaft_length.setter
-    def _shaft_length(self, length: float | VectorLike[float]):
-        if self.normalized_mode:
-            upper_range = 1.0
-            name_suffix = ' with normalized mode'
-        else:
-            upper_range = np.inf
-            name_suffix = ''
-
-        self.__shaft_length: NumpyArray[float] = _validation.validate_array3(
-            length,
-            broadcast=True,
-            must_be_in_range=[0.0, upper_range],
-            name=f"Shaft length{name_suffix}",
-        )
-
-    @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the shaft for each axis.
 
-        When :attr:`normalized_mode` is ``False``:
-
-            - The shaft length(s) of the axes will be true to scale, i.e. the actual
-              lengths of the shafts will match the specified value(s).
-            - Setting this value will also modify :attr:`total_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = :attr:`total_length`.
-
-            - Values must be non-negative.
-
-        When :attr:`normalized_mode` is ``True``:
-
-            - The shaft length(s) of the axes are scaled proportional to the
-              :attr:`total_length`.
-            - Setting this value will also modify :attr:`total_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = 1.0
-
-            - Values must be in range ``[0, 1]``.
+        Value must be non-negative.
 
         Examples
         --------
@@ -3207,56 +3025,18 @@ class AxesGeometrySource:
 
     @shaft_length.setter
     def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._shaft_length = length  # type: ignore[assignment]
-
-        if self.normalized_mode:
-            # Calc 1-length and round to nearest 1e-8
-            def calc_one_minus(vector):
-                return tuple(round(1.0 - x, 8) for x in vector)
-
-            self._tip_length = calc_one_minus(self._shaft_length)
-        else:
-            self._total_length = self._shaft_length + self._tip_length
-
-    @property
-    def _tip_length(self) -> NumpyArray[float]:
-        return self.__tip_length
-
-    @_tip_length.setter
-    def _tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        if self.normalized_mode:
-            upper_range = 1.0
-            name_suffix = ' with normalized mode'
-        else:
-            upper_range = np.inf
-            name_suffix = ''
-
-        self.__tip_length: NumpyArray[float] = _validation.validate_array3(
+        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
-            must_be_in_range=[0.0, upper_range],
-            name=f"Tip length{name_suffix}",
+            must_be_in_range=[0.0, np.inf],
+            name="Shaft length",
         )
 
     @property
     def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Length of the tip for each axis.
 
-        When :attr:`normalized_mode` is ``False``:
-
-            - The tip length(s) of the axes will be true to scale, i.e. the actual
-              lengths of the tips will match the specified value(s).
-            - Values must be non-negative.
-
-        When :attr:`normalized_mode` is ``True``:
-
-            - The tip length(s) of the axes are scaled proportional to the
-              :attr:`total_length`.
-            - Setting this value will also modify :attr:`shaft_length` such that:
-
-                :attr:`shaft_length` + :attr:`tip_length` = 1.0
-
-            - Values must be in range ``[0, 1]``.
+        Value must be non-negative.
 
         Examples
         --------
@@ -3275,95 +3055,12 @@ class AxesGeometrySource:
 
     @tip_length.setter
     def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self._tip_length = length  # type: ignore[assignment]
-
-        if self.normalized_mode:
-            # Calc 1-length and round to nearest 1e-8
-            def calc_one_minus(vector):
-                return tuple(round(1.0 - x, 8) for x in vector)
-
-            self._shaft_length = calc_one_minus(self._tip_length)
-        else:
-            self._total_length = self._shaft_length + self._tip_length
-
-    @property
-    def normalized_mode(self) -> bool:  # numpydoc ignore=RT01
-        """Normalize the shaft and tip lengths relative to the total length.
-
-        If ``True``, the :attr:`shaft_length` and :attr:`tip_length` represent
-        normalized lengths in range ``[0, 1]``. The shaft length plus tip length always
-        sum to one, and the axes are scaled proportional to the :attr:`total_length`.
-
-        If ``False``, the :attr:`shaft_length` and :attr:`tip_length` values are not
-        normalized and will be true to scale, i.e. the actual lengths of the shafts and
-        tips will match their specified value(s).
-
-        Examples
-        --------
-        Create an axes geometry source with a specific shaft length. The tip lengths are
-        automatically adjusted so that the lengths for each axis sum to 1.0.
-
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     shaft_length=0.7, normalized_mode=True
-        ... )
-        >>> axes_geometry_source.shaft_length
-        (0.7, 0.7, 0.7)
-        >>> axes_geometry_source.tip_length
-        (0.3, 0.3, 0.3)
-
-        Similarly, the shaft lengths are updated when setting the tip lengths.
-
-        >>> axes_geometry_source.tip_length = (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.tip_length
-        (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.shaft_length
-        (0.9, 0.8, 0.6)
-
-        The total length can be adjusted independently without impacting the shaft
-        or tip lengths.
-
-        >>> axes_geometry_source.total_length = (1.2, 1.4, 1.6)
-        >>> axes_geometry_source.total_length
-        (1.2, 1.4, 1.6)
-        >>> axes_geometry_source.tip_length
-        (0.1, 0.2, 0.4)
-        >>> axes_geometry_source.shaft_length
-        (0.9, 0.8, 0.6)
-
-        When ``normalized_mode`` is disabled, the shaft and tip lengths represent actual
-        lengths.
-
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     shaft_length=2.0, tip_length=0.5, normalized_mode=False
-        ... )
-        >>> axes_geometry_source.shaft_length
-        (2.0, 2.0, 2.0)
-        >>> axes_geometry_source.tip_length
-        (0.5, 0.5, 0.5)
-
-        The total length is automatically updated as the sum of the shaft and
-        tip lengths.
-
-        >>> axes_geometry_source.total_length
-        (2.5, 2.5, 2.5)
-
-        If the total length is modified, the shaft length is also updated by
-        subtracting the tip length from the total length.
-
-        >>> axes_geometry_source.total_length = 1.5
-        >>> axes_geometry_source.total_length
-        (1.5, 1.5, 1.5)
-        >>> axes_geometry_source.shaft_length
-        (1.0, 1.0, 1.0)
-        >>> axes_geometry_source.tip_length
-        (0.5, 0.5, 0.5)
-        """
-        return self._normalized_mode
-
-    @normalized_mode.setter
-    def normalized_mode(self, value: bool):  # numpydoc ignore=GL08
-        self._normalized_mode = bool(value)
+        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Tip length",
+        )
 
     @property
     def tip_radius(self) -> float:  # numpydoc ignore=RT01
@@ -3490,116 +3187,6 @@ class AxesGeometrySource:
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
     @property
-    def rgb_scalars(self) -> bool:  # numpydoc ignore=RT01
-        """Add rgb scalars to the axes.
-
-        The scalar array ``'axes_rgb'`` is added to the cell data of the output.
-        The arrays have rgb values specified by :attr:`x_color`, :attr:`y_color`, and
-        :attr:`z_color`.
-
-        Set this property to ``False`` to disable any coloring and remove the arrays
-        from the output.
-        """
-        return self._rgb_scalars
-
-    @rgb_scalars.setter
-    def rgb_scalars(self, value: bool):  # numpydoc ignore=GL08
-        self._rgb_scalars = value
-
-    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
-        # Local import to only import from plotting module as needed
-        from pyvista.plotting.colors import _validate_color_sequence
-
-        self._shaft_color[axis], self._tip_color[axis] = _validate_color_sequence(color, n_colors=2)
-
-    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
-        return self._shaft_color[axis], self._tip_color[axis]
-
-    @property
-    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the x-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.x_color
-        (Color(name='tomato', hex='#ff6347ff', opacity=255), Color(name='tomato', hex='#ff6347ff', opacity=255))
-
-        >>> axes_geometry_source.x_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.x_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.x)
-
-    @x_color.setter
-    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.x, color)
-
-    @property
-    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the y-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.y_color
-        (Color(name='seagreen', hex='#2e8b57ff', opacity=255), Color(name='seagreen', hex='#2e8b57ff', opacity=255))
-
-        >>> axes_geometry_source.y_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.y_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.y)
-
-    @y_color.setter
-    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.y, color)
-
-    @property
-    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the z-axis shaft and tip.
-
-        A single color or separate colors for the shaft and tip may be specified.
-        The axes are colored by adding a rgb scalar array to the dataset.
-        Has no effect if :attr:`rgb_scalars` is ``False``.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.z_color
-        (Color(name='blue', hex='#0000ffff', opacity=255), Color(name='blue', hex='#0000ffff', opacity=255))
-
-        >>> axes_geometry_source.z_color = (
-        ...     (1.0, 1.0, 1.0),
-        ...     (0.0, 0.0, 0.0),
-        ... )
-        >>> axes_geometry_source.z_color
-        (Color(name='white', hex='#ffffffff', opacity=255), Color(name='black', hex='#000000ff', opacity=255))
-        """
-        return self._get_axis_color(_AxisEnum.z)
-
-    @z_color.setter
-    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.z, color)
-
-    @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the axes in space.
 
@@ -3682,14 +3269,12 @@ class AxesGeometrySource:
         return geometry_name
 
     def _reset_shaft_and_tip_geometry(self):
-        # Store
+        # Store local copies of properties for iterating
         shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
         tip_radius, tip_length = (
             self.tip_radius,
             self.tip_length,
         )
-        total_length = self.total_length
-        normalized_mode = self.normalized_mode
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
         for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
@@ -3722,54 +3307,24 @@ class AxesGeometrySource:
                 flipped = part.flip_normal(normal=normal, point=origin)
                 part.append_polydata(flipped, inplace=True)
 
-            if normalized_mode:
-                # Scale part proportional to total length
-                part.scale(total_length, inplace=True)
-
     def _transform_shafts_and_tips(self):
         for dataset in [*self._shaft_datasets, *self._tip_datasets]:
             dataset.transform(self.transformation_matrix, inplace=True)
-
-    def _update_axis_rgb_scalars(self, axis: _AxisEnum):
-        SCALARS = 'axes_rgb'
-
-        def _set_rgb_scalars(dataset: pyvista.PolyData, color: Color):
-            # TODO: modify to allow any dtype once #6272 is merged
-            color_uint8 = np.array(color.int_rgb, dtype=np.uint8)
-            dataset.cell_data[SCALARS] = np.broadcast_to(color_uint8, (dataset.n_cells, 3))
-
-        def _clear_rgb_scalars(dataset):
-            if SCALARS in dataset.cell_data:
-                dataset.cell_data.remove(SCALARS)
-
-        if self.rgb_scalars:
-            _set_rgb_scalars(self._shaft_datasets[axis], self._shaft_color[axis])
-            _set_rgb_scalars(self._tip_datasets[axis], self._tip_color[axis])
-        else:
-            _clear_rgb_scalars(self._shaft_datasets[axis])
-            _clear_rgb_scalars(self._tip_datasets[axis])
 
     def update(self):
         """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
         self._transform_shafts_and_tips()
 
-        self._update_axis_rgb_scalars(_AxisEnum.x)
-        self._update_axis_rgb_scalars(_AxisEnum.y)
-        self._update_axis_rgb_scalars(_AxisEnum.z)
-
     @property
     def output(self) -> pyvista.MultiBlock:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
-        of the axes. The blocks are ordered and named as follows:
-            - ``'x_shaft'``
-            - ``'y_shaft'``
-            - ``'z_shaft'``
-            - ``'x_tip'``
-            - ``'y_tip'``
-            - ``'z_tip'``
+        of the axes. The blocks are ordered by shafts first then tips, and in x-y-z order.
+        Specifically, they are named as follows:
+
+            (``'x_shaft'``, ``'y_shaft'``, ``'z_shaft'``, ``'x_tip'``, ``'y_tip'``, ``'z_tip'``)
 
         The source is automatically updated by :meth:`update` prior to returning
         the output.
@@ -3780,9 +3335,7 @@ class AxesGeometrySource:
             Composite mesh with separate shaft and tip datasets.
         """
         self.update()
-        keys = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
-        values = (*self._shaft_datasets, *self._tip_datasets)
-        return pyvista.MultiBlock(dict(zip(keys, values)))
+        return self._output
 
     @staticmethod
     def _make_default_part(geometry: str) -> pyvista.PolyData:
