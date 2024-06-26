@@ -4012,23 +4012,23 @@ def test_axes_assembly():
     pl.show()
 
 
-def _direction_vectors():
-    return pv.Prop3D.orientation_to_direction_vectors((10, 20, 30))
-
-
 @pytest.mark.parametrize(
     'test_kwargs',
     [
         {},
         dict(position=(-0.5, -0.5, 1)),
-        dict(direction_vectors=_direction_vectors()),
-        dict(position=(-0.5, -0.5, 1), direction_vectors=_direction_vectors()),
+        dict(orientation=(10, 20, 30)),
+        dict(position=(-0.5, -0.5, 1), orientation=(10, 20, 30)),
+        dict(scale=(1.5, 2, 2.5)),
     ],
     ids=[
         'default',
         'position',
-        'direction_vectors',
-        'position_and_direction',
+        'orientation',
+        'position_and_orientation',
+        'scale',
+        #'user_matrix',
+        #'user_matrix',
     ],
 )
 def test_add_axes_marker(test_kwargs):

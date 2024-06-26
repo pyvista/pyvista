@@ -28,12 +28,10 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
-    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.plotting.colors import Color
 
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
@@ -2929,8 +2927,6 @@ class AxesGeometrySource:
         tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        direction_vectors: ArrayLike[float] | None = None,
         symmetric: bool = False,
     ):
         super().__init__()
@@ -2954,23 +2950,8 @@ class AxesGeometrySource:
         self.tip_radius = tip_radius
         self.tip_length = tip_length  # type: ignore[assignment]
 
-        self.position = position  # type: ignore[assignment]
-        self.direction_vectors = np.eye(3) if direction_vectors is None else direction_vectors
-
     def __repr__(self):
         """Representation of the axes."""
-
-        def _format_color(color: tuple[Color, Color]) -> tuple[str, str]:
-            color1 = color[0].name if color[0].name else str(color[0].float_rgb)
-            color2 = color[1].name if color[1].name else str(color[1].float_rgb)
-            return color1, color2
-
-        def _format_vectors(vectors: NumpyArray[float]):
-            blank_spaces = " " * 30
-            vectors_split = str(vectors).splitlines()
-            vectors_split[1] = f'{blank_spaces}{vectors_split[1]}'
-            vectors_split[2] = f'{blank_spaces}{vectors_split[2]}'
-            return '\n'.join(vectors_split)
 
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
@@ -2980,8 +2961,6 @@ class AxesGeometrySource:
             f"  Tip type:                   '{self.tip_type}'",
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
-            f"  Position:                   {self.position}",
-            f"  Direction vectors:          {_format_vectors(self.direction_vectors)}",
             f"  Symmetric:                  {self.symmetric}",
         ]
         return '\n'.join(attr)
@@ -3186,80 +3165,6 @@ class AxesGeometrySource:
     def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
         self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
 
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the axes in space.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.position
-        (0.0, 0.0, 0.0)
-        >>> axes_geometry_source.position = (1, 2, 3)
-        >>> axes_geometry_source.position
-        (1.0, 2.0, 3.0)
-        """
-        return tuple(self._position.tolist())
-
-    @position.setter
-    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self._position = _validation.validate_array3(value, dtype_out=float)
-
-    @property
-    def direction_vectors(self):  # numpydoc ignore=RT01
-        """Direction vectors of the axes.
-
-        The direction vectors are used as a 3x3 rotation matrix to orient the axes in
-        space. By default, the direction vectors align with the XYZ axes of the world
-        coordinates.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.direction_vectors
-        array([[1., 0., 0.],
-               [0., 1., 0.],
-               [0., 0., 1.]])
-
-        Orient the axes in space.
-
-        >>> vectors = np.array(
-        ...     [
-        ...         [0.36, 0.48, -0.80],
-        ...         [-0.80, 0.60, 0.00],
-        ...         [0.48, 0.64, 0.60],
-        ...     ]
-        ... )
-
-        >>> axes_geometry_source.direction_vectors = vectors
-        >>> axes_geometry_source.direction_vectors
-        array([[ 0.36,  0.48, -0.8 ],
-               [-0.8 ,  0.6 ,  0.  ],
-               [ 0.48,  0.64,  0.6 ]])
-        """
-        return self._direction_vectors
-
-    @direction_vectors.setter
-    def direction_vectors(self, vectors):  # numpydoc ignore=GL08
-        self._direction_vectors = _validation.validate_axes(vectors, name='direction_vectors')
-
-    @property
-    def transformation_matrix(self) -> NumpyArray[float]:
-        """Transformation matrix used to orient the axes in space.
-
-        Returns
-        -------
-        numpy.ndarray
-            4x4 transformation matrix.
-        """
-        matrix = np.eye(4)
-        matrix[:3, 3] = self.position
-        matrix[:3, :3] = self.direction_vectors
-        return matrix
-
     def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
@@ -3307,14 +3212,9 @@ class AxesGeometrySource:
                 flipped = part.flip_normal(normal=normal, point=origin)
                 part.append_polydata(flipped, inplace=True)
 
-    def _transform_shafts_and_tips(self):
-        for dataset in [*self._shaft_datasets, *self._tip_datasets]:
-            dataset.transform(self.transformation_matrix, inplace=True)
-
     def update(self):
         """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
-        self._transform_shafts_and_tips()
 
     @property
     def output(self) -> pyvista.MultiBlock:

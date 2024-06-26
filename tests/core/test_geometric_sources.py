@@ -666,10 +666,6 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         "  Tip type:                   'cone'",
         '  Tip radius:                 0.1',
         '  Tip length:                 (0.2, 0.2, 0.2)',
-        '  Position:                   (0.0, 0.0, 0.0)',
-        '  Direction vectors:          [[1. 0. 0.]',
-        '                               [0. 1. 0.]',
-        '                               [0. 0. 1.]]',
         '  Symmetric:                  False',
     ]
     assert len(actual_lines) == len(expected_lines)

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
+import vtk
 
 from pyvista.core import _validation
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
@@ -258,6 +259,14 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetOrientation(value)
 
     @property
+    def rotation(self) -> NumpyArray[float]:  # numpydoc ignore=GL08
+        return orientation_angles_to_rotation_matrix(self.orientation)
+
+    @rotation.setter
+    def rotation(self, array: NumpyArray[float]):  # numpydoc ignore=GL08
+        self.SetOrientation(rotation_matrix_to_orientation_angles(array))
+
+    @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity origin.
 
@@ -271,6 +280,17 @@ class Prop3D(_vtk.vtkProp3D):
     @origin.setter
     def origin(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetOrigin(value)
+
+    @property
+    def transformation_matrix(self) -> NumpyArray[float]:
+        """Transformation matrix of the entity.
+
+        Returns
+        -------
+        numpy.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetMatrix())
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
@@ -378,11 +398,20 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
-    @staticmethod
-    def orientation_to_direction_vectors(orientation: VectorLike[float]) -> NumpyArray[float]:
-        orientation_ = _validation.validate_array3(orientation, must_be_integer=True, dtype_out=int)
-        prop = _vtk.vtkActor()
-        prop.SetOrientation(orientation_)
-        matrix = _vtk.vtkMatrix4x4()
-        prop.GetMatrix(matrix)
-        return array_from_vtkmatrix(matrix)[:3, :3]
+
+def orientation_angles_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
+    valid_orientation = _validation.validate_array3(orientation)
+    prop = _vtk.vtkActor()
+    prop.SetOrientation(valid_orientation)
+    matrix = _vtk.vtkMatrix4x4()
+    prop.GetMatrix(matrix)
+    return array_from_vtkmatrix(matrix)[:3, :3]
+
+
+def rotation_matrix_to_orientation_angles(array: NumpyArray[float]):
+    valid_array = _validation.validate_transform3x3(array)
+    array_4x4 = np.eye(4)
+    array_4x4[:3, :3] = valid_array
+    transform = vtk.vtkTransform()
+    transform.SetMatrix(array_4x4.ravel(order='F'))
+    return transform.GetOrientation()

@@ -920,6 +920,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         z_color=None,
         position=(0, 0, 0),
         scale=(1, 1, 1),
+        orientation=(0, 0, 0),
+        rotation=None,
         user_matrix=None,
         **kwargs,
     ):
@@ -979,6 +981,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         scale : float | Vector, default: (1, 1, 1)
             Scaling factor for the axes.
+
+        rotation
 
         user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
             Transformation to apply to the axes. Can be a vtkTransform,
@@ -1078,6 +1082,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             y_color=y_color,
             z_color=z_color,
             position=position,
+            scale=scale,
+            orientation=orientation,
+            rotation=rotation,
             user_matrix=user_matrix,
             **kwargs,
         )
