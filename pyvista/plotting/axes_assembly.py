@@ -9,13 +9,13 @@ from typing import Union
 
 import numpy as np
 
-import pyvista
 import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
+from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.text import TextLabel
@@ -45,12 +45,25 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ):
         super().__init__()
 
-        self._shaft_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
-        self._tip_actors = [pv.Actor(), pv.Actor(), pv.Actor()]
+        # Init actors
+        self._shaft_actors = (Actor(), Actor(), Actor())
+        self._tip_actors = (Actor(), Actor(), Actor())
         self._label_actors = (TextLabel(), TextLabel(), TextLabel())
         actors = (*self._shaft_actors, *self._tip_actors, *self._label_actors)
+
+        # Add actors to assembly
         [self.AddPart(actor) for actor in actors]
 
+        # Init axes datasets and mappers
+        self._axes_geometry = AxesGeometrySource(**kwargs)
+        shaft_tip_actors = (*self._shaft_actors, *self._tip_actors)
+        shaft_tip_datasets = self._axes_geometry.output
+        [
+            setattr(actor, 'mapper', pv.DataSetMapper(dataset=dataset))
+            for actor, dataset in zip(shaft_tip_actors, shaft_tip_datasets)
+        ]
+
+        # Set colors
         if x_color is None:
             x_color = pv.global_theme.axes.x_color
         if y_color is None:
@@ -62,22 +75,13 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self.y_color = y_color
         self.z_color = z_color
 
-        axes_geometry = AxesGeometrySource(**kwargs)
-        self._axes_geometry = axes_geometry
-
-        datasets = (*axes_geometry._shaft_datasets, *axes_geometry._tip_datasets)
-        [
-            setattr(actor, 'mapper', pv.DataSetMapper(dataset=dataset))
-            for actor, dataset in zip(actors, datasets)
-        ]
-
         self._is_init = False
 
         # Set text labels
         if labels is None:
-            self.x_label = _set_default(x_label, 'X')
-            self.y_label = _set_default(y_label, 'Y')
-            self.z_label = _set_default(z_label, 'Z')
+            self.x_label = 'X' if x_label is None else x_label
+            self.y_label = 'Y' if y_label is None else y_label
+            self.z_label = 'Z' if z_label is None else z_label
         else:
             msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
             if x_label is not None:
@@ -554,64 +558,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     #     self._shaft_color_setters[axis](colors[0])
     #     self._tip_color_setters[axis](colors[1])
 
-    # @property
-    # def camera(self):
-    #     return self._camera
-    # @camera.setter
-    # def camera(self, camera):
-    #     self._camera = camera
-    #     self._x_follower.camera=camera
-    #     self._y_follower.camera=camera
-    #     self._z_follower.camera=camera
-
     def _get_transformed_label_positions(self):
         # Initial position vectors
         points = np.diag(self.label_position)
         matrix = self._axes_geometry.transformation_matrix
         return apply_transformation_to_points(matrix, points)
-
-    # def _transform_labels(self):
-    #     x_pos, y_pos, z_pos = self._get_transformed_label_positions()
-    #     x_label, y_label, z_label = self._datasets['labels']
-    #
-    #     # Face +x, with +z up
-    #     x_label.rotate_y(90, inplace=True)
-    #     x_label.rotate_x(90, inplace=True)
-    #     x_label.translate(x_pos, inplace=True)
-    #
-    #     # Face +y, with +z up
-    #     y_label.rotate_z(180, inplace=True)
-    #     y_label.rotate_x(-90, inplace=True)
-    #     y_label.translate(y_pos, inplace=True)
-    #
-    #     # Face +z, with (-0.5, -0.5, 0) up
-    #     z_label.rotate_z(135, inplace=True)
-    #     z_label.translate(z_pos, inplace=True)
-    #
-    #     for block in self._datasets['labels']:
-    #         if block is not None:
-    #             block.transform(self.transformation_matrix, inplace=True)
-
-    def _apply_label_colors(self):
-        ...
-        # x_label, y_label, z_label = self._datasets['labels']
-        # x_color, y_color, z_color = self.label_color
-        # AxesAssembly._set_rgb_array(x_label, x_color)
-        # AxesAssembly._set_rgb_array(y_label, y_color)
-        # AxesAssembly._set_rgb_array(z_label, z_color)
-
-    # def _reset_label_geometry(self):
-    #     # Scale label size proportional to norm of axes lengths
-    #     size = np.linalg.norm(self.total_length) * self.label_size
-    #
-    #     x_label = pyvista.Text3D(self.x_label, height=size, depth=0.0)
-    #     y_label = pyvista.Text3D(self.y_label, height=size, depth=0.0)
-    #     z_label = pyvista.Text3D(self.z_label, height=size, depth=0.0)
-    #
-    #     blocks = self._datasets['labels']
-    #     blocks['x'] = x_label
-    #     blocks['y'] = y_label
-    #     blocks['z'] = z_label
 
     def _update_label_positions(self):
         # self._apply_label_colors()
@@ -620,35 +571,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[1].position = y_pos
         self._label_actors[2].position = z_pos
 
-    # def _update_axes_geometry(self):
-    #     self._axes_geometry._update_axes_shaft_and_tip_geometry()
-
     def _update(self):
         self._axes_geometry.update()
         self._update_label_positions()
-
-    # @property
-    # def output_label_dataset(self):
-    #     self._reset_label_geometry()
-    #     self._apply_label_colors()
-    #     self._transform_labels()
-    #
-    #     labels = self._datasets['labels']
-    #     return labels['x'], labels['y'], labels['z']
-
-    @staticmethod
-    def _create_rgb_mapper(dataset: pv.DataSet):
-        mapper = pyvista.DataSetMapper(dataset=dataset)
-        mapper.set_scalars(
-            scalars=dataset.active_scalars,
-            scalars_name=dataset.active_scalars_name,
-            rgb=True,
-        )
-        return mapper
-
-
-def _set_default(val, default):
-    return default if val is None else val
 
     # @property
     # def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
