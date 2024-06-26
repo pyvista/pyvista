@@ -721,7 +721,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
     Parameters
     ----------
     extent : sequence[int]
-        The extent of the whole output image.
+        The extent of the whole output image, Default: (0,255,0,255,0,0).
 
     spacing : tuple
         The spacing of the grid.
