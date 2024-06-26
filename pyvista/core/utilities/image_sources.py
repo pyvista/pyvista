@@ -720,11 +720,14 @@ class ImageGridSource(_vtk.vtkImageGridSource):
 
     Parameters
     ----------
+    origin : sequence[float]
+        The origin of the grid.
+
     extent : sequence[int]
         The extent of the whole output image, Default: (0,255,0,255,0,0).
 
     spacing : tuple
-        The spacing of the grid.
+        The pixel spacing.
 
     Examples
     --------
@@ -738,8 +741,10 @@ class ImageGridSource(_vtk.vtkImageGridSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    def __init__(self, extent=None, spacing=None) -> None:
+    def __init__(self, origin=None, extent=None, spacing=None) -> None:
         super().__init__()
+        if origin is not None:
+            self.origin = origin
         if extent is not None:
             self.extent = extent
         if spacing is not None:
@@ -747,7 +752,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
 
     @property
     def origin(self) -> Sequence[float]:
-        """Get the origin of the grid.
+        """Get the origin of the data.
 
         Returns
         -------
@@ -758,7 +763,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
 
     @origin.setter
     def origin(self, origin: Sequence[float]) -> None:
-        """Set the origin of the grid.
+        """Set the origin of the data.
 
         Parameters
         ----------
@@ -796,7 +801,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
         Returns
         -------
         sequence[float]
-            The spacing of the grid.
+            The pixel spacing.
         """
         return self.GetDataSpacing()
 
@@ -807,7 +812,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
         Parameters
         ----------
         spacing : sequence[float]
-            The spacing of the grid.
+            The pixel spacing.
         """
         self.SetDataSpacing(spacing)
 
