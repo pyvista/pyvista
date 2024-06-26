@@ -547,3 +547,9 @@ def test_add_ruler_scale():
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
+
+
+def test_subplot_with_one_index():
+    pl = pv.Plotter(shape=(1, 2))
+    with pytest.raises(IndexError, match='Only one index is given'):
+        pl.subplot(0)
