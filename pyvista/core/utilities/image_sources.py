@@ -714,7 +714,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
 
 @no_new_attr
 class ImageGridSource(_vtk.vtkImageGridSource):
-    """Create a binary image of a grid.
+    """Create an image of a grid.
 
     .. versionadded:: 0.44.0
 
