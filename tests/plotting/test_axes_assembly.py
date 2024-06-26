@@ -134,26 +134,26 @@ def test_axes_assembly_label_color_init():
     assert axes_assembly.label_color[2].name == 'yellow'
 
 
-def test_axes_assembly_include_labels(axes_assembly):
-    assert axes_assembly.include_labels is True
-    axes_assembly.include_labels = False
-    assert axes_assembly.include_labels is False
+def test_axes_assembly_show_labels(axes_assembly):
+    assert axes_assembly.show_labels is True
+    axes_assembly.show_labels = False
+    assert axes_assembly.show_labels is False
 
 
-def test_axes_assembly_include_labels_init():
-    axes_assembly = pv.AxesAssembly(include_labels=False)
-    assert axes_assembly.include_labels is False
+def test_axes_assembly_show_labels_init():
+    axes_assembly = pv.AxesAssembly(show_labels=False)
+    assert axes_assembly.show_labels is False
 
 
 def test_axes_assembly_label_size(axes_assembly):
-    assert axes_assembly.label_size == 0.1
-    axes_assembly.label_size = 0.4
-    assert axes_assembly.label_size == 0.4
+    assert axes_assembly.label_size == 50
+    axes_assembly.label_size = 100
+    assert axes_assembly.label_size == 100
 
 
 def test_axes_assembly_label_size_init():
-    axes_assembly = pv.AxesAssembly(label_size=0.3)
-    assert axes_assembly.label_size == 0.3
+    axes_assembly = pv.AxesAssembly(label_size=42)
+    assert axes_assembly.label_size == 42
 
 
 # def test_axes_assembly_properties(axes_assembly):

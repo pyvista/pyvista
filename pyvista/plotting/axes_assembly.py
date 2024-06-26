@@ -16,13 +16,13 @@ from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
+from pyvista.plotting.colors import Color
 from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.text import TextLabel
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import VectorLike
     from pyvista.plotting._typing import ColorLike
-    from pyvista.plotting.colors import Color
 
 
 class AxesAssembly(_vtk.vtkPropAssembly):
@@ -62,7 +62,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self.y_color = y_color
         self.z_color = z_color
 
-        axes_geometry = AxesGeometrySource(**kwargs, rgb_scalars=False)
+        axes_geometry = AxesGeometrySource(**kwargs)
         self._axes_geometry = axes_geometry
 
         datasets = (*axes_geometry._shaft_datasets, *axes_geometry._tip_datasets)
@@ -75,6 +75,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         # Init label datasets and actors
         for actor in self._label_actors:
+            actor.size = label_size
             prop = actor.prop
             prop.bold = True
             prop.italic = True
@@ -343,17 +344,19 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[2].SetVisibility(value)
 
     @property
-    def label_size(self):
+    def label_size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text labels.
+
+        Must be a positive integer.
+        """
         return self._label_size
 
     @label_size.setter
-    def label_size(self, size: float):
+    def label_size(self, size: int):  # numpydoc ignore=GL08
+        self._label_size = size
         self._label_actors[0].size = size
         self._label_actors[1].size = size
         self._label_actors[2].size = size
-        # x_label = pyvista.Text3D(self.x_label, height=true_size, depth=0.0)
-        # y_label = pyvista.Text3D(self.y_label, height=true_size, depth=0.0)
-        # z_label = pyvista.Text3D(self.z_label, height=true_size, depth=0.0)
 
     @property
     def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -394,12 +397,16 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     #     return apply_transformation_to_points(self.transformation_matrix, tips)
 
     @property
-    def label_color(self):
-        return self._label_color
+    def label_color(self):  # numpydoc ignore=RT01
+        """Color of the text labels."""
+        return tuple([actor.prop.color for actor in self._label_actors])
 
     @label_color.setter
-    def label_color(self, color: ColorLike | Sequence[ColorLike]):
-        self._label_color = _validate_color_sequence(color, n_colors=3)
+    def label_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        colors = _validate_color_sequence(color, n_colors=3)
+        self._label_actors[0].prop.color = colors[0]
+        self._label_actors[1].prop.color = colors[1]
+        self._label_actors[2].prop.color = colors[2]
 
     @property
     def x_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
