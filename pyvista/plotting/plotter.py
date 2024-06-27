@@ -5956,7 +5956,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+        filename = Path(filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
             filename = Path(pyvista.FIGURE_PATH) / filename
         filename = filename.expanduser().resolve()
         extension = pyvista.core.utilities.fileio.get_ext(filename)
