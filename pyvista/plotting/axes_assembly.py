@@ -54,7 +54,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         labels=None,
         label_color='black',
         show_labels=True,
-        label_position=1.1,
+        label_position=None,
         label_size=50,
         x_color=None,
         y_color=None,
@@ -130,8 +130,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             prop = actor.prop
             prop.bold = True
             prop.italic = True
-            prop.justification_horizontal = 'center'
-            prop.justification_vertical = 'center'
+            # prop.justification_horizontal = 'center'
+            # prop.justification_vertical = 'center'
 
         self.position = position
         self.axes_vectors = np.eye(3) if axes_vectors is None else axes_vectors
@@ -394,7 +394,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[2].size = size
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> Tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Normalized position of the text label along each axis.
 
         Values must be non-negative.
@@ -413,17 +413,55 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         (0.1, 0.4, 0.2)
 
         """
-        return tuple(self._label_position)
+        position = self._label_position
+        return None if position is None else tuple(position)
 
     @label_position.setter
     def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
-        self._label_position = _validation.validate_array3(
-            position,
-            broadcast=True,
-            must_be_in_range=[0, np.inf],
-            name='Label position',
+        self._label_position = (
+            None
+            if position is None
+            else _validation.validate_array3(
+                position,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                name='Label position',
+                dtype_out=float,
+            )
         )
-        self._update_label_positions() if self._is_init else None
+        self._apply_transformation_to_labels() if self._is_init else None
+
+    # @property
+    # def label_offset(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    #     """Normalized position of the text label along each axis.
+    #
+    #     Values must be non-negative.
+    #
+    #     Examples
+    #     --------
+    #     >>> import pyvista as pv
+    #     >>> axes_actor = pv.AxesAssembly()
+    #     >>> axes_actor.label_position
+    #     (1.0, 1.0, 1.0)
+    #     >>> axes_actor.label_position = 0.3
+    #     >>> axes_actor.label_position
+    #     (0.3, 0.3, 0.3)
+    #     >>> axes_actor.label_position = (0.1, 0.4, 0.2)
+    #     >>> axes_actor.label_position
+    #     (0.1, 0.4, 0.2)
+    #
+    #     """
+    #     return tuple(self._label_position)
+    #
+    # @label_offset.setter
+    # def label_offset(self, offset: float | VectorLike[float]):  # numpydoc ignore=GL08
+    #     self._label_offset = _validation.validate_array3(
+    #         position,
+    #         broadcast=True,
+    #         must_be_in_range=[0, np.inf],
+    #         name='Label offset',
+    #     )
+    #     self._update_label_positions() if self._is_init else None
 
     #
     # @property
@@ -600,13 +638,24 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     #     self._tip_color_setters[axis](colors[1])
 
     def _get_transformed_label_positions(self):
-        # Initial position vectors
-        points = np.diag(self.label_position)
-        matrix = self._prop3d.transformation_matrix
-        return apply_transformation_to_points(matrix, points)
+        # Create position vectors
+        shaft_length = self._shaft_and_tip_geometry_source.shaft_length
+        label_position = self.label_position if self.label_position is not None else shaft_length
+        position_vectors = np.diag(label_position)
 
-    def _update_label_positions(self):
-        # self._apply_label_colors()
+        # Offset label positions radially by the tip radius
+        tip_radius = self._shaft_and_tip_geometry_source.tip_radius
+        offset_array = np.diag([tip_radius] * 3)
+        radial_offset1 = np.roll(offset_array, shift=1, axis=1)
+        radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
+
+        position_vectors += radial_offset1 + radial_offset2
+
+        # Transform positions
+        matrix = self._prop3d.transformation_matrix
+        return apply_transformation_to_points(matrix, position_vectors)
+
+    def _apply_transformation_to_labels(self):
         x_pos, y_pos, z_pos = self._get_transformed_label_positions()
         self._label_actors[0].position = x_pos
         self._label_actors[1].position = y_pos
@@ -614,7 +663,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     def _update(self):
         self._shaft_and_tip_geometry_source.update()
-        self._update_label_positions()
+        self._apply_transformation_to_labels()
 
     # @property
     # def x_shaft_prop(self) -> Property:  # numpydoc ignore=RT01
@@ -1028,7 +1077,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
 
         # Update labels
-        self._update_label_positions()
+        self._apply_transformation_to_labels()
 
     @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01

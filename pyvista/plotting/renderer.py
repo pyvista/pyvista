@@ -912,7 +912,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         y_label=None,
         z_label=None,
         label_color='black',
-        label_position=1.1,
+        label_position=None,
         label_size=50,
         show_labels=True,
         x_color=None,

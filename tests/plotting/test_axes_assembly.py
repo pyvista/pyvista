@@ -33,7 +33,7 @@ def axes_assembly():
 
 
 def test_axes_assembly_label_position(axes_assembly):
-    assert axes_assembly.label_position == (1.1, 1.1, 1.1)
+    assert axes_assembly.label_position is None
     axes_assembly.label_position = (1, 2, 3)
     assert axes_assembly.label_position == (1, 2, 3)
 
