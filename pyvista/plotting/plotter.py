@@ -5132,7 +5132,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio',
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
@@ -5208,7 +5208,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         filename = Path(filename)
         if not filename.suffix == '.gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         self._gif_filename = filename.resolve()
 
@@ -5957,7 +5957,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._on_first_render_request()
             self.render()
         filename = Path(filename)
-        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         filename = filename.expanduser().resolve()
         extension = pyvista.core.utilities.fileio.get_ext(filename)
@@ -6283,7 +6283,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
+        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         else:
             filename = Path(filename).expanduser().resolve()
