@@ -550,6 +550,8 @@ def test_add_ruler_scale():
 
 
 def test_subplot_with_one_index():
+    pl = pyvista.Plotter(shape='2|1')
+    pl.subplot(0)
     pl = pv.Plotter(shape=(1, 2))
     with pytest.raises(IndexError, match='Only one index is given'):
         pl.subplot(0)
