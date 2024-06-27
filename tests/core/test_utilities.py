@@ -1045,3 +1045,27 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
     assert repr(serial_dict_empty) == '{"foo": 42}'
     serial_dict_with_foobar.setdefault('foo', 42)
     assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
+
+
+# Test array ordering since methods require flattened array.
+@pytest.mark.parametrize('order', ['F', 'C'])
+def test_convert_orientation_angles_to_rotation_matrix(order):
+    orientation = (10, 20, 30)
+    rotation = np.array(
+        [
+            [0.78410209, -0.49240388, 0.37778609],
+            [0.52128058, 0.85286853, 0.02969559],
+            [-0.33682409, 0.17364818, 0.92541658],
+        ],
+        order=order,
+    )
+
+    actual_rotation = pv.orientation_angles_to_rotation_matrix(orientation)
+    assert isinstance(actual_rotation, np.ndarray)
+    assert actual_rotation.shape == (3, 3)
+    assert np.allclose(actual_rotation, rotation)
+
+    actual_orientation = pv.rotation_matrix_to_orientation_angles(rotation)
+    assert isinstance(actual_orientation, tuple)
+    assert len(actual_orientation) == 3
+    assert np.allclose(actual_orientation, orientation)
