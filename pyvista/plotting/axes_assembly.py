@@ -159,35 +159,31 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     #             except AttributeError:
     #                 raise AttributeError(str(e)) from e
 
-    # def __repr__(self):
-    #     """Representation of the axes actor."""
-    #     matrix_not_set = self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4))
-    #     mat_info = 'Identity' if matrix_not_set else 'Set'
-    #     bnds = self.bounds
-    #
-    #     attr = [
-    #         f"{type(self).__name__} ({hex(id(self))})",
-    #         # f"  X label:                    '{self.x_label}'",
-    #         # f"  Y label:                    '{self.y_label}'",
-    #         # f"  Z label:                    '{self.z_label}'",
-    #         # f"  Show labels:                {self.show_labels}",
-    #         # f"  Label position:             {self.label_position}",
-    #         f"  Shaft type:                 '{self.shaft_type}'",
-    #         f"  Shaft radius:               {self.shaft_radius}",
-    #         f"  Shaft length:               {self.shaft_length}",
-    #         f"  Tip type:                   '{self.tip_type}'",
-    #         f"  Tip radius:                 {self.tip_radius}",
-    #         f"  Tip length:                 {self.tip_length}",
-    #         f"  Total length:               {self.total_length}",
-    #         f"  Position:                   {self.position}",
-    #         f"  Scale:                      {self.scale}",
-    #         f"  User matrix:                {mat_info}",
-    #         f"  Visible:                    {self.visibility}",
-    #         f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-    #         f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-    #         f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
-    #     ]
-    #     return '\n'.join(attr)
+    def __repr__(self):
+        """Representation of the axes actor."""
+        matrix_not_set = self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4))
+        mat_info = 'Identity' if matrix_not_set else 'Set'
+        bnds = self.bounds
+
+        geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
+
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            *geometry_repr,
+            f"  X label:                    '{self.x_label}'",
+            f"  Y label:                    '{self.y_label}'",
+            f"  Z label:                    '{self.z_label}'",
+            f"  Show labels:                {self.show_labels}",
+            f"  Label position:             {self.label_position}",
+            f"  Position:                   {self.position}",
+            f"  Scale:                      {self.scale}",
+            f"  User matrix:                {mat_info}",
+            f"  Visible:                    {self.visibility}",
+            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+        ]
+        return '\n'.join(attr)
 
     @property
     def visibility(self) -> bool:  # numpydoc ignore=RT01
@@ -394,7 +390,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[2].size = size
 
     @property
-    def label_position(self) -> Tuple[float, float, float] | None:  # numpydoc ignore=RT01
+    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
         """Normalized position of the text label along each axis.
 
         Values must be non-negative.
@@ -414,7 +410,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         """
         position = self._label_position
-        return None if position is None else tuple(position)
+        return self._shaft_and_tip_geometry_source.shaft_length if position is None else position
 
     @label_position.setter
     def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
@@ -427,6 +423,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
                 must_be_in_range=[0, np.inf],
                 name='Label position',
                 dtype_out=float,
+                to_tuple=True,
             )
         )
         self._apply_transformation_to_labels() if self._is_init else None

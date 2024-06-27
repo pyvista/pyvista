@@ -33,7 +33,7 @@ def axes_assembly():
 
 
 def test_axes_assembly_label_position(axes_assembly):
-    assert axes_assembly.label_position is None
+    assert axes_assembly.label_position == (0.8, 0.8, 0.8)
     axes_assembly.label_position = (1, 2, 3)
     assert axes_assembly.label_position == (1, 2, 3)
 
@@ -255,216 +255,40 @@ def _compute_expected_bounds(axes_assembly):
     )
 
 
-rng = np.random.default_rng(42)
+def test_axes_assembly_repr(axes_assembly):
+    repr_ = repr(axes_assembly)
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  Shaft type:                 'cylinder'",
+        "  Shaft radius:               0.025",
+        "  Shaft length:               (0.8, 0.8, 0.8)",
+        "  Tip type:                   'cone'",
+        "  Tip radius:                 0.1",
+        "  Tip length:                 (0.2, 0.2, 0.2)",
+        "  Symmetric:                  False",
+        "  X label:                    'X'",
+        "  Y label:                    'Y'",
+        "  Z label:                    'Z'",
+        "  Show labels:                True",
+        "  Label position:             (0.8, 0.8, 0.8)",
+        "  Position:                   (0.0, 0.0, 0.0)",
+        "  Scale:                      (1.0, 1.0, 1.0)",
+        "  User matrix:                Identity",
+        "  Visible:                    True",
+        "  X Bounds                    -1.000E-01, 1.000E+00",
+        "  Y Bounds                    -1.000E-01, 1.000E+00",
+        "  Z Bounds                    -1.000E-01, 1.000E+00",
+    ]
+    assert len(actual_lines) == len(expected_lines)
+    assert actual_lines == expected_lines
 
+    # axes_assembly.shaft_type = 'cuboid'
+    # repr_ = repr(axes_assembly)
+    # assert "'cuboid'" in repr_
 
-# @pytest.mark.parametrize('shaft_tip_length', [(0, 1), (0.2, 0.3), (0.3, 0.8), (0.4, 0.6), (1, 0)])
-# @pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
-# @pytest.mark.parametrize('scale', [[1, 1, 1], [0.1, 0.2, 0.3], [2, 3, 4]])
-# @pytest.mark.parametrize('position', [[0, 0, 0], [2, 3, 4]])
-# def test_axes_assembly_GetBounds(shaft_tip_length, total_length, scale, position):
-#     shaft_length, tip_length = shaft_tip_length
-#
-#     # Test the override for GetBounds() returns the same result as without override
-#     # for zero-centered, axis-aligned cases (i.e. no position, scale, etc.)
-#     vtk_axes_assembly = vtk.vtkAxesActor()
-#     vtk_axes_assembly.SetNormalizedShaftLength(shaft_length, shaft_length, shaft_length)
-#     vtk_axes_assembly.SetNormalizedTipLength(tip_length, tip_length, tip_length)
-#     vtk_axes_assembly.SetTotalLength(total_length)
-#     vtk_axes_assembly.SetShaftTypeToCylinder()
-#     expected = vtk_axes_assembly.GetBounds()
-#
-#     axes_assembly = pv.AxesActor()
-#         shaft_length=shaft_length,
-#         tip_length=tip_length,
-#         total_length=total_length,
-#         auto_length=False,
-#         _make_orientable=True,
-#     )
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly._make_orientable = False
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     # test GetBounds() returns correct output when axes are orientable
-#     axes_assembly._make_orientable = True
-#     axes_assembly.position = position
-#     axes_assembly.scale = scale
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     # test that changing properties dynamically updates the axes
-#     axes_assembly.position = rng.random(3) * 2 - 1
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly.scale = rng.random(3) * 2
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly.user_matrix = np.diag(np.append(rng.random(3), 1))
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly.tip_length = rng.random(3)
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly.shaft_length = rng.random(3)
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     axes_assembly.total_length = rng.random(3) * 2
-#     expected = _compute_expected_bounds(axes_assembly)
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-#
-#     # test disabling workaround correctly resets axes actors
-#     vtk_axes_assembly = vtk.vtkAxesActor()
-#     vtk_axes_assembly.SetPosition(axes_assembly.position)
-#     vtk_axes_assembly.SetScale(axes_assembly.scale)
-#     vtk_axes_assembly.SetNormalizedShaftLength(axes_assembly.shaft_length)
-#     vtk_axes_assembly.SetNormalizedTipLength(axes_assembly.tip_length)
-#     vtk_axes_assembly.SetTotalLength(axes_assembly.total_length)
-#     vtk_axes_assembly.SetShaftTypeToCylinder()
-#
-#     axes_assembly._make_orientable = False
-#     expected = vtk_axes_assembly.GetBounds()
-#     actual = axes_assembly.GetBounds()
-#     assert np.allclose(actual, expected)
-
-
-def get_matrix_cases():
-    from enum import IntEnum
-
-    class Cases(IntEnum):
-        ALL = 0
-        ORIGIN = 1
-        SCALE = 2
-        USER_MATRIX = 3
-        ROTATE_X = 4
-        ROTATE_Y = 5
-        ROTATE_Z = 6
-        POSITION = 7
-        ORIENTATION = 8
-
-    return Cases
-
-
-# @pytest.mark.parametrize('case', range(len(get_matrix_cases())))
-# def test_axes_assembly_enable_orientation(axes_assembly, vtk_axes_assembly, case):
-#     # NOTE: This test works by asserting that:
-#     #   all(vtkAxesActor.GetMatrix()) == all(axes_assembly.GetUserMatrix())
-#     #
-#     # Normally, GetUserMatrix() and GetMatrix() are very different matrices:
-#     # - GetUserMatrix() is an independent user-provided transformation matrix
-#     # - GetMatrix() concatenates
-#     #     implicit_transform -> user_transform -> coordinate system transform
-#     # However, as a workaround for pyvista#5019, UserMatrix is used
-#     # to represent the user_transform *and* implicit_transform.
-#     # Since the renderer's coordinate system transform is identity
-#     # by default, this means that in for this test the assertion should
-#     # hold true.
-#
-#     cases = get_matrix_cases()
-#     angle = 42
-#     origin = (1, 5, 10)
-#     scale = (4, 5, 6)
-#     orientation = (10, 20, 30)
-#     position = (7, 8, 9)
-#     user_matrix = vtkmatrix_from_array(
-#         [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2], [0, 0, 0, 1]],
-#     )
-#
-#     # test each property separately and also all together
-#     axes_assembly._make_orientable = True
-#     if case in [cases.ALL, cases.ORIENTATION]:
-#         vtk_axes_assembly.SetOrientation(*orientation)
-#         axes_assembly.orientation = orientation
-#     if case in [cases.ALL, cases.ORIGIN]:
-#         vtk_axes_assembly.SetOrigin(*origin)
-#         axes_assembly.origin = origin
-#     if case in [cases.ALL, cases.SCALE]:
-#         vtk_axes_assembly.SetScale(*scale)
-#         axes_assembly.scale = scale
-#     if case in [cases.ALL, cases.POSITION]:
-#         vtk_axes_assembly.SetPosition(*position)
-#         axes_assembly.position = position
-#     if case in [cases.ALL, cases.ROTATE_X]:
-#         vtk_axes_assembly.RotateX(angle)
-#         axes_assembly.rotate_x(angle)
-#     if case in [cases.ALL, cases.ROTATE_Y]:
-#         vtk_axes_assembly.RotateY(angle * 2)
-#         axes_assembly.rotate_y(angle * 2)
-#     if case in [cases.ALL, cases.ROTATE_Z]:
-#         vtk_axes_assembly.RotateZ(angle * 3)
-#         axes_assembly.rotate_z(angle * 3)
-#     if case in [cases.ALL, cases.USER_MATRIX]:
-#         vtk_axes_assembly.SetUserMatrix(user_matrix)
-#         axes_assembly.user_matrix = user_matrix
-#
-#     expected = array_from_vtkmatrix(vtk_axes_assembly.GetMatrix())
-#     actual = array_from_vtkmatrix(axes_assembly._actors[0].GetUserMatrix())
-#     assert np.allclose(expected, actual)
-#
-#     default_bounds = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-#     assert np.allclose(vtk_axes_assembly.GetBounds(), default_bounds)
-#
-#     # test AxesActor has non-default bounds except in ORIGIN case
-#     actual_bounds = axes_assembly.GetBounds()
-#     if case == cases.ORIGIN:
-#         assert np.allclose(actual_bounds, default_bounds)
-#     else:
-#         assert not np.allclose(actual_bounds, default_bounds)
-#
-#     # test that bounds are always default (i.e. incorrect) after disabling orientation
-#     axes_assembly._make_orientable = False
-#     actual_bounds = axes_assembly.GetBounds()
-#     assert np.allclose(actual_bounds, default_bounds)
-
-
-# def test_axes_assembly_repr(axes_assembly):
-#     repr_ = repr(axes_assembly)
-#     actual_lines = repr_.splitlines()[1:]
-#     expected_lines = [
-#         # "  X label:                    'X'",
-#         # "  Y label:                    'Y'",
-#         # "  Z label:                    'Z'",
-#         # "  Show labels:                True",
-#         # "  Label position:             (1.0, 1.0, 1.0)",
-#         "  Shaft type:                 'cylinder'",
-#         "  Shaft radius:               0.05",
-#         "  Shaft length:               (0.8, 0.8, 0.8)",
-#         "  Tip type:                   'cone'",
-#         "  Tip radius:                 0.2",
-#         "  Tip length:                 (0.2, 0.2, 0.2)",
-#         "  Total length:               (1.0, 1.0, 1.0)",
-#         "  Position:                   (0.0, 0.0, 0.0)",
-#         "  Scale:                      (1.0, 1.0, 1.0)",
-#         "  User matrix:                Identity",
-#         "  Visible:                    True",
-#         "  X Bounds                    -1.000E-01, 1.000E+00",
-#         "  Y Bounds                    -1.000E-01, 1.000E+00",
-#         "  Z Bounds                    -1.000E-01, 1.000E+00",
-#     ]
-#     assert len(actual_lines) == len(expected_lines)
-#     assert actual_lines == expected_lines
-#
-#     axes_assembly.shaft_type = 'cuboid'
-#     repr_ = repr(axes_assembly)
-#     assert "'cuboid'" in repr_
-#
-#     # axes_assembly.user_matrix = np.eye(4) * 2
-#     # repr_ = repr(axes_assembly)
-#     # assert "User matrix:                Set" in repr_
+    # axes_assembly.user_matrix = np.eye(4) * 2
+    # repr_ = repr(axes_assembly)
+    # assert "User matrix:                Set" in repr_
 
 
 # @pytest.mark.parametrize('use_axis_num', [True, False])
