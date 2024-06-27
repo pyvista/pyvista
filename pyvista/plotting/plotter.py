@@ -635,7 +635,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame-vtk to export')
 
-        filename = Path(filename)
         data = self.export_vtksz(filename=None)
         buffer = io.StringIO()
         write_html(data, buffer)
@@ -644,6 +643,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return buffer
 
+        filename = Path(filename)
         if filename.suffix != ".html":
             filename += '.html'
 
