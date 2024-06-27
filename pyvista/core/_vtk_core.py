@@ -20,6 +20,7 @@ import warnings
 from vtkmodules.vtkCommonCore import vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource
+from vtkmodules.vtkImagingSources import vtkImageGridSource
 from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource
 from vtkmodules.vtkImagingSources import vtkImageNoiseSource
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
