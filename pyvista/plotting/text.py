@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -17,6 +18,8 @@ from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
+
+    from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
 
@@ -224,6 +227,83 @@ class Text(_vtk.vtkTextActor):
     @position.setter
     def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
         self.SetPosition(position[0], position[1])
+
+
+class TextLabel(Text):
+    """2D text actor with a 3D position coordinate.
+
+    Parameters
+    ----------
+    text : str, optional
+        Text string to be displayed.
+
+    position : VectorLike[float]
+        The position coordinate.
+
+    size : int
+        Size of the text label.
+
+    prop : pyvista.TextProperty, optional
+        The property of this actor.
+
+    See Also
+    --------
+    pyvista.Plotter.add_point_labels
+
+    Examples
+    --------
+    Create a text label for a point of interest.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Cone()
+    >>> tip_point = mesh.points[0]
+    >>> label = pv.TextLabel('tip', position=tip_point)
+
+    Plot the mesh and label.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+    """
+
+    def __init__(
+        self,
+        text: str | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        *,
+        size: int = 50,
+        prop: pyvista.Property | None = None,
+    ):
+        super().__init__(text=text, prop=prop)
+        self.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        self.SetTextScaleModeToNone()  # Use font size to control size of text
+        self.position = position  # type: ignore[assignment]
+        self.size = size
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Text position coordinate in xyz space."""
+        return self.GetPositionCoordinate().GetValue()
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        valid_position = _validation.validate_array3(position)
+        self.GetPositionCoordinate().SetValue(valid_position)
+
+    @property
+    def size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text label.
+
+        Notes
+        -----
+        The text property's font size used to control the size of the label.
+        """
+        return self.prop.font_size
+
+    @size.setter
+    def size(self, size: int):  # numpydoc ignore=GL08
+        self.prop.font_size = size
 
 
 @no_new_attr
