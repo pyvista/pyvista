@@ -5976,7 +5976,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f"Valid options include: {', '.join(modes.keys())}",
             )
         writer.CompressOff()
-        writer.SetFilePrefix(filename.with_suffix(''))
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            writer.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            writer.SetFilePrefix(filename.with_suffix(''))
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6290,7 +6293,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        exporter.SetFilePrefix(filename.with_suffix(''))
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            exporter.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            exporter.SetFilePrefix(filename.with_suffix(''))
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
