@@ -5132,7 +5132,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio',
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():  # pragma: no cover
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
@@ -6283,7 +6285,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():  # pragma: no cover
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
             filename = Path(pyvista.FIGURE_PATH) / filename
         else:
             filename = Path(filename).expanduser().resolve()
