@@ -626,12 +626,6 @@ def test_axes_geometry_source_shaft_radius_init():
     assert axes_geometry_source.shaft_radius == 3
 
 
-def test_axes_geometry_source_output():
-    out = pv.AxesGeometrySource().output
-    assert isinstance(out, pv.MultiBlock)
-    assert out.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
-
-
 def test_axes_geometry_source_update_output(axes_geometry_source):
     out1 = axes_geometry_source.output
     assert isinstance(out1, pv.MultiBlock)

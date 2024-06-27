@@ -2823,21 +2823,6 @@ class _PartEnum(IntEnum):
 class AxesGeometrySource:
     """Create axes geometry source.
 
-    # Source for generating fully 3-dimensional axes shaft and tip geometry. The axes
-    # may be arbitrarily oriented in space, and the length, radius, and color of the axis
-    # parts (shaft or tip) may be customized.
-    #
-    # By default, the shafts are cylinders and the tips are cones, though other geometries
-    # such as spheres and cubes are directly supported. The use of an arbitrary dataset
-    # for the shafts and/or tips is also supported.
-    #
-    # Unlike :class:`pyvista.AxesActor`, the output from this source is a
-    # :class:`pyvista.MultiBlock`, not an actor, and it does not include any labels. In
-    # addition, the generated axes are "true-to-scale" by default, i.e. a  shaft with a
-    # radius of 0.1 will truly have a radius of 0.1 (this is not the case for
-    # :class:`pyvista.AxesActor`). This behavior can be controlled with
-    # :attr:`normalized_mode`.
-
     Source for generating fully 3-dimensional axes shaft and tip geometry.
 
     By default, the shafts are cylinders and the tips are cones, though other geometries
@@ -2846,10 +2831,9 @@ class AxesGeometrySource:
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
-    The generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    The generated axes are "true-to-scale" by default, i.e. a shaft with a
     radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
     arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
-
 
     Parameters
     ----------
@@ -2895,13 +2879,6 @@ class AxesGeometrySource:
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
 
-    position : VectorLike[float], default: (0.0, 0.0, 0.0)
-        Position of the axes in space.
-
-    direction_vectors : ArrayLike[float]
-        Direction vectors of the axes. By default, this is a 3x3 identity matrix.
-        The vectors are used as a 3x3 rotation matrix to orient the axes in space.
-
     symmetric : bool, default: False
         Mirror the axes such that they extend to negative values.
 
@@ -2939,9 +2916,6 @@ class AxesGeometrySource:
         self._shaft_datasets = (polys[0], polys[1], polys[2])
         self._tip_datasets = (polys[3], polys[4], polys[5])
 
-        # Set misc flag params
-        self._symmetric = symmetric
-
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
@@ -2950,9 +2924,11 @@ class AxesGeometrySource:
         self.tip_radius = tip_radius
         self.tip_length = tip_length  # type: ignore[assignment]
 
+        # Set flags
+        self._symmetric = symmetric
+
     def __repr__(self):
         """Representation of the axes."""
-
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
             f"  Shaft type:                 '{self.shaft_type}'",
