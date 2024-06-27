@@ -937,7 +937,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
 
 
-def rotation_matrix_to_orientation_angles(
+def rotation_matrix_to_orientation(
     array: NumpyArray[float] | _vtk.vtkMatrix3x3,
 ) -> tuple[float, float, float]:
     """Convert a 3x3 rotation matrix to x-y-z orientation angles.
@@ -973,7 +973,7 @@ def rotation_matrix_to_orientation_angles(
     Examples
     --------
     >>> import pyvista as pv
-    >>> pv.rotation_matrix_to_orientation_angles(
+    >>> pv.rotation_matrix_to_orientation(
     ...     np.array([[0.5, 0.5, 0], [0.5, 0.5, 0], [0, 0, 1]])
     ... )
     (0.0, -0.0, 90.0)
@@ -986,7 +986,7 @@ def rotation_matrix_to_orientation_angles(
     return transform.GetOrientation()
 
 
-def orientation_angles_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
+def orientation_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
     """Convert x-y-z orientation angles to a 3x3 matrix.
 
     The orientation angles define rotations about the world's x-y-z axes. The angles
@@ -1020,7 +1020,7 @@ def orientation_angles_to_rotation_matrix(orientation: VectorLike[float]) -> Num
     Examples
     --------
     >>> import pyvista as pv
-    >>> pv.orientation_angles_to_rotation_matrix((10, 20, 30))
+    >>> pv.orientation_to_rotation_matrix((10, 20, 30))
     array([[ 0.78410209, -0.49240388,  0.37778609],
            [ 0.52128058,  0.85286853,  0.02969559],
            [-0.33682409,  0.17364818,  0.92541658]])

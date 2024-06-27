@@ -1049,7 +1049,7 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
 
 # Test array ordering since methods require flattened array.
 @pytest.mark.parametrize('order', ['F', 'C'])
-def test_convert_orientation_angles_to_rotation_matrix(order):
+def test_convert_orientation_to_rotation_matrix(order):
     orientation = (10, 20, 30)
     rotation = np.array(
         [
@@ -1060,12 +1060,12 @@ def test_convert_orientation_angles_to_rotation_matrix(order):
         order=order,
     )
 
-    actual_rotation = pv.orientation_angles_to_rotation_matrix(orientation)
+    actual_rotation = pv.orientation_to_rotation_matrix(orientation)
     assert isinstance(actual_rotation, np.ndarray)
     assert actual_rotation.shape == (3, 3)
     assert np.allclose(actual_rotation, rotation)
 
-    actual_orientation = pv.rotation_matrix_to_orientation_angles(rotation)
+    actual_orientation = pv.rotation_matrix_to_orientation(rotation)
     assert isinstance(actual_orientation, tuple)
     assert len(actual_orientation) == 3
     assert np.allclose(actual_orientation, orientation)
