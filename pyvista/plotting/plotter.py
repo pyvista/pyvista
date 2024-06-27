@@ -836,7 +836,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | Path, optional
+        filename : str | Path
             Filename to export the scene to.
 
         Examples
@@ -5096,7 +5096,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | Path, optional
+        filename : str | Path
             Filename of the movie to open.  Filename should end in mp4,
             but other filetypes may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
