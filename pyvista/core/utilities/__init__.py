@@ -14,10 +14,12 @@ from .arrays import field_array
 from .arrays import get_array
 from .arrays import get_array_association
 from .arrays import get_vtk_type
+from .arrays import orientation_angles_to_rotation_matrix
 from .arrays import parse_field_choice
 from .arrays import point_array
 from .arrays import raise_has_duplicates
 from .arrays import raise_not_matching
+from .arrays import rotation_matrix_to_orientation_angles
 from .arrays import row_array
 from .arrays import set_default_active_scalars
 from .arrays import set_default_active_vectors

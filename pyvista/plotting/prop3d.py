@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-import vtk
 
-from pyvista.core import _validation
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import orientation_angles_to_rotation_matrix
+from pyvista.core.utilities.arrays import rotation_matrix_to_orientation_angles
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
@@ -397,21 +397,3 @@ class Prop3D(_vtk.vtkProp3D):
         1.7272069317100354
         """
         return self.GetLength()
-
-
-def orientation_angles_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
-    valid_orientation = _validation.validate_array3(orientation)
-    prop = _vtk.vtkActor()
-    prop.SetOrientation(valid_orientation)
-    matrix = _vtk.vtkMatrix4x4()
-    prop.GetMatrix(matrix)
-    return array_from_vtkmatrix(matrix)[:3, :3]
-
-
-def rotation_matrix_to_orientation_angles(array: NumpyArray[float]):
-    valid_array = _validation.validate_transform3x3(array)
-    array_4x4 = np.eye(4)
-    array_4x4[:3, :3] = valid_array
-    transform = vtk.vtkTransform()
-    transform.SetMatrix(array_4x4.ravel(order='F'))
-    return transform.GetOrientation()
