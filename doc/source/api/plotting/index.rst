@@ -34,6 +34,7 @@ all plotting functionality in PyVista.
    CornerAnnotation
    CubeAxesActor
    DataSetMapper
+   Label
    LookupTable
    Plotter
    Prop3D
@@ -41,7 +42,6 @@ all plotting functionality in PyVista.
    Renderer
    RenderWindowInteractor
    Text
-   Label
    TextProperty
    Timer
    plotting.mapper._BaseMapper
