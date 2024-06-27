@@ -41,7 +41,7 @@ all plotting functionality in PyVista.
    Renderer
    RenderWindowInteractor
    Text
-   TextLabel
+   Label
    TextProperty
    Timer
    plotting.mapper._BaseMapper

@@ -48,8 +48,8 @@ def test_text_position(text):
     assert np.all(text.position == position)
 
 
-def test_text_label():
-    label = pv.TextLabel('text', (1, 2, 3), size=42, prop=pv.Property())
+def test_label():
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
 
     assert label.input == 'text'
     label.input = 'new'
