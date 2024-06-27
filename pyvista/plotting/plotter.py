@@ -590,7 +590,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
-        filename_mtl = filename.suffix('.mtl')
+        filename_mtl = filename.with_suffix('.mtl')
         if filename_mtl.is_file():
             importer.SetFileNameMTL(filename_mtl)
             importer.SetTexturePath(filename_mtl.parents[0])
