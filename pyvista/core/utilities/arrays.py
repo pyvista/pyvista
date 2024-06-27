@@ -972,6 +972,7 @@ def rotation_matrix_to_orientation(
 
     Examples
     --------
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> pv.rotation_matrix_to_orientation(
     ...     np.array([[0.5, 0.5, 0], [0.5, 0.5, 0], [0, 0, 1]])
