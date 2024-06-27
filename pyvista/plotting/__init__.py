@@ -54,6 +54,7 @@ from .renderer import Renderer
 from .renderer import scale_point
 from .text import CornerAnnotation
 from .text import Text
+from .text import TextLabel
 from .text import TextProperty
 from .texture import Texture
 from .texture import image_to_texture

@@ -17,6 +17,7 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import ClassVar
     from typing import Sequence
 
     from pyvista.core._typing_core import VectorLike
@@ -266,6 +267,8 @@ class TextLabel(Text):
     >>> _ = pl.add_actor(label)
     >>> pl.show()
     """
+
+    _new_attr_exceptions: ClassVar[tuple[str]] = ('size',)
 
     def __init__(
         self,
