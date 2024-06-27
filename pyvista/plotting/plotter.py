@@ -5976,7 +5976,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f"Valid options include: {', '.join(modes.keys())}",
             )
         writer.CompressOff()
-        writer.SetFilePrefix(filename.replace(extension, ''))
+        writer.SetFilePrefix(filename.with_suffix(''))
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6290,7 +6290,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        exporter.SetFilePrefix(filename.suffix)
+        exporter.SetFilePrefix(filename.with_suffix(''))
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
