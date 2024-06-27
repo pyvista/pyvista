@@ -12,7 +12,6 @@ from functools import wraps
 import io
 import logging
 import os
-import pathlib
 from pathlib import Path
 import platform
 import sys
@@ -428,7 +427,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | os.PathLike
+        filename : str | Path
             Path to the glTF file.
 
         set_camera : bool, default: True
@@ -483,7 +482,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | os.PathLike
+        filename : str | Path
             Path to the VRML file.
 
         Examples
@@ -522,7 +521,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | os.PathLike
+        filename : str | Path
             Path to the 3DS file.
 
         Examples
@@ -557,7 +556,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | os.PathLike
+        filename : str | Path
             Path to the .obj file.
 
         filename_mtl : str, optional
@@ -591,7 +590,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
-        filename_mtl = Path(filename).with_suffix('.mtl')
+        filename_mtl = filename.with_suffix('.mtl')
         if filename_mtl.is_file():
             importer.SetFileNameMTL(filename_mtl)
             importer.SetTexturePath(filename_mtl.parents[0])
@@ -603,7 +602,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to export the html file to.
 
         Returns
@@ -644,7 +643,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return buffer
 
-        if not filename.endswith('.html'):
+        filename = Path(filename)
+        if filename.suffix != ".html":
             filename += '.html'
 
         # Move to final destination
@@ -660,7 +660,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str | Path, optional
             Path to export the file to. Defaults to ``'scene-export.vtksz'``.
 
         format : str, optional
@@ -836,7 +836,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename to export the scene to.
 
         Examples
@@ -5101,7 +5101,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename of the movie to open.  Filename should end in mp4,
             but other filetypes may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
@@ -5137,8 +5137,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio',
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5156,7 +5158,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
         loop : int, default: 0
@@ -5210,11 +5212,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_gif` with:\n\n   pip install imageio',
             ) from None
 
-        if filename[-3:] != 'gif':
+        filename = Path(filename)
+        if not filename.suffix == '.gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
-        self._gif_filename = str(Path(filename).resolve())
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        self._gif_filename = filename.resolve()
 
         kwargs['mode'] = 'I'
         kwargs['loop'] = loop
@@ -5893,11 +5896,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
+        if isinstance(filename, (str, Path, io.BytesIO)):
             from PIL import Image
 
-            if isinstance(filename, (str, pathlib.Path)):
-                filename = pathlib.Path(filename)
+            if isinstance(filename, (str, Path)):
+                filename = Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
                     filename = Path(pyvista.FIGURE_PATH) / filename
                 if not filename.suffix:
@@ -5907,7 +5910,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Unsupported extension {filename.suffix}\n'
                         f'Must be one of the following: {SUPPORTED_FORMATS}',
                     )
-                filename = str(Path(str(filename)).expanduser().resolve())
+                filename = filename.expanduser().resolve()
                 Image.fromarray(image).save(filename)
             else:
                 Image.fromarray(image).save(filename, format="PNG")
@@ -5960,9 +5963,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
-        filename = str(Path(filename).expanduser().resolve())
+        filename = Path(filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        filename = filename.expanduser().resolve()
         extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
@@ -5979,7 +5983,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f"Valid options include: {', '.join(modes.keys())}",
             )
         writer.CompressOff()
-        writer.SetFilePrefix(filename.replace(extension, ''))
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            writer.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            writer.SetFilePrefix(filename.with_suffix(''))
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -6000,7 +6007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | pathlib.Path | io.BytesIO, optional
+        filename : str | Path | io.BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -6199,7 +6206,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
-        >>> filename = str(Path(mkdtemp()) / 'orbit.gif')
+        >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
         ...     mesh, texture=texture, smooth_shading=True
@@ -6266,7 +6273,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename to export the scene to.  Must end in ``'.obj'``.
 
         Examples
@@ -6283,17 +6290,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
         else:
-            filename = str(Path(filename).expanduser().resolve())
+            filename = Path(filename).expanduser().resolve()
 
-        if not filename.endswith('.obj'):
+        if not filename.suffix == '.obj':
             raise ValueError('`filename` must end with ".obj"')
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        exporter.SetFilePrefix(filename[:-4])
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            exporter.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            exporter.SetFilePrefix(filename.with_suffix(''))
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
@@ -6758,7 +6770,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.plotting.themes.Theme.full_screen>`.
 
-        screenshot : str | pathlib.Path | io.BytesIO | bool, default: False
+        screenshot : str | Path | io.BytesIO | bool, default: False
             Take a screenshot of the initial state of the plot.  If a string,
             it specifies the path to which the screenshot is saved. If
             ``True``, the screenshot is returned as an array. For interactive
