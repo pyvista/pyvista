@@ -2833,7 +2833,7 @@ class AxesGeometrySource:
 
     Unlike :class:`pyvista.AxesActor`, the output from this source is a
     :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
-    The generated axes are "true-to-scale" by default, i.e. a  shaft with a
+    The generated axes are "true-to-scale" by default, i.e. a shaft with a
     radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
     arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
 
@@ -2881,6 +2881,9 @@ class AxesGeometrySource:
     tip_length : float | VectorLike[float], default: 0.2
         Length of the tip for each axis.
 
+    symmetric : bool, default: False
+        Mirror the axes such that they extend to negative values.
+
     """
 
     GeometryTypes = Literal[
@@ -2903,6 +2906,7 @@ class AxesGeometrySource:
         tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
+        symmetric: bool = False,
     ):
         super().__init__()
         # Init datasets
@@ -2917,11 +2921,13 @@ class AxesGeometrySource:
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
+        self.shaft_length = shaft_length  # type: ignore[assignment]
         self.tip_type = tip_type  # type: ignore[assignment]
         self.tip_radius = tip_radius
-
-        self.shaft_length = shaft_length  # type: ignore[assignment]
         self.tip_length = tip_length  # type: ignore[assignment]
+
+        # Set flags
+        self._symmetric = symmetric
 
     def __repr__(self):
         """Representation of the axes."""
@@ -2933,8 +2939,25 @@ class AxesGeometrySource:
             f"  Tip type:                   '{self.tip_type}'",
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
+            f"  Symmetric:                  {self.symmetric}",
         ]
         return '\n'.join(attr)
+
+    @property
+    def symmetric(self) -> bool:  # numpydoc ignore=RT01
+        """Mirror the axes such that they extend to negative values.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+        >>> axes_geometry_source.output.plot()
+        """
+        return self._symmetric
+
+    @symmetric.setter
+    def symmetric(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric = val
 
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -3158,6 +3181,14 @@ class AxesGeometrySource:
             if part_type == _PartEnum.tip:
                 # Move tip to end of shaft
                 part.points[:, axis] += shaft_length[axis]
+
+            if self.symmetric:
+                # Flip and append to part
+                origin = [0, 0, 0]
+                normal = [0, 0, 0]
+                normal[axis] = 1
+                flipped = part.flip_normal(normal=normal, point=origin)
+                part.append_polydata(flipped, inplace=True)
 
     def update(self):
         """Update the output of the source."""
