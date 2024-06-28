@@ -18,18 +18,6 @@ def axes_assembly():
 #     axes.origin = origin
 #     assert np.all(axes.GetOrigin() == origin)
 #     assert np.all(axes.origin == origin)
-#
-#
-# def test_axes_symmetric(axes):
-#     # test showing
-#     assert not axes.GetSymmetric()
-#     axes.show_symmetric()
-#     assert axes.GetSymmetric()
-#
-#     # test hiding
-#     assert axes.GetSymmetric()
-#     axes.hide_symmetric()
-#     assert not axes.GetSymmetric()
 
 
 def test_axes_assembly_label_position(axes_assembly):
@@ -282,87 +270,9 @@ def test_axes_assembly_repr(axes_assembly):
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
-    # axes_assembly.shaft_type = 'cuboid'
-    # repr_ = repr(axes_assembly)
-    # assert "'cuboid'" in repr_
-
-    # axes_assembly.user_matrix = np.eye(4) * 2
-    # repr_ = repr(axes_assembly)
-    # assert "User matrix:                Set" in repr_
-
-
-# @pytest.mark.parametrize('use_axis_num', [True, False])
-# def test_axes_assembly_set_get_prop(axes_assembly, use_axis_num):
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0, 0, 0, 0, 0, 0)
-#
-#     axes_assembly.set_prop_values('ambient', 1.0)
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.5, axis=0 if use_axis_num else 'x')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val.x_shaft == 0.5
-#     assert val.x_tip == 0.5
-#     assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.0, part='shaft')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
-#
-#     axes_assembly.set_prop_values('ambient', 0.0, part='tip')
-#     val = axes_assembly.get_prop_values('ambient')
-#     assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-#
-#     msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
-#     with pytest.raises(ValueError, match=re.escape(msg)):
-#         axes_assembly.set_prop_values('ambient', 0.0, part=2)
-#
-#     msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
-#     with pytest.raises(ValueError, match=re.escape(msg)):
-#         axes_assembly.set_prop_values('ambient', 0.0, axis='a')
-
-
-# def test_axes_assemblys(axes_assembly):
-#     # test prop objects are distinct
-#     props = axes_assembly._props
-#     for i in range(6):
-#         for j in range(6):
-#             if i == j:
-#                 assert props[i] is props[j]
-#             else:
-#                 assert props[i] is not props[j]
-#
-#     # test setting new prop
-#     new_prop = pv.Property()
-#     axes_assembly.x_shaft_prop = new_prop
-#     assert axes_assembly.x_shaft_prop is new_prop
-#     axes_assembly.y_shaft_prop = new_prop
-#     assert axes_assembly.y_shaft_prop is new_prop
-#     axes_assembly.z_shaft_prop = new_prop
-#     assert axes_assembly.z_shaft_prop is new_prop
-#     axes_assembly.x_tip_prop = new_prop
-#     assert axes_assembly.x_tip_prop is new_prop
-#     axes_assembly.y_tip_prop = new_prop
-#     assert axes_assembly.y_tip_prop is new_prop
-#     axes_assembly.z_tip_prop = new_prop
-#     assert axes_assembly.z_tip_prop is new_prop
-#
-#     msg = "Prop must have type <class 'pyvista.plotting._property.Property'>, got <class 'int'> instead."
-#     with pytest.raises(TypeError, match=msg):
-#         axes_assembly.x_shaft_prop = 0
+    axes_assembly.user_matrix = np.eye(4) * 2
+    repr_ = repr(axes_assembly)
+    assert "User matrix:                Set" in repr_
 
 
 @pytest.fixture()
@@ -463,93 +373,3 @@ def test_axes_geometry_source_theme(axes_assembly):
 #     assert np.allclose(axes_assembly.center, (0.5, 0.5, 0.5))
 #     assert np.allclose(axes_assembly.length, default_length / 2)
 #     assert np.allclose(axes_assembly.bounds, (0, 1, 0, 1, 0, 1))
-
-
-# @pytest.mark.parametrize('tip_type', ['sphere', 'cone'])
-# @pytest.mark.parametrize('radius', [(0.01, 0.4), (0.01, 0.4)])  # ,(1, 0),(0, 1)])
-# @pytest.mark.parametrize('shaft_length', [[0.8, 0.8, 0.8]])
-# @pytest.mark.parametrize('total_length', [[1, 1, 1], [4, 3, 2], [0.4, 0.5, 1.1]])
-# @pytest.mark.parametrize('scale', [1, 2, 0.5])  # , [0.1, 0.2, 0.3], [2, 3, 4]])
-# @pytest.mark.parametrize('auto_length', [True, False])  # ,False])
-# def test_axes_assembly_true_to_scale(tip_type, radius, shaft_length, total_length, scale, auto_length):
-#     shaft_radius, tip_radius = radius
-#
-#     kwargs = dict(
-#         shaft_type='cylinder',
-#         tip_type=tip_type,
-#         shaft_length=shaft_length,
-#         total_length=total_length,
-#         scale=scale,
-#         shaft_radius=shaft_radius,
-#         tip_radius=tip_radius,
-#         auto_length=auto_length,
-#     )
-#     # # Create reference axes actor
-#     # axes_assembly = AxesActor(
-#     #     true_to_scale=False,
-#     #     **kwargs
-#     # )
-#     # bounds = [actor.GetBounds() for actor in axes_assembly._actors]
-#     # normal_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
-#     # shaft_scale = normal_size[:3].copy()
-#     # shaft_scale[np.invert(np.eye(3,dtype=bool))] /= (shaft_radius * 2)
-#     #
-#     # tip_scale = normal_size[3:6].copy()
-#     # tip_scale[np.invert(np.eye(3,dtype=bool))] /= (tip_radius * 2)
-#
-#     # Create test
-#     axes_assembly = AxesActor(true_to_scale=True, **kwargs)
-#     # bounds = [actor.GetBounds() for actor in axes_assembly_true._actors]
-#     # true_size = np.array([[b[1]-b[0],b[3]-b[2], b[5]-b[4]] for b in bounds])
-#
-#     #
-#     shaft_length_scaled = np.array(shaft_length) * np.array(total_length) * np.array(scale)
-#     tip_length_scaled = np.array(axes_assembly.tip_length) * np.array(total_length) * np.array(scale)
-#
-#     # actual_scale = axes_assembly._compute_true_to_scale_factors()
-#     # assert actual_scale.x_shaft * shaft_length_scaled[0] == 1.0
-#     # assert actual_scale.y_shaft * shaft_length_scaled[1] == 1.0
-#     # assert actual_scale.z_shaft * shaft_length_scaled[2] == 1.0
-#     # assert actual_scale.x_tip * tip_length_scaled[0] == 1.0
-#     # assert actual_scale.y_tip * tip_length_scaled[1] == 1.0
-#     # assert actual_scale.z_tip * tip_length_scaled[2] == 1.0
-#
-#     # axes_assembly._update_props()
-#     xsl, ysl, zsl = shaft_length_scaled
-#     xtl, ytl, ztl = tip_length_scaled
-#     sr, tr = shaft_radius * scale, tip_radius * scale
-#
-#     # test x shaft
-#     expected_bounds = (0.0, xsl, -sr, sr, -sr, sr)
-#     actual_bounds = axes_assembly._actors.x_shaft.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds)
-#
-#     # test y shaft
-#     expected_bounds = (-sr, sr, 0, ysl, -sr, sr)
-#     actual_bounds = axes_assembly._actors.y_shaft.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds)
-#
-#     # test z shaft
-#     expected_bounds = (-sr, sr, -sr, sr, 0, zsl)
-#     actual_bounds = axes_assembly._actors.z_shaft.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds)
-#
-#     # test x tip
-#     expected_bounds = (xsl, xsl + xtl, -tr, tr, -tr, tr)
-#     actual_bounds = axes_assembly._actors.x_tip.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
-#
-#     # test y tip
-#     expected_bounds = (-tr, tr, ysl, ysl + ytl, -tr, tr)
-#     actual_bounds = axes_assembly._actors.y_tip.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
-#
-#     # test z tip
-#     expected_bounds = (-tr, tr, -tr, tr, zsl, zsl + ztl)
-#     actual_bounds = axes_assembly._actors.z_tip.GetBounds()
-#     assert np.allclose(actual_bounds, expected_bounds, rtol=0.01)
-
-
-def test_axes_assembly_output():
-    out = pv.AxesAssembly()
-    assert isinstance(out, pv.AxesAssembly)

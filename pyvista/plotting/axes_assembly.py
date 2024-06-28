@@ -129,8 +129,6 @@ class AxesAssembly(Assembly):
             prop = actor.prop
             prop.bold = True
             prop.italic = True
-            # prop.justification_horizontal = 'center'
-            # prop.justification_vertical = 'center'
 
         self.position = position
         if orientation is not None and rotation is not None:
@@ -146,16 +144,6 @@ class AxesAssembly(Assembly):
 
         self._is_init = True
         self._update()
-
-    # def __getattr__(self, item: str):
-    #     try:
-    #         return self.__getattribute__(item)
-    #     except AttributeError as e:
-    #         if not item.startswith('_'):
-    #             try:
-    #                 return getattr(self._axes_geometry, item)
-    #             except AttributeError:
-    #                 raise AttributeError(str(e)) from e
 
     def __repr__(self):
         """Representation of the axes actor."""
@@ -426,44 +414,6 @@ class AxesAssembly(Assembly):
         )
         self._apply_transformation_to_labels() if self._is_init else None
 
-    # @property
-    # def label_offset(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Normalized position of the text label along each axis.
-    #
-    #     Values must be non-negative.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesAssembly()
-    #     >>> axes_actor.label_position
-    #     (1.0, 1.0, 1.0)
-    #     >>> axes_actor.label_position = 0.3
-    #     >>> axes_actor.label_position
-    #     (0.3, 0.3, 0.3)
-    #     >>> axes_actor.label_position = (0.1, 0.4, 0.2)
-    #     >>> axes_actor.label_position
-    #     (0.1, 0.4, 0.2)
-    #
-    #     """
-    #     return tuple(self._label_position)
-    #
-    # @label_offset.setter
-    # def label_offset(self, offset: float | VectorLike[float]):  # numpydoc ignore=GL08
-    #     self._label_offset = _validation.validate_array3(
-    #         position,
-    #         broadcast=True,
-    #         must_be_in_range=[0, np.inf],
-    #         name='Label offset',
-    #     )
-    #     self._update_label_positions() if self._is_init else None
-
-    #
-    # @property
-    # def tip_position(self):
-    #     tips = np.diag(np.array(self.total_length) * self.scale)
-    #     return apply_transformation_to_points(self.transformation_matrix, tips)
-
     @property
     def label_color(self):  # numpydoc ignore=RT01
         """Color of the text labels."""
@@ -517,24 +467,6 @@ class AxesAssembly(Assembly):
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
         self._shaft_actors[_AxisEnum.z].prop.color = shaft_color
         self._tip_actors[_AxisEnum.z].prop.color = tip_color
-
-    # def _get_axis_color(self, axis):
-    #     return (self._shaft_color_getters[axis](),
-    #                           self._tip_color_getters[axis]())
-
-    # def _set_axis_color(self, axis, color):
-    #     if color is None:
-    #         if axis == 0:
-    #             color = pv.global_theme.axes.x_color
-    #         elif axis == 1:
-    #             color = pv.global_theme.axes.y_color
-    #         else:
-    #             color = pv.global_theme.axes.z_color
-    #         colors = [Color(color)] * 2
-    #     else:
-    #         colors = _validate_color_sequence(color, num_colors=2)
-    #     self._shaft_color_setters[axis](colors[0])
-    #     self._tip_color_setters[axis](colors[1])
 
     def _get_transformed_label_positions(self):
         # Create position vectors
