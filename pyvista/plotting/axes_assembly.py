@@ -42,7 +42,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         x_color=None,
         y_color=None,
         z_color=None,
-        symmetric_bounds=False,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
@@ -85,95 +84,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
             *geometry_repr,
-            f"  Visible:                    {self.visibility}",
         ]
         return '\n'.join(attr)
-
-    @property
-    def visibility(self) -> bool:  # numpydoc ignore=RT01
-        """Enable or disable the visibility of the axes.
-
-        Examples
-        --------
-        Create an AxesAssembly and check its visibility
-
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.visibility
-        True
-
-        """
-        return bool(self.GetVisibility())
-
-    @visibility.setter
-    def visibility(self, value: bool):  # numpydoc ignore=GL08
-        self.SetVisibility(value)
-
-    @property
-    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
-        """Enable or disable symmetry in the axes bounds calculation.
-
-        Calculate the axes bounds as though the axes were symmetric,
-        i.e. extended along -X, -Y, and -Z directions. Setting this
-        parameter primarily affects camera positioning in a scene.
-
-        - If ``True``, the axes :attr:`bounds` are symmetric about
-          its :attr:`position`. Symmetric bounds allow for the axes to rotate
-          about its origin, which is useful in cases where the actor
-          is used as an orientation widget.
-
-        - If ``False``, the axes :attr:`bounds` are calculated as-is.
-          Asymmetric bounds are useful in cases where the axes are
-          placed in a scene with other actors, since the symmetry
-          could otherwise lead to undesirable camera positioning
-          (e.g. camera may be positioned further away than necessary).
-
-        Examples
-        --------
-        Get the symmetric bounds of the axes.
-
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor(symmetric_bounds=True)
-        >>> axes_actor.bounds
-        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        >>> axes_actor.center
-        (0.0, 0.0, 0.0)
-
-        Get the asymmetric bounds.
-
-        >>> axes_actor.symmetric_bounds = False
-        >>> axes_actor.bounds  # doctest:+SKIP
-        (-0.08, 1.0, -0.08, 1.0, -0.08, 1.0)
-        >>> axes_actor.center  # doctest:+SKIP
-        (0.46, 0.46, 0.46)
-
-        Show the difference in camera positioning with and without
-        symmetric bounds. Orientation is added for visualization.
-
-        >>> # Create actors
-        >>> axes_actor_sym = pv.AxesActor(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_actor_asym = pv.AxesActor(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
-        >>>
-        >>> # Show multi-window plot
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> _ = pl.add_text("Symmetric axes")
-        >>> _ = pl.add_actor(axes_actor_sym)
-        >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text("Asymmetric axes")
-        >>> _ = pl.add_actor(axes_actor_asym)
-        >>> pl.show()
-
-        """
-        return self._symmetric_bounds
-
-    @symmetric_bounds.setter
-    def symmetric_bounds(self, value: bool):  # numpydoc ignore=GL08
-        self._symmetric_bounds = bool(value)
 
     def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | tuple[ColorLike, ColorLike]):
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
