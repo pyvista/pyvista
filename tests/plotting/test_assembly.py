@@ -36,57 +36,17 @@ def test_multi_property_set_get_common_prop_value(
     assert multi_property_blue_and_red._props[1].color == 'purple'
 
 
-def test_multi_property_repr(multi_property_green, multi_property_blue_and_red):
-    actual_lines = repr(multi_property_green).splitlines()[1:]
-    assert actual_lines == [
-        '  Style:                       "Surface"',
-        "  Color:                       Color(name='green', hex='#008000ff', opacity=255)",
-        "  Edge color:                  Color(name='black', hex='#000000ff', opacity=255)",
-        '  Opacity:                     1.0',
-        '  Edge opacity:                1.0',
-        '  Show edges:                  False',
-        '  Lighting:                    True',
-        '  Ambient:                     0.0',
-        '  Diffuse:                     1.0',
-        '  Specular:                    0.0',
-        '  Specular power:              100.0',
-        '  Metallic:                    0.0',
-        '  Roughness:                   0.5',
-        '  Interpolation:               0',
-        '  Render points as spheres:    False',
-        '  Render lines as tubes:       False',
-        '  Line width:                  1.0',
-        '  Point size:                  5.0',
-        '  Culling:                     "none"',
-        "  Ambient color:               Color(name='green', hex='#008000ff', opacity=255)",
-        "  Specular color:              Color(name='green', hex='#008000ff', opacity=255)",
-        "  Diffuse color:               Color(name='green', hex='#008000ff', opacity=255)",
-        '  Anisotropy:                  0.0',
-    ]
+def test_multi_property_repr_matches_property():
+    prop = pv.Property(color='red')
+    multi_prop = MultiProperty([prop])
 
-    actual_lines = repr(multi_property_blue_and_red).splitlines()[1:]
-    assert actual_lines == [
-        '  Style:                       "Surface"',
-        '  Color:                       MULTIPLE VALUES',
-        "  Edge color:                  Color(name='black', hex='#000000ff', opacity=255)",
-        '  Opacity:                     1.0',
-        '  Edge opacity:                1.0',
-        '  Show edges:                  False',
-        '  Lighting:                    True',
-        '  Ambient:                     0.0',
-        '  Diffuse:                     1.0',
-        '  Specular:                    0.0',
-        '  Specular power:              100.0',
-        '  Metallic:                    0.0',
-        '  Roughness:                   0.5',
-        '  Interpolation:               0',
-        '  Render points as spheres:    False',
-        '  Render lines as tubes:       False',
-        '  Line width:                  1.0',
-        '  Point size:                  5.0',
-        '  Culling:                     "none"',
-        '  Ambient color:               MULTIPLE VALUES',
-        '  Specular color:              MULTIPLE VALUES',
-        '  Diffuse color:               MULTIPLE VALUES',
-        '  Anisotropy:                  0.0',
-    ]
+    prop_repr_lines = repr(prop).splitlines()[1:]
+    multi_prop_repr_lines = repr(multi_prop).splitlines()[1:]
+    assert prop_repr_lines == multi_prop_repr_lines
+
+
+def test_multi_property_repr_multiple_values(multi_property_blue_and_red):
+    repr_lines = repr(multi_property_blue_and_red).splitlines()[1:]
+    # Non-exhaustive test, only check a few properties are as expected
+    assert '  Color:                       MULTIPLE VALUES' in repr_lines
+    assert '  Opacity:                     1.0' in repr_lines

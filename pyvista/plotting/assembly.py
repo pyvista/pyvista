@@ -16,9 +16,9 @@ class MultiProperty:
     _MULTIPLE_VALUES = 'MULTIPLE VALUES'
 
     # List of @property decorated methods from pv.Property
-    _ATTRIBUTES: Final = [
-        name for name, value in vars(Property).items() if isinstance(value, property)
-    ]
+    _ATTRIBUTES: Final = sorted(
+        [name for name, value in vars(Property).items() if isinstance(value, property)]
+    )
 
     def __init__(self, props: Sequence[Property]):
         super().__init__()
@@ -56,6 +56,7 @@ class MultiProperty:
         If values differ between the objects, its value is shown
         as 'MULTIPLE VALUES'.
         """
+        from pyvista.core.errors import VTKVersionError
 
         props = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -67,6 +68,8 @@ class MultiProperty:
                 value = getattr(self, attr)
                 if isinstance(value, str):
                     value = f'"{value}"'
+            except VTKVersionError:
+                continue
             except ValueError:
                 value = MultiProperty._MULTIPLE_VALUES
             props.append(f'  {name:28s} {value}')
