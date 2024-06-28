@@ -4009,7 +4009,6 @@ def test_axes_assembly():
     pl = pv.Plotter()
     axes = pv.AxesAssembly()
     pl.add_actor(axes)
-    pl.show()
 
 
 def test_axes_actor_default_colors():

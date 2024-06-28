@@ -1,4 +1,4 @@
-"""Axes actor module."""
+"""Axes assembly module."""
 
 from __future__ import annotations
 
@@ -37,17 +37,55 @@ class _AxesGeometryKwargs(TypedDict):
 
 
 class AxesAssembly(_vtk.vtkPropAssembly):
+    """Assembly of arrow-style axes parts.
+
+    The axes may be used as a widget or added to a scene.
+
+    Parameters
+    ----------
+    x_color : ColorLike | Sequence[ColorLike], optional
+        Color of the x-axis shaft and tip.
+
+    y_color : ColorLike | Sequence[ColorLike], optional
+        Color of the y-axis shaft and tip.
+
+    z_color : ColorLike | Sequence[ColorLike], optional
+        Color of the z-axis shaft and tip.
+
+    **kwargs
+        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    Examples
+    --------
+    Add axes to a plot.
+
+    >>> import pyvista as pv
+    >>> axes = pv.AxesAssembly()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Customize the colors. Set each axis to a single color, or set the colors of each
+    shaft and tip separately with two colors.
+
+    >>> axes.x_color = ['cyan', 'blue']
+    >>> axes.y_color = ['magenta', 'red']
+    >>> axes.z_color = 'yellow'
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+    """
+
     def __init__(
         self,
-        x_color=None,
-        y_color=None,
-        z_color=None,
+        *,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
-
-        # Add dummy prop3d for calculation transformations
-        self._prop3d = Actor()
 
         # Init shaft and tip actors
         self._shaft_actors = (Actor(), Actor(), Actor())
@@ -71,9 +109,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         if z_color is None:
             z_color = pv.global_theme.axes.z_color
 
-        self.x_color = x_color
-        self.y_color = y_color
-        self.z_color = z_color
+        self.x_color = x_color  # type: ignore[assignment]
+        self.y_color = y_color  # type: ignore[assignment]
+        self.z_color = z_color  # type: ignore[assignment]
 
         self._update()
 
