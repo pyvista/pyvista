@@ -13,12 +13,6 @@ def axes_assembly():
     return pv.AxesAssembly()
 
 
-# def test_origin(axes):
-#     origin = np.random.default_rng().random(3)
-#     axes.origin = origin
-#     assert np.all(axes.GetOrigin() == origin)
-#     assert np.all(axes.origin == origin)
-
 # def test_axes_assembly_properties(axes_assembly):
 #     axes_assembly.x_shaft_prop.ambient = 0.1
 #     assert axes_assembly.x_shaft_prop.ambient == 0.1
@@ -56,28 +50,6 @@ def axes_assembly():
 #     msg = '`properties` must be a property object or a dictionary.'
 #     with pytest.raises(TypeError, match=msg):
 #         pv.pv.AxesAssembly(properties="not_a_dict")
-
-
-# def test_axes_assembly_user_matrix():
-#     eye = np.eye(4)
-#     eye2 = eye * 2
-#     eye3 = eye * 3
-#
-#     a = pv.AxesActor(_make_orientable=False)
-#     assert np.array_equal(a.user_matrix, eye)
-#     assert np.array_equal(a._user_matrix, eye)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
-#
-#     a.user_matrix = eye2
-#     assert np.array_equal(a.user_matrix, eye2)
-#     assert np.array_equal(a._user_matrix, eye2)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye2)
-#
-#     a._make_orientable = True
-#     a.SetUserMatrix(vtkmatrix_from_array(eye3))
-#     assert np.array_equal(a.user_matrix, eye3)
-#     assert np.array_equal(a._user_matrix, eye3)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye3)
 
 
 def _compute_expected_bounds(axes_assembly):
@@ -128,10 +100,6 @@ def test_axes_assembly_repr(axes_assembly):
         "  Tip type:                   'cone'",
         "  Tip radius:                 0.1",
         "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Symmetric:                  False",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
         "  Visible:                    True",
         "  X Bounds                    -1.000E-01, 1.000E+00",
         "  Y Bounds                    -1.000E-01, 1.000E+00",
@@ -178,44 +146,6 @@ def test_axes_geometry_source_theme(axes_assembly):
     assert axes_geometry_source.y_color[1].name == 'white'
     assert axes_geometry_source.z_color[0].name == 'gray'
     assert axes_geometry_source.z_color[1].name == 'gray'
-
-
-# def test_axes_assembly_center(axes_assembly):
-#     assert axes_assembly.center == (0, 0, 0)
-#     assert axes_assembly.GetCenter() == (0, 0, 0)
-#
-#     axes_assembly.position = (1, 2, 3)
-#     assert axes_assembly.center == axes_assembly.position
-#     assert axes_assembly.GetCenter() == axes_assembly.position
-#
-#     # test center is always the origin when workaround is disabled
-#     axes_assembly._make_orientable = False
-#     assert axes_assembly.GetCenter() == (0, 0, 0)
-
-
-# @pytest.mark.parametrize('use_scale', [True, False])
-# def test_axes_assembly_length(use_scale):
-#     axes_assembly = AxesActorProp()
-#     default_length = 3.4641016151377544
-#     assert np.allclose(axes_assembly.length, default_length)
-#     assert np.allclose(axes_assembly.GetLength(), default_length)
-#
-#     scaled_length = 7.4833147735478835
-#     if use_scale:
-#         axes_assembly.scale = (1, 2, 3)
-#     else:
-#         axes_assembly.total_length = (1, 2, 3)
-#     assert np.allclose(axes_assembly.length, scaled_length)
-#     assert np.allclose(axes_assembly.GetLength(), scaled_length)
-#
-#     axes_assembly._make_orientable = False
-#     if use_scale:
-#         # test length is not correct when workaround is disabled
-#         assert np.allclose(axes_assembly.length, default_length)
-#         assert np.allclose(axes_assembly.GetLength(), default_length)
-#     else:
-#         assert np.allclose(axes_assembly.length, scaled_length)
-#         assert np.allclose(axes_assembly.GetLength(), scaled_length)
 
 
 # def test_axes_assembly_symmetric_bounds():
