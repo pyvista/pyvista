@@ -5,7 +5,6 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
-from typing import Sequence
 
 import pyvista
 from pyvista.core import _validation
@@ -18,6 +17,9 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import ClassVar
+    from typing import Sequence
+
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -228,8 +230,8 @@ class Text(_vtk.vtkTextActor):
         self.SetPosition(position[0], position[1])
 
 
-class TextLabel(Text):
-    """2D text actor with a 3D position coordinate.
+class Label(Text):
+    """2D label actor with a 3D position coordinate.
 
     Parameters
     ----------
@@ -251,12 +253,12 @@ class TextLabel(Text):
 
     Examples
     --------
-    Create a text label for a point of interest.
+    Create a label for a point of interest.
 
     >>> import pyvista as pv
     >>> mesh = pv.Cone()
     >>> tip_point = mesh.points[0]
-    >>> label = pv.TextLabel('tip', position=tip_point)
+    >>> label = pv.Label('tip', position=tip_point)
 
     Plot the mesh and label.
 
@@ -265,6 +267,8 @@ class TextLabel(Text):
     >>> _ = pl.add_actor(label)
     >>> pl.show()
     """
+
+    _new_attr_exceptions: ClassVar[tuple[str]] = ('size',)
 
     def __init__(
         self,

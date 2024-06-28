@@ -19,7 +19,7 @@ from pyvista.plotting.actor import Actor
 from pyvista.plotting.assembly import Assembly
 from pyvista.plotting.colors import Color
 from pyvista.plotting.colors import _validate_color_sequence
-from pyvista.plotting.text import TextLabel
+from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsLike
@@ -89,7 +89,7 @@ class AxesAssembly(Assembly):
         self.add_parts(self._shaft_and_tip_actors)
 
         # Create label actors
-        self._label_actors = (TextLabel(), TextLabel(), TextLabel())
+        self._label_actors = (Label(), Label(), Label())
         self.add_parts(self._label_actors)
 
         # Set colors
