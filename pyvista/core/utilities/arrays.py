@@ -946,7 +946,7 @@ def rotation_matrix_to_orientation(
     are specified in degrees and in x-y-z order. However, the rotations should
     be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
 
-    The rotation angles and rotation matrix can be used interchangeably for
+    The orientation angles and rotation matrix can be used interchangeably for
     transformations.
 
     Parameters
@@ -957,18 +957,18 @@ def rotation_matrix_to_orientation(
     Returns
     -------
     tuple
-        Tuple with x-y-z axis rotation angles in degrees.
+        Tuple with x-y-z axis orientation angles in degrees.
 
     See Also
     --------
-    rotation_matrix_to_orientation_angles
+    orientation_to_rotation_matrix
         Inverse function for this conversion.
 
     pyvista.DataSet.rotate_x, pyvista.DataSet.rotate_y, pyvista.DataSet.rotate_z, pyvista.DataSet.transform
         Relevant methods for transforming datasets.
 
-    pyvista.Prop3D.orientation, pyvista.Prop3D.rotation
-        Relevant methods for transforming 3D props or :class:`pyvista.Actor`.
+    pyvista.Prop3D.rotate_x, pyvista.Prop3D.rotate_y, pyvista.Prop3D.rotate_z, pyvista.Prop3D.orientation
+        Relevant properties for transforming 3D props, e.g. :class:`pyvista.Actor`.
 
     Examples
     --------
@@ -994,7 +994,7 @@ def orientation_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray
     are specified in degrees and in x-y-z order. However, the rotations should
     be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
 
-    The rotation angles and rotation matrix can be used interchangeably for
+    The orientation angles and rotation matrix can be used interchangeably for
     transformations.
 
     Parameters
@@ -1009,14 +1009,14 @@ def orientation_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray
 
     See Also
     --------
-    rotation_matrix_to_orientation_angles
+    rotation_matrix_to_orientation
         Inverse function for this conversion.
 
     pyvista.DataSet.rotate_x, pyvista.DataSet.rotate_y, pyvista.DataSet.rotate_z, pyvista.DataSet.transform
         Relevant methods for transforming datasets.
 
-    pyvista.Prop3D.orientation, pyvista.Prop3D.rotation
-        Relevant methods for transforming 3D props or :class:`pyvista.Actor`.
+    pyvista.Prop3D.rotate_x, pyvista.Prop3D.rotate_y, pyvista.Prop3D.rotate_z, pyvista.Prop3D.orientation
+        Relevant properties for transforming 3D props, e.g. :class:`pyvista.Actor`.
 
     Examples
     --------
@@ -1027,12 +1027,12 @@ def orientation_to_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray
            [-0.33682409,  0.17364818,  0.92541658]])
 
     """
-    # Local import - vtkActor is usually only available in plotting module
-    from vtk import vtkActor
+    # Local import since importing from plotting module
+    from pyvista.plotting import _vtk
 
     valid_orientation = _validation.validate_array3(orientation)
-    # Use the transformations inherited from vtkProp3D class for the conversion
-    prop = vtkActor()
+    # Use the transformations inherited from vtkProp3D for the conversion
+    prop = _vtk.vtkActor()
     prop.SetOrientation(valid_orientation)
     matrix = _vtk.vtkMatrix4x4()
     prop.GetMatrix(matrix)
