@@ -424,6 +424,17 @@ def test_box_source():
     assert algo.quads
 
 
+def test_axes_geometry_source_symmetric_set_get(axes_geometry_source):
+    assert axes_geometry_source.symmetric is False
+    axes_geometry_source.symmetric = True
+    assert axes_geometry_source.symmetric is True
+
+
+def test_axes_geometry_source_symmetric_init():
+    axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+    assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+
 def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
     assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
     new_length = (0.1, 0.2, 0.3)
@@ -649,6 +660,7 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         "  Tip type:                   'cone'",
         '  Tip radius:                 0.1',
         '  Tip length:                 (0.2, 0.2, 0.2)',
+        '  Symmetric:                  False',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
