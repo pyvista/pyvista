@@ -35,6 +35,33 @@ def test_axes_assembly_repr(axes_assembly):
     assert actual_lines == expected_lines
 
 
+def test_axes_assembly_x_color(axes_assembly):
+    axes_assembly.x_color = 'black'
+    assert axes_assembly.x_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[0].prop.color.name == 'black'
+
+    assert axes_assembly.x_color[1].name == 'black'
+    assert axes_assembly._tip_actors[0].prop.color.name == 'black'
+
+
+def test_axes_assembly_y_color(axes_assembly):
+    axes_assembly.y_color = 'black'
+    assert axes_assembly.y_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[1].prop.color.name == 'black'
+
+    assert axes_assembly.y_color[1].name == 'black'
+    assert axes_assembly._tip_actors[1].prop.color.name == 'black'
+
+
+def test_axes_assembly_z_color(axes_assembly):
+    axes_assembly.z_color = 'black'
+    assert axes_assembly.z_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[2].prop.color.name == 'black'
+
+    assert axes_assembly.z_color[1].name == 'black'
+    assert axes_assembly._tip_actors[2].prop.color.name == 'black'
+
+
 @pytest.fixture()
 def _config_axes_theme():
     # Store values
@@ -49,7 +76,7 @@ def _config_axes_theme():
 
 
 @pytest.mark.usefixtures('_config_axes_theme')
-def test_axes_geometry_source_theme(axes_assembly):
+def test_axes_assembly_theme(axes_assembly):
     assert axes_assembly.x_color[0].name == 'tomato'
     assert axes_assembly.x_color[1].name == 'tomato'
     assert axes_assembly.y_color[0].name == 'seagreen'
