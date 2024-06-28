@@ -376,3 +376,23 @@ class Prop3D(_vtk.vtkProp3D):
         1.7272069317100354
         """
         return self.GetLength()
+
+    @property
+    def transformation_matrix(self) -> NumpyArray[float]:
+        """Transformation matrix of the entity.
+
+        The matrix is computed as a concatenation of the following transformations:
+
+        #. Translate entity to its :attr:`~origin`.
+        #. Scale entity by the values in :attr:`~scale`.
+        #. Rotate entity using the values in :attr:`~orientation`. Internally, rotations are
+           applied in the order :func:`~rotate_y`, then :func:`~rotate_x`, then :func:`~rotate_z`.
+        #. Translate entity away from its origin and to its :attr:`~position`.
+        #. Transform entity with :attr:`~user_matrix`.
+
+        Returns
+        -------
+        numpy.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetMatrix())
