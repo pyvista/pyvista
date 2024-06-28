@@ -59,7 +59,6 @@ class AxesAssembly(Assembly):
         x_color=None,
         y_color=None,
         z_color=None,
-        axes_vectors=None,
         position=(0, 0, 0),
         orientation=(0, 0, 0),
         rotation=None,
@@ -134,7 +133,6 @@ class AxesAssembly(Assembly):
             # prop.justification_vertical = 'center'
 
         self.position = position
-        self.axes_vectors = np.eye(3) if axes_vectors is None else axes_vectors
         if orientation is not None and rotation is not None:
             raise ValueError(
                 "Cannot set both orientation and rotation. Set either orientation or rotation, not both."
@@ -791,6 +789,7 @@ class AxesAssembly(Assembly):
 
     def _set_prop3d_attr(self, name, value):
         # Set props for shaft and tip actors
+        # Validate input by setting then getting from prop3d
         setattr(self._prop3d, name, value)
         valid_value = getattr(self._prop3d, name)
         [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
@@ -920,45 +919,3 @@ class AxesAssembly(Assembly):
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
         max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
         return np.linalg.norm(max_bnds - min_bnds).tolist()
-
-    @property
-    def axes_vectors(self):  # numpydoc ignore=RT01
-        """Direction vectors of the axes.
-
-        The direction vectors are used as a 3x3 rotation matrix to orient the axes in
-        space. By default, the direction vectors align with the XYZ axes of the world
-        coordinates.
-
-        Examples
-        --------
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource()
-        >>> axes_geometry_source.axes_vectors
-        array([[1., 0., 0.],
-               [0., 1., 0.],
-               [0., 0., 1.]])
-
-        Orient the axes in space.
-
-        >>> vectors = np.array(
-        ...     [
-        ...         [0.36, 0.48, -0.80],
-        ...         [-0.80, 0.60, 0.00],
-        ...         [0.48, 0.64, 0.60],
-        ...     ]
-        ... )
-
-        >>> axes_geometry_source.axes_vectors = vectors
-        >>> axes_geometry_source.axes_vectors
-        array([[ 0.36,  0.48, -0.8 ],
-               [-0.8 ,  0.6 ,  0.  ],
-               [ 0.48,  0.64,  0.6 ]])
-        """
-        return self._axes_vectors
-
-    @axes_vectors.setter
-    def axes_vectors(self, vectors):  # numpydoc ignore=GL08
-        self._axes_vectors = _validation.validate_axes(
-            vectors, name='axes vectors', must_be_orthogonal=False, must_have_orientation=None
-        )
