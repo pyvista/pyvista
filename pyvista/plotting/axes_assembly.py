@@ -84,6 +84,15 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
             *geometry_repr,
+            "  X Color:                                     ",
+            f"      Shaft                   {self.x_color[0]}",
+            f"      Tip                     {self.x_color[1]}",
+            "  Y Color:                                     ",
+            f"      Shaft                   {self.y_color[0]}",
+            f"      Tip                     {self.y_color[1]}",
+            "  Z Color:                                     ",
+            f"      Shaft                   {self.z_color[0]}",
+            f"      Tip                     {self.z_color[1]}",
         ]
         return '\n'.join(attr)
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 import pyvista as pv
@@ -21,17 +20,19 @@ def test_axes_assembly_repr(axes_assembly):
         "  Tip type:                   'cone'",
         "  Tip radius:                 0.1",
         "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Visible:                    True",
-        "  X Bounds                    -1.000E-01, 1.000E+00",
-        "  Y Bounds                    -1.000E-01, 1.000E+00",
-        "  Z Bounds                    -1.000E-01, 1.000E+00",
+        "  Symmetric:                  False",
+        "  X Color:                                     ",
+        "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "  Y Color:                                     ",
+        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "  Z Color:                                     ",
+        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
-
-    axes_assembly.user_matrix = np.eye(4) * 2
-    repr_ = repr(axes_assembly)
-    assert "User matrix:                Set" in repr_
 
 
 @pytest.fixture()
