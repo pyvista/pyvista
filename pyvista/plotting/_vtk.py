@@ -91,6 +91,7 @@ from vtkmodules.vtkRenderingCore import vtkPointGaussianMapper
 from vtkmodules.vtkRenderingCore import vtkPointPicker
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper2D
+from vtkmodules.vtkRenderingCore import vtkProp
 from vtkmodules.vtkRenderingCore import vtkProp3D
 from vtkmodules.vtkRenderingCore import vtkPropAssembly
 from vtkmodules.vtkRenderingCore import vtkProperty
