@@ -885,8 +885,6 @@ class Text3DSource(vtkVectorText):
         '_normal',
         '_process_empty_string',
         '_output',
-        '_extrude_filter',
-        '_tri_filter',
         '_modified',
     ]
 
