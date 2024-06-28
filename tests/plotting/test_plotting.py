@@ -4012,40 +4012,6 @@ def test_axes_assembly():
     pl.show()
 
 
-@pytest.mark.parametrize(
-    'test_kwargs',
-    [
-        {},
-        dict(position=(-0.5, -0.5, 1)),
-        dict(orientation=(10, 20, 30)),
-        dict(position=(-0.5, -0.5, 1), orientation=(10, 20, 30)),
-        dict(scale=(1.5, 2, 2.5)),
-    ],
-    ids=[
-        'default',
-        'position',
-        'orientation',
-        'position_and_orientation',
-        'scale',
-        #'user_matrix',
-        #'user_matrix',
-    ],
-)
-def test_add_axes_marker(test_kwargs):
-    plot = pv.Plotter()
-    plot.add_axes_marker(**test_kwargs)
-
-    if test_kwargs:
-        # Add a second marker at the origin for visual reference
-        plot.add_axes_marker(
-            x_color='black',
-            y_color='black',
-            z_color='black',
-            show_labels=False,
-        )
-    plot.show()
-
-
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
