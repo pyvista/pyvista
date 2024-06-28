@@ -81,7 +81,6 @@ from vtkmodules.vtkRenderingCore import vtkCompositeDataDisplayAttributes
 from vtkmodules.vtkRenderingCore import vtkCompositePolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkCoordinate
 from vtkmodules.vtkRenderingCore import vtkDataSetMapper
-from vtkmodules.vtkRenderingCore import vtkFollower
 from vtkmodules.vtkRenderingCore import vtkImageActor
 from vtkmodules.vtkRenderingCore import vtkLight
 from vtkmodules.vtkRenderingCore import vtkLightActor
