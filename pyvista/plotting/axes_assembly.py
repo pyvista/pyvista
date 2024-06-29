@@ -154,9 +154,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @x_color.setter
     def x_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.x].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.x].prop.color = tip_color
+        self._set_axis_color(_AxisEnum.x, color)
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -165,9 +163,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @y_color.setter
     def y_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.y].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.y].prop.color = tip_color
+        self._set_axis_color(_AxisEnum.y, color)
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -176,9 +172,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @z_color.setter
     def z_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.z].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.z].prop.color = tip_color
+        self._set_axis_color(_AxisEnum.z, color)
 
     def _update(self):
         self._shaft_and_tip_geometry_source.update()
