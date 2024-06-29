@@ -982,7 +982,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self) -> tuple[int] | tuple[int, int]:  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the plotter.
 
         Returns
@@ -1665,7 +1665,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.length
 
     @property
-    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the active renderer.
 
         Returns
