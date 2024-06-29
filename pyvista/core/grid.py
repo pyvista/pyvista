@@ -265,7 +265,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        tuple[numpy.ndarray]
+        tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
             Tuple of numpy arrays representing the points of this mesh.
 
         """
