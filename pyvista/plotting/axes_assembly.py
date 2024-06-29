@@ -16,13 +16,15 @@ from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 
 if TYPE_CHECKING:
+    import sys
+
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
 
-    try:
-        from typing import Unpack  # type: ignore[attr-defined]
-    except ModuleNotFoundError:
+    if sys.version_info >= (3, 11):
+        from typing import Unpack
+    else:
         from typing_extensions import Unpack
 
 
