@@ -79,6 +79,10 @@ def test_axes_assembly_color_inputs(axes_assembly):
     with pytest.raises(ValueError, match=re.escape(match + err_msg)):
         axes_assembly.y_color = 'ham'
 
+    match = "Invalid color(s):\n\t['eggs']"
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.y_color = ['eggs']
+
     match = "Invalid color(s):\n\t['red', 'green', 'blue']"
     with pytest.raises(ValueError, match=re.escape(match + err_msg)):
         axes_assembly.z_color = ['red', 'green', 'blue']
