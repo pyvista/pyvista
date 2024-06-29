@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 import pyvista as pv
@@ -60,6 +62,22 @@ def test_axes_assembly_z_color(axes_assembly):
 
     assert axes_assembly.z_color[1].name == 'black'
     assert axes_assembly._tip_actors[2].prop.color.name == 'black'
+
+
+def test_axes_assembly_color_inputs(axes_assembly):
+    axes_assembly.x_color = [[255, 255, 255, 255], [0.0, 0.0, 0.0]]
+    assert axes_assembly.x_color[0].name == 'white'
+    assert axes_assembly.x_color[1].name == 'black'
+
+    err_msg = '\nInput must be a single ColorLike color or a sequence of 2 ColorLike colors.'
+
+    match = 'Invalid color(s):\n\tham'
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.y_color = 'ham'
+
+    match = "Invalid color(s):\n\t['red', 'green', 'blue']"
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.z_color = ['red', 'green', 'blue']
 
 
 @pytest.fixture()

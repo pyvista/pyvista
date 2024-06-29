@@ -15,7 +15,7 @@ from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import sys
 
     from pyvista.core._typing_core import VectorLike
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
     if sys.version_info >= (3, 11):
         from typing import Unpack
-    else:  # pragma: no cover
+    else:
         from typing_extensions import Unpack
 
 
@@ -197,6 +197,6 @@ def _validate_color_sequence(
         raise ValueError(
             f"Invalid color(s):\n"
             f"\t{color}\n"
-            f"Input must be a single ColorLike color \n"
+            f"Input must be a single ColorLike color "
             f"or a sequence of {n_colors} ColorLike colors.",
         )
