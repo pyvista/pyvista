@@ -982,12 +982,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self) -> tuple[int, int]:  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:  # numpydoc ignore=RT01
         """Return the shape of the plotter.
 
         Returns
         -------
-        tuple[int, int]
+        tuple[int] | tuple[int, int]
             Shape of the plotter.
 
         Examples

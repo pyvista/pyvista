@@ -336,12 +336,12 @@ class Renderers:
         return self._renderers[self._active_index]
 
     @property
-    def shape(self) -> tuple[int, int]:  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:  # numpydoc ignore=RT01
         """Return the shape of the renderers.
 
         Returns
         -------
-        tuple[int, int]
+        tuple[int] | tuple[int, int]
             Shape of the renderers.
         """
         return self._shape
