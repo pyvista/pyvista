@@ -65,8 +65,12 @@ def test_axes_assembly_z_color(axes_assembly):
 
 
 def test_axes_assembly_color_inputs(axes_assembly):
-    axes_assembly.x_color = [[255, 255, 255, 255], [0.0, 0.0, 0.0]]
+    axes_assembly.x_color = [[255, 255, 255, 255]]
     assert axes_assembly.x_color[0].name == 'white'
+    assert axes_assembly.x_color[1].name == 'white'
+
+    axes_assembly.x_color = [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+    assert axes_assembly.x_color[0].name == 'red'
     assert axes_assembly.x_color[1].name == 'black'
 
     err_msg = '\nInput must be a single ColorLike color or a sequence of 2 ColorLike colors.'
