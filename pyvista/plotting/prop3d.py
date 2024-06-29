@@ -6,12 +6,15 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from pyvista.core import _validation
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
+    import scipy
+
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
@@ -193,6 +196,11 @@ class Prop3D(_vtk.vtkProp3D):
         and finally :func:`~rotate_z`.
 
         Rotations are applied about the specified :attr:`~origin`.
+
+        See Also
+        --------
+        rotation_from
+            Alternative method for setting the :attrs:`orientation`.
 
         Examples
         --------
@@ -376,3 +384,62 @@ class Prop3D(_vtk.vtkProp3D):
         1.7272069317100354
         """
         return self.GetLength()
+
+    def rotation_from(self, rotation: NumpyArray[float] | scipy.spatial.transform.Rotation):
+        """Set the entity's orientation from a rotation.
+
+        Set the rotation of this entity from a 3x3 rotation matrix or a SciPy
+        ``Rotation`` object. This method may be used as an alternative for setting the
+        :attrs:`orientation`.
+
+        Parameters
+        ----------
+        rotation : NumpyArray[float] | scipy.spatial.transform.Rotation
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        Examples
+        --------
+        Create an actor and show its initial orientation.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.orientation
+        (0.0, -0.0, 0.0)
+
+        Set the orientation using a 3x3 matrix.
+
+        >>> actor.rotation_from(
+        ...     np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        ... )
+        >>> actor.orientation
+        (0.0, -180.0, -89.99999999999999)
+
+
+        """
+        try:
+            orientation = _rotation_matrix_as_orientation(rotation)
+        except (TypeError, ValueError):
+            err_msg = f'Rotation must be a 3x3 NumPy array or a SciPy Rotation instance. Got {type(rotation)}.'
+            try:
+                from scipy.spatial.transform import Rotation
+            except ModuleNotFoundError:
+                raise TypeError(err_msg)
+            else:
+                if not isinstance(rotation, Rotation):
+                    raise TypeError(err_msg)
+                orientation = rotation.as_euler('yxz', degrees=True)
+
+        self.orientation = orientation
+
+
+def _rotation_matrix_as_orientation(
+    array: NumpyArray[float] | _vtk.vtkMatrix3x3,
+) -> tuple[float, float, float]:
+    """Convert a 3x3 rotation matrix to x-y-z orientation angles."""
+    array_3x3 = _validation.validate_transform3x3(array)
+    array_4x4 = np.eye(4)
+    array_4x4[:3, :3] = array_3x3
+    transform = _vtk.vtkTransform()
+    transform.SetMatrix(array_4x4.ravel())
+    return transform.GetOrientation()
