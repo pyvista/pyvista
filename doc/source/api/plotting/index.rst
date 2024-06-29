@@ -34,6 +34,7 @@ all plotting functionality in PyVista.
    CornerAnnotation
    CubeAxesActor
    DataSetMapper
+   Label
    LookupTable
    Plotter
    Prop3D
