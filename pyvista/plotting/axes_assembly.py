@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pyvista.plotting._typing import ColorLike
 
     try:
-        from typing import Unpack  # type: ignore[attr-defined]
+        from typing import Unpack
     except ModuleNotFoundError:
         from typing_extensions import Unpack
 
