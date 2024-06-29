@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Sequence
 from typing import TypedDict
-from typing import Union
 
 import pyvista as pv
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
@@ -16,6 +14,7 @@ from pyvista.plotting.colors import Color
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
+    from typing import Sequence
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
@@ -152,7 +151,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         return self._get_axis_color(_AxisEnum.x)
 
     @x_color.setter
-    def x_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._set_axis_color(_AxisEnum.x, color)
 
     @property
@@ -161,7 +160,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         return self._get_axis_color(_AxisEnum.y)
 
     @y_color.setter
-    def y_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._set_axis_color(_AxisEnum.y, color)
 
     @property
@@ -170,7 +169,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         return self._get_axis_color(_AxisEnum.z)
 
     @z_color.setter
-    def z_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._set_axis_color(_AxisEnum.z, color)
 
     def _update(self):
