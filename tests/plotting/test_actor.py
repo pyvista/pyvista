@@ -4,7 +4,6 @@ import platform
 
 import numpy as np
 import pytest
-import scipy
 import vtk
 
 import pyvista as pv
@@ -232,21 +231,6 @@ def test_vol_actor_prop(vol_actor):
     prop = vtk.vtkVolumeProperty()
     vol_actor.prop = prop
     assert vol_actor.prop is prop
-
-
-@pytest.mark.parametrize('func', [np.ndarray, scipy.spatial.transform.Rotation.from_matrix])
-def test_rotation_from(actor, func):
-    array = [
-        [0.78410209, -0.49240388, 0.37778609],
-        [0.52128058, 0.85286853, 0.02969559],
-        [-0.33682409, 0.17364818, 0.92541658],
-    ]
-
-    actor.rotation_from(array)
-
-    expected = (10, 20, 30)
-    actual = actor.orientation
-    assert np.allclose(actual, expected)
 
 
 @pytest.mark.parametrize('order', ['F', 'C'])
