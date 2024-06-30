@@ -4005,6 +4005,13 @@ def test_axes_geometry_shaft_type_tip_type(geometry_type):
     ).output.plot()
 
 
+def test_axes_assembly():
+    pl = pv.Plotter()
+    axes = pv.AxesAssembly()
+    pl.add_actor(axes)
+    pl.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER

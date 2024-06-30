@@ -14,6 +14,7 @@ from .actor import Actor
 from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
+from .axes_assembly import AxesAssembly
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox
