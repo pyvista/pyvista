@@ -58,8 +58,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         Text label for the z-axis. Alternatively, set the label with :attr:`labels`.
 
     labels : Sequence[str], optional,
-        Text labels. This is an alternative parameter to using :attr:`x_label`,
-        :attr:`y_label`, and :attr:`z_label` separately.
+        Text labels for the axes. This is an alternative parameter to using
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
 
     label_color : ColorLike, default: 'black'
         Color of the text labels.
@@ -214,28 +214,24 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Axes text labels.
+        """Return or set the axes labels.
 
-        This property can be used as an alternative to using :attr:`~x_label`,
-        :attr:`~y_label`, and :attr:`~z_label` separately for setting or
-        getting the axes text labels.
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.labels = 'UVW'
-        >>> axes_actor.labels
-        ('U', 'V', 'W')
+        >>> axes_actor = pv.AxesActor()
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
-
         """
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]):  # numpydoc ignore=GL08
+    def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
+        _validation.check_instance(labels, (list, tuple))
         _validation.check_iterable_items(labels, str, name='labels')
         _validation.check_length(labels, exact_length=3, name='labels')
         self.x_label = labels[0]
