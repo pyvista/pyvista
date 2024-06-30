@@ -242,7 +242,8 @@ def test_rotation_from(actor, func):
         [-0.33682409, 0.17364818, 0.92541658],
     ]
 
-    actor.rotation_from(array)
+    rotation = func(array)
+    actor.rotation_from(rotation)
 
     expected = (10, 20, 30)
     actual = actor.orientation
