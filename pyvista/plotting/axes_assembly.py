@@ -1,4 +1,4 @@
-"""Axes actor module."""
+"""Axes assembly module."""
 
 from __future__ import annotations
 
@@ -20,7 +20,10 @@ from pyvista.plotting.assembly import Assembly
 from pyvista.plotting.colors import Color
 from pyvista.plotting.text import Label
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
+    import sys
+    from typing import Sequence
+
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
@@ -28,9 +31,9 @@ if TYPE_CHECKING:
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
 
-    try:
-        from typing import Unpack  # type: ignore[attr-defined]
-    except ModuleNotFoundError:
+    if sys.version_info >= (3, 11):
+        from typing import Unpack
+    else:
         from typing_extensions import Unpack
 
 
@@ -66,6 +69,7 @@ class AxesAssembly(Assembly):
     Examples
     --------
     Add axes to a plot.
+
     >>> import pyvista as pv
     >>> axes = pv.AxesAssembly()
     >>> pl = pv.Plotter()
@@ -85,6 +89,7 @@ class AxesAssembly(Assembly):
 
     def __init__(
         self,
+        *,
         x_label=None,
         y_label=None,
         z_label=None,
@@ -173,6 +178,7 @@ class AxesAssembly(Assembly):
         self.user_matrix = user_matrix
 
         self._is_init = True
+
         self._update()
 
     def __repr__(self):

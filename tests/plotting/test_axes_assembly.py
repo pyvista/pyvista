@@ -15,6 +15,47 @@ def axes_assembly():
     return pv.AxesAssembly()
 
 
+def test_axes_assembly_repr(axes_assembly):
+    repr_ = repr(axes_assembly)
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  Shaft type:                 'cylinder'",
+        "  Shaft radius:               0.025",
+        "  Shaft length:               (0.8, 0.8, 0.8)",
+        "  Tip type:                   'cone'",
+        "  Tip radius:                 0.1",
+        "  Tip length:                 (0.2, 0.2, 0.2)",
+        "  Symmetric:                  False",
+        "  X label:                    'X'",
+        "  Y label:                    'Y'",
+        "  Z label:                    'Z'",
+        "  Show labels:                True",
+        "  Label position:             (0.8, 0.8, 0.8)",
+        "  X Color:                                     ",
+        "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "  Y Color:                                     ",
+        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "  Z Color:                                     ",
+        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "  Position:                   (0.0, 0.0, 0.0)",
+        "  Scale:                      (1.0, 1.0, 1.0)",
+        "  User matrix:                Identity",
+        "  Visible:                    True",
+        "  X Bounds                    -1.000E-01, 1.000E+00",
+        "  Y Bounds                    -1.000E-01, 1.000E+00",
+        "  Z Bounds                    -1.000E-01, 1.000E+00",
+    ]
+    assert len(actual_lines) == len(expected_lines)
+    assert actual_lines == expected_lines
+
+    axes_assembly.user_matrix = np.eye(4) * 2
+    repr_ = repr(axes_assembly)
+    assert "User matrix:                Set" in repr_
+
+
 def test_axes_assembly_x_color(axes_assembly):
     axes_assembly.x_color = 'black'
     assert axes_assembly.x_color[0].name == 'black'
@@ -292,47 +333,6 @@ def _compute_expected_bounds(axes_assembly):
         np.min(b[:, 4]),
         np.max(b[:, 5]),
     )
-
-
-def test_axes_assembly_repr(axes_assembly):
-    repr_ = repr(axes_assembly)
-    actual_lines = repr_.splitlines()[1:]
-    expected_lines = [
-        "  Shaft type:                 'cylinder'",
-        "  Shaft radius:               0.025",
-        "  Shaft length:               (0.8, 0.8, 0.8)",
-        "  Tip type:                   'cone'",
-        "  Tip radius:                 0.1",
-        "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Symmetric:                  False",
-        "  X label:                    'X'",
-        "  Y label:                    'Y'",
-        "  Z label:                    'Z'",
-        "  Show labels:                True",
-        "  Label position:             (0.8, 0.8, 0.8)",
-        "  X Color:                                     ",
-        "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        "  Y Color:                                     ",
-        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "  Z Color:                                     ",
-        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  Visible:                    True",
-        "  X Bounds                    -1.000E-01, 1.000E+00",
-        "  Y Bounds                    -1.000E-01, 1.000E+00",
-        "  Z Bounds                    -1.000E-01, 1.000E+00",
-    ]
-    assert len(actual_lines) == len(expected_lines)
-    assert actual_lines == expected_lines
-
-    axes_assembly.user_matrix = np.eye(4) * 2
-    repr_ = repr(axes_assembly)
-    assert "User matrix:                Set" in repr_
 
 
 # def test_axes_assembly_center(axes_assembly):
