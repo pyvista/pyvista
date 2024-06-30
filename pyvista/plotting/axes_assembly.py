@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Sequence
-from typing import Tuple
 from typing import TypedDict
 
 import numpy as np
@@ -215,7 +213,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         return '\n'.join(attr)
 
     @property
-    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Axes text labels.
 
         This property can be used as an alternative to using :attr:`~x_label`,
@@ -238,8 +236,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @labels.setter
     def labels(self, labels: Sequence[str]):  # numpydoc ignore=GL08
-        _validation.check_iterable_items(labels, str)
-        _validation.check_length(labels, exact_length=3)
+        _validation.check_iterable_items(labels, str, name='labels')
+        _validation.check_length(labels, exact_length=3, name='labels')
         self.x_label = labels[0]
         self.y_label = labels[1]
         self.z_label = labels[2]
@@ -329,7 +327,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[2].size = size
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the text label along each axis.
 
         By default, the labels are positioned at the ends of the shafts.
