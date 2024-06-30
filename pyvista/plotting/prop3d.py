@@ -385,17 +385,19 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
-
-    def rotation_from(self, rotation: NumpyArray[float] | scipy.spatial.transform.Rotation):
+    def rotation_from(
+        self, rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
+    ):
         """Set the entity's orientation from a rotation.
 
-        Set the rotation of this entity from a 3x3 rotation matrix or a SciPy
-        ``Rotation`` object. This method may be used as an alternative for setting the
-        :attrs:`orientation`.
+        Set the rotation of this entity from a 3x3 rotation matrix. This includes
+        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+
+        This method may be used as an alternative for setting the :attrs:`orientation`.
 
         Parameters
         ----------
-        rotation : NumpyArray[float] | scipy.spatial.transform.Rotation
+        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         Examples
@@ -416,22 +418,8 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor.orientation
         (0.0, -180.0, -89.99999999999999)
 
-
         """
-        try:
-            orientation = _rotation_matrix_as_orientation(rotation)
-        except (TypeError, ValueError):
-            err_msg = f'Rotation must be a 3x3 NumPy array or a SciPy Rotation instance. Got {type(rotation)}.'
-            try:
-                from scipy.spatial.transform import Rotation
-            except ModuleNotFoundError:
-                raise TypeError(err_msg)
-            else:
-                if not isinstance(rotation, Rotation):
-                    raise TypeError(err_msg)
-                orientation = rotation.as_euler('yxz', degrees=True)
-
-        self.orientation = orientation
+        self.orientation = _rotation_matrix_as_orientation(rotation)
 
 
 def _rotation_matrix_as_orientation(
@@ -457,7 +445,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array)
+    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
     array_4x4 = np.eye(4)
     array_4x4[:3, :3] = array_3x3
     transform = _vtk.vtkTransform()
