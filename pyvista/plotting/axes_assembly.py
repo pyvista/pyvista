@@ -98,7 +98,6 @@ class AxesAssembly(Assembly):
         z_color: ColorLike | Sequence[ColorLike] | None = None,
         position=(0, 0, 0),
         orientation=(0, 0, 0),
-        rotation=None,
         scale=(1, 1, 1),
         origin=(0, 0, 0),
         user_matrix=None,
@@ -168,13 +167,7 @@ class AxesAssembly(Assembly):
             prop.italic = True
 
         self.position = position
-        if orientation is not None and rotation is not None:
-            raise ValueError(
-                "Cannot set both orientation and rotation. Set either orientation or rotation, not both."
-            )
         self.orientation = orientation
-        if rotation is not None:
-            self.rotation = rotation
         self.scale = scale
         self.origin = origin
         self.user_matrix = user_matrix
@@ -752,14 +745,6 @@ class AxesAssembly(Assembly):
     @orientation.setter
     def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('orientation', orientation)
-
-    @property
-    def rotation(self) -> NumpyArray[float]:  # numpydoc ignore=GL08
-        return self._prop3d.rotation
-
-    @rotation.setter
-    def rotation(self, array: NumpyArray[float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('rotation', array)
 
     def _set_prop3d_attr(self, name, value):
         # Set props for shaft and tip actors
