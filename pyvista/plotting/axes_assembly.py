@@ -416,9 +416,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     def _get_transformed_label_positions(self):
         # Create position vectors
-        shaft_length = self._shaft_and_tip_geometry_source.shaft_length
-        label_position = self.label_position if self.label_position is not None else shaft_length
-        position_vectors = np.diag(label_position)
+        position_vectors = np.diag(self.label_position)
 
         # Offset label positions radially by the tip radius
         tip_radius = self._shaft_and_tip_geometry_source.tip_radius
