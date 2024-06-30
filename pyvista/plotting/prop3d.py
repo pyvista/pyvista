@@ -9,8 +9,6 @@ import numpy as np
 from pyvista.core import _validation
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
-from pyvista.core.utilities.arrays import orientation_angles_to_rotation_matrix
-from pyvista.core.utilities.arrays import rotation_matrix_to_orientation_angles
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
@@ -258,14 +256,6 @@ class Prop3D(_vtk.vtkProp3D):
     @orientation.setter
     def orientation(self, value: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
-
-    @property
-    def rotation(self) -> NumpyArray[float]:  # numpydoc ignore=GL08
-        return orientation_angles_to_rotation_matrix(self.orientation)
-
-    @rotation.setter
-    def rotation(self, array: NumpyArray[float]):  # numpydoc ignore=GL08
-        self.SetOrientation(rotation_matrix_to_orientation_angles(array))
 
     @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
