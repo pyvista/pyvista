@@ -1240,7 +1240,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             return False
 
         # next, check if there are three points per face
-        return (np.diff(self._offset_array) == 3).all()
+        return bool((np.diff(self._offset_array) == 3).all())
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
@@ -3090,7 +3090,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_id((3, 4, 0))
-        19
+        np.int64(19)
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
         >>> grid.cell_id(coords)
@@ -3117,7 +3117,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
     def cell_coords(
         self,
         ind: int | VectorLike[int],
-    ) -> None | tuple[int] | MatrixLike[int]:
+    ) -> None | MatrixLike[int]:
         """Return the cell structured coordinates.
 
         Parameters
@@ -3127,7 +3127,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         Returns
         -------
-        tuple(int), numpy.ndarray, or None
+        numpy.ndarray, or None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 
@@ -3140,7 +3140,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_coords(19)
-        (3, 4, 0)
+        array([3, 4, 0])
 
         >>> grid.cell_coords((19, 31, 41, 54))
         array([[3, 4, 0],
@@ -3157,8 +3157,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             if isinstance(coords[0], np.ndarray):
                 return np.stack(coords, axis=1)
-            return coords
-        return None
+            return np.asanyarray(coords)
 
     def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
