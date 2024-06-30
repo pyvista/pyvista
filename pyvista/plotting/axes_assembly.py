@@ -18,7 +18,6 @@ from pyvista.core.utilities.transformations import apply_transformation_to_point
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.assembly import Assembly
 from pyvista.plotting.colors import Color
-from pyvista.plotting.colors import _validate_color_sequence
 from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:
@@ -46,6 +45,44 @@ class _AxesGeometryKwargs(TypedDict):
 
 
 class AxesAssembly(Assembly):
+    """Assembly of arrow-style axes parts.
+
+    The axes may be used as a widget or added to a scene.
+
+    Parameters
+    ----------
+    x_color : ColorLike | Sequence[ColorLike], optional
+        Color of the x-axis shaft and tip.
+
+    y_color : ColorLike | Sequence[ColorLike], optional
+        Color of the y-axis shaft and tip.
+
+    z_color : ColorLike | Sequence[ColorLike], optional
+        Color of the z-axis shaft and tip.
+
+    **kwargs
+        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    Examples
+    --------
+    Add axes to a plot.
+    >>> import pyvista as pv
+    >>> axes = pv.AxesAssembly()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Customize the colors. Set each axis to a single color, or set the colors of each
+    shaft and tip separately with two colors.
+
+    >>> axes.x_color = ['cyan', 'blue']
+    >>> axes.y_color = ['magenta', 'red']
+    >>> axes.z_color = 'yellow'
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+    """
+
     def __init__(
         self,
         x_label=None,
@@ -56,9 +93,9 @@ class AxesAssembly(Assembly):
         show_labels=True,
         label_position=None,
         label_size=50,
-        x_color=None,
-        y_color=None,
-        z_color=None,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
         position=(0, 0, 0),
         orientation=(0, 0, 0),
         rotation=None,
@@ -99,9 +136,9 @@ class AxesAssembly(Assembly):
         if z_color is None:
             z_color = pv.global_theme.axes.z_color
 
-        self.x_color = x_color
-        self.y_color = y_color
-        self.z_color = z_color
+        self.x_color = x_color  # type: ignore[assignment]
+        self.y_color = y_color  # type: ignore[assignment]
+        self.z_color = z_color  # type: ignore[assignment]
 
         self._is_init = False
 
@@ -161,6 +198,15 @@ class AxesAssembly(Assembly):
             f"  Z label:                    '{self.z_label}'",
             f"  Show labels:                {self.show_labels}",
             f"  Label position:             {self.label_position}",
+            "  X Color:                                     ",
+            f"      Shaft                   {self.x_color[0]}",
+            f"      Tip                     {self.x_color[1]}",
+            "  Y Color:                                     ",
+            f"      Shaft                   {self.y_color[0]}",
+            f"      Tip                     {self.y_color[1]}",
+            "  Z Color:                                     ",
+            f"      Shaft                   {self.z_color[0]}",
+            f"      Tip                     {self.z_color[1]}",
             f"  Position:                   {self.position}",
             f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
@@ -426,47 +472,43 @@ class AxesAssembly(Assembly):
         self._label_actors[1].prop.color = colors[1]
         self._label_actors[2].prop.color = colors[2]
 
-    @property
-    def x_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
-        """Color of the x-axis shaft and tip."""
+    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | tuple[ColorLike, ColorLike]):
+        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
+        self._shaft_actors[axis].prop.color = shaft_color
+        self._tip_actors[axis].prop.color = tip_color
+
+    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
         return (
-            self._shaft_actors[_AxisEnum.x].prop.color,
-            self._tip_actors[_AxisEnum.x].prop.color,
+            self._shaft_actors[axis].prop.color,
+            self._tip_actors[axis].prop.color,
         )
+
+    @property
+    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the x-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.x)
 
     @x_color.setter
-    def x_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.x].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.x].prop.color = tip_color
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.x, color)
 
     @property
-    def y_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
+    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        return (
-            self._shaft_actors[_AxisEnum.y].prop.color,
-            self._tip_actors[_AxisEnum.y].prop.color,
-        )
+        return self._get_axis_color(_AxisEnum.y)
 
     @y_color.setter
-    def y_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.y].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.y].prop.color = tip_color
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.y, color)
 
     @property
-    def z_color(self) -> Tuple[Color, Color]:  # numpydoc ignore=RT01
+    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        return (
-            self._shaft_actors[_AxisEnum.z].prop.color,
-            self._tip_actors[_AxisEnum.z].prop.color,
-        )
+        return self._get_axis_color(_AxisEnum.z)
 
     @z_color.setter
-    def z_color(self, color: Union[ColorLike, Sequence[ColorLike]]):  # numpydoc ignore=GL08
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[_AxisEnum.z].prop.color = shaft_color
-        self._tip_actors[_AxisEnum.z].prop.color = tip_color
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.z, color)
 
     def _get_transformed_label_positions(self):
         # Create position vectors
@@ -851,3 +893,42 @@ class AxesAssembly(Assembly):
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
         max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
         return np.linalg.norm(max_bnds - min_bnds).tolist()
+
+
+def _validate_color_sequence(
+    color: ColorLike | Sequence[ColorLike],
+    n_colors: int | None = None,
+) -> tuple[Color, ...]:
+    """Validate a color sequence.
+
+    If `n_colors` is specified, the output will have `n` colors. For single-color
+    inputs, the color is copied and a sequence of `n` identical colors is returned.
+    For inputs with multiple colors, the number of colors in the input must
+    match `n_colors`.
+
+    If `n_colors` is None, no broadcasting or length-checking is performed.
+    """
+    try:
+        # Assume we have one color
+        color_list = [Color(color)]
+        n_colors = 1 if n_colors is None else n_colors
+        return tuple(color_list * n_colors)
+    except ValueError:
+        if isinstance(color, (tuple, list)):
+            try:
+                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
+                if len(color_list) == 1:
+                    n_colors = 1 if n_colors is None else n_colors
+                    color_list = color_list * n_colors
+
+                # Only return if we have the correct number of colors
+                if n_colors is not None and len(color_list) == n_colors:
+                    return tuple(color_list)
+            except ValueError:
+                pass
+    raise ValueError(
+        f"Invalid color(s):\n"
+        f"\t{color}\n"
+        f"Input must be a single ColorLike color "
+        f"or a sequence of {n_colors} ColorLike colors.",
+    )

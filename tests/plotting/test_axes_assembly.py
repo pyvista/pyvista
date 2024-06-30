@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 import vtk
@@ -11,6 +13,92 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 @pytest.fixture()
 def axes_assembly():
     return pv.AxesAssembly()
+
+
+def test_axes_assembly_x_color(axes_assembly):
+    axes_assembly.x_color = 'black'
+    assert axes_assembly.x_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[0].prop.color.name == 'black'
+
+    assert axes_assembly.x_color[1].name == 'black'
+    assert axes_assembly._tip_actors[0].prop.color.name == 'black'
+
+
+def test_axes_assembly_y_color(axes_assembly):
+    axes_assembly.y_color = 'black'
+    assert axes_assembly.y_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[1].prop.color.name == 'black'
+
+    assert axes_assembly.y_color[1].name == 'black'
+    assert axes_assembly._tip_actors[1].prop.color.name == 'black'
+
+
+def test_axes_assembly_z_color(axes_assembly):
+    axes_assembly.z_color = 'black'
+    assert axes_assembly.z_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[2].prop.color.name == 'black'
+
+    assert axes_assembly.z_color[1].name == 'black'
+    assert axes_assembly._tip_actors[2].prop.color.name == 'black'
+
+
+def test_axes_assembly_color_inputs(axes_assembly):
+    axes_assembly.x_color = [[255, 255, 255, 255]]
+    assert axes_assembly.x_color[0].name == 'white'
+    assert axes_assembly.x_color[1].name == 'white'
+
+    axes_assembly.x_color = [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+    assert axes_assembly.x_color[0].name == 'red'
+    assert axes_assembly.x_color[1].name == 'black'
+
+    err_msg = '\nInput must be a single ColorLike color or a sequence of 2 ColorLike colors.'
+
+    match = 'Invalid color(s):\n\tham'
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.y_color = 'ham'
+
+    match = "Invalid color(s):\n\t['eggs']"
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.y_color = ['eggs']
+
+    match = "Invalid color(s):\n\t['red', 'green', 'blue']"
+    with pytest.raises(ValueError, match=re.escape(match + err_msg)):
+        axes_assembly.z_color = ['red', 'green', 'blue']
+
+
+@pytest.fixture()
+def _config_axes_theme():
+    # Store values
+    x_color = pv.global_theme.axes.x_color
+    y_color = pv.global_theme.axes.y_color
+    z_color = pv.global_theme.axes.z_color
+    yield
+    # Restore values
+    pv.global_theme.axes.x_color = x_color
+    pv.global_theme.axes.y_color = y_color
+    pv.global_theme.axes.z_color = z_color
+
+
+@pytest.mark.usefixtures('_config_axes_theme')
+def test_axes_assembly_theme(axes_assembly):
+    assert axes_assembly.x_color[0].name == 'tomato'
+    assert axes_assembly.x_color[1].name == 'tomato'
+    assert axes_assembly.y_color[0].name == 'seagreen'
+    assert axes_assembly.y_color[1].name == 'seagreen'
+    assert axes_assembly.z_color[0].name == 'mediumblue'
+    assert axes_assembly.z_color[1].name == 'mediumblue'
+
+    pv.global_theme.axes.x_color = 'black'
+    pv.global_theme.axes.y_color = 'white'
+    pv.global_theme.axes.z_color = 'gray'
+
+    axes_geometry_source = pv.AxesAssembly()
+    assert axes_geometry_source.x_color[0].name == 'black'
+    assert axes_geometry_source.x_color[1].name == 'black'
+    assert axes_geometry_source.y_color[0].name == 'white'
+    assert axes_geometry_source.y_color[1].name == 'white'
+    assert axes_geometry_source.z_color[0].name == 'gray'
+    assert axes_geometry_source.z_color[1].name == 'gray'
 
 
 # def test_origin(axes):
@@ -83,43 +171,6 @@ def test_axes_assembly_labels_raises():
         pv.AxesAssembly(y_label='B', z_label='C', labels='UVW')
     with pytest.raises(ValueError, match=match.format('z_label')):
         pv.AxesAssembly(z_label='C', labels='UVW')
-
-
-def test_axes_assembly_label_color(axes_assembly):
-    assert axes_assembly.label_color[0].name == 'black'
-    assert axes_assembly.label_color[1].name == 'black'
-    assert axes_assembly.label_color[2].name == 'black'
-
-    axes_assembly.label_color = 'purple'
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'purple'
-    assert axes_assembly.label_color[1].name == 'purple'
-    assert axes_assembly.label_color[2].name == 'purple'
-
-    axes_assembly.label_color = 'r', 'g', 'b'
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'red'
-    assert axes_assembly.label_color[1].name == 'green'
-    assert axes_assembly.label_color[2].name == 'blue'
-
-    axes_assembly.label_color = ['red', 'green', 'blue']
-    assert len(axes_assembly.label_color) == 3
-    assert axes_assembly.label_color[0].name == 'red'
-    assert axes_assembly.label_color[1].name == 'green'
-    assert axes_assembly.label_color[2].name == 'blue'
-
-    axes_assembly.label_color = [1, 2, 3]
-    assert len(axes_assembly.label_color) == 3
-    assert np.array_equal(axes_assembly.label_color[0].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_assembly.label_color[1].int_rgb, [1, 2, 3])
-    assert np.array_equal(axes_assembly.label_color[2].int_rgb, [1, 2, 3])
-
-
-def test_axes_assembly_label_color_init():
-    axes_assembly = pv.AxesAssembly(label_color='yellow')
-    assert axes_assembly.label_color[0].name == 'yellow'
-    assert axes_assembly.label_color[1].name == 'yellow'
-    assert axes_assembly.label_color[2].name == 'yellow'
 
 
 def test_axes_assembly_show_labels(axes_assembly):
@@ -259,6 +310,15 @@ def test_axes_assembly_repr(axes_assembly):
         "  Z label:                    'Z'",
         "  Show labels:                True",
         "  Label position:             (0.8, 0.8, 0.8)",
+        "  X Color:                                     ",
+        "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "  Y Color:                                     ",
+        "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "  Z Color:                                     ",
+        "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "  Position:                   (0.0, 0.0, 0.0)",
         "  Scale:                      (1.0, 1.0, 1.0)",
         "  User matrix:                Identity",
@@ -273,41 +333,6 @@ def test_axes_assembly_repr(axes_assembly):
     axes_assembly.user_matrix = np.eye(4) * 2
     repr_ = repr(axes_assembly)
     assert "User matrix:                Set" in repr_
-
-
-@pytest.fixture()
-def _config_axes_theme():
-    # Store values
-    x_color = pv.global_theme.axes.x_color
-    y_color = pv.global_theme.axes.y_color
-    z_color = pv.global_theme.axes.z_color
-    yield
-    # Restore values
-    pv.global_theme.axes.x_color = x_color
-    pv.global_theme.axes.y_color = y_color
-    pv.global_theme.axes.z_color = z_color
-
-
-@pytest.mark.usefixtures('_config_axes_theme')
-def test_axes_geometry_source_theme(axes_assembly):
-    assert axes_assembly.x_color[0].name == 'tomato'
-    assert axes_assembly.x_color[1].name == 'tomato'
-    assert axes_assembly.y_color[0].name == 'seagreen'
-    assert axes_assembly.y_color[1].name == 'seagreen'
-    assert axes_assembly.z_color[0].name == 'mediumblue'
-    assert axes_assembly.z_color[1].name == 'mediumblue'
-
-    pv.global_theme.axes.x_color = 'black'
-    pv.global_theme.axes.y_color = 'white'
-    pv.global_theme.axes.z_color = 'gray'
-
-    axes_geometry_source = pv.AxesAssembly()
-    assert axes_geometry_source.x_color[0].name == 'black'
-    assert axes_geometry_source.x_color[1].name == 'black'
-    assert axes_geometry_source.y_color[0].name == 'white'
-    assert axes_geometry_source.y_color[1].name == 'white'
-    assert axes_geometry_source.z_color[0].name == 'gray'
-    assert axes_geometry_source.z_color[1].name == 'gray'
 
 
 # def test_axes_assembly_center(axes_assembly):
