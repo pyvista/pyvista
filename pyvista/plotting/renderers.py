@@ -117,8 +117,8 @@ class Renderers:
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
                 raise ValueError('"shape" must contain only positive integers.')
-            # always assign shape as a tuple
-            self._shape = tuple(shape)
+            # always assign shape as a tuple of native ints
+            self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
             # or initialize them to defaults (equally weighted).
@@ -312,13 +312,13 @@ class Renderers:
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray or numpy.int64
             2D location on the plotting grid.
         """
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
-            return index
+            return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
             raise IndexError(f'Index ({index}) is out of range.')
@@ -336,12 +336,12 @@ class Renderers:
         return self._renderers[self._active_index]
 
     @property
-    def shape(self):  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the renderers.
 
         Returns
         -------
-        tuple
+        tuple[int] | tuple[int, int]
             Shape of the renderers.
         """
         return self._shape
