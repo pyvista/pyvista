@@ -982,12 +982,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self):  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the plotter.
 
         Returns
         -------
-        tuple[numpy.int32, numpy.int32]
+        tuple[int] | tuple[int, int]
             Shape of the plotter.
 
         Examples
@@ -998,8 +998,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
         (2, 2)
+
         """
-        return self.renderers._shape
+        return self.renderers.shape
 
     @property
     def renderer(self):  # numpydoc ignore=RT01
@@ -1669,7 +1670,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the active renderer.
 
         Returns
@@ -1683,7 +1684,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
 
         """
         return self.renderer.center
@@ -6482,7 +6483,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[tuple[numpy.int64, numpy.int64]]
+        list[tuple[int, int]]
             A list with the subplot coordinates of the actor.
 
         Examples
@@ -6501,9 +6502,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         [(0, 0), (1, 0)]
 
         >>> plotter.show()
+
         """
         return [
-            tuple(self.renderers.index_to_loc(index))
+            tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors
         ]
