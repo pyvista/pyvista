@@ -53,6 +53,7 @@ from .renderer import CameraPosition
 from .renderer import Renderer
 from .renderer import scale_point
 from .text import CornerAnnotation
+from .text import Label
 from .text import Text
 from .text import TextProperty
 from .texture import Texture

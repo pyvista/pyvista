@@ -48,6 +48,22 @@ def test_text_position(text):
     assert np.all(text.position == position)
 
 
+def test_label():
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+
+    assert label.input == 'text'
+    label.input = 'new'
+    assert label.input == 'new'
+
+    assert label.position == (1, 2, 3)
+    label.position = (4, 5, 6)
+    assert label.position == (4, 5, 6)
+
+    assert label.size == 42
+    label.size = 99
+    assert label.size == 99
+
+
 @pytest.fixture()
 def prop():
     return pv.TextProperty()
