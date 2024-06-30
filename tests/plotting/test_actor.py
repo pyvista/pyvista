@@ -9,6 +9,8 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin',
@@ -245,3 +247,26 @@ def test_rotation_from(actor, func):
     expected = (10, 20, 30)
     actual = actor.orientation
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize('order', ['F', 'C'])
+def test_convert_orientation_to_rotation_matrix(order):
+    orientation = (10, 20, 30)
+    rotation = np.array(
+        [
+            [0.78410209, -0.49240388, 0.37778609],
+            [0.52128058, 0.85286853, 0.02969559],
+            [-0.33682409, 0.17364818, 0.92541658],
+        ],
+        order=order,
+    )
+
+    actual_rotation = _orientation_as_rotation_matrix(orientation)
+    assert isinstance(actual_rotation, np.ndarray)
+    assert actual_rotation.shape == (3, 3)
+    assert np.allclose(actual_rotation, rotation)
+
+    actual_orientation = _rotation_matrix_as_orientation(rotation)
+    assert isinstance(actual_orientation, tuple)
+    assert len(actual_orientation) == 3
+    assert np.allclose(actual_orientation, orientation)

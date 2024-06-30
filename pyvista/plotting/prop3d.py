@@ -385,6 +385,7 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
+
     def rotation_from(self, rotation: NumpyArray[float] | scipy.spatial.transform.Rotation):
         """Set the entity's orientation from a rotation.
 
@@ -436,10 +437,58 @@ class Prop3D(_vtk.vtkProp3D):
 def _rotation_matrix_as_orientation(
     array: NumpyArray[float] | _vtk.vtkMatrix3x3,
 ) -> tuple[float, float, float]:
-    """Convert a 3x3 rotation matrix to x-y-z orientation angles."""
+    """Convert a 3x3 rotation matrix to x-y-z orientation angles.
+
+    The orientation angles define rotations about the world's x-y-z axes. The angles
+    are specified in degrees and in x-y-z order. However, the rotations should
+    be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
+
+    The rotation angles and rotation matrix can be used interchangeably for
+    transformations.
+
+    Parameters
+    ----------
+    array : NumpyArray[float] | vtkMatrix3x3
+        3x3 rotation matrix as a NumPy array or a vtkMatrix.
+
+    Returns
+    -------
+    tuple
+        Tuple with x-y-z axis rotation angles in degrees.
+
+    """
     array_3x3 = _validation.validate_transform3x3(array)
     array_4x4 = np.eye(4)
     array_4x4[:3, :3] = array_3x3
     transform = _vtk.vtkTransform()
     transform.SetMatrix(array_4x4.ravel())
     return transform.GetOrientation()
+
+
+def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
+    """Convert x-y-z orientation angles to a 3x3 matrix.
+
+    The orientation angles define rotations about the world's x-y-z axes. The angles
+    are specified in degrees and in x-y-z order. However, the rotations should
+    be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
+
+    The rotation angles and rotation matrix can be used interchangeably for
+    transformations.
+
+    Parameters
+    ----------
+    orientation : VectorLike[float]
+        The x-y-z axis orientation angles in degrees.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 rotation matrix.
+
+    """
+    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    prop = _vtk.vtkActor()
+    prop.SetOrientation(valid_orientation)
+    matrix = _vtk.vtkMatrix4x4()
+    prop.GetMatrix(matrix)
+    return array_from_vtkmatrix(matrix)[:3, :3]
