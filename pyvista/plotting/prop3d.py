@@ -200,7 +200,7 @@ class Prop3D(_vtk.vtkProp3D):
         See Also
         --------
         rotation_from
-            Alternative method for setting the :attrs:`orientation`.
+            Alternative method for setting the :attr:`orientation`.
 
         Examples
         --------
@@ -393,7 +393,7 @@ class Prop3D(_vtk.vtkProp3D):
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
         NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
 
-        This method may be used as an alternative for setting the :attrs:`orientation`.
+        This method may be used as an alternative for setting the :attr:`orientation`.
 
         Parameters
         ----------
@@ -404,6 +404,7 @@ class Prop3D(_vtk.vtkProp3D):
         --------
         Create an actor and show its initial orientation.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Sphere())
