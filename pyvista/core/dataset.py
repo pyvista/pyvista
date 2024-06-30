@@ -1823,7 +1823,8 @@ class DataSet(DataSetFilters, DataObject):
         0.0
 
         :class:`pyvista.PolyData` is special as a 2D surface can
-        enclose a 3D volume.
+        enclose a 3D volume. This case uses a different methodology,
+        see :func:`pyvista.PolyData.volume`.
 
         >>> mesh = pv.Sphere()
         >>> mesh.volume
@@ -1831,7 +1832,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return sizes.cell_data['Volume'].sum()
+        return sizes.cell_data['Volume'].sum().item()
 
     @property
     def area(self) -> float:
@@ -1862,15 +1863,16 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.area
         0.0
 
-        Get the area of a sphere.
+        Get the area of a sphere. Discretization error results
+        in slight difference from ``pi``.
 
         >>> mesh = pv.Sphere()
-        >>> mesh.volume
-        0.51825
+        >>> mesh.area
+        3.13
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return sizes.cell_data['Area'].sum()
+        return sizes.cell_data['Area'].sum().item()
 
     def get_array(
         self,
@@ -2443,7 +2445,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> relative_position = cell_centers.points - point
         >>> distance = np.linalg.norm(relative_position, axis=1)
         >>> np.argmin(distance)
-        338
+        np.int64(338)
 
         Find the nearest cells to several random points that
         are centered on the origin.
@@ -3378,7 +3380,7 @@ class DataSet(DataSetFilters, DataObject):
             in_cell[i] = bool(is_inside)
 
         if singular:
-            return in_cell[0]
+            return in_cell[0].item()
         return in_cell
 
     @property

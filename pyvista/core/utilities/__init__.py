@@ -84,6 +84,7 @@ from .geometric_objects import Tube
 from .geometric_objects import Wavelet
 from .geometric_objects import translate
 from .geometric_sources import ArrowSource
+from .geometric_sources import AxesGeometrySource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
 from .geometric_sources import CubeSource
@@ -99,6 +100,7 @@ from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
 from .image_sources import ImageEllipsoidSource
 from .image_sources import ImageGaussianSource
+from .image_sources import ImageGridSource
 from .image_sources import ImageMandelbrotSource
 from .image_sources import ImageNoiseSource
 from .image_sources import ImageSinusoidSource

@@ -7,10 +7,14 @@ import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
+from typing import cast
 
 import numpy as np
 
 import pyvista
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -20,9 +24,6 @@ from .filters import _get_output
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -255,7 +256,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> tuple[NumpyArray[float], ...]:
+    def meshgrid(self) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -264,11 +265,18 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        tuple[numpy.ndarray]
-            List of numpy arrays representing the points of this mesh.
+        tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
+            Tuple of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        # Converting to tuple needed to be consistent type across numpy version
+        # Remove when support is dropped for numpy 1.x
+        # We also know this is 3-length so make it so in typing
+        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        # Python 3.8 does not allow subscripting tuple, but only used for type checking
+        if TYPE_CHECKING:  # pragma: no cover
+            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+        return out
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
