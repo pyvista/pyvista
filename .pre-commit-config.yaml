@@ -65,7 +65,7 @@ repos:
           [
             "mypy-extensions==1.0.0",
             "toml==0.10.2",
-            "numpy>=1.21",
+            "numpy>=2.0",
             "npt-promote==0.1",
           ]
 
