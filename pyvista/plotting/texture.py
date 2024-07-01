@@ -115,7 +115,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(uinput, **kwargs)
+        super().__init__(uinput)
 
         if isinstance(uinput, _vtk.vtkTexture):
             self._from_texture(uinput)
