@@ -106,9 +106,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
 
-    user_matrix : None
-        A 4x4 transformation matrix applied to the axes. The user matrix is the last
-        transformation applied to the actor.
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the actor.
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
@@ -134,6 +134,28 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     >>> axes.label_color = 'brown'
 
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+    modify the lengths.
+
+    >>> axes = pv.AxesAssembly(
+    ...     shaft_type='pyramid',
+    ...     tip_type='hemisphere',
+    ...     tip_length=0.1,
+    ...     shaft_length=(0.5, 1.0, 1.5),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Position and orient the axes in space.
+
+    >>> axes = pv.AxesAssembly(
+    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
+    ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -256,8 +278,8 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             f"      Tip                     {self.z_color[1]}",
             f"  Position:                   {self.position}",
             f"  Orientation:                {self.orientation}",
-            f"  Scale:                      {self.scale}",
             f"  Origin:                     {self.origin}",
+            f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
             f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
             f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
