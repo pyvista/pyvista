@@ -131,57 +131,67 @@ def test_axes_assembly_theme(axes_assembly):
 
 def test_axes_assembly_label_position(axes_assembly):
     assert axes_assembly.label_position == (0.8, 0.8, 0.8)
-    axes_assembly.label_position = (1, 2, 3)
-    assert axes_assembly.label_position == (1, 2, 3)
+    label_position = (1, 2, 3)
+    axes_assembly.label_position = label_position
+    assert axes_assembly.label_position == label_position
 
 
 def test_axes_assembly_label_position_init():
-    axes_assembly = pv.AxesAssembly(label_position=2)
-    assert axes_assembly.label_position == (2, 2, 2)
+    label_position = 2
+    axes_assembly = pv.AxesAssembly(label_position=label_position)
+    assert axes_assembly.label_position == (label_position, label_position, label_position)
 
 
 def test_axes_assembly_labels(axes_assembly):
     assert axes_assembly.labels == ('X', 'Y', 'Z')
-    axes_assembly.labels = ('i', 'j', 'k')
-    assert axes_assembly.labels == ('i', 'j', 'k')
+    labels = ('i', 'j', 'k')
+    axes_assembly.labels = labels
+    assert axes_assembly.labels == labels
 
 
 def test_axes_assembly_labels_init():
-    axes_assembly = pv.AxesAssembly(labels=('i', 'j', 'k'))
-    assert axes_assembly.labels == ('i', 'j', 'k')
+    labels = ('i', 'j', 'k')
+    axes_assembly = pv.AxesAssembly(labels=labels)
+    assert axes_assembly.labels == labels
 
 
 def test_axes_assembly_x_label(axes_assembly):
     assert axes_assembly.x_label == 'X'
-    axes_assembly.x_label = 'label'
-    assert axes_assembly.x_label == 'label'
+    x_label = 'label'
+    axes_assembly.x_label = x_label
+    assert axes_assembly.x_label == x_label
 
 
 def test_axes_assembly_x_label_init(axes_assembly):
-    axes_assembly = pv.AxesAssembly(x_label='label')
-    assert axes_assembly.x_label == 'label'
+    x_label = 'label'
+    axes_assembly = pv.AxesAssembly(x_label=x_label)
+    assert axes_assembly.x_label == x_label
 
 
 def test_axes_assembly_y_label(axes_assembly):
     assert axes_assembly.y_label == 'Y'
-    axes_assembly.y_label = 'label'
-    assert axes_assembly.y_label == 'label'
+    y_label = 'label'
+    axes_assembly.y_label = y_label
+    assert axes_assembly.y_label == y_label
 
 
 def test_axes_assembly_y_label_init(axes_assembly):
-    axes_assembly = pv.AxesAssembly(y_label='label')
-    assert axes_assembly.y_label == 'label'
+    y_label = 'label'
+    axes_assembly = pv.AxesAssembly(y_label=y_label)
+    assert axes_assembly.y_label == y_label
 
 
 def test_axes_assembly_z_label(axes_assembly):
     assert axes_assembly.z_label == 'Z'
-    axes_assembly.z_label = 'label'
-    assert axes_assembly.z_label == 'label'
+    z_label = 'label'
+    axes_assembly.z_label = z_label
+    assert axes_assembly.z_label == z_label
 
 
 def test_axes_assembly_z_label_init(axes_assembly):
-    axes_assembly = pv.AxesAssembly(z_label='label')
-    assert axes_assembly.z_label == 'label'
+    z_label = 'label'
+    axes_assembly = pv.AxesAssembly(z_label=z_label)
+    assert axes_assembly.z_label == z_label
 
 
 def test_axes_assembly_labels_raises():
@@ -207,10 +217,12 @@ def test_axes_assembly_show_labels_init():
 
 def test_axes_assembly_label_size(axes_assembly):
     assert axes_assembly.label_size == 50
-    axes_assembly.label_size = 100
-    assert axes_assembly.label_size == 100
+    label_size = 100
+    axes_assembly.label_size = label_size
+    assert axes_assembly.label_size == label_size
 
 
 def test_axes_assembly_label_size_init():
-    axes_assembly = pv.AxesAssembly(label_size=42)
-    assert axes_assembly.label_size == 42
+    label_size = 42
+    axes_assembly = pv.AxesAssembly(label_size=label_size)
+    assert axes_assembly.label_size == label_size
