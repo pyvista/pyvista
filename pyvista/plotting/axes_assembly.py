@@ -25,6 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
     from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -89,6 +90,26 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the axes. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the axes.
+
+    user_matrix : None
+        A 4x4 transformation matrix applied to the axes. The user matrix is the last
+        transformation applied to the actor.
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -132,11 +153,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        position=(0, 0, 0),
-        orientation=(0, 0, 0),
-        scale=(1, 1, 1),
-        origin=(0, 0, 0),
-        user_matrix=None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
@@ -199,11 +220,11 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             prop.bold = True
             prop.italic = True
 
-        self.position = position  # type: ignore[method-assign]
-        self.orientation = orientation  # type: ignore[method-assign]
-        self.scale = scale  # type: ignore[method-assign]
-        self.origin = origin  # type: ignore[method-assign]
-        self.user_matrix = user_matrix  # type: ignore[method-assign]
+        self.position = position  # type: ignore[assignment]
+        self.orientation = orientation  # type: ignore[assignment]
+        self.scale = scale  # type: ignore[assignment]
+        self.origin = origin  # type: ignore[assignment]
+        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes assembly."""
@@ -481,6 +502,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.scale)
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.scale``."""
         return self._prop3d.scale
 
     @scale.setter
@@ -491,6 +513,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.position)
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.position``."""
         return self._prop3d.position
 
     @position.setter
@@ -501,6 +524,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.orientation)
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.orientation``."""
         return self._prop3d.orientation
 
     @orientation.setter
@@ -511,6 +535,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.origin)
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.origin``."""
         return self._prop3d.origin
 
     @origin.setter
@@ -521,6 +546,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.user_matrix)
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.user_matrix``."""
         return self._prop3d.user_matrix
 
     @user_matrix.setter
@@ -531,17 +557,20 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     @wraps(Prop3D.bounds)
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.bounds``."""
         return self.GetBounds()
 
     @property
     @wraps(Prop3D.center)
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.center``."""
         bnds = self.bounds
         return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
 
     @property
     @wraps(Prop3D.length)
     def length(self) -> float:  # numpydoc ignore=RT01
+        """Wraps ``Prop3D.length``."""
         bnds = self.bounds
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
         max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
