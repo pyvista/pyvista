@@ -78,7 +78,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
+        return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
