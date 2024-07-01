@@ -560,7 +560,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         deep=False,
     ):
         """Initialize the uniform grid."""
-        super().__init__(**kwargs)
+        super().__init__()
 
         # first argument must be either vtkImageData or a path
         if uinput is not None:
