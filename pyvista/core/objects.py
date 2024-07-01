@@ -35,7 +35,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     def __init__(self, *args, deep=True, **kwargs):
         """Initialize the table."""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTable):
                 if deep:
