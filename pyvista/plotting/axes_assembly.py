@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Sequence
-from typing import Tuple
 from typing import TypedDict
-from typing import Union
 
 import numpy as np
 
@@ -54,6 +51,32 @@ class AxesAssembly(Assembly):
 
     Parameters
     ----------
+    x_label : str, default: 'X'
+        Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
+
+    y_label : str, default: 'Y'
+        Text label for the y-axis. Alternatively, set the label with :attr:`labels`.
+
+    z_label : str, default: 'Z'
+        Text label for the z-axis. Alternatively, set the label with :attr:`labels`.
+
+    labels : Sequence[str], optional,
+        Text labels for the axes. This is an alternative parameter to using
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
+
+    label_color : ColorLike, default: 'black'
+        Color of the text labels.
+
+    show_labels : bool, default: True
+        Show or hide the text labels.
+
+    label_position : float | VectorLike[float], optional
+        Position of the text labels along each axis. By default, the labels are
+        positioned at the ends of the shafts.
+
+    label_size : int, default: 50
+        Size of the text labels.
+
     x_color : ColorLike | Sequence[ColorLike], optional
         Color of the x-axis shaft and tip.
 
@@ -76,12 +99,17 @@ class AxesAssembly(Assembly):
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
 
-    Customize the colors. Set each axis to a single color, or set the colors of each
-    shaft and tip separately with two colors.
+    Customize the axes colors. Set each axis to a single color, or set the colors of
+    each shaft and tip separately with two colors.
 
     >>> axes.x_color = ['cyan', 'blue']
     >>> axes.y_color = ['magenta', 'red']
     >>> axes.z_color = 'yellow'
+
+    Customize the label color too.
+
+    >>> axes.label_color = 'brown'
+
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -90,14 +118,14 @@ class AxesAssembly(Assembly):
     def __init__(
         self,
         *,
-        x_label=None,
-        y_label=None,
-        z_label=None,
-        labels=None,
-        label_color='black',
-        show_labels=True,
-        label_position=None,
-        label_size=50,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        z_label: str | None = None,
+        labels: Sequence[str] | None = None,
+        label_color: ColorLike = 'black',
+        show_labels: bool = True,
+        label_position: float | VectorLike[float] | None = None,
+        label_size: int = 50,
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
@@ -128,7 +156,7 @@ class AxesAssembly(Assembly):
         # Add actors to assembly
         self.add_parts(self._shaft_and_tip_actors)
 
-        # Create label actors
+        # Init label actors and add to assembly
         self._label_actors = (Label(), Label(), Label())
         self.add_parts(self._label_actors)
 
@@ -159,11 +187,11 @@ class AxesAssembly(Assembly):
                 raise ValueError(msg.format('y_label'))
             if z_label is not None:
                 raise ValueError(msg.format('z_label'))
-            self.labels = labels
+            self.labels = labels  # type: ignore[assignment]
         self.show_labels = show_labels
-        self.label_color = label_color
+        self.label_color = label_color  # type: ignore[assignment]
         self.label_size = label_size
-        self.label_position = label_position
+        self.label_position = label_position  # type: ignore[assignment]
 
         # Set default text properties
         for actor in self._label_actors:
@@ -195,6 +223,7 @@ class AxesAssembly(Assembly):
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
+            f"  Label color:                {self.label_color}",
             f"  Show labels:                {self.show_labels}",
             f"  Label position:             {self.label_position}",
             "  X Color:                                     ",
@@ -303,35 +332,27 @@ class AxesAssembly(Assembly):
         self._symmetric_bounds = bool(value)
 
     @property
-    def labels(self) -> Tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Axes text labels.
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
 
-        This property can be used as an alternative to using :attr:`~x_label`,
-        :attr:`~y_label`, and :attr:`~z_label` separately for setting or
-        getting the axes text labels.
-
-        A single string with exactly three characters can be used to set the labels
-        of the x, y, and z axes (respectively) to a single character. Alternatively.
-        a sequence of three strings can be used.
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.labels = 'UVW'
-        >>> axes_actor.labels
-        ('U', 'V', 'W')
+        >>> axes_actor = pv.AxesActor()
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
-
         """
         return self.x_label, self.y_label, self.z_label
 
     @labels.setter
-    def labels(self, labels: Sequence[str]):  # numpydoc ignore=GL08
-        _validation.check_iterable_items(labels, str)
-        _validation.check_length(labels, exact_length=3)
+    def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
+        _validation.check_instance(labels, (list, tuple))
+        _validation.check_iterable_items(labels, str, name='labels')
+        _validation.check_length(labels, exact_length=3, name='labels')
         self.x_label = labels[0]
         self.y_label = labels[1]
         self.z_label = labels[2]
@@ -395,7 +416,7 @@ class AxesAssembly(Assembly):
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
-        """Enable or disable the text labels for the axes."""
+        """Show or hide the text labels for the axes."""
         return self._show_labels
 
     @show_labels.setter
@@ -421,8 +442,10 @@ class AxesAssembly(Assembly):
         self._label_actors[2].size = size
 
     @property
-    def label_position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Normalized position of the text label along each axis.
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the text label along each axis.
+
+        By default, the labels are positioned at the ends of the shafts.
 
         Values must be non-negative.
 
@@ -431,7 +454,7 @@ class AxesAssembly(Assembly):
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesAssembly()
         >>> axes_actor.label_position
-        (1.0, 1.0, 1.0)
+        (0.8, 0.8, 0.8)
         >>> axes_actor.label_position = 0.3
         >>> axes_actor.label_position
         (0.3, 0.3, 0.3)
@@ -444,7 +467,7 @@ class AxesAssembly(Assembly):
         return self._shaft_and_tip_geometry_source.shaft_length if position is None else position
 
     @label_position.setter
-    def label_position(self, position: Union[float, VectorLike[float]]):  # numpydoc ignore=GL08
+    def label_position(self, position: float | VectorLike[float] | None):  # numpydoc ignore=GL08
         self._label_position = (
             None
             if position is None
@@ -457,19 +480,20 @@ class AxesAssembly(Assembly):
                 to_tuple=True,
             )
         )
-        self._apply_transformation_to_labels() if self._is_init else None
+        self._apply_transformation_to_labels()
 
     @property
-    def label_color(self):  # numpydoc ignore=RT01
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the text labels."""
-        return tuple([actor.prop.color for actor in self._label_actors])
+        return self._label_color
 
     @label_color.setter
-    def label_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        colors = _validate_color_sequence(color, n_colors=3)
-        self._label_actors[0].prop.color = colors[0]
-        self._label_actors[1].prop.color = colors[1]
-        self._label_actors[2].prop.color = colors[2]
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        self._label_actors[0].prop.color = valid_color
+        self._label_actors[1].prop.color = valid_color
+        self._label_actors[2].prop.color = valid_color
 
     def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | tuple[ColorLike, ColorLike]):
         shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
@@ -511,9 +535,7 @@ class AxesAssembly(Assembly):
 
     def _get_transformed_label_positions(self):
         # Create position vectors
-        shaft_length = self._shaft_and_tip_geometry_source.shaft_length
-        label_position = self.label_position if self.label_position is not None else shaft_length
-        position_vectors = np.diag(label_position)
+        position_vectors = np.diag(self.label_position)
 
         # Offset label positions radially by the tip radius
         tip_radius = self._shaft_and_tip_geometry_source.tip_radius
