@@ -23,6 +23,12 @@ def test_axes_assembly_repr(axes_assembly):
         "  Tip radius:                 0.1",
         "  Tip length:                 (0.2, 0.2, 0.2)",
         "  Symmetric:                  False",
+        "  X label:                    'X'",
+        "  Y label:                    'Y'",
+        "  Z label:                    'Z'",
+        "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
+        "  Show labels:                True",
+        "  Label position:             (0.8, 0.8, 0.8)",
         "  X Color:                                     ",
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
@@ -121,3 +127,102 @@ def test_axes_assembly_theme(axes_assembly):
     assert axes_geometry_source.y_color[1].name == 'white'
     assert axes_geometry_source.z_color[0].name == 'gray'
     assert axes_geometry_source.z_color[1].name == 'gray'
+
+
+def test_axes_assembly_label_position(axes_assembly):
+    assert axes_assembly.label_position == (0.8, 0.8, 0.8)
+    label_position = (1, 2, 3)
+    axes_assembly.label_position = label_position
+    assert axes_assembly.label_position == label_position
+
+
+def test_axes_assembly_label_position_init():
+    label_position = 2
+    axes_assembly = pv.AxesAssembly(label_position=label_position)
+    assert axes_assembly.label_position == (label_position, label_position, label_position)
+
+
+def test_axes_assembly_labels(axes_assembly):
+    assert axes_assembly.labels == ('X', 'Y', 'Z')
+    labels = ('i', 'j', 'k')
+    axes_assembly.labels = labels
+    assert axes_assembly.labels == labels
+
+
+def test_axes_assembly_labels_init():
+    labels = ('i', 'j', 'k')
+    axes_assembly = pv.AxesAssembly(labels=labels)
+    assert axes_assembly.labels == labels
+
+
+def test_axes_assembly_x_label(axes_assembly):
+    assert axes_assembly.x_label == 'X'
+    x_label = 'label'
+    axes_assembly.x_label = x_label
+    assert axes_assembly.x_label == x_label
+
+
+def test_axes_assembly_x_label_init(axes_assembly):
+    x_label = 'label'
+    axes_assembly = pv.AxesAssembly(x_label=x_label)
+    assert axes_assembly.x_label == x_label
+
+
+def test_axes_assembly_y_label(axes_assembly):
+    assert axes_assembly.y_label == 'Y'
+    y_label = 'label'
+    axes_assembly.y_label = y_label
+    assert axes_assembly.y_label == y_label
+
+
+def test_axes_assembly_y_label_init(axes_assembly):
+    y_label = 'label'
+    axes_assembly = pv.AxesAssembly(y_label=y_label)
+    assert axes_assembly.y_label == y_label
+
+
+def test_axes_assembly_z_label(axes_assembly):
+    assert axes_assembly.z_label == 'Z'
+    z_label = 'label'
+    axes_assembly.z_label = z_label
+    assert axes_assembly.z_label == z_label
+
+
+def test_axes_assembly_z_label_init(axes_assembly):
+    z_label = 'label'
+    axes_assembly = pv.AxesAssembly(z_label=z_label)
+    assert axes_assembly.z_label == z_label
+
+
+def test_axes_assembly_labels_raises():
+    match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+    with pytest.raises(ValueError, match=match.format('x_label')):
+        pv.AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
+    with pytest.raises(ValueError, match=match.format('y_label')):
+        pv.AxesAssembly(y_label='B', z_label='C', labels='UVW')
+    with pytest.raises(ValueError, match=match.format('z_label')):
+        pv.AxesAssembly(z_label='C', labels='UVW')
+
+
+def test_axes_assembly_show_labels(axes_assembly):
+    assert axes_assembly.show_labels is True
+    axes_assembly.show_labels = False
+    assert axes_assembly.show_labels is False
+
+
+def test_axes_assembly_show_labels_init():
+    axes_assembly = pv.AxesAssembly(show_labels=False)
+    assert axes_assembly.show_labels is False
+
+
+def test_axes_assembly_label_size(axes_assembly):
+    assert axes_assembly.label_size == 50
+    label_size = 100
+    axes_assembly.label_size = label_size
+    assert axes_assembly.label_size == label_size
+
+
+def test_axes_assembly_label_size_init():
+    label_size = 42
+    axes_assembly = pv.AxesAssembly(label_size=label_size)
+    assert axes_assembly.label_size == label_size
