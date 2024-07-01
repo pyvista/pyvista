@@ -1031,7 +1031,6 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
 
-
     @property
     def interpolate_before_map(self):  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
