@@ -19,6 +19,8 @@ a statue as though it were metallic.
 
 # sphinx_gallery_start_ignore
 # physically based rendering does not seem to work in vtk-js
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 

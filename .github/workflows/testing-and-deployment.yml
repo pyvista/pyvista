@@ -21,7 +21,8 @@ env:
 
 jobs:
   macOS:
-    runs-on: macos-latest
+    # https://github.com/pyvista/pyvista/pull/5960
+    runs-on: macos-12
     name: Mac OS Unit Testing
     strategy:
       matrix:
@@ -52,7 +53,14 @@ jobs:
         run: pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: pytest -v tests/plotting --fail_extra_image_cache
+        run: pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images
 
   LinuxConda:
     runs-on: ubuntu-20.04
@@ -123,7 +131,14 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pytest -v tests/plotting --cov-report html --fail_extra_image_cache
+          pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.job }}
+          path: debug_images
 
   Linux:
     name: Linux Unit Testing
@@ -134,16 +149,25 @@ jobs:
       # see discussion at https://github.com/pyvista/pyvista/issues/2867
       matrix:
         include:
+          # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - python-version: "3.8"
-            vtk-version: "9.0.3" # Requires numpy<1.24
+            vtk-version: "9.0.3" # Requires numpy~=1.23
+            numpy-version: "1.23"
           - python-version: "3.9"
             vtk-version: "9.1"
+            numpy-version: "1.26" # Test numpy 1.26
           - python-version: "3.10"
             vtk-version: "9.2.2"
+            numpy-version: "latest"
           - python-version: "3.11"
             vtk-version: "9.2.6"
+            numpy-version: "latest"
           - python-version: "3.12"
             vtk-version: "latest"
+            numpy-version: "latest"
+          - python-version: "3.12"
+            vtk-version: "latest"
+            numpy-version: "nightly"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -182,13 +206,20 @@ jobs:
       - name: Install Testing Requirements
         run: pip install -r requirements_test.txt
 
-      - name: Limit NumPy for VTK 9.0.3
-        if: ${{ matrix.vtk-version == '9.0.3' }}
-        run: pip install 'numpy<1.24'
+      - name: Set up numpy
+        if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
+        run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
         if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
         run: pip install 'matplotlib<3.6'
+
+      - name: Install latest numpy 2.0 beta/rc
+        if: ${{ matrix.numpy-version == 'nightly' }}
+        run: |
+          pip uninstall numpy matplotlib -y
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
+          pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista -v tests/core tests/examples
@@ -199,7 +230,14 @@ jobs:
           version: 3.0
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples
+        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images
 
       - name: Software Report
         if: always()
@@ -278,4 +316,11 @@ jobs:
         run: python -m pytest -v --ignore=tests/plotting
 
       - name: Test Plotting
-        run: python -m pytest -v tests/plotting --fail_extra_image_cache
+        run: python -m pytest -v tests/plotting --fail_extra_image_cache --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import Color, LookupTable
+from pyvista import Color
+from pyvista import LookupTable
 
 
 @pytest.fixture()
@@ -242,3 +245,10 @@ def test_custom_opacity(lut, skip_check_gc):
 
     with pytest.raises(ValueError, match='between 0 and 1'):
         lut.apply_opacity(-0.1)
+
+
+@pytest.mark.parametrize('clamping', [True, False])
+def test_to_opacity_tf(lut, clamping):
+    tf = lut.to_opacity_tf(clamping=clamping)
+    assert isinstance(tf, vtk.vtkPiecewiseFunction)
+    assert tf.GetClamping() == int(clamping)

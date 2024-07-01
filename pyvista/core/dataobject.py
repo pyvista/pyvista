@@ -1,21 +1,32 @@
 """Attributes common to PolyData and Grid Objects."""
 
+from __future__ import annotations
+
 from abc import abstractmethod
-import collections.abc
+from collections import UserDict
+from collections import defaultdict
 from pathlib import Path
-from typing import Any, DefaultDict, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import ClassVar
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import NumpyArray
 from .datasetattributes import DataSetAttributes
+from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
-from .utilities.fileio import read, set_vtkwriter_mode
+from .utilities.arrays import _JSONValueType
+from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import read
+from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import NumpyArray
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -35,17 +46,17 @@ class DataObject:
 
     """
 
-    _WRITERS: Dict[str, Union[Type[_vtk.vtkXMLWriter], Type[_vtk.vtkDataWriter]]] = {}
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
         super().__init__(*args, **kwargs)
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
-        self._association_bitarray_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_bitarray_names: defaultdict[Any, Any] = defaultdict(set)
 
         # view these arrays as complex128 as VTK doesn't support complex types
-        self._association_complex_names: DefaultDict[Any, Any] = collections.defaultdict(set)
+        self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
     def __getattr__(self, item: str) -> Any:
         """Get attribute from base class if not found."""
@@ -61,7 +72,6 @@ class DataObject:
 
         """
         self.ShallowCopy(to_copy)
-        return None
 
     def deep_copy(self, to_copy: _vtk.vtkDataObject) -> None:
         """Overwrite this data object with another data object as a deep copy.
@@ -73,15 +83,14 @@ class DataObject:
 
         """
         self.DeepCopy(to_copy)
-        return None
 
-    def _from_file(self, filename: Union[str, Path], **kwargs):
+    def _from_file(self, filename: str | Path, **kwargs):
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
             raise ValueError(
                 f'Reading file returned data of `{type(data).__name__}`, '
-                f'but `{type(self).__name__}` was expected.'
+                f'but `{type(self).__name__}` was expected.',
             )
         self.shallow_copy(data)
         self._post_file_load_processing()
@@ -91,9 +100,9 @@ class DataObject:
 
     def save(
         self,
-        filename: Union[Path, str],
+        filename: Path | str,
         binary: bool = True,
-        texture: Optional[Union[NumpyArray[np.uint8], str]] = None,
+        texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
 
@@ -129,7 +138,7 @@ class DataObject:
         if self._WRITERS is None:
             raise NotImplementedError(
                 f'{self.__class__.__name__} writers are not specified,'
-                ' this should be a dict of (file extension: vtkWriter type)'
+                ' this should be a dict of (file extension: vtkWriter type)',
             )
 
         file_path = Path(filename)
@@ -139,7 +148,7 @@ class DataObject:
         if file_ext not in self._WRITERS:
             raise ValueError(
                 'Invalid file extension for this data type.'
-                f' Must be one of: {self._WRITERS.keys()}'
+                f' Must be one of: {self._WRITERS.keys()}',
             )
 
         # store complex and bitarray types as field data
@@ -159,10 +168,9 @@ class DataObject:
                 writer.SetArrayName(array_name)
 
             # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore
+            if self[array_name].shape[-1] == 4:  # type: ignore[index]
                 writer.SetEnableAlpha(True)
         writer.Write()
-        return None
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""
@@ -174,7 +182,6 @@ class DataObject:
                 if array_names:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
-        return None
 
     def _restore_metadata(self) -> None:
         """Restore PyVista metadata from field data.
@@ -192,13 +199,12 @@ class DataObject:
                     assoc_data = getattr(self, f'_association_{assoc_name}_names')
                     assoc_data[assoc_type] = set(fdata[key])
                     del fdata[key]
-        return None
 
     @abstractmethod
     def get_data_range(self):  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
-            f'{type(self)} mesh type does not have a `get_data_range` method.'
+            f'{type(self)} mesh type does not have a `get_data_range` method.',
         )
 
     def _get_attrs(self):  # pragma: no cover
@@ -244,10 +250,11 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import HTML, display as _display
+                from IPython.display import HTML
+                from IPython.display import display as _display
 
                 _display(HTML(fmt))
-                return
+                return None
             return fmt
         # Otherwise return a string that is Python console friendly
         fmt = f"{type(self).__name__} ({hex(id(self))})\n"
@@ -328,7 +335,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -414,7 +421,7 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self) -> DataSetAttributes:  # numpydoc ignore=RT01
+    def field_data(self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -439,7 +446,9 @@ class DataObject:
 
         """
         return DataSetAttributes(
-            self.GetFieldData(), dataset=self, association=FieldAssociation.NONE
+            self.GetFieldData(),
+            dataset=self,
+            association=FieldAssociation.NONE,
         )
 
     def clear_field_data(self) -> None:
@@ -463,10 +472,152 @@ class DataObject:
             raise NotImplementedError(f'`{type(self)}` does not support field data')
 
         self.field_data.clear()
-        return None
 
     @property
-    def memory_address(self) -> str:  # numpydoc ignore=RT01
+    def user_dict(self) -> _SerializedDictArray:
+        """Set or return a user-specified data dictionary.
+
+        The dictionary is stored as a JSON-serialized string as part of the mesh's
+        field data. Unlike regular field data, which requires values to be stored
+        as an array, the user dict provides a mapping for scalar values.
+
+        Since the user dict is stored as field data, it is automatically saved
+        with the mesh when it is saved in a compatible file format (e.g. ``'.vtk'``).
+        Any saved metadata is automatically de-serialized by PyVista whenever
+        the user dict is accessed again. Since the data is stored as JSON, it
+        may also be easily retrieved or read by other programs.
+
+        Any JSON-serializable values are permitted by the user dict, i.e. values
+        can have type ``dict``, ``list``, ``tuple``, ``str``, ``int``, ``float``,
+        ``bool``, or ``None``. Storing NumPy arrays is not directly supported, but
+        these may be cast beforehand to a supported type, e.g. by calling ``tolist()``
+        on the array.
+
+        To completely remove the user dict string from the dataset's field data,
+        set its value to ``None``.
+
+        .. note::
+
+            The user dict is a convenience property and is intended for metadata storage.
+            It has an inefficient dictionary implementation and should only be used to
+            store a small number of infrequently-accessed keys with relatively small
+            values. It should not be used to store frequently accessed array data
+            with many entries (a regular field data array should be used instead).
+
+        .. warning::
+
+            Field data is typically passed-through by dataset filters, and therefore
+            the user dict's items can generally be expected to persist and remain
+            unchanged in the output of filtering methods. However, this behavior is
+            not guaranteed, as it's possible that some filters may modify or clear
+            field data. Use with caution.
+
+        Returns
+        -------
+        UserDict
+            JSON-serialized dict-like object which is subclassed from :py:class:`collections.UserDict`.
+
+        Examples
+        --------
+        Load a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_ant()
+
+        Add data to the user dict. The contents are serialized as JSON.
+
+        >>> mesh.user_dict['name'] = 'ant'
+        >>> mesh.user_dict
+        {"name": "ant"}
+
+        Alternatively, set the user dict from an existing dict.
+
+        >>> mesh.user_dict = dict(name='ant')
+
+        The user dict can be updated like a regular dict.
+
+        >>> mesh.user_dict.update(
+        ...     {
+        ...         'num_legs': 6,
+        ...         'body_parts': ['head', 'thorax', 'abdomen'],
+        ...     }
+        ... )
+        >>> mesh.user_dict
+        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
+
+        Data in the user dict is stored as field data.
+
+        >>> mesh.field_data
+        pyvista DataSetAttributes
+        Association     : NONE
+        Contains arrays :
+            _PYVISTA_USER_DICT      str        "{"name": "ant",..."
+
+        Since it's field data, the user dict can be saved to file along with the
+        mesh and retrieved later.
+
+        >>> mesh.save('ant.vtk')
+        >>> mesh_from_file = pv.read('ant.vtk')
+        >>> mesh_from_file.user_dict
+        {"name": "ant", "num_legs": 6, "body_parts": ["head", "thorax", "abdomen"]}
+
+        """
+        self._config_user_dict()
+        return self._user_dict
+
+    @user_dict.setter
+    def user_dict(
+        self,
+        dict_: dict[str, _JSONValueType] | UserDict,  # type: ignore[type-arg]
+    ):  # numpydoc ignore=GL08
+        # Setting None removes the field data array
+        if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
+            del self.field_data['_PYVISTA_USER_DICT']
+            return
+
+        self._config_user_dict()
+        if isinstance(dict_, dict):
+            self._user_dict.data = dict_
+        elif isinstance(dict_, UserDict):
+            self._user_dict.data = dict_.data
+        else:
+            raise TypeError(
+                f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
+            )
+
+    def _config_user_dict(self):
+        """Init serialized dict array and ensure it is added to field_data."""
+        field_name = '_PYVISTA_USER_DICT'
+        field_data = self.field_data
+
+        if not hasattr(self, '_user_dict'):
+            # Init
+            self._user_dict = _SerializedDictArray()
+
+        if field_name in field_data.keys():
+            if isinstance(array := field_data[field_name], pyvista_ndarray):
+                # When loaded from file, field will be cast as pyvista ndarray
+                # Convert to string and initialize new user dict object from it
+                self._user_dict = _SerializedDictArray(''.join(array))
+            elif isinstance(array, str) and repr(self._user_dict) != array:
+                # Filters may update the field data block separately, e.g.
+                # when copying field data, so we need to capture the new
+                # string and re-init
+                self._user_dict = _SerializedDictArray(array)
+            else:
+                # User dict is correctly configured, do nothing
+                return
+
+        # Set field data array directly instead of calling 'set_array'
+        # This skips the call to '_prepare_array' which will otherwise
+        # do all kinds of casting/conversions and mangle this array
+        self._user_dict.SetName(field_name)
+        field_data.VTKObject.AddArray(self._user_dict)
+        field_data.VTKObject.Modified()
+
+    @property
+    def memory_address(self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -485,7 +636,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
     @property
-    def actual_memory_size(self) -> int:  # numpydoc ignore=RT01
+    def actual_memory_size(self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
@@ -522,7 +673,6 @@ class DataObject:
 
         """
         self.CopyStructure(dataset)
-        return None
 
     def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
@@ -543,7 +693,6 @@ class DataObject:
 
         """
         self.CopyAttributes(dataset)
-        return None
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
@@ -600,7 +749,8 @@ class DataObject:
         """Support unpickle."""
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
-            'PICKLE_FORMAT', 'legacy'  # backwards compatibility - assume 'legacy'
+            'PICKLE_FORMAT',
+            'legacy',  # backwards compatibility - assume 'legacy'
         )
         self.__dict__.update(state)
 

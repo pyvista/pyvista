@@ -13,6 +13,8 @@ based rendering and VTK v9 supports high dynamic range textures.
 
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 
@@ -23,7 +25,7 @@ texture = examples.download_dikhololo_night()
 ###############################################################################
 # Set up the plotter and enable environment textures.  This works well
 # for physically based rendering enabled meshes like the damaged
-# helmet example.
+# helmet example.  Use :func:`pyvista.Plotter.import_gltf` to import file.
 
 # sphinx_gallery_start_ignore
 PYVISTA_GALLERY_FORCE_STATIC = True

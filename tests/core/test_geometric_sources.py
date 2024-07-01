@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import re
+
 import numpy as np
 import pytest
 import vtk
@@ -5,6 +9,25 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
+
+
+@pytest.fixture()
+def axes_geometry_source():
+    return pv.AxesGeometrySource()
+
+
+def test_capsule_source():
+    if pv.vtk_version_info < (9, 3):
+        algo = pv.CapsuleSource()
+        assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+        assert np.array_equal(algo.direction, (1.0, 0.0, 0.0))
+        assert algo.radius == 0.5
+        assert algo.cylinder_length == 1.0
+        assert algo.theta_resolution == 30
+        assert algo.phi_resolution == 30
+        direction = np.random.default_rng().random(3)
+        algo.direction = direction
+        assert np.array_equal(algo.direction, direction)
 
 
 def test_cone_source():
@@ -35,6 +58,13 @@ def test_cylinder_source():
     algo.direction = direction
     assert np.array_equal(algo.center, center)
     assert np.array_equal(algo.direction, direction)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_cylinder_capsule_cap():
+    algo = pv.CylinderSource()
+    algo.capsule_cap = True
+    assert algo.capsule_cap
 
 
 def test_multiple_lines_source():
@@ -133,7 +163,12 @@ def test_text3d_source():
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
-        string=string, center=center, height=height, width=width, depth=depth, normal=normal
+        string=string,
+        center=center,
+        height=height,
+        width=width,
+        depth=depth,
+        normal=normal,
     )
     out = src.output
     bnds = out.bounds
@@ -283,10 +318,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     assert points_before is points_after
 
     # Test setting a new value sets modified flag but does not change output
-    if name == "string":
-        new_value = value + value
-    else:
-        new_value = np.array(value) * 2
+    new_value = value + value if name == 'string' else np.array(value) * 2
     points_before = text3d_source_with_text._output.GetPoints()
     setattr(text3d_source_with_text, name, new_value)
     points_after = text3d_source_with_text._output.GetPoints()
@@ -361,3 +393,278 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+
+
+def test_superquadric_source():
+    algo = pv.SuperquadricSource()
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.scale == (1.0, 1.0, 1.0)
+    assert algo.size == 0.5
+    assert algo.theta_roundness == 1.0
+    assert algo.phi_roundness == 1.0
+    assert algo.theta_resolution == 16
+    assert algo.phi_resolution == 16
+    assert not algo.toroidal
+    assert algo.thickness == 1 / 3
+
+
+def test_arrow_source():
+    algo = pv.ArrowSource()
+    assert algo.tip_length == 0.25
+    assert algo.tip_radius == 0.1
+    assert algo.tip_resolution == 20
+    assert algo.shaft_radius == 0.05
+    assert algo.shaft_resolution == 20
+
+
+def test_box_source():
+    algo = pv.BoxSource()
+    assert np.array_equal(algo.bounds, [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0])
+    assert algo.level == 0
+    assert algo.quads
+
+
+def test_axes_geometry_source_symmetric_set_get(axes_geometry_source):
+    assert axes_geometry_source.symmetric is False
+    axes_geometry_source.symmetric = True
+    assert axes_geometry_source.symmetric is True
+
+
+def test_axes_geometry_source_symmetric_init():
+    axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+    assert axes_geometry_source.output.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+
+def test_axes_geometry_source_shaft_length_set_get(axes_geometry_source):
+    assert axes_geometry_source.shaft_length == (0.8, 0.8, 0.8)
+    new_length = (0.1, 0.2, 0.3)
+    axes_geometry_source.shaft_length = new_length
+    assert axes_geometry_source.shaft_length == new_length
+
+
+def test_axes_geometry_source_shaft_length_init():
+    axes_geometry_source = pv.AxesGeometrySource(shaft_length=0.9)
+    assert axes_geometry_source.shaft_length == (0.9, 0.9, 0.9)
+
+
+@pytest.mark.parametrize('part', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
+def test_axes_geometry_source_bounds(axes_geometry_source, part):
+    x_shaft_len, y_shaft_len, z_shaft_len = 0.5, 0.6, 0.7
+    shaft_radius = 0.05
+    axes_geometry_source.shaft_length = x_shaft_len, y_shaft_len, z_shaft_len
+    axes_geometry_source.shaft_radius = shaft_radius
+
+    x_tip_len, y_tip_len, z_tip_len = 0.2, 0.3, 0.4
+    tip_radius = 0.2
+    axes_geometry_source.tip_length = x_tip_len, y_tip_len, z_tip_len
+    axes_geometry_source.tip_radius = tip_radius
+
+    x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip = axes_geometry_source.output
+
+    if part == 'x_shaft':
+        actual_bounds = x_shaft.bounds
+        expected_bounds = (
+            0,
+            x_shaft_len,
+            -shaft_radius,
+            shaft_radius,
+            -shaft_radius,
+            shaft_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'y_shaft':
+        actual_bounds = y_shaft.bounds
+        expected_bounds = (
+            -shaft_radius,
+            shaft_radius,
+            0,
+            y_shaft_len,
+            -shaft_radius,
+            shaft_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'z_shaft':
+        actual_bounds = z_shaft.bounds
+        expected_bounds = (
+            -shaft_radius,
+            shaft_radius,
+            -shaft_radius,
+            shaft_radius,
+            0,
+            z_shaft_len,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'x_tip':
+        actual_bounds = x_tip.bounds
+        expected_bounds = (
+            x_shaft_len,
+            x_shaft_len + x_tip_len,
+            -tip_radius,
+            tip_radius,
+            -tip_radius,
+            tip_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'y_tip':
+        actual_bounds = y_tip.bounds
+        expected_bounds = (
+            -tip_radius,
+            tip_radius,
+            y_shaft_len,
+            y_shaft_len + y_tip_len,
+            -tip_radius,
+            tip_radius,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    elif part == 'z_tip':
+        actual_bounds = z_tip.bounds
+        expected_bounds = (
+            -tip_radius,
+            tip_radius,
+            -tip_radius,
+            tip_radius,
+            z_shaft_len,
+            z_shaft_len + z_tip_len,
+        )
+        assert np.allclose(actual_bounds, expected_bounds)
+
+    else:
+        raise NotImplementedError
+
+
+def test_axes_geometry_source_tip_length_set_get(axes_geometry_source):
+    assert axes_geometry_source.tip_length == (0.2, 0.2, 0.2)
+    axes_geometry_source.tip_length = (0.1, 0.2, 0.3)
+    assert axes_geometry_source.tip_length == (0.1, 0.2, 0.3)
+
+
+def test_axes_geometry_source_tip_length_init():
+    axes_geometry_source = pv.AxesGeometrySource(tip_length=0.9)
+    assert axes_geometry_source.tip_length == (0.9, 0.9, 0.9)
+
+
+def test_axes_geometry_source_tip_radius_set_get(axes_geometry_source):
+    assert axes_geometry_source.tip_radius == 0.1
+    axes_geometry_source.tip_radius = 0.8
+    assert axes_geometry_source.tip_radius == 0.8
+
+
+def test_axes_geometry_source_tip_radius_init():
+    axes_geometry_source = pv.AxesGeometrySource(tip_radius=9)
+    assert axes_geometry_source.tip_radius == 9
+
+
+@pytest.mark.parametrize(
+    'shaft_type',
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
+)
+def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_source):
+    axes_geometry_source.shaft_type = shaft_type
+    assert axes_geometry_source.shaft_type == shaft_type
+
+
+def test_axes_geometry_source_custom_part(axes_geometry_source):
+    axes_geometry_source.shaft_type = pv.ParametricKlein()
+    assert axes_geometry_source.shaft_type == 'custom'
+
+    axes_geometry_source.tip_type = pv.ParametricKlein()
+    assert axes_geometry_source.tip_type == 'custom'
+
+    match = 'Custom axes part must be 3D. Got bounds: (-0.5, 0.5, -0.5, 0.5, 0.0, 0.0).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = pv.Plane()
+
+    match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        axes_geometry_source.shaft_type = 'foo'
+
+    match = "Geometry must be a string or pyvista.DataSet. Got <class 'int'>."
+    with pytest.raises(TypeError, match=match):
+        axes_geometry_source.shaft_type = 42
+
+
+@pytest.mark.parametrize(
+    'shaft_type',
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
+)
+def test_axes_geometry_source_shaft_type_init(shaft_type):
+    axes_geometry_source = pv.AxesGeometrySource(shaft_type=shaft_type)
+    assert axes_geometry_source.shaft_type == shaft_type
+
+
+@pytest.mark.parametrize(
+    'tip_type',
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
+)
+def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
+    axes_geometry_source.tip_type = tip_type
+    assert axes_geometry_source.tip_type == tip_type
+
+
+@pytest.mark.parametrize(
+    'tip_type',
+    pv.AxesGeometrySource.GEOMETRY_TYPES,
+)
+def test_axes_geometry_source_tip_type_init(tip_type):
+    axes_geometry_source = pv.AxesGeometrySource(tip_type=tip_type)
+    assert axes_geometry_source.tip_type == tip_type
+
+
+def test_axes_geometry_source_shaft_radius_set_get(axes_geometry_source):
+    assert axes_geometry_source.shaft_radius == 0.025
+    axes_geometry_source.shaft_radius = 0.1
+    assert axes_geometry_source.shaft_radius == 0.1
+
+
+def test_axes_geometry_source_shaft_radius_init():
+    axes_geometry_source = pv.AxesGeometrySource(shaft_radius=3)
+    assert axes_geometry_source.shaft_radius == 3
+
+
+def test_axes_geometry_source_update_output(axes_geometry_source):
+    out1 = axes_geometry_source.output
+    assert isinstance(out1, pv.MultiBlock)
+    assert out1.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+
+    # Test output object references are unchanged when updating
+    out2 = axes_geometry_source.output
+    assert out1 is out2
+
+    assert out1[0] is out2[0]
+    assert out1[1] is out2[1]
+    assert out1[2] is out2[2]
+    assert out1[3] is out2[3]
+    assert out1[4] is out2[4]
+    assert out1[5] is out2[5]
+
+    assert out1['x_shaft'] is out2['x_shaft']
+    assert out1['y_shaft'] is out2['y_shaft']
+    assert out1['z_shaft'] is out2['z_shaft']
+    assert out1['x_tip'] is out2['x_tip']
+    assert out1['y_tip'] is out2['y_tip']
+    assert out1['z_tip'] is out2['z_tip']
+
+
+def test_axes_geometry_source_repr(axes_geometry_source):
+    repr_ = repr(axes_geometry_source)
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  Shaft type:                 'cylinder'",
+        '  Shaft radius:               0.025',
+        '  Shaft length:               (0.8, 0.8, 0.8)',
+        "  Tip type:                   'cone'",
+        '  Tip radius:                 0.1',
+        '  Tip length:                 (0.2, 0.2, 0.2)',
+        '  Symmetric:                  False',
+    ]
+    assert len(actual_lines) == len(expected_lines)
+    assert actual_lines == expected_lines
+
+    axes_geometry_source.shaft_type = pv.ParametricTorus()
+    repr_ = repr(axes_geometry_source)
+    assert "Shaft type:                 'custom'" in repr_

@@ -1,14 +1,31 @@
 """Array casting functions."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+
 import numpy as np
+import numpy.typing as npt
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+    from pyvista.core._typing_core._array_like import NumberType
+    from pyvista.core._typing_core._array_like import _FiniteNestedList
+    from pyvista.core._typing_core._array_like import _FiniteNestedTuple
 
 
-def _cast_to_list(arr):
+def _cast_to_list(
+    arr: _ArrayLikeOrScalar[NumberType],
+) -> Union[NumberType, _FiniteNestedList[NumberType]]:
     """Cast an array to a nested list.
 
     Parameters
     ----------
-    arr : array_like
+    arr : float | ArrayLike[float]
         Array to cast.
 
     Returns
@@ -19,12 +36,14 @@ def _cast_to_list(arr):
     return _cast_to_numpy(arr).tolist()
 
 
-def _cast_to_tuple(arr):
+def _cast_to_tuple(
+    arr: ArrayLike[NumberType],
+) -> Union[NumberType, _FiniteNestedTuple[NumberType]]:
     """Cast an array to a nested tuple.
 
     Parameters
     ----------
-    arr : array_like
+    arr : float | ArrayLike[float]
         Array to cast.
 
     Returns
@@ -40,7 +59,15 @@ def _cast_to_tuple(arr):
     return _to_tuple(arr)
 
 
-def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=False):
+def _cast_to_numpy(
+    arr: _ArrayLikeOrScalar[NumberType],
+    /,
+    *,
+    as_any: bool = True,
+    dtype: Optional[npt.DTypeLike] = None,
+    copy: bool = False,
+    must_be_real: bool = False,
+) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
     Object arrays are not allowed but the dtype is otherwise unchecked by default.
@@ -54,14 +81,14 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
 
     Parameters
     ----------
-    arr : array_like
+    arr : float | ArrayLike[float]
         Array to cast.
 
     as_any : bool, default: True
         Allow subclasses of ``np.ndarray`` to pass through without
         making a copy.
 
-    dtype : dtype_like, optional
+    dtype : npt.typing.DTypeLike, optional
         The data-type of the returned array.
 
     copy : bool, default: False
@@ -72,7 +99,7 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
             * is a subclass of ``np.ndarray`` and ``as_any`` is ``False``.
 
     must_be_real : bool, default: True
-        Raise a TypeError if the array does not have real numbers, i.e.
+        Raise a ``TypeError`` if the array does not have real numbers, i.e.
         its data type is not integer or floating.
 
     Raises
@@ -95,18 +122,19 @@ def _cast_to_numpy(arr, /, *, as_any=True, dtype=None, copy=False, must_be_real=
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+        # we only type for newer numpy, and this branch only touched in older numpy
+        if not TYPE_CHECKING:
+            VisibleDeprecationWarning = np.VisibleDeprecationWarning
 
     try:
-        if as_any:
-            out = np.asanyarray(arr, dtype=dtype)
-            if copy:
-                out = out.copy()
-        else:
-            out = np.array(arr, dtype=dtype, copy=copy)
+        out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
+
+        if copy and out is arr:
+            # we requested a copy but didn't end up with one
+            out = out.copy()
     except (ValueError, VisibleDeprecationWarning) as e:
         raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
-    if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
+    if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
         raise TypeError("Object arrays are not supported.")

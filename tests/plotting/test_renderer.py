@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -30,6 +32,27 @@ def test_show_bounds_axes_ranges():
         *cube_axes_actor.GetZAxisRange(),
     ]
     assert test_ranges == axes_ranges
+
+    # make sure that the axes labels match the axes ranges
+    labels_ranges = []
+    for axis in range(3):
+        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        labels_ranges.append(float(axis_labels.GetValue(0)))
+        labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
+    assert labels_ranges == axes_ranges
+
+
+def test_show_grid_axes_ranges_with_all_edges():
+    plotter = pv.Plotter()
+
+    axes_ranges = [5, 10, 5, 10, 5, 10]
+    plotter.show_grid(axes_ranges=axes_ranges, all_edges=True)
+    labels_ranges = []
+    for axis in range(3):
+        axis_labels = plotter.renderer.cube_axes_actor.GetAxisLabels(axis)
+        labels_ranges.append(float(axis_labels.GetValue(0)))
+        labels_ranges.append(float(axis_labels.GetValue(axis_labels.GetNumberOfValues() - 1)))
+    assert labels_ranges == axes_ranges
 
 
 def test_show_bounds_with_scaling(sphere):
@@ -81,6 +104,41 @@ def test_renderer_set_viewup():
 def test_reset_camera():
     plotter = pv.Plotter()
     plotter.reset_camera(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_isometric():
+    plotter = pv.Plotter()
+    plotter.view_isometric(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_xy():
+    plotter = pv.Plotter()
+    plotter.view_xy(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_yx():
+    plotter = pv.Plotter()
+    plotter.view_yx(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_xz():
+    plotter = pv.Plotter()
+    plotter.view_xz(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_zx():
+    plotter = pv.Plotter()
+    plotter.view_zx(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_yz():
+    plotter = pv.Plotter()
+    plotter.view_yz(bounds=(-1, 1, -1, 1, -1, 1))
+
+
+def test_view_zy():
+    plotter = pv.Plotter()
+    plotter.view_zy(bounds=(-1, 1, -1, 1, -1, 1))
 
 
 def test_camera_is_set():
@@ -259,6 +317,20 @@ def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl.show()
 
 
+def test_legend_none_face(verify_image_cache):
+    """Verifies that ``face="none"`` does not add a face for each label in legend."""
+    pl = pv.Plotter()
+    pl.add_mesh(
+        pv.Icosphere(center=(3, 0, 0), radius=1),
+        color="r",
+        label="Sphere",
+    )
+    pl.add_mesh(pv.Box(), color="w", label="Box")
+    # add a large legend to ensure test fails if face="none" not configured right
+    pl.add_legend(face="none", bcolor="k", size=(0.6, 0.6))
+    pl.show()
+
+
 def test_legend_add_entry_warning(verify_image_cache):
     pl = pv.Plotter()
     legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
@@ -283,3 +355,10 @@ def test_add_legend_background_opacity(sphere):
     pl.add_mesh(sphere, label='sphere')
     actor = pl.add_legend(background_opacity=background_opacity)
     assert actor.GetBackgroundOpacity() == background_opacity
+
+
+def test_viewport():
+    pl = pv.Plotter(shape=(1, 2))
+    assert pl.renderers[0].viewport == (0.0, 0.0, 0.5, 1.0)
+    pl.renderers[0].viewport = (0.125, 0.25, 0.375, 0.75)
+    assert pl.renderers[0].viewport == (0.125, 0.25, 0.375, 0.75)

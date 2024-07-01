@@ -1,3 +1,5 @@
+.. _parametric_api:
+
 Parametric Objects
 ------------------
 

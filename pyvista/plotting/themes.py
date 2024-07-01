@@ -30,22 +30,34 @@ pyvista.
 
 """
 
+from __future__ import annotations
+
 from enum import Enum
 from itertools import chain
 import json
 import os
 import pathlib
-from typing import Any, Callable, Dict, List, Optional, Union
+from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
 import warnings
 
-import pyvista
-from pyvista.core._typing_core import Number, Vector
+import pyvista  # noqa: TCH001
 from pyvista.core.utilities.misc import _check_range
 
-from ._typing import ColorLike
-from .colors import Color, get_cmap_safe, get_cycler
+from .colors import Color
+from .colors import get_cmap_safe
+from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
+
+    from pyvista.core._typing_core import Number
+    from pyvista.core._typing_core import VectorLike
+
+    from ._typing import ColorLike
 
 
 def _set_plot_theme_from_env() -> None:
@@ -58,9 +70,8 @@ def _set_plot_theme_from_env() -> None:
             allowed = ', '.join([item.name for item in _NATIVE_THEMES])
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
-                f'Should be one of the following: {allowed}'
+                f'Should be one of the following: {allowed}',
             )
-    return None
 
 
 def load_theme(filename):
@@ -85,7 +96,7 @@ def load_theme(filename):
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
     """
-    with open(filename) as f:
+    with Path(filename).open() as f:
         theme_dict = json.load(f)
     return Theme.from_dict(theme_dict)
 
@@ -132,7 +143,7 @@ def set_plot_theme(theme):
         pyvista.global_theme.load_theme(theme)
     else:
         raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
         )
 
 
@@ -150,7 +161,7 @@ class _ForceSlots(type):
 class _ThemeConfig(metaclass=_ForceSlots):
     """Provide common methods for theme configuration classes."""
 
-    __slots__: List[str] = []
+    __slots__: list[str] = []
 
     @classmethod
     def from_dict(cls, dict_):
@@ -164,7 +175,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 setattr(inst, key, value)
         return inst
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return theme config parameters as a dictionary.
 
         Returns
@@ -287,7 +298,8 @@ class _LightingConfig(_ThemeConfig):
 
     @interpolation.setter
     def interpolation(
-        self, interpolation: Union[str, int, InterpolationType]
+        self,
+        interpolation: str | int | InterpolationType,
     ):  # numpydoc ignore=GL08
         self._interpolation = InterpolationType.from_any(interpolation).value
 
@@ -627,7 +639,7 @@ class _SilhouetteConfig(_ThemeConfig):
         self._opacity = float(opacity)
 
     @property
-    def feature_angle(self) -> Union[float, None]:  # numpydoc ignore=RT01
+    def feature_angle(self) -> float | None:  # numpydoc ignore=RT01
         """Return or set the silhouette feature angle.
 
         Examples
@@ -639,7 +651,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._feature_angle
 
     @feature_angle.setter
-    def feature_angle(self, feature_angle: Union[float, None]):  # numpydoc ignore=GL08
+    def feature_angle(self, feature_angle: float | None):  # numpydoc ignore=GL08
         self._feature_angle = feature_angle
 
     @property
@@ -783,16 +795,33 @@ class _AxesConfig(_ThemeConfig):
 
     Examples
     --------
-    Set the x axis color to black.
+    Show the default axes configuration values.
 
     >>> import pyvista as pv
+    >>> pv.global_theme.axes.x_color
+    Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+    >>> pv.global_theme.axes.y_color
+    Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+    >>> pv.global_theme.axes.z_color
+    Color(name='blue', hex='#0000ffff', opacity=255)
+
+    >>> pv.global_theme.axes.box
+    False
+
+    >>> pv.global_theme.axes.show
+    True
+
+    Set the x-axis color to black.
+
     >>> pv.global_theme.axes.x_color = 'black'
 
-    Show axes by default.
+    Show the axes orientation widget by default.
 
     >>> pv.global_theme.axes.show = True
 
-    Use the ``vtk.vtkCubeAxesActor``.
+    Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
     >>> pv.global_theme.axes.box = True
 
@@ -824,11 +853,17 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set x axis color.
+        """Return or set x-axis color.
 
         Examples
         --------
+        Get the default x-axis color
+
         >>> import pyvista as pv
+        >>> pv.global_theme.axes.x_color
+        Color(name='tomato', hex='#ff6347ff', opacity=255)
+
+        Change the default color.
         >>> pv.global_theme.axes.x_color = 'red'
         """
         return self._x_color
@@ -839,12 +874,18 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def y_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set y axis color.
+        """Return or set y-axis color.
 
         Examples
         --------
+        Get the default y-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.y_color = 'red'
+        >>> pv.global_theme.axes.y_color
+        Color(name='seagreen', hex='#2e8b57ff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
 
@@ -854,12 +895,18 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def z_color(self) -> Color:  # numpydoc ignore=RT01
-        """Return or set z axis color.
+        """Return or set z-axis color.
 
         Examples
         --------
+        Get the default z-axis color
+
         >>> import pyvista as pv
-        >>> pv.global_theme.axes.z_color = 'red'
+        >>> pv.global_theme.axes.z_color
+        Color(name='blue', hex='#0000ffff', opacity=255)
+
+        Change the default color.
+        >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color
 
@@ -869,7 +916,10 @@ class _AxesConfig(_ThemeConfig):
 
     @property
     def box(self) -> bool:  # numpydoc ignore=RT01
-        """Use the ``vtk.vtkCubeAxesActor`` instead of the default ``vtk.vtkAxesActor``.
+        """Use a box axes orientation widget.
+
+        If ``True``, Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>`
+        instead of the :class:`pyvista.AxesActor` as the orientation widget for plots.
 
         Examples
         --------
@@ -1388,7 +1438,7 @@ class _TrameConfig(_ThemeConfig):
         service = os.environ.get('JUPYTERHUB_SERVICE_PREFIX', '')
         prefix = os.environ.get('PYVISTA_TRAME_SERVER_PROXY_PREFIX', '/proxy/')
         if service and not prefix.startswith('http'):  # pragma: no cover
-            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))
+            self._server_proxy_prefix = os.path.join(service, prefix.lstrip('/'))  # noqa: PTH118
             self._server_proxy_enabled = True
         else:
             self._server_proxy_prefix = prefix
@@ -1396,6 +1446,16 @@ class _TrameConfig(_ThemeConfig):
         self._jupyter_extension_enabled = (
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
+        # if set, jupyter_mode overwrites defaults
+        jupyter_mode = os.environ.get("PYVISTA_TRAME_JUPYTER_MODE")
+        if jupyter_mode == "extension" and self._jupyter_extension_available:  # pragma: no cover
+            self._server_proxy_enabled = False
+            self._jupyter_extension_enabled = True
+        elif jupyter_mode == "proxy" and self._server_proxy_enabled:  # pragma: no cover
+            self._jupyter_extension_enabled = False
+        elif jupyter_mode == "native":  # pragma: no cover
+            self._jupyter_extension_enabled = False
+            self._server_proxy_enabled = False
         self._default_mode = 'trame'
 
     @property
@@ -1487,7 +1547,7 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
         warnings.warn(
-            "The jupyter_extension_available flag is read only and is automatically detected."
+            "The jupyter_extension_available flag is read only and is automatically detected.",
         )
 
     @property
@@ -1551,7 +1611,7 @@ class _CameraConfig(_ThemeConfig):
         self._parallel_scale = 1.0
 
     @property
-    def position(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def position(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera position.
 
         Examples
@@ -1565,11 +1625,11 @@ class _CameraConfig(_ThemeConfig):
         return self._position
 
     @position.setter
-    def position(self, position: Vector[float]):  # numpydoc ignore=GL08
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         self._position = position
 
     @property
-    def viewup(self) -> Vector[float]:  # numpydoc ignore=RT01
+    def viewup(self) -> VectorLike[float]:  # numpydoc ignore=RT01
         """Return or set the camera viewup.
 
         Examples
@@ -1583,7 +1643,7 @@ class _CameraConfig(_ThemeConfig):
         return self._viewup
 
     @viewup.setter
-    def viewup(self, viewup: Vector[float]):  # numpydoc ignore=GL08
+    def viewup(self, viewup: VectorLike[float]):  # numpydoc ignore=GL08
         self._viewup = viewup
 
     @property
@@ -2037,7 +2097,7 @@ class Theme(_ThemeConfig):
         return self._jupyter_backend
 
     @jupyter_backend.setter
-    def jupyter_backend(self, backend: 'str'):  # numpydoc ignore=GL08
+    def jupyter_backend(self, backend: str):  # numpydoc ignore=GL08
         from pyvista.jupyter import _validate_jupyter_backend
 
         self._jupyter_backend = _validate_jupyter_backend(backend)
@@ -2130,11 +2190,11 @@ class Theme(_ThemeConfig):
             self._camera = camera
         else:
             raise TypeError(
-                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}"
+                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}",
             )
 
     @property
-    def notebook(self) -> Union[bool, None]:  # numpydoc ignore=RT01
+    def notebook(self) -> bool | None:  # numpydoc ignore=RT01
         """Return or set the state of notebook plotting.
 
         Setting this to ``True`` always enables notebook plotting,
@@ -2152,11 +2212,11 @@ class Theme(_ThemeConfig):
         return self._notebook
 
     @notebook.setter
-    def notebook(self, value: Union[bool, None]):  # numpydoc ignore=GL08
+    def notebook(self, value: bool | None):  # numpydoc ignore=GL08
         self._notebook = value
 
     @property
-    def window_size(self) -> List[int]:  # numpydoc ignore=RT01
+    def window_size(self) -> list[int]:  # numpydoc ignore=RT01
         """Return or set the default render window size.
 
         Examples
@@ -2170,7 +2230,7 @@ class Theme(_ThemeConfig):
         return self._window_size
 
     @window_size.setter
-    def window_size(self, window_size: List[int]):  # numpydoc ignore=GL08
+    def window_size(self, window_size: list[int]):  # numpydoc ignore=GL08
         if len(window_size) != 2:
             raise ValueError('Expected a length 2 iterable for ``window_size``.')
 
@@ -2658,7 +2718,7 @@ class Theme(_ThemeConfig):
         self._title = title
 
     @property
-    def anti_aliasing(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def anti_aliasing(self) -> str | None:  # numpydoc ignore=RT01
         """Enable or disable anti-aliasing.
 
         Should be either ``"ssaa"``, ``"msaa"``, ``"fxaa"``, or ``None``.
@@ -2684,7 +2744,7 @@ class Theme(_ThemeConfig):
         return self._anti_aliasing
 
     @anti_aliasing.setter
-    def anti_aliasing(self, anti_aliasing: Union[str, None]):  # numpydoc ignore=GL08
+    def anti_aliasing(self, anti_aliasing: str | None):  # numpydoc ignore=GL08
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
                 raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
@@ -2733,7 +2793,8 @@ class Theme(_ThemeConfig):
 
     @multi_rendering_splitting_position.setter
     def multi_rendering_splitting_position(
-        self, multi_rendering_splitting_position: float
+        self,
+        multi_rendering_splitting_position: float,
     ):  # numpydoc ignore=GL08
         self._multi_rendering_splitting_position = multi_rendering_splitting_position
 
@@ -2765,7 +2826,7 @@ class Theme(_ThemeConfig):
         if mapper not in mappers:
             raise ValueError(
                 f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}"
+                f"include:\n {', '.join(mappers)}",
             )
 
         self._volume_mapper = mapper
@@ -2850,16 +2911,16 @@ class Theme(_ThemeConfig):
 
         Examples
         --------
-        Set the x axis color to black.
+        Set the x-axis color to black.
 
         >>> import pyvista as pv
         >>> pv.global_theme.axes.x_color = 'black'
 
-        Show axes by default.
+        Show the axes orientation widget by default.
 
         >>> pv.global_theme.axes.show = True
 
-        Use the ``vtk.vtkCubeAxesActor``.
+        Use the :func:`axes orientation box <pyvista.create_axes_orientation_box>` as the orientation widget.
 
         >>> pv.global_theme.axes.box = True
 
@@ -2873,13 +2934,14 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[['pyvista.Plotter'], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback
 
     @before_close_callback.setter
     def before_close_callback(
-        self, value: Callable[['pyvista.Plotter'], None]
+        self,
+        value: Callable[[pyvista.Plotter], None],
     ):  # numpydoc ignore=GL08
         self._before_close_callback = value
 
@@ -2978,7 +3040,7 @@ class Theme(_ThemeConfig):
     def name(self, name: str):  # numpydoc ignore=GL08
         self._name = name
 
-    def load_theme(self, theme: Union[str, 'Theme']) -> None:
+    def load_theme(self, theme: str | Theme) -> None:
         """Overwrite the current theme with a theme.
 
         Parameters
@@ -3017,12 +3079,11 @@ class Theme(_ThemeConfig):
 
         if not isinstance(theme, Theme):
             raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
             )
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
-        return None
 
     def save(self, filename: str) -> None:
         """Serialize this theme to a json file.
@@ -3048,10 +3109,8 @@ class Theme(_ThemeConfig):
         data = self.to_dict()
         # functions are not serializable
         del data["before_close_callback"]
-        with open(filename, 'w') as f:
+        with Path(filename).open('w') as f:
             json.dump(data, f)
-
-        return None
 
     @property
     def split_sharp_edges(self) -> bool:  # numpydoc ignore=RT01
@@ -3116,7 +3175,7 @@ class Theme(_ThemeConfig):
         self._lighting_params = config
 
     @property
-    def logo_file(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def logo_file(self) -> str | None:  # numpydoc ignore=RT01
         """Return or set the logo file.
 
         .. note::
@@ -3144,7 +3203,7 @@ class Theme(_ThemeConfig):
         return self._logo_file
 
     @logo_file.setter
-    def logo_file(self, logo_file: Optional[Union[str, pathlib.Path]]):  # numpydoc ignore=GL08
+    def logo_file(self, logo_file: str | pathlib.Path | None):  # numpydoc ignore=GL08
         if logo_file is None:
             path = None
         else:

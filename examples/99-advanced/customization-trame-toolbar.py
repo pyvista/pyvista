@@ -7,10 +7,16 @@ Customize Trame toolbar
 Bring more of the power of trame to the jupyter view.
 """
 
+from __future__ import annotations
+
 import asyncio
 
 import pyvista as pv
-from pyvista.trame.ui.vuetify3 import button, divider, select, slider, text_field
+from pyvista.trame.ui.vuetify3 import button
+from pyvista.trame.ui.vuetify3 import divider
+from pyvista.trame.ui.vuetify3 import select
+from pyvista.trame.ui.vuetify3 import slider
+from pyvista.trame.ui.vuetify3 import text_field
 
 ###############################################################################
 # Let's first create the menu items we want to add to the trame's toolbar.
@@ -76,8 +82,7 @@ def button_play():
 
 
 ###############################################################################
-# We will do a simple rendering of a Cone using the vtk `vtkConeSouce`
-# algorithm.
+# We will do a simple rendering of a Cone using `ConeSouce`.
 #
 # When using the ``pl.show`` method. The function we created ``custom_tools``
 # should be passed as a ``jupyter_kwargs`` argument under the key

@@ -10,6 +10,14 @@ updates:
         patterns:
           - "trame"
           - "trame-*"
+      sphinx:
+        patterns:
+          - "*sphinx*"
+          - "pypandoc"
+      pytest:
+        patterns:
+          - "pytest"
+          - "pytest-*"
     labels:
       - "maintenance"
       - "dependencies"

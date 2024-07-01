@@ -16,6 +16,9 @@ PyVista is:
 
 .. _Visualization Toolkit: https://vtk.org
 
+.. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
+
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
 through NumPy and direct array access through a variety of methods and classes.
 This package provides a Pythonic, well-documented interface exposing
@@ -80,13 +83,9 @@ Status badges
 .. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
    :target: https://github.com/pyvista/pyvista/discussions
 
-.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat
-  :target: https://timothycrosley.github.io/isort
-  :alt: isort
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
-  :target: https://github.com/psf/black
-  :alt: black
+.. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
+  :target: https://github.com/prettier/prettier
+  :alt: prettier
 
 .. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
    :target: https://www.python.org/downloads/
@@ -101,29 +100,35 @@ Status badges
    :target: https://github.com/astral-sh/ruff
    :alt: Ruff
 
-+----------------------+------------------------+-------------+
-| Deployment           | |pypi|                 | |conda|     |
-+----------------------+------------------------+-------------+
-| Build Status         | |GH-CI|                | |python|    |
-|                      +------------------------+-------------+
-|                      | |pre-commit.ci status| |             |
-+----------------------+------------------------+-------------+
-| Metrics              | |codacy|               | |codecov|   |
-+----------------------+------------------------+-------------+
-| Activity             | |PyPIact|              | |condaact|  |
-+----------------------+------------------------+-------------+
-| Citation             | |joss|                 | |zenodo|    |
-+----------------------+------------------------+-------------+
-| License              | |MIT|                  |             |
-+----------------------+------------------------+-------------+
-| Community            | |slack|                | |discuss|   |
-+----------------------+------------------------+-------------+
-| Formatter            | |black|                | |isort|     |
-+----------------------+------------------------+-------------+
-| Linter               | |Ruff|                               |
-+----------------------+------------------------+-------------+
-| Affiliated           | |NumFOCUS Affiliated|                |
-+----------------------+------------------------+-------------+
+.. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/nschloe/awesome-scientific-computing
+
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
+
++----------------------+------------------------------------------------+
+| Deployment           | |pypi| |conda| |Packaging status|              |
++----------------------+------------------------------------------------+
+| Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
++----------------------+------------------------------------------------+
+| Metrics              | |codacy| |codecov|                             |
++----------------------+------------------------------------------------+
+| Activity             | |PyPIact| |condaact|                           |
++----------------------+------------------------------------------------+
+| Citation             | |joss| |zenodo|                                |
++----------------------+------------------------------------------------+
+| License              | |MIT|                                          |
++----------------------+------------------------------------------------+
+| Community            | |slack| |discuss|                              |
++----------------------+------------------------------------------------+
+| Formatter            | |prettier|                                     |
++----------------------+------------------------------------------------+
+| Linter               | |Ruff|                                         |
++----------------------+------------------------------------------------+
+| Affiliated           | |NumFOCUS Affiliated|                          |
++----------------------+------------------------------------------------+
+| Mentioned            | |Awesome Scientific Computing|                 |
++----------------------+------------------------------------------------+
 
 
 Highlights
