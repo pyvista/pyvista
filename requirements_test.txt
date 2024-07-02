@@ -4,13 +4,13 @@
 cmocean<4.0.4
 colorcet<3.2.0
 embreex<2.17.8
-hypothesis<6.103.3
+hypothesis<6.104.3
 imageio<2.35.0
 imageio-ffmpeg<0.6.0
 ipython<9.0.0
 ipywidgets<9.0.0
 meshio<5.4.0
-mypy<1.9.0
+mypy<1.11.0
 nest_asyncio<1.6.1
 npt-promote==0.1
 numpydoc==1.7.0
