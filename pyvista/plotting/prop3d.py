@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista.core import _validation
+from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
@@ -360,7 +361,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @user_matrix.setter
     def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
-        array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
+        array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
     @property

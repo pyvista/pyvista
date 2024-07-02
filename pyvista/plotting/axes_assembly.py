@@ -642,14 +642,17 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         by one unit in the Z direction, rotates the actor about the z-axis by
         approximately 45 degrees, and shrinks the actor by a factor of 0.5.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> axes = pv.AxesAssembly()
-        >>> array = [
-        ...     [0.35355339, -0.35355339, 0.0, 0.0],
-        ...     [0.35355339, 0.35355339, 0.0, 0.0],
-        ...     [0.0, 0.0, 0.5, 1.0],
-        ...     [0.0, 0.0, 0.0, 1.0],
-        ... ]
+        >>> array = np.array(
+        ...     [
+        ...         [0.35355339, -0.35355339, 0.0, 0.0],
+        ...         [0.35355339, 0.35355339, 0.0, 0.0],
+        ...         [0.0, 0.0, 0.5, 1.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
         >>> axes.user_matrix = array
 
         >>> pl = pv.Plotter()
