@@ -160,6 +160,10 @@ class AxesAssembly(Assembly):
         self._label_actors = (Label(), Label(), Label())
         self.add_parts(self._label_actors)
 
+        # Init label actors and add to assembly
+        self._label_actors = (Label(), Label(), Label())
+        [self.AddPart(actor) for actor in self._label_actors]
+
         # Set colors
         if x_color is None:
             x_color = pv.global_theme.axes.x_color
