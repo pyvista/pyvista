@@ -9,6 +9,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
@@ -22,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
     from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -86,6 +88,26 @@ class AxesAssembly(Assembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the axes. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the axes.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the actor.
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -113,6 +135,28 @@ class AxesAssembly(Assembly):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
+
+    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+    modify the lengths.
+
+    >>> axes = pv.AxesAssembly(
+    ...     shaft_type='pyramid',
+    ...     tip_type='hemisphere',
+    ...     tip_length=0.1,
+    ...     shaft_length=(0.5, 1.0, 1.5),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Position and orient the axes in space.
+
+    >>> axes = pv.AxesAssembly(
+    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
     """
 
     def __init__(
@@ -129,17 +173,16 @@ class AxesAssembly(Assembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        position=(0, 0, 0),
-        orientation=(0, 0, 0),
-        scale=(1, 1, 1),
-        origin=(0, 0, 0),
-        user_matrix=None,
-        symmetric_bounds=False,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
 
-        # Add dummy prop3d for calculation transformations
+        # Add dummy prop3d for calculating transformations
         self._prop3d = Actor()
 
         # Init shaft and tip actors
@@ -176,8 +219,6 @@ class AxesAssembly(Assembly):
         self.y_color = y_color  # type: ignore[assignment]
         self.z_color = z_color  # type: ignore[assignment]
 
-        self._is_init = False
-
         # Set text labels
         if labels is None:
             self.x_label = 'X' if x_label is None else x_label
@@ -203,20 +244,18 @@ class AxesAssembly(Assembly):
             prop.bold = True
             prop.italic = True
 
-        self.position = position
-        self.orientation = orientation
-        self.scale = scale
-        self.origin = origin
-        self.user_matrix = user_matrix
-
-        self._is_init = True
-
-        self._update()
+        self.position = position  # type: ignore[assignment]
+        self.orientation = orientation  # type: ignore[assignment]
+        self.scale = scale  # type: ignore[assignment]
+        self.origin = origin  # type: ignore[assignment]
+        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     def __repr__(self):
-        """Representation of the axes actor."""
-        matrix_not_set = self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4))
-        mat_info = 'Identity' if matrix_not_set else 'Set'
+        """Representation of the axes assembly."""
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -240,6 +279,8 @@ class AxesAssembly(Assembly):
             f"      Shaft                   {self.z_color[0]}",
             f"      Tip                     {self.z_color[1]}",
             f"  Position:                   {self.position}",
+            f"  Orientation:                {self.orientation}",
+            f"  Origin:                     {self.origin}",
             f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
             f"  Visible:                    {self.visibility}",
@@ -550,7 +591,7 @@ class AxesAssembly(Assembly):
         position_vectors += radial_offset1 + radial_offset2
 
         # Transform positions
-        matrix = self._prop3d.transformation_matrix
+        matrix = array_from_vtkmatrix(self._prop3d.GetMatrix())
         return apply_transformation_to_points(matrix, position_vectors)
 
     def _apply_transformation_to_labels(self):
@@ -558,225 +599,6 @@ class AxesAssembly(Assembly):
         self._label_actors[0].position = x_pos
         self._label_actors[1].position = y_pos
         self._label_actors[2].position = z_pos
-
-    def _update(self):
-        self._shaft_and_tip_geometry_source.update()
-        self._apply_transformation_to_labels()
-
-    @property
-    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Scaling factor applied to the axes.
-
-        Examples
-        --------
-        Create an actor using the :class:`pyvista.Plotter` and then change the
-        scale of the actor.
-
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor.scale = (2.0, 2.0, 2.0)
-        >>> actor.scale
-        (2.0, 2.0, 2.0)
-
-        """
-        return self._prop3d.scale
-
-    @scale.setter
-    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('scale', scale)
-
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the entity position.
-
-        Examples
-        --------
-        Change the position of an actor. Note how this does not change the
-        position of the underlying dataset, just the relative location of the
-        actor in the :class:`pyvista.Plotter`.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(mesh, color='r')
-        >>> actor.position = (0, 0, 1)  # shifts the red sphere up
-        >>> pl.show()
-
-        """
-        return self._prop3d.position
-
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('position', position)
-
-    def rotate_x(self, angle: float):
-        """Rotate the entity about the x-axis.
-
-        Parameters
-        ----------
-        angle : float
-            Angle to rotate the entity about the x-axis in degrees.
-
-        Examples
-        --------
-        Rotate the actor about the x-axis 45 degrees. Note how this does not
-        change the location of the underlying dataset.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color='r',
-        ...     style='wireframe',
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> actor.rotate_x(45)
-        >>> pl.show_axes()
-        >>> pl.show()
-
-        """
-        self.RotateX(angle)
-
-    def rotate_y(self, angle: float):
-        """Rotate the entity about the y-axis.
-
-        Parameters
-        ----------
-        angle : float
-            Angle to rotate the entity about the y-axis in degrees.
-
-        Examples
-        --------
-        Rotate the actor about the y-axis 45 degrees. Note how this does not
-        change the location of the underlying dataset.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color='r',
-        ...     style='wireframe',
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> actor.rotate_y(45)
-        >>> pl.show_axes()
-        >>> pl.show()
-
-        """
-        self.RotateY(angle)
-
-    def rotate_z(self, angle: float):
-        """Rotate the entity about the z-axis.
-
-        Parameters
-        ----------
-        angle : float
-            Angle to rotate the entity about the z-axis in degrees.
-
-        Examples
-        --------
-        Rotate the actor about the z-axis 45 degrees. Note how this does not
-        change the location of the underlying dataset.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color='r',
-        ...     style='wireframe',
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> actor.rotate_z(45)
-        >>> pl.show_axes()
-        >>> pl.show()
-
-        """
-        self.RotateZ(angle)
-
-    @property
-    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the entity orientation angles.
-
-        Orientation angles of the axes which define rotations about the
-        world's x-y-z axes. The angles are specified in degrees and in
-        x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
-
-        Rotations are applied about the specified :attr:`~origin`.
-
-        Examples
-        --------
-        Reorient just the actor and plot it. Note how the actor is rotated
-        about the origin ``(0, 0, 0)`` by default.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube(center=(0, 0, 3))
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color='r',
-        ...     style='wireframe',
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> actor.orientation = (45, 0, 0)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        Repeat the last example, but this time reorient the actor about
-        its center by specifying its :attr:`~origin`.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube(center=(0, 0, 3))
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color='b')
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color='r',
-        ...     style='wireframe',
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> actor.origin = actor.center
-        >>> actor.orientation = (45, 0, 0)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        Show that the orientation changes with rotation.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(mesh)
-        >>> actor.rotate_x(90)
-        >>> actor.orientation  # doctest:+SKIP
-        (90, 0, 0)
-
-        Set the orientation directly.
-
-        >>> actor.orientation = (0, 45, 45)
-        >>> actor.orientation  # doctest:+SKIP
-        (0, 45, 45)
-
-        """
-        return self._prop3d.orientation
-
-    @orientation.setter
-    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('orientation', orientation)
 
     def _set_prop3d_attr(self, name, value):
         # Set props for shaft and tip actors
@@ -789,8 +611,94 @@ class AxesAssembly(Assembly):
         self._apply_transformation_to_labels()
 
     @property
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the scaling factor applied to the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.scale = (2.0, 2.0, 2.0)
+        >>> axes.scale
+        (2.0, 2.0, 2.0)
+        """
+        return self._prop3d.scale
+
+    @scale.setter
+    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('scale', scale)
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the position of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.position = (1.0, 2.0, 3.0)
+        >>> axes.position
+        (1.0, 2.0, 3.0)
+        """
+        return self._prop3d.position
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('position', position)
+
+    @property
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the axes orientation angles.
+
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+
+        Rotations are applied about the specified :attr:`~origin`.
+
+        Examples
+        --------
+        Create axes positioned above the origin and set its orientation.
+
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly(
+        ...     position=(0, 0, 2), orientation=(45, 0, 0)
+        ... )
+
+        Create default non-oriented axes as well for reference.
+
+        >>> reference_axes = pv.AxesAssembly(
+        ...     x_color='black', y_color='black', z_color='black'
+        ... )
+
+        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
+        default, such that the rotated axes appear directly above the reference axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+
+        Now change the origin of the axes and plot the result. Since the rotation
+        is performed about a different point, the final position of the axes changes.
+
+        >>> axes.origin = (2, 2, 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        """
+        return self._prop3d.orientation
+
+    @orientation.setter
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('orientation', orientation)
+
+    @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the entity origin.
+        """Return or set the origin of the axes.
 
         This is the point about which all rotations take place.
 
@@ -801,54 +709,18 @@ class AxesAssembly(Assembly):
 
     @origin.setter
     def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._prop3d.origin = origin
-
-    @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return the bounds of the entity.
-
-        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
-        >>> actor = pl.add_mesh(mesh)
-        >>> actor.bounds
-        (-0.05, 0.05, -0.1, 0.1, -0.15, 0.15)
-
-        """
-        return self.GetBounds()
-
-    @property
-    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return the center of the entity.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere(center=(0.5, 0.5, 1)))
-        >>> actor.center  # doctest:+SKIP
-        (0.5, 0.5, 1)
-        """
-        bnds = self.bounds
-        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
+        self._set_prop3d_attr('origin', origin)
 
     @property
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return or set the user matrix.
 
         In addition to the instance variables such as position and orientation, the user
-        can add an additional transformation to the actor.
+        can add a transformation to the actor.
 
         This matrix is concatenated with the actor's internal transformation that is
-        implicitly created when the actor is created. This affects the actor/rendering
-        only, not the input data itself.
-
-        The user matrix is the last transformation applied to the actor before
-        rendering.
+        implicitly created when the actor is created. The user matrix is the last
+        transformation applied to the actor before rendering.
 
         Returns
         -------
@@ -857,54 +729,73 @@ class AxesAssembly(Assembly):
 
         Examples
         --------
-        Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
-        effectively translates the actor by one unit in the Z direction,
-        rotates the actor about the z-axis by approximately 45 degrees, and
-        shrinks the actor by a factor of 0.5.
+        Apply a 4x4 transformation to the axes. This effectively translates the actor
+        by one unit in the Z direction, rotates the actor about the z-axis by
+        approximately 45 degrees, and shrinks the actor by a factor of 0.5.
 
         >>> import numpy as np
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
-        >>> actor = pl.add_mesh(
-        ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
-        ...     line_width=5,
-        ...     lighting=False,
-        ... )
-        >>> arr = np.array(
+        >>> axes = pv.AxesAssembly()
+        >>> array = np.array(
         ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2],
+        ...         [0.35355339, -0.35355339, 0.0, 0.0],
+        ...         [0.35355339, 0.35355339, 0.0, 0.0],
+        ...         [0.0, 0.0, 0.5, 1.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
         ...     ]
         ... )
-        >>> actor.user_matrix = arr
-        >>> pl.show_axes()
+        >>> axes.user_matrix = array
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
         >>> pl.show()
 
         """
-        return self._user_matrix
+        return self._prop3d.user_matrix
 
     @user_matrix.setter
     def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        array = np.eye(4) if matrix is None else _validation.validate_transform4x4(matrix)
-        self._user_matrix = array
+        self._set_prop3d_attr('user_matrix', matrix)
 
     @property
-    def length(self) -> float:  # numpydoc ignore=RT01
-        """Return the length of the entity.
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return the bounds of the axes.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(pv.Sphere())
-        >>> actor.length
-        1.7272069317100354
+        >>> axes = pv.AxesAssembly()
+        >>> axes.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        """
+        return self.GetBounds()
+
+    @property
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the center of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.center
+        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
+        """
+        bnds = self.bounds
+        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
+
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.length
+        1.9052558909067219
         """
         bnds = self.bounds
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))

@@ -4,10 +4,8 @@ import re
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista as pv
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 
 @pytest.fixture()
@@ -42,6 +40,8 @@ def test_axes_assembly_repr(axes_assembly):
         "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "  Position:                   (0.0, 0.0, 0.0)",
+        "  Orientation:                (0.0, -0.0, 0.0)",
+        "  Origin:                     (0.0, 0.0, 0.0)",
         "  Scale:                      (1.0, 1.0, 1.0)",
         "  User matrix:                Identity",
         "  Visible:                    True",
@@ -143,13 +143,6 @@ def test_axes_assembly_theme(axes_assembly):
     assert axes_geometry_source.z_color[1].name == 'gray'
 
 
-# def test_origin(axes):
-#     origin = np.random.default_rng().random(3)
-#     axes.origin = origin
-#     assert np.all(axes.GetOrigin() == origin)
-#     assert np.all(axes.origin == origin)
-
-
 def test_axes_assembly_label_position(axes_assembly):
     assert axes_assembly.label_position == (0.8, 0.8, 0.8)
     label_position = (1, 2, 3)
@@ -249,165 +242,84 @@ def test_axes_assembly_label_size_init():
     assert axes_assembly.label_size == label_size
 
 
-# def test_axes_assembly_properties(axes_assembly):
-#     axes_assembly.x_shaft_prop.ambient = 0.1
-#     assert axes_assembly.x_shaft_prop.ambient == 0.1
-#     axes_assembly.x_tip_prop.ambient = 0.11
-#     assert axes_assembly.x_tip_prop.ambient == 0.11
-#
-#     axes_assembly.y_shaft_prop.ambient = 0.2
-#     assert axes_assembly.y_shaft_prop.ambient == 0.2
-#     axes_assembly.y_tip_prop.ambient = 0.12
-#     assert axes_assembly.y_tip_prop.ambient == 0.12
-#
-#     axes_assembly.z_shaft_prop.ambient = 0.3
-#     assert axes_assembly.z_shaft_prop.ambient == 0.3
-#     axes_assembly.z_tip_prop.ambient = 0.13
-#     assert axes_assembly.z_tip_prop.ambient == 0.13
-#
-#     # Test init
-#     prop = pv.Property(ambient=0.42)
-#     axes_assembly = pv.AxesAssembly(properties=prop)
-#     assert axes_assembly.x_shaft_prop.ambient == 0.42
-#     assert axes_assembly.x_shaft_prop is not prop
-#     assert axes_assembly.x_tip_prop.ambient == 0.42
-#     assert axes_assembly.y_shaft_prop is not prop
-#
-#     assert axes_assembly.y_shaft_prop.ambient == 0.42
-#     assert axes_assembly.y_shaft_prop is not prop
-#     assert axes_assembly.y_tip_prop.ambient == 0.42
-#     assert axes_assembly.y_shaft_prop is not prop
-#
-#     assert axes_assembly.z_shaft_prop.ambient == 0.42
-#     assert axes_assembly.z_shaft_prop is not prop
-#     assert axes_assembly.z_tip_prop.ambient == 0.42
-#     assert axes_assembly.z_shaft_prop is not prop
-#
-#     msg = '`properties` must be a property object or a dictionary.'
-#     with pytest.raises(TypeError, match=msg):
-#         pv.pv.AxesAssembly(properties="not_a_dict")
+def test_axes_assembly_origin(axes_assembly):
+    assert axes_assembly.origin == (0, 0, 0)
+    origin = (1, 2, 3)
+    axes_assembly.origin = origin
+    assert axes_assembly.origin == origin
 
 
-# def test_axes_assembly_user_matrix():
-#     eye = np.eye(4)
-#     eye2 = eye * 2
-#     eye3 = eye * 3
-#
-#     a = pv.AxesActor(_make_orientable=False)
-#     assert np.array_equal(a.user_matrix, eye)
-#     assert np.array_equal(a._user_matrix, eye)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye)
-#
-#     a.user_matrix = eye2
-#     assert np.array_equal(a.user_matrix, eye2)
-#     assert np.array_equal(a._user_matrix, eye2)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye2)
-#
-#     a._make_orientable = True
-#     a.SetUserMatrix(vtkmatrix_from_array(eye3))
-#     assert np.array_equal(a.user_matrix, eye3)
-#     assert np.array_equal(a._user_matrix, eye3)
-#     assert np.array_equal(array_from_vtkmatrix(a.GetUserMatrix()), eye3)
+def test_axes_assembly_origin_init():
+    origin = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(origin=origin)
+    assert axes_assembly.origin == origin
 
 
-def _compute_expected_bounds(axes_assembly):
-    # Compute expected bounds by transforming vtkAxesActor actors
-
-    # Create two vtkAxesActor (one for (+) and one for (-) axes)
-    # and store their actors
-    actors = []
-    vtk_axes = [vtk.vtkAxesActor(), vtk.vtkAxesActor()]
-    for axes in vtk_axes:
-        axes.SetNormalizedShaftLength(axes_assembly.shaft_length)
-        axes.SetNormalizedTipLength(axes_assembly.tip_length)
-        axes.SetTotalLength(axes_assembly.total_length)
-        axes.SetShaftTypeToCylinder()
-
-        props = vtk.vtkPropCollection()
-        axes.GetActors(props)
-        actors.extend([props.GetItemAsObject(num) for num in range(6)])
-
-    # Transform actors and get their bounds
-    # Half of the actors are reflected to give symmetric axes
-    bounds = []
-    matrix = axes_assembly._concatenate_implicit_matrix_and_user_matrix()
-    matrix_reflect = matrix @ np.diag((-1, -1, -1, 1))
-    for i, actor in enumerate(actors):
-        m = matrix if i < 6 else matrix_reflect
-        actor.SetUserMatrix(vtkmatrix_from_array(m))
-        bounds.append(actor.GetBounds())
-
-    b = np.array(bounds)
-    return (
-        np.min(b[:, 0]),
-        np.max(b[:, 1]),
-        np.min(b[:, 2]),
-        np.max(b[:, 3]),
-        np.min(b[:, 4]),
-        np.max(b[:, 5]),
-    )
+def test_axes_assembly_scale(axes_assembly):
+    assert axes_assembly.scale == (1.0, 1.0, 1.0)
+    scale = (1, 2, 3)
+    axes_assembly.scale = scale
+    assert axes_assembly.scale == scale
 
 
-# def test_axes_assembly_center(axes_assembly):
-#     assert axes_assembly.center == (0, 0, 0)
-#     assert axes_assembly.GetCenter() == (0, 0, 0)
-#
-#     axes_assembly.position = (1, 2, 3)
-#     assert axes_assembly.center == axes_assembly.position
-#     assert axes_assembly.GetCenter() == axes_assembly.position
-#
-#     # test center is always the origin when workaround is disabled
-#     axes_assembly._make_orientable = False
-#     assert axes_assembly.GetCenter() == (0, 0, 0)
+def test_axes_assembly_scale_init():
+    scale = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(scale=scale)
+    assert axes_assembly.scale == scale
 
 
-# @pytest.mark.parametrize('use_scale', [True, False])
-# def test_axes_assembly_length(use_scale):
-#     axes_assembly = AxesActorProp()
-#     default_length = 3.4641016151377544
-#     assert np.allclose(axes_assembly.length, default_length)
-#     assert np.allclose(axes_assembly.GetLength(), default_length)
-#
-#     scaled_length = 7.4833147735478835
-#     if use_scale:
-#         axes_assembly.scale = (1, 2, 3)
-#     else:
-#         axes_assembly.total_length = (1, 2, 3)
-#     assert np.allclose(axes_assembly.length, scaled_length)
-#     assert np.allclose(axes_assembly.GetLength(), scaled_length)
-#
-#     axes_assembly._make_orientable = False
-#     if use_scale:
-#         # test length is not correct when workaround is disabled
-#         assert np.allclose(axes_assembly.length, default_length)
-#         assert np.allclose(axes_assembly.GetLength(), default_length)
-#     else:
-#         assert np.allclose(axes_assembly.length, scaled_length)
-#         assert np.allclose(axes_assembly.GetLength(), scaled_length)
+def test_axes_assembly_position(axes_assembly):
+    assert axes_assembly.position == (0, 0, 0)
+    position = (1, 2, 3)
+    axes_assembly.position = position
+    assert axes_assembly.position == position
 
 
-# def test_axes_assembly_symmetric_bounds():
-#     axes_assembly = AxesActorProp()
-#     default_bounds = (-1, 1, -1, 1, -1, 1)
-#     default_length = 3.4641016151377544
-#     assert np.allclose(axes_assembly.center, (0, 0, 0))
-#     assert np.allclose(axes_assembly.length, default_length)
-#     assert np.allclose(axes_assembly.bounds, default_bounds)
-#
-#     # test radius > length
-#     axes_assembly.shaft_radius = 2
-#     assert np.allclose(axes_assembly.center, (0, 0, 0))
-#     assert np.allclose(axes_assembly.length, 5.542562584220408)
-#     assert np.allclose(axes_assembly.bounds, (-1.6, 1.6, -1.6, 1.6, -1.6, 1.6))
-#
-#     axes_assembly.symmetric_bounds = False
-#
-#     # make axes geometry tiny to approximate lines and points
-#     axes_assembly.shaft_radius = 1e-8
-#     axes_assembly.tip_radius = 1e-8
-#     axes_assembly.shaft_length = 1
-#     axes_assembly.tip_length = 0
-#
-#     assert np.allclose(axes_assembly.center, (0.5, 0.5, 0.5))
-#     assert np.allclose(axes_assembly.length, default_length / 2)
-#     assert np.allclose(axes_assembly.bounds, (0, 1, 0, 1, 0, 1))
+def test_axes_assembly_position_init():
+    position = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(position=position)
+    assert axes_assembly.position == position
+
+
+def test_axes_assembly_orientation(axes_assembly):
+    assert axes_assembly.orientation == (0, 0, 0)
+    orientation = (1, 2, 4)
+    axes_assembly.orientation = orientation
+    assert axes_assembly.orientation == orientation
+
+
+def test_axes_assembly_orientation_init():
+    orientation = (1, 2, 4)
+    axes_assembly = pv.AxesAssembly(orientation=orientation)
+    assert axes_assembly.orientation == orientation
+
+
+def test_axes_assembly_user_matrix(axes_assembly):
+    assert np.array_equal(axes_assembly.user_matrix, np.eye(4))
+    user_matrix = np.diag((2, 3, 4, 1))
+    axes_assembly.user_matrix = user_matrix
+    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+
+
+def test_axes_assembly_user_matrix_init():
+    user_matrix = np.diag((2, 3, 4, 1))
+    axes_assembly = pv.AxesAssembly(user_matrix=user_matrix)
+    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+
+
+def test_axes_assembly_center(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.center == tuple(dataset.center)
+
+
+def test_axes_assembly_bounds(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.bounds == tuple(dataset.bounds)
+
+
+def test_axes_assembly_length(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.length == dataset.length

@@ -273,17 +273,6 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetOrigin(value)
 
     @property
-    def transformation_matrix(self) -> NumpyArray[float]:
-        """Transformation matrix of the entity.
-
-        Returns
-        -------
-        numpy.ndarray
-            4x4 transformation matrix.
-        """
-        return array_from_vtkmatrix(self.GetMatrix())
-
-    @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the entity.
 
