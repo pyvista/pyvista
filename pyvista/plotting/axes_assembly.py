@@ -16,6 +16,7 @@ from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 from pyvista.plotting.text import Label
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
@@ -34,11 +35,12 @@ if TYPE_CHECKING:  # pragma: no cover
 class _AxesGeometryKwargs(TypedDict):
     shaft_type: AxesGeometrySource.GeometryTypes | DataSet
     shaft_radius: float
-    shaft_length: float
+    shaft_length: float | VectorLike[float]
     tip_type: AxesGeometrySource.GeometryTypes | DataSet
     tip_radius: float
     tip_length: float | VectorLike[float]
     symmetric: bool
+    symmetric_bounds: bool
 
 
 class AxesAssembly(_vtk.vtkPropAssembly):
@@ -126,9 +128,12 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
+
+        self._prop3d = Actor()
 
         # Init shaft and tip actors
         self._shaft_actors = (Actor(), Actor(), Actor())
@@ -185,6 +190,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             prop.bold = True
             prop.italic = True
 
+        self.orientation = orientation  # type: ignore[assignment]
         self._update()
 
     def __repr__(self):
@@ -427,7 +433,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         position_vectors += radial_offset1 + radial_offset2
 
         # Transform positions
-        matrix = np.eye(4)  # TODO: use Prop3D transformation
+        matrix = array_from_vtkmatrix(self._prop3d.GetMatrix())
         return apply_transformation_to_points(matrix, position_vectors)
 
     def _apply_transformation_to_labels(self):
@@ -436,9 +442,60 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[1].position = y_pos
         self._label_actors[2].position = z_pos
 
+    def _set_prop3d_attr(self, name, value):
+        # Set props for shaft and tip actors
+        # Validate input by setting then getting from prop3d
+        setattr(self._prop3d, name, value)
+        valid_value = getattr(self._prop3d, name)
+        [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
+
+        # Update labels
+        self._apply_transformation_to_labels()
+
     def _update(self):
         self._shaft_and_tip_geometry_source.update()
         self._apply_transformation_to_labels()
+
+    @property
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the axes orientation angles.
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+        Rotations are applied about the specified :attr:`~origin`.
+        Examples
+        --------
+        Create axes positioned above the origin and set its orientation.
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly(
+        ...     position=(0, 0, 2), orientation=(45, 0, 0)
+        ... )
+        Create default non-oriented axes as well for reference.
+        >>> reference_axes = pv.AxesAssembly(
+        ...     x_color='black', y_color='black', z_color='black'
+        ... )
+        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
+        default, such that the rotated axes appear directly above the reference axes.
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        Now change the origin of the axes and plot the result. Since the rotation
+        is performed about a different point, the final position of the axes changes.
+        >>> axes.origin = (2, 2, 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        """
+        return self._prop3d.orientation
+
+    @orientation.setter
+    def orientation(self,
+                    orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('orientation', orientation)
 
 
 def _validate_color_sequence(
