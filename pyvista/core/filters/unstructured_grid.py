@@ -145,7 +145,7 @@ class UnstructuredGridFilters(DataSetFilters):
             raise VTKVersionError("UnstructuredGrid.clean requires VTK >= 9.2.2") from None
 
         alg = vtkStaticCleanUnstructuredGrid()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(self.copy())
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
         alg.SetMergingArray(merging_array_name)
