@@ -233,7 +233,7 @@ class _PointSet(DataSet):
         )
 
 
-class PointSet(_vtk.vtkPointSet, _PointSet):
+class PointSet(_PointSet, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -497,7 +497,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
+class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -1727,7 +1727,7 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
-class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
+class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:
@@ -2320,7 +2320,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return grid
 
 
-class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
+class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -2686,7 +2686,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
+class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
 
     Can be initialized by the following:

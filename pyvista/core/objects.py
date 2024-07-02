@@ -18,7 +18,7 @@ from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
 
-class Table(_vtk.vtkTable, DataObject):
+class Table(DataObject, _vtk.vtkTable):
     """Wrapper for the ``vtkTable`` class.
 
     Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
@@ -33,12 +33,11 @@ class Table(_vtk.vtkTable, DataObject):
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, deep=True, **kwargs):
         """Initialize the table."""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkTable):
-                deep = kwargs.get('deep', True)
                 if deep:
                     self.deep_copy(args[0])
                 else:

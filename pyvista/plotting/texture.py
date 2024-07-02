@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 
-class Texture(_vtk.vtkTexture, DataObject):
+class Texture(DataObject, _vtk.vtkTexture):
     """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
@@ -115,7 +115,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(uinput, **kwargs)
+        super().__init__(uinput)
 
         if isinstance(uinput, _vtk.vtkTexture):
             self._from_texture(uinput)

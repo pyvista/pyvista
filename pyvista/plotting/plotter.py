@@ -4405,9 +4405,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            self.mapper.scalar_mode = 'point'
+            self.mapper.scalar_map_mode = 'point'
         elif scalars.shape[0] == volume.n_cells:
-            self.mapper.scalar_mode = 'cell'
+            self.mapper.scalar_map_mode = 'cell'
         else:
             raise_not_matching(scalars, volume)
 
