@@ -6,6 +6,7 @@ from collections.abc import Iterable
 import contextlib
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
 from typing import cast
@@ -38,6 +39,12 @@ from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
+    from pyvista.core.utilities.geometric_sources import AxesGeometrySource
+    from pyvista.plotting._typing import ColorLike
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -906,102 +913,149 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_axes_marker(
         self,
-        x_label=None,
-        y_label=None,
-        z_label=None,
-        label_color='black',
-        label_position=None,
-        label_size=50,
-        show_labels=True,
-        x_color=None,
-        y_color=None,
-        z_color=None,
-        position=(0, 0, 0),
-        scale=(1, 1, 1),
-        orientation=(0, 0, 0),
-        rotation=None,
-        user_matrix=None,
-        **kwargs,
+        shaft_type: AxesGeometrySource.GeometryTypes | pyvista.DataSet = 'cylinder',
+        shaft_radius: float = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: AxesGeometrySource.GeometryTypes | pyvista.DataSet = 'cone',
+        tip_radius: float = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric: bool = False,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        z_label: str | None = None,
+        labels: Sequence[str] | None = None,
+        label_color: ColorLike = 'black',
+        show_labels: bool = True,
+        label_position: float | VectorLike[float] | None = None,
+        label_size: int = 50,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
     ):
         """Add an axes actor to the scene.
 
         The axes colors, labels, and shaft/tip geometry can all be customized.
         The axes can also be arbitrarily positioned and oriented in space.
 
-        .. versionadded:: 0.43.0
-
-        .. warning::
-
-            Positioning and orienting the axes in space by setting ``position``,
-            ``orientation``, etc. is an experimental feature. In some cases, this
-            may result in the axes not being visible when plotting the axes. Call
-            :func:`reset_camera` with :attr:`bounds`
-            (e.g. ``ren.reset_camera(ren.bounds)``) to reset the camera if necessary.
-
         Parameters
         ----------
-        x_label : str, default: "X"
-            Text label for the x-axis.
+        shaft_type : str | pyvista.DataSet, default: 'cylinder'
+            Shaft type for all axes. Can be any of the following:
 
-        y_label : str, default: "Y"
-            Text label for the y-axis.
+            - ``'cylinder'``
+            - ``'sphere'``
+            - ``'hemisphere'``
+            - ``'cone'``
+            - ``'pyramid'``
+            - ``'cube'``
+            - ``'octahedron'``
 
-        z_label : str, default: "Z"
-            Text label for the z-axis.
+            Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+            specified. In this case, the dataset must be oriented such that it "points" in
+            the positive z direction.
 
-        label_color
+        shaft_radius : float, default: 0.025
+            Radius of the axes shafts.
 
-        show_labels : bool, default: False
-            Enable or disable the text labels for the axes.
+        shaft_length : float | VectorLike[float], default: 0.8
+            Length of the shaft for each axis.
 
-        x_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.x_color`
+        tip_type : str | pyvista.DataSet, default: 'cone'
+            Tip type for all axes. Can be any of the following:
+
+            - ``'cylinder'``
+            - ``'sphere'``
+            - ``'hemisphere'``
+            - ``'cone'``
+            - ``'pyramid'``
+            - ``'cube'``
+            - ``'octahedron'``
+
+            Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+            specified. In this case, the dataset must be oriented such that it "points" in
+            the positive z direction.
+
+        tip_radius : float, default: 0.1
+            Radius of the axes tips.
+
+        tip_length : float | VectorLike[float], default: 0.2
+            Length of the tip for each axis.
+
+        symmetric : bool, default: False
+            Mirror the axes such that they extend to negative values.
+
+        x_label : str, default: 'X'
+            Text label for the x-axis. Alternatively, set the label with :attr:`labels`.
+
+        y_label : str, default: 'Y'
+            Text label for the y-axis. Alternatively, set the label with :attr:`labels`.
+
+        z_label : str, default: 'Z'
+            Text label for the z-axis. Alternatively, set the label with :attr:`labels`.
+
+        labels : Sequence[str], optional,
+            Text labels for the axes. This is an alternative parameter to using
+            :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
+
+        label_color : ColorLike, default: 'black'
+            Color of the text labels.
+
+        show_labels : bool, default: True
+            Show or hide the text labels.
+
+        label_position : float | VectorLike[float], optional
+            Position of the text labels along each axis. By default, the labels are
+            positioned at the ends of the shafts.
+
+        label_size : int, default: 50
+            Size of the text labels.
+
+        x_color : ColorLike | Sequence[ColorLike], optional
             Color of the x-axis shaft and tip.
+            Defaults to :attr:`pyvista.plotting.themes._AxesConfig.x_color`.
 
-        y_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.y_color`
+        y_color : ColorLike | Sequence[ColorLike], optional
             Color of the y-axis shaft and tip.
+            Defaults to :attr:`pyvista.plotting.themes._AxesConfig.y_color`.
 
-        z_color : ColorLike, default: :attr:`pyvista.plotting.themes._AxesConfig.z_color`
+        z_color : ColorLike | Sequence[ColorLike], optional
             Color of the z-axis shaft and tip.
+            Defaults to :attr:`pyvista.plotting.themes._AxesConfig.z_color`.
 
-        position : Vector, default: (0, 0, 0)
-            Position of the axes.
+        position : VectorLike[float], default: (0.0, 0.0, 0.0)
+            Position of the axes in space.
 
-        orientation : Vector, default: (0, 0, 0)
+        orientation : VectorLike[float], default: (0, 0, 0)
             Orientation angles of the axes which define rotations about the
             world's x-y-z axes. The angles are specified in degrees and in
             x-y-z order. However, the actual rotations are applied in the
-            following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-            and finally :func:`~rotate_z`.
+            around the y-axis first, then the x-axis, and finally the z-axis.
 
-        origin : Vector, default: (0, 0, 0)
-            Origin of the axes. This is the point about which all
-            rotations take place.
+        origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+            Origin of the axes. This is the point about which all rotations take place. The
+            rotations are defined by the :attr:`orientation`.
 
-        scale : float | Vector, default: (1, 1, 1)
-            Scaling factor for the axes.
+        scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+            Scaling factor applied to the axes.
 
-        rotation
-
-        user_matrix : vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform | np.ndarray
-            Transformation to apply to the axes. Can be a vtkTransform,
-            3x3 transformation matrix, or 4x4 transformation matrix.
-            Defaults to the identity matrix.
-
-        **kwargs : dict, optional
-            See :class:`~pyvista.AxesActor` for additional keyword arguments.
+        user_matrix : MatrixLike[float], optional
+            A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+            The user matrix is the last transformation applied to the actor.
 
         Returns
         -------
-        pyvista.AxesActor
-            Actor of the axes.
+        pyvista.AxesAssembly
+            Assembly of axes parts.
 
         See Also
         --------
         pyvista.Plotter.add_axes
             Add an axes orientation widget to a scene.
-
-        pyvista.AxesActor
-            Actor used by this method.
 
         Examples
         --------
@@ -1020,21 +1074,66 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Apply a transformation to a mesh and show an axes marker with
         the same transformation.
 
-        >>> mesh = pv.ParametricSuperEllipsoid(0.6, 0.4, 0.2)
-        >>> transform = np.array(
-        ...     [
-        ...         [0.78410209, -0.49240388, 0.37778609, 1.0],
-        ...         [0.52128058, 0.85286853, 0.02969559, 2.0],
-        ...         [-0.33682409, 0.17364818, 0.92541658, 3.0],
-        ...         [0.0, 0.0, 0.0, 1.0],
-        ...     ]
+        >>> from pyvista.plotting.prop3d import (
+        ...     _orientation_as_rotation_matrix,
         ... )
+        >>> # Create dataset
+        >>> x_radius, y_radius, z_radius = 0.6, 0.4, 0.2
+        >>> mesh = pv.ParametricSuperEllipsoid(
+        ...     x_radius, y_radius, z_radius
+        ... )
+
+        >>> # Create transform
+        >>> position = (1, 2, 3)
+        >>> rotation_matrix = _orientation_as_rotation_matrix((10, 20, 30))
+        >>> transform = np.eye(4)
+        >>> transform[:3, :3] = rotation_matrix
+        >>> transform[:3, 3] = position
+
         >>> mesh = mesh.transform(transform)
+
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_axes_marker(user_matrix=transform)
         >>> _ = pl.show_grid()
         >>> pl.show()
+
+        Show a similar plot, but this time scale the axes to match the size of the
+        mesh. Make the mesh transparent to see inside.
+
+        >>> scale = (x_radius, y_radius, z_radius)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, opacity=0.5)
+        >>> _ = pl.add_axes_marker(scale=scale, user_matrix=transform)
+        >>> _ = pl.show_grid()
+        >>> pl.show()
+
+        Note how the non-uniform scaling results in distorted shape of the axes arrows.
+        We can instead customize the geometry of the axes to avoid the distortion.
+
+        >>> # We want the axes to have this length
+        >>> total_length = np.array((x_radius, y_radius, z_radius))
+        >>> # Reduce the length of the tips
+        >>> tip_length = 0.1
+        >>> # Size the shaft lengths to make up the difference
+        >>> shaft_length = total_length - tip_length
+        >>> # Make the tip diameter match the tip length
+        >>> tip_radius = tip_length / 2
+        >>> # Maintain a 4:1 ratio between tip radius and shaft radius
+        >>> shaft_radius = tip_radius / 4
+        >>>
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, opacity=0.5)
+        >>> axes = pl.add_axes_marker(
+        ...     shaft_length=shaft_length,
+        ...     shaft_radius=shaft_radius,
+        ...     tip_length=tip_length,
+        ...     tip_radius=tip_radius,
+        ...     user_matrix=transform,
+        ... )
+        >>> _ = pl.show_grid()
+        >>> pl.show()
+
 
         """
         # TODO: Add support for themed tip and shaft type
@@ -1042,22 +1141,29 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         #     tip_type = pv.global_theme.axes.tip_type
 
         axes_assembly = pyvista.AxesAssembly(
+            shaft_type=shaft_type,
+            shaft_radius=shaft_radius,
+            shaft_length=shaft_length,
+            tip_type=tip_type,
+            tip_radius=tip_radius,
+            tip_length=tip_length,
+            symmetric=symmetric,
             x_label=x_label,
             y_label=y_label,
             z_label=z_label,
+            labels=labels,
             label_color=label_color,
+            show_labels=show_labels,
             label_position=label_position,
             label_size=label_size,
-            show_labels=show_labels,
             x_color=x_color,
             y_color=y_color,
             z_color=z_color,
             position=position,
-            scale=scale,
             orientation=orientation,
-            rotation=rotation,
+            origin=origin,
+            scale=scale,
             user_matrix=user_matrix,
-            **kwargs,
         )
         self.add_actor(axes_assembly)
 

@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class _AxesGeometryKwargs(TypedDict):
     shaft_type: AxesGeometrySource.GeometryTypes | DataSet
     shaft_radius: float
-    shaft_length: float
+    shaft_length: float | VectorLike[float]
     tip_type: AxesGeometrySource.GeometryTypes | DataSet
     tip_radius: float
     tip_length: float | VectorLike[float]
@@ -81,12 +81,15 @@ class AxesAssembly(Assembly):
 
     x_color : ColorLike | Sequence[ColorLike], optional
         Color of the x-axis shaft and tip.
+        Defaults to :attr:`pyvista.plotting.themes._AxesConfig.x_color`.
 
     y_color : ColorLike | Sequence[ColorLike], optional
         Color of the y-axis shaft and tip.
+        Defaults to :attr:`pyvista.plotting.themes._AxesConfig.y_color`.
 
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
+        Defaults to :attr:`pyvista.plotting.themes._AxesConfig.z_color`.
 
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
         Position of the axes in space.
