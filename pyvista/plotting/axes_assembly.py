@@ -112,6 +112,21 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
+
+    Add the axes as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`:
+
+    >>> import pyvista as pv
+
+    >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     axes,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
+    >>> pl.show()
     """
 
     def __init__(
@@ -458,38 +473,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @property
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the axes orientation angles.
-        Orientation angles of the axes which define rotations about the
-        world's x-y-z axes. The angles are specified in degrees and in
-        x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
-        Rotations are applied about the specified :attr:`~origin`.
-        Examples
-        --------
-        Create axes positioned above the origin and set its orientation.
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly(
-        ...     position=(0, 0, 2), orientation=(45, 0, 0)
-        ... )
-        Create default non-oriented axes as well for reference.
-        >>> reference_axes = pv.AxesAssembly(
-        ...     x_color='black', y_color='black', z_color='black'
-        ... )
-        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
-        default, such that the rotated axes appear directly above the reference axes.
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes)
-        >>> _ = pl.add_actor(reference_axes)
-        >>> pl.show()
-        Now change the origin of the axes and plot the result. Since the rotation
-        is performed about a different point, the final position of the axes changes.
-        >>> axes.origin = (2, 2, 2)
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes)
-        >>> _ = pl.add_actor(reference_axes)
-        >>> pl.show()
-        """
+        """Return or set the axes orientation angles."""
         return self._prop3d.orientation
 
     @orientation.setter
