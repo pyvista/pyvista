@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import wraps
 from typing import TYPE_CHECKING
 from typing import TypedDict
 
@@ -17,7 +16,6 @@ from pyvista.core.utilities.transformations import apply_transformation_to_point
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
-from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -522,77 +520,189 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._apply_transformation_to_labels()
 
     @property
-    @wraps(Prop3D.scale)
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.scale``."""
+        """Return or set the scaling factor applied to the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.scale = (2.0, 2.0, 2.0)
+        >>> axes.scale
+        (2.0, 2.0, 2.0)
+        """
         return self._prop3d.scale
 
     @scale.setter
-    @wraps(Prop3D.scale)
     def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('scale', scale)
 
     @property
-    @wraps(Prop3D.position)
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.position``."""
+        """Return or set the position of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.position = (1.0, 2.0, 3.0)
+        >>> axes.position
+        (1.0, 2.0, 3.0)
+        """
         return self._prop3d.position
 
     @position.setter
-    @wraps(Prop3D.position)
     def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('position', position)
 
     @property
-    @wraps(Prop3D.orientation)
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.orientation``."""
+        """Return or set the axes orientation angles.
+
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+
+        Rotations are applied about the specified :attr:`~origin`.
+
+        Examples
+        --------
+        Create axes positioned above the origin and set its orientation.
+
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly(
+        ...     position=(0, 0, 2), orientation=(45, 0, 0)
+        ... )
+
+        Create default non-oriented axes as well for reference.
+
+        >>> reference_axes = pv.AxesAssembly(
+        ...     x_color='black', y_color='black', z_color='black'
+        ... )
+
+        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
+        default, such that the rotated axes appear directly above the reference axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+
+        Now change the origin of the axes and plot the result. Since the rotation
+        is performed about a different point, the final position of the axes changes.
+
+        >>> axes.origin = (2, 2, 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        """
         return self._prop3d.orientation
 
     @orientation.setter
-    @wraps(Prop3D.orientation)
-    def orientation(self, orientation: VectorLike[float]):  # numpydoc ignore=GL08
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('orientation', orientation)
 
     @property
-    @wraps(Prop3D.origin)
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.origin``."""
+        """Return or set the origin of the axes.
+
+        This is the point about which all rotations take place.
+
+        See :attr:`~orientation` for examples.
+
+        """
         return self._prop3d.origin
 
     @origin.setter
-    @wraps(Prop3D.origin)
-    def origin(self, origin: VectorLike[float]):  # numpydoc ignore=GL08
+    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('origin', origin)
 
     @property
-    @wraps(Prop3D.user_matrix)
     def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.user_matrix``."""
+        """Return or set the user matrix.
+
+        In addition to the instance variables such as position and orientation, the user
+        can add a transformation to the actor.
+
+        This matrix is concatenated with the actor's internal transformation that is
+        implicitly created when the actor is created. The user matrix is the last
+        transformation applied to the actor before rendering.
+
+        Returns
+        -------
+        np.ndarray
+            A 4x4 transformation matrix.
+
+        Examples
+        --------
+        Apply a 4x4 transformation to the axes. This effectively translates the actor
+        by one unit in the Z direction, rotates the actor about the z-axis by
+        approximately 45 degrees, and shrinks the actor by a factor of 0.5.
+
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> array = [
+        ...     [0.35355339, -0.35355339, 0.0, 0.0],
+        ...     [0.35355339, 0.35355339, 0.0, 0.0],
+        ...     [0.0, 0.0, 0.5, 1.0],
+        ...     [0.0, 0.0, 0.0, 1.0],
+        ... ]
+        >>> axes.user_matrix = array
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        """
         return self._prop3d.user_matrix
 
     @user_matrix.setter
-    @wraps(Prop3D.user_matrix)
     def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
         self._set_prop3d_attr('user_matrix', matrix)
 
     @property
-    @wraps(Prop3D.bounds)
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.bounds``."""
+        """Return the bounds of the axes.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        """
         return self.GetBounds()
 
     @property
-    @wraps(Prop3D.center)
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.center``."""
+        """Return the center of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.center
+        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
+        """
         bnds = self.bounds
         return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
 
     @property
-    @wraps(Prop3D.length)
     def length(self) -> float:  # numpydoc ignore=RT01
-        """Wraps ``Prop3D.length``."""
+        """Return the length of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.length
+        1.9052558909067219
+        """
         bnds = self.bounds
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
         max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
