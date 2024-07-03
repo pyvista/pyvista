@@ -3007,15 +3007,15 @@ class AxesGeometrySource:
         Show the difference in camera positioning with and without
         symmetric bounds. Orientation is added for visualization.
 
-        >>> # Create actors
+        Create actors.
         >>> axes_sym = pv.AxesAssembly(
         ...     orientation=(90, 0, 0), symmetric_bounds=True
         ... )
         >>> axes_asym = pv.AxesAssembly(
         ...     orientation=(90, 0, 0), symmetric_bounds=False
         ... )
-        >>>
-        >>> # Show multi-window plot
+
+        Show multi-window plot.
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_text("Symmetric axes")
