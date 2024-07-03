@@ -145,6 +145,7 @@ class UnstructuredGridFilters(DataSetFilters):
             raise VTKVersionError("UnstructuredGrid.clean requires VTK >= 9.2.2") from None
 
         alg = vtkStaticCleanUnstructuredGrid()
+        # https://github.com/pyvista/pyvista/pull/6337
         alg.SetInputDataObject(self.copy())
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
