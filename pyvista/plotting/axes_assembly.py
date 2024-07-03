@@ -578,9 +578,9 @@ class SymmetricAxesAssembly(AxesAssembly):
     def __init__(
         self,
         *,
-        x_label: str | None = None,
-        y_label: str | None = None,
-        z_label: str | None = None,
+        x_label: str | Sequence[str] | None = None,
+        y_label: str | Sequence[str] | None = None,
+        z_label: str | Sequence[str] | None = None,
         labels: Sequence[str] | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
@@ -596,9 +596,9 @@ class SymmetricAxesAssembly(AxesAssembly):
         [self.AddPart(actor) for actor in self._label_actors_symmetric]
 
         super().__init__(
-            x_label=x_label,
-            y_label=y_label,
-            z_label=z_label,
+            x_label=x_label,  # type: ignore[arg-type]
+            y_label=y_label,  # type: ignore[arg-type]
+            z_label=z_label,  # type: ignore[arg-type]
             labels=labels,
             label_color=label_color,
             show_labels=show_labels,
