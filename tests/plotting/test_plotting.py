@@ -4012,9 +4012,9 @@ def test_axes_assembly():
     pl.show()
 
 
-def test_symmetric_axes_assembly():
+def test_axes_assembly_symmetric():
     pl = pv.Plotter()
-    axes = pv.SymmetricAxesAssembly()
+    axes = pv.AxesAssemblySymmetric()
     pl.add_actor(axes)
     pl.show()
 

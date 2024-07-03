@@ -493,7 +493,7 @@ def _validate_color_sequence(
     )
 
 
-class SymmetricAxesAssembly(AxesAssembly):
+class AxesAssemblySymmetric(AxesAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
     This class is similar to :class:`~pyvista.AxesAssembly` but the axes are
@@ -554,7 +554,7 @@ class SymmetricAxesAssembly(AxesAssembly):
     Add symmetric axes to a plot.
 
     >>> import pyvista as pv
-    >>> axes_assembly = pv.SymmetricAxesAssembly()
+    >>> axes_assembly = pv.AxesAssemblySymmetric()
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes_assembly)
     >>> pl.show()
@@ -579,7 +579,7 @@ class SymmetricAxesAssembly(AxesAssembly):
     :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
     only show text for the positive axes.
 
-    >>> axes_assembly = pv.SymmetricAxesAssembly(
+    >>> axes_assembly = pv.AxesAssemblySymmetric(
     ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
     ... )
     >>> pl = pv.Plotter()
@@ -642,7 +642,7 @@ class SymmetricAxesAssembly(AxesAssembly):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_assembly = pv.SymmetricAxesAssembly()
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
 
         Use three strings to set the labels. Plus ``'+'`` and minus ``'-'``
         characters are added automatically.
@@ -707,7 +707,7 @@ class SymmetricAxesAssembly(AxesAssembly):
         characters are added automatically.
 
         >>> import pyvista as pv
-        >>> axes_assembly = pv.SymmetricAxesAssembly()
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
         >>> axes_assembly.x_label = 'Axis'
         >>> axes_assembly.x_label
         ('+Axis', '-Axis')
@@ -738,7 +738,7 @@ class SymmetricAxesAssembly(AxesAssembly):
         characters are added automatically.
 
         >>> import pyvista as pv
-        >>> axes_assembly = pv.SymmetricAxesAssembly()
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
         >>> axes_assembly.y_label = 'Axis'
         >>> axes_assembly.y_label
         ('+Axis', '-Axis')
@@ -769,7 +769,7 @@ class SymmetricAxesAssembly(AxesAssembly):
         characters are added automatically.
 
         >>> import pyvista as pv
-        >>> axes_assembly = pv.SymmetricAxesAssembly()
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
         >>> axes_assembly.z_label = 'Axis'
         >>> axes_assembly.z_label
         ('+Axis', '-Axis')
