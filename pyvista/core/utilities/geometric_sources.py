@@ -2885,7 +2885,7 @@ class AxesGeometrySource:
     symmetric_bounds : bool, default: False
         Make the bounds of the axes symmetric. This option is similar to
         :attr:`symmetric`, except only the bounds are made to be symmetric,
-        not the actual geometry.
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
 
     """
 
@@ -2949,6 +2949,7 @@ class AxesGeometrySource:
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
             f"  Symmetric:                  {self.symmetric}",
+            f"  Symmetric bounds:           {self.symmetric_bounds}",
         ]
         return '\n'.join(attr)
 

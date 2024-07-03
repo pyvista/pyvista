@@ -672,6 +672,7 @@ def test_axes_geometry_source_repr(axes_geometry_source):
         '  Tip radius:                 0.1',
         '  Tip length:                 (0.2, 0.2, 0.2)',
         '  Symmetric:                  False',
+        '  Symmetric bounds:           False',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
