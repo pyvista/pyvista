@@ -9,6 +9,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
@@ -16,7 +17,6 @@ from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
 from pyvista.plotting.text import Label
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
@@ -84,6 +84,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
+
+    orientation : tuple
+        Orientation of the axes.
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
@@ -477,8 +480,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         return self._prop3d.orientation
 
     @orientation.setter
-    def orientation(self,
-                    orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('orientation', orientation)
 
 

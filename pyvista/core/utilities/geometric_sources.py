@@ -2883,7 +2883,9 @@ class AxesGeometrySource:
         Mirror the axes such that they extend to negative values.
 
     symmetric_bounds : bool, default: False
-
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry.
 
     """
 
@@ -2950,7 +2952,6 @@ class AxesGeometrySource:
         ]
         return '\n'.join(attr)
 
-
     @property
     def symmetric(self) -> bool:  # numpydoc ignore=RT01
         """Mirror the axes such that they extend to negative values.
@@ -2984,7 +2985,9 @@ class AxesGeometrySource:
         Get the symmetric bounds of the axes.
 
         >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     symmetric_bounds=True
+        ... )
         >>> axes_geometry_source.output.bounds
         (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
@@ -3024,7 +3027,7 @@ class AxesGeometrySource:
         return self._symmetric_bounds
 
     @symmetric_bounds.setter
-    def symmetric_bounds(self, val: bool):
+    def symmetric_bounds(self, val: bool):  # numpydoc ignore=GL08
         self._symmetric_bounds = val
 
     @property
@@ -3213,7 +3216,11 @@ class AxesGeometrySource:
 
     def _set_normalized_datasets(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
-        datasets = self._shaft_datasets_normalized if part == _PartEnum.shaft else self._tip_datasets_normalized
+        datasets = (
+            self._shaft_datasets_normalized
+            if part == _PartEnum.shaft
+            else self._tip_datasets_normalized
+        )
         datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
         datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
         datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
@@ -3228,8 +3235,10 @@ class AxesGeometrySource:
         )
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
-        nested_datasets_normalized = [self._shaft_datasets_normalized,
-                           self._tip_datasets_normalized]
+        nested_datasets_normalized = [
+            self._shaft_datasets_normalized,
+            self._tip_datasets_normalized,
+        ]
         for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
             # Reset part by copying from the normalized version
             part_normalized = nested_datasets_normalized[part_type][axis]
