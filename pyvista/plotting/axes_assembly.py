@@ -668,7 +668,7 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     @labels.setter
     def labels(
-        self, labels: list[str] | tuple[str, str, str, str, str, str]
+        self, labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
     ):  # numpydoc ignore=GL08
         valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
         if len(valid_labels) == 3:
