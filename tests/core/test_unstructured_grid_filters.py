@@ -21,15 +21,15 @@ def test_clean_points():
     points = np.vstack([u_points] * 2)
 
     grid = pv.PolyData(points).cast_to_unstructured_grid()
-    grid_orig = grid.copy()  # ensure grid is not modified in-place
     grid.point_data['data'] = np.hstack((np.zeros(n_unique_points), np.ones(n_unique_points)))
+    grid_orig = grid.copy()  # ensure grid is not modified in-place
 
     cleaned = grid.clean(produce_merge_map=True)
+    assert grid_orig == grid
     assert cleaned.field_data['PointMergeMap'].size == points.shape[0]
     assert cleaned.n_points == n_unique_points
     assert np.allclose(cleaned.point_data['data'], 0.5)
     assert cleaned.point_data['data'].size == n_unique_points
-    assert grid_orig == grid
 
     # verify not averaging works
     cleaned = grid.clean(average_point_data=False)
@@ -43,6 +43,7 @@ def test_clean_points():
     points = np.vstack((u_points, u_points_shift))
 
     grid = pv.PolyData(points).cast_to_unstructured_grid()
+    grid_orig = grid.copy()
     cleaned = grid.clean(tolerance=1e-5)
     assert cleaned.n_points == points.shape[0]
     assert grid_orig == grid
@@ -51,10 +52,9 @@ def test_clean_points():
 @skip_lesser_9_2_2
 def test_clean_grid(hexbeam):
     hexbeam_shifted = hexbeam.translate([1, 0, 0])
-    hexbeam_orig = hexbeam.copy()
-
     hexbeam.point_data['data'] = np.zeros(hexbeam.n_points)
     hexbeam_shifted.point_data['data'] = np.ones(hexbeam.n_points)
+    hexbeam_orig = hexbeam.copy()
 
     merged = hexbeam.merge(hexbeam_shifted, merge_points=False)
     cleaned = merged.clean(average_point_data=True, produce_merge_map=False)
