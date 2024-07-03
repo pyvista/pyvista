@@ -3019,7 +3019,7 @@ class AxesGeometrySource:
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_text("Symmetric axes")
-        >>> _ = pl.add_actor(axes_asym)
+        >>> _ = pl.add_actor(axes_sym)
         >>> pl.subplot(0, 1)
         >>> _ = pl.add_text("Asymmetric axes")
         >>> _ = pl.add_actor(axes_asym)
