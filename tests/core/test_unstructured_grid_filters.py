@@ -52,6 +52,7 @@ def test_clean_points():
 @skip_lesser_9_2_2
 def test_clean_grid(hexbeam):
     hexbeam_shifted = hexbeam.translate([1, 0, 0])
+
     hexbeam.point_data['data'] = np.zeros(hexbeam.n_points)
     hexbeam_shifted.point_data['data'] = np.ones(hexbeam.n_points)
     hexbeam_orig = hexbeam.copy()
