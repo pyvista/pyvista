@@ -4012,6 +4012,13 @@ def test_axes_assembly():
     pl.show()
 
 
+def test_symmetric_axes_assembly():
+    pl = pv.Plotter()
+    axes = pv.SymmetricAxesAssembly()
+    pl.add_actor(axes)
+    pl.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER

@@ -12,6 +12,11 @@ def axes_assembly():
     return pv.AxesAssembly()
 
 
+@pytest.fixture()
+def symmetric_axes_assembly():
+    return pv.SymmetricAxesAssembly()
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
@@ -226,3 +231,41 @@ def test_axes_assembly_label_size_init():
     label_size = 42
     axes_assembly = pv.AxesAssembly(label_size=label_size)
     assert axes_assembly.label_size == label_size
+
+
+def test_symmetric_axes_assembly(symmetric_axes_assembly):
+    assert symmetric_axes_assembly.GetBounds() == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+
+def test_symmetric_axes_assembly_set_get_labels(symmetric_axes_assembly):
+    labels = 'A', 'B', 'C'
+    symmetric_axes_assembly.labels = labels
+    assert symmetric_axes_assembly.labels == ('+A', '-A', '+B', '-B', '+C', '-C')
+
+    labels = ('1', '2', '3', '4', '5', '6')
+    symmetric_axes_assembly.labels = labels
+    assert symmetric_axes_assembly.labels == labels
+
+
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
+def test_symmetric_axes_assembly_set_get_label(symmetric_axes_assembly, test_property):
+    label = 'U'
+    setattr(symmetric_axes_assembly, test_property, label)
+    assert getattr(symmetric_axes_assembly, test_property) == ('+' + label, '-' + label)
+
+    label = ('plus', 'minus')
+    setattr(symmetric_axes_assembly, test_property, label)
+    assert getattr(symmetric_axes_assembly, test_property) == label
+
+
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
+def test_symmetric_axes_assembly_init_label(test_property):
+    label = 'U'
+    kwargs = {test_property: label}
+    axes_assembly = pv.SymmetricAxesAssembly(**kwargs)
+    assert getattr(axes_assembly, test_property) == ('+' + label, '-' + label)
+
+    label = ('plus', 'minus')
+    kwargs = {test_property: label}
+    axes_assembly = pv.SymmetricAxesAssembly(**kwargs)
+    assert getattr(axes_assembly, test_property) == label
