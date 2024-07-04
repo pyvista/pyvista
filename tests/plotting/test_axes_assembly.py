@@ -24,6 +24,7 @@ def test_axes_assembly_repr(axes_assembly):
         "  Tip radius:                 0.1",
         "  Tip length:                 (0.2, 0.2, 0.2)",
         "  Symmetric:                  False",
+        "  Symmetric bounds:           False",
         "  X label:                    'X'",
         "  Y label:                    'Y'",
         "  Z label:                    'Z'",
