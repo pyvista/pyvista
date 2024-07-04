@@ -367,8 +367,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
 
 @no_new_attr
-class DataSetMapper(_BaseMapper, _vtk.vtkDataSetMapper):
-    """Wrap _vtk.vtkDataSetMapper.
+class _DataSetMapper(_BaseMapper):
+    """Base wrapper for _vtk.vtkDataSetMapper.
 
     Parameters
     ----------
@@ -377,17 +377,6 @@ class DataSetMapper(_BaseMapper, _vtk.vtkDataSetMapper):
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
-
-    Examples
-    --------
-    Create a mapper outside :class:`pyvista.Plotter` and assign it to an
-    actor.
-
-    >>> import pyvista as pv
-    >>> mesh = pv.Cube()
-    >>> mapper = pv.DataSetMapper(dataset=mesh)
-    >>> actor = pv.Actor(mapper=mapper)
-    >>> actor.plot()
 
     """
 
@@ -872,8 +861,41 @@ class DataSetMapper(_BaseMapper, _vtk.vtkDataSetMapper):
         return '\n'.join(mapper_attr)
 
 
+class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
+    """Wrap _vtk.vtkDataSetMapper.
+
+    Parameters
+    ----------
+    dataset : pyvista.DataSet, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    Examples
+    --------
+    Create a mapper outside :class:`pyvista.Plotter` and assign it to an
+    actor.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Cube()
+    >>> mapper = pv.DataSetMapper(dataset=mesh)
+    >>> actor = pv.Actor(mapper=mapper)
+    >>> actor.plot()
+
+    """
+
+    def __init__(
+        self,
+        dataset: pyvista.DataSet | None = None,
+        theme: pyvista.themes.Theme | None = None,
+    ):
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 @no_new_attr
-class PointGaussianMapper(DataSetMapper, _vtk.vtkPointGaussianMapper):
+class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap vtkPointGaussianMapper.
 
     Parameters
