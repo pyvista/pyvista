@@ -504,7 +504,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     def set_part_prop(
         self,
         name: str,
-        value: float | str | Sequence[float | str],
+        value: float | str | ColorLike | Sequence[float | str | ColorLike],
         axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
         part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
     ):
@@ -519,7 +519,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         name : str
             Name of the :class:`~pyvista.Property` attribute to set.
 
-        value : float | str | Sequence[float] | Sequence[str],
+        value : float | str | ColorLike | Sequence[float | str | ColorLike]
             Value to set the attribute to. If a single value, set all specified axes
             shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
             If a sequence of values, set the specified parts to these values.
@@ -595,23 +595,52 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
         """
         actors = self._filter_part_actors(axis=axis, part=part)
-        values: Sequence[float | str]
-        if isinstance(value, Sequence) and not isinstance(value, str):
-            if len(value) != len(actors):
-                raise ValueError(
-                    f"Number of items ({len(value)}) in {value} must match the number of parts ({len(actors)}) for axis <{axis}> and part: <{part}>"
-                )
+        values: Sequence[float | str | ColorLike]
+
+        # Validate input as a sequence of values
+        if 'color' in name:
+            # Special case for color inputs
+            if axis == 'all' and part == 'all':
+                n_values = 6
+            elif part == 'all':
+                n_values = 2
+            elif axis == 'all':
+                n_values = 3
+            else:
+                n_values = 1
+            values = _validate_color_sequence(value, n_values)
+        elif isinstance(value, Sequence) and not isinstance(value, str):
+            # Number sequence
             values = value
         else:
+            # Scalar number or string
             values = [value] * len(actors)
-        for actor, value in zip(actors, values):
-            setattr(actor.prop, name, value)
+
+        if len(values) != len(actors):
+            raise ValueError(
+                f"Number of values ({len(values)}) in {value} must match the number of parts ({len(actors)}) for axis '{axis}' and part '{part}'"
+            )
+        for actor, val in zip(actors, values):
+            setattr(actor.prop, name, val)
+
+        # except ValueError as e:
+        #     # Input may be a sequence of colors
+        #     # Validate colors and try again
+
+        #     try:
+        #         values = _validate_color_sequence(value, n_values)
+        #         self.set_part_prop(name=name, value=values,axis=axis, part=part)
+        #     except (ValueError, TypeError):
+        #         pass
+        #     _check_length()
+        # else:
+        #     _check_length()
 
     def get_part_prop(self, name: str):
         """Get :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
 
         This is a generalized getter method which returns the value of
-        a specific :class:`pyvista.Property`attribute for all shafts and tips;
+        a specific :class:`pyvista.Property` attribute for all shafts and tips.
 
         Parameters
         ----------
@@ -621,7 +650,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         Returns
         -------
         tuple
-            Named tuple with the requested attribute value for the axes shafts and tips.
+            Named tuple with attribute values for the axes shafts and tips.
             The values are ordered ``(x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip)``.
 
         Examples
