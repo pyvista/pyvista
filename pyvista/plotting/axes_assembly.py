@@ -434,10 +434,9 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     def _apply_transformation_to_labels(
         self, position_scalars: tuple[float, float, float], labels: tuple[Label, Label, Label]
     ):
-        x_vector, y_vector, z_vector = self._transform_label_position(position_scalars)
-        labels[0].position = x_vector
-        labels[1].position = y_vector
-        labels[2].position = z_vector
+        vectors = self._transform_label_position(position_scalars)
+        for label, vector in zip(labels, vectors):
+            label.position = vector
 
     def _update_label_positions(self):
         self._apply_transformation_to_labels(self.label_position, self._label_actors)
