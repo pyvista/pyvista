@@ -437,67 +437,89 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ):
         """Set :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
 
-        This is a generalized setter method which sets the value of a specific
-        :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
-        parts.
+         This is a generalized setter method which sets the value of a specific
+         :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
+         parts.
 
-        Parameters
-        ----------
-        name : str
-            Name of the :class:`~pyvista.Property` attribute to set.
+         Parameters
+         ----------
+         name : str
+             Name of the :class:`~pyvista.Property` attribute to set.
 
-        value : float | str | Sequence[float] | Sequence[str],
-            Value to set the attribute to. If a single value, set all specified axes
-            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
-            If a sequence of values, set the specified parts to these values.
+         value : float | str | Sequence[float] | Sequence[str],
+             Value to set the attribute to. If a single value, set all specified axes
+             shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+             If a sequence of values, set the specified parts to these values.
 
-        axis : str | int, default: 'all'
-            Set :class:`~pyvista.Property` attributes for a specific part of the axes.
-            Specify one of:
+         axis : str | int, default: 'all'
+             Set :class:`~pyvista.Property` attributes for a specific part of the axes.
+             Specify one of:
 
-            - ``'x'`` or ``0``: only set the property for the x-axis.
-            - ``'y'`` or ``1``: only set the property for the y-axis.
-            - ``'z'`` or ``2``: only set the property for the z-axis.
-            - ``'all'``: set the property for all three axes.
+             - ``'x'`` or ``0``: only set the property for the x-axis.
+             - ``'y'`` or ``1``: only set the property for the y-axis.
+             - ``'z'`` or ``2``: only set the property for the z-axis.
+             - ``'all'``: set the property for all three axes.
 
-        part : str | int, default: 'all'
-            Set the property for a specific part of the axes. Specify one of:
+         part : str | int, default: 'all'
+             Set the property for a specific part of the axes. Specify one of:
 
-            - ``'shaft'`` or ``0``: only set the property for the axes shafts.
-            - ``'tip'`` or ``1``: only set the property for the axes tips.
-            - ``'all'``: set the property for axes shafts and tips.
+             - ``'shaft'`` or ``0``: only set the property for the axes shafts.
+             - ``'tip'`` or ``1``: only set the property for the axes tips.
+             - ``'all'``: set the property for axes shafts and tips.
 
-        Examples
-        --------
-        Set the ambient property for all axes shafts and tips.
+         Examples
+         --------
+         Set :attr:`~pyvista.Property.ambient` for all axes shafts and tips to a
+         single value.
 
-        >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.set_part_prop('ambient', 0.7)
-        >>> axes_actor.get_part_prop('ambient')
-        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+         >>> import pyvista as pv
+         >>> axes_actor = pv.AxesAssembly()
+         >>> axes_actor.set_part_prop('ambient', 0.7)
+         >>> axes_actor.get_part_prop('ambient')
+         _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
 
-        Set a property for the x-axis only. The property is set for
-        both the axis shaft and tip by default.
+         Set the property again, but this time set separate values for each part.
 
-        >>> axes_actor.set_part_prop('ambient', 0.3, axis='x')
-        >>> axes_actor.get_part_prop('ambient')
-        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
+         >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+         >>> axes_actor.set_part_prop('ambient', values)
+         >>> axes_actor.get_part_prop('ambient')
+         _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
 
-        Set a property for the axes tips only. The property is set for
-        all axes by default.
+         Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
+         for both the axis shaft and tip by default.
 
-        >>> axes_actor.set_part_prop('ambient', 0.1, part='tip')
-        >>> axes_actor.get_part_prop('ambient')
-        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+         >>> axes_actor.set_part_prop('opacity', 0.5, axis='x')
+         >>> axes_actor.get_part_prop('opacity')
+         _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
 
-        Set a property for a single axis and specific part.
+         Set the property again, but this time set separate values for the shaft and tip.
+
+         >>> axes_actor.set_part_prop('opacity', [0.3, 0.7], axis='x')
+         >>> axes_actor.get_part_prop('opacity')
+         _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
+
+         Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
+         is set for all axes by default.
+
+         >>> axes_actor.set_part_prop('show_edges', True, part='shaft')
+         >>> axes_actor.get_part_prop('show_edges')
+         _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+
+         Set the property again, but this time set separate values for each shaft.
 
         >>> axes_actor.set_part_prop(
-        ...     'ambient', 0.9, axis='z', part='shaft'
+        ...     'show_edges', [True, False, True], part='shaft'
         ... )
-        >>> axes_actor.get_part_prop('ambient')
-        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+         >>> axes_actor.get_part_prop('show_edges')
+         _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+
+         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
+
+         >>> axes_actor.set_part_prop(
+         ...     'style', 'wireframe', axis='x', part='shaft'
+         ... )
+         >>> axes_actor.get_part_prop('style')
+         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
         """
         actors = self._filter_part_actors(axis=axis, part=part)
         values: Sequence[float | str]
