@@ -780,10 +780,7 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
-            return False
-
-        return True
+        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
     def __next__(self) -> _TypeMultiBlockLeaf | None:
         """Get the next block from the iterator."""

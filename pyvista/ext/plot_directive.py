@@ -223,9 +223,7 @@ def _contains_doctest(text):
 
 
 def _contains_pyvista_plot(text):
-    if ".. pyvista-plot::" in text:
-        return True
-    return False
+    return '.. pyvista-plot::' in text
 
 
 def _strip_comments(code):
