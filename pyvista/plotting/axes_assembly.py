@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
-from typing import Any
 from typing import Literal
 from typing import NamedTuple
+from typing import Sequence
 from typing import TypedDict
 
 import numpy as np
@@ -23,7 +24,6 @@ from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
-    from typing import Sequence
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
@@ -431,7 +431,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     def set_part_prop(
         self,
         name: str,
-        value: Any,
+        value: float | str | Sequence[float | str],
         axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
         part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
     ):
@@ -446,8 +446,10 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         name : str
             Name of the :class:`~pyvista.Property` attribute to set.
 
-        value : Any
-            Value to set the attribute to.
+        value : float | str | Sequence[float] | Sequence[str],
+            Value to set the attribute to. If a single value, set all specified axes
+            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+            If a sequence of values, set the specified parts to these values.
 
         axis : str | int, default: 'all'
             Set :class:`~pyvista.Property` attributes for a specific part of the axes.
@@ -498,7 +500,16 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
         """
         actors = self._filter_part_actors(axis=axis, part=part)
-        for actor in actors:
+        values: Sequence[float | str]
+        if isinstance(value, Sequence) and not isinstance(value, str):
+            if len(value) != len(actors):
+                raise ValueError(
+                    f"Number of items ({len(value)}) in {value} must match the number of parts ({len(actors)}) for axis <{axis}> and part: <{part}>"
+                )
+            values = value
+        else:
+            values = [value] * len(actors)
+        for actor, value in zip(actors, values):
             setattr(actor.prop, name, value)
 
     def get_part_prop(self, name: str):
@@ -543,13 +554,18 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         if part not in valid_part:
             raise ValueError(f"Part must be one of {valid_part}.")
 
+        # Create ordered list of filtered actors
+        # Iterate over parts in <shaft-xyz> then <tip-xyz> order
         actors: list[Actor] = []
-        for axis_num, axis_name in enumerate(['x', 'y', 'z']):
-            if axis in [axis_num, axis_name, 'all']:
-                if part in [_PartEnum.shaft, _PartEnum.shaft.name, 'all']:
-                    actors.append(self._shaft_actors[axis_num])
-                if part in [_PartEnum.tip, _PartEnum.tip.name, 'all']:
-                    actors.append(self._tip_actors[axis_num])
+        for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
+            if part in [part_type.name, part_type.value, 'all']:
+                if axis in [axis_num.name, axis_num.value, 'all']:
+                    # Add actor to list
+                    if part_type == _PartEnum.shaft:
+                        actors.append(self._shaft_actors[axis_num])
+                    else:
+                        actors.append(self._tip_actors[axis_num])
+
         return actors
 
     def _get_transformed_label_positions(self):
