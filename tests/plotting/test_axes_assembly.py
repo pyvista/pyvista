@@ -228,65 +228,69 @@ def test_axes_assembly_label_size_init():
     assert axes_assembly.label_size == label_size
 
 
-@pytest.mark.parametrize('value_type', ['scalar', 'sequence'])
-@pytest.mark.parametrize('use_axis_num', [True, False])
-def test_axes_actor_set_get_part_prop(axes_assembly, use_axis_num, value_type):
-    val = axes_assembly.get_part_prop('ambient')
-    assert val == (0, 0, 0, 0, 0, 0)
-
-    # Test set all
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 1.0)
-    else:
-        axes_assembly.set_part_prop('ambient', [1.0] * 6)
+def test_axes_actor_set_get_part_prop_all(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 1.0)
     val = axes_assembly.get_part_prop('ambient')
     assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
 
-    # Test set single axis
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 0.5, axis=0 if use_axis_num else 'x')
-    else:
-        axes_assembly.set_part_prop('ambient', [0.5] * 2, axis=0 if use_axis_num else 'x')
-
+    axes_assembly.set_part_prop('ambient', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     val = axes_assembly.get_part_prop('ambient')
-    assert val.x_shaft == 0.5
-    assert val.x_tip == 0.5
-    assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
+    assert val == (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
 
-    # Test set single tip
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
-    else:
-        axes_assembly.set_part_prop('ambient', [0.7], axis=1 if use_axis_num else 'y', part='tip')
+
+def test_axes_actor_set_get_part_prop_axis(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 0.5, axis=0)
     val = axes_assembly.get_part_prop('ambient')
-    assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
+    assert val == (0.5, 0.0, 0.0, 0.5, 0.0, 0.0)
 
-    # Test set single shaft
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
-    else:
-        axes_assembly.set_part_prop('ambient', [0.1], axis=2 if use_axis_num else 'z', part='shaft')
+    axes_assembly.set_part_prop('ambient', [0.1, 0.2], axis='x')
     val = axes_assembly.get_part_prop('ambient')
-    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+    assert val.x_shaft == 0.1
+    assert val.x_tip == 0.2
+    assert val == (0.1, 0.0, 0.0, 0.2, 0.0, 0.0)
 
-    # Test set all shafts
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 0.0, part='shaft')
-    else:
-        axes_assembly.set_part_prop('ambient', [0.0] * 3, part='shaft')
+
+def test_axes_actor_set_get_part_prop_axis_and_tip(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 0.7, axis=1, part=1)
     val = axes_assembly.get_part_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
+    assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
 
-    # Test set all tips
-    if value_type == 'scalar':
-        axes_assembly.set_part_prop('ambient', 0.0, part='tip')
-    else:
-        axes_assembly.set_part_prop('ambient', [0.0] * 3, part='tip')
-    axes_assembly.set_part_prop('ambient', 0.0, part='tip')
+    axes_assembly.set_part_prop('ambient', [0.7], axis='y', part='tip')
     val = axes_assembly.get_part_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
 
-    # Test raises
+
+def test_axes_actor_set_get_part_prop_axis_and_shaft(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 0.1, axis=2, part=0)
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
+
+    axes_assembly.set_part_prop('ambient', [0.1], axis='z', part='shaft')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
+
+
+def test_axes_actor_set_get_part_prop_shaft(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 0.3, part='shaft')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.3, 0.3, 0.3, 0.0, 0.0, 0.0)
+
+    axes_assembly.set_part_prop('ambient', [0.1, 0.2, 0.4], part=0)
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.1, 0.2, 0.4, 0.0, 0.0, 0.0)
+
+
+def test_axes_actor_set_get_part_prop_tip(axes_assembly):
+    axes_assembly.set_part_prop('ambient', 0.3, part='tip')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.3, 0.3, 0.3)
+
+    axes_assembly.set_part_prop('ambient', [0.1, 0.2, 0.4], part=1)
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.1, 0.2, 0.4)
+
+
+def test_axes_actor_set_get_part_prop_raises(axes_assembly):
     msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
     with pytest.raises(ValueError, match=re.escape(msg)):
         axes_assembly.set_part_prop('ambient', 0.0, part=2)
