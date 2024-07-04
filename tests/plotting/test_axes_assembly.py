@@ -370,8 +370,6 @@ def test_axes_actor_set_get_part_prop_axis(axes_assembly):
 
     axes_assembly.set_part_prop('ambient', [0.1, 0.2], axis='x')
     val = axes_assembly.get_part_prop('ambient')
-    assert val.x_shaft == 0.1
-    assert val.x_tip == 0.2
     assert val == (0.1, 0.0, 0.0, 0.2, 0.0, 0.0)
 
 

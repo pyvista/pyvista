@@ -32,7 +32,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
-    from pyvista.plotting._property import Property
     from pyvista.plotting._typing import ColorLike
 
     if sys.version_info >= (3, 11):
@@ -42,12 +41,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class _AxesPropTuple(NamedTuple):
-    x_shaft: Property
-    y_shaft: Property
-    z_shaft: Property
-    x_tip: Property
-    y_tip: Property
-    z_tip: Property
+    x_shaft: float | str | ColorLike
+    y_shaft: float | str | ColorLike
+    z_shaft: float | str | ColorLike
+    x_tip: float | str | ColorLike
+    y_tip: float | str | ColorLike
+    z_tip: float | str | ColorLike
 
 
 class _AxesGeometryKwargs(TypedDict):
@@ -463,43 +462,32 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[1].prop.color = valid_color
         self._label_actors[2].prop.color = valid_color
 
-    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | tuple[ColorLike, ColorLike]):
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[axis].prop.color = shaft_color
-        self._tip_actors[axis].prop.color = tip_color
-
-    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
-        return (
-            self._shaft_actors[axis].prop.color,
-            self._tip_actors[axis].prop.color,
-        )
-
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.x)
+        return self.get_part_prop('color')[_AxisEnum.x :: 3]
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.x, color)
+        self.set_part_prop('color', color, axis=_AxisEnum.x.value)
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.y)
+        return self.get_part_prop('color')[_AxisEnum.y :: 3]
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.y, color)
+        self.set_part_prop('color', color, axis=_AxisEnum.y.value)
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.z)
+        return self.get_part_prop('color')[_AxisEnum.z.value :: 3]
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.z, color)
+        self.set_part_prop('color', color, axis=_AxisEnum.z.value)
 
     def set_part_prop(
         self,
@@ -620,21 +608,10 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             raise ValueError(
                 f"Number of values ({len(values)}) in {value} must match the number of parts ({len(actors)}) for axis '{axis}' and part '{part}'"
             )
+
+        # Sequence is valid, now set values
         for actor, val in zip(actors, values):
             setattr(actor.prop, name, val)
-
-        # except ValueError as e:
-        #     # Input may be a sequence of colors
-        #     # Validate colors and try again
-
-        #     try:
-        #         values = _validate_color_sequence(value, n_values)
-        #         self.set_part_prop(name=name, value=values,axis=axis, part=part)
-        #     except (ValueError, TypeError):
-        #         pass
-        #     _check_length()
-        # else:
-        #     _check_length()
 
     def get_part_prop(self, name: str):
         """Get :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
