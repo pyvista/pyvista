@@ -826,7 +826,7 @@ class CompositePolyDataMapper(
 
         self.scalar_visibility = True
         if rgb:
-            self.scalar_map_mode = 'direct'
+            self.color_mode = 'direct'
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()
