@@ -92,7 +92,6 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
         The class to be decorated as abstract.
 
     """
-
     # def __new__(cls, *args, **kwargs):
     #     if cls is cls_:
     #         raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
