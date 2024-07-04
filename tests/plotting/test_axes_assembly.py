@@ -330,7 +330,7 @@ def test_axes_assembly_length(axes_assembly):
 
 
 def test_axes_assembly_symmetric(axes_assembly_symmetric):
-    assert axes_assembly_symmetric.GetBounds() == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    assert axes_assembly_symmetric.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
 
 
 def test_axes_assembly_symmetric_set_get_labels(axes_assembly_symmetric):
