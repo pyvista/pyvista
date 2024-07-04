@@ -4005,11 +4005,44 @@ def test_axes_geometry_shaft_type_tip_type(geometry_type):
     ).output.plot()
 
 
-def test_axes_assembly():
-    pl = pv.Plotter()
-    axes = pv.AxesAssembly()
-    pl.add_actor(axes)
-    pl.show()
+POSITION = (-0.5, -0.5, 1)
+ORIENTATION = (10, 20, 30)
+SCALE = (1.5, 2, 2.5)
+ORIGIN = (2, 1.5, 1)
+actor = pv.Actor()
+actor.position = POSITION
+actor.orientation = ORIENTATION
+actor.scale = SCALE
+actor.origin = ORIGIN
+USER_MATRIX = pv.array_from_vtkmatrix(actor.GetMatrix())
+
+AXES_ASSEMBLY_TEST_CASES = dict(
+    default={},
+    position=dict(position=POSITION),
+    orientation=dict(orientation=ORIENTATION),
+    scale=dict(scale=SCALE),
+    origin=dict(origin=ORIGIN, orientation=ORIENTATION),
+    user_matrix=dict(user_matrix=USER_MATRIX),
+)
+
+
+@pytest.mark.parametrize(
+    'test_kwargs',
+    AXES_ASSEMBLY_TEST_CASES.values(),
+    ids=AXES_ASSEMBLY_TEST_CASES.keys(),
+)
+def test_axes_assembly(test_kwargs):
+    plot = pv.Plotter()
+    axes_assembly = pv.AxesAssembly(**test_kwargs)
+    plot.add_actor(axes_assembly)
+
+    if test_kwargs:
+        # Add second axes at the origin for visual reference
+        reference_axes = pv.AxesAssembly(
+            x_color='black', y_color='black', z_color='black', show_labels=False
+        )
+        plot.add_actor(reference_axes)
+    plot.show()
 
 
 def test_axes_actor_default_colors():

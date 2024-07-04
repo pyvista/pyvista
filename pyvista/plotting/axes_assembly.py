@@ -13,6 +13,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
@@ -25,6 +26,10 @@ from pyvista.plotting.text import Label
 if TYPE_CHECKING:  # pragma: no cover
     import sys
 
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._property import Property
@@ -97,6 +102,26 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the axes. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the axes.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the actor.
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -124,6 +149,28 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
+
+    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+    modify the lengths.
+
+    >>> axes = pv.AxesAssembly(
+    ...     shaft_type='pyramid',
+    ...     tip_type='hemisphere',
+    ...     tip_length=0.1,
+    ...     shaft_length=(0.5, 1.0, 1.5),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Position and orient the axes in space.
+
+    >>> axes = pv.AxesAssembly(
+    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
     """
 
     def __init__(
@@ -140,9 +187,17 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
+
+        # Add dummy prop3d for calculating transformations
+        self._prop3d = Actor()
 
         # Init shaft and tip actors
         self._shaft_actors = (Actor(), Actor(), Actor())
@@ -199,10 +254,20 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             prop.bold = True
             prop.italic = True
 
-        self._update()
+        self.position = position  # type: ignore[assignment]
+        self.orientation = orientation  # type: ignore[assignment]
+        self.scale = scale  # type: ignore[assignment]
+        self.origin = origin  # type: ignore[assignment]
+        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     def __repr__(self):
-        """Representation of the axes actor."""
+        """Representation of the axes assembly."""
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
+        bnds = self.bounds
+
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
 
         attr = [
@@ -223,6 +288,14 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             "  Z Color:                                     ",
             f"      Shaft                   {self.z_color[0]}",
             f"      Tip                     {self.z_color[1]}",
+            f"  Position:                   {self.position}",
+            f"  Orientation:                {self.orientation}",
+            f"  Origin:                     {self.origin}",
+            f"  Scale:                      {self.scale}",
+            f"  User matrix:                {mat_info}",
+            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
         ]
         return '\n'.join(attr)
 
@@ -437,89 +510,89 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ):
         """Set :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
 
-         This is a generalized setter method which sets the value of a specific
-         :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
-         parts.
+        This is a generalized setter method which sets the value of a specific
+        :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
+        parts.
 
-         Parameters
-         ----------
-         name : str
-             Name of the :class:`~pyvista.Property` attribute to set.
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`~pyvista.Property` attribute to set.
 
-         value : float | str | Sequence[float] | Sequence[str],
-             Value to set the attribute to. If a single value, set all specified axes
-             shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
-             If a sequence of values, set the specified parts to these values.
+        value : float | str | Sequence[float] | Sequence[str],
+            Value to set the attribute to. If a single value, set all specified axes
+            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+            If a sequence of values, set the specified parts to these values.
 
-         axis : str | int, default: 'all'
-             Set :class:`~pyvista.Property` attributes for a specific part of the axes.
-             Specify one of:
+        axis : str | int, default: 'all'
+            Set :class:`~pyvista.Property` attributes for a specific part of the axes.
+            Specify one of:
 
-             - ``'x'`` or ``0``: only set the property for the x-axis.
-             - ``'y'`` or ``1``: only set the property for the y-axis.
-             - ``'z'`` or ``2``: only set the property for the z-axis.
-             - ``'all'``: set the property for all three axes.
+            - ``'x'`` or ``0``: only set the property for the x-axis.
+            - ``'y'`` or ``1``: only set the property for the y-axis.
+            - ``'z'`` or ``2``: only set the property for the z-axis.
+            - ``'all'``: set the property for all three axes.
 
-         part : str | int, default: 'all'
-             Set the property for a specific part of the axes. Specify one of:
+        part : str | int, default: 'all'
+            Set the property for a specific part of the axes. Specify one of:
 
-             - ``'shaft'`` or ``0``: only set the property for the axes shafts.
-             - ``'tip'`` or ``1``: only set the property for the axes tips.
-             - ``'all'``: set the property for axes shafts and tips.
+            - ``'shaft'`` or ``0``: only set the property for the axes shafts.
+            - ``'tip'`` or ``1``: only set the property for the axes tips.
+            - ``'all'``: set the property for axes shafts and tips.
 
-         Examples
-         --------
-         Set :attr:`~pyvista.Property.ambient` for all axes shafts and tips to a
-         single value.
+        Examples
+        --------
+        Set :attr:`~pyvista.Property.ambient` for all axes shafts and tips to a
+        single value.
 
-         >>> import pyvista as pv
-         >>> axes_actor = pv.AxesAssembly()
-         >>> axes_actor.set_part_prop('ambient', 0.7)
-         >>> axes_actor.get_part_prop('ambient')
-         _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.set_part_prop('ambient', 0.7)
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
 
-         Set the property again, but this time set separate values for each part.
+        Set the property again, but this time set separate values for each part.
 
-         >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-         >>> axes_actor.set_part_prop('ambient', values)
-         >>> axes_actor.get_part_prop('ambient')
-         _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
+        >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        >>> axes_actor.set_part_prop('ambient', values)
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
 
-         Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
-         for both the axis shaft and tip by default.
+        Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
+        for both the axis shaft and tip by default.
 
-         >>> axes_actor.set_part_prop('opacity', 0.5, axis='x')
-         >>> axes_actor.get_part_prop('opacity')
-         _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
+        >>> axes_actor.set_part_prop('opacity', 0.5, axis='x')
+        >>> axes_actor.get_part_prop('opacity')
+        _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
 
-         Set the property again, but this time set separate values for the shaft and tip.
+        Set the property again, but this time set separate values for the shaft and tip.
 
-         >>> axes_actor.set_part_prop('opacity', [0.3, 0.7], axis='x')
-         >>> axes_actor.get_part_prop('opacity')
-         _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
+        >>> axes_actor.set_part_prop('opacity', [0.3, 0.7], axis='x')
+        >>> axes_actor.get_part_prop('opacity')
+        _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
 
-         Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
-         is set for all axes by default.
+        Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
+        is set for all axes by default.
 
-         >>> axes_actor.set_part_prop('show_edges', True, part='shaft')
-         >>> axes_actor.get_part_prop('show_edges')
-         _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_actor.set_part_prop('show_edges', True, part='shaft')
+        >>> axes_actor.get_part_prop('show_edges')
+        _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
 
-         Set the property again, but this time set separate values for each shaft.
+        Set the property again, but this time set separate values for each shaft.
 
         >>> axes_actor.set_part_prop(
         ...     'show_edges', [True, False, True], part='shaft'
         ... )
-         >>> axes_actor.get_part_prop('show_edges')
-         _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+        >>> axes_actor.get_part_prop('show_edges')
+        _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
 
-         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
+        Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-         >>> axes_actor.set_part_prop(
-         ...     'style', 'wireframe', axis='x', part='shaft'
-         ... )
-         >>> axes_actor.get_part_prop('style')
-         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+        >>> axes_actor.set_part_prop(
+        ...     'style', 'wireframe', axis='x', part='shaft'
+        ... )
+        >>> axes_actor.get_part_prop('style')
+        _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
         """
         actors = self._filter_part_actors(axis=axis, part=part)
         values: Sequence[float | str]
@@ -603,7 +676,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         position_vectors += radial_offset1 + radial_offset2
 
         # Transform positions
-        matrix = np.eye(4)  # TODO: use Prop3D transformation
+        matrix = array_from_vtkmatrix(self._prop3d.GetMatrix())
         return apply_transformation_to_points(matrix, position_vectors)
 
     def _apply_transformation_to_labels(self):
@@ -612,9 +685,207 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._label_actors[1].position = y_pos
         self._label_actors[2].position = z_pos
 
-    def _update(self):
-        self._shaft_and_tip_geometry_source.update()
+    def _set_prop3d_attr(self, name, value):
+        # Set props for shaft and tip actors
+        # Validate input by setting then getting from prop3d
+        setattr(self._prop3d, name, value)
+        valid_value = getattr(self._prop3d, name)
+        [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
+
+        # Update labels
         self._apply_transformation_to_labels()
+
+    @property
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the scaling factor applied to the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.scale = (2.0, 2.0, 2.0)
+        >>> axes.scale
+        (2.0, 2.0, 2.0)
+        """
+        return self._prop3d.scale
+
+    @scale.setter
+    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('scale', scale)
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the position of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.position = (1.0, 2.0, 3.0)
+        >>> axes.position
+        (1.0, 2.0, 3.0)
+        """
+        return self._prop3d.position
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('position', position)
+
+    @property
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the axes orientation angles.
+
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+
+        Rotations are applied about the specified :attr:`~origin`.
+
+        Examples
+        --------
+        Create axes positioned above the origin and set its orientation.
+
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly(
+        ...     position=(0, 0, 2), orientation=(45, 0, 0)
+        ... )
+
+        Create default non-oriented axes as well for reference.
+
+        >>> reference_axes = pv.AxesAssembly(
+        ...     x_color='black', y_color='black', z_color='black'
+        ... )
+
+        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
+        default, such that the rotated axes appear directly above the reference axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+
+        Now change the origin of the axes and plot the result. Since the rotation
+        is performed about a different point, the final position of the axes changes.
+
+        >>> axes.origin = (2, 2, 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        """
+        return self._prop3d.orientation
+
+    @orientation.setter
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('orientation', orientation)
+
+    @property
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the origin of the axes.
+
+        This is the point about which all rotations take place.
+
+        See :attr:`~orientation` for examples.
+
+        """
+        return self._prop3d.origin
+
+    @origin.setter
+    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('origin', origin)
+
+    @property
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the user matrix.
+
+        In addition to the instance variables such as position and orientation, the user
+        can add a transformation to the actor.
+
+        This matrix is concatenated with the actor's internal transformation that is
+        implicitly created when the actor is created. The user matrix is the last
+        transformation applied to the actor before rendering.
+
+        Returns
+        -------
+        np.ndarray
+            A 4x4 transformation matrix.
+
+        Examples
+        --------
+        Apply a 4x4 transformation to the axes. This effectively translates the actor
+        by one unit in the Z direction, rotates the actor about the z-axis by
+        approximately 45 degrees, and shrinks the actor by a factor of 0.5.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> array = np.array(
+        ...     [
+        ...         [0.35355339, -0.35355339, 0.0, 0.0],
+        ...         [0.35355339, 0.35355339, 0.0, 0.0],
+        ...         [0.0, 0.0, 0.5, 1.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
+        >>> axes.user_matrix = array
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        """
+        return self._prop3d.user_matrix
+
+    @user_matrix.setter
+    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('user_matrix', matrix)
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return the bounds of the axes.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        """
+        return self.GetBounds()
+
+    @property
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the center of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.center
+        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
+        """
+        bnds = self.bounds
+        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
+
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.length
+        1.9052558909067219
+        """
+        bnds = self.bounds
+        min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
+        max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
+        return np.linalg.norm(max_bnds - min_bnds).tolist()
 
 
 def _validate_color_sequence(
@@ -626,7 +897,7 @@ def _validate_color_sequence(
     If `n_colors` is specified, the output will have `n` colors. For single-color
     inputs, the color is copied and a sequence of `n` identical colors is returned.
     For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`
+    match `n_colors`.
 
     If `n_colors` is None, no broadcasting or length-checking is performed.
     """
