@@ -226,3 +226,47 @@ def test_axes_assembly_label_size_init():
     label_size = 42
     axes_assembly = pv.AxesAssembly(label_size=label_size)
     assert axes_assembly.label_size == label_size
+
+
+@pytest.mark.parametrize('use_axis_num', [True, False])
+def test_axes_actor_set_get_part_prop(axes_assembly, use_axis_num):
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0, 0, 0, 0, 0, 0)
+
+    axes_assembly.set_part_prop('ambient', 1.0)
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.5, axis=0 if use_axis_num else 'x')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val.x_shaft == 0.5
+    assert val.x_tip == 0.5
+    assert val == (0.5, 1.0, 1.0, 0.5, 1.0, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.7, axis=1 if use_axis_num else 'y', part='tip')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.5, 1.0, 1.0, 0.5, 0.7, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.1, axis=2 if use_axis_num else 'z', part='shaft')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.5, 1.0, 0.1, 0.5, 0.7, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.0, part='shaft')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.5, 0.7, 1.0)
+
+    axes_assembly.set_part_prop('ambient', 0.0, part='tip')
+    val = axes_assembly.get_part_prop('ambient')
+    assert val == (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    msg = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        axes_assembly.set_part_prop('ambient', 0.0, part=2)
+
+    msg = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        axes_assembly.set_part_prop('ambient', 0.0, axis='a')

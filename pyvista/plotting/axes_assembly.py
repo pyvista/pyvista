@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import NamedTuple
 from typing import TypedDict
 
 import numpy as np
@@ -11,6 +14,7 @@ import pyvista as pv
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
+from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
@@ -23,12 +27,22 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
+    from pyvista.plotting._property import Property
     from pyvista.plotting._typing import ColorLike
 
     if sys.version_info >= (3, 11):
         from typing import Unpack
     else:
         from typing_extensions import Unpack
+
+
+class _AxesPropTuple(NamedTuple):
+    x_shaft: Property
+    y_shaft: Property
+    z_shaft: Property
+    x_tip: Property
+    y_tip: Property
+    z_tip: Property
 
 
 class _AxesGeometryKwargs(TypedDict):
@@ -413,6 +427,130 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._set_axis_color(_AxisEnum.z, color)
+
+    def set_part_prop(
+        self,
+        name: str,
+        value: Any,
+        axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
+        part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
+    ):
+        """Set :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
+
+        This is a generalized setter method which sets the value of a specific
+        :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
+        parts.
+
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`~pyvista.Property` attribute to set.
+
+        value : Any
+            Value to set the attribute to.
+
+        axis : str | int, default: 'all'
+            Set :class:`~pyvista.Property` attributes for a specific part of the axes.
+            Specify one of:
+
+            - ``'x'`` or ``0``: only set the property for the x-axis.
+            - ``'y'`` or ``1``: only set the property for the y-axis.
+            - ``'z'`` or ``2``: only set the property for the z-axis.
+            - ``'all'``: set the property for all three axes.
+
+        part : str | int, default: 'all'
+            Set the property for a specific part of the axes. Specify one of:
+
+            - ``'shaft'`` or ``0``: only set the property for the axes shafts.
+            - ``'tip'`` or ``1``: only set the property for the axes tips.
+            - ``'all'``: set the property for axes shafts and tips.
+
+        Examples
+        --------
+        Set the ambient property for all axes shafts and tips.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.set_part_prop('ambient', 0.7)
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+
+        Set a property for the x-axis only. The property is set for
+        both the axis shaft and tip by default.
+
+        >>> axes_actor.set_part_prop('ambient', 0.3, axis='x')
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.3, y_tip=0.7, z_tip=0.7)
+
+        Set a property for the axes tips only. The property is set for
+        all axes by default.
+
+        >>> axes_actor.set_part_prop('ambient', 0.1, part='tip')
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.7, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+
+        Set a property for a single axis and specific part.
+
+        >>> axes_actor.set_part_prop(
+        ...     'ambient', 0.9, axis='z', part='shaft'
+        ... )
+        >>> axes_actor.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.3, y_shaft=0.7, z_shaft=0.9, x_tip=0.1, y_tip=0.1, z_tip=0.1)
+        """
+        actors = self._filter_part_actors(axis=axis, part=part)
+        for actor in actors:
+            setattr(actor.prop, name, value)
+
+    def get_part_prop(self, name: str):
+        """Get :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
+
+        This is a generalized getter method which returns the value of
+        a specific :class:`pyvista.Property`attribute for all shafts and tips;
+
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`~pyvista.Property` attribute to get.
+
+        Returns
+        -------
+        tuple
+            Named tuple with the requested attribute value for the axes shafts and tips.
+            The values are ordered ``(x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip)``.
+
+        Examples
+        --------
+        Get the ambient property of the axes shafts and tips.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssembly()
+        >>> axes_assembly.get_part_prop('ambient')
+        _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
+
+        """
+        prop_values = [getattr(actor.prop, name) for actor in self._shaft_and_tip_actors]
+        return _AxesPropTuple(*prop_values)
+
+    def _filter_part_actors(
+        self,
+        axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
+        part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
+    ):
+        valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
+        if axis not in valid_axis:
+            raise ValueError(f"Axis must be one of {valid_axis}.")
+        valid_part = [0, 1, 'shaft', 'tip', 'all']
+        if part not in valid_part:
+            raise ValueError(f"Part must be one of {valid_part}.")
+
+        actors: list[Actor] = []
+        for axis_num, axis_name in enumerate(['x', 'y', 'z']):
+            if axis in [axis_num, axis_name, 'all']:
+                if part in [_PartEnum.shaft, _PartEnum.shaft.name, 'all']:
+                    actors.append(self._shaft_actors[axis_num])
+                if part in [_PartEnum.tip, _PartEnum.tip.name, 'all']:
+                    actors.append(self._tip_actors[axis_num])
+        return actors
 
     def _get_transformed_label_positions(self):
         # Create position vectors
