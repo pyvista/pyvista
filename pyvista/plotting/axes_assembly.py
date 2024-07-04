@@ -22,6 +22,10 @@ if TYPE_CHECKING:  # pragma: no cover
     import sys
     from typing import Sequence
 
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
@@ -85,8 +89,25 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
-    orientation : tuple
-        Orientation of the axes.
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the axes. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the axes.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the actor.
 
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
@@ -112,6 +133,28 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     >>> axes.label_color = 'brown'
 
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Create axes with custom geometry. Use pyramid shafts and hemisphere tips and
+    modify the lengths.
+
+    >>> axes = pv.AxesAssembly(
+    ...     shaft_type='pyramid',
+    ...     tip_type='hemisphere',
+    ...     tip_length=0.1,
+    ...     shaft_length=(0.5, 1.0, 1.5),
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Position and orient the axes in space.
+
+    >>> axes = pv.AxesAssembly(
+    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
+    ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -146,11 +189,16 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         super().__init__()
 
+        # Add dummy prop3d for calculating transformations
         self._prop3d = Actor()
 
         # Init shaft and tip actors
@@ -208,11 +256,20 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             prop.bold = True
             prop.italic = True
 
+        self.position = position  # type: ignore[assignment]
         self.orientation = orientation  # type: ignore[assignment]
-        self._update()
+        self.scale = scale  # type: ignore[assignment]
+        self.origin = origin  # type: ignore[assignment]
+        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     def __repr__(self):
-        """Representation of the axes actor."""
+        """Representation of the axes assembly."""
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
+        bnds = self.bounds
+
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
 
         attr = [
@@ -233,6 +290,14 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             "  Z Color:                                     ",
             f"      Shaft                   {self.z_color[0]}",
             f"      Tip                     {self.z_color[1]}",
+            f"  Position:                   {self.position}",
+            f"  Orientation:                {self.orientation}",
+            f"  Origin:                     {self.origin}",
+            f"  Scale:                      {self.scale}",
+            f"  User matrix:                {mat_info}",
+            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
         ]
         return '\n'.join(attr)
 
@@ -467,21 +532,199 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         valid_value = getattr(self._prop3d, name)
         [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
 
-        # Update labels
-        self._apply_transformation_to_labels()
-
-    def _update(self):
-        self._shaft_and_tip_geometry_source.update()
         self._apply_transformation_to_labels()
 
     @property
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the scaling factor applied to the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.scale = (2.0, 2.0, 2.0)
+        >>> axes.scale
+        (2.0, 2.0, 2.0)
+        """
+        return self._prop3d.scale
+
+    @scale.setter
+    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('scale', scale)
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the position of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.position = (1.0, 2.0, 3.0)
+        >>> axes.position
+        (1.0, 2.0, 3.0)
+        """
+        return self._prop3d.position
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('position', position)
+
+    @property
     def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the axes orientation angles."""
+        """Return or set the axes orientation angles.
+
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+
+        Rotations are applied about the specified :attr:`~origin`.
+
+        Examples
+        --------
+        Create axes positioned above the origin and set its orientation.
+
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly(
+        ...     position=(0, 0, 2), orientation=(45, 0, 0)
+        ... )
+
+        Create default non-oriented axes as well for reference.
+
+        >>> reference_axes = pv.AxesAssembly(
+        ...     x_color='black', y_color='black', z_color='black'
+        ... )
+
+        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
+        default, such that the rotated axes appear directly above the reference axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+
+        Now change the origin of the axes and plot the result. Since the rotation
+        is performed about a different point, the final position of the axes changes.
+
+        >>> axes.origin = (2, 2, 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> _ = pl.add_actor(reference_axes)
+        >>> pl.show()
+        """
         return self._prop3d.orientation
 
     @orientation.setter
     def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
         self._set_prop3d_attr('orientation', orientation)
+
+    @property
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the origin of the axes.
+
+        This is the point about which all rotations take place.
+
+        See :attr:`~orientation` for examples.
+
+        """
+        return self._prop3d.origin
+
+    @origin.setter
+    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('origin', origin)
+
+    @property
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Return or set the user matrix.
+
+        In addition to the instance variables such as position and orientation, the user
+        can add a transformation to the actor.
+
+        This matrix is concatenated with the actor's internal transformation that is
+        implicitly created when the actor is created. The user matrix is the last
+        transformation applied to the actor before rendering.
+
+        Returns
+        -------
+        np.ndarray
+            A 4x4 transformation matrix.
+
+        Examples
+        --------
+        Apply a 4x4 transformation to the axes. This effectively translates the actor
+        by one unit in the Z direction, rotates the actor about the z-axis by
+        approximately 45 degrees, and shrinks the actor by a factor of 0.5.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> array = np.array(
+        ...     [
+        ...         [0.35355339, -0.35355339, 0.0, 0.0],
+        ...         [0.35355339, 0.35355339, 0.0, 0.0],
+        ...         [0.0, 0.0, 0.5, 1.0],
+        ...         [0.0, 0.0, 0.0, 1.0],
+        ...     ]
+        ... )
+        >>> axes.user_matrix = array
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        """
+        return self._prop3d.user_matrix
+
+    @user_matrix.setter
+    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        self._set_prop3d_attr('user_matrix', matrix)
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return the bounds of the axes.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        """
+        return self.GetBounds()
+
+    @property
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the center of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.center
+        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
+        """
+        bnds = self.bounds
+        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
+
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.length
+        1.9052558909067219
+        """
+        bnds = self.bounds
+        min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
+        max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
+        return np.linalg.norm(max_bnds - min_bnds).tolist()
 
 
 def _validate_color_sequence(
@@ -493,7 +736,7 @@ def _validate_color_sequence(
     If `n_colors` is specified, the output will have `n` colors. For single-color
     inputs, the color is copied and a sequence of `n` identical colors is returned.
     For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`
+    match `n_colors`.
 
     If `n_colors` is None, no broadcasting or length-checking is performed.
     """
