@@ -4045,6 +4045,12 @@ def test_axes_assembly(test_kwargs):
     plot.show()
 
 
+def test_add_axes_marker():
+    pl = pv.Plotter()
+    pl.add_axes_marker()
+    pl.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER

@@ -45,6 +45,7 @@ def test_axes_assembly_repr(axes_assembly):
         "  Origin:                     (0.0, 0.0, 0.0)",
         "  Scale:                      (1.0, 1.0, 1.0)",
         "  User matrix:                Identity",
+        "  Visible:                    True",
         "  X Bounds                    -1.000E-01, 1.000E+00",
         "  Y Bounds                    -1.000E-01, 1.000E+00",
         "  Z Bounds                    -1.000E-01, 1.000E+00",
