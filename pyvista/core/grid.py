@@ -6,16 +6,15 @@ from functools import wraps
 import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Dict
-from typing import List
 from typing import Sequence
-from typing import Tuple
-from typing import Type
-from typing import Union
+from typing import cast
 
 import numpy as np
 
 import pyvista
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -25,9 +24,6 @@ from .filters import _get_output
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
 
 
 @abstract_class
@@ -39,7 +35,7 @@ class Grid(DataSet):
         super().__init__()
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:
+    def dimensions(self) -> tuple[int, int, int]:
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -141,9 +137,9 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
     """
 
     _WRITERS: ClassVar[
-        Dict[
+        dict[
             str,
-            Union[Type[_vtk.vtkRectilinearGridWriter], Type[_vtk.vtkXMLRectilinearGridWriter]],
+            type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
         ]
     ] = {
         '.vtk': _vtk.vtkRectilinearGridWriter,
@@ -260,7 +256,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> List[NumpyArray[float]]:
+    def meshgrid(self) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -269,11 +265,18 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        list[numpy.ndarray]
-            List of numpy arrays representing the points of this mesh.
+        tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
+            Tuple of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        # Converting to tuple needed to be consistent type across numpy version
+        # Remove when support is dropped for numpy 1.x
+        # We also know this is 3-length so make it so in typing
+        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        # Python 3.8 does not allow subscripting tuple, but only used for type checking
+        if TYPE_CHECKING:  # pragma: no cover
+            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+        return out
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
@@ -547,9 +550,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
 
     """
 
-    _WRITERS: ClassVar[
-        Dict[str, Union[Type[_vtk.vtkDataSetWriter], Type[_vtk.vtkXMLImageDataWriter]]]
-    ] = {
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {
         '.vtk': _vtk.vtkDataSetWriter,
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
@@ -731,7 +732,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.points[:, 2]
 
     @property
-    def origin(self) -> Tuple[float]:  # numpydoc ignore=RT01
+    def origin(self) -> tuple[float]:  # numpydoc ignore=RT01
         """Return the origin of the grid (bottom southwest corner).
 
         Examples
@@ -764,12 +765,12 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[Union[float, int]]):  # numpydoc ignore=GL08
+    def origin(self, origin: Sequence[float | int]):  # numpydoc ignore=GL08
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
     @property
-    def spacing(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def spacing(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the spacing for each axial direction.
 
         Notes
@@ -797,7 +798,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: Sequence[Union[float, int]]):  # numpydoc ignore=GL08
+    def spacing(self, spacing: Sequence[float | int]):  # numpydoc ignore=GL08
         if min(spacing) < 0:
             raise ValueError(f"Spacing must be non-negative, got {spacing}")
         self.SetSpacing(*spacing)
@@ -851,7 +852,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         return grid
 
     @property
-    def extent(self) -> Tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
+    def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.

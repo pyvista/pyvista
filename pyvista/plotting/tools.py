@@ -147,22 +147,22 @@ def create_axes_marker(
         Color of the label text.
 
     x_color : ColorLike, optional
-        Color of the x axis text.
+        Color of the x-axis text.
 
     y_color : ColorLike, optional
-        Color of the y axis text.
+        Color of the y-axis text.
 
     z_color : ColorLike, optional
-        Color of the z axis text.
+        Color of the z-axis text.
 
     xlabel : str, default: "X"
-        Text used for the x axis.
+        Text used for the x-axis.
 
     ylabel : str, default: "Y"
-        Text used for the y axis.
+        Text used for the y-axis.
 
     zlabel : str, default: "Z"
-        Text used for the z axis.
+        Text used for the z-axis.
 
     labels_off : bool, default: False
         Enable or disable the text labels for the axes.
@@ -297,33 +297,33 @@ def create_axes_orientation_box(
         Color of the edges.
 
     x_color : ColorLike, optional
-        Color of the x axis text.
+        Color of the x-axis text.
 
     y_color : ColorLike, optional
-        Color of the y axis text.
+        Color of the y-axis text.
 
     z_color : ColorLike, optional
-        Color of the z axis text.
+        Color of the z-axis text.
 
     xlabel : str, optional
-        Text used for the x axis.
+        Text used for the x-axis.
 
     ylabel : str, optional
-        Text used for the y axis.
+        Text used for the y-axis.
 
     zlabel : str, optional
-        Text used for the z axis.
+        Text used for the z-axis.
 
     x_face_color : ColorLike, optional
-        Color used for the x axis arrow.  Defaults to theme axes
+        Color used for the x-axis arrow.  Defaults to theme axes
         parameters.
 
     y_face_color : ColorLike, optional
-        Color used for the y axis arrow.  Defaults to theme axes
+        Color used for the y-axis arrow.  Defaults to theme axes
         parameters.
 
     z_face_color : ColorLike, optional
-        Color used for the z axis arrow.  Defaults to theme axes
+        Color used for the z-axis arrow.  Defaults to theme axes
         parameters.
 
     color_box : bool, optional
@@ -447,6 +447,66 @@ def create_axes_orientation_box(
     _update_axes_label_color(actor, label_color)
 
     return actor
+
+
+def create_north_arrow():
+    """Create a north arrow mesh.
+
+    .. versionadded:: 0.44.0
+
+    Returns
+    -------
+    pyvista.PolyData
+        North arrow mesh.
+
+    """
+    points = np.array(
+        [
+            [0.0, 5.0, 0.0],
+            [-2.0, 0.0, 0.0],
+            [0.0, 1.5, 0.0],
+            [2.0, 0.0, 0.0],
+            [0.0, 5.0, 1.0],
+            [-2.0, 0.0, 1.0],
+            [0.0, 1.5, 1.0],
+            [2.0, 0.0, 1.0],
+        ],
+    )
+    faces = np.array(
+        [
+            4,
+            3,
+            7,
+            4,
+            0,
+            4,
+            2,
+            6,
+            7,
+            3,
+            4,
+            1,
+            5,
+            6,
+            2,
+            4,
+            0,
+            4,
+            5,
+            1,
+            4,
+            0,
+            1,
+            2,
+            3,
+            4,
+            4,
+            7,
+            6,
+            5,
+        ],
+    )
+    return pyvista.PolyData(points, faces)
 
 
 def normalize(x, minimum=None, maximum=None):
@@ -677,13 +737,9 @@ def check_matplotlib_vtk_compatibility():
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
-        if mpl_vers >= (3, 6):
-            return False
-        return True
+        return not mpl_vers >= (3, 6)
     elif pyvista.vtk_version_info > (9, 2, 2):
-        if mpl_vers >= (3, 6):
-            return True
-        return False  # pragma: no cover
+        return mpl_vers >= (3, 6)
     raise RuntimeError('Uncheckable versions.')  # pragma: no cover
 
 

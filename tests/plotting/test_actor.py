@@ -8,6 +8,8 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
 skip_mac = pytest.mark.skipif(
     platform.system() == 'Darwin',
@@ -45,6 +47,14 @@ def test_actor_init_empty():
         actor.not_an_attribute = None
 
     assert actor.memory_address == actor.GetAddressAsString("")
+
+    actor.user_matrix = None
+    repr_ = repr(actor)
+    assert "User matrix:                Identity" in repr_
+
+    actor.user_matrix = np.eye(4) * 2
+    repr_ = repr(actor)
+    assert "User matrix:                Set" in repr_
 
 
 def test_actor_from_argument():
@@ -116,6 +126,8 @@ def test_actor_scale(actor):
     scale = (2, 2, 2)
     actor.scale = scale
     assert actor.scale == scale
+    actor.scale = 3
+    assert actor.scale == (3, 3, 3)
 
 
 def test_actor_position(actor):
@@ -147,6 +159,34 @@ def test_actor_orientation(actor):
     assert np.allclose(actor.orientation, orientation)
 
 
+def test_actor_rotation_order(actor):
+    orientation = (10, 20, 30)
+    dataset = pv.Cube()
+    dataset.rotate_y(orientation[1], inplace=True)
+    dataset.rotate_x(orientation[0], inplace=True)
+    dataset.rotate_z(orientation[2], inplace=True)
+
+    actor = pv.Actor(mapper=pv.DataSetMapper(pv.Cube()))
+    actor.orientation = orientation
+    assert np.allclose(dataset.bounds, actor.bounds)
+
+
+def test_actor_origin(actor):
+    assert actor.origin == (0, 0, 0)
+    origin = (1, 2, 3)
+    actor.origin = origin
+    assert np.allclose(actor.origin, origin)
+
+
+def test_actor_length(actor):
+    initial_length = 2**0.5  # sqrt(2)
+    scale_factor = 2
+
+    assert actor.length == initial_length
+    actor.scale = scale_factor
+    assert actor.length == initial_length * scale_factor
+
+
 def test_actor_unit_matrix(actor):
     assert np.allclose(actor.user_matrix, np.eye(4))
 
@@ -166,6 +206,14 @@ def test_actor_center(actor):
     assert actor.center == (0.0, 0.0, 0.0)
 
 
+def test_actor_name(actor):
+    actor.name = 1
+    assert actor._name == 1
+
+    with pytest.raises(ValueError, match='Name must be truthy'):
+        actor.name = None
+
+
 def test_actor_backface_prop(actor):
     actor.prop.opacity = 0.5
     assert isinstance(actor.backface_prop, pv.Property)
@@ -183,3 +231,26 @@ def test_vol_actor_prop(vol_actor):
     prop = vtk.vtkVolumeProperty()
     vol_actor.prop = prop
     assert vol_actor.prop is prop
+
+
+@pytest.mark.parametrize('order', ['F', 'C'])
+def test_convert_orientation_to_rotation_matrix(order):
+    orientation = (10, 20, 30)
+    rotation = np.array(
+        [
+            [0.78410209, -0.49240388, 0.37778609],
+            [0.52128058, 0.85286853, 0.02969559],
+            [-0.33682409, 0.17364818, 0.92541658],
+        ],
+        order=order,
+    )
+
+    actual_rotation = _orientation_as_rotation_matrix(orientation)
+    assert isinstance(actual_rotation, np.ndarray)
+    assert actual_rotation.shape == (3, 3)
+    assert np.allclose(actual_rotation, rotation)
+
+    actual_orientation = _rotation_matrix_as_orientation(rotation)
+    assert isinstance(actual_orientation, tuple)
+    assert len(actual_orientation) == 3
+    assert np.allclose(actual_orientation, orientation)

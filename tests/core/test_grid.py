@@ -1334,9 +1334,9 @@ def test_ExplicitStructuredGrid_cell_coords():
     grid = examples.load_explicit_structured()
 
     coords = grid.cell_coords(19)
-    assert isinstance(coords, tuple)
-    assert all(np.issubdtype(c, np.integer) for c in coords)
-    assert coords == (3, 4, 0)
+    assert isinstance(coords, np.ndarray)
+    assert np.issubdtype(coords.dtype, np.integer)
+    assert np.array_equal(coords, (3, 4, 0))
 
     coords = grid.cell_coords((19, 31, 41, 54))
     assert isinstance(coords, np.ndarray)

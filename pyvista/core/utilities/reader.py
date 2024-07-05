@@ -9,12 +9,9 @@ import enum
 from functools import wraps
 import importlib
 import os
-import pathlib
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import List
-from typing import Union
 from xml.etree import ElementTree
 
 import numpy as np
@@ -26,6 +23,9 @@ from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
 
@@ -170,7 +170,7 @@ def get_reader(filename, force_ext=None):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         The string path to the file to read.
 
     force_ext : str, optional
@@ -204,7 +204,7 @@ def get_reader(filename, force_ext=None):
     except KeyError:
         if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
-                pathlib.Path(f).suffix == '.dcm' for f in files
+                Path(f).suffix == '.dcm' for f in files
             ):
                 Reader = DICOMReader
             else:
@@ -224,7 +224,7 @@ class BaseVTKReader(ABC):
 
     def __init__(self: BaseVTKReader):
         self._data_object = None
-        self._observers: List[Union[int, Callable[[Any], Any]]] = []
+        self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename):
         """Set file name."""
@@ -275,7 +275,7 @@ class BaseReader:
 
     Parameters
     ----------
-    path : str
+    path : str, Path
         Path of the file to read.
     """
 
@@ -295,7 +295,7 @@ class BaseReader:
         self._progress_msg = None
         self.__directory = None
         self._set_defaults()
-        self.path = path
+        self.path = str(path)
         self._set_defaults_post()
 
     def __repr__(self):
@@ -371,7 +371,7 @@ class BaseReader:
         return self.__directory
 
     @path.setter
-    def path(self, path: str):  # numpydoc ignore=GL08
+    def path(self, path: str | Path):  # numpydoc ignore=GL08
         if Path(path).is_dir():
             self._set_directory(path)
         elif Path(path).is_file():
@@ -510,9 +510,7 @@ class PointCellDataSelection:
             Whether reading the cell array is enabled.
 
         """
-        if self.reader.GetPointArrayStatus(name):
-            return True
-        return False
+        return bool(self.reader.GetPointArrayStatus(name))
 
     def enable_all_point_arrays(self):
         """Enable all point arrays."""
@@ -1503,13 +1501,16 @@ class MultiBlockPlot3DReader(BaseReader):
         """
         # files may be a list or a single filename
         if files:
-            if isinstance(files, (str, pathlib.Path)):
+            if isinstance(files, (str, Path)):
                 files = [files]
         files = [_process_filename(f) for f in files]
 
         # AddFileName supports reading multiple q files
         for q_filename in files:
-            self.reader.AddFileName(q_filename)
+            if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+                self.reader.AddFileName(str(q_filename))
+            else:
+                self.reader.AddFileName(q_filename)
 
     @property
     def auto_detect_format(self):
@@ -1520,7 +1521,7 @@ class MultiBlockPlot3DReader(BaseReader):
     def auto_detect_format(self, value):  # numpydoc ignore=GL08
         self.reader.SetAutoDetectFormat(value)
 
-    def add_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def add_function(self, value: int | Plot3DFunctionEnum):
         """Specify additional functions to compute.
 
         The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
@@ -1549,7 +1550,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.AddFunction(value)
 
-    def remove_function(self, value: Union[int, Plot3DFunctionEnum]):
+    def remove_function(self, value: int | Plot3DFunctionEnum):
         """Remove one function from list of functions to compute.
 
         For details on the types of accepted values, see :meth:``add_function``.
@@ -1768,7 +1769,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self.reader.GetFamilyArrayStatus(name))
 
     @property
-    def family_array_names(self) -> List[str]:
+    def family_array_names(self) -> list[str]:
         """Return the list of all family array names.
 
         Returns
@@ -1942,7 +1943,7 @@ class _PVDReader(BaseVTKReader):
 
     def SetFileName(self, filename):
         """Set filename and update reader."""
-        self._filename = filename
+        self._filename = str(filename)
         self._directory = str(Path(filename).parent)
 
     def UpdateInformation(self):
@@ -1978,8 +1979,7 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(str(Path(self._directory) / dataset.path))
-            for dataset in self._active_datasets
+            get_reader(Path(self._directory) / dataset.path) for dataset in self._active_datasets
         ]
 
 

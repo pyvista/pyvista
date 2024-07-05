@@ -1,6 +1,6 @@
 """Utilities routines."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 import contextlib
@@ -84,6 +84,7 @@ from .geometric_objects import Tube
 from .geometric_objects import Wavelet
 from .geometric_objects import translate
 from .geometric_sources import ArrowSource
+from .geometric_sources import AxesGeometrySource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
 from .geometric_sources import CubeSource
@@ -105,6 +106,7 @@ from .helpers import is_pyvista_dataset
 from .helpers import wrap
 from .image_sources import ImageEllipsoidSource
 from .image_sources import ImageGaussianSource
+from .image_sources import ImageGridSource
 from .image_sources import ImageMandelbrotSource
 from .image_sources import ImageNoiseSource
 from .image_sources import ImageSinusoidSource

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
@@ -11,9 +10,8 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
-from typing import Type
+from typing import Sequence
 from typing import TypeVar
-from typing import Union
 import warnings
 
 import numpy as np
@@ -152,7 +150,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: T | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters

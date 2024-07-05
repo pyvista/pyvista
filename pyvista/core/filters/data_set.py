@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 import warnings
 
 import matplotlib.pyplot as plt
@@ -36,7 +36,6 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
-
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -2270,10 +2269,10 @@ class DataSetFilters:
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``scale``
-            If ``scale`` , color by scale the glyphs.
-            If ``scalar`` , color by scalar the glyphs.
-            If ``vector`` , color by vector the glyphs.
+        color_mode : str, optional, default: ``'scale'``
+            If ``'scale'`` , color the glyphs by scale.
+            If ``'scalar'`` , color the glyphs by scalar.
+            If ``'vector'`` , color the glyphs by vector.
 
             .. versionadded:: 0.44
 
@@ -5126,11 +5125,13 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5285,11 +5286,13 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5459,7 +5462,7 @@ class DataSetFilters:
         values other than ``0`` are included in the output.
 
         >>> extracted.get_data_range()
-        (0.0, 81.0)
+        (np.float64(0.0), np.float64(81.0))
         >>> extracted.plot()
 
         Set ``include_cells=False`` to only extract points. The output scalars now
@@ -5467,7 +5470,7 @@ class DataSetFilters:
 
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
-        (0.0, 0.0)
+        (np.float64(0.0), np.float64(0.0))
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
         Use ``ranges`` to extract values from a grid's point data in range.
@@ -6821,9 +6824,9 @@ class DataSetFilters:
         There is only 1 point and cell, so access the only value.
 
         >>> integrated["Area"][0]
-        3.14
+        np.float64(3.14)
         >>> integrated["data"][0]
-        6.28
+        np.float64(6.28)
 
         See the :ref:`integrate_example` for more examples using this filter.
 
@@ -7235,7 +7238,7 @@ class DataSetFilters:
         Show range of labels
 
         >>> image_labels.get_data_range()
-        (0, 29)
+        (np.uint8(0), np.uint8(29))
 
         Find 'gaps' in the labels
 
@@ -7252,7 +7255,7 @@ class DataSetFilters:
         Show range of packed labels
 
         >>> packed_labels.get_data_range()
-        (0, 25)
+        (np.uint8(0), np.uint8(25))
 
         """
         # Set a input scalars

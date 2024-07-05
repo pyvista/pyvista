@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
 from typing import ClassVar
+from typing import Sequence
 from typing import cast
 import warnings
 
@@ -34,6 +34,7 @@ from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
+from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
@@ -101,10 +102,10 @@ def make_legend_face(face):
 
     Parameters
     ----------
-    face : str | None | pyvista.PolyData
+    face : str | pyvista.PolyData | NoneType
         The shape of the legend face. Valid strings are:
-        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
-        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle', 'none'.
+        Also accepts ``None`` or instances of ``pyvista.PolyData``.
 
     Returns
     -------
@@ -116,8 +117,8 @@ def make_legend_face(face):
     ValueError
         If the provided face value is invalid.
     """
-    if face is None:
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
+    if face is None or face == "none":
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -134,7 +135,7 @@ def make_legend_face(face):
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
-            '\tNone'
+            '\t"none"\n'
             '\tpyvista.PolyData',
         )
     return legendface
@@ -475,7 +476,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds.tolist()))
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -484,17 +485,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Returns
         -------
         float
-            Length of the diagional of the bounding box.
+            Length of the diagonal of the bounding box.
         """
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
         -------
-        list
+        tuple[float, float, float]
             Cartesian coordinates of the center.
 
         """
@@ -502,7 +503,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x = (bounds[1] + bounds[0]) / 2
         y = (bounds[3] + bounds[2]) / 2
         z = (bounds[5] + bounds[4]) / 2
-        return [x, y, z]
+        return x, y, z
 
     @property
     def background_color(self):  # numpydoc ignore=RT01
@@ -997,6 +998,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkOrientationMarkerWidget
             Orientation marker widget.
 
+        See Also
+        --------
+        add_axes
+            Add an axes orientation widget.
+
         Examples
         --------
         Use an Arrow as the orientation widget.
@@ -1067,22 +1073,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the labels.
 
         x_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes parameters.
+            Color used for the x-axis arrow.  Defaults to theme axes parameters.
 
         y_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes parameters.
+            Color used for the y-axis arrow.  Defaults to theme axes parameters.
 
         z_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes parameters.
+            Color used for the z-axis arrow.  Defaults to theme axes parameters.
 
         xlabel : str, default: "X"
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, default: "Y"
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, default: "Z"
-            Text used for the z axis.
+            Text used for the z-axis.
 
         labels_off : bool, default: false
             Enable or disable the text labels for the axes.
@@ -1108,8 +1114,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
-            Axes actor.
+        AxesActor
+            Axes actor of the added widget.
+
+
+        See Also
+        --------
+        show_axes
+            Similar method which calls :func:`add_axes` without any parameters.
+
+        add_axes_at_origin
+            Add an :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
@@ -1185,6 +1200,81 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
+    def add_north_arrow_widget(
+        self,
+        interactive=None,
+        color="#4169E1",
+        opacity=1.0,
+        line_width=2,
+        edge_color=None,
+        lighting=False,
+        viewport=(0, 0, 0.1, 0.1),
+    ):
+        """Add a geographic north arrow to the scene.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Control if the orientation widget is interactive.  By
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.plotting.themes.Theme.interactive>`.
+
+        color : ColorLike, optional
+            Color of the north arrow.
+
+        opacity : float, optional
+            Opacity of the north arrow.
+
+        line_width : float, optional
+            Width of the north edge arrow lines.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        lighting : bool, optional
+            Enable or disable lighting on north arrow.
+
+        viewport : sequence[float], default: (0, 0, 0.1, 0.1)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkOrientationMarkerWidget
+            Orientation marker widget.
+
+        Examples
+        --------
+        Use an north arrow as the orientation widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> terrain = examples.download_st_helens().warp_by_scalar()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(terrain)
+        >>> widget = pl.add_north_arrow_widget()
+        >>> pl.enable_terrain_style(True)
+        >>> pl.show()
+
+        """
+        marker = create_north_arrow()
+        mapper = pyvista.DataSetMapper(marker)
+        actor = pyvista.Actor(mapper)
+        actor.prop.show_edges = True
+        if edge_color is not None:
+            actor.prop.edge_color = edge_color
+        actor.prop.line_width = line_width
+        actor.prop.color = color
+        actor.prop.opacity = opacity
+        actor.prop.lighting = lighting
+        return self.add_orientation_widget(
+            actor,
+            interactive=interactive,
+            viewport=viewport,
+        )
+
     def add_box_axes(
         self,
         *,
@@ -1224,33 +1314,33 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Color of the edges.
 
         x_color : ColorLike, optional
-            Color of the x axis text.
+            Color of the x-axis text.
 
         y_color : ColorLike, optional
-            Color of the y axis text.
+            Color of the y-axis text.
 
         z_color : ColorLike, optional
-            Color of the z axis text.
+            Color of the z-axis text.
 
         xlabel : str, optional
-            Text used for the x axis.
+            Text used for the x-axis.
 
         ylabel : str, optional
-            Text used for the y axis.
+            Text used for the y-axis.
 
         zlabel : str, optional
-            Text used for the z axis.
+            Text used for the z-axis.
 
         x_face_color : ColorLike, optional
-            Color used for the x axis arrow.  Defaults to theme axes
+            Color used for the x-axis arrow.  Defaults to theme axes
             parameters.
 
         y_face_color : ColorLike, optional
-            Color used for the y axis arrow.  Defaults to theme axes
+            Color used for the y-axis arrow.  Defaults to theme axes
             parameters.
 
         z_face_color : ColorLike, optional
-            Color used for the z axis arrow.  Defaults to theme axes
+            Color used for the z-axis arrow.  Defaults to theme axes
             parameters.
 
         label_color : ColorLike, optional
@@ -1320,6 +1410,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def hide_axes(self):
         """Hide the axes orientation widget.
 
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1333,6 +1431,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def show_axes(self):
         """Show the axes orientation widget.
+
+        See Also
+        --------
+        add_axes
+            Similar method with additional options.
+
+        hide_axes
+            Hide the axes orientation widget.
+
+        axes_enabled
+            Check if the axes orientation widget is enabled.
+
+        add_axes_at_origin
+            Add a :class:`pyvista.AxesActor` to the origin of a scene.
 
         Examples
         --------
@@ -1349,8 +1461,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
 
     @property
-    def axes_enabled(self):  # numpydoc ignore=RT01
-        """Return ``True`` when axes are enabled.
+    def axes_enabled(self):
+        """Return ``True`` when the axes widget is enabled.
+
+        See Also
+        --------
+        show_axes
+            Show the axes orientation widget.
+
+        hide_axes
+            Hide the axes orientation widget.
 
         Examples
         --------
@@ -1359,6 +1479,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
         >>> pl.renderer.axes_enabled
         False
+
+        Returns
+        -------
+        bool
+            Return ``True`` when the axes widget is enabled.
 
         """
         if hasattr(self, 'axes_widget'):
@@ -1422,13 +1547,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
 
         show_xaxis : bool, default: True
-            Makes X axis visible.
+            Makes x-axis visible.
 
         show_yaxis : bool, default: True
-            Makes Y axis visible.
+            Makes y-axis visible.
 
         show_zaxis : bool, default: True
-            Makes Z axis visible.
+            Makes z-axis visible.
 
         show_xlabels : bool, default: True
             Shows X labels.
@@ -1466,22 +1591,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``color='#FFFFFF'``
 
         xtitle : str, default: "X Axis"
-            Title of the X axis.  Default ``"X Axis"``.
+            Title of the x-axis.  Default ``"X Axis"``.
 
         ytitle : str, default: "Y Axis"
-            Title of the Y axis.  Default ``"Y Axis"``.
+            Title of the y-axis.  Default ``"Y Axis"``.
 
         ztitle : str, default: "Z Axis"
-            Title of the Z axis.  Default ``"Z Axis"``.
+            Title of the z-axis.  Default ``"Z Axis"``.
 
         n_xlabels : int, default: 5
-            Number of labels for the X axis.
+            Number of labels for the x-axis.
 
         n_ylabels : int, default: 5
-            Number of labels for the Y axis.
+            Number of labels for the y-axis.
 
         n_zlabels : int, default: 5
-            Number of labels for the Z axis.
+            Number of labels for the z-axis.
 
         use_2d : bool, default: False
             This can be enabled for smoother plotting.
@@ -2342,7 +2467,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Examples
         --------
         Look from the top down by setting view up to ``[0, 1, 0]``.
-        Notice how the Y axis appears vertical.
+        Notice how the y-axis appears vertical.
 
         >>> from pyvista import demos
         >>> pl = demos.orientation_plotter()
@@ -2536,7 +2661,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True):
         """Scale all the actors in the scene.
 
-        Scaling in performed independently on the X, Y and Z axis.
+        Scaling in performed independently on the X, Y and z-axis.
         A scale of zero is illegal and will be replaced with one.
 
         .. warning::
@@ -3511,8 +3636,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
               of the item to add, ``color`` is the color of the label to add,
               and ``face`` is a string which defines the face (i.e. ``circle``,
               ``triangle``, ``box``, etc.).
-              ``face`` could be also ``None`` (there is no face then), or a
-              :class:`pyvista.PolyData`.
+              ``face`` could be also ``"none"`` (no face shown for the entry),
+              or a :class:`pyvista.PolyData`.
             * A dict with the key ``label``. Optionally you can add the
               keys ``color`` and ``face``. The values of these keys can be
               strings. For the ``face`` key, it can be also a
@@ -3551,17 +3676,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData | NoneType, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
 
-            * None: ``None``
+            You may set it to one of the following:
+
+            * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
             * Triangle: ``"^"`` or ``'triangle'``
             * Circle: ``"o"`` or ``'circle'``
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``None`` removes the legend face.  A custom face can be
+            Passing ``"none"`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
 
@@ -3728,7 +3857,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointa,
         pointb,
         flip_range=False,
-        number_labels=5,
+        number_labels=None,
         show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -3768,8 +3897,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int, default: 5
+        number_labels : int, optional
             Number of labels to place on ruler.
+            If not supplied, the number will be adjusted for "nice" values.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -3872,7 +4002,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
+        if number_labels is not None:
+            ruler.AdjustLabelsOff()
+            ruler.SetNumberOfLabels(number_labels)
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

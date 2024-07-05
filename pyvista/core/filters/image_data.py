@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 import operator
-import platform
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
@@ -424,17 +423,12 @@ class ImageDataFilters(DataSetFilters):
         else:
             field = self.get_array_association(scalars, preference=preference)
 
-        # For some systems and/or Numpy < 2.0, integer scalars won't threshold
-        # correctly. Cast to float in these cases.
-        has_int_dtype = np.issubdtype(
+        # For some systems integer scalars won't threshold
+        # correctly. Cast to float to be robust.
+        cast_dtype = np.issubdtype(
             array_dtype := self.active_scalars.dtype,
             int,
         ) and array_dtype != np.dtype(np.uint8)
-        cast_dtype = (
-            has_int_dtype
-            and int(np.__version__.split('.')[0]) < 2
-            and platform.system() in ['Darwin', 'Linux']
-        )
         if cast_dtype:
             self[scalars] = self[scalars].astype(float, casting='safe')
 
@@ -660,13 +654,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation
@@ -740,13 +734,13 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         x_cutoff : float
-            The cutoff frequency for the x axis.
+            The cutoff frequency for the x-axis.
 
         y_cutoff : float
-            The cutoff frequency for the y axis.
+            The cutoff frequency for the y-axis.
 
         z_cutoff : float
-            The cutoff frequency for the z axis.
+            The cutoff frequency for the z-axis.
 
         order : int, default: 1
             The order of the cutoff curve. Given from the equation
