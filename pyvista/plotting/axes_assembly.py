@@ -26,7 +26,6 @@ from pyvista.plotting.text import Label
 if TYPE_CHECKING:  # pragma: no cover
     import sys
     from typing import Iterator
-    from typing import Sequence
 
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
