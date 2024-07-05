@@ -234,7 +234,9 @@ def test_vol_actor_prop(vol_actor):
     assert vol_actor.prop is prop
 
 
-@pytest.mark.parametrize('func', [np.ndarray, scipy.spatial.transform.Rotation.from_matrix])
+@pytest.mark.parametrize(
+    'func', [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=['numpy', 'scipy']
+)
 def test_rotation_from(actor, func):
     array = [
         [0.78410209, -0.49240388, 0.37778609],

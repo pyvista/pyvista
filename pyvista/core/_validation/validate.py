@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import inspect
 from itertools import product
+import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -562,15 +563,30 @@ def validate_transform3x3(transform, /, *, name="Transform"):
 
     """
     check_string(name, name="Name")
-    arr = np.eye(3)  # initialize
     if isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
+        return _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
-            arr = validate_array(transform, must_have_shape=(3, 3), name=name)
+            return validate_array(transform, must_have_shape=(3, 3), name=name)
         except ValueError:
-            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
-    return arr
+            pass
+        except TypeError:
+            try:
+                from scipy.spatial.transform import Rotation
+            except ModuleNotFoundError:
+                pass
+            else:
+                if isinstance(transform, Rotation):
+                    return transform.as_matrix()
+
+    error_message = (
+        f'Input transform must be one of:\n'
+        '\tvtkMatrix3x3\n'
+        '\t3x3 np.ndarray\n'
+        '\tscipy.spatial.transform.Rotation\n'
+        f'Got {reprlib.repr(transform)} with type {type(transform)} instead.'
+    )
+    raise TypeError(error_message)
 
 
 def _array_from_vtkmatrix(
