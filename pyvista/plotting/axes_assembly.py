@@ -485,7 +485,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.x.value)
+        self.set_part_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -494,7 +494,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.y.value)
+        self.set_part_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -503,14 +503,14 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.z.value)
+        self.set_part_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
     def set_part_prop(
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
-        axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
-        part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
+        axis: Literal['x', 'y', 'z', 'all'] = 'all',
+        part: Literal['shaft', 'tip', 'all'] = 'all',
     ):
         """Set :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
 
@@ -532,16 +532,16 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             Set :class:`~pyvista.Property` attributes for a specific part of the axes.
             Specify one of:
 
-            - ``'x'`` or ``0``: only set the property for the x-axis.
-            - ``'y'`` or ``1``: only set the property for the y-axis.
-            - ``'z'`` or ``2``: only set the property for the z-axis.
+            - ``'x'``: only set the property for the x-axis.
+            - ``'y'``: only set the property for the y-axis.
+            - ``'z'``: only set the property for the z-axis.
             - ``'all'``: set the property for all three axes.
 
         part : str | int, default: 'all'
             Set the property for a specific part of the axes. Specify one of:
 
-            - ``'shaft'`` or ``0``: only set the property for the axes shafts.
-            - ``'tip'`` or ``1``: only set the property for the axes tips.
+            - ``'shaft'``: only set the property for the axes shafts.
+            - ``'tip'``: only set the property for the axes tips.
             - ``'all'``: set the property for axes shafts and tips.
 
         Examples
@@ -661,15 +661,17 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
     def _filter_part_actors(
         self,
-        axis: Literal['x', 'y', 'z', 0, 1, 2, 'all'] = 'all',
-        part: Literal['shaft', 'tip', 0, 1, 'all'] = 'all',
+        axis: Literal['x', 'y', 'z', 'all'] = 'all',
+        part: Literal['shaft', 'tip', 'all'] = 'all',
     ):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
+        valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f"Axis must be one of {valid_axis}.")
+            raise ValueError(f"Axis must be one of {valid_axis_official}.")
         valid_part = [0, 1, 'shaft', 'tip', 'all']
+        valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f"Part must be one of {valid_part}.")
+            raise ValueError(f"Part must be one of {valid_part_official}.")
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
