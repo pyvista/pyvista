@@ -4031,14 +4031,17 @@ AXES_ASSEMBLY_TEST_CASES = dict(
     AXES_ASSEMBLY_TEST_CASES.values(),
     ids=AXES_ASSEMBLY_TEST_CASES.keys(),
 )
-def test_axes_assembly(test_kwargs):
+@pytest.mark.parametrize(
+    'class_', [pv.AxesAssembly, pv.AxesAssemblySymmetric], ids=['asymmetric', 'symmetric']
+)
+def test_axes_assembly(test_kwargs, class_):
     plot = pv.Plotter()
-    axes_assembly = pv.AxesAssembly(**test_kwargs)
+    axes_assembly = class_(**test_kwargs, label_color='white', label_size=25)
     plot.add_actor(axes_assembly)
 
     if test_kwargs:
         # Add second axes at the origin for visual reference
-        reference_axes = pv.AxesAssembly(
+        reference_axes = class_(
             x_color='black', y_color='black', z_color='black', show_labels=False
         )
         plot.add_actor(reference_axes)
@@ -4046,10 +4049,15 @@ def test_axes_assembly(test_kwargs):
 
 
 def test_axes_assembly_symmetric():
-    pl = pv.Plotter()
-    axes = pv.AxesAssemblySymmetric()
-    pl.add_actor(axes)
-    pl.show()
+    plot = pv.Plotter()
+    axes_assembly = pv.AxesAssemblySymmetric(label_size=25, user_matrix=USER_MATRIX)
+    plot.add_actor(axes_assembly)
+    # Add second axes at the origin for visual reference
+    reference_axes = pv.AxesAssemblySymmetric(
+        x_color='black', y_color='black', z_color='black', show_labels=False
+    )
+    plot.add_actor(reference_axes)
+    plot.show()
 
 
 def test_axes_actor_default_colors():
