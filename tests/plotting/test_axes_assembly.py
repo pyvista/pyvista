@@ -532,11 +532,11 @@ def test_axes_actor_set_get_part_prop_tip(axes_assembly):
 
 
 def test_axes_actor_set_get_part_prop_raises(axes_assembly):
-    match = "Part must be one of [0, 1, 'shaft', 'tip', 'all']."
+    match = "Part must be one of ['shaft', 'tip', 'all']."
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_part_prop('ambient', 0.0, part=2)
 
-    match = "Axis must be one of [0, 1, 2, 'x', 'y', 'z', 'all']."
+    match = "Axis must be one of ['x', 'y', 'z', 'all']."
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_part_prop('ambient', 0.0, axis='a')
 
