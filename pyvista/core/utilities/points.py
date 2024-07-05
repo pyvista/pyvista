@@ -488,13 +488,6 @@ def principal_axes(points: MatrixLike[float]):
 
     .. versionadded:: 0.44.0
 
-    See Also
-    --------
-    :attr:`~pyvista.DataSet.principal_axes`
-        Compute the principal axes of a mesh.
-    :func:`~pyvista.fit_plane_to_points`
-        Use the principal axes to fit a plane.
-
     Parameters
     ----------
     points : MatrixLike[float]
