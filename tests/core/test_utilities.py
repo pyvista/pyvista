@@ -1204,7 +1204,7 @@ def test_principal_axes_vectors_raises():
 # https://stackoverflow.com/questions/54961554/why-can-a-352gb-numpy-ndarray-be-used-on-an-8gb-memory-macos-computer
 @pytest.mark.skipif(platform.system() == 'Darwin', reason='Memory is stored virtually.')
 def test_principal_axes_vectors_memory_error():
-    N_huge_RAM = 370000  # requires approx 1 TiB of RAM to compute without sampling
+    N_huge_RAM = 1000000  # requires approx 1 TiB of RAM to compute without sampling
     points = np.random.default_rng().random((N_huge_RAM, 3))
     axes = principal_axes_vectors(points)
     assert np.any(axes)
