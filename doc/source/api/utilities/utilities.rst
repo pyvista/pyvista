@@ -37,6 +37,7 @@ Features
    grid_from_sph_coords
    merge
    perlin_noise
+   principal_axes
    sample_function
    spherical_to_cartesian
    transform_vectors_sph_to_cart
