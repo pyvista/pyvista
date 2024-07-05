@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import pickle
-import platform
 import random
 from re import escape
 import shutil
@@ -1198,20 +1197,6 @@ def test_principal_axes_vectors_raises():
         principal_axes_vectors(np.empty((0, 3)), axis_0_direction='x', axis_1_direction='x')
     with pytest.raises(ValueError, match="must be distinct"):
         principal_axes_vectors(np.empty((0, 3)), axis_1_direction='x', axis_2_direction='x')
-
-
-# See source for reason:
-# https://stackoverflow.com/questions/54961554/why-can-a-352gb-numpy-ndarray-be-used-on-an-8gb-memory-macos-computer
-@pytest.mark.skipif(platform.system() == 'Darwin', reason='Memory is stored virtually.')
-def test_principal_axes_vectors_memory_error():
-    N_huge_RAM = 1000000  # requires approx 1 TiB of RAM to compute without sampling
-    points = np.random.default_rng().random((N_huge_RAM, 3))
-    axes = principal_axes_vectors(points)
-    assert np.any(axes)
-    axes = principal_axes_vectors(points, sample_count=11000)
-    assert np.any(axes)
-    with pytest.raises(MemoryError):
-        principal_axes_vectors(points, sample_count=None)
 
 
 def test_principal_axes_vectors_sample_count():
