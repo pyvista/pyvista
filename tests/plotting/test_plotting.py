@@ -4045,6 +4045,25 @@ def test_axes_assembly(test_kwargs):
     plot.show()
 
 
+@pytest.mark.parametrize(
+    'test_kwargs',
+    AXES_ASSEMBLY_TEST_CASES.values(),
+    ids=AXES_ASSEMBLY_TEST_CASES.keys(),
+)
+def test_axes_assembly_symmetric(test_kwargs):
+    plot = pv.Plotter()
+    axes_assembly = pv.AxesAssemblySymmetric(**test_kwargs, label_color='white', label_size=25)
+    plot.add_actor(axes_assembly)
+
+    if test_kwargs:
+        # Add second axes at the origin for visual reference
+        reference_axes = pv.AxesAssemblySymmetric(
+            x_color='black', y_color='black', z_color='black', show_labels=False
+        )
+        plot.add_actor(reference_axes)
+    plot.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
