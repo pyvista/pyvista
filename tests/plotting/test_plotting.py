@@ -4048,18 +4048,6 @@ def test_axes_assembly(test_kwargs, class_):
     plot.show()
 
 
-def test_axes_assembly_symmetric():
-    plot = pv.Plotter()
-    axes_assembly = pv.AxesAssemblySymmetric(label_size=25, user_matrix=USER_MATRIX)
-    plot.add_actor(axes_assembly)
-    # Add second axes at the origin for visual reference
-    reference_axes = pv.AxesAssemblySymmetric(
-        x_color='black', y_color='black', z_color='black', show_labels=False
-    )
-    plot.add_actor(reference_axes)
-    plot.show()
-
-
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
