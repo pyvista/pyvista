@@ -472,9 +472,12 @@ def principal_axes(points: MatrixLike[float]):
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes
     are also known as the principal components of the points in Principal Component
-    Analysis (PCA). They are computed as the eigenvectors of the covariance matrix
-    from the mean-centered points. The axes vectors are processed to ensure that they
-    form a right-handed coordinate frame.
+    Analysis (PCA), or the right singular vectors from the Singular Value Decomposition
+    (SVD).
+
+    The axes are computed as the eigenvectors of the covariance matrix from the
+    mean-centered points, and are processed to ensure that they form a right-handed
+    coordinate frame.
 
     The axes explain the total variance of the points. The first axis explains the
     largest percentage of variance, followed by the second axis, followed again by
