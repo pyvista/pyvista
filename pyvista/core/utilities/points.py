@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -459,3 +465,121 @@ def vector_poly_data(orig, vec):
     pdata.GetPointData().SetActiveScalars(name)
 
     return pyvista.PolyData(pdata)
+
+
+def principal_axes(points: MatrixLike[float]):
+    """Compute the principal axes of a set of points.
+
+    Principal axes are orthonormal vectors that best fit a set of points. The axes
+    are also known as the principal components of the points in Principal Component
+    Analysis (PCA). They are computed as the eigenvectors of the covariance matrix
+    from the mean-centered points. The axes vectors are processed to ensure that they
+    form a right-handed coordinate frame.
+
+    The axes explain the total variance of the points. The first axis explains the
+    largest percentage of variance, followed by the second axis, followed again by
+    the third axis which explains the smallest percentage of variance. The axes may
+    be used to build an oriented bounding box of the points or to transform the points
+    so the principal axes of the points are aligned with the XYZ axes.
+
+    .. note::
+        The computed axes are not unique, and the sign of each axis direction can be
+        arbitrarily changed.
+
+    .. versionadded:: 0.44.0
+
+    See Also
+    --------
+    :attr:`~pyvista.DataSet.principal_axes`
+        Compute the principal axes of a mesh.
+    :func:`~pyvista.fit_plane_to_points`
+        Use the principal axes to fit a plane.
+
+    Parameters
+    ----------
+    points : MatrixLike[float]
+        Nx3 array of points. At least two points are required.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 orthonormal array with the principal axes as row vectors.
+
+    Examples
+    --------
+    Create a mesh with points that have the largest variation in ``X``,
+    followed by ``Y``, then ``Z``.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.ParametricEllipsoid(xradius=10, yradius=5, zradius=1)
+    >>> p = pv.Plotter()
+    >>> _ = p.add_mesh(mesh)
+    >>> _ = p.show_grid()
+    >>> p.show()
+
+    Compute its principal axes.
+
+    >>> principal_axes = pv.principal_axes(mesh.points)
+    >>> principal_axes
+    array([[-1.00000000e+00,  3.54192738e-18,  1.67535314e-19],
+           [ 3.54192738e-18,  1.00000000e+00, -4.90676973e-19],
+           [-1.67535314e-19, -4.90676973e-19, -1.00000000e+00]])
+
+    Note that the principal axes have ones along the diagonal and zeros
+    in the off diagonals. This indicates that the first principal axis is
+    aligned with the x-axis, the second with the y-axis, and third with
+    the z-axis. This is expected, since the mesh is already axis-aligned.
+
+    However, since the signs of the principal axes are arbitrary, the
+    first and third axes in this case have a negative direction.
+
+    """
+    # Require at least two points otherwise calc will fail
+    points = _validation.validate_arrayNx3(points, must_have_min_length=2, name='Points array')
+    dtype_out = np.float64
+
+    def _init_vector() -> NumpyArray[float]:
+        return np.empty(shape=(3,), dtype=dtype_out)
+
+    def _normalize_vector(vector: NumpyArray[float]):
+        vector /= np.linalg.norm(vector)
+
+    def _has_nan(array: NumpyArray[float]) -> np.bool_:
+        return np.any(np.isnan(array))
+
+    # Compute OBB
+    corner = _init_vector()
+    max_ = _init_vector()
+    mid_ = _init_vector()
+    min_ = _init_vector()
+    size = _init_vector()
+    _vtk.vtkOBBTree().ComputeOBB(vtk_points(points, deep=False), corner, max_, mid_, min_, size)
+
+    # Process output
+    # Make sure vectors have full rank and have a right-handed cross product
+    try:
+        rank = np.linalg.matrix_rank([max_, mid_, min_])
+    except np.linalg.LinAlgError:
+        rank = None
+    else:
+        # Normalize vectors on a per-rank basis to avoid division by zero
+        if rank == 1:
+            # Given a unit _init_vector v1, find two other unit vectors v2 and v3 which
+            # form an orthonormal set. There is an infinite number of such vectors,
+            # specify an angle theta to choose one set.
+            _normalize_vector(max_)
+            theta = 0.0
+            _vtk.vtkMath.Perpendiculars(max_, mid_, min_, theta)
+            _vtk.vtkMath.Cross(max_, mid_, min_)
+        elif rank in [2, 3]:
+            _normalize_vector(max_)
+            _normalize_vector(mid_)
+            _vtk.vtkMath.Cross(max_, mid_, min_)
+        vectors = np.vstack([max_, mid_, min_])
+
+    if rank == 0 or _has_nan(corner) or _has_nan(vectors):
+        raise ValueError(
+            f"Unable to compute principal axes. The computed axes must have non-zero rank, got rank {rank}.\nThe input points array may be poorly defined."
+        )
+
+    return vectors
