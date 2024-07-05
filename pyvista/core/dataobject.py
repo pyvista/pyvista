@@ -50,7 +50,11 @@ class DataObject:
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
-        # super().__init__(*args, **kwargs)
+        try:
+            super().__init__(*args, **kwargs)
+        except TypeError:
+            # super() maps to object
+            super().__init__()
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self._association_bitarray_names: defaultdict[Any, Any] = defaultdict(set)
