@@ -179,6 +179,7 @@ from vtkmodules.vtkCommonDataModel import vtkGenericCell
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import vtkIterativeClosestPointTransform
+from vtkmodules.vtkCommonDataModel import vtkMolecule
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
