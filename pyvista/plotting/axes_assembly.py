@@ -44,7 +44,6 @@ class _AxesGeometryKwargs(TypedDict):
     tip_type: AxesGeometrySource.GeometryTypes | DataSet
     tip_radius: float
     tip_length: float | VectorLike[float]
-    symmetric: bool
     symmetric_bounds: bool
 
 
@@ -540,7 +539,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         # Update labels
         self._update_label_positions()
-
 
     @property
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
