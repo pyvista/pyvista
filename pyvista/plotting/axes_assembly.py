@@ -52,11 +52,12 @@ class _AxesPropTuple(NamedTuple):
 class _AxesGeometryKwargs(TypedDict):
     shaft_type: AxesGeometrySource.GeometryTypes | DataSet
     shaft_radius: float
-    shaft_length: float
+    shaft_length: float | VectorLike[float]
     tip_type: AxesGeometrySource.GeometryTypes | DataSet
     tip_radius: float
     tip_length: float | VectorLike[float]
     symmetric: bool
+    symmetric_bounds: bool
 
 
 class AxesAssembly(_vtk.vtkPropAssembly):
@@ -169,6 +170,21 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Add the axes as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`:
+
+    >>> import pyvista as pv
+
+    >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     axes,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
     >>> pl.show()
     """
 
@@ -698,7 +714,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         valid_value = getattr(self._prop3d, name)
         [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
 
-        # Update labels
         self._apply_transformation_to_labels()
 
     @property
