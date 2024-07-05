@@ -11,7 +11,7 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
 
