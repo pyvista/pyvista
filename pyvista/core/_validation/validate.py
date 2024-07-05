@@ -540,9 +540,8 @@ def validate_transform3x3(transform, /, *, name="Transform"):
     Parameters
     ----------
     transform : array_like | vtkMatrix3x3 | scipy.spatial.transform.Rotation
-        Transformation matrix as a 3x3 array or vtkMatrix3x3. Objects which
-        may be cast as a NumPy array are also supported, e.g. SciPy ``Rotation``
-        instances.
+        Transformation matrix as a 3x3 array, vtk matrix, or a SciPy ``Rotation``
+        instance.
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
