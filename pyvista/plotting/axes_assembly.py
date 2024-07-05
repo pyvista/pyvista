@@ -40,10 +40,12 @@ if TYPE_CHECKING:  # pragma: no cover
 class _AxesGeometryKwargs(TypedDict):
     shaft_type: AxesGeometrySource.GeometryTypes | DataSet
     shaft_radius: float
-    shaft_length: float
+    shaft_length: float | VectorLike[float]
     tip_type: AxesGeometrySource.GeometryTypes | DataSet
     tip_radius: float
     tip_length: float | VectorLike[float]
+    symmetric: bool
+    symmetric_bounds: bool
 
 
 class AxesAssembly(_vtk.vtkPropAssembly):
@@ -156,6 +158,21 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
+    >>> pl.show()
+
+    Add the axes as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`:
+
+    >>> import pyvista as pv
+
+    >>> axes = pv.AxesAssembly(symmetric_bounds=True)
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     axes,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
     >>> pl.show()
     """
 
@@ -523,6 +540,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         # Update labels
         self._update_label_positions()
+
 
     @property
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01

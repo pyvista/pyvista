@@ -2882,6 +2882,11 @@ class AxesGeometrySource:
     symmetric : bool, default: False
         Mirror the axes such that they extend to negative values.
 
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
     """
 
     GeometryTypes = Literal[
@@ -2905,6 +2910,7 @@ class AxesGeometrySource:
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric: bool = False,
+        symmetric_bounds: bool = False,
     ):
         super().__init__()
         # Init datasets
@@ -2916,6 +2922,10 @@ class AxesGeometrySource:
         self._shaft_datasets = (polys[0], polys[1], polys[2])
         self._tip_datasets = (polys[3], polys[4], polys[5])
 
+        # Also store datasets for internal use
+        self._shaft_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+        self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+
         # Set geometry-dependent params
         self.shaft_type = shaft_type  # type: ignore[assignment]
         self.shaft_radius = shaft_radius
@@ -2926,6 +2936,7 @@ class AxesGeometrySource:
 
         # Set flags
         self._symmetric = symmetric
+        self._symmetric_bounds = symmetric_bounds
 
     def __repr__(self):
         """Representation of the axes."""
@@ -2938,6 +2949,7 @@ class AxesGeometrySource:
             f"  Tip radius:                 {self.tip_radius}",
             f"  Tip length:                 {self.tip_length}",
             f"  Symmetric:                  {self.symmetric}",
+            f"  Symmetric bounds:           {self.symmetric_bounds}",
         ]
         return '\n'.join(attr)
 
@@ -2956,6 +2968,68 @@ class AxesGeometrySource:
     @symmetric.setter
     def symmetric(self, val: bool):  # numpydoc ignore=GL08
         self._symmetric = val
+
+    @property
+    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable symmetry in the axes bounds.
+
+        This option is similar to :attr:`symmetric`, except instead of making
+        the axes parts symmetric, only the bounds of the axes are made to be
+        symmetric. This is achieved by adding a single invisible cell to each tip
+        dataset along each axis to simulate the symmetry. Setting this
+        parameter primarily affects camera positioning and is useful if the
+        axes are used as a widget, as it allows for the axes to rotate
+        about its origin.
+
+        Examples
+        --------
+        Get the symmetric bounds of the axes.
+
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     symmetric_bounds=True
+        ... )
+        >>> axes_geometry_source.output.bounds
+        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+        >>> axes_geometry_source.output.center
+        array([0.0, 0.0, 0.0])
+
+        Get the asymmetric bounds.
+
+        >>> axes_geometry_source.symmetric_bounds = False
+        >>> axes_geometry_source.output.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+
+        >>> axes_geometry_source.output.center
+        array([0.45, 0.45, 0.45])
+
+        Show the difference in camera positioning with and without
+        symmetric bounds. Orientation is added for visualization.
+
+        Create actors.
+        >>> axes_sym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=True
+        ... )
+        >>> axes_asym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=False
+        ... )
+
+        Show multi-window plot.
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_actor(axes_sym)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_actor(axes_asym)
+        >>> pl.show()
+        """
+        return self._symmetric_bounds
+
+    @symmetric_bounds.setter
+    def symmetric_bounds(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric_bounds = val
 
     @property
     def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -3099,7 +3173,7 @@ class AxesGeometrySource:
 
     @shaft_type.setter
     def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet):  # numpydoc ignore=GL08
-        self._shaft_type = self._set_geometry(part=_PartEnum.shaft, geometry=shaft_type)
+        self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
     def tip_type(self) -> str:  # numpydoc ignore=RT01
@@ -3139,11 +3213,15 @@ class AxesGeometrySource:
 
     @tip_type.setter
     def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
-        self._tip_type = self._set_geometry(part=_PartEnum.tip, geometry=tip_type)
+        self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
-    def _set_geometry(self, part: _PartEnum, geometry: str | pyvista.DataSet):
+    def _set_normalized_datasets(self, part: _PartEnum, geometry: str | pyvista.DataSet):
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
-        datasets = self._shaft_datasets if part == _PartEnum.shaft else self._tip_datasets
+        datasets = (
+            self._shaft_datasets_normalized
+            if part == _PartEnum.shaft
+            else self._tip_datasets_normalized
+        )
         datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
         datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
         datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
@@ -3158,9 +3236,15 @@ class AxesGeometrySource:
         )
 
         nested_datasets = [self._shaft_datasets, self._tip_datasets]
+        nested_datasets_normalized = [
+            self._shaft_datasets_normalized,
+            self._tip_datasets_normalized,
+        ]
         for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
-            # Reset geometry
-            part = AxesGeometrySource._normalize_part(nested_datasets[part_type][axis])
+            # Reset part by copying from the normalized version
+            part_normalized = nested_datasets_normalized[part_type][axis]
+            part = nested_datasets[part_type][axis]
+            part.copy_from(part_normalized)
 
             # Offset so axis bounds are [0, 1]
             part.points[:, axis] += 0.5
@@ -3187,6 +3271,19 @@ class AxesGeometrySource:
                 normal[axis] = 1
                 flipped = part.flip_normal(normal=normal, point=origin)
                 part.append_polydata(flipped, inplace=True)
+            elif self.symmetric_bounds and part_type == _PartEnum.tip:
+                # For this feature we add a single degenerate cell
+                # at the tip and flip its position
+                point = [0, 0, 0]
+                total_length = shaft_length[axis] + tip_length[axis]
+                point[axis] = total_length
+                flipped_point = np.array([point]) * -1  # Flip point
+                point_id = part.n_points
+                new_face = [3, point_id, point_id, point_id]
+
+                # Update mesh
+                part.points = np.append(part.points, flipped_point, axis=0)
+                part.faces = np.append(part.faces, new_face)
 
     def update(self):
         """Update the output of the source."""
@@ -3254,7 +3351,7 @@ class AxesGeometrySource:
             )
         elif isinstance(geometry, pyvista.DataSet):
             name = 'custom'
-            part = geometry
+            part = geometry.copy()
         else:
             raise TypeError(
                 f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
