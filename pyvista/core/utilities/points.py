@@ -336,7 +336,6 @@ def principal_axes_vectors(
     return_transforms=False,
     transformed_center="origin",
     sample_count=10000,
-    precision=np.double,
 ):
     """Compute the principal axes vectors of a set of points.
 
@@ -481,12 +480,6 @@ def principal_axes_vectors(
         the number of input points is less than this value. Can be set
         to ``None`` to disable sampling.
 
-    precision : str, default: np.double
-        Control the precision of the SVD computation. Use ``np.double``
-        for better precision and ``np.single`` to reduce the time and
-        memory requirements for the computation. The returned values
-        will also have this type.
-
     Raises
     ------
     MemoryError
@@ -559,7 +552,6 @@ def principal_axes_vectors(
     # array([[ 1.0000000e+00, -5.7725526e-11,  9.1508944e-19],
     #        [ 5.7725526e-11,  1.0000000e+00, -3.8939370e-18],
     #        [-9.1508944e-19,  3.8939370e-18,  1.0000000e+00]], dtype=float32)
-    from numpy.core._exceptions import _ArrayMemoryError
 
     def _default_values():
         default_axes = np.eye(3)
@@ -606,11 +598,6 @@ def principal_axes_vectors(
     if len(data) == 0:
         return _default_values()
 
-    # Validate precision
-    precision = np.array(np.empty(0), dtype=precision).dtype.type
-    if precision not in [np.single, np.double]:
-        raise TypeError(f"Precision must be np.single or np.double, got {precision} instead.")
-
     # Center data
     centroid = np.mean(data, axis=0)
     data -= centroid
@@ -632,32 +619,15 @@ def principal_axes_vectors(
     if sample_count is not None:
         data = random_sample_points(data, count=sample_count, pass_through=True, seed=42)
 
-    # Compute principal axes
-    try:
-        if precision is np.double:
-            # Use SVD as it's numerically more stable than using PCA (below)
-            _, axes_values, axes_vectors = np.linalg.svd(data)  # row vectors, descending order
-
-            ## Equivalently (up to a difference in axis sign, non-uniqueness of
-            ## vectors, and numerical error), the axes may also be computed using
-            ## PCA, i.e. using covariance and eigenvalue decomposition.
-            # covariance = np.cov(data, rowvar=False)
-            # _, axes_vectors = np.linalg.eigh(covariance)  # column vectors, ascending order
-            # axes_vectors = axes_vectors.T[::-1]  # row vectors, descending order
-
-        elif precision is np.single:
-            _, axes_values, axes_vectors = _svd_single(data)
-        else:
-            # This line should not be reachable
-            raise NotImplementedError(f"Type {precision} precision is not valid.")
-
-    except _ArrayMemoryError as e:
-        msg = (
-            f"Failed to allocate memory to compute the principal axes for "
-            f"N={len(data)} points. Consider reducing the number of points"
-            f"with `sample_count` or using some other method."
-        )
-        raise MemoryError(msg) from e
+    # Compute principal axes using vtkOBBTree
+    corner = [0, 0, 0]
+    max_ = [0, 0, 0]
+    mid_ = [0, 0, 0]
+    min_ = [0, 0, 0]
+    size = [0, 0, 0]
+    _vtk.vtkOBBTree().ComputeOBB(vtk_points(data, deep=False), corner, max_, mid_, min_, size)
+    axes_vectors = np.vstack([max_, mid_, min_])
+    axes_values = size
 
     if swap_equal_axes:
         # Note: Swapping may create a left-handed coordinate frame. This
@@ -697,6 +667,12 @@ def principal_axes_vectors(
 
     axes_vectors = np.vstack((i_vector, j_vector, k_vector))
 
+    try:
+        if np.linalg.matrix_rank(axes_vectors) != 3:
+            return _default_values()
+    except np.linalg.LinAlgError:
+        return _default_values()
+
     if return_transforms:
         transform, inverse = axes_rotation_matrix(
             axes_vectors,
@@ -731,48 +707,6 @@ def _swap_axes(vectors, values):
         elif np.isclose(values[1], values[2]):
             _swap(1, 2)
     return vectors
-
-
-def _svd_single(a):
-    """Compute single-precision SVD.
-
-    The function is a customized recreating of `numpy.linalg.svd` with
-    modifications for single floats. Stock SVD always computes with
-    double floats, which is not always practical.
-
-    In contrast to numpy's general SVD, this version:
-        - assumes that we have an array of real numbers
-        - assumes that M > N
-        - always computes uv (compute_uv==True)
-        - always returns full matrices (full_matrices==True)
-
-    Warning: No checks are done to validate the assumptions above.
-
-    """
-    # Import locally instead of at module level to avoid cluttering
-    # the namespace with internal NumPy functions
-    from numpy.linalg.linalg import _assert_stacked_2d
-    from numpy.linalg.linalg import _makearray
-    from numpy.linalg.linalg import _raise_linalgerror_svd_nonconvergence
-    from numpy.linalg.linalg import _umath_linalg
-    from numpy.linalg.linalg import get_linalg_error_extobj
-
-    a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
-    result_t = np.single
-
-    extobj = get_linalg_error_extobj(_raise_linalgerror_svd_nonconvergence)
-
-    gufunc = _umath_linalg.svd_n_f  # compute full uv with M < N
-
-    # default signature is 'd->ddd' for double floats
-    # swap 'd' with 'f' for single floats
-    signature = 'f->fff'
-    u, s, vh = gufunc(a, signature=signature, extobj=extobj)
-    u = u.astype(result_t, copy=False)
-    s = s.astype(result_t, copy=False)
-    vh = vh.astype(result_t, copy=False)
-    return wrap(u), s, wrap(vh)
 
 
 def fit_plane_to_points(

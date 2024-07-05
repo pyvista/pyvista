@@ -918,36 +918,32 @@ def test_has_module():
 
 
 @pytest.mark.parametrize('normal_direction', ['z', '-z'])
-@pytest.mark.parametrize('is_double', [True, False])
 @pytest.mark.parametrize('i_resolution', [2, 10, 20])
 @pytest.mark.parametrize('j_resolution', [2, 10, 20])
-def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution, j_resolution):
+def test_fit_plane_to_points(airplane, normal_direction, i_resolution, j_resolution):
     # set up
-    if is_double:
-        airplane.points_to_double()
-
     expected_normal = np.array([-2.5776557795075497e-08, 0.1217805140255676, -0.9925570544828484])
     if normal_direction == 'z':
         expected_normal *= -1
     expected_center = [896.9955164251104, 686.6469899574811, 78.13206745346744]
-    if is_double:
-        expected_bounds = [
-            139.06047647458706,
-            1654.9305563756338,
-            38.07752570263108,
-            1335.216454212331,
-            -1.4433109538384485,
-            157.70744586077336,
-        ]
-    else:
-        expected_bounds = [
-            139.0604705810547,
-            1654.9305419921875,
-            38.07742691040039,
-            1335.216552734375,
-            -1.4435099363327026,
-            157.707275390625,
-        ]
+    # if is_double:
+    #     expected_bounds = [
+    #         139.06047647458706,
+    #         1654.9305563756338,
+    #         38.07752570263108,
+    #         1335.216454212331,
+    #         -1.4433109538384485,
+    #         157.70744586077336,
+    #     ]
+    # else:
+    expected_bounds = (
+        139.0604764745824,
+        1654.9305563756288,
+        38.07754817708553,
+        1335.2164766867857,
+        -1.4434941291069094,
+        157.70726268550465,
+    )
 
     # do tests
     plane = fit_plane_to_points(airplane.points)
@@ -974,16 +970,6 @@ def test_fit_plane_to_points(airplane, normal_direction, is_double, i_resolution
     actual_plane_center = np.mean(plane.points, axis=0)
     assert np.allclose(normal, actual_plane_normal)
     assert np.allclose(center, actual_plane_center)
-
-    # test correct type
-    if is_double:
-        assert plane.points.dtype.type is np.double
-        assert normal.dtype.type is np.double
-        assert center.dtype.type is np.double
-    else:
-        assert plane.points.dtype.type is not np.double
-        assert normal.dtype.type is not np.double
-        assert center.dtype.type is not np.double
 
 
 def swap_axes_test_cases():
@@ -1050,16 +1036,16 @@ def test_principal_axes_vectors_swap_and_project():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
     vectors = principal_axes_vectors(points, swap_equal_axes=False)
-    assert np.array_equal(vectors, [[0, 0, -1], [-1, 0, 0], [0, 1, 0]])  # ZXY
+    assert np.array_equal(vectors, [[0, 0, 1], [1, 0, 0], [0, 1, 0]])  # ZXY
     vectors = principal_axes_vectors(points, swap_equal_axes=True)
-    assert np.array_equal(vectors, [[-1, 0, 0], [0, 0, -1], [0, -1, 0]])  # XZY
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY
 
     # create planar data with equal variance in x and y
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
     vectors = principal_axes_vectors(points, swap_equal_axes=False)
-    assert np.array_equal(vectors, [[0, -1, 0], [-1, 0, 0], [0, 0, -1]])  # YXZ
+    assert np.array_equal(vectors, [[0, 1, 0], [1, 0, 0], [0, 0, -1]])  # YXZ
     vectors = principal_axes_vectors(points, swap_equal_axes=True)
-    assert np.array_equal(vectors, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])  # XYZ
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ
 
     vectors = principal_axes_vectors(points, project_xyz=True)
     assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ all positive
@@ -1071,23 +1057,23 @@ def test_principal_axes_vectors_swap_and_project():
         axis_2_direction='-z',
         swap_equal_axes=False,
     )
-    assert np.array_equal(vectors, [[0, -1, 0], [-1, 0, 0], [0, 0, -1]])
+    assert np.array_equal(vectors, [[0, 1, 0], [1, 0, 0], [0, 0, -1]])
 
 
 def test_principal_axes_vectors_direction():
     # define planar data with largest variation in x, then y
     points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]
     vectors = principal_axes_vectors(points)
-    assert np.array_equal(vectors, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     axes = principal_axes_vectors(points, axis_0_direction=[1, 0, 0])
     assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     axes = principal_axes_vectors(points, axis_1_direction=[0, -1, 0])
-    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+    assert np.array_equal(axes, [[1, 0, 0], [-0, -1, -0], [0, 0, -1]])
 
     axes = principal_axes_vectors(points, axis_2_direction=[0, 0, -1])
-    assert np.array_equal(axes, [[-1, 0, 0], [0, 1, 0], [0, 0, -1]])
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
 
     axes = principal_axes_vectors(points, axis_0_direction=[-1, 0, 0], axis_1_direction=[0, -1, 0])
     assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
@@ -1182,9 +1168,9 @@ def test_principal_axes_vectors(airplane):
     assert np.allclose(
         axes,
         [
-            [8.131365e-07, -0.9925571, -0.12178052],
-            [-1.0, -8.102506e-07, -7.321818e-08],
-            [-2.5999512e-08, 0.12178052, -0.9925571],
+            [-8.12132213e-07, 9.92557054e-01, 1.21780514e-01],
+            [1.00000000e00, 8.09226640e-07, 7.33171741e-08],
+            [-2.57765578e-08, 1.21780514e-01, -9.92557054e-01],
         ],
     )
 
@@ -1212,21 +1198,6 @@ def test_principal_axes_vectors_raises():
         principal_axes_vectors(np.empty((0, 3)), axis_0_direction='x', axis_1_direction='x')
     with pytest.raises(ValueError, match="must be distinct"):
         principal_axes_vectors(np.empty((0, 3)), axis_1_direction='x', axis_2_direction='x')
-    with pytest.raises(TypeError, match="must be np.single or np.double"):
-        principal_axes_vectors(np.eye(3), precision=str)
-
-
-@pytest.mark.parametrize('input_type', [np.single, np.double])
-@pytest.mark.parametrize('precision', [np.single, np.double])
-def test_principal_axes_vectors_precision(input_type, precision):
-    data = np.eye(3).astype(input_type)
-    axes, transform, inverse = principal_axes_vectors(np.eye(3), precision=precision)
-    assert axes.dtype.type is precision
-    assert transform.dtype.type is precision
-    assert inverse.dtype.type is precision
-
-    # test dtype strings are also valid input
-    assert np.any(principal_axes_vectors(data, precision=precision.__name__))
 
 
 # See source for reason:
