@@ -796,7 +796,6 @@ def test_axis_rotation_not_inplace():
     assert not np.allclose(p, p_out)
 
 
-@pytest.mark.skip(reason="We aren't able to use the __new__ method override previously leveraged")
 def test_bad_instantiation():
     with pytest.raises(TypeError):
         pv.DataSet()
