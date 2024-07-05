@@ -553,25 +553,20 @@ def principal_axes(points: MatrixLike[float]):
 
     # Process output
     # Make sure vectors have full rank and have a right-handed cross product
-    try:
-        rank = np.linalg.matrix_rank([max_, mid_, min_])
-    except np.linalg.LinAlgError:
-        rank = None
-    else:
-        # Normalize vectors on a per-rank basis to avoid division by zero
-        if rank == 1:
-            # Given a unit _init_vector v1, find two other unit vectors v2 and v3 which
-            # form an orthonormal set. There is an infinite number of such vectors,
-            # specify an angle theta to choose one set.
-            _normalize_vector(max_)
-            theta = 0.0
-            _vtk.vtkMath.Perpendiculars(max_, mid_, min_, theta)
-            _vtk.vtkMath.Cross(max_, mid_, min_)
-        elif rank in [2, 3]:
-            _normalize_vector(max_)
-            _normalize_vector(mid_)
-            _vtk.vtkMath.Cross(max_, mid_, min_)
-        vectors = np.vstack([max_, mid_, min_])
+    rank = np.linalg.matrix_rank([max_, mid_, min_])
+    if rank == 1:
+        # Given a unit _init_vector v1, find two other unit vectors v2 and v3 which
+        # form an orthonormal set. There is an infinite number of such vectors,
+        # specify an angle theta to choose one set.
+        _normalize_vector(max_)
+        theta = 0.0
+        _vtk.vtkMath.Perpendiculars(max_, mid_, min_, theta)
+        _vtk.vtkMath.Cross(max_, mid_, min_)
+    elif rank in [2, 3]:
+        _normalize_vector(max_)
+        _normalize_vector(mid_)
+        _vtk.vtkMath.Cross(max_, mid_, min_)
+    vectors = np.vstack([max_, mid_, min_])
 
     if rank == 0 or _has_nan(corner) or _has_nan(vectors):
         raise ValueError(

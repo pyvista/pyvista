@@ -914,32 +914,37 @@ def test_fit_plane_to_points():
     )
 
 
-def test_principal_axes(airplane):
-    axes = principal_axes(airplane.points)
-    expected_axes = np.array(
-        [
-            [-8.12132213e-07, 9.92557054e-01, 1.21780514e-01],
-            [1.00000000e00, 8.09226640e-07, 7.33171741e-08],
-            [-2.57765578e-08, 1.21780514e-01, -9.92557054e-01],
-        ]
-    )
-    assert np.allclose(axes, expected_axes)
-    assert np.array_equal(np.cross(axes[0], axes[1]), axes[2])
+AIRPLANE_CASE = (
+    pv.examples.load_airplane().points,
+    [
+        [-8.12132213e-07, 9.92557054e-01, 1.21780514e-01],
+        [1.00000000e00, 8.09226640e-07, 7.33171741e-08],
+        [-2.57765578e-08, 1.21780514e-01, -9.92557054e-01],
+    ],
+)
+PLANAR_CASE = (
+    [[0, 0, 0], [1, 1, 1]],
+    [
+        [0.57735027, 0.57735027, 0.57735027],
+        [0.0, -0.70710678, 0.70710678],
+        [0.81649658, -0.40824829, -0.40824829],
+    ],
+)
 
-    # test two points returns non-default axes
-    points = [[0, 0, 0], [1, 1, 1]]
+
+@pytest.mark.parametrize(
+    ('points', 'expected_axes'), [AIRPLANE_CASE, PLANAR_CASE], ids=['airplane', 'planar']
+)
+def test_principal_axes(points, expected_axes):
     axes = principal_axes(points)
-    expected_axes = np.array(
-        [
-            [0.57735027, 0.57735027, 0.57735027],
-            [0.0, -0.70710678, 0.70710678],
-            [0.81649658, -0.40824829, -0.40824829],
-        ]
-    )
     assert np.allclose(axes, expected_axes)
     assert np.array_equal(np.cross(axes[0], axes[1]), axes[2])
+    assert np.allclose(np.linalg.norm(axes[0]), 1)
+    assert np.allclose(np.linalg.norm(axes[1]), 1)
+    assert np.allclose(np.linalg.norm(axes[2]), 1)
 
-    # test empty data returns default axes
+
+def test_principal_axes_raises(airplane):
     points = np.empty((0, 3))
     match = 'Points array must have a minimum length of 2. Got length 0 instead.'
     with pytest.raises(ValueError, match=match):
