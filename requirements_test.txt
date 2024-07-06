@@ -22,7 +22,7 @@ pytest-cov<5.1.0
 pytest-memprof<0.3.0
 pytest-pyvista==0.1.8
 pytest-xdist<3.7.0
-scipy<1.14.0
+scipy<1.14.1
 sphinx<7.4.0
 sphinx-gallery<0.17.0
 sphinx_design<0.7.0
