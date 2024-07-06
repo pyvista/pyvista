@@ -576,8 +576,8 @@ def validate_transform3x3(transform, /, *, name="Transform"):
             pass
         except TypeError:
             try:
-                from scipy.spatial.transform import Rotation  # pragma: no cover
-            except ModuleNotFoundError:
+                from scipy.spatial.transform import Rotation
+            except ModuleNotFoundError:  # pragma: no cover
                 pass
             else:
                 if isinstance(transform, Rotation):
