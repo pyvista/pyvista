@@ -482,38 +482,38 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
-        return self.get_part_prop('color')[_AxisEnum.x :: 3]
+        return self.get_actor_prop('color')[_AxisEnum.x :: 3]
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        return self.get_part_prop('color')[_AxisEnum.y :: 3]
+        return self.get_actor_prop('color')[_AxisEnum.y :: 3]
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        return self.get_part_prop('color')[_AxisEnum.z.value :: 3]
+        return self.get_actor_prop('color')[_AxisEnum.z.value :: 3]
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self.set_part_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
+        self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
 
-    def set_part_prop(
+    def set_actor_prop(
         self,
         name: str,
         value: float | str | ColorLike | Sequence[float | str | ColorLike],
         axis: Literal['x', 'y', 'z', 'all'] = 'all',
         part: Literal['shaft', 'tip', 'all'] = 'all',
     ):
-        """Set :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
+        """Set :class:`~pyvista.Property` attributes for the axes shaft and/or tip actors.
 
         This is a generalized setter method which sets the value of a specific
         :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
@@ -552,51 +552,51 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.set_part_prop('ambient', 0.7)
-        >>> axes_actor.get_part_prop('ambient')
+        >>> axes_actor.set_actor_prop('ambient', 0.7)
+        >>> axes_actor.get_actor_prop('ambient')
         _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
 
         Set the property again, but this time set separate values for each part.
 
         >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
-        >>> axes_actor.set_part_prop('ambient', values)
-        >>> axes_actor.get_part_prop('ambient')
+        >>> axes_actor.set_actor_prop('ambient', values)
+        >>> axes_actor.get_actor_prop('ambient')
         _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
 
         Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
         for both the axis shaft and tip by default.
 
-        >>> axes_actor.set_part_prop('opacity', 0.5, axis='x')
-        >>> axes_actor.get_part_prop('opacity')
+        >>> axes_actor.set_actor_prop('opacity', 0.5, axis='x')
+        >>> axes_actor.get_actor_prop('opacity')
         _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
 
         Set the property again, but this time set separate values for the shaft and tip.
 
-        >>> axes_actor.set_part_prop('opacity', [0.3, 0.7], axis='x')
-        >>> axes_actor.get_part_prop('opacity')
+        >>> axes_actor.set_actor_prop('opacity', [0.3, 0.7], axis='x')
+        >>> axes_actor.get_actor_prop('opacity')
         _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
 
         Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
         is set for all axes by default.
 
-        >>> axes_actor.set_part_prop('show_edges', True, part='shaft')
-        >>> axes_actor.get_part_prop('show_edges')
+        >>> axes_actor.set_actor_prop('show_edges', True, part='shaft')
+        >>> axes_actor.get_actor_prop('show_edges')
         _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
 
         Set the property again, but this time set separate values for each shaft.
 
-        >>> axes_actor.set_part_prop(
+        >>> axes_actor.set_actor_prop(
         ...     'show_edges', [True, False, True], part='shaft'
         ... )
-        >>> axes_actor.get_part_prop('show_edges')
+        >>> axes_actor.get_actor_prop('show_edges')
         _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_actor.set_part_prop(
+        >>> axes_actor.set_actor_prop(
         ...     'style', 'wireframe', axis='x', part='shaft'
         ... )
-        >>> axes_actor.get_part_prop('style')
+        >>> axes_actor.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
         """
         actors = self._filter_part_actors(axis=axis, part=part)
@@ -623,15 +623,15 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         if len(values) != len(actors):
             raise ValueError(
-                f"Number of values ({len(values)}) in {value} must match the number of parts ({len(actors)}) for axis '{axis}' and part '{part}'"
+                f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
             )
 
         # Sequence is valid, now set values
         for actor, val in zip(actors, values):
             setattr(actor.prop, name, val)
 
-    def get_part_prop(self, name: str):
-        """Get :class:`~pyvista.Property` attributes for the axes shafts and/or tips.
+    def get_actor_prop(self, name: str):
+        """Get :class:`~pyvista.Property` attributes for the axes shaft and/or tip actors.
 
         This is a generalized getter method which returns the value of
         a specific :class:`pyvista.Property` attribute for all shafts and tips.
@@ -653,7 +653,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         >>> import pyvista as pv
         >>> axes_assembly = pv.AxesAssembly()
-        >>> axes_assembly.get_part_prop('ambient')
+        >>> axes_assembly.get_actor_prop('ambient')
         _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
 
         """
