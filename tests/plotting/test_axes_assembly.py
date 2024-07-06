@@ -366,3 +366,18 @@ def test_axes_assembly_symmetric_init_label(test_property):
     kwargs = {test_property: label}
     axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
     assert getattr(axes_assembly, test_property) == label
+
+
+def test_label_prop3d():
+    label = pv.plotting.axes_assembly.LabelProp3D()
+    position = (1, 2, 3)
+    label.position = position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == position
+
+    relative_position = np.array(position) * -1
+    label.relative_position = relative_position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == tuple((position + relative_position).tolist())

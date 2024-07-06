@@ -146,7 +146,6 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         self.SetLinearFontScaleFactor(factor)
 
 
-@no_new_attr
 class Text(_vtk.vtkTextActor):
     r"""Define text by default theme.
 
