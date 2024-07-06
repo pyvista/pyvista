@@ -477,13 +477,13 @@ def validate_axes(
 def validate_transform4x4(transform, /, *, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
 
-    This function supports inputs with a 3x3 or 4x4 size. If the input is 3x3, a
-    the array is padded using values from a 4x4 identity matrix.
+    This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
+    the array is padded using a 4x4 identity matrix.
 
     Parameters
     ----------
-    transform : array_like | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
-        Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtk matrix, or a
+    transform : array_like | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        Transformation matrix as a 3x3 or 4x4 array or vtk matrix, or a
         SciPy ``Rotation`` instance.
 
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
