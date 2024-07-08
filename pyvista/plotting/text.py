@@ -231,8 +231,13 @@ class Text(_vtk.vtkTextActor):
         self.SetPosition(position[0], position[1])
 
 
-class Label(Text, _Prop3DMixin):
+class Label(_Prop3DMixin, Text):
     """2D label actor with a 3D position coordinate.
+
+    Unlike :class:`~pyvista.Text`, which uses 2D viewport coordinates to position text
+    in a plot, this class instead uses a 3D position coordinate. This class may be
+    positioned, oriented, and transformed in a manner similar to a 3D
+    :class:`~pyvista.Actor`.
 
     Parameters
     ----------
@@ -331,7 +336,11 @@ class Label(Text, _Prop3DMixin):
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Text position coordinate in xyz space."""
+        """Position of the label in xyz space.
+
+        This is the "true" position of the label. Internally this is loosely
+        equal to :attr:`position` + :attr:`relative_position`.
+        """
         return self.GetPositionCoordinate().GetValue()
 
     @_label_position.setter
