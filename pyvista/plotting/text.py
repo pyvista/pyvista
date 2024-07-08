@@ -363,16 +363,6 @@ class Label(_Prop3DMixin, Text):
         self.prop.font_size = size
 
     @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the text in XYZ coordinates."""
-        return self._prop3d.position
-
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.position = position
-        self._post_set_update()
-
-    @property
     def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the label relative to its :attr:`position`."""
         return tuple(self._relative_position.tolist())
