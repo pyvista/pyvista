@@ -9,15 +9,12 @@ from typing import TYPE_CHECKING
 
 import pyvista
 from pyvista.core import _validation
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
-from .. import Actor
-from .. import NumpyArray
-from .. import TransformLike
-from .. import VectorLike
-from .. import array_from_vtkmatrix
 from . import _vtk
+from .actor import Actor
 from .colors import Color
 from .themes import Theme
 from .tools import FONTS
@@ -26,6 +23,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import ClassVar
     from typing import Sequence
 
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike

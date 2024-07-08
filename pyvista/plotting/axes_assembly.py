@@ -14,7 +14,6 @@ from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
-from pyvista.plotting.mapper import DataSetMapper
 from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -461,7 +460,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._shaft_and_tip_geometry_source = AxesGeometrySource(symmetric=False, **kwargs)
         shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
         for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
-            actor.mapper = DataSetMapper(dataset=dataset)
+            actor.mapper = pv.DataSetMapper(dataset=dataset)
 
         # Add actors to assembly
         [self.AddPart(actor) for actor in self._shaft_and_tip_actors]
