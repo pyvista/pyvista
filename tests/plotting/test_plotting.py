@@ -35,6 +35,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
+import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -4064,14 +4065,19 @@ def test_axes_assembly_symmetric(test_kwargs):
     plot.show()
 
 
-def test_label_prop_3d():
+@pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
+def test_label_prop3d(relative_position):
+    dataset = pv.Cone(direction=(0, 0, 1))
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=dataset))
+    actor.user_matrix = USER_MATRIX
+
+    label = pv.Label(text='TEXT', size=100, relative_position=relative_position)
+    label.prop.justification_horizontal = 'center'
+    label.user_matrix = USER_MATRIX
+
     pl = pv.Plotter()
-    label = pv.plotting.axes_assembly.LabelProp3D()
-    label.input = 'X'
-    # label.relative_position=(0.1,0.1,0.1)
-    label.size = 100
-    pl.add_mesh(pv.Sphere(), color='black')
     pl.add_actor(label)
+    pl.add_actor(actor)
     pl.show()
 
 

@@ -64,6 +64,21 @@ def test_label():
     assert label.size == 99
 
 
+def test_label_relative_position():
+    label = pv.Label()
+    position = (1, 2, 3)
+    label.position = position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == position
+
+    relative_position = np.array(position) * -1
+    label.relative_position = relative_position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == tuple((position + relative_position).tolist())
+
+
 @pytest.fixture()
 def prop():
     return pv.TextProperty()

@@ -9,7 +9,6 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.plotting import _vtk
@@ -132,119 +131,6 @@ class _AxesGeometryKwargs(TypedDict):
 #         self.scale = scale  # type: ignore[assignment]
 #         self.origin = origin  # type: ignore[assignment]
 #         self.user_matrix = user_matrix  # type: ignore[assignment]
-
-
-class _Prop3DMixin:
-    def __init__(self):
-        self._prop3d = Actor()
-
-    @property
-    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d.scale
-
-    @scale.setter
-    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.scale = scale
-        self._post_set()
-
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d.position
-
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.position = position
-        self._post_set()
-
-    @property
-    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d.orientation
-
-    @orientation.setter
-    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._prop3d.orientation = orientation
-        self._post_set()
-
-    @property
-    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d.origin
-
-    @origin.setter
-    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._prop3d.origin = origin
-        self._post_set()
-
-    @property
-    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        return self._prop3d.user_matrix
-
-    @user_matrix.setter
-    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        self._prop3d.user_matrix = matrix
-        self._post_set()
-
-    @property
-    def _transformation_matrix(self):
-        return array_from_vtkmatrix(self._prop3d.GetMatrix())
-
-    def _pre_set(self):
-        """Subclasses should override this to update"""
-
-    def _post_set(self):
-        """Subclasses should override this to update"""
-
-
-class LabelProp3D(Label, _Prop3DMixin):
-    # # _new_attr_exceptions: list[str] = ['position', 'scale', 'orientation', 'user_matrix', 'origin', 'relative_position']
-    def __init__(self, *, relative_position: VectorLike[float] = (0.0, 0.0, 0.0)):
-        # We have a diamond inheritance w.r.t. to the 'position' property so we
-        # have to be careful about the init order
-        _Prop3DMixin.__init__(self)
-        self._relative_position = np.array((0, 0, 0))
-        Label.__init__(self)
-        self.relative_position = relative_position
-
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d_position
-
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d_position = position
-        self._post_set()
-
-    @property
-    def relative_position(self):
-        """Position of the label relative to its Prop3D position."""
-        return tuple(self._relative_position.tolist())
-
-    @relative_position.setter
-    def relative_position(self, position: VectorLike[float]):
-        self._relative_position = _validation.validate_array3(position, dtype_out=float)
-        self._post_set()
-
-    @property
-    def _label_position(self):
-        return Label.position.fget(self)
-
-    @_label_position.setter
-    def _label_position(self, position):
-        Label.position.fset(self, position)
-
-    @property
-    def _prop3d_position(self):
-        return _Prop3DMixin.position.fget(self)
-
-    @_prop3d_position.setter
-    def _prop3d_position(self, position):
-        _Prop3DMixin.position.fset(self, position)
-
-    def _post_set(self):
-        # Update the label's underlying text position
-        matrix4x4 = self._transformation_matrix
-        vector4x1 = np.array((*self.relative_position, 1))
-        new_position = (matrix4x4 @ vector4x1)[:3]
-        self._label_position = new_position
 
 
 # class HybridAssembly(_vtk.vtkPropAssembly):
@@ -581,7 +467,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         [self.AddPart(actor) for actor in self._shaft_and_tip_actors]
 
         # Init label actors and add to assembly
-        self._label_actors = (LabelProp3D(), LabelProp3D(), LabelProp3D())
+        self._label_actors = (Label(), Label(), Label())
         [self.AddPart(actor) for actor in self._label_actors]
 
         # Set colors
@@ -881,6 +767,12 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         position_vectors += radial_offset1 + radial_offset2
         return position_vectors
+
+    def _update_label_positions(self):
+        labels = self._label_actors
+        position_vectors = self._get_offset_label_position_vectors(self.label_position)
+        for label, position in zip(labels, position_vectors):
+            label.relative_position = position
 
     def _set_prop3d_attr(self, name, value):
         # Set props for shaft and tip actors
@@ -1269,7 +1161,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init symmetric label actors and add to assembly
-        self._label_actors_symmetric = (LabelProp3D(), LabelProp3D(), LabelProp3D())
+        self._label_actors_symmetric = (Label(), Label(), Label())
         [self.AddPart(actor) for actor in self._label_actors_symmetric]
 
         super().__init__(
@@ -1456,7 +1348,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         labels_plus = self._label_actors
         scalar_position_plus = self.label_position
         vector_position_plus = self._get_offset_label_position_vectors(scalar_position_plus)
-        for label, position in labels_plus, vector_position_plus:
+        for label, position in zip(labels_plus, vector_position_plus):
             label.relative_position = position
 
         labels_minus = self._label_actors_symmetric
@@ -1466,5 +1358,5 @@ class AxesAssemblySymmetric(AxesAssembly):
             -scalar_position_plus[2],
         )
         vector_position_minus = self._get_offset_label_position_vectors(scalar_position_minus)
-        for label, position in labels_minus, vector_position_minus:
+        for label, position in zip(labels_minus, vector_position_minus):
             label.relative_position = position

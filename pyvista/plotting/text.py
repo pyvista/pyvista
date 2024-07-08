@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,6 +12,11 @@ from pyvista.core import _validation
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
+from .. import Actor
+from .. import NumpyArray
+from .. import TransformLike
+from .. import VectorLike
+from .. import array_from_vtkmatrix
 from . import _vtk
 from .colors import Color
 from .themes import Theme
@@ -229,7 +235,66 @@ class Text(_vtk.vtkTextActor):
         self.SetPosition(position[0], position[1])
 
 
-class Label(Text):
+class _Prop3DMixin:
+    def __init__(self):
+        self._prop3d = Actor()
+
+    @property
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        return self._prop3d.scale
+
+    @scale.setter
+    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
+        self._prop3d.scale = scale
+        self._post_set_update()
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        return self._prop3d.position
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._prop3d.position = position
+        self._post_set_update()
+
+    @property
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        return self._prop3d.orientation
+
+    @orientation.setter
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._prop3d.orientation = orientation
+        self._post_set_update()
+
+    @property
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        return self._prop3d.origin
+
+    @origin.setter
+    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._prop3d.origin = origin
+        self._post_set_update()
+
+    @property
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        return self._prop3d.user_matrix
+
+    @user_matrix.setter
+    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        self._prop3d.user_matrix = matrix
+        self._post_set_update()
+
+    @property
+    def _transformation_matrix(self):
+        return array_from_vtkmatrix(self._prop3d.GetMatrix())
+
+    @abstractmethod
+    def _post_set_update(self):
+        """Update object after setting Prop3D attributes."""
+        raise NotImplementedError("Class must implement `_post_set_update`")
+
+
+class Label(Text, _Prop3DMixin):
     """2D label actor with a 3D position coordinate.
 
     Parameters
@@ -238,7 +303,10 @@ class Label(Text):
         Text string to be displayed.
 
     position : VectorLike[float]
-        The position coordinate.
+        Position of the text in XYZ coordinates.
+
+    relative_position : VectorLike[float]
+        Position of the text in XYZ coordinates relative to its :attr:`position`.
 
     size : int
         Size of the text label.
@@ -255,41 +323,75 @@ class Label(Text):
     Create a label for a point of interest.
 
     >>> import pyvista as pv
-    >>> mesh = pv.Cone()
-    >>> tip_point = mesh.points[0]
+    >>> cone_dataset = pv.Cone()
+    >>> tip_point = cone_dataset.points[0]
     >>> label = pv.Label('tip', position=tip_point)
 
     Plot the mesh and label.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh)
+    >>> cone_actor = pl.add_mesh(cone_dataset)
     >>> _ = pl.add_actor(label)
     >>> pl.show()
+
+    The previous example set the label's position as the cone's tip explicitly.
+    However, this means that the two actors now have different positions.
+
+    >>> cone_actor.position
+    >>> label.position
+
+    And if we change the orientation, the label is no longer positioned at the tip.
+
+    >>> cone_actor.orientation = 10, 20, 30
+    >>> label.orientation = 10, 20, 30
+    >>>
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
+    If we want the position of the label to have the same *relative* position to the
+    cone, we can set its :attr:`relative_position` instead.
+
+    >>> # Reset the label's position to match the cone's position
+    >>> label.position = cone_actor.position
+    >>> # Now position the label at the tip
+    >>> label.relative_position = tip_point
+    >>>
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
     """
 
-    _new_attr_exceptions: ClassVar[tuple[str]] = ('size',)
+    _new_attr_exceptions: ClassVar[tuple[str, ...]] = ('size', 'relative_position')
 
     def __init__(
         self,
         text: str | None = None,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
+        relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
         size: int = 50,
         prop: pyvista.Property | None = None,
     ):
-        super().__init__(text=text, prop=prop)
+        Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
+
+        _Prop3DMixin.__init__(self)
+        self.relative_position = relative_position  # type: ignore[assignment]
         self.position = position  # type: ignore[assignment]
         self.size = size
 
     @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Text position coordinate in xyz space."""
         return self.GetPositionCoordinate().GetValue()
 
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+    @_label_position.setter
+    def _label_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
         valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
@@ -306,6 +408,33 @@ class Label(Text):
     @size.setter
     def size(self, size: int):  # numpydoc ignore=GL08
         self.prop.font_size = size
+
+    @property
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the text in XYZ coordinates."""
+        return self._prop3d.position
+
+    @position.setter
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._prop3d.position = position
+        self._post_set_update()
+
+    @property
+    def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the label relative to its :attr:`position`."""
+        return tuple(self._relative_position.tolist())
+
+    @relative_position.setter
+    def relative_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._relative_position = _validation.validate_array3(position, dtype_out=float)
+        self._post_set_update()
+
+    def _post_set_update(self):
+        # Update the label's underlying text position
+        matrix4x4 = self._transformation_matrix
+        vector4 = (*self.relative_position, 1)
+        new_position = (matrix4x4 @ vector4)[:3]
+        self._label_position = new_position
 
 
 @no_new_attr
