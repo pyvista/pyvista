@@ -914,28 +914,53 @@ def test_fit_plane_to_points():
     )
 
 
-AIRPLANE_CASE = (
-    pv.examples.load_airplane().points,
-    [
-        [-8.12132213e-07, 9.92557054e-01, 1.21780514e-01],
-        [1.00000000e00, 8.09226640e-07, 7.33171741e-08],
-        [-2.57765578e-08, 1.21780514e-01, -9.92557054e-01],
-    ],
+DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
+
+CASE_RANK0 = (
+    0,
+    [[0, 0, 0], [0, 0, 0]],
+    [DEFAULT_PRINCIPAL_AXES],
 )
-PLANAR_CASE = (
+CASE_RANK1 = (
+    1,
     [[0, 0, 0], [1, 1, 1]],
     [
         [0.57735027, 0.57735027, 0.57735027],
-        [0.0, -0.70710678, 0.70710678],
-        [0.81649658, -0.40824829, -0.40824829],
+        [0.10981765, 0.64577303, -0.75559068],
+        [-0.80907772, 0.49964373, 0.30943399],
+    ],
+)
+
+CASE_RANK2 = (
+    2,
+    [[0, 1, 3], [2, 0, 0]],
+    [
+        [0.53452248, -0.26726124, -0.80178373],
+        [0.72780288, -0.3367067, 0.59743749],
+        [-0.42963784, -0.90288428, 0.0145362],
+    ],
+)
+CASE_RANK3 = (
+    3,
+    pv.examples.load_airplane().points,
+    [
+        [
+            [8.2724944e-07, -9.9255711e-01, -1.2178054e-01],
+            [-1.0000000e00, -8.2404779e-07, -7.6653841e-08],
+            [-2.4269667e-08, 1.2178054e-01, -9.9255711e-01],
+        ]
     ],
 )
 
 
 @pytest.mark.parametrize(
-    ('points', 'expected_axes'), [AIRPLANE_CASE, PLANAR_CASE], ids=['airplane', 'planar']
+    ('rank', 'points', 'expected_axes'),
+    [CASE_RANK0, CASE_RANK1, CASE_RANK2, CASE_RANK3],
+    ids=['rank0', 'rank1', 'rank2', 'rank3'],
 )
-def test_principal_axes(points, expected_axes):
+def test_principal_axes(rank, points, expected_axes):
+    assert np.linalg.matrix_rank(points) == rank
+
     axes = principal_axes(points)
     assert np.allclose(axes, expected_axes)
     assert np.array_equal(np.cross(axes[0], axes[1]), axes[2])
@@ -943,22 +968,17 @@ def test_principal_axes(points, expected_axes):
     assert np.allclose(np.linalg.norm(axes[1]), 1)
     assert np.allclose(np.linalg.norm(axes[2]), 1)
 
+    assert type(axes) is np.ndarray
 
-def test_principal_axes_raises(airplane):
-    points = np.empty((0, 3))
-    match = 'Points array must have a minimum length of 2. Got length 0 instead.'
-    with pytest.raises(ValueError, match=match):
-        _ = principal_axes(points)
 
-    points = [[0, 0, 0]]
-    match = 'Points array must have a minimum length of 2. Got length 1 instead.'
-    with pytest.raises(ValueError, match=match):
-        _ = principal_axes(points)
+def test_principal_axes_empty():
+    axes = principal_axes(np.empty((0, 3)))
+    assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
-    points = [[0, 0, 0], [0, 0, 0]]
-    match = 'Unable to compute principal axes. The computed axes must have non-zero rank, got rank 0.\nThe input points array may be poorly defined.'
-    with pytest.raises(ValueError, match=match):
-        _ = principal_axes(points)
+
+def test_principal_axes_single_point():
+    axes = principal_axes([1, 2, 3])
+    assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
 
 @pytest.mark.parametrize(

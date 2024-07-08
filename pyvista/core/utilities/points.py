@@ -13,7 +13,6 @@ from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -517,9 +516,9 @@ def principal_axes(points: MatrixLike[float]):
 
     >>> principal_axes = pv.principal_axes(mesh.points)
     >>> principal_axes
-    array([[-1.00000000e+00,  3.54192738e-18,  1.67535314e-19],
-           [ 3.54192738e-18,  1.00000000e+00, -4.90676973e-19],
-           [-1.67535314e-19, -4.90676973e-19, -1.00000000e+00]])
+    array([[-1.0000000e+00,  2.8895332e-08,  6.3519676e-11],
+           [ 2.8895332e-08,  1.0000000e+00,  6.5883937e-10],
+           [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off diagonals. This indicates that the first principal axis is
@@ -531,46 +530,21 @@ def principal_axes(points: MatrixLike[float]):
 
     """
     # Require at least two points otherwise calc will fail
-    points = _validation.validate_arrayNx3(points, must_have_min_length=2, name='Points array')
-    dtype_out = np.float64
+    points = _validation.validate_arrayNx3(points)  # , must_have_min_length=1, name='Points array')
 
-    def _init_vector() -> NumpyArray[float]:
-        return np.empty(shape=(3,), dtype=dtype_out)
+    points_centered = points - np.mean(points, axis=0)
+    eig_vals, eig_vectors = np.linalg.eigh(points_centered.T @ points_centered)
+    sizes = np.sqrt(eig_vals)
+    axes = eig_vectors.T[::-1]  # columns, ascending order -> rows, descending order
 
-    def _normalize_vector(vector: NumpyArray[float]):
-        vector /= np.linalg.norm(vector)
+    # Normalize and ensure output forms right-handed coordinate frame
+    axes[0] /= np.linalg.norm(axes[0])
+    axes[1] /= np.linalg.norm(axes[1])
+    axes[2] = np.cross(axes[0], axes[1])
+    if type(axes) is not np.ndarray:
+        axes = np.array(axes, dtype=axes.dtype)
 
-    def _has_nan(array: NumpyArray[float]) -> np.bool_:
-        return np.any(np.isnan(array))
-
-    # Compute OBB
-    corner = _init_vector()
-    max_ = _init_vector()
-    mid_ = _init_vector()
-    min_ = _init_vector()
-    size = _init_vector()
-    _vtk.vtkOBBTree().ComputeOBB(vtk_points(points, deep=False), corner, max_, mid_, min_, size)
-
-    # Process output
-    # Make sure vectors have full rank and have a right-handed cross product
-    rank = np.linalg.matrix_rank([max_, mid_, min_])
-    if rank == 1:
-        # Given a unit _init_vector v1, find two other unit vectors v2 and v3 which
-        # form an orthonormal set. There is an infinite number of such vectors,
-        # specify an angle theta to choose one set.
-        _normalize_vector(max_)
-        theta = 0.0
-        _vtk.vtkMath.Perpendiculars(max_, mid_, min_, theta)
-        _vtk.vtkMath.Cross(max_, mid_, min_)
-    elif rank in [2, 3]:
-        _normalize_vector(max_)
-        _normalize_vector(mid_)
-        _vtk.vtkMath.Cross(max_, mid_, min_)
-    vectors = np.vstack([max_, mid_, min_])
-
-    if rank == 0 or _has_nan(corner) or _has_nan(vectors):
-        raise ValueError(
-            f"Unable to compute principal axes. The computed axes must have non-zero rank, got rank {rank}.\nThe input points array may be poorly defined."
-        )
-
-    return vectors
+    return_sizes = False
+    if return_sizes:
+        return axes, sizes
+    return axes
