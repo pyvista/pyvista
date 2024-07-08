@@ -2,22 +2,18 @@
 
 from __future__ import annotations
 
-from abc import abstractmethod
-from functools import wraps
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pyvista
 from pyvista.core import _validation
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
-from .actor import Actor
 from .colors import Color
-from .prop3d import Prop3D
+from .prop3d import _Prop3DMixin
 from .themes import Theme
 from .tools import FONTS
 
@@ -25,8 +21,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing import ClassVar
     from typing import Sequence
 
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -235,82 +229,6 @@ class Text(_vtk.vtkTextActor):
     @position.setter
     def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
         self.SetPosition(position[0], position[1])
-
-
-class _Prop3DMixin:
-    """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`."""
-
-    def __init__(self):
-        self._prop3d = Actor()
-
-    @property
-    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
-    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.scale."""
-        return self._prop3d.scale
-
-    @scale.setter
-    @wraps(Prop3D.scale.fset)
-    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.scale = scale
-        self._post_set_update()
-
-    @property
-    @wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.position."""
-        return self._prop3d.position
-
-    @position.setter
-    @wraps(Prop3D.position.fset)
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.position = position
-        self._post_set_update()
-
-    @property
-    @wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
-    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.orientation."""
-        return self._prop3d.orientation
-
-    @orientation.setter
-    @wraps(Prop3D.orientation.fset)
-    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._prop3d.orientation = orientation
-        self._post_set_update()
-
-    @property
-    @wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
-    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.origin."""
-        return self._prop3d.origin
-
-    @origin.setter
-    @wraps(Prop3D.origin.fset)
-    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._prop3d.origin = origin
-        self._post_set_update()
-
-    @property
-    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
-    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.user_matrix."""
-        return self._prop3d.user_matrix
-
-    @user_matrix.setter
-    @wraps(Prop3D.user_matrix.fset)
-    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        self._prop3d.user_matrix = matrix
-        self._post_set_update()
-
-    @property
-    def _transformation_matrix(self):
-        return array_from_vtkmatrix(self._prop3d.GetMatrix())
-
-    @abstractmethod
-    def _post_set_update(self):
-        """Update object after setting Prop3D attributes."""
-        raise NotImplementedError("Class must implement `_post_set_update`")
 
 
 class Label(Text, _Prop3DMixin):

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
+from functools import wraps
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -437,3 +439,81 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
     matrix = _vtk.vtkMatrix4x4()
     prop.GetMatrix(matrix)
     return array_from_vtkmatrix(matrix)[:3, :3]
+
+
+class _Prop3DMixin:
+    """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`."""
+
+    def __init__(self):
+        from pyvista import Actor  # Avoid circular import
+
+        self._prop3d = Actor()
+
+    @property
+    @wraps(Prop3D.scale.fget)  # type: ignore[attr-defined]
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.scale."""
+        return self._prop3d.scale
+
+    @scale.setter
+    @wraps(Prop3D.scale.fset)
+    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
+        self._prop3d.scale = scale
+        self._post_set_update()
+
+    @property
+    @wraps(Prop3D.position.fget)  # type: ignore[attr-defined]
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.position."""
+        return self._prop3d.position
+
+    @position.setter
+    @wraps(Prop3D.position.fset)
+    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._prop3d.position = position
+        self._post_set_update()
+
+    @property
+    @wraps(Prop3D.orientation.fget)  # type: ignore[attr-defined]
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.orientation."""
+        return self._prop3d.orientation
+
+    @orientation.setter
+    @wraps(Prop3D.orientation.fset)
+    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._prop3d.orientation = orientation
+        self._post_set_update()
+
+    @property
+    @wraps(Prop3D.origin.fget)  # type: ignore[attr-defined]
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.origin."""
+        return self._prop3d.origin
+
+    @origin.setter
+    @wraps(Prop3D.origin.fset)
+    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self._prop3d.origin = origin
+        self._post_set_update()
+
+    @property
+    @wraps(Prop3D.user_matrix.fget)  # type: ignore[attr-defined]
+    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.user_matrix."""
+        return self._prop3d.user_matrix
+
+    @user_matrix.setter
+    @wraps(Prop3D.user_matrix.fset)
+    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        self._prop3d.user_matrix = matrix
+        self._post_set_update()
+
+    @property
+    def _transformation_matrix(self):
+        return array_from_vtkmatrix(self._prop3d.GetMatrix())
+
+    @abstractmethod
+    def _post_set_update(self):
+        """Update object after setting Prop3D attributes."""
+        raise NotImplementedError("Class must implement `_post_set_update`")
