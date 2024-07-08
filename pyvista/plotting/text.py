@@ -262,12 +262,12 @@ class Label(_Prop3DMixin, Text):
 
     Examples
     --------
-    Create a label for a point of interest.
+    Create a label for a point of interest. Here we add a label to the tip of a cone.
 
     >>> import pyvista as pv
     >>> cone_dataset = pv.Cone()
-    >>> tip_point = cone_dataset.points[0]
-    >>> label = pv.Label('tip', position=tip_point)
+    >>> tip = (0.5, 0, 0)
+    >>> label = pv.Label('tip', position=tip)
 
     Plot the mesh and label.
 
@@ -297,13 +297,22 @@ class Label(_Prop3DMixin, Text):
     If we want the position of the label to have the same *relative* position to the
     cone, we can set its :attr:`relative_position` instead.
 
-    >>> # Reset the label's position to match the cone's position
+    First, set the label's position to match the cone's position.
+
     >>> label.position = cone_actor.position
-    >>> # Now position the label at the tip
-    >>> label.relative_position = tip_point
-    >>>
+    >>> label.position
+    (0.0, 0.0, 0.0)
+
+    Now set its :attr:`relative_position`.
+
+    >>> label.relative_position = tip
+    >>> label.relative_position
+    (0.5, 0.0, 0.0)
+
+    Plot the results.
+
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(cone_actor)
+    >>> _ = pl.add_actor(cone_actor)
     >>> _ = pl.add_actor(label)
     >>> pl.show()
 
