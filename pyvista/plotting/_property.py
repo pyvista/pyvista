@@ -1256,7 +1256,7 @@ class Property(_vtk.vtkProperty):
                 name = ' '.join(attr.split('_')).capitalize() + ':'
                 try:
                     value = getattr(self, attr)
-                except VTKVersionError:  # pragma:no cover
+                except (VTKVersionError, AttributeError):  # pragma:no cover
                     continue
                 if callable(value):
                     continue

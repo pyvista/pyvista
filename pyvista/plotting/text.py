@@ -276,6 +276,7 @@ class Label(Text, _Prop3DMixin):
 
     >>> cone_actor.position
     >>> label.position
+    (0.0, 0.0, 0.0)
 
     And if we change the orientation, the label is no longer positioned at the tip.
 
