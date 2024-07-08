@@ -151,6 +151,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         self.SetLinearFontScaleFactor(factor)
 
 
+@no_new_attr
 class Text(_vtk.vtkTextActor):
     r"""Define text by default theme.
 
@@ -364,7 +365,12 @@ class Label(Text, _Prop3DMixin):
 
     """
 
-    _new_attr_exceptions: ClassVar[tuple[str, ...]] = ('size', 'relative_position')
+    _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
+        'size',
+        'relative_position',
+        '_relative_position',
+        '_prop3d',
+    )
 
     def __init__(
         self,
