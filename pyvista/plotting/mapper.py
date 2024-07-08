@@ -367,8 +367,8 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
 
 @no_new_attr
-class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
-    """Wrap _vtk.vtkDataSetMapper.
+class _DataSetMapper(_BaseMapper):
+    """Base wrapper for _vtk.vtkDataSetMapper.
 
     Parameters
     ----------
@@ -377,17 +377,6 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
 
     theme : pyvista.plotting.themes.Theme, optional
         Plot-specific theme.
-
-    Examples
-    --------
-    Create a mapper outside :class:`pyvista.Plotter` and assign it to an
-    actor.
-
-    >>> import pyvista as pv
-    >>> mesh = pv.Cube()
-    >>> mapper = pv.DataSetMapper(dataset=mesh)
-    >>> actor = pv.Actor(mapper=mapper)
-    >>> actor.plot()
 
     """
 
@@ -872,8 +861,41 @@ class DataSetMapper(_vtk.vtkDataSetMapper, _BaseMapper):
         return '\n'.join(mapper_attr)
 
 
+class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
+    """Wrap _vtk.vtkDataSetMapper.
+
+    Parameters
+    ----------
+    dataset : pyvista.DataSet, optional
+        Dataset to assign to this mapper.
+
+    theme : pyvista.plotting.themes.Theme, optional
+        Plot-specific theme.
+
+    Examples
+    --------
+    Create a mapper outside :class:`pyvista.Plotter` and assign it to an
+    actor.
+
+    >>> import pyvista as pv
+    >>> mesh = pv.Cube()
+    >>> mapper = pv.DataSetMapper(dataset=mesh)
+    >>> actor = pv.Actor(mapper=mapper)
+    >>> actor.plot()
+
+    """
+
+    def __init__(
+        self,
+        dataset: pyvista.DataSet | None = None,
+        theme: pyvista.themes.Theme | None = None,
+    ):
+        """Initialize this class."""
+        super().__init__(dataset=dataset, theme=theme)
+
+
 @no_new_attr
-class PointGaussianMapper(_vtk.vtkPointGaussianMapper, DataSetMapper):
+class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     """Wrap vtkPointGaussianMapper.
 
     Parameters
@@ -1124,24 +1146,23 @@ class _BaseVolumeMapper(_BaseMapper):
         self._lut = None
 
 
-class FixedPointVolumeRayCastMapper(_vtk.vtkFixedPointVolumeRayCastMapper, _BaseVolumeMapper):
+class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
     """Wrap _vtk.vtkFixedPointVolumeRayCastMapper."""
 
 
-class GPUVolumeRayCastMapper(_vtk.vtkGPUVolumeRayCastMapper, _BaseVolumeMapper):
+class GPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkGPUVolumeRayCastMapper."""
 
 
-class OpenGLGPUVolumeRayCastMapper(_vtk.vtkOpenGLGPUVolumeRayCastMapper, _BaseVolumeMapper):
+class OpenGLGPUVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkOpenGLGPUVolumeRayCastMapper):
     """Wrap _vtk.vtkOpenGLGPUVolumeRayCastMapper."""
 
 
-class SmartVolumeMapper(_vtk.vtkSmartVolumeMapper, _BaseVolumeMapper):
+class SmartVolumeMapper(_BaseVolumeMapper, _vtk.vtkSmartVolumeMapper):
     """Wrap _vtk.vtkSmartVolumeMapper."""
 
 
 class UnstructuredGridVolumeRayCastMapper(
-    _vtk.vtkUnstructuredGridVolumeRayCastMapper,
-    _BaseVolumeMapper,
+    _BaseVolumeMapper, _vtk.vtkUnstructuredGridVolumeRayCastMapper
 ):
     """Wrap _vtk.vtkUnstructuredGridVolumeMapper."""
