@@ -981,6 +981,14 @@ def test_principal_axes_single_point():
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
 
+def test_principal_axes_vectors_many_points():
+    n_points = 2_000_000
+    points = np.random.default_rng().random((n_points, 3))
+    axes = pv.principal_axes(points)
+    assert np.any(axes)
+    assert np.all(axes != 0)
+
+
 @pytest.mark.parametrize(
     'transform_like',
     [
