@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -485,7 +486,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
     return array_from_vtkmatrix(matrix)[:3, :3]
 
 
-class _Prop3DMixin:
+class _Prop3DMixin(ABC):
     """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`."""
 
     def __init__(self):
@@ -560,4 +561,4 @@ class _Prop3DMixin:
     @abstractmethod
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
-        raise NotImplementedError("Class must implement `_post_set_update`")
+        ...
