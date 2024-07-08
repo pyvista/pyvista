@@ -373,11 +373,11 @@ def test_label_prop3d():
     position = (1, 2, 3)
     label.position = position
     assert label.position == position
-    assert label._prop3d.position == position
+    assert label._prop3d_position == position
     assert label._label_position == position
 
     relative_position = np.array(position) * -1
     label.relative_position = relative_position
     assert label.position == position
-    assert label._prop3d.position == position
+    assert label._prop3d_position == position
     assert label._label_position == tuple((position + relative_position).tolist())

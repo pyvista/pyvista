@@ -16,6 +16,7 @@ from pyvista.core.utilities.transformations import apply_transformation_to_point
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
+from pyvista.plotting.mapper import DataSetMapper
 from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -135,21 +136,8 @@ class _AxesGeometryKwargs(TypedDict):
 
 
 class _Prop3DMixin:
-    # #_prop3d = Actor()
-    # def __new__(cls, *args, **kwargs):
-    #     obj = super().__new__(cls)
-    #     obj._prop3d = Actor()
-    #     return obj
     def __init__(self):
-        pass
-
-    @property
-    def _prop3d(self):
-        if hasattr(self, '__prop3d'):
-            return self.__prop3d
-        else:
-            self.__prop3d = Actor()
-            return self.__prop3d
+        self._prop3d = Actor()
 
     @property
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -210,17 +198,20 @@ class _Prop3DMixin:
 class LabelProp3D(Label, _Prop3DMixin):
     # # _new_attr_exceptions: list[str] = ['position', 'scale', 'orientation', 'user_matrix', 'origin', 'relative_position']
     def __init__(self, *, relative_position: VectorLike[float] = (0.0, 0.0, 0.0)):
-        super().__init__()
+        # We have a diamond inheritance w.r.t. to the 'position' property so we
+        # have to be careful about the init order
+        _Prop3DMixin.__init__(self)
+        self._relative_position = np.array((0, 0, 0))
+        Label.__init__(self)
         self.relative_position = relative_position
-        # super().__init__()
 
     @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        return self._prop3d.position
+        return self._prop3d_position
 
     @position.setter
     def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.position = position
+        self._prop3d_position = position
         self._post_set()
 
     @property
@@ -240,6 +231,14 @@ class LabelProp3D(Label, _Prop3DMixin):
     @_label_position.setter
     def _label_position(self, position):
         Label.position.fset(self, position)
+
+    @property
+    def _prop3d_position(self):
+        return _Prop3DMixin.position.fget(self)
+
+    @_prop3d_position.setter
+    def _prop3d_position(self, position):
+        _Prop3DMixin.position.fset(self, position)
 
     def _post_set(self):
         # Update the label's underlying text position
@@ -577,7 +576,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         self._shaft_and_tip_geometry_source = AxesGeometrySource(symmetric=False, **kwargs)
         shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
         for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
-            actor.mapper = pv.DataSetMapper(dataset=dataset)
+            actor.mapper = DataSetMapper(dataset=dataset)
 
         # Add actors to assembly
         [self.AddPart(actor) for actor in self._shaft_and_tip_actors]
