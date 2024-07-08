@@ -526,7 +526,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         # Validate input by setting then getting from prop3d
         setattr(self._prop3d, name, value)
         valid_value = getattr(self._prop3d, name)
-        actors = [*self._shaft_and_tip_actors, *self._label_actors]
+        actors = [*self._shaft_and_tip_actors, *self._label_actor_iterator]
         [setattr(actor, name, valid_value) for actor in actors]
 
     @property
@@ -1092,18 +1092,13 @@ class AxesAssemblySymmetric(AxesAssembly):
         self._set_axis_label(_AxisEnum.z, label)
 
     def _update_label_positions(self):
-        labels_plus = self._label_actors
-        scalar_position_plus = self.label_position
-        vector_position_plus = self._get_offset_label_position_vectors(scalar_position_plus)
-        for label, position in zip(labels_plus, vector_position_plus):
-            label.relative_position = position
+        # Update plus labels using parent method
+        AxesAssembly._update_label_positions(self)
 
+        # Update minus labels
+        label_position = self.label_position
+        label_position_minus = (-label_position[0], -label_position[1], -label_position[2])
         labels_minus = self._label_actors_symmetric
-        scalar_position_minus = (
-            -scalar_position_plus[0],
-            -scalar_position_plus[1],
-            -scalar_position_plus[2],
-        )
-        vector_position_minus = self._get_offset_label_position_vectors(scalar_position_minus)
+        vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
         for label, position in zip(labels_minus, vector_position_minus):
             label.relative_position = position
