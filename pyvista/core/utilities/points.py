@@ -522,9 +522,9 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
 
     >>> principal_axes = pv.principal_axes(mesh.points)
     >>> principal_axes
-    array([[-1.0000000e+00,  2.8895332e-08,  6.3519676e-11],
-           [ 2.8895332e-08,  1.0000000e+00,  6.5883937e-10],
-           [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]], dtype=float32)
+    array([[-1.0000000e+00,  1.6606515e-10,  1.9055901e-10],
+           [-1.6606515e-10, -1.0000000e+00, -5.0257620e-10],
+           [ 1.9055901e-10, -5.0257620e-10,  1.0000000e+00]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off diagonals. This indicates that the first principal axis is
