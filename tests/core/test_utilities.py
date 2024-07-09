@@ -913,7 +913,7 @@ def test_fit_plane_to_points():
         ],
     )
 
-
+# Default output from `np.linalg.eigh`
 DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
 
 CASE_RANK0 = (
