@@ -512,7 +512,10 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     followed by ``Y``, then ``Z``.
 
     >>> import pyvista as pv
-    >>> mesh = pv.ParametricEllipsoid(xradius=10, yradius=5, zradius=1)
+    >>> radii = np.array((6, 3, 1))  # x-y-z radii
+    >>> mesh = pv.ParametricEllipsoid(
+    ...     xradius=radii[0], yradius=radii[1], zradius=radii[2]
+    ... )
     >>> p = pv.Plotter()
     >>> _ = p.add_mesh(mesh)
     >>> _ = p.show_grid()
@@ -524,12 +527,10 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     ...     mesh.points, return_sizes=True
     ... )
     >>> principal_axes
-    pyvista_ndarray([[-1.0000000e+00,  1.6606515e-10,  1.9055901e-10],
-                     [-1.6606515e-10, -1.0000000e+00, -5.0257620e-10],
-                     [ 1.9055901e-10, -5.0257620e-10,  1.0000000e+00]],
+    pyvista_ndarray([[-1.0000000e+00,  1.1993595e-08,  5.9457805e-10],
+                     [ 1.1993595e-08,  1.0000000e+00,  2.4189151e-09],
+                     [-5.9457800e-10,  2.4189151e-09, -1.0000000e+00]],
                     dtype=float32)
-    >>> sizes
-    array([494.99997 , 247.50002 ,  69.307274], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
@@ -538,6 +539,28 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
 
     However, since the signs of the principal axes are arbitrary, the
     first and third axes in this case have a negative direction.
+
+    Show the computed sizes.
+
+    >>> sizes
+    array([296.99997 , 148.49998 ,  69.307274], dtype=float32)
+
+    Convert the sizes to percentages for analysis.
+
+    >>> sizes / sum(sizes)
+    array([0.5769149 , 0.28845745, 0.13462761], dtype=float32)
+
+    From these values, we can determine that the axes explain approximately 60%, 30%,
+    and 10% of the total variance in the points, respectively.
+
+    Let's compare this to the ratios of the known radii of the ellipsoid.
+
+    >>> radii / sum(radii)
+    array([0.6, 0.3, 0.1])
+
+    From this result, we can observe that the relative sizes of the ellipsoid radii
+    correspond to the relative sizes of the principal axes. Hence, the principal axes
+    can be interpreted as the semi-major axes of the best-fitting ellipsoid to the data.
 
     """
     points = _validation.validate_arrayNx3(points)
