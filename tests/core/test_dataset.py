@@ -1289,7 +1289,7 @@ def test_rotate_vector():
 def test_rotate_from():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
-    out = mesh.rotate_from([1, 1, 1])
+    out = mesh.rotate_from([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
     assert isinstance(out, pv.StructuredGrid)
 
 
