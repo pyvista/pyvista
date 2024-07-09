@@ -252,8 +252,8 @@ def test_rotation_from(actor, func):
     assert np.allclose(actual, expected)
 
 
-@pytest.mark.parametrize('use_point', [True, False])
-def test_rotation_from_matches_dataset_rotate_from(use_point):
+@pytest.mark.parametrize('origin', [None, [1, 2, 3]])
+def test_rotation_from_matches_dataset_rotate(origin):
     array = [
         [0.78410209, -0.49240388, 0.37778609],
         [0.52128058, 0.85286853, 0.02969559],
@@ -261,9 +261,11 @@ def test_rotation_from_matches_dataset_rotate_from(use_point):
     ]
     # Rotate dataset and actor independently
     dataset = pv.Cube()
-    dataset.rotate_from(array, inplace=True)
     actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Cube()))
+    dataset.rotate(array, point=origin, inplace=True)
     actor.rotation_from(array)
+    if origin:
+        actor.origin = origin
     assert np.allclose(dataset.bounds, actor.bounds)
 
 

@@ -16,7 +16,6 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -1142,14 +1141,14 @@ class DataSet(DataSetFilters, DataObject):
             inplace=inplace,
         )
 
-    def rotate_from(
+    def rotate(
         self,
-        rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        rotation: MatrixLike[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation,
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
-        """Rotate mesh from a rotation matrix or ``Rotation`` object.
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::
             See also the notes at :func:`transform()
@@ -1158,7 +1157,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        rotation : MatrixLike[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         point : Vector, default: (0.0, 0.0, 0.0)
@@ -1179,11 +1178,21 @@ class DataSet(DataSetFilters, DataObject):
 
         Examples
         --------
-        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
 
         Plot the rotated mesh.
 
@@ -1192,24 +1201,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
-
         """
-        valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
-        valid_point = _validation.validate_array3(point, name='point', dtype_out=float)
-
-        rotate = np.eye(4)
-        rotate[:3, :3] = valid_rotation
-        if np.array_equal(valid_point, (0, 0, 0)):
-            t = rotate
-        else:
-            translate_to_origin = np.eye(4)
-            translate_to_origin[:3, 3] = valid_point * -1
-
-            translate_from_origin = np.eye(4)
-            translate_from_origin[:3, 3] = valid_point
-
-            t = translate_from_origin @ rotate @ translate_to_origin
-
+        t = transformations.rotation(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,

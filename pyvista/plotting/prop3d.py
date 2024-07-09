@@ -16,6 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import scipy
 
     from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -386,7 +387,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetLength()
 
     def rotation_from(
-        self, rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        self, rotation: MatrixLike[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
     ):
         """Set the entity's orientation from a rotation.
 
