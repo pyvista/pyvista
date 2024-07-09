@@ -527,7 +527,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
                      [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
-    in the off diagonals. This indicates that the first principal axis is
+    in the off-diagonal. This indicates that the first principal axis is
     aligned with the x-axis, the second with the y-axis, and third with
     the z-axis. This is expected, since the mesh is already axis-aligned.
 
