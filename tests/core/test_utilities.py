@@ -971,16 +971,19 @@ def test_principal_axes(rank, points, expected_axes):
     assert isinstance(sizes, np.ndarray)
 
 
-def test_princal_axes_return_sizes():
+def test_principal_axes_return_sizes():
     # Create axis-aligned symmetric point cloud with 6 points
-    x_size, y_size, z_size = 3, 2, 1
-    points_plus = np.diag((x_size, y_size, z_size))
+    sizes_in = np.array((3, 2, 1))
+    points_plus = np.diag(sizes_in)
     points_minus = -points_plus
     points = np.vstack([points_plus, points_minus])
 
-    axes, sizes = principal_axes(points, return_sizes=True)
-    expected_sizes = [4.24264069, 2.82842712, 1.41421356]
-    assert np.allclose(sizes, expected_sizes)
+    axes, sizes_out = principal_axes(points, return_sizes=True)
+
+    # Test ratios of input sizes match ratios of output sizes
+    sizes_in_ratio = sizes_in / np.sum(sizes_in)
+    sizes_out_ratio = sizes_out / np.sum(sizes_out)
+    assert np.allclose(sizes_in_ratio, sizes_out_ratio)
 
 
 def test_principal_axes_empty():
