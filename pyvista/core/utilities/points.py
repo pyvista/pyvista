@@ -495,8 +495,8 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
         Nx3 array of points.
 
     return_sizes : bool, default: False
-        If ``True``, also returns the axes sizes. The sizes are computed as the square
-        root of the eigen vectors of the mean-centered covariance matrix.
+        If ``True``, also returns the axis sizes. The sizes are computed as the square
+        root of the eigenvectors of the mean-centered covariance matrix.
 
     Returns
     -------
@@ -504,7 +504,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
         3x3 orthonormal array with the principal axes as row vectors.
 
     numpy.ndarray
-        Three-item array of the axes sizes.
+        Three-item array of the axis sizes.
 
     Examples
     --------
