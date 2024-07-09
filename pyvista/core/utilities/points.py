@@ -518,13 +518,18 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     >>> _ = p.show_grid()
     >>> p.show()
 
-    Compute its principal axes.
+    Compute its principal axes and return the sizes.
 
-    >>> principal_axes = pv.principal_axes(mesh.points)
+    >>> principal_axes, sizes = pv.principal_axes(
+    ...     mesh.points, return_sizes=True
+    ... )
     >>> principal_axes
     pyvista_ndarray([[-1.0000000e+00,  2.8895332e-08,  6.3519676e-11],
                      [ 2.8895332e-08,  1.0000000e+00,  6.5883937e-10],
-                     [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]], dtype=float32)
+                     [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]],
+                    dtype=float32)
+    >>> sizes
+    array([494.99997 , 247.50002 ,  69.307274], dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
     in the off-diagonal. This indicates that the first principal axis is
