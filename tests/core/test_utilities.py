@@ -913,6 +913,7 @@ def test_fit_plane_to_points():
         ],
     )
 
+
 # Default output from `np.linalg.eigh`
 DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
 
@@ -992,12 +993,18 @@ def test_principal_axes_single_point():
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
 
-def test_principal_axes_vectors_many_points():
-    n_points = 2_000_000
-    points = np.random.default_rng().random((n_points, 3))
-    axes = pv.principal_axes(points)
-    assert np.any(axes)
-    assert np.all(axes != 0)
+def test_principal_axes_vectors_success_with_many_points():
+    # Use large mesh to verify no memory errors are raised
+    res = 4000
+    ellipsoid = pv.ParametricSuperEllipsoid(
+        xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
+    )
+    assert ellipsoid.n_points == 16_000_000
+
+    axes, sizes = pv.principal_axes(ellipsoid.points, return_sizes=True)
+
+    # Check sizes to verify the computed output is valid
+    assert np.allclose(sizes, [5998.4927, 3999.9836, 2828.623])
 
 
 @pytest.mark.parametrize(
