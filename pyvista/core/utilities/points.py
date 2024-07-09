@@ -466,13 +466,12 @@ def vector_poly_data(orig, vec):
     return pyvista.PolyData(pdata)
 
 
-def principal_axes(points: MatrixLike[float]):
+def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes
-    are also known as the principal components of the points in Principal Component
-    Analysis (PCA), or the right singular vectors from the Singular Value Decomposition
-    (SVD).
+    are also known as the principal components in Principal Component Analysis (PCA),
+    or the right singular vectors from the Singular Value Decomposition (SVD).
 
     The axes are computed as the eigenvectors of the covariance matrix from the
     mean-centered points, and are processed to ensure that they form a right-handed
@@ -481,24 +480,31 @@ def principal_axes(points: MatrixLike[float]):
     The axes explain the total variance of the points. The first axis explains the
     largest percentage of variance, followed by the second axis, followed again by
     the third axis which explains the smallest percentage of variance. The axes may
-    be used to build an oriented bounding box of the points or to transform the points
-    so the principal axes of the points are aligned with the XYZ axes.
+    be used to build an oriented bounding box or to align the points to another set
+    of axes (e.g. the world XYZ axes).
 
     .. note::
         The computed axes are not unique, and the sign of each axis direction can be
         arbitrarily changed.
 
-    .. versionadded:: 0.44.0
+    .. versionadded:: 0.45.0
 
     Parameters
     ----------
     points : MatrixLike[float]
-        Nx3 array of points. At least two points are required.
+        Nx3 array of points.
+
+    return_sizes : bool, default: False
+        If ``True``, also returns the axes sizes. The sizes are computed as the square
+        root of the eigen vectors of the mean-centered covariance matrix.
 
     Returns
     -------
     numpy.ndarray
         3x3 orthonormal array with the principal axes as row vectors.
+
+    numpy.ndarray
+        Three-item array of the axes sizes.
 
     Examples
     --------
@@ -529,12 +535,11 @@ def principal_axes(points: MatrixLike[float]):
     first and third axes in this case have a negative direction.
 
     """
-    # Require at least two points otherwise calc will fail
-    points = _validation.validate_arrayNx3(points)  # , must_have_min_length=1, name='Points array')
+    points = _validation.validate_arrayNx3(points)
 
     points_centered = points - np.mean(points, axis=0)
     eig_vals, eig_vectors = np.linalg.eigh(points_centered.T @ points_centered)
-    sizes = np.sqrt(eig_vals)
+    sizes = np.sqrt(eig_vals)[::-1]  # ascending order -> descending order
     axes = eig_vectors.T[::-1]  # columns, ascending order -> rows, descending order
 
     # Normalize and ensure output forms right-handed coordinate frame
@@ -544,7 +549,6 @@ def principal_axes(points: MatrixLike[float]):
     if type(axes) is not np.ndarray:
         axes = np.array(axes, dtype=axes.dtype)
 
-    return_sizes = False
     if return_sizes:
         return axes, sizes
     return axes

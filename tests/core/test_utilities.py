@@ -965,6 +965,11 @@ def test_principal_axes(rank, points, expected_axes):
 
     assert type(axes) is np.ndarray
 
+    _, sizes = principal_axes(points, return_sizes=True)
+    assert sizes[0] >= sizes[1]
+    assert sizes[1] >= sizes[2]
+    assert type(sizes) is np.ndarray
+
 
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
