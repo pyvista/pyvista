@@ -369,7 +369,7 @@ def rotation(
            [ 0.        ,  0.70710678,  0.70710678, -0.41421356],
            [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
-    Compute the inverse transformation using rotation's transpose.
+    Compute the inverse transformation using the rotation's transpose.
 
     >>> trans_inv = transformations.rotation(rotation.T, point=point)
     >>> trans_inv
