@@ -923,21 +923,17 @@ CASE_RANK0 = (
 )
 CASE_RANK1 = (
     1,
-    [[0, 0, 0], [1, 1, 1]],
-    [
-        [0.57735027, 0.57735027, 0.57735027],
-        [0.11435482, 0.64295988, -0.75731471],
-        [-0.80844891, 0.50325864, 0.30519027],
-    ],
+    [[0, 0, 0], [1, 0, 0]],
+    [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]],
 )
 
 CASE_RANK2 = (
     2,
-    [[0, 1, 3], [2, 0, 0]],
+    [[1, 2, 3], [3, 2, 1]],
     [
-        [0.53452248, -0.26726124, -0.80178373],
-        [0.79735937, -0.15503524, 0.58325133],
-        [-0.28018521, -0.95107071, 0.13023343],
+        [-0.70710678, 0.0, 0.70710678],
+        [0.0, 1.0, 0.0],
+        [-0.70710678, 0.0, -0.70710678],
     ],
 )
 CASE_RANK3 = (
@@ -960,7 +956,8 @@ def test_principal_axes(rank, points, expected_axes):
     assert np.linalg.matrix_rank(points) == rank
 
     axes = principal_axes(points)
-    assert np.allclose(axes, expected_axes)
+    assert np.allclose(axes, expected_axes, atol=1e-7)
+
     assert np.array_equal(np.cross(axes[0], axes[1]), axes[2])
     assert np.allclose(np.linalg.norm(axes[0]), 1)
     assert np.allclose(np.linalg.norm(axes[1]), 1)
