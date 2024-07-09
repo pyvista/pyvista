@@ -524,9 +524,9 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     ...     mesh.points, return_sizes=True
     ... )
     >>> principal_axes
-    pyvista_ndarray([[-1.0000000e+00,  2.8895332e-08,  6.3519676e-11],
-                     [ 2.8895332e-08,  1.0000000e+00,  6.5883937e-10],
-                     [-6.3519655e-11,  6.5883937e-10, -1.0000000e+00]],
+    pyvista_ndarray([[-1.0000000e+00,  1.6606515e-10,  1.9055901e-10],
+                     [-1.6606515e-10, -1.0000000e+00, -5.0257620e-10],
+                     [ 1.9055901e-10, -5.0257620e-10,  1.0000000e+00]],
                     dtype=float32)
     >>> sizes
     array([494.99997 , 247.50002 ,  69.307274], dtype=float32)
