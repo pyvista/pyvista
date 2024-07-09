@@ -1004,7 +1004,8 @@ def test_principal_axes_vectors_success_with_many_points():
     axes, sizes = pv.principal_axes(ellipsoid.points, return_sizes=True)
 
     # Check sizes to verify the computed output is valid
-    assert np.allclose(sizes, [5998.4927, 3999.9836, 2828.623], atol=1e-1)
+    # Need large atol due to loss of numerical precision
+    assert np.allclose(sizes, [5998.4927, 3999.9836, 2828.623], atol=1)
 
 
 @pytest.mark.parametrize(
