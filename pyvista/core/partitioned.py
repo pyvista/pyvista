@@ -41,7 +41,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkPartitionedDataSet):
                 deep = kwargs.get('deep', True)
