@@ -546,8 +546,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     axes[0] /= np.linalg.norm(axes[0])
     axes[1] /= np.linalg.norm(axes[1])
     axes[2] = np.cross(axes[0], axes[1])
-    if type(axes) is not np.ndarray:
-        axes = np.array(axes, dtype=axes.dtype)
+    axes = np.asarray(axes)
 
     if return_sizes:
         return axes, sizes
