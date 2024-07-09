@@ -542,10 +542,9 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     sizes = np.sqrt(eig_vals)[::-1]  # ascending order -> descending order
     axes = eig_vectors.T[::-1]  # columns, ascending order -> rows, descending order
 
-    # Normalize and ensure output forms right-handed coordinate frame
-    axes[0] /= np.linalg.norm(axes[0])
-    axes[1] /= np.linalg.norm(axes[1])
-    axes[2] = np.cross(axes[0], axes[1])
+    # Ensure output forms a right-handed coordinate frame
+    if np.linalg.det(axes) < 0:
+        axes[2] *= -1
 
     if return_sizes:
         return axes, sizes

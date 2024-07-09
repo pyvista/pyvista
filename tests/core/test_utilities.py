@@ -958,7 +958,7 @@ def test_principal_axes(rank, points, expected_axes):
     axes = principal_axes(points)
     assert np.allclose(axes, expected_axes, atol=1e-7)
 
-    assert np.array_equal(np.cross(axes[0], axes[1]), axes[2])
+    assert np.allclose(np.cross(axes[0], axes[1]), axes[2])
     assert np.allclose(np.linalg.norm(axes[0]), 1)
     assert np.allclose(np.linalg.norm(axes[1]), 1)
     assert np.allclose(np.linalg.norm(axes[2]), 1)
