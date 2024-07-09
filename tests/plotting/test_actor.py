@@ -252,6 +252,21 @@ def test_rotation_from(actor, func):
     assert np.allclose(actual, expected)
 
 
+@pytest.mark.parametrize('use_point', [True, False])
+def test_rotation_from_matches_rotate_from(use_point):
+    dataset = pv.Cone()
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Cone()))
+
+    array = [
+        [0.78410209, -0.49240388, 0.37778609],
+        [0.52128058, 0.85286853, 0.02969559],
+        [-0.33682409, 0.17364818, 0.92541658],
+    ]
+    dataset = dataset.rotate_from(np.array(array).T)
+    actor.rotation_from(array)
+    assert np.allclose(dataset.bounds, actor.bounds)
+
+
 @pytest.mark.parametrize('order', ['F', 'C'])
 def test_convert_orientation_to_rotation_matrix(order):
     orientation = (10, 20, 30)

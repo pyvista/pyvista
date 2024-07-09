@@ -16,6 +16,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
@@ -46,6 +47,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+
+    import scipy
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1133,6 +1136,80 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(vector)
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        return self.transform(
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_from(
+        self,
+        rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation,
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh from a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
+        valid_point = _validation.validate_array3(point, name='point', dtype_out=float)
+
+        rotate = np.eye(4)
+        rotate[:3, :3] = valid_rotation
+        if np.array_equal(valid_point, (0, 0, 0)):
+            t = rotate
+        else:
+            translate_to_origin = np.eye(4)
+            translate_to_origin[:3, 3] = valid_point * -1
+
+            translate_from_origin = np.eye(4)
+            translate_from_origin[:3, 3] = valid_point
+
+            t = translate_from_origin @ rotate @ translate_to_origin
+
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,

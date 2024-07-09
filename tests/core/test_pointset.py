@@ -345,3 +345,10 @@ def test_rotate_vector():
     pset = pv.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])
+
+
+def test_rotate_from():
+    np_points = np.array([1, 1, 1], dtype=float)
+    pset = pv.PointSet(np_points)
+    pset.rotate_from([[-1, 0, 0], [0, -1, 0], [0, 0, -1]], inplace=True)
+    assert np.allclose(pset.points, [-1, -1, -1])
