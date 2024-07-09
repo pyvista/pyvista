@@ -561,4 +561,3 @@ class _Prop3DMixin(ABC):
     @abstractmethod
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
-        ...
