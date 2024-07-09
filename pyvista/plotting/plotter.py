@@ -3842,12 +3842,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Label must be a string')
 
         if (
-            hasattr(self.mesh, '_glyph_geom')
-            and self.mesh._glyph_geom is not None
-            and self.mesh._glyph_geom[0] is not None
+            getattr(self.mesh, '_glyph_geom', None) is not None
+            and self.mesh._glyph_geom() is not None  # resolve weakref.ref
         ):
-            # Using only the first geometry
-            geom = pyvista.PolyData(self.mesh._glyph_geom[0])
+            # This uses only the first geometry
+            geom = pyvista.PolyData(self.mesh._glyph_geom())
         else:
             geom = pyvista.Triangle()
             if scalars is not None:
