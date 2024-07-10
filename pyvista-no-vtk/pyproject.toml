@@ -3,7 +3,7 @@ requires = ['setuptools']
 build-backend = 'setuptools.build_meta'
 
 [project]
-name = 'pyvista-agnostic'
+name = 'pyvista-no-vtk'
 description = 'Easier Pythonic interface to VTK'
 authors = [
     {name = 'PyVista Developers', email = 'info@pyvista.org'},
