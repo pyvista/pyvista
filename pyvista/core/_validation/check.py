@@ -259,13 +259,13 @@ def check_sorted(
         )
 
 
-def check_finite(arr, /, *, name="Array"):
+def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -287,8 +287,8 @@ def check_finite(arr, /, *, name="Array"):
     >>> _validation.check_finite([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    if not np.all(np.isfinite(arr)):
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must have finite values.")
 
 
