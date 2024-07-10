@@ -530,9 +530,9 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     ...     mesh.points, return_sizes=True
     ... )
     >>> principal_axes
-    pyvista_ndarray([[-1.0000000e+00,  1.1993595e-08,  5.9457805e-10],
-                     [ 1.1993595e-08,  1.0000000e+00,  2.4189151e-09],
-                     [-5.9457800e-10,  2.4189151e-09, -1.0000000e+00]],
+    pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
+                     [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
+                     [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
                     dtype=float32)
 
     Note that the principal axes have ones along the diagonal and zeros
