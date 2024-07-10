@@ -259,13 +259,13 @@ def check_sorted(
         )
 
 
-def check_finite(arr, /, *, name="Array"):
+def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -287,22 +287,29 @@ def check_finite(arr, /, *, name="Array"):
     >>> _validation.check_finite([1, 2, 3])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    if not np.all(np.isfinite(arr)):
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    if not np.all(np.isfinite(array)):
         raise ValueError(f"{name} must have finite values.")
 
 
-def check_integer(arr, /, *, strict=False, name="Array"):
+def check_integer(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    *,
+    strict: bool = False,
+    name: str = "Array",
+):
     """Check if an array has integer or integer-like float values.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     strict : bool, default: False
-        If ``True``, the array's data must be a subtype of ``np.integer``
-        (i.e. float types are not allowed).
+        If ``True``, the array's data must be a subtype of `int` or
+        ``np.integer``. Otherwise, floats are allowed but must be
+        whole numbers.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -318,6 +325,7 @@ def check_integer(arr, /, *, strict=False, name="Array"):
     See Also
     --------
     check_nonnegative
+    check_subdtype
 
     Examples
     --------
@@ -327,10 +335,10 @@ def check_integer(arr, /, *, strict=False, name="Array"):
     >>> _validation.check_integer([1.0, 2.0])
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     if strict:
-        check_subdtype(arr, np.integer)
-    elif not np.array_equal(arr, np.floor(arr)):
+        check_subdtype(array, np.integer)
+    elif not np.array_equal(array, np.floor(array)):
         raise ValueError(f"{name} must have integer-like values.")
 
 
