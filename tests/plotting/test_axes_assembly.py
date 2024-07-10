@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -10,6 +11,11 @@ import pyvista as pv
 @pytest.fixture()
 def axes_assembly():
     return pv.AxesAssembly()
+
+
+@pytest.fixture()
+def axes_assembly_symmetric():
+    return pv.AxesAssemblySymmetric()
 
 
 def test_axes_assembly_repr(axes_assembly):
@@ -23,6 +29,7 @@ def test_axes_assembly_repr(axes_assembly):
         "  Tip radius:                 0.1",
         "  Tip length:                 (0.2, 0.2, 0.2)",
         "  Symmetric:                  False",
+        "  Symmetric bounds:           False",
         "  X label:                    'X'",
         "  Y label:                    'Y'",
         "  Z label:                    'Z'",
@@ -38,9 +45,21 @@ def test_axes_assembly_repr(axes_assembly):
         "  Z Color:                                     ",
         "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "  Position:                   (0.0, 0.0, 0.0)",
+        "  Orientation:                (0.0, -0.0, 0.0)",
+        "  Origin:                     (0.0, 0.0, 0.0)",
+        "  Scale:                      (1.0, 1.0, 1.0)",
+        "  User matrix:                Identity",
+        "  X Bounds                    -1.000E-01, 1.000E+00",
+        "  Y Bounds                    -1.000E-01, 1.000E+00",
+        "  Z Bounds                    -1.000E-01, 1.000E+00",
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
+
+    axes_assembly.user_matrix = np.eye(4) * 2
+    repr_ = repr(axes_assembly)
+    assert "User matrix:                Set" in repr_
 
 
 def test_axes_assembly_x_color(axes_assembly):
@@ -226,3 +245,124 @@ def test_axes_assembly_label_size_init():
     label_size = 42
     axes_assembly = pv.AxesAssembly(label_size=label_size)
     assert axes_assembly.label_size == label_size
+
+
+def test_axes_assembly_origin(axes_assembly):
+    assert axes_assembly.origin == (0, 0, 0)
+    origin = (1, 2, 3)
+    axes_assembly.origin = origin
+    assert axes_assembly.origin == origin
+
+
+def test_axes_assembly_origin_init():
+    origin = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(origin=origin)
+    assert axes_assembly.origin == origin
+
+
+def test_axes_assembly_scale(axes_assembly):
+    assert axes_assembly.scale == (1.0, 1.0, 1.0)
+    scale = (1, 2, 3)
+    axes_assembly.scale = scale
+    assert axes_assembly.scale == scale
+
+
+def test_axes_assembly_scale_init():
+    scale = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(scale=scale)
+    assert axes_assembly.scale == scale
+
+
+def test_axes_assembly_position(axes_assembly):
+    assert axes_assembly.position == (0, 0, 0)
+    position = (1, 2, 3)
+    axes_assembly.position = position
+    assert axes_assembly.position == position
+
+
+def test_axes_assembly_position_init():
+    position = (1, 2, 3)
+    axes_assembly = pv.AxesAssembly(position=position)
+    assert axes_assembly.position == position
+
+
+def test_axes_assembly_orientation(axes_assembly):
+    assert axes_assembly.orientation == (0, 0, 0)
+    orientation = (1, 2, 4)
+    axes_assembly.orientation = orientation
+    assert axes_assembly.orientation == orientation
+
+
+def test_axes_assembly_orientation_init():
+    orientation = (1, 2, 4)
+    axes_assembly = pv.AxesAssembly(orientation=orientation)
+    assert axes_assembly.orientation == orientation
+
+
+def test_axes_assembly_user_matrix(axes_assembly):
+    assert np.array_equal(axes_assembly.user_matrix, np.eye(4))
+    user_matrix = np.diag((2, 3, 4, 1))
+    axes_assembly.user_matrix = user_matrix
+    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+
+
+def test_axes_assembly_user_matrix_init():
+    user_matrix = np.diag((2, 3, 4, 1))
+    axes_assembly = pv.AxesAssembly(user_matrix=user_matrix)
+    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+
+
+def test_axes_assembly_center(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.center == tuple(dataset.center)
+
+
+def test_axes_assembly_bounds(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.bounds == tuple(dataset.bounds)
+
+
+def test_axes_assembly_length(axes_assembly):
+    # Test param matches value from underlying dataset
+    dataset = axes_assembly._shaft_and_tip_geometry_source.output
+    assert axes_assembly.length == dataset.length
+
+
+def test_axes_assembly_symmetric(axes_assembly_symmetric):
+    assert axes_assembly_symmetric.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+
+def test_axes_assembly_symmetric_set_get_labels(axes_assembly_symmetric):
+    labels = 'A', 'B', 'C'
+    axes_assembly_symmetric.labels = labels
+    assert axes_assembly_symmetric.labels == ('+A', '-A', '+B', '-B', '+C', '-C')
+
+    labels = ('1', '2', '3', '4', '5', '6')
+    axes_assembly_symmetric.labels = labels
+    assert axes_assembly_symmetric.labels == labels
+
+
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
+def test_axes_assembly_symmetric_set_get_label(axes_assembly_symmetric, test_property):
+    label = 'U'
+    setattr(axes_assembly_symmetric, test_property, label)
+    assert getattr(axes_assembly_symmetric, test_property) == ('+' + label, '-' + label)
+
+    label = ('plus', 'minus')
+    setattr(axes_assembly_symmetric, test_property, label)
+    assert getattr(axes_assembly_symmetric, test_property) == label
+
+
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
+def test_axes_assembly_symmetric_init_label(test_property):
+    label = 'U'
+    kwargs = {test_property: label}
+    axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
+    assert getattr(axes_assembly, test_property) == ('+' + label, '-' + label)
+
+    label = ('plus', 'minus')
+    kwargs = {test_property: label}
+    axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
+    assert getattr(axes_assembly, test_property) == label

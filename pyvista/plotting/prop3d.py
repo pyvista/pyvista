@@ -13,6 +13,8 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
+    import scipy
+
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
@@ -194,6 +196,11 @@ class Prop3D(_vtk.vtkProp3D):
         and finally :func:`~rotate_z`.
 
         Rotations are applied about the specified :attr:`~origin`.
+
+        See Also
+        --------
+        rotation_from
+            Alternative method for setting the :attr:`orientation`.
 
         Examples
         --------
@@ -378,6 +385,43 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
+    def rotation_from(
+        self, rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
+    ):
+        """Set the entity's orientation from a rotation.
+
+        Set the rotation of this entity from a 3x3 rotation matrix. This includes
+        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+
+        This method may be used as an alternative for setting the :attr:`orientation`.
+
+        Parameters
+        ----------
+        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        Examples
+        --------
+        Create an actor and show its initial orientation.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.orientation
+        (0.0, -0.0, 0.0)
+
+        Set the orientation using a 3x3 matrix.
+
+        >>> actor.rotation_from(
+        ...     np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        ... )
+        >>> actor.orientation
+        (0.0, -180.0, -89.99999999999999)
+
+        """
+        self.orientation = _rotation_matrix_as_orientation(rotation)
+
 
 def _rotation_matrix_as_orientation(
     array: NumpyArray[float] | _vtk.vtkMatrix3x3,
@@ -402,7 +446,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array)
+    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
     array_4x4 = np.eye(4)
     array_4x4[:3, :3] = array_3x3
     transform = _vtk.vtkTransform()
