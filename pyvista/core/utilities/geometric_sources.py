@@ -3384,3 +3384,95 @@ class AxesGeometrySource:
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         return name, (part_x, part_y, part_z)
+
+
+class OrthoPlanesSource:
+    """
+    bounds : sequence[float], optional
+    Specify the bounding box of the cube. If given, all other size
+    arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+    """
+
+    def __init__(
+        self,
+        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        *,
+        resolution: int | VectorLike[int] = (1, 1, 1),
+    ):
+        # Init output
+        names = ['xy', 'yz', 'zx']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+
+        # Init properties
+        self.bounds = bounds  # type: ignore[assignment]
+        self.resolution = resolution  # type: ignore[assignment]
+
+        # Set-up plane parameters
+        ORIGIN = (0.0, 0.0, 0.0)
+        x_res, y_res, z_res = self.resolution
+        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+
+        # Init planes
+        xy_plane = PlaneSource()
+        xy_plane.i_resolution = x_res
+        xy_plane.j_resolution = y_res
+        xy_plane.SetPoint1(x_size, 0.0, 0.0)
+        xy_plane.SetPoint2(0.0, y_size, 0.0)
+        xy_plane.SetOrigin(ORIGIN)
+        xy_plane.SetCenter(center)
+        # xy_plane.SetNormal(0.0,0.0,zmax)
+        self._xy_plane = xy_plane
+
+        yz_plane = PlaneSource()
+        yz_plane.i_resolution = y_res
+        yz_plane.j_resolution = z_res
+        yz_plane.SetPoint1(0.0, y_size, 0.0)
+        yz_plane.SetPoint2(0.0, 0.0, z_size)
+        yz_plane.SetOrigin(ORIGIN)
+        yz_plane.SetCenter(center)
+        # yz_plane.SetNormal(xmax,0.0,0.0)
+        self._yz_plane = yz_plane
+
+        zx_plane = PlaneSource()
+        zx_plane.i_resolution = z_res
+        zx_plane.j_resolution = x_res
+        zx_plane.SetPoint1(0.0, 0.0, z_size)
+        zx_plane.SetPoint2(x_size, 0.0, 0.0)
+        zx_plane.SetOrigin(ORIGIN)
+        zx_plane.SetCenter(center)
+        # xy_plane.SetNormal(0.0,ymax,0.0)
+        self._zx_plane = zx_plane
+
+    @property
+    def resolution(self) -> tuple[int, int, int]:
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, resolution: int | VectorLike[int]):
+        self._resolution = _validation.validate_array3(resolution, broadcast=True, to_tuple=True)
+
+    @property
+    def bounds(self) -> BoundsLike:
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):
+        self._bounds = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True
+        )
+
+    def update(self):
+        self._xy_plane.Update()
+        self._output['xy'].copy_from(self._xy_plane.GetOutput())
+        self._yz_plane.Update()
+        self._output['yz'].copy_from(self._yz_plane.GetOutput())
+        self._zx_plane.Update()
+        self._output['zx'].copy_from(self._zx_plane.GetOutput())
+
+    @property
+    def output(self):
+        self.update()
+        return self._output

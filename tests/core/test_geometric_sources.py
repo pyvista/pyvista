@@ -680,3 +680,11 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     axes_geometry_source.shaft_type = pv.ParametricTorus()
     repr_ = repr(axes_geometry_source)
     assert "Shaft type:                 'custom'" in repr_
+
+
+def test_ortho_planes_source():
+    plane_source = pv.OrthoPlanesSource()
+    output = plane_source.output
+    assert isinstance(output, pv.MultiBlock)
+    assert output.keys() == ['xy', 'yz', 'zx']
+    plane_source.output.plot(show_edges=True)

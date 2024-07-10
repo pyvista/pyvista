@@ -4507,3 +4507,19 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+@pytest.mark.parametrize('sign', ['+', '-'])
+def test_ortho_planes_source_normals(sign):
+    plane_source = pv.OrthoPlanesSource()
+    pv.merge(plane_source.output).plot_normals(mag=0.8, color='red')
+
+
+@pytest.mark.parametrize(
+    'resolution',
+    [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
+    ids=['x_resolution', 'y_resolution', 'z_resolution'],
+)
+def test_ortho_planes_source_resolution(resolution):
+    plane_source = pv.OrthoPlanesSource(resolution=resolution)
+    plane_source.output.plot(show_edges=True, line_width=10, lighting=False)
