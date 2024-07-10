@@ -490,6 +490,11 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
         The computed axes are not unique, and the sign of each axis direction can be
         arbitrarily changed.
 
+    .. note::
+        This implementation creates a temporary array of the same size as the input
+        array, and is therefore not optimal in terms of its memory requirements.
+        A more memory-efficient computation may be supported in a future release.
+
     .. versionadded:: 0.45.0
 
     Parameters
