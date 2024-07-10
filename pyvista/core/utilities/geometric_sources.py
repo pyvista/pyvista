@@ -3401,50 +3401,13 @@ class OrthoPlanesSource:
     ):
         # Init output
         names = ['xy', 'yz', 'zx']
-        polys = [pyvista.PolyData() for _ in range(len(names))]
+        polys = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
         self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+        self._plane_sources = (_vtk.vtkPlaneSource(), _vtk.vtkPlaneSource(), _vtk.vtkPlaneSource())
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
-
-        # Set-up plane parameters
-        ORIGIN = (0.0, 0.0, 0.0)
-        x_res, y_res, z_res = self.resolution
-        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
-        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
-        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
-
-        # Init planes
-        xy_plane = PlaneSource()
-        xy_plane.i_resolution = x_res
-        xy_plane.j_resolution = y_res
-        xy_plane.SetPoint1(x_size, 0.0, 0.0)
-        xy_plane.SetPoint2(0.0, y_size, 0.0)
-        xy_plane.SetOrigin(ORIGIN)
-        xy_plane.SetCenter(center)
-        # xy_plane.SetNormal(0.0,0.0,zmax)
-        self._xy_plane = xy_plane
-
-        yz_plane = PlaneSource()
-        yz_plane.i_resolution = y_res
-        yz_plane.j_resolution = z_res
-        yz_plane.SetPoint1(0.0, y_size, 0.0)
-        yz_plane.SetPoint2(0.0, 0.0, z_size)
-        yz_plane.SetOrigin(ORIGIN)
-        yz_plane.SetCenter(center)
-        # yz_plane.SetNormal(xmax,0.0,0.0)
-        self._yz_plane = yz_plane
-
-        zx_plane = PlaneSource()
-        zx_plane.i_resolution = z_res
-        zx_plane.j_resolution = x_res
-        zx_plane.SetPoint1(0.0, 0.0, z_size)
-        zx_plane.SetPoint2(x_size, 0.0, 0.0)
-        zx_plane.SetOrigin(ORIGIN)
-        zx_plane.SetCenter(center)
-        # xy_plane.SetNormal(0.0,ymax,0.0)
-        self._zx_plane = zx_plane
 
     @property
     def resolution(self) -> tuple[int, int, int]:
@@ -3465,12 +3428,45 @@ class OrthoPlanesSource:
         )
 
     def update(self):
-        self._xy_plane.Update()
-        self._output['xy'].copy_from(self._xy_plane.GetOutput())
-        self._yz_plane.Update()
-        self._output['yz'].copy_from(self._yz_plane.GetOutput())
-        self._zx_plane.Update()
-        self._output['zx'].copy_from(self._zx_plane.GetOutput())
+        # Set-up plane parameters
+        ORIGIN = (0.0, 0.0, 0.0)
+        x_res, y_res, z_res = self.resolution
+        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+
+        xy_source, yz_source, zx_source = self._plane_sources
+        xy_source.SetXResolution(x_res)
+        xy_source.SetYResolution(y_res)
+        xy_source.SetPoint1(x_size, 0.0, 0.0)
+        xy_source.SetPoint2(0.0, y_size, 0.0)
+        xy_source.SetOrigin(ORIGIN)
+        xy_source.SetCenter(center)
+        # xy_plane.SetNormal(0.0,0.0,zmax)
+
+        yz_source.SetXResolution(y_res)
+        yz_source.SetYResolution(z_res)
+        yz_source.SetPoint1(0.0, y_size, 0.0)
+        yz_source.SetPoint2(0.0, 0.0, z_size)
+        yz_source.SetOrigin(ORIGIN)
+        yz_source.SetCenter(center)
+        # yz_plane.SetNormal(xmax,0.0,0.0)
+
+        zx_source.SetXResolution(z_res)
+        zx_source.SetYResolution(x_res)
+        zx_source.SetPoint1(0.0, 0.0, z_size)
+        zx_source.SetPoint2(x_size, 0.0, 0.0)
+        zx_source.SetOrigin(ORIGIN)
+        zx_source.SetCenter(center)
+        # xy_plane.SetNormal(0.0,ymax,0.0)
+
+        # Update sources and update polydata output
+        xy_source.Update()
+        self._output['xy'].copy_from(xy_source.GetOutput())
+        yz_source.Update()
+        self._output['yz'].copy_from(yz_source.GetOutput())
+        zx_source.Update()
+        self._output['zx'].copy_from(zx_source.GetOutput())
 
     @property
     def output(self):

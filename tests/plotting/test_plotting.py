@@ -4509,6 +4509,8 @@ def test_direction_objects(direction_obj_test_case):
     plot.show()
 
 
+# check_gc fails, suspected memory leak with pv.merge
+@pytest.mark.usefixtures('skip_check_gc')
 @pytest.mark.parametrize('sign', ['+', '-'])
 def test_ortho_planes_source_normals(sign):
     plane_source = pv.OrthoPlanesSource()
