@@ -139,6 +139,32 @@ jobs:
           name: pyvista-notebooks
           path: _notebooks
 
+  preview:
+    name: Preview Documentation
+    runs-on: ubuntu-20.04
+    needs: doc
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs-build
+          path: .
+
+      - name: Preview HTML documentation
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: .
+          production-deploy: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          enable-commit-comment: false
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
+        timeout-minutes: 10
+
   deploy:
     name: Publish Documentation
     runs-on: ubuntu-20.04
@@ -152,7 +178,7 @@ jobs:
 
       - name: Deploy Dev Docs
         # if: github.event_name == 'push' && !contains(github.ref, 'refs/tags')
-        uses: nwtgck/actions-netlify@v2.1
+        uses: nwtgck/actions-netlify@v3.0
         with:
           publish-dir: .
           production-deploy: true
