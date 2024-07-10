@@ -551,12 +551,12 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     Show the computed sizes.
 
     >>> sizes
-    array([296.99997 , 148.49998 ,  69.307274], dtype=float32)
+    array([297.     , 148.5    ,  69.30727], dtype=float32)
 
     Convert the sizes to percentages for analysis.
 
     >>> sizes / sum(sizes)
-    array([0.5769149 , 0.28845745, 0.13462761], dtype=float32)
+    array([0.57691497, 0.28845748, 0.13462761], dtype=float32)
 
     From these values, we can determine that the axes explain approximately 60%, 30%,
     and 10% of the total variance in the points, respectively.
