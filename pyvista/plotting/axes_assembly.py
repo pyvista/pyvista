@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import NamedTuple
+from typing import Sequence
 from typing import TypedDict
 
 import numpy as np
@@ -12,6 +16,7 @@ from pyvista.core import _validation
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
+from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
@@ -21,7 +26,6 @@ from pyvista.plotting.text import Label
 if TYPE_CHECKING:  # pragma: no cover
     import sys
     from typing import Iterator
-    from typing import Sequence
 
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
@@ -35,6 +39,15 @@ if TYPE_CHECKING:  # pragma: no cover
         from typing import Unpack
     else:
         from typing_extensions import Unpack
+
+
+class _AxesPropTuple(NamedTuple):
+    x_shaft: float | str | ColorLike
+    y_shaft: float | str | ColorLike
+    z_shaft: float | str | ColorLike
+    x_tip: float | str | ColorLike
+    y_tip: float | str | ColorLike
+    z_tip: float | str | ColorLike
 
 
 class _AxesGeometryKwargs(TypedDict):
@@ -466,43 +479,214 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         for label in self._label_actor_iterator:
             label.prop.color = valid_color
 
-    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | tuple[ColorLike, ColorLike]):
-        shaft_color, tip_color = _validate_color_sequence(color, n_colors=2)
-        self._shaft_actors[axis].prop.color = shaft_color
-        self._tip_actors[axis].prop.color = tip_color
-
-    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
-        return (
-            self._shaft_actors[axis].prop.color,
-            self._tip_actors[axis].prop.color,
-        )
-
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.x)
+        return self.get_actor_prop('color')[_AxisEnum.x :: 3]
 
     @x_color.setter
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.x, color)
+        self.set_actor_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
 
     @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.y)
+        return self.get_actor_prop('color')[_AxisEnum.y :: 3]
 
     @y_color.setter
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.y, color)
+        self.set_actor_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
 
     @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
-        return self._get_axis_color(_AxisEnum.z)
+        return self.get_actor_prop('color')[_AxisEnum.z.value :: 3]
 
     @z_color.setter
     def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
-        self._set_axis_color(_AxisEnum.z, color)
+        self.set_actor_prop('color', color, axis=_AxisEnum.z.value)  # type: ignore[arg-type]
+
+    def set_actor_prop(
+        self,
+        name: str,
+        value: float | str | ColorLike | Sequence[float | str | ColorLike],
+        axis: Literal['x', 'y', 'z', 'all'] = 'all',
+        part: Literal['shaft', 'tip', 'all'] = 'all',
+    ):
+        """Set :class:`~pyvista.Property` attributes for the axes shaft and/or tip actors.
+
+        This is a generalized setter method which sets the value of a specific
+        :class:`~pyvista.Property` attribute for any combination of axis shaft or tip
+        parts.
+
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`~pyvista.Property` attribute to set.
+
+        value : float | str | ColorLike | Sequence[float | str | ColorLike]
+            Value to set the attribute to. If a single value, set all specified axes
+            shaft(s) or tip(s) :class:`~pyvista.Property` attributes to this value.
+            If a sequence of values, set the specified parts to these values.
+
+        axis : str | int, default: 'all'
+            Set :class:`~pyvista.Property` attributes for a specific part of the axes.
+            Specify one of:
+
+            - ``'x'``: only set the property for the x-axis.
+            - ``'y'``: only set the property for the y-axis.
+            - ``'z'``: only set the property for the z-axis.
+            - ``'all'``: set the property for all three axes.
+
+        part : str | int, default: 'all'
+            Set the property for a specific part of the axes. Specify one of:
+
+            - ``'shaft'``: only set the property for the axes shafts.
+            - ``'tip'``: only set the property for the axes tips.
+            - ``'all'``: set the property for axes shafts and tips.
+
+        Examples
+        --------
+        Set :attr:`~pyvista.Property.ambient` for all axes shafts and tips to a
+        single value.
+
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.set_actor_prop('ambient', 0.7)
+        >>> axes_actor.get_actor_prop('ambient')
+        _AxesPropTuple(x_shaft=0.7, y_shaft=0.7, z_shaft=0.7, x_tip=0.7, y_tip=0.7, z_tip=0.7)
+
+        Set the property again, but this time set separate values for each part.
+
+        >>> values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        >>> axes_actor.set_actor_prop('ambient', values)
+        >>> axes_actor.get_actor_prop('ambient')
+        _AxesPropTuple(x_shaft=0.1, y_shaft=0.2, z_shaft=0.3, x_tip=0.4, y_tip=0.5, z_tip=0.6)
+
+        Set :attr:`~pyvista.Property.opacity` for the x-axis only. The property is set
+        for both the axis shaft and tip by default.
+
+        >>> axes_actor.set_actor_prop('opacity', 0.5, axis='x')
+        >>> axes_actor.get_actor_prop('opacity')
+        _AxesPropTuple(x_shaft=0.5, y_shaft=1.0, z_shaft=1.0, x_tip=0.5, y_tip=1.0, z_tip=1.0)
+
+        Set the property again, but this time set separate values for the shaft and tip.
+
+        >>> axes_actor.set_actor_prop('opacity', [0.3, 0.7], axis='x')
+        >>> axes_actor.get_actor_prop('opacity')
+        _AxesPropTuple(x_shaft=0.3, y_shaft=1.0, z_shaft=1.0, x_tip=0.7, y_tip=1.0, z_tip=1.0)
+
+        Set :attr:`~pyvista.Property.show_edges` for the axes shafts only. The property
+        is set for all axes by default.
+
+        >>> axes_actor.set_actor_prop('show_edges', True, part='shaft')
+        >>> axes_actor.get_actor_prop('show_edges')
+        _AxesPropTuple(x_shaft=True, y_shaft=True, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+
+        Set the property again, but this time set separate values for each shaft.
+
+        >>> axes_actor.set_actor_prop(
+        ...     'show_edges', [True, False, True], part='shaft'
+        ... )
+        >>> axes_actor.get_actor_prop('show_edges')
+        _AxesPropTuple(x_shaft=True, y_shaft=False, z_shaft=True, x_tip=False, y_tip=False, z_tip=False)
+
+        Set :attr:`~pyvista.Property.style` for a single axis and specific part.
+
+        >>> axes_actor.set_actor_prop(
+        ...     'style', 'wireframe', axis='x', part='shaft'
+        ... )
+        >>> axes_actor.get_actor_prop('style')
+        _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+        """
+        actors = self._filter_part_actors(axis=axis, part=part)
+        values: Sequence[float | str | ColorLike]
+
+        # Validate input as a sequence of values
+        if 'color' in name:
+            # Special case for color inputs
+            if axis == 'all' and part == 'all':
+                n_values = 6
+            elif part == 'all':
+                n_values = 2
+            elif axis == 'all':
+                n_values = 3
+            else:
+                n_values = 1
+            values = _validate_color_sequence(value, n_values)
+        elif isinstance(value, Sequence) and not isinstance(value, str):
+            # Number sequence
+            values = value
+        else:
+            # Scalar number or string
+            values = [value] * len(actors)
+
+        if len(values) != len(actors):
+            raise ValueError(
+                f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            )
+
+        # Sequence is valid, now set values
+        for actor, val in zip(actors, values):
+            setattr(actor.prop, name, val)
+
+    def get_actor_prop(self, name: str):
+        """Get :class:`~pyvista.Property` attributes for the axes shaft and/or tip actors.
+
+        This is a generalized getter method which returns the value of
+        a specific :class:`pyvista.Property` attribute for all shafts and tips.
+
+        Parameters
+        ----------
+        name : str
+            Name of the :class:`~pyvista.Property` attribute to get.
+
+        Returns
+        -------
+        tuple
+            Named tuple with attribute values for the axes shafts and tips.
+            The values are ordered ``(x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip)``.
+
+        Examples
+        --------
+        Get the ambient property of the axes shafts and tips.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssembly()
+        >>> axes_assembly.get_actor_prop('ambient')
+        _AxesPropTuple(x_shaft=0.0, y_shaft=0.0, z_shaft=0.0, x_tip=0.0, y_tip=0.0, z_tip=0.0)
+
+        """
+        prop_values = [getattr(actor.prop, name) for actor in self._shaft_and_tip_actors]
+        return _AxesPropTuple(*prop_values)
+
+    def _filter_part_actors(
+        self,
+        axis: Literal['x', 'y', 'z', 'all'] = 'all',
+        part: Literal['shaft', 'tip', 'all'] = 'all',
+    ):
+        valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
+        valid_axis_official = valid_axis[3:]
+        if axis not in valid_axis:
+            raise ValueError(f"Axis must be one of {valid_axis_official}.")
+        valid_part = [0, 1, 'shaft', 'tip', 'all']
+        valid_part_official = valid_part[2:]
+        if part not in valid_part:
+            raise ValueError(f"Part must be one of {valid_part_official}.")
+
+        # Create ordered list of filtered actors
+        # Iterate over parts in <shaft-xyz> then <tip-xyz> order
+        actors: list[Actor] = []
+        for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
+            if part in [part_type.name, part_type.value, 'all']:
+                if axis in [axis_num.name, axis_num.value, 'all']:
+                    # Add actor to list
+                    if part_type == _PartEnum.shaft:
+                        actors.append(self._shaft_actors[axis_num])
+                    else:
+                        actors.append(self._tip_actors[axis_num])
+
+        return actors
 
     def _transform_label_position(self, position_scalars: tuple[float, float, float]):
         # Create position vectors
