@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 from typing import Literal
 from typing import Sequence
 import warnings
-import weakref
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -2450,7 +2449,7 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        output._glyph_geom = weakref.ref(geom[0])
+        output._glyph_geom = geom
 
         return output
 
