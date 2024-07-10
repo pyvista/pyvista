@@ -1,5 +1,7 @@
 """PyVista Scalar bar module."""
 
+from __future__ import annotations
+
 import contextlib
 import weakref
 

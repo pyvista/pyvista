@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import trimesh
@@ -6,7 +8,8 @@ from vtk.util import numpy_support
 
 import pyvista as pv
 from pyvista.core import _vtk_core
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 

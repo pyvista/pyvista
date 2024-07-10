@@ -89,6 +89,7 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    :toctree: _autosummary
 
    ArrowSource
+   AxesGeometrySource
    BoxSource
    ConeSource
    CubeSource

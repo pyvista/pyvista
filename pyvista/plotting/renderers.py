@@ -1,7 +1,9 @@
 """Organize Renderers for ``pyvista.Plotter``."""
 
-import collections
+from __future__ import annotations
+
 from itertools import product
+from typing import Sequence
 from weakref import proxy
 
 import numpy as np
@@ -108,15 +110,15 @@ class Renderers:
             self._render_idxs = np.arange(n + m)
 
         else:
-            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(shape, (np.ndarray, Sequence)):
                 raise TypeError('"shape" should be a list, tuple or string descriptor')
             if len(shape) != 2:
                 raise ValueError('"shape" must have length 2.')
             shape = np.asarray(shape)
             if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
                 raise ValueError('"shape" must contain only positive integers.')
-            # always assign shape as a tuple
-            self._shape = tuple(shape)
+            # always assign shape as a tuple of native ints
+            self._shape = tuple(size.item() for size in shape)
             self._render_idxs = np.empty(self._shape, dtype=int)
             # Check if row and col weights correspond to given shape,
             # or initialize them to defaults (equally weighted).
@@ -152,12 +154,12 @@ class Renderers:
             # top left cell)
 
             if groups is not None:
-                if not isinstance(groups, collections.abc.Sequence):
+                if not isinstance(groups, Sequence):
                     raise TypeError(
                         f'"groups" should be a list or tuple, not {type(groups).__name__}.',
                     )
                 for group in groups:
-                    if not isinstance(group, collections.abc.Sequence):
+                    if not isinstance(group, Sequence):
                         raise TypeError(
                             'Each group entry should be a list or '
                             f'tuple, not {type(group).__name__}.',
@@ -264,7 +266,7 @@ class Renderers:
         """
         if isinstance(loc, (int, np.integer)):
             return loc
-        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
+        elif isinstance(loc, (np.ndarray, Sequence)):
             if not len(loc) == 2:
                 raise ValueError('"loc" must contain two items')
             index_row = loc[0]
@@ -310,13 +312,13 @@ class Renderers:
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray or numpy.int64
             2D location on the plotting grid.
         """
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
-            return index
+            return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
             raise IndexError(f'Index ({index}) is out of range.')
@@ -334,12 +336,12 @@ class Renderers:
         return self._renderers[self._active_index]
 
     @property
-    def shape(self):  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the renderers.
 
         Returns
         -------
-        tuple
+        tuple[int] | tuple[int, int]
             Shape of the renderers.
         """
         return self._shape

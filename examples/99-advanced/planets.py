@@ -20,6 +20,8 @@ This example is inspired by `planet3D-MATLAB
 
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 

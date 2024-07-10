@@ -13,6 +13,8 @@ an input array {u, v, w}.
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 1

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import faulthandler
 import locale
 import os
 from pathlib import Path
 import sys
-from typing import Dict
 
 # Otherwise VTK reader issues on some systems, causing sphinx to crash. See also #226.
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -21,7 +22,8 @@ make_tables.make_all_tables()
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.docs import linkcode_resolve, pv_html_page_context  # noqa: F401
+from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
+from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
 # Manage errors
@@ -354,7 +356,8 @@ reset_pyvista = ResetPyVista()
 # skip building the osmnx example if osmnx is not installed
 has_osmnx = False
 try:
-    import osmnx, fiona  # noqa: F401,E401 isort: skip
+    import fiona  # noqa: F401
+    import osmnx  # noqa: F401
 
     has_osmnx = True
 except:
@@ -522,7 +525,7 @@ htmlhelp_basename = "pyvistadoc"
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements: Dict[str, str] = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',

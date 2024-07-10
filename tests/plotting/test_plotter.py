@@ -5,6 +5,8 @@ All other tests requiring rendering should to in
 
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 
@@ -13,7 +15,8 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -544,3 +547,15 @@ def test_add_ruler_scale():
     min_, max_ = ruler.GetRange()
     assert min_ == 0.6
     assert max_ == 0.0
+
+
+def test_plotter_shape():
+    pl = pv.Plotter()
+    assert isinstance(pl.shape, tuple)
+    assert pl.shape == (1, 1)
+    assert isinstance(pl.shape[0], int)
+
+    pl = pv.Plotter(shape=(1, 2))
+    assert isinstance(pl.shape, tuple)
+    assert pl.shape == (1, 2)
+    assert isinstance(pl.shape[0], int)

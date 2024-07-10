@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from math import pi
 import pathlib
 from pathlib import Path
 import re
-from typing import Dict, List
 from unittest.mock import patch
 import warnings
 
@@ -11,7 +12,9 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.errors import CellSizeError, NotAllTrianglesError, PyVistaFutureWarning
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
 
@@ -218,9 +221,9 @@ def test_lines_on_init(lines_is_cell_array):
 
 def _assert_verts_equal(
     mesh: pv.PolyData,
-    verts: List[int],
+    verts: list[int],
     n_verts: int,
-    cell_types: Dict[int, pv.CellType],
+    cell_types: dict[int, pv.CellType],
 ):
     assert np.array_equal(mesh.verts, verts)
     assert mesh.n_verts == n_verts
@@ -620,9 +623,10 @@ def test_save(sphere, extension, binary, tmpdir):
                 or 'solid' in fst
                 or 'pgeometry' in fst
                 or '# generated' in fst
+                or '#inventor' in fst
             )
 
-    if extension != '.geo':
+    if extension not in ('.geo', '.iv'):
         mesh = pv.PolyData(filename)
         assert mesh.faces.shape == sphere.faces.shape
         assert mesh.points.shape == sphere.points.shape
@@ -1142,7 +1146,11 @@ def test_n_lines():
 
 def test_n_faces_strict():
     # Mesh with one face and one line
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
     assert mesh.n_cells == 2  # n_faces + n_lines
     assert mesh.n_faces_strict == 1
 
@@ -1163,7 +1171,11 @@ def test_n_faces(default_n_faces):
     if pv._version.version_info >= (0, 49):
         raise RuntimeError("Convert default n_faces behavior to strict")
 
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
 
     # Should raise a warning the first time
     with pytest.warns(pv.PyVistaDeprecationWarning):
@@ -1182,7 +1194,11 @@ def test_n_faces(default_n_faces):
 
 def test_opt_in_n_faces_strict(default_n_faces):
     pv.PolyData.use_strict_n_faces(True)
-    mesh = pv.PolyData([(0.0, 0, 0), (1, 0, 0), (0, 1, 0)], faces=[3, 0, 1, 2], lines=[2, 0, 1])
+    mesh = pv.PolyData(
+        [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
+        faces=[3, 0, 1, 2],
+        lines=[2, 0, 1],
+    )
     assert mesh.n_faces == mesh.n_faces_strict
 
 
@@ -1207,7 +1223,7 @@ def test_tetrahedron_regular_faces():
 
 @pytest.mark.parametrize('deep', [False, True])
 def test_regular_faces(deep):
-    points = np.array([[1.0, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]])
+    points = np.array([[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]], dtype=float)
     faces = np.array([[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]])
     mesh = pv.PolyData.from_regular_faces(points, faces, deep=deep)
     expected_faces = np.hstack([np.full((len(faces), 1), 3), faces]).astype(pv.ID_TYPE).flatten()
@@ -1228,7 +1244,7 @@ def test_empty_regular_faces():
 
 
 def test_regular_faces_mutable():
-    points = [[1, 1, 1], [-1, 1, -1], [1, -1, -1], [-1, -1, 1]]
+    points = [[1.0, 1.0, 1.0], [-1.0, 1.0, -1.0], [1.0, -1.0, -1.0], [-1.0, -1.0, 1.0]]
     faces = [[0, 1, 2]]
     mesh = pv.PolyData.from_regular_faces(points, faces)
     mesh.regular_faces[0, 2] = 3

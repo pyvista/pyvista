@@ -17,6 +17,8 @@ depend on the orientation of the surface normals:
 
 # sphinx_gallery_start_ignore
 # backface properties do not work in interactive
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 

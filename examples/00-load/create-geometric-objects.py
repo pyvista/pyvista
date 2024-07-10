@@ -8,6 +8,8 @@ The "Hello, world!" of VTK.
 Uses objects from :ref:`geometry_api`.
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
 ###############################################################################

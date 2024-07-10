@@ -18,6 +18,7 @@ and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-ba
 # -----------------------------
 # Create image data of a 3D volume with eight points and a discrete scalar data
 # array.
+from __future__ import annotations
 
 import numpy as np
 

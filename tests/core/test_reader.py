@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import platform
@@ -1102,3 +1104,13 @@ def test_particle_reader():
 
     with pytest.raises(ValueError, match="Invalid endian:"):
         reader.endian = "InvalidEndian"
+
+
+def test_prostar_reader():
+    filename = examples.download_prostar(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ProStarReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

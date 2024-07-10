@@ -5,6 +5,8 @@ Plot data in spherical coordinates
 Generate and visualize meshes from data in longitude-latitude coordinates.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

@@ -2,24 +2,42 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pyvista.core.utilities.arrays import array_from_vtkmatrix, vtkmatrix_from_array
-
-from . import _vtk
+from pyvista.core import _validation
+from pyvista.core.utilities.arrays import _coerce_transformlike_arg
+from pyvista.core.utilities.arrays import array_from_vtkmatrix
+from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike, NumpyArray, VectorLike
+    import scipy
+
+    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Prop3D(_vtk.vtkProp3D):
     """Prop3D wrapper for vtkProp3D.
 
-    Used to represent an entity in a rendering scene. It handles functions
-    related to the position, orientation and scaling. Used as parent class
-    in Actor and Volume class.
+    Used to represent an entity in a rendering scene. It provides spatial
+    properties and methods relating to an entity's position, orientation
+    and scale. It is used as parent class for :class:`pyvista.Actor`,
+    :class:`pyvista.AxesActor`, and :class:`pyvista.plotting.volume.Volume`.
+
+    ``Prop3D`` applies transformations in the following order:
+
+        #. Translate entity to its :attr:`~origin`.
+        #. Scale entity by the values in :attr:`~scale`.
+        #. Rotate entity using the values in :attr:`~orientation`. Internally, rotations are
+           applied in the order :func:`~rotate_y`, then :func:`~rotate_x`, then :func:`~rotate_z`.
+        #. Translate entity away from its origin and to its :attr:`~position`.
+        #. Transform entity with :attr:`~user_matrix`.
+
     """
 
     def __init__(self):
@@ -27,7 +45,7 @@ class Prop3D(_vtk.vtkProp3D):
         super().__init__()
 
     @property
-    def scale(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set entity scale.
 
         Examples
@@ -50,7 +68,7 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetScale(value)
 
     @property
-    def position(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the entity position.
 
         Examples
@@ -75,16 +93,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetPosition(value)
 
     def rotate_x(self, angle: float):
-        """Rotate the entity about the x axis.
+        """Rotate the entity about the x-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the x axis in degrees.
+            Angle to rotate the entity about the x-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the x axis 45 degrees. Note how this does not
+        Rotate the actor about the x-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -106,16 +124,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateX(angle)
 
     def rotate_y(self, angle: float):
-        """Rotate the entity about the y axis.
+        """Rotate the entity about the y-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the y axis in degrees.
+            Angle to rotate the entity about the y-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the y axis 45 degrees. Note how this does not
+        Rotate the actor about the y-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -137,16 +155,16 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateY(angle)
 
     def rotate_z(self, angle: float):
-        """Rotate the entity about the z axis.
+        """Rotate the entity about the z-axis.
 
         Parameters
         ----------
         angle : float
-            Angle to rotate the entity about the z axis in degrees.
+            Angle to rotate the entity about the z-axis in degrees.
 
         Examples
         --------
-        Rotate the actor about the Z axis 45 degrees. Note how this does not
+        Rotate the actor about the z-axis 45 degrees. Note how this does not
         change the location of the underlying dataset.
 
         >>> import pyvista as pv
@@ -168,19 +186,29 @@ class Prop3D(_vtk.vtkProp3D):
         self.RotateZ(angle)
 
     @property
-    def orientation(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the entity orientation.
+    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the entity orientation angles.
 
-        Orientation is defined as the rotation from the global axes in degrees
-        about the actor's x, y, and z axes.
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
+        and finally :func:`~rotate_z`.
+
+        Rotations are applied about the specified :attr:`~origin`.
+
+        See Also
+        --------
+        rotation_from
+            Alternative method for setting the :attr:`orientation`.
 
         Examples
         --------
         Reorient just the actor and plot it. Note how the actor is rotated
-        about its own axes as defined by its position.
+        about the origin ``(0, 0, 0)`` by default.
 
         >>> import pyvista as pv
-        >>> mesh = pv.Cube()
+        >>> mesh = pv.Cube(center=(0, 0, 3))
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
@@ -190,9 +218,27 @@ class Prop3D(_vtk.vtkProp3D):
         ...     line_width=5,
         ...     lighting=False,
         ... )
-        >>> actor.position = (0, 0, 1)
         >>> actor.orientation = (45, 0, 0)
-        >>> pl.show_axes()
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        Repeat the last example, but this time reorient the actor about
+        its center by specifying its :attr:`~origin`.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(center=(0, 0, 3))
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='b')
+        >>> actor = pl.add_mesh(
+        ...     mesh,
+        ...     color='r',
+        ...     style='wireframe',
+        ...     line_width=5,
+        ...     lighting=False,
+        ... )
+        >>> actor.origin = actor.center
+        >>> actor.orientation = (45, 0, 0)
+        >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
 
         Show that the orientation changes with rotation.
@@ -215,8 +261,23 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: Tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, value: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
+
+    @property
+    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the entity origin.
+
+        This is the point about which all rotations take place.
+
+        See :attr:`~orientation` for examples.
+
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+        self.SetOrigin(value)
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
@@ -237,7 +298,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetBounds()
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return the center of the entity.
 
         Examples
@@ -273,7 +334,7 @@ class Prop3D(_vtk.vtkProp3D):
         --------
         Apply a 4x4 translation to a wireframe actor. This 4x4 transformation
         effectively translates the actor by one unit in the Z direction,
-        rotates the actor about the Z axis by approximately 45 degrees, and
+        rotates the actor about the z-axis by approximately 45 degrees, and
         shrinks the actor by a factor of 0.5.
 
         >>> import numpy as np
@@ -306,18 +367,117 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(
-        self,
-        value: Union[_vtk.vtkMatrix4x4, NumpyArray[float]],
-    ):  # numpydoc ignore=GL08
-        if isinstance(value, np.ndarray):
-            if value.shape != (4, 4):
-                raise ValueError('User matrix array must be 4x4.')
-            value = vtkmatrix_from_array(value)
+    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
+        array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
+        self.SetUserMatrix(vtkmatrix_from_array(array))
 
-        if isinstance(value, _vtk.vtkMatrix4x4):
-            self.SetUserMatrix(value)
-        else:
-            raise TypeError(
-                'Input user matrix must be either:\n\tvtk.vtkMatrix4x4\n\t4x4 np.ndarray\n',
-            )
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the entity.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.length
+        1.7272069317100354
+        """
+        return self.GetLength()
+
+    def rotation_from(
+        self, rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
+    ):
+        """Set the entity's orientation from a rotation.
+
+        Set the rotation of this entity from a 3x3 rotation matrix. This includes
+        NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
+
+        This method may be used as an alternative for setting the :attr:`orientation`.
+
+        Parameters
+        ----------
+        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        Examples
+        --------
+        Create an actor and show its initial orientation.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Sphere())
+        >>> actor.orientation
+        (0.0, -0.0, 0.0)
+
+        Set the orientation using a 3x3 matrix.
+
+        >>> actor.rotation_from(
+        ...     np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        ... )
+        >>> actor.orientation
+        (0.0, -180.0, -89.99999999999999)
+
+        """
+        self.orientation = _rotation_matrix_as_orientation(rotation)
+
+
+def _rotation_matrix_as_orientation(
+    array: NumpyArray[float] | _vtk.vtkMatrix3x3,
+) -> tuple[float, float, float]:
+    """Convert a 3x3 rotation matrix to x-y-z orientation angles.
+
+    The orientation angles define rotations about the world's x-y-z axes. The angles
+    are specified in degrees and in x-y-z order. However, the rotations should
+    be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
+
+    The rotation angles and rotation matrix can be used interchangeably for
+    transformations.
+
+    Parameters
+    ----------
+    array : NumpyArray[float] | vtkMatrix3x3
+        3x3 rotation matrix as a NumPy array or a vtkMatrix.
+
+    Returns
+    -------
+    tuple
+        Tuple with x-y-z axis rotation angles in degrees.
+
+    """
+    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
+    array_4x4 = np.eye(4)
+    array_4x4[:3, :3] = array_3x3
+    transform = _vtk.vtkTransform()
+    transform.SetMatrix(array_4x4.ravel())
+    return transform.GetOrientation()
+
+
+def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
+    """Convert x-y-z orientation angles to a 3x3 matrix.
+
+    The orientation angles define rotations about the world's x-y-z axes. The angles
+    are specified in degrees and in x-y-z order. However, the rotations should
+    be applied in the order: first rotate about the y-axis, then x-axis, then z-axis.
+
+    The rotation angles and rotation matrix can be used interchangeably for
+    transformations.
+
+    Parameters
+    ----------
+    orientation : VectorLike[float]
+        The x-y-z axis orientation angles in degrees.
+
+    Returns
+    -------
+    numpy.ndarray
+        3x3 rotation matrix.
+
+    """
+    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    prop = _vtk.vtkActor()
+    prop.SetOrientation(valid_orientation)
+    matrix = _vtk.vtkMatrix4x4()
+    prop.GetMatrix(matrix)
+    return array_from_vtkmatrix(matrix)[:3, :3]

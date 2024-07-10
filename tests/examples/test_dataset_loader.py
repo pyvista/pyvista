@@ -1,44 +1,50 @@
 # ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+from __future__ import annotations
+
 from dataclasses import dataclass
 import inspect
 import os
 from pathlib import Path
 import shutil
-from types import FunctionType, ModuleType
-from typing import Any, Callable, Dict, List, Tuple
+from types import FunctionType
+from types import ModuleType
+from typing import TYPE_CHECKING
+from typing import Any
 
 import numpy as np
 import pytest
 
 import pyvista as pv
-from pyvista.examples import downloads, examples
-from pyvista.examples._dataset_loader import (
-    _DatasetLoader,
-    _Downloadable,
-    _DownloadableFile,
-    _format_file_size,
-    _load_and_merge,
-    _load_as_cubemap,
-    _load_as_multiblock,
-    _MultiFileDownloadableDatasetLoader,
-    _SingleFileDatasetLoader,
-    _SingleFileDownloadableDatasetLoader,
-)
+from pyvista.examples import downloads
+from pyvista.examples import examples
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _Downloadable
+from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _format_file_size
+from pyvista.examples._dataset_loader import _load_and_merge
+from pyvista.examples._dataset_loader import _load_as_cubemap
+from pyvista.examples._dataset_loader import _load_as_multiblock
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
 
 
 @dataclass
 class DatasetLoaderTestCase:
     dataset_name: str
-    dataset_function: Tuple[str, FunctionType]
-    dataset_loader: Tuple[str, _DatasetLoader]
+    dataset_function: tuple[str, FunctionType]
+    dataset_loader: tuple[str, _DatasetLoader]
 
 
 def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
-) -> List[DatasetLoaderTestCase]:
+) -> list[DatasetLoaderTestCase]:
     """Generate test cases by module with all dataset functions and their respective file loaders."""
 
-    test_cases_dict: Dict = {}
+    test_cases_dict: dict = {}
 
     def add_to_dict(func: str, dataset_function: Callable[[], Any]):
         # Function for stuffing example functions into a dict.
@@ -86,7 +92,7 @@ def _generate_dataset_loader_test_cases_from_module(
     [add_to_dict(name, func) for name, func in dataset_file_loaders.items()]
 
     # Flatten dict
-    test_cases_list: List[DatasetLoaderTestCase] = []
+    test_cases_list: list[DatasetLoaderTestCase] = []
     for name, content in sorted(test_cases_dict.items()):
         dataset_function = content.setdefault('dataset_function', None)
         dataset_loader = content.setdefault('dataset_loader', None)
@@ -103,15 +109,15 @@ def _generate_dataset_loader_test_cases_from_module(
 def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
     if test_case.dataset_function is None:
         return (
-            f"A file loader:\n\t\'{test_case.dataset_loader[0]}\'\n\t{test_case.dataset_loader[1]}\n"
+            f"A file loader:\n\t'{test_case.dataset_loader[0]}'\n\t{test_case.dataset_loader[1]}\n"
             f"was found but is missing a corresponding download function.\n\n"
-            f"Expected to find a function named:\n\t\'download_{test_case.dataset_name}\'\nGot: {test_case.dataset_function}"
+            f"Expected to find a function named:\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
         )
     elif test_case.dataset_loader is None:
         return (
-            f"A download function:\n\t\'{test_case.dataset_function[0]}\'\n\t{test_case.dataset_function[1]}\n"
+            f"A download function:\n\t'{test_case.dataset_function[0]}'\n\t{test_case.dataset_function[1]}\n"
             f"was found but is missing a corresponding file loader.\n\n"
-            f"Expected to find a loader named:\n\t\'_dataset_{test_case.dataset_name}\'\nGot: {test_case.dataset_loader}"
+            f"Expected to find a loader named:\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
         )
     else:
         return None
@@ -196,7 +202,6 @@ def test_single_file_loader(FileLoader, use_archive, examples_local_repository_t
 
     # test download
     if isinstance(file_loader, (_DownloadableFile, _SingleFileDownloadableDatasetLoader)):
-
         assert isinstance(file_loader, _Downloadable)
         path_download = file_loader.download()
         assert os.path.isfile(path_download)

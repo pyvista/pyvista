@@ -13,6 +13,8 @@ based rendering and VTK v9 supports high dynamic range textures.
 
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 

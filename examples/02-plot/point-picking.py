@@ -9,6 +9,8 @@ This example demonstrates how to pick points on meshes using
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 
 # sphinx_gallery_start_ignore

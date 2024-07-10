@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 
 import meshio
@@ -129,7 +131,8 @@ def test_pathlib_read_write(tmpdir, sphere):
 
 
 def test_file_format():
-    from meshio._exceptions import ReadError, WriteError
+    from meshio._exceptions import ReadError
+    from meshio._exceptions import WriteError
 
     with pytest.raises(ReadError):
         _ = pv.read_meshio(examples.hexbeamfile, file_format="bar")

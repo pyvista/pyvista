@@ -7,6 +7,8 @@ style and scale them by a dynamic radius.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -20,13 +22,16 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # First, generate the sphere positions and radii randomly on the edge of a
 # torus.
 
+# Seed the rng for reproducibility
+rng = np.random.default_rng(seed=0)
+
 N_SPHERES = 10_000
-theta = np.random.default_rng().uniform(0, 2 * np.pi, N_SPHERES)
-phi = np.random.default_rng().uniform(0, 2 * np.pi, N_SPHERES)
+theta = rng.uniform(0, 2 * np.pi, N_SPHERES)
+phi = rng.uniform(0, 2 * np.pi, N_SPHERES)
 torus_radius = 1
 tube_radius = 0.3
 radius = torus_radius + tube_radius * np.cos(phi)
-rad = np.random.default_rng().random(N_SPHERES) * 0.01
+rad = rng.random(N_SPHERES) * 0.01
 
 pos = np.zeros((N_SPHERES, 3))
 pos[:, 0] = radius * np.cos(theta)

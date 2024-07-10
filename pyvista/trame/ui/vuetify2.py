@@ -1,17 +1,27 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Viewer class for a Vue 2 client.
 
 This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
-from trame.ui.vuetify2 import VAppLayout
-from trame.widgets import html, vuetify
-from trame_client.ui.core import AbstractLayout
 
-from pyvista.trame.views import PyVistaLocalView, PyVistaRemoteLocalView, PyVistaRemoteView
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from trame.ui.vuetify2 import VAppLayout
+from trame.widgets import html
+from trame.widgets import vuetify
+
+from pyvista.trame.views import PyVistaLocalView
+from pyvista.trame.views import PyVistaRemoteLocalView
+from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
+
+if TYPE_CHECKING:  # pragma: no cover
+    from trame_client.ui.core import AbstractLayout
 
 
 def button(click, icon, tooltip):  # numpydoc ignore=PR01

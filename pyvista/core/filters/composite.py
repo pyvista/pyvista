@@ -1,10 +1,13 @@
 """Filters module with a class to manage filters/algorithms for composite datasets."""
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class

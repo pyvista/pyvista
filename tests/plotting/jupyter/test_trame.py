@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from IPython.display import IFrame
@@ -11,26 +13,25 @@ has_trame = True
 try:
     from trame.app import get_server
 
-    from pyvista.trame.jupyter import EmbeddableWidget, Widget, build_url, elegantly_launch
-    from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
-    from pyvista.trame.ui.vuetify2 import (
-        divider as vue2_divider,
-        select as vue2_select,
-        slider as vue2_slider,
-        text_field as vue2_text_field,
-    )
-    from pyvista.trame.ui.vuetify3 import (
-        divider as vue3_divider,
-        select as vue3_select,
-        slider as vue3_slider,
-        text_field as vue3_text_field,
-    )
-    from pyvista.trame.views import (
-        PyVistaLocalView,
-        PyVistaRemoteLocalView,
-        PyVistaRemoteView,
-        _BasePyVistaView,
-    )
+    from pyvista.trame.jupyter import EmbeddableWidget
+    from pyvista.trame.jupyter import Widget
+    from pyvista.trame.jupyter import build_url
+    from pyvista.trame.jupyter import elegantly_launch
+    from pyvista.trame.ui import base_viewer
+    from pyvista.trame.ui import get_viewer
+    from pyvista.trame.ui import plotter_ui
+    from pyvista.trame.ui.vuetify2 import divider as vue2_divider
+    from pyvista.trame.ui.vuetify2 import select as vue2_select
+    from pyvista.trame.ui.vuetify2 import slider as vue2_slider
+    from pyvista.trame.ui.vuetify2 import text_field as vue2_text_field
+    from pyvista.trame.ui.vuetify3 import divider as vue3_divider
+    from pyvista.trame.ui.vuetify3 import select as vue3_select
+    from pyvista.trame.ui.vuetify3 import slider as vue3_slider
+    from pyvista.trame.ui.vuetify3 import text_field as vue3_text_field
+    from pyvista.trame.views import PyVistaLocalView
+    from pyvista.trame.views import PyVistaRemoteLocalView
+    from pyvista.trame.views import PyVistaRemoteView
+    from pyvista.trame.views import _BasePyVistaView
 except:
     has_trame = False
 

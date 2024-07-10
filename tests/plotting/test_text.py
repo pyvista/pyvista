@@ -2,6 +2,8 @@
 Tests for text objects
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -44,6 +46,22 @@ def test_text_position(text):
     position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
+
+
+def test_label():
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+
+    assert label.input == 'text'
+    label.input = 'new'
+    assert label.input == 'new'
+
+    assert label.position == (1, 2, 3)
+    label.position = (4, 5, 6)
+    assert label.position == (4, 5, 6)
+
+    assert label.size == 42
+    label.size = 99
+    assert label.size == 99
 
 
 @pytest.fixture()

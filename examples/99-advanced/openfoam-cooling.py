@@ -14,6 +14,8 @@ post processed according to this `README.md
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv

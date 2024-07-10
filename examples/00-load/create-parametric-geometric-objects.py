@@ -7,6 +7,8 @@ Parametric Geometric Objects
 Creating parametric objects from :ref:`parametric_api`.
 """
 
+from __future__ import annotations
+
 from math import pi
 
 # sphinx_gallery_thumbnail_number = 12
