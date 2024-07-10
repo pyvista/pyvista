@@ -566,9 +566,8 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     >>> radii / sum(radii)
     array([0.6, 0.3, 0.1])
 
-    From this result, we can observe that the relative sizes of the ellipsoid radii
-    correspond to the relative sizes of the principal axes. Hence, the principal axes
-    can be interpreted as the semi-major axes of the best-fitting ellipsoid to the data.
+    Note how the two ratios are nearly identical. From this result, we can interpret
+    the principal axes as the semi-major axes of the best-fitting ellipsoid to the data.
 
     """
     points = _validation.validate_arrayNx3(points)
