@@ -366,15 +366,22 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "
     check_greater_than(array, 0, strict=False, name=name)
 
 
-def check_greater_than(arr, /, value, *, strict=True, name="Array"):
+def check_greater_than(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    value: float,
+    *,
+    strict: bool = True,
+    name: str = "Array",
+):
     """Check if an array's elements are all greater than some value.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
-    value : Number
+    value : float
         Value which the array's elements must be greater than.
 
     strict : bool, default: True
@@ -393,7 +400,7 @@ def check_greater_than(arr, /, value, *, strict=True, name="Array"):
     See Also
     --------
     check_less_than
-    check_in_range
+    check_range
     check_nonnegative
 
     Examples
@@ -404,14 +411,14 @@ def check_greater_than(arr, /, value, *, strict=True, name="Array"):
     >>> _validation.check_greater_than([1, 2, 3], value=0)
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    value = _cast_to_numpy(value)
-    check_shape(value, ())
-    check_real(value)
-    check_finite(value)
-    if strict and not np.all(arr > value):
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    valid_value = _cast_to_numpy(value)
+    check_shape(valid_value, (), name='Value')
+    check_real(valid_value, name='Value')
+    check_finite(valid_value, name='Value')
+    if strict and not np.all(array > valid_value):
         raise ValueError(f"{name} values must all be greater than {value}.")
-    elif not np.all(arr >= value):
+    elif not np.all(array >= valid_value):
         raise ValueError(f"{name} values must all be greater than or equal to {value}.")
 
 
@@ -1105,5 +1112,5 @@ def _validate_shape_value(shape: int | tuple[int, ...] | tuple[None]):
         shape = (shape,)
     else:
         check_iterable_items(shape, int, name='Shape')
-    check_greater_than(shape, -1, name="Shape", strict=False)
+    check_greater_than(shape, -1, name="Shape", strict=False)  # type: ignore[type-var]
     raise RuntimeError("This line should not be reachable.")  # pragma: no cover
