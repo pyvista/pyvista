@@ -334,13 +334,13 @@ def check_integer(arr, /, *, strict=False, name="Array"):
         raise ValueError(f"{name} must have integer-like values.")
 
 
-def check_nonnegative(arr, /, *, name="Array"):
+def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "Array"):
     """Check if an array's elements are all nonnegative.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
     name : str, default: "Array"
         Variable name to use in the error messages if any are raised.
@@ -363,7 +363,7 @@ def check_nonnegative(arr, /, *, name="Array"):
     >>> _validation.check_nonnegative([1, 2, 3])
 
     """
-    check_greater_than(arr, 0, strict=False, name=name)
+    check_greater_than(array, 0, strict=False, name=name)
 
 
 def check_greater_than(arr, /, value, *, strict=True, name="Array"):
