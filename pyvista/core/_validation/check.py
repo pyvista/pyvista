@@ -413,9 +413,9 @@ def check_greater_than(
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
     valid_value = _cast_to_numpy(value)
-    check_shape(valid_value, ())
-    check_real(valid_value)
-    check_finite(valid_value)
+    check_shape(valid_value, (), name='Value')
+    check_real(valid_value, name='Value')
+    check_finite(valid_value, name='Value')
     if strict and not np.all(array > valid_value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(array >= valid_value):
