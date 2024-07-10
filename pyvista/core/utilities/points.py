@@ -519,6 +519,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     Create a mesh with points that have the largest variation in ``X``,
     followed by ``Y``, then ``Z``.
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> radii = np.array((6, 3, 1))  # x-y-z radii
     >>> mesh = pv.ParametricEllipsoid(
