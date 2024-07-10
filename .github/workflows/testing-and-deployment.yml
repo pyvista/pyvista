@@ -251,16 +251,23 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Check package
+      - name: Build & check main package
         run: |
           pip install build twine
           python -m build
           twine check --strict dist/*
 
-      - name: Upload to PyPi
+      - name: Build & check agnostic package
+        working-directory: pyvista-agnostic
+        run: |
+          python -m build
+          twine check --strict dist/*
+
+      - name: Upload to PyPI
         if: matrix.python-version == '3.9' && startsWith(github.ref, 'refs/tags/v')
         run: |
           twine upload --skip-existing dist/pyvista*
+          twine upload --skip-existing pyvista-agnostic/dist/pyvista*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

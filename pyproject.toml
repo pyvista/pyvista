@@ -156,6 +156,7 @@ plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
 ]
+exclude = ["^setup\\.py$",] # hm, this isn't working?
 
 
 [tool.numpydoc_validation]
