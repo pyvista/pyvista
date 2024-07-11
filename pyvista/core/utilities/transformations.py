@@ -8,7 +8,7 @@ import numpy as np
 
 from pyvista.core import _validation
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import scipy
 
     from pyvista.core import _vtk_core as _vtk
