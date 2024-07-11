@@ -3392,7 +3392,7 @@ class OrthogonalPlanesSource:
     """Orthogonal planes source.
 
     This source generates three orthogonal planes. The :attr:`output` is a
-    :class:~pyvista.MultiBlock` with named plane meshes ``'xy'``, ``'yz'``, ``'zx'``.
+    :class:`~pyvista.MultiBlock` with named plane meshes ``'xy'``, ``'yz'``, ``'zx'``.
 
     Parameters
     ----------
