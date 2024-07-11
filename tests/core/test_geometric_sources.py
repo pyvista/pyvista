@@ -687,10 +687,26 @@ def test_ortho_planes_source():
     output = plane_source.output
     assert isinstance(output, pv.MultiBlock)
     assert output.keys() == ['xy', 'yz', 'zx']
-    plane_source.output.plot(show_edges=True)
+    assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
-def test_ortho_planes_source_normal_sign_set_get():
+def test_ortho_planes_source_bounds_set_get():
+    # Test set get
+    bounds = (1, 2, 3, 4, 5, 6)
+    xmin, xmax, ymin, ymax, zmin, zmax = bounds
+    plane_source = pv.OrthoPlanesSource(bounds=bounds)
+    assert plane_source.bounds == bounds
+    # Test multiblock bounds
+    output = plane_source.output
+    assert output.bounds == bounds
+    # Test plane bounds
+    xmid, ymid, zmid = output.center
+    assert output['xy'].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
+    assert output['yz'].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
+    assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
+
+
+def test_ortho_planes_source_normal_sign():
     plane_source = pv.OrthoPlanesSource()
     output = plane_source.output
     assert plane_source.normal_sign == ('+', '+', '+')
