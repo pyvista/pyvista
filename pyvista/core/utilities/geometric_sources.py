@@ -3410,7 +3410,7 @@ class OrthogonalPlanesSource:
 
     Examples
     --------
-    Generate default orthonormal planes.
+    Generate default orthogonal planes.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -3539,6 +3539,12 @@ class OrthogonalPlanesSource:
     @property
     def output(self):
         """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
+        plane. The blocks are named ``'xy'``, ``'yz'``, and ``'zx'`` by default.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
 
         Returns
         -------
