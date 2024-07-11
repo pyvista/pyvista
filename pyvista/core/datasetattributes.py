@@ -1157,14 +1157,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         Examples
         --------
+        Create a mesh add a new point array with normals.
+
         >>> import pyvista as pv
         >>> import numpy as np
         >>> mesh = pv.Sphere()
-        >>> mesh.point_data.set_normals(
-        ...     np.random.default_rng().random((mesh.n_points, 3)),
-        ...     'my-normals',
-        ... )
-        >>> mesh.point_data.active_normals_name
+        >>> normals = np.random.default_rng().random((mesh.n_points, 3))
+        >>> mesh.point_data['my-normals'] = normals
+
+        Set the active normals.
+
+        >>> mesh.point_data._active_normals_name = 'my-normals'
+        >>> mesh.point_data._active_normals_name
         'my-normals'
         """
         if self.GetNormals() is not None:
