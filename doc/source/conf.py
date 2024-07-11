@@ -439,9 +439,9 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme  # noqa: F401
+import sphinx_book_theme  # noqa: F401
 
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_book_theme"
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
