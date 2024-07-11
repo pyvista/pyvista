@@ -68,6 +68,7 @@ repos:
             "numpy>=2.0",
             "npt-promote==0.1",
             "matplotlib<3.9.1",
+            "scipy<1.14.1",
           ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
