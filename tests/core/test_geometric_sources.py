@@ -683,21 +683,21 @@ def test_axes_geometry_source_repr(axes_geometry_source):
 
 
 def test_orthogonal_planes_source():
-    plane_source = pv.OrthogonalPlanesSource()
-    output = plane_source.output
+    planes_source = pv.OrthogonalPlanesSource()
+    output = planes_source.output
     assert isinstance(output, pv.MultiBlock)
     assert output.keys() == ['xy', 'yz', 'zx']
     assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
-def test_orthogonal_planes_source_bounds_set_get():
+def test_orthogonal_planes_source_bounds():
     # Test set get
     bounds = (1, 2, 3, 4, 5, 6)
     xmin, xmax, ymin, ymax, zmin, zmax = bounds
-    plane_source = pv.OrthogonalPlanesSource(bounds=bounds)
-    assert plane_source.bounds == bounds
+    planes_source = pv.OrthogonalPlanesSource(bounds=bounds)
+    assert planes_source.bounds == bounds
     # Test multiblock bounds
-    output = plane_source.output
+    output = planes_source.output
     assert output.bounds == bounds
     # Test plane bounds
     xmid, ymid, zmid = output.center
@@ -706,27 +706,35 @@ def test_orthogonal_planes_source_bounds_set_get():
     assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
 
 
+def test_orthogonal_planes_source_names():
+    planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
+    assert planes_source.names == ('a', 'b', 'c')
+
+    with pytest.raises(TypeError, match='abcd'):
+        planes_source.names = 'abc'
+
+
 def test_orthogonal_planes_source_normal_sign():
-    plane_source = pv.OrthogonalPlanesSource()
-    output = plane_source.output
-    assert plane_source.normal_sign == ('+', '+', '+')
+    planes_source = pv.OrthogonalPlanesSource()
+    output = planes_source.output
+    assert planes_source.normal_sign == ('+', '+', '+')
     assert np.all(pv.merge(output)['Normals'] >= 0)
 
-    plane_source.normal_sign = '-'
-    assert plane_source.normal_sign == ('-', '-', '-')
+    planes_source.normal_sign = '-'
+    assert planes_source.normal_sign == ('-', '-', '-')
     np.all(pv.merge(output)['Normals'] <= 0)
 
-    plane_source.normal_sign = ['+', '+', '+']
-    assert plane_source.normal_sign == ('+', '+', '+')
+    planes_source.normal_sign = ['+', '+', '+']
+    assert planes_source.normal_sign == ('+', '+', '+')
 
     match = "must be one of: \n\t['+', '-']"
     with pytest.raises(ValueError, match=re.escape(match)):
-        plane_source.normal_sign = 'a'
+        planes_source.normal_sign = 'a'
 
     match = "must be one of: \n\t['+', '-']"
     with pytest.raises(ValueError, match=re.escape(match)):
-        plane_source.normal_sign = ['a', 'b', 'c']
+        planes_source.normal_sign = ['a', 'b', 'c']
 
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
-        plane_source.normal_sign = 0
+        planes_source.normal_sign = 0

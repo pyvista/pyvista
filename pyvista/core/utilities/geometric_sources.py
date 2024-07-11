@@ -3408,6 +3408,9 @@ class OrthogonalPlanesSource:
         Sign of the plane's normal vectors. Use a single value to set all normals to
         the same sign, or three values to set them independently.
 
+    names : sequence[str], default: ('xy','yz','zx')
+        Name of each plane in the generated :class:`~pyvista.MultiBlock`.
+
     Examples
     --------
     Generate default orthogonal planes.
@@ -3438,17 +3441,18 @@ class OrthogonalPlanesSource:
         *,
         resolution: int | VectorLike[int] = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
+        names: Sequence[str] = ('xy', 'yz', 'zx'),
     ):
         # Init sources and the output dataset
-        names = ['xy', 'yz', 'zx']
         polys = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
-        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+        self._output = pyvista.MultiBlock(polys)
         self._plane_sources = (_vtk.vtkPlaneSource(), _vtk.vtkPlaneSource(), _vtk.vtkPlaneSource())
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
         self.normal_sign = normal_sign  # type: ignore[assignment]
+        self.names = names  # type: ignore[assignment]
 
     @property
     def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -3479,7 +3483,9 @@ class OrthogonalPlanesSource:
 
     @resolution.setter
     def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
-        self._resolution = _validation.validate_array3(resolution, broadcast=True, to_tuple=True)
+        self._resolution = _validation.validate_array3(
+            resolution, broadcast=True, to_tuple=True, name='resolution'
+        )
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
@@ -3489,8 +3495,20 @@ class OrthogonalPlanesSource:
     @bounds.setter
     def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         self._bounds = _validation.validate_array(
-            bounds, dtype_out=float, must_have_length=6, to_tuple=True
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
+
+    @property
+    def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the planes."""
+        return self._names
+
+    @names.setter
+    def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=3, name='names')
+        self._names = cast(Tuple[str, str, str], tuple(names))
 
     def update(self):
         """Update the output of the source."""
@@ -3530,14 +3548,18 @@ class OrthogonalPlanesSource:
         zx_source.SetCenter(center)
         zx_source.Update()
 
-        # Update the polydata output
-        for source, plane, sign in zip(self._plane_sources, self._output, self.normal_sign):
+        # Update the output
+        output = self._output
+        for index, name, source, plane, sign in zip(
+            range(3), self.names, self._plane_sources, output, self.normal_sign
+        ):
             plane.copy_from(source.GetOutput())
             if sign == '-':
                 plane['Normals'] *= -1
+            output.set_block_name(index, name)
 
     @property
-    def output(self):
+    def output(self) -> pyvista.MultiBlock:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
