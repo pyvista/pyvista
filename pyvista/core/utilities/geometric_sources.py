@@ -11,6 +11,7 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
+from typing import Tuple
 from typing import cast
 from typing import get_args
 
@@ -3429,7 +3430,7 @@ class OrthoPlanesSource:
     @property
     def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the sign of the plane's normal vectors."""
-        return cast(tuple[str, str, str], self._normal_sign)
+        return cast(Tuple[str, str, str], self._normal_sign)
 
     @normal_sign.setter
     def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
