@@ -487,7 +487,11 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
 
 
 class _Prop3DMixin(ABC):
-    """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`."""
+    """Add 3D transformations to props which do not inherit from :class:`pyvista.Prop3D`.
+
+    Derived classes need to implement the :meth:`_post_set_update` method to define
+    their behavior, e.g. manually apply a transformation.
+    """
 
     def __init__(self):
         from pyvista import Actor  # Avoid circular import
@@ -556,6 +560,13 @@ class _Prop3DMixin(ABC):
 
     @property
     def _transformation_matrix(self):
+        """Transformation matrix applied to the actor.
+
+        The transformation is computed from the attributes :attr:`position`
+        :attr:`origin`, :attr:`scale`, :attr:`orientation`, and :attr:`user_matrix`.
+
+        It is the actual transformation applied to the actor under-the-hood by vtk.
+        """
         return array_from_vtkmatrix(self._prop3d.GetMatrix())
 
     @abstractmethod
