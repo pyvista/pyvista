@@ -3403,10 +3403,32 @@ class OrthoPlanesSource:
         Number of points on the planes in the x-y-z directions. Use a single number
         for a uniform resolution, or three values to set independent resolutions.
 
-    normal_sign : '+' | '-', default: '+'
+    normal_sign : '+' | '-' | sequence['+' | '-'], default: '+'
         Sign of the plane's normal vectors. Use a single value to set all normals to
         the same sign, or three values to set them independently.
 
+    Examples
+    --------
+    Generate default orthonormal planes.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> planes_source = pv.OrthoPlanesSource()
+    >>> output = planes_source.output
+    >>> output.plot()
+
+    Modify the planes to fit a mesh's bounds.
+
+    >>> human = examples.download_human()
+    >>> planes_source.bounds = human.bounds
+    >>> planes_source.update()
+
+    Plot the mesh and the planes.
+
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(human)
+    >>> pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
     """
 
     def __init__(
