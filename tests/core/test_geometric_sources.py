@@ -682,7 +682,7 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     assert "Shaft type:                 'custom'" in repr_
 
 
-def test_ortho_planes_source():
+def test_orthogonal_planes_source():
     plane_source = pv.OrthogonalPlanesSource()
     output = plane_source.output
     assert isinstance(output, pv.MultiBlock)
@@ -690,7 +690,7 @@ def test_ortho_planes_source():
     assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
-def test_ortho_planes_source_bounds_set_get():
+def test_orthogonal_planes_source_bounds_set_get():
     # Test set get
     bounds = (1, 2, 3, 4, 5, 6)
     xmin, xmax, ymin, ymax, zmin, zmax = bounds
@@ -706,7 +706,7 @@ def test_ortho_planes_source_bounds_set_get():
     assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
 
 
-def test_ortho_planes_source_normal_sign():
+def test_orthogonal_planes_source_normal_sign():
     plane_source = pv.OrthogonalPlanesSource()
     output = plane_source.output
     assert plane_source.normal_sign == ('+', '+', '+')
