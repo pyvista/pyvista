@@ -710,7 +710,8 @@ def test_orthogonal_planes_source_names():
     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
     assert planes_source.names == ('a', 'b', 'c')
 
-    with pytest.raises(TypeError, match='abcd'):
+    match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
 
 
