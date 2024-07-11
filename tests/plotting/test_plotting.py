@@ -4513,7 +4513,7 @@ def test_direction_objects(direction_obj_test_case):
 @pytest.mark.usefixtures('skip_check_gc')
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 def test_ortho_planes_source_normals(normal_sign):
-    plane_source = pv.OrthoPlanesSource(normal_sign=normal_sign, resolution=2)
+    plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
     output = plane_source.output
     for plane in output:
         plane['_rgb'] = [
@@ -4536,5 +4536,5 @@ def test_ortho_planes_source_normals(normal_sign):
     ids=['x_resolution', 'y_resolution', 'z_resolution'],
 )
 def test_ortho_planes_source_resolution(resolution):
-    plane_source = pv.OrthoPlanesSource(resolution=resolution)
+    plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=10, lighting=False)

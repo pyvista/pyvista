@@ -92,7 +92,7 @@ from .geometric_sources import CylinderSource
 from .geometric_sources import DiscSource
 from .geometric_sources import LineSource
 from .geometric_sources import MultipleLinesSource
-from .geometric_sources import OrthoPlanesSource
+from .geometric_sources import OrthogonalPlanesSource
 from .geometric_sources import PlaneSource
 from .geometric_sources import PlatonicSolidSource
 from .geometric_sources import PolygonSource

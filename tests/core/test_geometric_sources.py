@@ -683,7 +683,7 @@ def test_axes_geometry_source_repr(axes_geometry_source):
 
 
 def test_ortho_planes_source():
-    plane_source = pv.OrthoPlanesSource()
+    plane_source = pv.OrthogonalPlanesSource()
     output = plane_source.output
     assert isinstance(output, pv.MultiBlock)
     assert output.keys() == ['xy', 'yz', 'zx']
@@ -694,7 +694,7 @@ def test_ortho_planes_source_bounds_set_get():
     # Test set get
     bounds = (1, 2, 3, 4, 5, 6)
     xmin, xmax, ymin, ymax, zmin, zmax = bounds
-    plane_source = pv.OrthoPlanesSource(bounds=bounds)
+    plane_source = pv.OrthogonalPlanesSource(bounds=bounds)
     assert plane_source.bounds == bounds
     # Test multiblock bounds
     output = plane_source.output
@@ -707,7 +707,7 @@ def test_ortho_planes_source_bounds_set_get():
 
 
 def test_ortho_planes_source_normal_sign():
-    plane_source = pv.OrthoPlanesSource()
+    plane_source = pv.OrthogonalPlanesSource()
     output = plane_source.output
     assert plane_source.normal_sign == ('+', '+', '+')
     assert np.all(pv.merge(output)['Normals'] >= 0)

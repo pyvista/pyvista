@@ -3388,7 +3388,7 @@ class AxesGeometrySource:
         return name, (part_x, part_y, part_z)
 
 
-class OrthoPlanesSource:
+class OrthogonalPlanesSource:
     """Orthonormal planes source.
 
     This source generates three orthonormal planes. The :attr:`output` is a
@@ -3414,7 +3414,7 @@ class OrthoPlanesSource:
 
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> planes_source = pv.OrthoPlanesSource()
+    >>> planes_source = pv.OrthogonalPlanesSource()
     >>> output = planes_source.output
     >>> output.plot()
 
