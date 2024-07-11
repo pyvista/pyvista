@@ -3427,8 +3427,8 @@ class OrthogonalPlanesSource:
     Plot the mesh and the planes.
 
     >>> pl = pv.Plotter()
-    >>> pl.add_mesh(human)
-    >>> pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
     >>> pl.show()
     """
 
