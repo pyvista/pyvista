@@ -239,6 +239,13 @@ class Label(_Prop3DMixin, Text):
     positioned, oriented, and transformed in a manner similar to a 3D
     :class:`~pyvista.Actor`.
 
+    In addition, this class supports an additional :attr:`relative_position` attribute.
+    In general, it is recommended to simply use :attr:`position` when positioning a
+    :class:`Label` by itself. However, if the position of the label depends on the
+    positioning of another actor, both :attr:`position` and :attr:`relative_position`
+    may be used together. In these cases, the :attr:`position` of the label and actor
+    should be kept in-sync. See the examples below.
+
     Parameters
     ----------
     text : str, optional
@@ -284,36 +291,57 @@ class Label(_Prop3DMixin, Text):
     >>> label.position
     (0.5, 0.0, 0.0)
 
-    And if we change the orientation, the label is no longer positioned at the tip.
+    And if we change the 3D orientation of the cone and label, the label is no longer
+    positioned at the tip.
 
-    >>> cone_actor.orientation = 10, 20, 30
-    >>> label.orientation = 10, 20, 30
+    >>> cone_actor.orientation = 0, 0, 90
+    >>> label.orientation = 0, 0, 90
     >>>
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(cone_actor)
     >>> _ = pl.add_actor(label)
     >>> pl.show()
 
-    If we want the position of the label to have the same *relative* position to the
-    cone, we can set its :attr:`relative_position` instead.
+    This is because rotations by :class:`pyvista.Prop3D` are applied **before** the
+    actor is moved to its final position, and therefore the label's position is not
+    considered in the rotation. Hence, the final position of the label remains at
+    ``(0.5, 0.0, 0.0)`` as it did earlier, despite changing its orientation.
 
-    First, set the label's position to match the cone's position.
+    If we want the position of the label to have the same positioning *relative* to the
+    cone, we can instead set its :attr:`relative_position`.
+
+    First, reset the label's position to match the cone's position.
 
     >>> label.position = cone_actor.position
     >>> label.position
     (0.0, 0.0, 0.0)
 
-    Now set its :attr:`relative_position`.
+    Now set its :attr:`relative_position` to the tip of the cone.
 
     >>> label.relative_position = tip
     >>> label.relative_position
     (0.5, 0.0, 0.0)
 
-    Plot the results.
+    Plot the results. The label is now correctly positioned at the tip of the cone.
+    This is because the :attr:`relative_position` is considered as part of the
+    rotation.
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(cone_actor)
     >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
+    As long as the label and cone's :class:`pyvista.Prop3D` attributes are modified
+    together and synchronized, the label will remain at the tip of the cone.
+
+    Modify the position of the label and tip.
+
+    >>> cone_actor.position = (1.0, 2.0, 3.0)
+    >>> label.position = (1.0, 2.0, 3.0)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
 
     """
