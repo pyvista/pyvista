@@ -11,6 +11,7 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
+from typing import cast
 from typing import get_args
 
 import numpy as np
@@ -3387,19 +3388,34 @@ class AxesGeometrySource:
 
 
 class OrthoPlanesSource:
-    """
-    bounds : sequence[float], optional
-    Specify the bounding box of the cube. If given, all other size
-    arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+    """Orthonormal planes source.
+
+    Generates three orthonormal planes.
+
+    Parameters
+    ----------
+    bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        The generated planes are centered in these bounds.
+
+    resolution : int | VectorLike[int], default: 2
+        Number of points on the planes in the x-y-z directions. Use a single number
+        for a uniform resolution, or three values to set independent resolutions.
+
+    normal_sign : '+' | '-', default: '+'
+        Sign of the plane's normal vectors. Use a single value to set all normals to
+        the same sign, or three values to set them independently.
+
     """
 
     def __init__(
         self,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
-        resolution: int | VectorLike[int] = (1, 1, 1),
+        resolution: int | VectorLike[int] = 2,
+        normal_sign: Literal['+', '-'] | Sequence[str] = '+',
     ):
-        # Init output
+        # Init sources and the output dataset
         names = ['xy', 'yz', 'zx']
         polys = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
         self._output = pyvista.MultiBlock(dict(zip(names, polys)))
@@ -3408,41 +3424,71 @@ class OrthoPlanesSource:
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
+        self.normal_sign = normal_sign  # type: ignore[assignment]
 
     @property
-    def resolution(self) -> tuple[int, int, int]:
+    def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the sign of the plane's normal vectors."""
+        return cast(tuple[str, str, str], self._normal_sign)
+
+    @normal_sign.setter
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
+        def _check_sign(sign_):
+            allowed = ['+', '-']
+            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+
+        valid_sign: Sequence[str]
+        _validation.check_instance(sign, (tuple, list, str), name='normal sign')
+        if isinstance(sign, str):
+            _check_sign(sign)
+            valid_sign = [sign] * 3
+        else:
+            _validation.check_length(sign, exact_length=3)
+            [_check_sign(s) for s in sign]
+            valid_sign = sign
+        self._normal_sign = tuple(valid_sign)
+
+    @property
+    def resolution(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
+        """Return or set the resolution of the planes."""
         return self._resolution
 
     @resolution.setter
-    def resolution(self, resolution: int | VectorLike[int]):
+    def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
         self._resolution = _validation.validate_array3(resolution, broadcast=True, to_tuple=True)
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounds of the planes."""
         return self._bounds
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         self._bounds = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=6, to_tuple=True
         )
 
     def update(self):
-        # Set-up plane parameters
+        """Update the output of the source."""
         ORIGIN = (0.0, 0.0, 0.0)
+
+        # Unpack vars
+        xy_source, yz_source, zx_source = self._plane_sources
         x_res, y_res, z_res = self.resolution
         x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+
+        # Compute bounds-related vars
         x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
         center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
 
-        xy_source, yz_source, zx_source = self._plane_sources
+        # Update plane sources
         xy_source.SetXResolution(x_res)
         xy_source.SetYResolution(y_res)
         xy_source.SetPoint1(x_size, 0.0, 0.0)
         xy_source.SetPoint2(0.0, y_size, 0.0)
         xy_source.SetOrigin(ORIGIN)
         xy_source.SetCenter(center)
-        # xy_plane.SetNormal(0.0,0.0,zmax)
+        xy_source.Update()
 
         yz_source.SetXResolution(y_res)
         yz_source.SetYResolution(z_res)
@@ -3450,7 +3496,7 @@ class OrthoPlanesSource:
         yz_source.SetPoint2(0.0, 0.0, z_size)
         yz_source.SetOrigin(ORIGIN)
         yz_source.SetCenter(center)
-        # yz_plane.SetNormal(xmax,0.0,0.0)
+        yz_source.Update()
 
         zx_source.SetXResolution(z_res)
         zx_source.SetYResolution(x_res)
@@ -3458,17 +3504,22 @@ class OrthoPlanesSource:
         zx_source.SetPoint2(x_size, 0.0, 0.0)
         zx_source.SetOrigin(ORIGIN)
         zx_source.SetCenter(center)
-        # xy_plane.SetNormal(0.0,ymax,0.0)
-
-        # Update sources and update polydata output
-        xy_source.Update()
-        self._output['xy'].copy_from(xy_source.GetOutput())
-        yz_source.Update()
-        self._output['yz'].copy_from(yz_source.GetOutput())
         zx_source.Update()
-        self._output['zx'].copy_from(zx_source.GetOutput())
+
+        # Update the polydata output
+        for source, plane, sign in zip(self._plane_sources, self._output, self.normal_sign):
+            plane.copy_from(source.GetOutput())
+            if sign == '-':
+                plane['Normals'] *= -1
 
     @property
     def output(self):
+        """Get the output of the source.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
         self.update()
         return self._output

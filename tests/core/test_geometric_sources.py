@@ -688,3 +688,29 @@ def test_ortho_planes_source():
     assert isinstance(output, pv.MultiBlock)
     assert output.keys() == ['xy', 'yz', 'zx']
     plane_source.output.plot(show_edges=True)
+
+
+def test_ortho_planes_source_normal_sign_set_get():
+    plane_source = pv.OrthoPlanesSource()
+    output = plane_source.output
+    assert plane_source.normal_sign == ('+', '+', '+')
+    assert np.all(pv.merge(output)['Normals'] >= 0)
+
+    plane_source.normal_sign = '-'
+    assert plane_source.normal_sign == ('-', '-', '-')
+    np.all(pv.merge(output)['Normals'] <= 0)
+
+    plane_source.normal_sign = ['+', '+', '+']
+    assert plane_source.normal_sign == ('+', '+', '+')
+
+    match = "must be one of: \n\t['+', '-']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        plane_source.normal_sign = 'a'
+
+    match = "must be one of: \n\t['+', '-']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        plane_source.normal_sign = ['a', 'b', 'c']
+
+    match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        plane_source.normal_sign = 0
