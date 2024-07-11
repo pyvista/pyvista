@@ -4530,6 +4530,9 @@ def test_orthogonal_planes_source_normals(normal_sign):
     merged.plot_normals(mag=0.8, color='red')
 
 
+# Add skips since Plane's edges differ (e.g. triangles instead of quads)
+@skip_windows
+@skip_9_1_0
 @pytest.mark.parametrize(
     'resolution',
     [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
