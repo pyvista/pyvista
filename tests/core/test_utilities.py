@@ -996,7 +996,7 @@ def test_principal_axes_single_point():
 def test_principal_axes_vectors_success_with_many_points():
     # Use large mesh to verify no memory errors are raised
     res = 4000
-    ellipsoid = pv.ParametricSuperEllipsoid(
+    ellipsoid = pv.ParametricEllipsoid(
         xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
     )
     assert ellipsoid.n_points == 16_000_000
