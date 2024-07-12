@@ -44,6 +44,7 @@ from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
+from .planes_assembly import PlanesAssembly
 from .plotter import _ALL_PLOTTERS
 from .plotter import BasePlotter
 from .plotter import Plotter

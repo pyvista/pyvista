@@ -4507,3 +4507,37 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+# check_gc fails, suspected memory leak with pv.merge
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('normal_sign', ['+', '-'])
+def test_orthogonal_planes_source_normals(normal_sign):
+    plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
+    output = plane_source.output
+    for plane in output:
+        plane['_rgb'] = [
+            pv.Color('red').float_rgb,
+            pv.Color('green').float_rgb,
+            pv.Color('blue').float_rgb,
+            pv.Color('yellow').float_rgb,
+        ]
+    # Merge for plotting, since multiblock does not have a `plot_normals` method
+    merged = pv.merge(output)
+    # This line is necessary due to issue: https://github.com/pyvista/pyvista/issues/6365
+    merged.GetPointData().SetActiveNormals('Normals')
+
+    merged.plot_normals(mag=0.8, color='red')
+
+
+# Add skips since Plane's edges differ (e.g. triangles instead of quads)
+@skip_windows
+@skip_9_1_0
+@pytest.mark.parametrize(
+    'resolution',
+    [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
+    ids=['x_resolution', 'y_resolution', 'z_resolution'],
+)
+def test_orthogonal_planes_source_resolution(resolution):
+    plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
+    plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
