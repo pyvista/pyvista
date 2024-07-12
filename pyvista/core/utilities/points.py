@@ -479,9 +479,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
 
     The axes explain the total variance of the points. The first axis explains the
     largest percentage of variance, followed by the second axis, followed again by
-    the third axis which explains the smallest percentage of variance. Geometrically,
-    they can be interpreted as the semi-major axes of the best-fitting ellipsoid to
-    the data (for some value of "best-fitting").
+    the third axis which explains the smallest percentage of variance.
 
     The axes may be used to build an oriented bounding box or to align the points to
     another set of axes (e.g. the world XYZ axes).
