@@ -2193,17 +2193,37 @@ class PlaneSource(_vtk.vtkPlaneSource):
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    origin : sequence[float], default: (-0.5, -0.5, 0.0)
+        Origin in ``[x, y, z]``.
+
+    pointa : sequence[float], default: (0.5, -0.5, 0.0)
+        Location in ``[x, y, z]``.
+
+    pointb : sequence[float], default: (0.5, 0.5, 0.0)
+        Location in ``[x, y, z]``.
+
     """
 
     def __init__(
         self,
         i_resolution=10,
         j_resolution=10,
+        center=(0.0, 0.0, 0.0),
+        origin=(-0.5, -0.5, 0.0),
+        pointa=(0.5, -0.5, 0.0),
+        pointb=(-0.5, 0.5, 0.0),
     ):
         """Initialize source."""
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
+        self.center = center
+        self.origin = origin
+        self.pointa = pointa
+        self.pointb = pointb
 
     @property
     def i_resolution(self) -> int:
