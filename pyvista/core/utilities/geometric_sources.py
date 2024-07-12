@@ -2250,6 +2250,98 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.SetYResolution(j_resolution)
 
     @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]):
+        """Set the origin in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        self.SetOrigin(origin)
+
+    @property
+    def pointa(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint1()
+
+    @pointa.setter
+    def pointa(self, pointa: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointa : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointa).size != 3:
+            raise TypeError('Point A must be a length three tuple of floats.')
+        self.SetPoint1(*pointa)
+
+    @property
+    def pointb(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint2()
+
+    @pointb.setter
+    def pointb(self, pointb: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        pointb : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        if np.array(pointb).size != 3:
+            raise TypeError('Point B must be a length three tuple of floats.')
+        self.SetPoint2(*pointb)
+
+    @property
     def output(self):
         """Get the output data object for a port on this algorithm.
 
