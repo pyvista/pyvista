@@ -22,8 +22,10 @@ import pyvista
 from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import NumpyArray
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import BoundsLike
+    from ._typing_core import NumpyArray
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -40,10 +42,10 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet,
     CompositeFilters,
     DataObject,
     MutableSequence,  # type: ignore[type-arg]
+    _vtk.vtkMultiBlockDataSet,
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -201,13 +203,11 @@ class MultiBlock(
             minima = np.array([0.0, 0.0, 0.0])
             maxima = np.array([0.0, 0.0, 0.0])
         else:
-            minima = np.minimum.reduce(all_bounds)[::2]
-            maxima = np.maximum.reduce(all_bounds)[1::2]
+            minima = np.minimum.reduce(all_bounds)[::2].tolist()
+            maxima = np.maximum.reduce(all_bounds)[1::2].tolist()
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
-
-        return cast(BoundsLike, tuple(the_bounds))
+        return (minima[0], maxima[0], minima[1], maxima[1], minima[2], maxima[2])
 
     @property
     def center(self) -> NumpyArray[float]:
@@ -780,10 +780,7 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
-            return False
-
-        return True
+        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
     def __next__(self) -> _TypeMultiBlockLeaf | None:
         """Get the next block from the iterator."""

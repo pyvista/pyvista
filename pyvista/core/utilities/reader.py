@@ -510,9 +510,7 @@ class PointCellDataSelection:
             Whether reading the cell array is enabled.
 
         """
-        if self.reader.GetPointArrayStatus(name):
-            return True
-        return False
+        return bool(self.reader.GetPointArrayStatus(name))
 
     def enable_all_point_arrays(self):
         """Enable all point arrays."""

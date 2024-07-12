@@ -1143,7 +1143,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_field_data_no_scalars_vectors()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or dtype == bool:
+        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
             self.SetActiveScalars(name)
 
     @property
@@ -1458,5 +1458,5 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_texture_coordinates()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or dtype == bool:
+        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
             self.SetActiveTCoords(name)

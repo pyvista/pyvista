@@ -737,13 +737,9 @@ def check_matplotlib_vtk_compatibility():
 
     mpl_vers = tuple(map(int, mpl.__version__.split('.')[:2]))
     if pyvista.vtk_version_info <= (9, 2, 2):
-        if mpl_vers >= (3, 6):
-            return False
-        return True
+        return not mpl_vers >= (3, 6)
     elif pyvista.vtk_version_info > (9, 2, 2):
-        if mpl_vers >= (3, 6):
-            return True
-        return False  # pragma: no cover
+        return mpl_vers >= (3, 6)
     raise RuntimeError('Uncheckable versions.')  # pragma: no cover
 
 

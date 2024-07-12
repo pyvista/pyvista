@@ -178,7 +178,9 @@ try:
     from matplotlib import colormaps
     from matplotlib import colors
 except ImportError:  # pragma: no cover
-    from matplotlib import cm as colormaps
+    # typing for newer versions of matplotlib
+    # in newer versions cm is a module
+    from matplotlib import cm as colormaps  # type: ignore[assignment]
     from matplotlib import colors
 
 from typing import TYPE_CHECKING
