@@ -12,6 +12,8 @@ to opt out of lighting altogether. Pass ``lighting=False`` to
 :func:`pyvista.Plotter.add_mesh` to disable lighting for the given
 mesh:
 
+.. tags:: Lights
+
 """
 
 # sphinx_gallery_thumbnail_number = 1

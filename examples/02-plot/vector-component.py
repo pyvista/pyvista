@@ -6,6 +6,9 @@ Plot a single component of a vector as a scalar array.
 
 We can plot individual components of multi-component arrays with the
 ``component`` argument  of the ``add_mesh`` method.
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

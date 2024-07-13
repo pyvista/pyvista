@@ -11,6 +11,9 @@ The ordering for the output gradient tuple will be
 an input array {u, v, w}.
 
 Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
+
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

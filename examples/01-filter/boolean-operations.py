@@ -38,6 +38,7 @@ must be all triangle meshes, which you can check with
    probably has its normals pointing inward. Use
    :func:`pyvista.PolyDataFilters.plot_normals` to visualize the normals.
 
+.. tags:: Filter
 
 """
 

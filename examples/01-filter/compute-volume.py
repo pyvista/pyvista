@@ -6,6 +6,9 @@ Volumetric Analysis
 
 
 Calculate mass properties such as the volume or area of datasets
+
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

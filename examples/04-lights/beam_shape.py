@@ -10,6 +10,9 @@ by the light's position and focal point. Positional lights, however, have more
 options for beam customization.
 
 Consider two hemispheres:
+
+.. tags:: Lights
+
 """
 
 # sphinx_gallery_thumbnail_number = 5

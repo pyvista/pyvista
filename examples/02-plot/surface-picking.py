@@ -8,6 +8,8 @@ This example demonstrates how to pick meshes using
 
 This allows you to pick points on the surface of a mesh.
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

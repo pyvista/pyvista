@@ -19,6 +19,8 @@ For headlights the :py:attr:`pyvista.Camera.position` and
 :py:attr:`pyvista.Camera.focal_point` properties are meaningless. No matter
 where you move the camera, the light always emanates from the view point:
 
+.. tags:: Lights
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

@@ -6,6 +6,9 @@ Extract Surface
 
 You can extract the surface of nearly any object within ``pyvista``
 using the ``extract_surface`` filter.
+
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

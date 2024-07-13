@@ -8,6 +8,8 @@ Surface reconstruction has a dedicated filter in PyVista and is
 handled by :func:`pyvista.PolyDataFilters.reconstruct_surface`. This
 tends to perform much better than :func:`pyvista.DataSetFilters.delaunay_3d`.
 
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

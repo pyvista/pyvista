@@ -12,6 +12,9 @@ plane. Considering that planes are most commonly used for clipping and slicing
 meshes, we have included two helper methods for doing those tasks.
 
 Let's use a plane to clip a mesh:
+
+.. tags:: Widgets
+
 """
 
 # sphinx_gallery_start_ignore

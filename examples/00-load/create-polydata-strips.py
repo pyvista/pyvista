@@ -10,6 +10,8 @@ triangle strips.
 Triangle strips are a more efficient way of storing the connectivity of
 adjacent triangles.
 
+.. tags:: Load
+
 """
 
 # sphinx_gallery_start_ignore

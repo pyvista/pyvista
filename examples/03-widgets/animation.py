@@ -8,6 +8,9 @@ This example demonstrates how to create a simple animation.
 A timer is used to move a sphere across a scene.
 
 Inspired by `VTK Animation Examples <https://examples.vtk.org/site/Python/Utilities/Animation/>`_.
+
+.. tags:: Widgets
+
 """
 
 from __future__ import annotations

@@ -14,6 +14,8 @@ nearby light sources.
 See `Kitware: Screen-Space Ambient Occlusion
 <https://www.kitware.com/ssao/>`_ for more details
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

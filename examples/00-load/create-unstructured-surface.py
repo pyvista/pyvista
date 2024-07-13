@@ -6,6 +6,9 @@ Creating an Unstructured Grid
 
 Create an irregular, unstructured grid from NumPy arrays.
 This example uses :class:`pyvista.UnstructuredGrid`.
+
+.. tags:: Load
+
 """
 
 from __future__ import annotations

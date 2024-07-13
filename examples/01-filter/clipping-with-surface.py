@@ -12,6 +12,9 @@ implicit distance and thresholding the mesh. This thresholding is one approach
 to clip by a surface, and preserve the original geometry of the given mesh,
 but many folks leverage the ``clip_surface`` filter to triangulate/tessellate
 the mesh geometries along the clip.
+
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

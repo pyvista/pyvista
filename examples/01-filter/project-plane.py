@@ -4,6 +4,9 @@ Project to a Plane
 
 :class:`pyvista.PolyData` surfaces and pointsets can easily be projected to a
 plane defined by a normal and origin
+
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

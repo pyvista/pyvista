@@ -5,6 +5,9 @@ Ray Tracing
 ~~~~~~~~~~~
 
 Single line segment ray tracing for PolyData objects.
+
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

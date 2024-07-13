@@ -13,6 +13,9 @@ the box, but we have added a lot of ways to use this widget so that you can
 easily add several widgets to a scene.
 
 Let's look at a few use cases that all update a surface mesh.
+
+.. tags:: Widgets
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

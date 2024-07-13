@@ -5,6 +5,8 @@ Scaled Gaussian Points
 This example demonstrates how to plot spheres using the ``'points_gaussian'``
 style and scale them by a dynamic radius.
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

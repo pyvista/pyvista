@@ -4,6 +4,8 @@
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. tags:: Load
+
 """
 
 # sphinx_gallery_start_ignore

@@ -9,6 +9,8 @@ Generate a moving gif from an active plotter.
    Use ``lighting=False`` to reduce the size of the color space to avoid
    "jittery" GIFs, especially for the scalar bar.
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

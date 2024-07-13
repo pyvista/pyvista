@@ -7,6 +7,8 @@ Import a VRML file directly into a PyVista plotting scene.
 For more details regarding the VRML format, see:
 https://en.wikipedia.org/wiki/VRML
 
+.. tags:: Load
+
 """
 
 from __future__ import annotations

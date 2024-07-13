@@ -5,6 +5,9 @@ Moving Isovalue
 ~~~~~~~~~~~~~~~
 
 Make an animation of an isovalue through a volumetric dataset
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

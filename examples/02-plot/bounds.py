@@ -7,6 +7,8 @@ Plotting Bounds
 This example demonstrates to show bounds within a :class:`pyvista.Plotter`
 using :func:`show_grid() <pyvista.Plotter.show_grid>`
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

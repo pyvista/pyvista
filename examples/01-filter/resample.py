@@ -22,6 +22,9 @@ For :func:`pyvista.DataSetFilters.interpolate`, see :ref:`interpolate_example`.
 
 
 Resample one mesh's point/cell arrays onto another mesh's nodes.
+
+.. tags:: Filter
+
 """
 
 ###############################################################################

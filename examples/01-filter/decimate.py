@@ -6,6 +6,8 @@ Decimation
 
 Decimate a mesh
 
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

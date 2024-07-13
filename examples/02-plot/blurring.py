@@ -8,6 +8,8 @@ This example shows how you can use :func:`add_blurring
 :func:`enable_depth_of_field <pyvista.Plotter.enable_depth_of_field>`
 to highlight part of your plot.
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

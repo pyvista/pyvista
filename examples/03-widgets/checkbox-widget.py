@@ -8,6 +8,8 @@ Use a checkbox to turn on/off the visibility of meshes in a scene.
 
 See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 
+.. tags:: Widgets
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

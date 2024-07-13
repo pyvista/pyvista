@@ -6,6 +6,8 @@ Picking Meshes
 This example demonstrates how to pick meshes using
 :func:`enable_mesh_picking() <pyvista.Plotter.enable_mesh_picking>`.
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

@@ -5,6 +5,9 @@ Types of Shading
 ~~~~~~~~~~~~~~~~
 
 Comparison of default, flat shading vs. smooth shading.
+
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

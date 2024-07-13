@@ -3,6 +3,9 @@ Plot data in spherical coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Generate and visualize meshes from data in longitude-latitude coordinates.
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

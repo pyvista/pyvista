@@ -88,6 +88,7 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
+    "sphinx_tags",
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
 ]
@@ -588,6 +589,25 @@ notfound_no_urls_prefix = True
 # exclude traditional Python prompts from the copied code
 copybutton_prompt_text = r'>>> ?|\.\.\. '
 copybutton_prompt_is_regexp = True
+
+# sphinx-tags options ---------------------------------------------------------
+# See https://sphinx-tags.readthedocs.io/en/latest/index.html
+
+tags_badge_colors = {
+    "Load": "primary",
+    "Filter": "secondary",
+    "Plot": "dark",
+    "Widgets": "success",
+    "Lights": "primary",
+}
+tags_create_tags = True
+tags_create_badges = True
+tags_index_head = "Gallery examples categorised by tag:"  # tags landing page intro text
+tags_intro_text = "🏷 Tags:"  # prefix text for a tags list
+tags_overview_title = "🏷 Tags"  # title for the tags landing page
+tags_output_dir = "tags"
+tags_page_header = "Gallery examples contain this tag:"  # tag sub-page, header text
+tags_page_title = "🏷 Tag"  # tag sub-page, title appended with the tag name
 
 
 def setup(app):

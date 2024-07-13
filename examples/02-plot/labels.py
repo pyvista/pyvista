@@ -3,6 +3,9 @@ Label Points
 ~~~~~~~~~~~~
 
 Use string arrays in a point set to label points
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

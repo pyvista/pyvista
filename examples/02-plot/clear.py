@@ -4,6 +4,8 @@ Clearing a Mesh or the Entire Plot
 
 This example demonstrates how to remove elements from a scene.
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

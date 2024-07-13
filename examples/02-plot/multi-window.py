@@ -4,6 +4,9 @@ Multi-Window Plot
 
 
 Subplotting: having multiple scenes in a single window
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

@@ -10,6 +10,8 @@ To learn more, please see `this blog post`_.
 
 .. _this blog post: https://blog.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
 
+.. tags:: Plot
+
 """
 
 ###############################################################################

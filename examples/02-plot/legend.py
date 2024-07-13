@@ -3,6 +3,9 @@ Legends and glyphs
 ~~~~~~~~~~~~~~~~~~
 
 Using custom legends and glyphs within PyVista.
+
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

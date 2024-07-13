@@ -4,6 +4,8 @@
 Linked Views in Subplots
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

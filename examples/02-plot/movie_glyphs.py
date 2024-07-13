@@ -7,6 +7,8 @@ Save a Movie Using Glyphs
 Create an animated GIF by generating glyphs using :func:`glyph()
 <pyvista.DataSetFilters.glyph>` using :func:`pyvista.Sphere`.
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 1

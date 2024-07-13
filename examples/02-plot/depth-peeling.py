@@ -11,6 +11,8 @@ have issues with this routine.
 For this example, we will showcase the difference that depth peeling
 provides.
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

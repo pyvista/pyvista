@@ -22,6 +22,9 @@ For :func:`pyvista.DataSetFilters.sample`, see :ref:`resampling_example`.
 
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
+
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 4

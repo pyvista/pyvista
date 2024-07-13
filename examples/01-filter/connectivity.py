@@ -7,6 +7,8 @@ Connectivity
 This example highlights some applications of the :func:`~pyvista.DataSetFilters.connectivity`
 filter.
 
+.. tags:: Filter
+
 """
 
 ###############################################################################

@@ -29,6 +29,8 @@ the distance from every vertex point in the bottom mesh to the closest spatial p
 inside a cell of the top mesh.  This will be the shortest distance from the vertex point
 to the top surface, unlike the first two examples.
 
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

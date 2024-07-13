@@ -7,6 +7,8 @@ Customize Scalar Bars
 Walk through of all the different capabilities of scalar bars and
 how a user can customize scalar bars.
 
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

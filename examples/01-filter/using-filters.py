@@ -5,6 +5,9 @@ Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
 
 Using common filters like thresholding and clipping.
+
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 2

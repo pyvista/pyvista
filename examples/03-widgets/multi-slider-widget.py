@@ -9,6 +9,8 @@ In this example we simply change a few parameters for the
 :func:`pyvista.Sphere` method, but this could easily be applied to any
 mesh-generating/altering code.
 
+.. tags:: Widgets
+
 """
 
 # sphinx_gallery_start_ignore

@@ -8,6 +8,8 @@ Rotations of a mesh about its axes. In this model, the x axis is from the left
 to right; the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
+.. tags:: Filter
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

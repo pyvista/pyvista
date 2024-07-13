@@ -7,6 +7,8 @@ Perlin noise over a region to generate random terrain.
 Video games like Minecraft use Perlin noise to create terrain.  Here,
 we create a voxelized mesh similar to a Minecraft "cave".
 
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

@@ -3,6 +3,9 @@ Visible Vertices
 ~~~~~~~~~~~~~~~~
 
 Display vertices on a mesh in the same fashion as edge visibility.
+
+.. tags:: Plot
+
 """
 
 # sphinx_gallery_thumbnail_number = 3

@@ -29,6 +29,7 @@ balance between efficiency and quality. If you desire additional smoothing, you
 can either increase the number of ``multi_samples`` or use SSAA. Low-end PCs
 should consider FXAA.
 
+.. tags:: Plot
 
 """
 

@@ -13,6 +13,9 @@ Here, we demonstrate FFT usage by first generating Perlin noise using
 sample :func:`pyvista.perlin_noise <pyvista.core.utilities.features.perlin_noise>`,
 and then performing FFT of the sampled noise to show the frequency content of
 that noise.
+
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

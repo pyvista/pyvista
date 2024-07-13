@@ -10,6 +10,8 @@ Create an animated MP4 movie of a rendering scene.
     This movie will appear static since MP4 movies will not be
     rendered on a sphinx gallery example.
 
+.. tags:: Plot
+
 """
 
 from __future__ import annotations

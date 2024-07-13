@@ -8,6 +8,9 @@ This example uses :func:`pyvista.read`.
 
 .. _meshio: https://github.com/nschloe/meshio
 .. _FEniCS/Dolfin: https://fenicsproject.org
+
+.. tags:: Load
+
 """
 
 from __future__ import annotations

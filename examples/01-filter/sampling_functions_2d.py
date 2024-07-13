@@ -14,6 +14,8 @@ The development of Perlin Noise has allowed computer graphics artists
 to better represent the complexity of natural phenomena in visual
 effects for the motion picture industry.
 
+.. tags:: Filter
+
 """
 
 from __future__ import annotations

@@ -10,6 +10,8 @@ structure of the dataset.
 
 .. image:: ../../images/gifs/volume-clip-plane-widget.gif
 
+.. tags:: Widgets
+
 """
 
 # sphinx_gallery_start_ignore

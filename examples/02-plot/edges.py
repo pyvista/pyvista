@@ -5,6 +5,9 @@ Show Edges
 ~~~~~~~~~~
 
 Show the edges of all geometries within a mesh
+
+.. tags:: Plot
+
 """
 
 ###############################################################################

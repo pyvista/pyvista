@@ -25,6 +25,7 @@ sphere.
    repeated collisions.  See the `Collision Detection Example
    <https://kitware.github.io/vtk-examples/site/Python/Visualization/CollisionDetection/>`_
 
+.. tags:: Filter
 
 """
 

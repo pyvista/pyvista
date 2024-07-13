@@ -21,6 +21,9 @@ quadratic attenuation produces a beam that is shorter in range than that produce
 by linear attenuation.
 
 Three spotlights with three different attenuation profiles each:
+
+.. tags:: Lights
+
 """
 
 # sphinx_gallery_thumbnail_number = 3
