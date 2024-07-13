@@ -2278,7 +2278,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
     @property
     def center(self) -> Sequence[float]:
         """Get the center in ``[x, y, z]``.
-        
+
         The center of the plane is translated to the specified point.
 
         Returns
@@ -2322,7 +2322,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.SetOrigin(origin)
 
     @property
-    def pointa(self) -> Sequence[float]:
+    def point_a(self) -> Sequence[float]:
         """Get the Location in ``[x, y, z]``.
 
         Returns
@@ -2332,16 +2332,16 @@ class PlaneSource(_vtk.vtkPlaneSource):
         """
         return self.GetPoint1()
 
-    @pointa.setter
-    def pointa(self, pointa: Sequence[float]):
+    @point_a.setter
+    def point_a(self, point_a: Sequence[float]):
         """Set the Location in ``[x, y, z]``.
 
         Parameters
         ----------
-        pointa : sequence[float]
+        point_a : sequence[float]
             Location in ``[x, y, z]``.
         """
-        self.SetPoint1(*pointa)
+        self.SetPoint1(*point_a)
 
     @property
     def point_b(self) -> Sequence[float]:
@@ -2354,16 +2354,16 @@ class PlaneSource(_vtk.vtkPlaneSource):
         """
         return self.GetPoint2()
 
-    @pointb.setter
+    @point_b.setter
     def point_b(self, point_b: Sequence[float]):
         """Set the Location in ``[x, y, z]``.
 
         Parameters
         ----------
-        pointb : sequence[float]
+        point_b : sequence[float]
             Location in ``[x, y, z]``.
         """
-        self.SetPoint2(*pointb)
+        self.SetPoint2(*point_b)
 
     @property
     def output(self):
