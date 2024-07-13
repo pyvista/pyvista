@@ -8,6 +8,8 @@ This example demonstrates how to measure distance between two points.
 
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
 cube = pv.Cube()

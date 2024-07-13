@@ -15,6 +15,8 @@ path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.Plotter.add_mesh_slice_spline`.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -31,7 +33,7 @@ points = np.array(
         [-0.30179377, -3.21555997, -4.19999019],
         [3.24099167, 2.05814768, 3.39041509],
         [4.39935227, 4.18804542, 8.96391132],
-    ]
+    ],
 )
 
 p = pv.Plotter()

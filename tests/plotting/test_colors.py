@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import itertools
 
-import matplotlib
+import matplotlib as mpl
 import numpy as np
 import pytest
 
@@ -27,7 +29,7 @@ except:
 
 @pytest.mark.parametrize("cmap", COLORMAPS)
 def test_get_cmap_safe(cmap):
-    assert isinstance(get_cmap_safe(cmap), matplotlib.colors.LinearSegmentedColormap)
+    assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
 def test_color():

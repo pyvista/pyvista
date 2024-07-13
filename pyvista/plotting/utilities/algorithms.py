@@ -1,5 +1,7 @@
 """Internal vtkAlgorithm support helpers."""
 
+from __future__ import annotations
+
 import traceback
 
 import numpy as np
@@ -215,9 +217,9 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
             if output.n_arrays:
                 output.set_active_scalars(self.scalars_name, preference=self.preference)
             out.ShallowCopy(output)
-        except Exception as e:  # pragma: no cover
+        except Exception:  # pragma: no cover
             traceback.print_exc()
-            raise e
+            raise
         return 1
 
 
@@ -261,9 +263,9 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             out = self.GetOutputData(outInfo, 0)
             output = inp.cast_to_polydata(deep=False)
             out.ShallowCopy(output)
-        except Exception as e:  # pragma: no cover
+        except Exception:  # pragma: no cover
             traceback.print_exc()
-            raise e
+            raise
         return 1
 
 
@@ -329,9 +331,9 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
             if output.active_scalars_name in ['point_ids', 'cell_ids']:
                 output.active_scalars_name = inp.active_scalars_name
             out.ShallowCopy(output)
-        except Exception as e:  # pragma: no cover
+        except Exception:  # pragma: no cover
             traceback.print_exc()
-            raise e
+            raise
         return 1
 
 
@@ -369,9 +371,9 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             out = self.GetOutputData(outInfo, 0)
             output = source.extract_cells(np.unique(clipped.cell_data['cell_ids']))
             out.ShallowCopy(output)
-        except Exception as e:  # pragma: no cover
+        except Exception:  # pragma: no cover
             traceback.print_exc()
-            raise e
+            raise
         return 1
 
 

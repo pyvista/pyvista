@@ -5,6 +5,8 @@ Ray Tracing
 Single line segment ray tracing for PolyData objects.
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
 # Create source to ray trace

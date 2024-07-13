@@ -8,6 +8,8 @@ Create a spline/polyline from a numpy array of XYZ vertices using
 :func:`pyvista.Spline`.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2

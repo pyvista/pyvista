@@ -2,6 +2,8 @@
 Tests for non-spatially referenced objects
 """
 
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
@@ -99,8 +101,6 @@ def test_table_init(tmpdir):
     with pytest.raises(TypeError):
         pv.Table("foo")
 
-    return
-
 
 def test_table_row_arrays():
     nr, nc = 50, 3
@@ -151,8 +151,6 @@ def test_table_row_arrays():
 
     del table[table.keys()[0]]
     assert table.n_arrays == n - 2
-
-    return
 
 
 def test_table_row_np_bool():

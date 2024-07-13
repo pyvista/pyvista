@@ -5,12 +5,18 @@ Create Triangulated Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a surface from a set of points through a Delaunay triangulation.
+This example uses :func:`pyvista.PolyDataFilters.delaunay_2d`.
 """
+
+from __future__ import annotations
 
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+
+# Seed random numbers for reproducibility
+rng = np.random.default_rng(seed=0)
 
 ###############################################################################
 # Simple Triangulations
@@ -20,8 +26,8 @@ import pyvista as pv
 
 # Define a simple Gaussian surface
 n = 20
-x = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
-y = np.linspace(-200, 200, num=n) + np.random.default_rng().uniform(-5, 5, size=n)
+x = np.linspace(-200, 200, num=n) + rng.uniform(-5, 5, size=n)
+y = np.linspace(-200, 200, num=n) + rng.uniform(-5, 5, size=n)
 xx, yy = np.meshgrid(x, y)
 A, b = 100, 100
 zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -55,8 +61,8 @@ x = np.arange(10, dtype=float)
 xx, yy, zz = np.meshgrid(x, x, [0])
 points = np.column_stack((xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")))
 # Perturb the points
-points[:, 0] += np.random.default_rng().random(len(points)) * 0.3
-points[:, 1] += np.random.default_rng().random(len(points)) * 0.3
+points[:, 0] += rng.random(len(points)) * 0.3
+points[:, 1] += rng.random(len(points)) * 0.3
 # Create the point cloud mesh to triangulate from the coordinates
 cloud = pv.PolyData(points)
 cloud

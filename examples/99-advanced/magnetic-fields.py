@@ -20,6 +20,7 @@ library.
 """
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
 
 import numpy as np
 
@@ -43,9 +44,7 @@ grid.point_data
 # Create several hoops to represent the coil. This matches the geometry in the
 # original example.
 
-coils = []
-for z in np.linspace(-8, 8, 16):
-    coils.append(pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False))
+coils = [pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False) for z in np.linspace(-8, 8, 16)]
 coil_block = pv.MultiBlock(coils)
 coil_block.plot(render_lines_as_tubes=True, line_width=10)
 

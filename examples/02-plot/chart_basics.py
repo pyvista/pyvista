@@ -8,6 +8,8 @@ This example shows how different types of charts can be added to the scene. A mo
 combine multiple charts as overlays in the same renderer, is given in :ref:`chart_overlays_example`.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -151,7 +153,7 @@ import matplotlib.pyplot as plt
 
 # First, create the matplotlib figure
 f, ax = plt.subplots(
-    tight_layout=True
+    tight_layout=True,
 )  # Tight layout to keep axis labels visible on smaller figures
 alphas = [0.5 + i for i in range(5)]
 betas = [*reversed(alphas)]

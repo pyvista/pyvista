@@ -20,6 +20,8 @@ critical consideration.
 
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -95,7 +97,7 @@ h_pressure = np.array(
         [0.0028, 587969605.2],
         [0.003, 0],
         [0.005, 0],
-    ]
+    ],
 )
 
 plt.plot(x_coord, samp_z_stress, '.', label='Z Component Stress')

@@ -13,6 +13,8 @@ Cycle through colors when sequentially adding meshes to a plotter.
 # this in much the same way as Matplotlib.
 
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import pyvista as pv
 
 ###############################################################################

@@ -33,7 +33,7 @@ wheel size.
 
 .. note::
    We have also published some convenient CMake configurations files that you
-   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`. These configurations cover the build variants described here
+   can adopt from `banesullivan/vtk-cmake <https://github.com/banesullivan/vtk-cmake>`_. These configurations cover the build variants described here
    and make the process of reproducibly building VTK wheel variants more
    straightforward.
 
@@ -190,7 +190,7 @@ built on. You can work around this by building your wheels using a
 `manylinux <https://github.com/pypa/manylinux>`_ docker image.
 
 To do this, create a ``build_wheels.sh`` with the following contents in the
-``git clone``d ``vtk`` directory, and give it executable permissions
+``git clone`` d ``vtk`` directory, and give it executable permissions
 (``chmod +x build_wheels.sh``):
 
 .. code-block:: bash

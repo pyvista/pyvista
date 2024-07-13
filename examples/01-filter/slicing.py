@@ -7,6 +7,8 @@ Slicing
 Extract thin planar slices from a volume.
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -27,7 +29,7 @@ from pyvista import examples
 
 mesh = examples.load_channels()
 # define a categorical colormap
-cmap = plt.cm.get_cmap("viridis", 4)
+cmap = plt.get_cmap("viridis", 4)
 
 mesh.plot(cmap=cmap)
 

@@ -13,6 +13,8 @@ mesh-generating/altering code.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -37,7 +39,6 @@ class MyCustomRoutine:
         # This is where you call your simulation
         result = pv.Sphere(**self.kwargs)
         self.output.copy_from(result)
-        return
 
 
 ###############################################################################

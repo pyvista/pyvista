@@ -19,6 +19,9 @@ as well as some pure-python helpers.
 
 """
 
+from __future__ import annotations
+
+import contextlib
 from itertools import product
 
 import numpy as np
@@ -27,23 +30,25 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 from .arrays import _coerce_pointslike_arg
-from .geometric_sources import (
-    ArrowSource,
-    BoxSource,
-    ConeSource,
-    CubeSource,
-    CylinderSource,
-    DiscSource,
-    LineSource,
-    MultipleLinesSource,
-    PlaneSource,
-    PlatonicSolidSource,
-    PolygonSource,
-    SphereSource,
-    SuperquadricSource,
-    Text3DSource,
-    translate,
-)
+from .geometric_sources import ArrowSource
+from .geometric_sources import BoxSource
+from .geometric_sources import ConeSource
+from .geometric_sources import CubeSource
+from .geometric_sources import CylinderSource
+from .geometric_sources import DiscSource
+from .geometric_sources import LineSource
+from .geometric_sources import MultipleLinesSource
+from .geometric_sources import PlaneSource
+from .geometric_sources import PlatonicSolidSource
+from .geometric_sources import PolygonSource
+from .geometric_sources import SphereSource
+from .geometric_sources import SuperquadricSource
+from .geometric_sources import Text3DSource
+from .geometric_sources import translate
+
+with contextlib.suppress(ImportError):
+    from .geometric_sources import CapsuleSource
+
 from .helpers import wrap
 from .misc import check_valid_vector
 
@@ -55,6 +60,87 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def Capsule(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    cylinder_length=1.0,
+    resolution=30,
+):
+    """Create the surface of a capsule.
+
+    .. warning::
+       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
+       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       orients the mesh to a new ``center`` and ``direction``.
+
+    .. note::
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
+       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
+       not identical.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Location of the centroid in ``[x, y, z]``.
+
+    direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction the capsule points to in ``[x, y, z]``.
+
+    radius : float, default: 0.5
+        Radius of the capsule.
+
+    cylinder_length : float, default: 1.0
+        Cylinder length of the capsule.
+
+    resolution : int, default: 30
+        Number of points on the circular face of the cylinder.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Capsule surface.
+
+    See Also
+    --------
+    pyvista.Cylinder
+
+    Examples
+    --------
+    Create a capsule using default parameters.
+
+    >>> import pyvista as pv
+    >>> capsule = pv.Capsule()
+    >>> capsule.plot(show_edges=True)
+
+    """
+    if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
+        algo = CylinderSource(
+            center=center,
+            direction=direction,
+            radius=radius,
+            height=cylinder_length,
+            capping=True,
+            resolution=resolution,
+        )
+        algo.capsule_cap = True
+    else:
+        algo = CapsuleSource(
+            center=(0, 0, 0),
+            direction=(1, 0, 0),
+            radius=radius,
+            cylinder_length=cylinder_length,
+            theta_resolution=resolution,
+            phi_resolution=resolution,
+        )
+    output = wrap(algo.output)
+    output.rotate_z(90, inplace=True)
+    translate(output, center, direction)
+    return output
 
 
 def Cylinder(
@@ -846,7 +932,7 @@ def SolidSphereGeneric(
                         npoints_on_pos_axis,
                         _index(0, nphi - 1, itheta + 1),
                         _index(0, nphi - 1, itheta),
-                    ]
+                    ],
                 )
                 celltypes.append(pyvista.CellType.TETRA)
 
@@ -860,7 +946,7 @@ def SolidSphereGeneric(
                     _index(0, iphi + 1, itheta + 1),
                     _index(0, iphi + 1, itheta),
                     0,
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.PYRAMID)
 
@@ -880,7 +966,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, 0, itheta + 1),
                     _index(ir + 1, 0, itheta),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -898,7 +984,7 @@ def SolidSphereGeneric(
                     axis1,
                     _index(ir + 1, nphi - 1, itheta),
                     _index(ir + 1, nphi - 1, itheta + 1),
-                ]
+                ],
             )
             celltypes.append(pyvista.CellType.WEDGE)
 
@@ -917,7 +1003,7 @@ def SolidSphereGeneric(
                 _index(ir + 1, iphi + 1, itheta),
                 _index(ir + 1, iphi + 1, itheta + 1),
                 _index(ir + 1, iphi, itheta + 1),
-            ]
+            ],
         )
         celltypes.append(pyvista.CellType.HEXAHEDRON)
 
@@ -1018,7 +1104,7 @@ def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     return line
 
 
-def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
+def MultipleLines(points=None):
     """Create multiple lines.
 
     Parameters
@@ -1043,6 +1129,8 @@ def MultipleLines(points=[[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]):
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
     """
+    if points is None:
+        points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
     return MultipleLinesSource(points=points).output
 
 
@@ -1136,6 +1224,7 @@ def Cube(
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
+
         .. versionadded:: 0.44.0
 
     Returns
@@ -1609,7 +1698,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
-    angles = np.arange(0.0, 1.0 + 1.0 / resolution, 1.0 / resolution) * angle
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
     arc['Distance'] = radius * angles
     return arc
 
@@ -1826,9 +1915,16 @@ def Rectangle(points=None):
     vec_02 = point_2 - point_0
     vec_12 = point_2 - point_1
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02)
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12)
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12)
+    mag_01 = np.linalg.norm(vec_01)
+    mag_02 = np.linalg.norm(vec_02)
+    mag_12 = np.linalg.norm(vec_12)
+
+    if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
+        raise ValueError("Unable to build a rectangle with less than three different points")
+
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val
@@ -1837,8 +1933,6 @@ def Rectangle(points=None):
     ]
     if len(null_scalar_products) == 0:
         raise ValueError("The three points should defined orthogonal vectors")
-    if len(null_scalar_products) > 1:
-        raise ValueError("Unable to build a rectangle with less than three different points")
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):

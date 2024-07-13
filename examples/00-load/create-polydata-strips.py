@@ -13,6 +13,8 @@ adjacent triangles.
 """
 
 # sphinx_gallery_start_ignore
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -31,7 +33,7 @@ points = np.array(
         [0.0, 2.0, 0.0],
         [1.0, 3.0, 0.0],
         [0.0, 3.0, 0.0],
-    ]
+    ],
 )
 
 ###############################################################################

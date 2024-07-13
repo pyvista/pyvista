@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 import platform
 import weakref
@@ -7,7 +9,12 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import ImageData, MultiBlock, PolyData, RectilinearGrid, StructuredGrid, examples as ex
+from pyvista import ImageData
+from pyvista import MultiBlock
+from pyvista import PolyData
+from pyvista import RectilinearGrid
+from pyvista import StructuredGrid
+from pyvista import examples as ex
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
@@ -342,7 +349,15 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
 @pytest.mark.parametrize('extension', pv.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension, binary, tmpdir, use_pathlib, ant, sphere, uniform, airplane, tetbeam
+    extension,
+    binary,
+    tmpdir,
+    use_pathlib,
+    ant,
+    sphere,
+    uniform,
+    airplane,
+    tetbeam,
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
@@ -362,7 +377,7 @@ def test_multi_block_io(
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, tetbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))  # noqa: UP031
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
     # Now check everything
@@ -652,7 +667,7 @@ def test_set_active_scalars(multiblock_all):
     with pytest.raises(KeyError, match='does not exist'):
         multiblock_all.set_active_scalars('point_data_a')
     multiblock_all.set_active_scalars('point_data_a', allow_missing=True)
-    multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
+    assert multiblock_all[1].point_data.active_scalars_name == 'point_data_a'
 
     with pytest.raises(KeyError, match='is missing from all'):
         multiblock_all.set_active_scalars('does not exist', allow_missing=True)
@@ -758,7 +773,9 @@ def test_compute_normals(multiblock_poly):
         block.clear_data()
         block['point_data'] = range(block.n_points)
     mblock = multiblock_poly._compute_normals(
-        cell_normals=False, split_vertices=True, track_vertices=True
+        cell_normals=False,
+        split_vertices=True,
+        track_vertices=True,
     )
     for block in mblock:
         assert 'Normals' in block.point_data
@@ -775,3 +792,51 @@ def test_activate_scalars(multiblock_poly):
     for block in multiblock_poly:
         data = np.array(['a'] * block.n_points)
         block.point_data.set_array(data, 'data')
+
+
+def test_clear_all_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() == []
+                assert subblock.cell_data.keys() == []
+        else:
+            assert block.point_data.keys() == []
+            assert block.cell_data.keys() == []
+
+
+def test_clear_all_point_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_point_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() == []
+                assert subblock.cell_data.keys() != []
+        else:
+            assert block.point_data.keys() == []
+            assert block.cell_data.keys() != []
+
+
+def test_clear_all_cell_data(multiblock_all):
+    for block in multiblock_all:
+        block.point_data['data'] = range(block.n_points)
+        block.cell_data['data'] = range(block.n_cells)
+    multiblock_all.append(multiblock_all.copy())
+    multiblock_all.clear_all_cell_data()
+    for block in multiblock_all:
+        if isinstance(block, MultiBlock):
+            for subblock in block:
+                assert subblock.point_data.keys() != []
+                assert subblock.cell_data.keys() == []
+        else:
+            assert block.point_data.keys() != []
+            assert block.cell_data.keys() == []

@@ -23,10 +23,18 @@ A user-defined Foo class is defined that extends the functionality of
 
 """
 
+from __future__ import annotations
+
 from .composite import MultiBlock
-from .grid import ImageData, RectilinearGrid
+from .grid import ImageData
+from .grid import RectilinearGrid
 from .objects import Table
-from .pointset import ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
+from .partitioned import PartitionedDataSet
+from .pointset import ExplicitStructuredGrid
+from .pointset import PointSet
+from .pointset import PolyData
+from .pointset import StructuredGrid
+from .pointset import UnstructuredGrid
 
 _wrappers = {
     'vtkExplicitStructuredGrid': ExplicitStructuredGrid,
@@ -39,5 +47,6 @@ _wrappers = {
     'vtkMultiBlockDataSet': MultiBlock,
     'vtkTable': Table,
     'vtkPointSet': PointSet,
+    'vtkPartitionedDataSet': PartitionedDataSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }

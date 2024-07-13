@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 from weakref import proxy
 import xml.dom.minidom as md
 from xml.etree import ElementTree
@@ -50,7 +49,7 @@ class Camera(_vtk.vtkCamera):
         if renderer:
             if not isinstance(renderer, pyvista.Renderer):
                 raise TypeError(
-                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument'
+                    'Camera only accepts a pyvista.Renderer or None as the ``renderer`` argument',
                 )
             self._renderer = proxy(renderer)
         else:
@@ -106,7 +105,7 @@ class Camera(_vtk.vtkCamera):
         self._is_set = bool(value)
 
     @classmethod
-    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+    def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
         """Load a Paraview camera file (.pvcc extension).
 
         Returns a pyvista.Camera object for which attributes has been read
@@ -168,7 +167,7 @@ class Camera(_vtk.vtkCamera):
         camera.is_set = True
         return camera
 
-    def to_paraview_pvcc(self, filename: Union[str, Path]):
+    def to_paraview_pvcc(self, filename: str | Path):
         """Write the camera parameters to a Paraview camera file (.pvcc extension).
 
         Parameters
@@ -197,7 +196,9 @@ class Camera(_vtk.vtkCamera):
         }
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="3")
+                proxy,
+                "Property",
+                dict(name=name, id=f"0.{name}", number_of_elements="3"),
             )
 
             for i in range(3):
@@ -215,7 +216,9 @@ class Camera(_vtk.vtkCamera):
 
         for name, attr in to_find.items():
             e = ElementTree.SubElement(
-                proxy, "Property", dict(name=name, id=f"0.{name}", number_of_elements="1")
+                proxy,
+                "Property",
+                dict(name=name, id=f"0.{name}", number_of_elements="1"),
             )
             tmp = ElementTree.Element("Element")
             tmp.attrib["index"] = "0"
@@ -231,7 +234,7 @@ class Camera(_vtk.vtkCamera):
 
         xmlstr = ElementTree.tostring(root).decode()
         newxml = md.parseString(xmlstr)
-        with open(filename, 'w') as outfile:
+        with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
     @property
@@ -275,7 +278,7 @@ class Camera(_vtk.vtkCamera):
         """
         if self._renderer is None:
             raise AttributeError(
-                'Camera is must be associated with a renderer to reset its clipping range.'
+                'Camera is must be associated with a renderer to reset its clipping range.',
             )
         self._renderer.reset_camera_clipping_range()
 
@@ -633,8 +636,7 @@ class Camera(_vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        frustum = pyvista.wrap(frustum_source.GetOutput())
-        return frustum
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01

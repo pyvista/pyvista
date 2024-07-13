@@ -4,6 +4,11 @@ changelog:
   exclude:
     labels:
       - ignore-for-release
+    authors:
+      - dependabot
+      - github-actions
+      - pre-commit-ci
+      - pyvista-bot
   categories:
     - title: Breaking Changes
       labels:

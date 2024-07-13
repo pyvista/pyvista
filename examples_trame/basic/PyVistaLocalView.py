@@ -4,6 +4,8 @@ This is a full-fledged example on building your own user interface
 with client-side rendering.
 """
 
+from __future__ import annotations
+
 from trame.app import get_server
 from trame.ui.vuetify3 import SinglePageLayout
 from trame.widgets import vuetify3
@@ -12,7 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.trame import PyVistaLocalView
 
-server = get_server()
+server = get_server(client_type="vue3")
 state, ctrl = server.state, server.controller
 
 state.trame__title = "PyVistaLocalView"

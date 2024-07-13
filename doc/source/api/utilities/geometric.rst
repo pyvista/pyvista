@@ -1,3 +1,5 @@
+.. _geometry_api:
+
 Geometry
 --------
 PyVista includes several functions to generate simple geometric
@@ -36,6 +38,7 @@ Geometric Objects
 
    Arrow
    Box
+   Capsule
    Circle
    CircularArc
    CircularArcFromNormal
@@ -47,6 +50,7 @@ Geometric Objects
    Dodecahedron
    Icosahedron
    Icosphere
+   KochanekSpline
    Line
    MultipleLines
    Octahedron
@@ -85,6 +89,7 @@ Geometric sources are closer to the actual VTK pipeline. They serve as the
    :toctree: _autosummary
 
    ArrowSource
+   AxesGeometrySource
    BoxSource
    ConeSource
    CubeSource

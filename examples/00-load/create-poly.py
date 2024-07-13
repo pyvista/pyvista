@@ -8,6 +8,8 @@ Creating a :class:`pyvista.PolyData` (surface mesh) from vertices and faces.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -27,7 +29,7 @@ faces = np.hstack(
         [4, 0, 1, 2, 3],  # square
         [3, 0, 1, 4],  # triangle
         [3, 1, 2, 4],  # triangle
-    ]
+    ],
 )
 
 surf = pv.PolyData(vertices, faces)

@@ -1,5 +1,7 @@
 """Demos to show off the functionality of PyVista."""
 
+from __future__ import annotations
+
 import time
 
 import numpy as np
@@ -34,11 +36,13 @@ def glyphs(grid_sz=3):
     >>> mesh.plot()
 
     """
+    # Seed rng for reproducible plots
+    rng = np.random.default_rng(seed=0)
+
     n = 10
     values = np.arange(n)  # values for scalars to look up glyphs by
 
     # taken from:
-    rng = np.random.default_rng()
     params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
     geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
@@ -54,7 +58,12 @@ def glyphs(grid_sz=3):
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(
-        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False
+        geom=geoms,
+        indices=values,
+        scale=False,
+        factor=0.3,
+        rng=(0, n - 1),
+        orient=False,
     )
 
 
@@ -261,7 +270,10 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     plotter.add_mesh(mesh, scalars="Height", show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
-        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True
+        title='Wave Example',
+        window_size=[800, 600],
+        auto_close=False,
+        interactive_update=True,
     )
 
     # Update Z and display a frame for each updated position
@@ -372,7 +384,9 @@ def plot_ants_plane(notebook=None):
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(
-        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'}
+        airplane,
+        scalars=plane_scalars,
+        scalar_bar_args={'title': 'Plane Y\nLocation'},
     )
     plotter.add_text('Ants and Plane Example')
     plotter.show()
@@ -460,7 +474,7 @@ def plot_datasets(dataset_type=None):
         if dataset_type not in allowable_types:
             raise ValueError(
                 f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}'
+                f'of the following: {allowable_types}',
             )
 
     ###########################################################################
@@ -509,10 +523,7 @@ def plot_datasets(dataset_type=None):
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    if dataset_type is not None:
-        pl = pyvista.Plotter()
-    else:
-        pl = pyvista.Plotter(shape='3/2')
+    pl = pyvista.Plotter() if dataset_type is not None else pyvista.Plotter(shape='3/2')
 
     # polydata
     if dataset_type is None:

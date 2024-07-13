@@ -1,5 +1,7 @@
 """Test charting functionality"""
 
+from __future__ import annotations
+
 import itertools
 import platform
 import weakref
@@ -14,7 +16,8 @@ from pyvista.plotting import charts
 from pyvista.plotting.colors import COLOR_SCHEMES
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS CI fails when downloading examples'
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -435,7 +438,7 @@ def test_chart_common(pl, chart_f, request):
 
     # Check is_within
     assert chart._is_within(
-        ((chart.loc[0] + chart.size[0] / 2) * w, (chart.loc[1] + chart.size[1] / 2) * h)
+        ((chart.loc[0] + chart.size[0] / 2) * w, (chart.loc[1] + chart.size[1] / 2) * h),
     )
     assert not chart._is_within(((chart.loc[0] + chart.size[0] / 2) * w, chart.loc[1] * h - 5))
     assert not chart._is_within((chart.loc[0] * w - 5, (chart.loc[1] + chart.size[1] / 2) * h))
@@ -782,7 +785,8 @@ def test_chart_2d(pl, chart_2d):
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show()  # This will also call chart._resize
     assert np.allclose(
-        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+        chart._geometry,
+        (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2),
     )
 
     # Test parse_format
@@ -939,7 +943,8 @@ def test_chart_box(pl, chart_box, box_plot):
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(
-        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+        chart._geometry,
+        (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2),
     )
 
     # Test remaining properties
@@ -974,7 +979,8 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(
-        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+        chart._geometry,
+        (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2),
     )
 
     # Test remaining properties
@@ -1007,7 +1013,8 @@ def test_chart_mpl(pl, chart_mpl):
     pl.window_size = (int(pl.window_size[0] / 2), int(pl.window_size[1] / 2))
     pl.show(auto_close=False)  # This will also call chart._resize
     assert np.allclose(
-        chart._geometry, (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2)
+        chart._geometry,
+        (loc[0] * r_w / 2, loc[1] * r_h / 2, size[0] * r_w / 2, size[1] * r_h / 2),
     )
     assert np.allclose(chart.position, (loc[0] * r_w / 2, loc[1] * r_h / 2))
     assert np.allclose(chart._canvas.get_width_height(), (size[0] * r_w / 2, size[1] * r_h / 2))
@@ -1112,7 +1119,10 @@ def test_iren_context_style(pl):
 
 @pytest.mark.skip_plotting()
 @pytest.mark.needs_vtk_version(
-    9, 3, 0, reason="Chart interaction when using multiple renderers is bugged on older versions."
+    9,
+    3,
+    0,
+    reason="Chart interaction when using multiple renderers is bugged on older versions.",
 )
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts

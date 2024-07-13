@@ -12,6 +12,7 @@ Generate a moving gif from an active plotter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 

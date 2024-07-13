@@ -2,7 +2,9 @@
 Tests for text objects
 """
 
-import os
+from __future__ import annotations
+
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -44,6 +46,22 @@ def test_text_position(text):
     position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
+
+
+def test_label():
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+
+    assert label.input == 'text'
+    label.input = 'new'
+    assert label.input == 'new'
+
+    assert label.position == (1, 2, 3)
+    label.position = (4, 5, 6)
+    assert label.position == (4, 5, 6)
+
+    assert label.size == 42
+    label.size = 99
+    assert label.size == 99
 
 
 @pytest.fixture()
@@ -126,14 +144,15 @@ def test_property_orientation(prop):
 
 
 def test_property_set_font_file(prop):
-    font_file = os.path.join(os.path.dirname(__file__), "fonts/Mplus2-Regular.ttf")
+    font_file = str(Path(__file__).parent / "fonts/Mplus2-Regular.ttf")
     prop.set_font_file(font_file)
     with pytest.raises(FileNotFoundError):
         prop.set_font_file("foo.ttf")
 
 
 @pytest.mark.parametrize(
-    'justification', [('left', 'left'), ('center', 'centered'), ('right', 'right')]
+    'justification',
+    [('left', 'left'), ('center', 'centered'), ('right', 'right')],
 )
 def test_property_justification_horizontal(prop, justification):
     prop.justification_horizontal = justification[0]
@@ -145,7 +164,8 @@ def test_property_justification_horizontal(prop, justification):
 
 
 @pytest.mark.parametrize(
-    'justification', [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')]
+    'justification',
+    [('bottom', 'bottom'), ('center', 'centered'), ('top', 'top')],
 )
 def test_property_justification_vertical(prop, justification):
     prop.justification_vertical = justification[0]

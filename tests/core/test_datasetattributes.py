@@ -1,17 +1,26 @@
+from __future__ import annotations
+
 import os
 import platform
-from string import ascii_letters, digits, whitespace
+from string import ascii_letters
+from string import digits
+from string import whitespace
 import sys
 
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
 from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import integers, lists, text
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
+from hypothesis.strategies import text
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import FieldAssociation, convert_array
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = pytest.mark.skipif(
@@ -56,7 +65,9 @@ def insert_string_array(hexbeam_point_attributes):
 
 def test_init(hexbeam):
     attributes = pv.DataSetAttributes(
-        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT
+        hexbeam.GetPointData(),
+        dataset=hexbeam,
+        association=FieldAssociation.POINT,
     )
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam
@@ -99,6 +110,25 @@ def test_repr(hexbeam_point_attributes):
     vectors0 = np.random.default_rng().random((sz, 3))
     hexbeam_point_attributes.set_vectors(vectors0, 'vectors0')
     assert 'VECTOR' in str(hexbeam_point_attributes)
+
+
+def test_repr_field_attributes_with_string(hexbeam_field_attributes):
+    repr_str = str(hexbeam_field_attributes)
+    assert 'DataSetAttributes' in repr_str
+    assert 'Contains arrays : None' in repr_str
+
+    # Add string data
+    str_len_18 = 'stringlength18char'
+    assert len(str_len_18) == 18
+    str_len_19 = 'stringlength19chars'
+    assert len(str_len_19) == 19
+
+    hexbeam_field_attributes['string_data_18'] = str_len_18
+    hexbeam_field_attributes['string_data_19'] = str_len_19
+
+    repr_str = str(hexbeam_field_attributes)
+    assert 'string_data_18          str        "stringlength18char"' in repr_str
+    assert 'string_data_19          str        "stringlength19c..."' in repr_str
 
 
 def test_empty_active_vectors(hexbeam):
@@ -344,7 +374,7 @@ def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
 
 def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
     with pytest.raises(TypeError):
-        hexbeam_field_attributes.active_scalars
+        _ = hexbeam_field_attributes.active_scalars
 
 
 def test_should_remove_array(insert_arange_narray):
@@ -548,7 +578,7 @@ def test_normals_name(plane):
 
 def test_normals_raise_field(plane):
     with pytest.raises(AttributeError):
-        plane.field_data.active_normals
+        _ = plane.field_data.active_normals
 
 
 def test_add_two_vectors():

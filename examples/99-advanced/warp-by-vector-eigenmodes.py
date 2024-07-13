@@ -17,6 +17,7 @@ https://asa.scitation.org/doi/10.1121/1.401643
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
+from __future__ import annotations
 
 from itertools import product
 
@@ -29,11 +30,7 @@ import pyvista as pv
 def analytical_integral_rppd(p, q, r, a, b, c):
     """Returns the analytical value of the RPPD integral, i.e. the integral
     of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c)."""
-    if p < 0:
-        return 0.0
-    elif q < 0:
-        return 0.0
-    elif r < 0.0:
+    if p < 0 or q < 0 or r < 0.0:
         return 0.0
     else:
         return (
@@ -97,11 +94,9 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     things up.
     """
     # building coordinates
-    triplets = []
-    for p in range(N + 1):
-        for q in range(N - p + 1):
-            for r in range(N - p - q + 1):
-                triplets.append((p, q, r))
+    triplets = [
+        (p, q, r) for p in range(N + 1) for q in range(N - p + 1) for r in range(N - p - q + 1)
+    ]
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
@@ -169,7 +164,10 @@ l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
-    N, analytical_integral_rppd, geometry_parameters, cijkl
+    N,
+    analytical_integral_rppd,
+    geometry_parameters,
+    cijkl,
 )
 
 # solving the eigenvalue problem using symmetric solver
@@ -200,9 +198,9 @@ grid = pv.StructuredGrid(x, y, z)
 
 slices = []
 for zz in np.linspace(-l3 / 2.0, l3 / 2.0, nz)[::-1]:
-    slice = grid.points.copy()
-    slice[:, -1] = zz
-    slices.append(slice)
+    slice_ = grid.points.copy()
+    slice_[:, -1] = zz
+    slices.append(slice_)
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack(slices)

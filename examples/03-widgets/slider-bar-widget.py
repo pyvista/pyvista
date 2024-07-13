@@ -13,6 +13,8 @@ be used for just about anything.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -56,7 +58,6 @@ def create_mesh(value):
     res = int(value)
     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
     p.add_mesh(sphere, name='sphere', show_edges=True)
-    return
 
 
 p.add_slider_widget(create_mesh, [5, 100], title='Resolution')

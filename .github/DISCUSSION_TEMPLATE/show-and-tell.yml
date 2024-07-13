@@ -1,0 +1,27 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to open this discussion to help improve PyVista!
+  - type: textarea
+    id: feature-details
+    attributes:
+      label: Describe something you've made
+      description: |
+        Provide a clear and concise description of something you've made.
+      placeholder: Tell us what you see!
+      value: "I have something made!"
+    validations:
+      required: true
+  - type: textarea
+    id: Links
+    attributes:
+      label: Links to Documentation, Examples, or Class Definitions.
+      description: Please include the relevant links below.
+  - type: textarea
+    id: pseudocode-and-screenshots
+    attributes:
+      label: Pseudocode or Screenshots
+      description: Feel free to include pseudocode or screenshots you've made.
+      placeholder: Provide some code for us to reproduce you've made!
+      value: "```python\nInsert code here\n```\nOr drag your screenshot here!"

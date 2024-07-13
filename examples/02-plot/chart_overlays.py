@@ -15,6 +15,8 @@ interaction with the 3D scene.
 
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -51,7 +53,10 @@ h_chart = pv.ChartMPL(f, size=(0.46, 0.25), loc=(0.02, 0.06))
 h_chart.background_color = (1.0, 1.0, 1.0, 0.4)
 p.add_chart(h_chart)
 v_chart = pv.Chart2D(
-    size=(0.46, 0.25), loc=(0.52, 0.06), x_label="Time (s)", y_label="Velocity (m/s)"
+    size=(0.46, 0.25),
+    loc=(0.52, 0.06),
+    x_label="Time (s)",
+    y_label="Velocity (m/s)",
 )
 v_line = v_chart.line(t[:1], v[:1])
 v_chart.y_range = (-1, 1)
