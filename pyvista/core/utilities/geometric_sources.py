@@ -2219,8 +2219,8 @@ class PlaneSource(_vtk.vtkPlaneSource):
         j_resolution=10,
         center=(0.0, 0.0, 0.0),
         origin=(-0.5, -0.5, 0.0),
-        pointa=(0.5, -0.5, 0.0),
-        pointb=(-0.5, 0.5, 0.0),
+        point_a=(0.5, -0.5, 0.0),
+        point_b=(-0.5, 0.5, 0.0),
     ):
         """Initialize source."""
         super().__init__()
@@ -2228,8 +2228,8 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.j_resolution = j_resolution
         self.center = center
         self.origin = origin
-        self.pointa = pointa
-        self.pointb = pointb
+        self.point_a = point_a
+        self.point_b = point_b
 
     @property
     def i_resolution(self) -> int:
