@@ -2208,7 +2208,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
     point_a : sequence[float], default: (0.5, -0.5, 0.0)
         Location in ``[x, y, z]``.
 
-    pointb : sequence[float], default: (0.5, 0.5, 0.0)
+    point_b : sequence[float], default: (-0.5, 0.5, 0.0)
         Location in ``[x, y, z]``.
 
     """
