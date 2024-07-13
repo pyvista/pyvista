@@ -2278,6 +2278,8 @@ class PlaneSource(_vtk.vtkPlaneSource):
     @property
     def center(self) -> Sequence[float]:
         """Get the center in ``[x, y, z]``.
+        
+        The center of the plane is translated to the specified point.
 
         Returns
         -------
