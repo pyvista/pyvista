@@ -72,3 +72,5 @@ mesh.plot_over_line(
     ylabel="Height above sea level",
     figsize=(10, 5),
 )
+###############################################################################
+# .. tags:: plot

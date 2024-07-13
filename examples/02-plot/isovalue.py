@@ -72,3 +72,5 @@ for surf in surfaces[::-1]:
 
 # Be sure to close the plotter when finished
 plotter.close()
+###############################################################################
+# .. tags:: plot

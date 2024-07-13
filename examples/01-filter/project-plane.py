@@ -26,3 +26,5 @@ p = pv.Plotter()
 p.add_mesh(poly)
 p.add_mesh(projected)
 p.show()
+###############################################################################
+# .. tags:: filter

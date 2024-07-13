@@ -46,3 +46,5 @@ p.show()
 # How long is that path?
 distance = land.geodesic_distance(cape_town, rome)
 distance
+###############################################################################
+# .. tags:: filter

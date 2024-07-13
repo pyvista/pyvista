@@ -140,3 +140,5 @@ pl.show()
 ###############################################################################
 # See also the :ref:`sphere_eversion_example` example which relies on
 # distinguishing the inside and the outside of a sphere.
+###############################################################################
+# .. tags:: plot

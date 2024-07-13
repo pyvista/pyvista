@@ -105,3 +105,5 @@ light.set_direction_angle(20, -20)
 plotter.add_light(light)
 plotter.enable_shadows()
 plotter.show()
+###############################################################################
+# .. tags:: lights

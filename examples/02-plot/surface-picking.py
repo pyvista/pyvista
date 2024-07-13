@@ -46,3 +46,5 @@ pl = pv.Plotter()
 pl.add_mesh(cube, show_edges=True)
 pl.enable_surface_point_picking(callback=callback, show_point=False)
 pl.show()
+###############################################################################
+# .. tags:: plot

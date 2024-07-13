@@ -67,3 +67,5 @@ p.show()
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/slider-widget-resolution.gif
+###############################################################################
+# .. tags:: widgets

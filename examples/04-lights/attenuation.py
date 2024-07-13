@@ -100,3 +100,5 @@ for attenuation_values, light_x in zip(all_attenuation_values, light_offsets):
 
 plotter.view_vector((1, -2, 2))
 plotter.show()
+###############################################################################
+# .. tags:: lights

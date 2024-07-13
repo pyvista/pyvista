@@ -97,3 +97,5 @@ text.translate([-20.0, 24.0, 0.0], inplace=True)
 
 p.add_mesh(text, color="yellow")
 p.show(cpos="xy")
+###############################################################################
+# .. tags:: load

@@ -30,3 +30,5 @@ face_view = [
 
 
 nefertiti.plot(cpos=face_view, show_edges=True, color=True)
+###############################################################################
+# .. tags:: plot

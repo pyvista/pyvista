@@ -214,3 +214,5 @@ resolution = 100
 arc = pv.CircularArc(pointa, pointb, center, resolution)
 poly = arc.extrude([0, 0, 1])
 poly.plot(color='lightblue', cpos='iso', show_edges=True)
+###############################################################################
+# .. tags:: load

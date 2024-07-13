@@ -83,3 +83,5 @@ plotter.add_text("Spring", font_size=24)
 plotter.add_mesh(spring, color='lightblue', show_edges=True)
 
 plotter.show(cpos="zx")
+###############################################################################
+# .. tags:: filter

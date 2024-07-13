@@ -66,3 +66,5 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
 # Closes and finalizes movie
 plotter.close()
+###############################################################################
+# .. tags:: plot

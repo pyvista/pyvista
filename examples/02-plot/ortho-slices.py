@@ -66,3 +66,5 @@ p.camera_position = 'xz'
 p.enable_parallel_projection()
 
 p.show()
+###############################################################################
+# .. tags:: plot

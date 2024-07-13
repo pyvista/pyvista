@@ -176,3 +176,5 @@ p.show()
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/sphere-widget-c.gif
+###############################################################################
+# .. tags:: widgets

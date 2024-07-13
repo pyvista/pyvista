@@ -56,3 +56,5 @@ pl.enable_depth_of_field()
 pl.camera.zoom(1.5)
 pl.enable_anti_aliasing('ssaa')
 pl.show()
+###############################################################################
+# .. tags:: plot

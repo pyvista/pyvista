@@ -123,3 +123,5 @@ pl.add_mesh(line, style='wireframe', line_width=20, show_scalar_bar=False, color
 pl.add_mesh(plane, style='wireframe', color='black', show_scalar_bar=False)
 pl.add_mesh(extruded_line, show_scalar_bar=False, lighting=False)
 pl.show()
+###############################################################################
+# .. tags:: filter

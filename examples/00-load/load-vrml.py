@@ -24,3 +24,5 @@ sextant_file = examples.vrml.download_sextant()
 pl = pyvista.Plotter()
 pl.import_vrml(sextant_file)
 pl.show()
+###############################################################################
+# .. tags:: load

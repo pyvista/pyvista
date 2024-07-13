@@ -79,3 +79,5 @@ pl.add_points(
     show_scalar_bar=False,
 )
 pl.show(cpos=cpos)
+###############################################################################
+# .. tags:: plot

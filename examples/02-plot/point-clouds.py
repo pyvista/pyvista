@@ -170,3 +170,5 @@ path = pl.generate_orbital_path(n_points=36, shift=cloud.length, factor=3.0)
 pl.open_gif("orbit_cloud.gif")
 pl.orbit_on_path(path, write_frames=True)
 pl.close()
+###############################################################################
+# .. tags:: plot

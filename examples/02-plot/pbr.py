@@ -97,3 +97,5 @@ plotter.add_light(light)
 # plot with a good camera position
 plotter.camera_position = [(9.51, 13.92, 15.81), (-2.836, -0.93, 10.2), (-0.22, -0.18, 0.959)]
 cpos = plotter.show()
+###############################################################################
+# .. tags:: plot

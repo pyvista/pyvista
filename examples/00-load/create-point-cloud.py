@@ -132,3 +132,5 @@ plotter.add_mesh(arrows, color='lightblue')
 #                          point_color='yellow', point_size=20)
 plotter.show_grid()
 plotter.show()
+###############################################################################
+# .. tags:: load

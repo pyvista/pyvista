@@ -61,3 +61,5 @@ p.show()
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/line-widget-streamlines.gif
+###############################################################################
+# .. tags:: widgets
