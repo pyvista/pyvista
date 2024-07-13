@@ -2341,7 +2341,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         point_a : sequence[float]
             Location in ``[x, y, z]``.
         """
-        self.SetPoint1(*point_a)
+        self.SetPoint1(point_a)
 
     @property
     def point_b(self) -> Sequence[float]:
@@ -2363,7 +2363,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         point_b : sequence[float]
             Location in ``[x, y, z]``.
         """
-        self.SetPoint2(*point_b)
+        self.SetPoint2(point_b)
 
     @property
     def output(self):
