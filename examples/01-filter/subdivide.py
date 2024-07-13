@@ -9,9 +9,6 @@ Increase the number of triangles in a single, connected triangular mesh.
 The :func:`pyvista.PolyDataFilters.subdivide` filter utilizes three different
 subdivision algorithms to subdivide a mesh's cells: `butterfly`, `loop`,
 or `linear`.
-
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

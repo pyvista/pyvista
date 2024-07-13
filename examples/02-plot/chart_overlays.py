@@ -13,8 +13,6 @@ the chart, perform another double left click. This will either enable
 interaction with another chart (if clicked on top of it) or re-enable
 interaction with the 3D scene.
 
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

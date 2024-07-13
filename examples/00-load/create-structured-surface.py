@@ -6,9 +6,6 @@ Creating a Structured Surface
 
 Create a StructuredGrid surface from NumPy arrays
 using :class:`pyvista.StructuredGrid`.
-
-.. tags:: Load
-
 """
 
 from __future__ import annotations

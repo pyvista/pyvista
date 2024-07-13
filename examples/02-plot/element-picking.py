@@ -16,8 +16,6 @@ The different elements of a mesh are:
 
 These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum class.
 
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_thumbnail_number = 1

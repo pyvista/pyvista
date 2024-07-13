@@ -19,8 +19,6 @@ with ``.show(auto_close=False)``.  You may also have to set
    Use ``lighting=False`` to reduce the size of the color space to avoid
    "jittery" GIFs when showing the scalar bar.
 
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_thumbnail_number = 2

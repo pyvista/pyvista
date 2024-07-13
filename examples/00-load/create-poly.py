@@ -6,8 +6,6 @@ Create PolyData
 
 Creating a :class:`pyvista.PolyData` (surface mesh) from vertices and faces.
 
-.. tags:: Load
-
 """
 
 from __future__ import annotations

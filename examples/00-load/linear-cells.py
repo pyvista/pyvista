@@ -14,8 +14,6 @@ cell. Non-linear cells contain additional points along the edges of the cell.
 For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
 
-.. tags:: Load
-
 """
 
 # sphinx_gallery_start_ignore

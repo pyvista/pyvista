@@ -5,9 +5,6 @@ Streamlines
 ~~~~~~~~~~~
 
 Integrate a vector field to generate streamlines.
-
-.. tags:: Filter
-
 """
 
 ###############################################################################

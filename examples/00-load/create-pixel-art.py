@@ -8,8 +8,6 @@ Here we use :func:`pyvista.Box` to make `pixel art <https://en.wikipedia.org/wik
 Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f47e.svg>`_
 and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
-.. tags:: Load
-
 """
 
 from __future__ import annotations

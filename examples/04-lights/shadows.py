@@ -5,9 +5,6 @@ Shadows
 ~~~~~~~
 
 Demonstrate the usage of lights and shadows in PyVista.
-
-.. tags:: Lights
-
 """
 
 from __future__ import annotations

@@ -5,9 +5,6 @@ Applying Textures
 ~~~~~~~~~~~~~~~~~
 
 Plot a mesh with an image projected onto it as a texture.
-
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

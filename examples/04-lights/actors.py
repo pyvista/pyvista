@@ -11,9 +11,6 @@ so they can be visualized using a cone.
 
 This is exactly the purpose of a ``vtk.vtkLightActor``, the
 functionality of which can be enabled for spotlights:
-
-.. tags:: Lights
-
 """
 
 # sphinx_gallery_thumbnail_number = 1

@@ -6,8 +6,6 @@ Reflect Meshes
 
 This example reflects a mesh across a plane.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

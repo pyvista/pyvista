@@ -10,9 +10,6 @@ NumPy arrays.
 This also explores how to extract a volume of interest (VOI) from a
 :class:`pyvista.ImageData` using the
 :func:`pyvista.ImageDataFilters.extract_subset` filter.
-
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_thumbnail_number = 3

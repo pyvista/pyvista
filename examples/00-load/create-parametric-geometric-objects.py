@@ -5,9 +5,6 @@ Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating parametric objects from :ref:`parametric_api`.
-
-.. tags:: Load
-
 """
 
 from __future__ import annotations

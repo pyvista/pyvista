@@ -6,9 +6,6 @@ Geometric Objects
 
 The "Hello, world!" of VTK.
 Uses objects from :ref:`geometry_api`.
-
-.. tags:: Load
-
 """
 
 from __future__ import annotations

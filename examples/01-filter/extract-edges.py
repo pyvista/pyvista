@@ -5,9 +5,6 @@ Extract Edges
 ~~~~~~~~~~~~~
 
 Extract edges from a surface.
-
-.. tags:: Filter
-
 """
 
 # sphinx_gallery_thumbnail_number = 2

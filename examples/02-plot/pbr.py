@@ -15,8 +15,6 @@ the ``metallic`` and ``roughness`` arguments for further control.
 Let's show off this functionality by rendering a high quality mesh of
 a statue as though it were metallic.
 
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_start_ignore

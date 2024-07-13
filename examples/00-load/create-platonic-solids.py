@@ -6,9 +6,6 @@ Platonic Solids
 
 PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
 :func:`pyvista.PlatonicSolid`.
-
-.. tags:: Load
-
 """
 
 # sphinx_gallery_start_ignore

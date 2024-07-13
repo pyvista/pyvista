@@ -5,9 +5,6 @@ Geodesic Paths
 ~~~~~~~~~~~~~~
 
 Calculates the geodesic path between two vertices using Dijkstra's algorithm
-
-.. tags:: Filter
-
 """
 
 # sphinx_gallery_thumbnail_number = 1

@@ -17,9 +17,6 @@ scene with a box widget that controls its extent, the
 :func:`pyvista.Plotter.add_mesh_clip_box` method.
 
 .. image:: ../../images/gifs/box-clip.gif
-
-.. tags:: Widgets
-
 """
 
 # sphinx_gallery_start_ignore

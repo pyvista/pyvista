@@ -13,8 +13,6 @@ to reduce noise or decrease the detail of an image dataset.
 
 See also :func:`pyvista.ImageDataFilters.gaussian_smooth`.
 
-.. tags:: Filter
-
 """
 
 # sphinx_gallery_thumbnail_number = 2

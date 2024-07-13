@@ -6,9 +6,6 @@ Plot with Opacity
 
 Plot a mesh's scalar array with an opacity transfer function or opacity mapping
 based on a scalar array.
-
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_thumbnail_number = 2

@@ -5,9 +5,6 @@ Plot Over Line
 ~~~~~~~~~~~~~~
 
 Plot the values of a dataset over a line through that dataset
-
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_thumbnail_number = 2

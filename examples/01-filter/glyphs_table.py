@@ -6,9 +6,6 @@ Table of Glyphs
 
 ``vtk`` supports tables of glyphs from which glyphs are looked
 up. This example demonstrates this functionality.
-
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

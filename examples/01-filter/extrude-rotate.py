@@ -10,8 +10,6 @@ new polygonal primitives. These primitives form a "skirt" or
 swept surface. For example, sweeping a line results in a
 cylindrical shell, and sweeping a circle creates a torus.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

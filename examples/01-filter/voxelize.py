@@ -9,8 +9,6 @@ Create a voxel model (like legos) of a closed surface or volumetric mesh.
 This example also demonstrates how to compute an implicit distance from a
 bounding :class:`pyvista.PolyData` surface.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

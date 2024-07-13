@@ -6,8 +6,6 @@ Load and Plot from a File
 
 Read a dataset from a known file type.
 
-.. tags:: Load
-
 """
 
 ###############################################################################

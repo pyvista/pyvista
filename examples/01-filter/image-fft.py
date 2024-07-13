@@ -15,8 +15,6 @@ Here, we demonstrate FFT usage by denoising an image, effectively removing any
 This example was inspired by `Image denoising by FFT
 <https://scipy-lectures.org/intro/scipy/auto_examples/solutions/plot_fft_image_denoise.html>`_.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

@@ -1,9 +1,6 @@
 """
 Saving Screenshots
 ~~~~~~~~~~~~~~~~~~
-
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

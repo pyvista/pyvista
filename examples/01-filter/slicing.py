@@ -5,9 +5,6 @@ Slicing
 ~~~~~~~
 
 Extract thin planar slices from a volume.
-
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

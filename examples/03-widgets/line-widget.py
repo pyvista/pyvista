@@ -13,9 +13,6 @@ widget, so it is necessary to pass a custom callback method.
 One particularly fun example is to use the line widget to create a source for
 the :func:`pyvista.DataSetFilters.streamlines` filter. Again note the use of
 the ``name`` argument in ``add_mesh``.
-
-.. tags:: Widgets
-
 """
 
 # sphinx_gallery_start_ignore

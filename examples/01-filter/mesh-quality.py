@@ -9,9 +9,6 @@ Leverage powerful VTK algorithms for computing mesh quality.
 Here we will use the :func:`pyvista.DataSetFilters.compute_cell_quality` filter
 to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
-
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

@@ -8,8 +8,6 @@ Demonstrate the usage of a lookup table within PyVista
 The :class:`pyvista.LookupTable` can be used to have fine-tuned control over
 the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

@@ -6,8 +6,6 @@ Create a GIF Movie of a Static Object with a Moving Colormap
 Generate a gif movie of a Hopf torus with a moving colormap,
 by updating the scalars.
 
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

@@ -5,8 +5,6 @@ Computing Surface Normals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Compute normals on a surface.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations

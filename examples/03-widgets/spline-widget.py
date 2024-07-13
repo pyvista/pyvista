@@ -13,9 +13,6 @@ A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataSetFilters.slice_along_line` filter named
 :func:`pyvista.Plotter.add_mesh_slice_spline`.
-
-.. tags:: Widgets
-
 """
 
 from __future__ import annotations

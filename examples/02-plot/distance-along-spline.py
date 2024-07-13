@@ -9,8 +9,6 @@ spline.
 
 This is an extension of the :ref:`create_spline_example`.
 
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

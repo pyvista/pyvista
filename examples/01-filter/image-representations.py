@@ -11,8 +11,6 @@ when generating plots and/or when using either point- or cell-based filters such
 :meth:`ImageDataFilters.image_threshold <pyvista.ImageDataFilters.image_threshold>` (point-based)
 and :meth:`DataSetFilters.threshold <pyvista.DataSetFilters.threshold>` (cell-based).
 
-.. tags:: Filter
-
 """
 
 ################################################################################

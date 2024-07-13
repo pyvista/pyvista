@@ -7,8 +7,6 @@ Control Global and Local Plotting Themes
 PyVista allows you to set global and local plotting themes to easily
 set default plotting parameters.
 
-.. tags:: Plot
-
 """
 
 from __future__ import annotations

@@ -8,7 +8,6 @@ Plot connections between points in 3D as cylinders, colored by scalars.
 Lines are created in a :class:`pyvista.PolyData` and then rendered as
 cylinders.
 
-.. tags:: Load
 
 """
 

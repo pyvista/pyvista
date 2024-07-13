@@ -7,8 +7,6 @@ Depth of Field Plotting
 This example shows how you can use :func:`enable_depth_of_field
 <pyvista.Plotter.enable_depth_of_field>` to highlight part of your plot.
 
-.. tags:: Plot
-
 """
 
 # sphinx_gallery_start_ignore

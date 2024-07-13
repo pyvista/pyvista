@@ -14,8 +14,6 @@ Python due to its modularity.  If there's some limitation of pyvista
 (or trimesh), then you can adapt your scripts to use the best features
 of more than one module.
 
-.. tags:: Load
-
 """
 
 # sphinx_gallery_start_ignore

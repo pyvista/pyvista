@@ -11,8 +11,6 @@ marching cubes filters as provided by the :func:`contour
 Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.
 
-.. tags:: Filter
-
 """
 
 from __future__ import annotations
