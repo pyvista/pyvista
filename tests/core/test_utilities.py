@@ -999,7 +999,7 @@ def test_principal_axes_vectors_success_with_many_points():
     ellipsoid = pv.ParametricEllipsoid(
         xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
     )
-    assert ellipsoid.n_points == 16_000_000
+    assert ellipsoid.n_points == 15_988_004
 
     axes, sizes = pv.principal_axes(ellipsoid.points, return_sizes=True)
 
