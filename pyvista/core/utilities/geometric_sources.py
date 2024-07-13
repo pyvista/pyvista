@@ -2341,12 +2341,10 @@ class PlaneSource(_vtk.vtkPlaneSource):
         pointa : sequence[float]
             Location in ``[x, y, z]``.
         """
-        if np.array(pointa).size != 3:
-            raise TypeError('Point A must be a length three tuple of floats.')
         self.SetPoint1(*pointa)
 
     @property
-    def pointb(self) -> Sequence[float]:
+    def point_b(self) -> Sequence[float]:
         """Get the Location in ``[x, y, z]``.
 
         Returns
@@ -2357,7 +2355,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         return self.GetPoint2()
 
     @pointb.setter
-    def pointb(self, pointb: Sequence[float]):
+    def point_b(self, point_b: Sequence[float]):
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -2365,8 +2363,6 @@ class PlaneSource(_vtk.vtkPlaneSource):
         pointb : sequence[float]
             Location in ``[x, y, z]``.
         """
-        if np.array(pointb).size != 3:
-            raise TypeError('Point B must be a length three tuple of floats.')
         self.SetPoint2(*pointb)
 
     @property
