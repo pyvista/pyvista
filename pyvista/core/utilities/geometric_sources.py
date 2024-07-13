@@ -2183,12 +2183,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
 
-    The plane is defined by specifying an origin point, and then 
-    two other points that, together with the origin, define two 
+    The plane is defined by specifying an origin point, and then
+    two other points that, together with the origin, define two
     axes for the plane (magnitude and direction). These axes do
     not have to be orthogonal - so you can create a parallelogram.
     The axes must not be parallel.
-    
+
     .. versionadded:: 0.44
 
     Parameters
