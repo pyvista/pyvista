@@ -24,7 +24,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista.plotting.opts import ElementType
 
-###############################################################################
+# %%
 # Pick Face on Voxel Cell
 # +++++++++++++++++++++++
 #
@@ -51,7 +51,7 @@ except AttributeError:
     # ignore this section when manually closing the window
     pass
 
-###############################################################################
+# %%
 # Pick an Edge of a Cell
 # ++++++++++++++++++++++
 #

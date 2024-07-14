@@ -13,7 +13,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # PyVista wrapped data objects have a suite of common filters ready for immediate
 # use directly on the object. These filters include the following
 # (see :ref:`filters` for a complete list):
@@ -38,7 +38,7 @@ threshed = dataset.threshold([100, 500])
 
 outline = dataset.outline()
 
-###############################################################################
+# %%
 # And now there is a thresholded version of the input dataset in the new
 # ``threshed`` object. To learn more about what keyword arguments are available to
 # alter how filters are executed, print the docstring for any filter attached to
@@ -55,7 +55,7 @@ p.camera_position = [-2, 5, 3]
 p.show()
 
 
-###############################################################################
+# %%
 # What about other filters? Let's collect a few filter results and compare them:
 
 contours = dataset.contour()
@@ -86,7 +86,7 @@ p.camera_position = [-2, 5, 3]
 p.link_views()
 p.show()
 
-###############################################################################
+# %%
 # Filter Pipeline
 # +++++++++++++++
 #
@@ -103,7 +103,7 @@ p.show()
 # Apply a filtering chain
 result = dataset.threshold().elevation().clip(normal="z").slice_orthogonal()
 
-###############################################################################
+# %%
 # And to view this filtered data, simply call the ``plot`` method
 # (``result.plot()``) or create a rendering scene:
 

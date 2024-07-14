@@ -9,14 +9,14 @@ Integrate a vector field to generate streamlines on a 2D surface.
 
 # sphinx_gallery_thumbnail_number = 3
 
-###############################################################################
+# %%
 # This example generates streamlines of flow around a cylinder in cross flow.
 from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # The data is multiblock with the fluid data as the first block.
 # The data lies in the `xy` plane, i.e. `z=0`, with no `z` velocity.
 
@@ -24,7 +24,7 @@ mesh = examples.download_cylinder_crossflow()
 fluid_mesh = mesh[0]
 print(fluid_mesh)
 
-###############################################################################
+# %%
 # The default behavior of the :func:`streamlines()
 # <pyvista.DataSetFilters.streamlines>` filter is to use a 3D sphere source as
 # the seed points.  This often will not generate any seed points on the 2D
@@ -49,7 +49,7 @@ p.add_mesh(one_streamline.tube(radius=0.05), scalars="vorticity_mag", clim=clim)
 p.view_xy()
 p.show(cpos=camera_position)
 
-###############################################################################
+# %%
 # To generate multiple streamlines, a line source can be used with the ``pointa``
 # and ``pointb`` parameters.
 
@@ -68,7 +68,7 @@ p.add_mesh(line_streamlines.tube(radius=0.05), scalars="vorticity_mag", clim=cli
 p.view_xy()
 p.show(cpos=camera_position)
 
-###############################################################################
+# %%
 # The behavior immediately downstream of the cylinder is still not apparent
 # using streamlines at the inlet.
 #
@@ -92,7 +92,7 @@ p.add_mesh(line_streamlines.tube(radius=0.02), scalars="vorticity_mag", clim=cli
 p.view_xy()
 p.show(cpos=camera_position)
 
-###############################################################################
+# %%
 # The streamlines are only approximately evenly spaced and capture the
 # vortex pair downstream of the cylinder with appropriate choice of
 # ``start_position``.

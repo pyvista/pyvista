@@ -23,26 +23,26 @@ dargs = dict(show_edges=True, color=True)
 # Preview the mesh
 mesh.plot(cpos=cpos, **dargs)
 
-###############################################################################
+# %%
 # Now let's define a target reduction and compare the
 # :func:`pyvista.PolyDataFilters.decimate` and
 # :func:`pyvista.PolyDataFilters.decimate_pro` filters.
 target_reduction = 0.7
 print(f"Reducing {target_reduction * 100.0} percent out of the original mesh")
 
-###############################################################################
+# %%
 decimated = mesh.decimate(target_reduction)
 
 decimated.plot(cpos=cpos, **dargs)
 
 
-###############################################################################
+# %%
 pro_decimated = mesh.decimate_pro(target_reduction, preserve_topology=True)
 
 pro_decimated.plot(cpos=cpos, **dargs)
 
 
-###############################################################################
+# %%
 # Side by side comparison:
 
 # sphinx_gallery_start_ignore

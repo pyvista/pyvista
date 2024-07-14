@@ -17,7 +17,7 @@ from pyvista import examples
 sextant_file = examples.vrml.download_sextant()
 
 
-###############################################################################
+# %%
 # Set up the plotter and import VRML file.
 # Use :func:`pyvista.Plotter.import_vrml` to import file.
 

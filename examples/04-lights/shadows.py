@@ -20,7 +20,7 @@ mesh.rotate_x(90, inplace=True)
 mesh.rotate_z(120, inplace=True)
 
 
-###############################################################################
+# %%
 # Using two lights, plot the Stanford Dragon with shadows.
 #
 # .. Note::
@@ -79,7 +79,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Show light penetrating several planes.  Adjust the light intensity
 # and the ``shadow_attenuation`` to change how many planes the
 # light can go through.
@@ -108,7 +108,7 @@ plotter.enable_shadows()
 plotter.show()
 
 
-###############################################################################
+# %%
 # Here, we use a lower shadow_attenuation value to demonstrate how the
 # light can travel through more planes.
 

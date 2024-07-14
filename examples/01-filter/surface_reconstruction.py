@@ -14,14 +14,14 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a point cloud from a sphere and then reconstruct a surface from it.
 
 points = pv.wrap(pv.Sphere().points)
 surf = points.reconstruct_surface()
 surf
 
-###############################################################################
+# %%
 # Plot the point cloud and the reconstructed sphere.
 
 pl = pv.Plotter(shape=(1, 2))

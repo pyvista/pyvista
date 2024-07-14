@@ -14,7 +14,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 #
 # We can allow tables of glyphs in a backward-compatible way by
 # allowing a sequence of geometries as well as single (scalar)

@@ -17,23 +17,23 @@ from pyvista import examples
 vol = examples.download_brain()
 vol
 
-###############################################################################
+# %%
 # Now lets make an array of all of the isovalues for which we want to show.
 values = np.linspace(5, 150, num=25)
 
-###############################################################################
+# %%
 # Now let's create an initial isosurface that we can plot and move
 surface = vol.contour(values[:1])
 
-###############################################################################
+# %%
 # Precompute the surfaces
 surfaces = [vol.contour([v]) for v in values]
 
-###############################################################################
+# %%
 # Set a single surface as the one being plotted that can be overwritten
 surface = surfaces[0].copy()
 
-###############################################################################
+# %%
 
 filename = "isovalue.gif"
 

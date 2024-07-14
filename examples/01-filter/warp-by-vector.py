@@ -8,7 +8,7 @@ This example applies the ``warp_by_vector`` filter to a sphere mesh that has
 3D displacement vectors defined at each node.
 """
 
-###############################################################################
+# %%
 # We first compare the unwarped sphere to the warped sphere.
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ p.add_text("After warp")
 p.add_mesh(warped, color='white')
 p.show()
 
-###############################################################################
+# %%
 # We then use several values for the scale factor applied to the warp
 # operation. Applying a warping factor that is too high can often lead to
 # unrealistic results.

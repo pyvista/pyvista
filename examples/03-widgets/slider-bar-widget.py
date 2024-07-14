@@ -34,7 +34,7 @@ p = pv.Plotter()
 p.add_mesh_threshold(mesh)
 p.show()
 
-###############################################################################
+# %%
 # After interacting with the scene, the threshold mesh is available as:
 p.threshold_meshes
 
@@ -43,7 +43,7 @@ p.threshold_meshes
 #
 # .. image:: ../../images/gifs/slider-widget-threshold.gif
 
-###############################################################################
+# %%
 # Custom Callback
 # +++++++++++++++
 #

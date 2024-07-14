@@ -35,7 +35,7 @@ furniture = examples.download_kitchen(split=True)
 arr = np.linalg.norm(mesh['velocity'], axis=1)
 clim = [arr.min(), arr.max()]
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(furniture, name='furniture', color=True)

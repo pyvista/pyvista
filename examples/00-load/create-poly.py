@@ -14,7 +14,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # A PolyData object can be created quickly from numpy arrays.  The vertex array
 # contains the locations of the points in the mesh and the face array contains
 # the number of points of each face and the indices of the vertices which
@@ -44,7 +44,7 @@ surf.plot(
 )
 
 
-###############################################################################
+# %%
 # Polygonal PolyData
 # ~~~~~~~~~~~~~~~~~~
 # Create a three face polygonal mesh directly from points and faces.

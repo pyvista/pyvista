@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Generate an Extruded Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -30,7 +30,7 @@ extruded_hills = mesh.extrude_trim((0, 0, -1.0), plane)
 extruded_hills
 
 
-###############################################################################
+# %%
 # Plot the Extruded Surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the resulting :class:`pyvista.PolyData`.
@@ -55,7 +55,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Extruding All Edges
 # ~~~~~~~~~~~~~~~~~~~
 # The previous example used the default ``extrusion='boundary_edges'``, which
@@ -78,7 +78,7 @@ print(f'Extrusion has {extruded_disc.n_faces_strict} faces with default boundary
 print(f'Extrusion has {extruded_disc_all.n_faces_strict} faces with all_edges')
 
 
-###############################################################################
+# %%
 # Plot
 # ~~~~
 # Show the additional interior faces by plotting with ``style='wireframe'``.
@@ -101,7 +101,7 @@ pl.camera.zoom(1.3)
 pl.show()
 
 
-###############################################################################
+# %%
 # Extrude a Line
 # ~~~~~~~~~~~~~~
 # You can also extrude lines. Observe that the output from extruded lines is
@@ -113,7 +113,7 @@ extruded_line = line.extrude_trim((0, 0, 1), plane)
 extruded_line
 
 
-###############################################################################
+# %%
 # Plot the Extruded Line
 # ~~~~~~~~~~~~~~~~~~~~~~
 # Note how the scalars are copied to the extruded line.

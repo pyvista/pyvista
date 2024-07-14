@@ -20,7 +20,7 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Compare the Plotting methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's create a sample point cloud using :func:`numpy.random.random`.
@@ -30,7 +30,7 @@ rng = np.random.default_rng(seed=0)
 points = rng.random((1000, 3))
 points
 
-###############################################################################
+# %%
 # Basic Plot
 # ~~~~~~~~~~
 # We can simply plot this point cloud using the convenience :func:`pyvista.plot`
@@ -39,7 +39,7 @@ points
 pv.plot(points)
 
 
-###############################################################################
+# %%
 # Plot with Scalars
 # ~~~~~~~~~~~~~~~~~
 # That's quite boring, so let's spice things up by adding color. We can either
@@ -55,7 +55,7 @@ pv.plot(
 )
 
 
-###############################################################################
+# %%
 # Plot with RGBA
 # ~~~~~~~~~~~~~~
 # Alternatively, we can color the point cloud using an RGBA array. This has
@@ -65,7 +65,7 @@ rgba = points - points.min(axis=0)
 rgba /= rgba.max(axis=0)
 pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos='xy', rgba=True)
 
-###############################################################################
+# %%
 # Point Cloud Plot Styles
 # ~~~~~~~~~~~~~~~~~~~~~~~
 # PyVista supports the ``'points_gaussian'`` style, which renders points as
@@ -77,7 +77,7 @@ pv.plot(points, scalars=rgba, render_points_as_spheres=True, point_size=20, cpos
 pv.plot(points, style='points_gaussian', opacity=0.5, point_size=15)
 
 
-###############################################################################
+# %%
 # Here's a plotter with four combinations of the options side-by-side so you
 # can see for yourself the different options available when plotting these
 # points. PyVista tries to achieve sensible defaults, but should you find these
@@ -145,7 +145,7 @@ pl.camera.zoom(1.2)
 pl.show()
 
 
-###############################################################################
+# %%
 # Orbit a Point Cloud
 # ~~~~~~~~~~~~~~~~~~~
 # Generate a plot orbiting around a point cloud. Color based on the distance
