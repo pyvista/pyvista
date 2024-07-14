@@ -17,7 +17,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Project Points
 # ~~~~~~~~~~~~~~
 # Create a point cloud and project it to a plane.
@@ -48,7 +48,7 @@ polydata = pv.PolyData(projected_points)
 mesh = polydata.delaunay_2d()
 
 
-###############################################################################
+# %%
 # Visualize the Result
 # ~~~~~~~~~~~~~~~~~~~~
 
