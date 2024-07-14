@@ -37,7 +37,7 @@ import pyvista as pv
 pv.set_plot_theme("document")
 
 
-###############################################################################
+# %%
 # Create the main mesh and the secondary "moving" mesh
 #
 # Collision faces will be plotted on this sphere, and to do so we
@@ -48,7 +48,7 @@ sphere0['collisions'] = np.zeros(sphere0.n_cells, dtype=bool)
 # This mesh will be the moving mesh
 sphere1 = pv.Sphere(radius=0.6, center=(-1, 0, 0))
 
-###############################################################################
+# %%
 # Set up the plotter open a movie, and write a frame after moving the sphere.
 #
 

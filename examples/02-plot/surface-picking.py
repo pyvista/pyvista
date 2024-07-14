@@ -19,7 +19,7 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Create a mesh and enable picking using the default settings.
 
 cube = pv.Cube()
@@ -30,7 +30,7 @@ pl.enable_surface_point_picking()
 pl.show()
 
 
-###############################################################################
+# %%
 # Enable a callback that creates a cube at the right-clicked point and add a
 # label at the point as well it.
 
