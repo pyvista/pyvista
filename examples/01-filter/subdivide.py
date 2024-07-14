@@ -16,7 +16,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # First, let's load a **triangulated** mesh to subdivide. We can use the
 # :func:`pyvista.DataSetFilters.triangulate` filter to ensure the mesh we are
 # using is purely triangles.
@@ -28,7 +28,7 @@ cpos = [
     (-0.10170607813337212, 0.9686438023715356, -0.22668272496584665),
 ]
 
-###############################################################################
+# %%
 # Now, lets do a few subdivisions with the mesh and compare the results.
 # Below is a helper function to make a comparison plot of thee different
 # subdivisions.
@@ -59,7 +59,7 @@ def plot_subdivisions(mesh, a, b):
     return p
 
 
-###############################################################################
+# %%
 # Run the subdivisions for 1 and 3 levels.
 
 plotter = plot_subdivisions(mesh, 1, 3)
