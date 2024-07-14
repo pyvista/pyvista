@@ -963,24 +963,24 @@ def test_principal_axes(rank, points, expected_axes):
     assert np.allclose(np.linalg.norm(axes, axis=1), 1)
     assert isinstance(axes, np.ndarray)
 
-    _, sizes = principal_axes(points, return_sizes=True)
-    assert sizes[0] >= sizes[1] >= sizes[2]
-    assert isinstance(sizes, np.ndarray)
+    _, std = principal_axes(points, return_std=True)
+    assert std[0] >= std[1] >= std[2]
+    assert isinstance(std, np.ndarray)
 
 
-def test_principal_axes_return_sizes():
+def test_principal_axes_return_std():
     # Create axis-aligned symmetric point cloud with 6 points
     sizes_in = np.array((3, 2, 1))
     points_plus = np.diag(sizes_in)
     points_minus = -points_plus
     points = np.vstack([points_plus, points_minus])
 
-    axes, sizes_out = principal_axes(points, return_sizes=True)
+    axes, std = principal_axes(points, return_std=True)
 
-    # Test ratios of input sizes match ratios of output sizes
-    sizes_in_ratio = sizes_in / np.sum(sizes_in)
-    sizes_out_ratio = sizes_out / np.sum(sizes_out)
-    assert np.allclose(sizes_in_ratio, sizes_out_ratio)
+    # Test ratios of input sizes match ratios of output std
+    ratios_in = sizes_in / sum(sizes_in)
+    ratios_out = std / sum(std)
+    assert np.allclose(ratios_in, ratios_out)
 
 
 def test_principal_axes_empty():
@@ -1001,11 +1001,11 @@ def test_principal_axes_vectors_success_with_many_points():
     )
     assert ellipsoid.n_points == 997_004
 
-    axes, sizes = pv.principal_axes(ellipsoid.points, return_sizes=True)
+    axes, std = pv.principal_axes(ellipsoid.points, return_std=True)
 
-    # Check sizes to verify the computed output is valid
+    # Check std to verify the computed output is valid
     # Need large atol due to loss of numerical precision
-    assert np.allclose(sizes, [0.001503, 0.001002, 0.00070782], atol=1)
+    assert np.allclose(std, [0.001503, 0.001002, 0.00070782])
 
 
 @pytest.mark.parametrize(

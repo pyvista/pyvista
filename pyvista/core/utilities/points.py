@@ -466,7 +466,7 @@ def vector_poly_data(orig, vec):
     return pyvista.PolyData(pdata)
 
 
-def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
+def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes
@@ -500,9 +500,10 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     points : MatrixLike[float]
         Nx3 array of points.
 
-    return_sizes : bool, default: False
-        If ``True``, also returns the axis sizes. The sizes are computed as the square
-        root of the eigenvectors of the mean-centered covariance matrix.
+    return_std : bool, default: False
+        If ``True``, also returns the standard deviation of the points along each axis.
+        Standard deviation is computed as the square root of the eigenvalues of the
+        mean-centered covariance matrix, divided by the number of points.
 
     Returns
     -------
@@ -514,26 +515,30 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
 
     Examples
     --------
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(seed=0)
+
     Create a mesh with points that have the largest variation in ``X``,
     followed by ``Y``, then ``Z``.
 
-    >>> import numpy as np
-    >>> import pyvista as pv
     >>> radii = np.array((6, 3, 1))  # x-y-z radii
     >>> mesh = pv.ParametricEllipsoid(
     ...     xradius=radii[0], yradius=radii[1], zradius=radii[2]
     ... )
+
+    Plot the mesh and highlight its points in black.
+
     >>> p = pv.Plotter()
     >>> _ = p.add_mesh(mesh)
+    >>> _ = p.add_points(mesh, color='black')
     >>> _ = p.show_grid()
     >>> p.show()
 
-    Compute its principal axes and return the sizes.
+    Compute its principal axes and return the standard deviation.
 
-    >>> principal_axes, sizes = pv.principal_axes(
-    ...     mesh.points, return_sizes=True
-    ... )
-    >>> principal_axes
+    >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
+    >>> axes
     pyvista_ndarray([[-1.0000000e+00, -3.8287229e-08,  3.6589407e-10],
                      [-3.8287229e-08,  1.0000000e+00, -3.0685656e-09],
                      [-3.6589393e-10, -3.0685656e-09, -1.0000000e+00]],
@@ -547,27 +552,55 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     However, since the signs of the principal axes are arbitrary, the
     first and third axes in this case have a negative direction.
 
-    Show the computed sizes.
+    Show the standard deviation along each axis.
 
-    >>> sizes
+    >>> std
     array([0.03060594, 0.01530297, 0.00714213], dtype=float32)
 
-    Convert the sizes to percentages for analysis.
+    Convert the values to proportions for analysis.
 
-    >>> sizes / sum(sizes)
-    array([0.5769149 , 0.28845745, 0.13462763], dtype=float32)
+    >>> std / sum(std)
+    array([0.5769149 , 0.28845745, 0.1346276 ], dtype=float32)
 
-    From these values, we can determine that the axes explain approximately 60%, 30%,
-    and 10% of the total variance in the points, respectively.
+    From this result, we can determine that the axes explain approximately
+    58%, 29%, and 13% of the total variance in the points, respectively.
 
-    Let's compare this to the ratios of the known radii of the ellipsoid.
+    Let's compare this to the proportions of the known radii of the ellipsoid.
 
     >>> radii / sum(radii)
     array([0.6, 0.3, 0.1])
 
-    Note how the two ratios are nearly identical. From this result, we can interpret
-    the principal axes as the semi-major axes of the best-fitting ellipsoid to the data.
+    Note how the two ratios are similar, but do not match exactly. This is
+    because the points of the ellipsoid are prolate and are denser near the
+    poles. If the points were normally distributed, however, the proportions
+    would match exactly.
 
+    Create an array of normally distributed points scaled along the x-y-z axes.
+    Use the same scaling as the radii of the ellipsoid from the previous example.
+
+    >>> normal_points = rng.normal(size=(1000, 3))
+    >>> scaled_points = normal_points * radii
+    >>> axes, std = pv.principal_axes(scaled_points, return_std=True)
+    >>> axes
+    array([[-0.99997578,  0.00682346,  0.00136972],
+           [ 0.00681368,  0.99995213, -0.00702282],
+           [-0.00141757, -0.00701331, -0.9999744 ]])
+
+    Once again, the axes have ones along the diagonal as expected since the
+    points are already axis-aligned. Now let's examine the standard deviation
+    and compare the relative proportions.
+
+    >>> std
+    array([0.18798689, 0.0915765 , 0.03228786])
+
+    >>> std / sum(std)
+    array([0.60280948, 0.29365444, 0.10353608])
+
+    >>> radii / sum(radii)
+    array([0.6, 0.3, 0.1])
+
+    Since the points are normally distributed, the relative proportion of
+    the standard deviation matches the scaling of the axes almost perfectly.
     """
     points = _validation.validate_arrayNx3(points)
 
@@ -579,8 +612,8 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     if np.linalg.det(axes) < 0:
         axes[2] *= -1
 
-    if return_sizes:
+    if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        sizes = (np.sqrt(eig_vals) / len(points))[::-1]
-        return axes, sizes
+        std = (np.sqrt(eig_vals) / len(points))[::-1]
+        return axes, std
     return axes
