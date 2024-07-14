@@ -550,7 +550,7 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     Show the computed sizes.
 
     >>> sizes
-    array([0.03060593, 0.01530297, 0.00714213], dtype=float32)
+    array([0.03060594, 0.01530297, 0.00714213], dtype=float32)
 
     Convert the sizes to percentages for analysis.
 
