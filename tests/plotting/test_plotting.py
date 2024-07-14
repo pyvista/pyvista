@@ -4541,3 +4541,36 @@ def test_orthogonal_planes_source_normals(normal_sign):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+def test_planes_assembly(airplane):
+    plot = pv.Plotter()
+    actor = pv.PlanesAssembly()
+    plot.add_actor(actor)
+    actor.camera = plot.camera
+    plot.add_axes()
+    plot.show()
+
+
+def test_planes_assembly_bounds(airplane):
+    plot = pv.Plotter()
+    actor = pv.PlanesAssembly(bounds=airplane.bounds)
+    plot.add_actor(actor)
+    actor.camera = plot.camera
+    plot.add_axes()
+    plot.show()
+
+
+@pytest.mark.parametrize('label_kwarg', ['xy_label', 'yz_label', 'zx_label'])
+def test_planes_assembly_label_position(plane, label_kwarg):
+    plot = pv.Plotter()
+
+    for num in range(8):
+        actor = pv.PlanesAssembly(labels=['', '', ''], opacity=0.0, label_position=num)
+        setattr(actor, label_kwarg, str(num))
+        plot.add_actor(actor)
+        actor.camera = plot.camera
+    plot.camera_position = label_kwarg.split('_')[0]
+    plot.background_color = 'gray'
+    plot.add_axes_at_origin()
+    plot.show()

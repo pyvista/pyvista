@@ -14,9 +14,7 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
-from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.axes_assembly import _validate_label_sequence
@@ -63,13 +61,13 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     Parameters
     ----------
-    xy_label : str, default: 'X'
+    xy_label : str, default: 'XY'
         Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
 
-    yz_label : str, default: 'Y'
+    yz_label : str, default: 'YZ'
         Text label for the yz-plane. Alternatively, set the label with :attr:`labels`.
 
-    zx_label : str, default: 'Z'
+    zx_label : str, default: 'ZX'
         Text label for the zx-plane. Alternatively, set the label with :attr:`labels`.
 
     labels : Sequence[str], optional,
@@ -167,12 +165,12 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         labels: Sequence[str] | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
-        label_position: float | VectorLike[float] = 0.8,
+        label_position: int | VectorLike[int] = 0,
         label_size: int = 50,
         xy_color: ColorLike | Sequence[ColorLike] | None = None,
         yz_color: ColorLike | Sequence[ColorLike] | None = None,
         zx_color: ColorLike | Sequence[ColorLike] | None = None,
-        opacity: float | VectorLike[float] = 0.2,
+        opacity: float | VectorLike[float] = 0.3,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -189,8 +187,8 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         self._plane_actors = (Actor(), Actor(), Actor())
 
         # Init planes from source
-        self._planes_source = OrthogonalPlanesSource(**kwargs)
-        self.planes = cast(MutableSequence[pv.PolyData], self._planes_source.output)
+        self._geometry_source = OrthogonalPlanesSource(**kwargs)
+        self.planes = cast(MutableSequence[pv.PolyData], self._geometry_source.output)
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
@@ -198,8 +196,9 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         [self.AddPart(actor) for actor in self._plane_actors]
 
         # Init label actors and add to assembly
-        self._label_actors = (Label(), Label(), Label())
-        [self.AddPart(actor) for actor in self._label_actors]
+        self._axis_actors = (_AxisActor(), _AxisActor(), _AxisActor())
+        self._label_properties = tuple(axis.GetTitleTextProperty() for axis in self._axis_actors)
+        [self.AddPart(actor) for actor in self._axis_actors]
 
         # Set colors
         if xy_color is None:
@@ -221,9 +220,9 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
         # Set text labels
         if labels is None:
-            self.xy_label = 'X' if xy_label is None else xy_label
-            self.yz_label = 'Y' if yz_label is None else yz_label
-            self.zx_label = 'Z' if zx_label is None else zx_label
+            self.xy_label = 'XY' if xy_label is None else xy_label
+            self.yz_label = 'YZ' if yz_label is None else yz_label
+            self.zx_label = 'ZX' if zx_label is None else zx_label
         else:
             msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
             if xy_label is not None:
@@ -259,7 +258,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
             mat_info = 'Set'
         bnds = self.bounds
 
-        geometry_repr = repr(self._planes_source).splitlines()[1:]
+        geometry_repr = repr(self._geometry_source).splitlines()[1:]
 
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
@@ -331,7 +330,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     @xy_label.setter
     def xy_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[0].input = label
+        self._axis_actors[0].SetTitle(label)
 
     @property
     def yz_label(self) -> str:  # numpydoc ignore=RT01
@@ -350,7 +349,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     @yz_label.setter
     def yz_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[1].input = label
+        self._axis_actors[1].SetTitle(label)
 
     @property
     def zx_label(self) -> str:  # numpydoc ignore=RT01
@@ -369,7 +368,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     @zx_label.setter
     def zx_label(self, label: str):  # numpydoc ignore=GL08
-        self._label_actors[2].input = label
+        self._axis_actors[2].SetTitle(label)
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
@@ -393,11 +392,11 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
     @label_size.setter
     def label_size(self, size: int):  # numpydoc ignore=GL08
         self._label_size = size
-        for label in self._label_actor_iterator:
-            label.size = size
+        for axis in self._axis_actors:
+            axis.SetTitleScale(size)
 
     @property
-    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+    def label_position(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Position of the text label along each axis.
 
         By default, the labels are positioned at the ends of the shafts.
@@ -421,13 +420,13 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: float | VectorLike[float] | None):  # numpydoc ignore=GL08
+    def label_position(self, position: int | VectorLike[int] | None):  # numpydoc ignore=GL08
         self._label_position = _validation.validate_array3(
             position,
             broadcast=True,
-            must_be_in_range=[0, np.inf],
+            must_be_integer=[0, np.inf],
             name='Label position',
-            dtype_out=float,
+            dtype_out=int,
             to_tuple=True,
         )
         self._update_label_positions()
@@ -483,49 +482,92 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         for actor, opacity in zip(self._plane_actors, valid_opacity):
             actor.prop.opacity = opacity
 
-    def _transform_label_position(self, position_scalars: tuple[float, float, float]):
-        # Create position vectors
-        i_off = [1.1] * 3
-        j_off = -0.1
-        x_scalar, y_scalar, z_scalar = position_scalars
-        xy_bounds = _BoundsTuple(*self.planes[0].bounds)
-        yz_bounds = _BoundsTuple(*self.planes[1].bounds)
-        zx_bounds = _BoundsTuple(*self.planes[2].bounds)
+    @property
+    def camera(self):  # numpydoc ignore=RT01
+        """Camera to use for displaying the labels."""
+        if not hasattr(self, '_camera'):
+            raise ValueError('Camera has not been')
+        return self._camera
 
-        def coord(min_, max_, norm_offset):
-            # Return coordinate that is `norm_offset` between from `max_` and `min_`
-            return (max_ - min_) * norm_offset + min_
-
-        xy_position = (
-            coord(xy_bounds.x_min, xy_bounds.x_max, i_off[0]),
-            coord(xy_bounds.y_min, xy_bounds.y_max, j_off),
-            xy_bounds.z_min,
-        )
-        yz_position = (
-            yz_bounds.x_min,
-            coord(yz_bounds.y_min, yz_bounds.y_max, j_off),
-            coord(yz_bounds.z_min, yz_bounds.z_max, i_off[1]),
-        )
-        zx_position = (
-            coord(zx_bounds.x_min, zx_bounds.x_max, j_off),
-            zx_bounds.y_min,
-            coord(zx_bounds.z_min, zx_bounds.z_max, i_off[2]),
-        )
-        position_vectors = np.array([xy_position, yz_position, zx_position])
-
-        # Transform positions
-        matrix = array_from_vtkmatrix(self._prop3d.GetMatrix())
-        return apply_transformation_to_points(matrix, position_vectors)
-
-    def _apply_transformation_to_labels(
-        self, position_scalars: tuple[float, float, float], labels: tuple[Label, Label, Label]
-    ):
-        vectors = self._transform_label_position(position_scalars)
-        for label, vector in zip(labels, vectors):
-            label.position = vector
+    @camera.setter
+    def camera(self, camera):  # numpydoc ignore=GL08
+        self._camera = camera
+        for axis in self._axis_actors:
+            axis.SetCamera(camera)
 
     def _update_label_positions(self):
-        self._apply_transformation_to_labels(self.label_position, self._label_actors)
+        axis_actors = self._axis_actors
+        plane_sources = self._geometry_source._plane_sources
+
+        def set_axis_location(plane_id, location: int):
+            this_plane_source = plane_sources[plane_id]
+            this_axis_actor = axis_actors[plane_id]
+
+            # Get two points defining the axis
+            # We pick two points from the corners of the plane
+            origin, point1, point2 = (
+                np.array(this_plane_source.GetOrigin()),
+                np.array(this_plane_source.GetPoint1()),
+                np.array(this_plane_source.GetPoint2()),
+            )
+
+            vector1 = point1 - origin
+            vector2 = point2 - origin
+
+            corner_bottom_left = origin
+            corner_bottom_right = origin + vector1
+            corner_top_left = origin + vector2
+            corner_top_right = corner_bottom_right + vector2
+
+            midpoint_left = (corner_top_left + corner_bottom_left) / 2
+            midpoint_right = (corner_bottom_right + corner_top_right) / 2
+            midpoint_top = (corner_top_left + corner_top_right) / 2
+            midpoint_bottom = (corner_bottom_left + corner_bottom_right) / 2
+
+            ordered_points = [
+                midpoint_right,
+                corner_top_right,
+                midpoint_top,
+                corner_top_left,
+                midpoint_left,
+                corner_bottom_left,
+                midpoint_bottom,
+                corner_bottom_right,
+            ]
+            # Duplicate first point as last point
+            ordered_points.append(ordered_points[0])
+
+            # Set axis points to specified location
+            axis_point1, axis_point2 = ordered_points[location : location + 2]
+            this_axis_actor.SetPoint1(axis_point1)
+            this_axis_actor.SetPoint2(axis_point2)
+
+            # Align axis type to its direction
+            axis_dir = np.abs(axis_point1 - axis_point2) / np.linalg.norm(axis_point1 - axis_point2)
+            if np.allclose(axis_dir, [1, 0, 0]):
+                this_axis_actor.SetAxisTypeToX()
+            elif np.allclose(axis_dir, [0, 1, 0]):
+                this_axis_actor.SetAxisTypeToY()
+            elif np.allclose(axis_dir, [0, 0, 1]):
+                this_axis_actor.SetAxisTypeToZ()
+            else:
+                raise RuntimeError(f"Unexpected axis direction! Got {axis_dir}.")
+
+            # Re-scale the title text (which is 3D vtkVectorText)
+            this_axis_actor.GetTitleActor().SetScale(self.planes.length * self.label_size / 1000)  # type: ignore[attr-defined]
+
+        #          2          1
+        #    +----------+----------+
+        #  3 | (-i, +j) | (+i, +j) | 0
+        #    +----------+----------+
+        #  4 | (-i, -j) | (+i, -j) | 7
+        #    +----------+----------+
+        #          5          6
+
+        positions = self._label_position
+        set_axis_location(0, positions[0])
+        set_axis_location(1, positions[1])
+        set_axis_location(2, positions[2])
 
     def _set_prop3d_attr(self, name, value):
         # Set props for plane actors
@@ -728,3 +770,31 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
         max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
         return np.linalg.norm(max_bnds - min_bnds).tolist()
+
+
+def _AxisActor():
+    actor = _vtk.vtkAxisActor()
+
+    # Only show the title
+    actor.TitleVisibilityOn()
+    actor.MinorTicksVisibleOff()
+    actor.TickVisibilityOff()
+    actor.DrawGridlinesOff()
+
+    # Set empty tick labels
+    labels = _vtk.vtkStringArray()
+    labels.SetNumberOfTuples(0)
+    # labels.SetValue(0, "")
+    actor.SetLabels(labels)
+
+    # Format title positioning
+    actor.SetTitleOffset(0, 0)
+    actor.GetTitleActor().SetScreenOffset(100)
+    actor.SetLabelOffset(0)
+    actor.SetLabelScale(0.1)
+
+    # actor.SetUse2DMode(True)
+    # actor.SetTitleAlignLocation(2)
+    # actor.SetAxisPositionToMinMax()
+
+    return actor
