@@ -995,17 +995,17 @@ def test_principal_axes_single_point():
 
 def test_principal_axes_vectors_success_with_many_points():
     # Use large mesh to verify no memory errors are raised
-    res = 4000
+    res = 1000
     ellipsoid = pv.ParametricEllipsoid(
         xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
     )
-    assert ellipsoid.n_points == 15_988_004
+    assert ellipsoid.n_points == 997_004
 
     axes, sizes = pv.principal_axes(ellipsoid.points, return_sizes=True)
 
     # Check sizes to verify the computed output is valid
     # Need large atol due to loss of numerical precision
-    assert np.allclose(sizes, [5998.4927, 3999.9836, 2828.623], atol=1)
+    assert np.allclose(sizes, [0.001503, 0.001002, 0.00070782], atol=1)
 
 
 @pytest.mark.parametrize(

@@ -550,12 +550,12 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
     Show the computed sizes.
 
     >>> sizes
-    array([297.     , 148.5    ,  69.30727], dtype=float32)
+    array([0.03060593, 0.01530297, 0.00714213], dtype=float32)
 
     Convert the sizes to percentages for analysis.
 
     >>> sizes / sum(sizes)
-    array([0.57691497, 0.28845748, 0.13462761], dtype=float32)
+    array([0.5769149 , 0.28845745, 0.13462763], dtype=float32)
 
     From these values, we can determine that the axes explain approximately 60%, 30%,
     and 10% of the total variance in the points, respectively.
@@ -573,13 +573,14 @@ def principal_axes(points: MatrixLike[float], *, return_sizes: bool = False):
 
     points_centered = points - np.mean(points, axis=0)
     eig_vals, eig_vectors = np.linalg.eigh(points_centered.T @ points_centered)
-    sizes = np.sqrt(eig_vals)[::-1]  # ascending order -> descending order
     axes = eig_vectors.T[::-1]  # columns, ascending order -> rows, descending order
 
-    # Ensure output forms a right-handed coordinate frame
+    # Ensure axes form a right-handed coordinate frame
     if np.linalg.det(axes) < 0:
         axes[2] *= -1
 
     if return_sizes:
+        # Compute standard deviation and swap order from ascending -> descending
+        sizes = (np.sqrt(eig_vals) / len(points))[::-1]
         return axes, sizes
     return axes
