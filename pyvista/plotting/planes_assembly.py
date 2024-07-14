@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import MutableSequence
 from typing import NamedTuple
 from typing import Sequence
 from typing import TypedDict
-from typing import cast
 
 import numpy as np
 
@@ -61,18 +59,18 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     Parameters
     ----------
-    xy_label : str, default: 'XY'
+    x_label : str, default: 'XY'
         Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
 
-    yz_label : str, default: 'YZ'
+    y_label : str, default: 'YZ'
         Text label for the yz-plane. Alternatively, set the label with :attr:`labels`.
 
-    zx_label : str, default: 'ZX'
+    z_label : str, default: 'ZX'
         Text label for the zx-plane. Alternatively, set the label with :attr:`labels`.
 
     labels : Sequence[str], optional,
         Text labels for the planes. This is an alternative parameter to using
-        :attr:`xy_label`, :attr:`yz_label`, and :attr:`zx_label` separately.
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
 
     label_color : ColorLike, default: 'black'
         Color of the text labels.
@@ -87,13 +85,13 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
     label_size : int, default: 50
         Size of the text labels.
 
-    xy_color : ColorLike, optional
+    x_color : ColorLike, optional
         Color of the xy-plane.
 
-    yz_color : ColorLike, optional
+    y_color : ColorLike, optional
         Color of the yz-plane.
 
-    zx_color : ColorLike, optional
+    z_color : ColorLike, optional
         Color of the zx-plane.
 
     opacity : float, default: 0.3
@@ -134,9 +132,9 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     Customize the plane colors.
 
-    >>> planes.xy_color = ['cyan', 'blue']
-    >>> planes.yz_color = ['magenta', 'red']
-    >>> planes.zx_color = 'yellow'
+    >>> planes.x_color = ['cyan', 'blue']
+    >>> planes.y_color = ['magenta', 'red']
+    >>> planes.z_color = 'yellow'
 
     Customize the label color too.
 
@@ -159,17 +157,17 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
     def __init__(
         self,
         *,
-        xy_label: str | None = None,
-        yz_label: str | None = None,
-        zx_label: str | None = None,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        z_label: str | None = None,
         labels: Sequence[str] | None = None,
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: int | VectorLike[int] = 0,
         label_size: int = 50,
-        xy_color: ColorLike | Sequence[ColorLike] | None = None,
-        yz_color: ColorLike | Sequence[ColorLike] | None = None,
-        zx_color: ColorLike | Sequence[ColorLike] | None = None,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
         opacity: float | VectorLike[float] = 0.3,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -188,7 +186,15 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
-        self.planes = cast(MutableSequence[pv.PolyData], self._geometry_source.output)
+        output = self._geometry_source.output
+        # Change order of planes and rename
+        # This is to match the standard 'x-y-z' API used by assemblies
+        self.planes = pv.MultiBlock(dict(x=output['yz'], y=output['zx'], z=output['xy']))
+
+        # Repeat for individual plane sources
+        plane_sources = self._geometry_source._plane_sources
+        self._plane_sources = plane_sources[1], plane_sources[2], plane_sources[0]
+
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
 
@@ -201,16 +207,16 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         [self.AddPart(actor) for actor in self._axis_actors]
 
         # Set colors
-        if xy_color is None:
-            xy_color = pv.global_theme.axes.x_color
-        if yz_color is None:
-            yz_color = pv.global_theme.axes.y_color
-        if zx_color is None:
-            zx_color = pv.global_theme.axes.z_color
+        if x_color is None:
+            x_color = pv.global_theme.axes.x_color
+        if y_color is None:
+            y_color = pv.global_theme.axes.y_color
+        if z_color is None:
+            z_color = pv.global_theme.axes.z_color
 
-        self.xy_color = xy_color  # type: ignore[assignment]
-        self.yz_color = yz_color  # type: ignore[assignment]
-        self.zx_color = zx_color  # type: ignore[assignment]
+        self.x_color = x_color  # type: ignore[assignment]
+        self.y_color = y_color  # type: ignore[assignment]
+        self.z_color = z_color  # type: ignore[assignment]
         self.opacity = opacity  # type: ignore[assignment]
         # Set default properties
         for actor in self._plane_actors:
@@ -220,17 +226,17 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
         # Set text labels
         if labels is None:
-            self.xy_label = 'XY' if xy_label is None else xy_label
-            self.yz_label = 'YZ' if yz_label is None else yz_label
-            self.zx_label = 'ZX' if zx_label is None else zx_label
+            self.x_label = 'YZ' if x_label is None else x_label
+            self.y_label = 'ZX' if y_label is None else y_label
+            self.z_label = 'XY' if z_label is None else z_label
         else:
             msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-            if xy_label is not None:
-                raise ValueError(msg.format('xy_label'))
-            if yz_label is not None:
-                raise ValueError(msg.format('yz_label'))
-            if zx_label is not None:
-                raise ValueError(msg.format('zx_label'))
+            if x_label is not None:
+                raise ValueError(msg.format('x_label'))
+            if y_label is not None:
+                raise ValueError(msg.format('y_label'))
+            if z_label is not None:
+                raise ValueError(msg.format('z_label'))
             self.labels = labels  # type: ignore[assignment]
         self.show_labels = show_labels
         self.label_color = label_color  # type: ignore[assignment]
@@ -263,15 +269,15 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
             *geometry_repr,
-            f"  X label:                    '{self.xy_label}'",
-            f"  Y label:                    '{self.yz_label}'",
-            f"  Z label:                    '{self.zx_label}'",
+            f"  X label:                    '{self.x_label}'",
+            f"  Y label:                    '{self.y_label}'",
+            f"  Z label:                    '{self.z_label}'",
             f"  Label color:                {self.label_color}",
             f"  Show labels:                {self.show_labels}",
             f"  Label position:             {self.label_position}",
-            f"  XY Color:                   {self.xy_color}",
-            f"  YZ Color:                   {self.yz_color}",
-            f"  ZX Color:                   {self.zx_color}",
+            f"  XY Color:                   {self.x_color}",
+            f"  YZ Color:                   {self.y_color}",
+            f"  ZX Color:                   {self.z_color}",
             f"  Position:                   {self.position}",
             f"  Orientation:                {self.orientation}",
             f"  Origin:                     {self.origin}",
@@ -293,8 +299,8 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the assembly labels.
 
-        This property may be used as an alternative to using :attr:`xy_label`,
-        :attr:`yz_label`, and :attr:`zx_label` separately.
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
 
         Examples
         --------
@@ -304,70 +310,70 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
         """
-        return self.xy_label, self.yz_label, self.zx_label
+        return self.x_label, self.y_label, self.z_label
 
     @labels.setter
     def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
         labels = _validate_label_sequence(labels, n_labels=3, name='labels')
-        self.xy_label = labels[0]
-        self.yz_label = labels[1]
-        self.zx_label = labels[2]
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
 
     @property
-    def xy_label(self) -> str:  # numpydoc ignore=RT01
+    def x_label(self) -> str:  # numpydoc ignore=RT01
         """Text label for the xy-plane.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.xy_label = 'This axis'
-        >>> axes_actor.xy_label
+        >>> axes_actor.x_label = 'This axis'
+        >>> axes_actor.x_label
         'This axis'
 
         """
         return self._label_actors[0].input
 
-    @xy_label.setter
-    def xy_label(self, label: str):  # numpydoc ignore=GL08
+    @x_label.setter
+    def x_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[0].SetTitle(label)
 
     @property
-    def yz_label(self) -> str:  # numpydoc ignore=RT01
+    def y_label(self) -> str:  # numpydoc ignore=RT01
         """Text label for the yz-plane.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.yz_label = 'This axis'
-        >>> axes_actor.yz_label
+        >>> axes_actor.y_label = 'This axis'
+        >>> axes_actor.y_label
         'This axis'
 
         """
         return self._label_actors[1].input
 
-    @yz_label.setter
-    def yz_label(self, label: str):  # numpydoc ignore=GL08
+    @y_label.setter
+    def y_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[1].SetTitle(label)
 
     @property
-    def zx_label(self) -> str:  # numpydoc ignore=RT01
+    def z_label(self) -> str:  # numpydoc ignore=RT01
         """Text label for the zx-plane.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.zx_label = 'This axis'
-        >>> axes_actor.zx_label
+        >>> axes_actor.z_label = 'This axis'
+        >>> axes_actor.z_label
         'This axis'
 
         """
         return self._label_actors[2].input
 
-    @zx_label.setter
-    def zx_label(self, label: str):  # numpydoc ignore=GL08
+    @z_label.setter
+    def z_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[2].SetTitle(label)
 
     @property
@@ -444,30 +450,30 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
             label.prop.color = valid_color
 
     @property
-    def xy_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the xy-plane."""
         return self._plane_actors[0].prop.color
 
-    @xy_color.setter
-    def xy_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    @x_color.setter
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._plane_actors[0].prop.color = color
 
     @property
-    def yz_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the yz-plane."""
         return self._plane_actors[1].prop.color
 
-    @yz_color.setter
-    def yz_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    @y_color.setter
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._plane_actors[1].prop.color = color
 
     @property
-    def zx_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the zx-plane."""
         return self._plane_actors[2].prop.color
 
-    @zx_color.setter
-    def zx_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    @z_color.setter
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._plane_actors[2].prop.color = color
 
     @property
@@ -497,14 +503,12 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
 
     def _update_label_positions(self):
         axis_actors = self._axis_actors
-        plane_sources = self._geometry_source._plane_sources
+        plane_sources = self._plane_sources
 
         def set_axis_location(plane_id, location: int):
             this_plane_source = plane_sources[plane_id]
             this_axis_actor = axis_actors[plane_id]
 
-            # Get two points defining the axis
-            # We pick two points from the corners of the plane
             origin, point1, point2 = (
                 np.array(this_plane_source.GetOrigin()),
                 np.array(this_plane_source.GetPoint1()),
@@ -524,6 +528,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
             midpoint_top = (corner_top_left + corner_top_right) / 2
             midpoint_bottom = (corner_bottom_left + corner_bottom_right) / 2
 
+            # Order points counter-clockwise right side
             ordered_points = [
                 midpoint_right,
                 corner_top_right,
@@ -554,7 +559,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
                 raise RuntimeError(f"Unexpected axis direction! Got {axis_dir}.")
 
             # Re-scale the title text (which is 3D vtkVectorText)
-            this_axis_actor.GetTitleActor().SetScale(self.planes.length * self.label_size / 1000)  # type: ignore[attr-defined]
+            this_axis_actor.GetTitleActor().SetScale(self.planes.length * self.label_size / 1000)
 
         #          2          1
         #    +----------+----------+
@@ -639,7 +644,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         Create default non-oriented assembly as well for reference.
 
         >>> reference_axes = pv.AxesAssembly(
-        ...     xy_color='black', yz_color='black', zx_color='black'
+        ...     x_color='black', y_color='black', z_color='black'
         ... )
 
         Plot the assembly. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
