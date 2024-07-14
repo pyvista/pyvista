@@ -6,6 +6,7 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
+from abc import ABC
 from enum import IntEnum
 import itertools
 from typing import TYPE_CHECKING
@@ -36,6 +37,57 @@ if TYPE_CHECKING:  # pragma: no cover
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
+class GeometricSource(ABC):
+    """Base class for geometric sources.
+
+    Parameters
+    ----------
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+    """
+
+    def __init__(self, point_dtype: Literal['float32', 'float64'] = 'float32'):
+        """Initialize the geometric source class."""
+        self.point_dtype = point_dtype
+
+    @property
+    def point_dtype(self) -> str:
+        """Get the desired output point types. It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        str
+            Desired output point types.
+        """
+        precision = self.GetOutputPointsPrecision()
+        return {
+            _vtk.vtkAlgorithm.SINGLE_PRECISION: 'float32',
+            _vtk.vtkAlgorithm.DOUBLE_PRECISION: 'float64',
+        }[precision]
+
+    @point_dtype.setter
+    def point_dtype(self, point_dtype: str):
+        """Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        Parameters
+        ----------
+        point_dtype : str, default: 'float32'
+            Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        point_dtype: str
+            Desired output point types.
+        """
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
+            'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+        }[point_dtype]
+        self.SetOutputPointsPrecision(precision)
 
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
@@ -288,7 +340,7 @@ if _vtk.vtk_version_info < (9, 3):
 
 
 @no_new_attr
-class ConeSource(_vtk.vtkConeSource):
+class ConeSource(_vtk.vtkConeSource, GeometricSource):
     """Cone source algorithm class.
 
     Parameters
@@ -318,6 +370,9 @@ class ConeSource(_vtk.vtkConeSource):
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
+    **kwargs : dict, optional
+        Additional keyword arguments are passed to the base class.
+
     Examples
     --------
     Create a default ConeSource.
@@ -336,9 +391,10 @@ class ConeSource(_vtk.vtkConeSource):
         capping=True,
         angle=None,
         resolution=6,
+        **kwargs,
     ):
         """Initialize the cone source class."""
-        super().__init__()
+        super().__init__(**kwargs)
         self.center = center
         self.direction = direction
         self.height = height
