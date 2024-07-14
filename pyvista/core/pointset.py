@@ -1691,6 +1691,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Delete the object."""
         if hasattr(self, '_obbTree'):
             del self._obbTree
+        self._glyph_geom = None
 
 
 @abstract_class

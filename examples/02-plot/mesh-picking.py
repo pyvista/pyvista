@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Pick either a cube or a sphere using "p"
 # ++++++++++++++++++++++++++++++++++++++++
 #
@@ -27,7 +27,7 @@ pl.enable_mesh_picking()
 pl.show()
 
 
-###############################################################################
+# %%
 # Deform the mesh after picking
 # +++++++++++++++++++++++++++++
 # Pick to trigger a callback that "shrinks" the mesh each time it's selected.
@@ -46,7 +46,7 @@ pl.enable_mesh_picking(callback=callback, show=False)
 pl.show()
 
 
-###############################################################################
+# %%
 # Pick based on Actors
 # ++++++++++++++++++++
 # Return the picked actor to the callback
