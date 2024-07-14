@@ -3560,9 +3560,8 @@ class OrthogonalPlanesSource:
         names: Sequence[str] = ('xy', 'yz', 'zx'),
     ):
         # Init sources and the output dataset
-        polys = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
-        self._output = pyvista.MultiBlock(polys)
-        self._plane_sources = (_vtk.vtkPlaneSource(), _vtk.vtkPlaneSource(), _vtk.vtkPlaneSource())
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
+        self._plane_sources = tuple(pyvista.PlaneSource() for _ in range(3))
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
@@ -3640,28 +3639,28 @@ class OrthogonalPlanesSource:
         center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
 
         # Update plane sources
-        xy_source.SetXResolution(x_res)
-        xy_source.SetYResolution(y_res)
-        xy_source.SetPoint1(x_size, 0.0, 0.0)
-        xy_source.SetPoint2(0.0, y_size, 0.0)
-        xy_source.SetOrigin(ORIGIN)
-        xy_source.SetCenter(center)
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
         xy_source.Update()
 
-        yz_source.SetXResolution(y_res)
-        yz_source.SetYResolution(z_res)
-        yz_source.SetPoint1(0.0, y_size, 0.0)
-        yz_source.SetPoint2(0.0, 0.0, z_size)
-        yz_source.SetOrigin(ORIGIN)
-        yz_source.SetCenter(center)
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
         yz_source.Update()
 
-        zx_source.SetXResolution(z_res)
-        zx_source.SetYResolution(x_res)
-        zx_source.SetPoint1(0.0, 0.0, z_size)
-        zx_source.SetPoint2(x_size, 0.0, 0.0)
-        zx_source.SetOrigin(ORIGIN)
-        zx_source.SetCenter(center)
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
         zx_source.Update()
 
         # Update the output
