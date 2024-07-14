@@ -31,5 +31,5 @@ mesh.remove_cells(ghosts, inplace=True)
 # %%
 # Now we can plot the mesh and those cells will be hidden
 mesh.plot(clim=[0, 4])
-###############################################################################
+# %%
 # .. tags:: plot

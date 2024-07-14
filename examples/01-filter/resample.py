@@ -81,5 +81,5 @@ p.add_mesh(threshold(result), **dargs)
 p.link_views()
 p.view_isometric()
 p.show(cpos=cpos)
-###############################################################################
+# %%
 # .. tags:: filter

@@ -32,5 +32,5 @@ p.add_mesh(ray, color="blue", line_width=5, label="Ray Segment")
 p.add_mesh(intersection, color="maroon", point_size=25, label="Intersection Points")
 p.add_legend()
 p.show()
-###############################################################################
+# %%
 # .. tags:: filter

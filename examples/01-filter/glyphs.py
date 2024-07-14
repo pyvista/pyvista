@@ -89,5 +89,5 @@ p = pv.Plotter()
 p.add_mesh(arrows, color="black")
 p.add_mesh(mesh, scalars="Elevation", cmap="terrain", smooth_shading=True)
 p.show()
-###############################################################################
+# %%
 # .. tags:: filter

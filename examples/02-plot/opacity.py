@@ -164,5 +164,5 @@ p.subplot(0, 1)
 p.add_text('No Opacity')
 p.add_mesh(contours, scalars='Temperature', cmap='bwr')
 p.show()
-###############################################################################
+# %%
 # .. tags:: plot

@@ -29,5 +29,5 @@ plotter.show(screenshot='airplane.png')
 
 plt.imshow(plotter.image)
 plt.show()
-###############################################################################
+# %%
 # .. tags:: plot

@@ -121,5 +121,5 @@ p.show()
 # the ``InteractionEvent`` observer:
 #
 # .. image:: ../../images/gifs/plane-slice-continuous.gif
-###############################################################################
+# %%
 # .. tags:: widgets

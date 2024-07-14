@@ -77,5 +77,5 @@ pl.enable_depth_of_field()
 pl.enable_anti_aliasing('ssaa')
 pl.set_environment_texture(cubemap)
 pl.show()
-###############################################################################
+# %%
 # .. tags:: plot

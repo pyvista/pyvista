@@ -115,5 +115,5 @@ model = grid.clip_surface(surface)
 
 # Compute height and display it
 model.elevation().plot()
-###############################################################################
+# %%
 # .. tags:: filter

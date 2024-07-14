@@ -19,5 +19,5 @@ plotter.add_mesh(mesh)
 plotter.add_floor('-y')
 plotter.add_floor('-z')
 plotter.show()
-###############################################################################
+# %%
 # .. tags:: plot

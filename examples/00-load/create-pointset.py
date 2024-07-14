@@ -54,5 +54,5 @@ if pv.vtk_version_info >= (9, 1):
 
 if pv.vtk_version_info >= (9, 1):
     clipped_pset.plot(show_scalar_bar=False)
-###############################################################################
+# %%
 # .. tags:: load

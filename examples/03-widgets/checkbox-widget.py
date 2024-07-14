@@ -90,5 +90,5 @@ for i, lst in enumerate(colors):
         Startpos = Startpos + size + (size // 10)
 
 p.show()
-###############################################################################
+# %%
 # .. tags:: widgets

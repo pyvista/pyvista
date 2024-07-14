@@ -173,5 +173,5 @@ plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 # Display the window
 plotter.show()
-###############################################################################
+# %%
 # .. tags:: plot

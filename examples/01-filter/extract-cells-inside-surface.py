@@ -51,5 +51,5 @@ p.add_mesh(rot, color="mintcream", opacity=0.35, **dargs)
 
 p.camera_position = cpos
 p.show()
-###############################################################################
+# %%
 # .. tags:: filter

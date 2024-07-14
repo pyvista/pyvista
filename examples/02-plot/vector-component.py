@@ -52,5 +52,5 @@ pl.link_views()
 pl.camera_position = 'iso'
 pl.background_color = 'white'
 pl.show()
-###############################################################################
+# %%
 # .. tags:: plot

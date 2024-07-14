@@ -55,5 +55,5 @@ p.subplot(2, 2)
 p.add_mesh(disc, color='lightblue', show_edges=True)
 # Render all of them
 p.show()
-###############################################################################
+# %%
 # .. tags:: load

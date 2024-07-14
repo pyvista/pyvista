@@ -135,5 +135,5 @@ plotter.add_light(light)
 plotter.view_vector((1, -2, 2))
 plotter.enable_shadows()
 plotter.show()
-###############################################################################
+# %%
 # .. tags:: lights

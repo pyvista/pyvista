@@ -165,5 +165,5 @@ for time_value in reader.time_values:
     plotter.clear()
 
 plotter.close()
-###############################################################################
+# %%
 # .. tags:: load

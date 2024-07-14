@@ -57,9 +57,9 @@ def simulate(pointa, pointb):
 p.add_line_widget(callback=simulate, use_vertices=True)
 p.show()
 
-##############################################################################
+# %%
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/line-widget-streamlines.gif
-###############################################################################
+# %%
 # .. tags:: widgets

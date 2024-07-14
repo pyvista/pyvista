@@ -128,5 +128,5 @@ for angle in np.linspace(0, np.pi, 20, endpoint=False):
     pl.write_frame()
 
 pl.close()
-###############################################################################
+# %%
 # .. tags:: filter

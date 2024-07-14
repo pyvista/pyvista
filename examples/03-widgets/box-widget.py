@@ -42,5 +42,5 @@ p.show(cpos=[-1, -1, 0.2])
 # %%
 # After interacting with the scene, the clipped mesh is available as:
 p.box_clipped_meshes
-###############################################################################
+# %%
 # .. tags:: widgets

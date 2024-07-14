@@ -42,5 +42,5 @@ shifted.plot(color='brown', lighting=False)
 # %%
 # For further examples about fine-tuning mesh properties that affect
 # light rendering, see the :ref:`lighting_properties_example` example.
-###############################################################################
+# %%
 # .. tags:: lights

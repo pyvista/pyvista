@@ -204,5 +204,5 @@ grid.plot(show_edges=True)
 
 split_cells = grid.explode(0.5)
 split_cells.plot(show_edges=True, ssao=True)
-###############################################################################
+# %%
 # .. tags:: load

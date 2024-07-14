@@ -80,5 +80,5 @@ split_cells.point_data['Point Cell Data'] = np.hstack(
     ),
 )
 split_cells.plot(scalars='Point Cell Data')
-###############################################################################
+# %%
 # .. tags:: plot

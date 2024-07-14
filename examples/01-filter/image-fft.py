@@ -117,5 +117,5 @@ fft_image.plot(
 rfft = fft_image.rfft()
 rfft['PNGImage'] = np.real(rfft['PNGImage'])
 rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')
-###############################################################################
+# %%
 # .. tags:: filter

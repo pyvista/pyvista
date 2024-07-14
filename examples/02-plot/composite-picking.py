@@ -68,5 +68,5 @@ def callback(index, *args):
 pl.enable_block_picking(callback, side="left")
 pl.background_color = "w"
 pl.show()
-###############################################################################
+# %%
 # .. tags:: plot

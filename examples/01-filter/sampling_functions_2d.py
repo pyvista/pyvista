@@ -81,5 +81,5 @@ pl.add_light(pv.Light((3, 1, 0.5), show_actor=True, positional=True, cone_angle=
 pl.add_mesh(mesh, cmap='gist_earth', show_scalar_bar=False, smooth_shading=True, clim=clim)
 pl.enable_shadows = True
 pl.show()
-###############################################################################
+# %%
 # .. tags:: filter

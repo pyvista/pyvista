@@ -50,5 +50,5 @@ for i in range(100):
 
 # Be sure to close the plotter when finished
 plotter.close()
-###############################################################################
+# %%
 # .. tags:: plot

@@ -242,5 +242,5 @@ for i in range(sphere.points.shape[0]):
 # And let's display it with a world map
 tex = examples.load_globe_texture()
 sphere.plot(texture=tex)
-###############################################################################
+# %%
 # .. tags:: plot

@@ -97,5 +97,5 @@ for (i, j), name in np.ndenumerate(keys):
 p.link_views()
 p.view_isometric()
 p.show()
-###############################################################################
+# %%
 # .. tags:: filter

@@ -45,5 +45,5 @@ for i in range(nframe):
 
 # Close movie and delete object
 p.close()
-###############################################################################
+# %%
 # .. tags:: plot

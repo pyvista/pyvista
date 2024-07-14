@@ -35,5 +35,5 @@ image.plot(rgb=True, cpos="xy")
 
 # Mapped image colors
 image.plot(cpos="xy")
-###############################################################################
+# %%
 # .. tags:: load

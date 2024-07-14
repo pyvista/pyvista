@@ -165,5 +165,5 @@ p = pv.Plotter()
 p.add_mesh(pv.Sphere(radius=RADIUS))
 p.add_mesh(surfaces)
 p.show()
-###############################################################################
+# %%
 # .. tags:: plot

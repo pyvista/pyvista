@@ -80,5 +80,5 @@ faces = np.concatenate((face_a, face_b, face_c))
 
 mesh = pv.PolyData(points, faces)
 mesh.plot(show_edges=True, line_width=5)
-###############################################################################
+# %%
 # .. tags:: load

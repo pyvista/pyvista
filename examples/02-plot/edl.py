@@ -94,5 +94,5 @@ p = pv.Plotter()
 p.add_mesh(point_cloud, scalars="Elevation", point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
-###############################################################################
+# %%
 # .. tags:: plot

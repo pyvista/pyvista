@@ -101,5 +101,5 @@ for actor in pl.renderer.actors.values():
         actor.prop.color = next(colors)['color']
 
 pl.show()
-###############################################################################
+# %%
 # .. tags:: plot

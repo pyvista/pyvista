@@ -120,5 +120,5 @@ tube.plot(scalars="theta", smooth_shading=True)
 
 ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
-###############################################################################
+# %%
 # .. tags:: load

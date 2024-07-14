@@ -52,5 +52,5 @@ pl.add_text('Earth Visible as Globe')
 pl.add_mesh(globe, texture=texture, smooth_shading=True)
 
 pl.show()
-###############################################################################
+# %%
 # .. tags:: plot
