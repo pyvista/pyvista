@@ -85,6 +85,12 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
     label_size : int, default: 50
         Size of the text labels.
 
+    label_mode : '2D' | '3D', default: '2D'
+        Mode to use for text labels. In '2D' mode, the label actors are 2D
+        sprites and are always visible. In '3D' mode, they are polygons
+        and may be occluded. The two modes have minor differences in
+        appearance as well as behavior in terms of how they follow the camera.
+
     x_color : ColorLike, optional
         Color of the xy-plane.
 
@@ -165,6 +171,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         show_labels: bool = True,
         label_position: int | VectorLike[int] = 0,
         label_size: int = 50,
+        label_mode: Literal['2D', '3D'] = '2D',
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
@@ -242,6 +249,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         self.label_color = label_color  # type: ignore[assignment]
         self.label_size = label_size
         self.label_position = label_position  # type: ignore[assignment]
+        self.label_mode = label_mode
 
         # Set default text properties
         for label in self._label_actor_iterator:
@@ -332,7 +340,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[0].input
+        return self._axis_actors[0].GetTitle()
 
     @x_label.setter
     def x_label(self, label: str):  # numpydoc ignore=GL08
@@ -351,7 +359,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[1].input
+        return self._axis_actors[1].GetTitle()
 
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
@@ -370,7 +378,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         'This axis'
 
         """
-        return self._label_actors[2].input
+        return self._axis_actors[2].GetTitle()
 
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
@@ -448,6 +456,25 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         self._label_color = valid_color
         for label in self._label_actor_iterator:
             label.prop.color = valid_color
+
+    @property
+    def label_mode(self) -> Literal['2D', '3D']:  # numpydoc ignore=RT01
+        """Mode to use for text labels.
+
+        Mode must be either '2D' or '3D'. In '2D' mode, the label actors are 2D
+        sprites and are always visible. In '3D' mode, the label actors polygons
+        and may be occluded. The two modes also have minor differences in
+        appearance as well as behavior in terms of how they follow the camera.
+        """
+        return self._label_mode
+
+    @label_mode.setter
+    def label_mode(self, mode: Literal['2D', '3D']):  # numpydoc ignore=GL08
+        _validation.check_contains(item=mode, container=['2D', '3D'])
+        self._label_mode = mode
+        use_2D = mode == '2D'
+        for axis in self._axis_actors:
+            axis.SetUse2DMode(use_2D)
 
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -548,6 +575,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
             this_axis_actor.SetPoint2(axis_point2)
 
             # Align axis type to its direction
+            # NOTE: Using SetAxisType() doesn't really seem to have any effect
             axis_dir = np.abs(axis_point1 - axis_point2) / np.linalg.norm(axis_point1 - axis_point2)
             if np.allclose(axis_dir, [1, 0, 0]):
                 this_axis_actor.SetAxisTypeToX()
@@ -558,8 +586,12 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
             else:
                 raise RuntimeError(f"Unexpected axis direction! Got {axis_dir}.")
 
-            # Re-scale the title text (which is 3D vtkVectorText)
-            this_axis_actor.GetTitleActor().SetScale(self.planes.length * self.label_size / 1000)
+            # Re-scale the title text proportional to planes assembly
+            # Values on the order of 0.01-0.05 seem to work best. Use a normalization
+            # factor so that values for `label_size` are on the order of 10-50
+            NORM_FACTOR = 1000
+            scale = self.planes.length * self.label_size / NORM_FACTOR
+            this_axis_actor.GetTitleActor().SetScale(scale)
 
         #          2          1
         #    +----------+----------+
@@ -569,7 +601,7 @@ class PlanesAssembly(_vtk.vtkPropAssembly):
         #    +----------+----------+
         #          5          6
 
-        positions = self._label_position
+        positions = self.label_position
         set_axis_location(0, positions[0])
         set_axis_location(1, positions[1])
         set_axis_location(2, positions[2])
@@ -794,12 +826,10 @@ def _AxisActor():
 
     # Format title positioning
     actor.SetTitleOffset(0, 0)
-    actor.GetTitleActor().SetScreenOffset(100)
     actor.SetLabelOffset(0)
-    actor.SetLabelScale(0.1)
 
-    # actor.SetUse2DMode(True)
-    # actor.SetTitleAlignLocation(2)
-    # actor.SetAxisPositionToMinMax()
-
+    # For 2D mode only
+    actor.SetVerticalOffsetXTitle2D(0)
+    actor.SetHorizontalOffsetYTitle2D(0)
+    actor.GetTitleTextProperty().SetVerticalJustificationToCentered()
     return actor

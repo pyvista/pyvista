@@ -4564,11 +4564,14 @@ def test_planes_assembly_bounds(airplane):
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
 )
-def test_planes_assembly_label_position(plane, label_kwarg, camera_position):
+@pytest.mark.parametrize('label_mode', ['2D', '3D'])
+def test_planes_assembly_label_position(plane, label_kwarg, camera_position, label_mode):
     plot = pv.Plotter()
 
     for num in range(8):
-        actor = pv.PlanesAssembly(labels=['', '', ''], opacity=0.0, label_position=num)
+        actor = pv.PlanesAssembly(
+            labels=['', '', ''], opacity=0.0, label_position=num, label_mode=label_mode
+        )
         setattr(actor, label_kwarg, str(num))
         plot.add_actor(actor)
         actor.camera = plot.camera
