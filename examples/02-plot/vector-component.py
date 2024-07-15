@@ -19,12 +19,12 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 
-###############################################################################
+# %%
 # Download an example notched beam stress
 mesh = examples.download_notch_displacement()
 
 
-###############################################################################
+# %%
 # The default behavior with no component specified is to use the
 # vector magnitude. We can access each component by specifying the
 # component argument.

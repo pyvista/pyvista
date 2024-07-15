@@ -30,7 +30,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 
-###############################################################################
+# %%
 # Load the example Moon landing image and plot it.
 
 image = examples.download_moonlanding_image()
@@ -44,7 +44,7 @@ grey_theme.axes.show = False
 image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
 
-###############################################################################
+# %%
 # Apply FFT to the image
 # ~~~~~~~~~~~~~~~~~~~~~~
 # FFT will be applied to the active scalars, ``'PNGImage'``, the default
@@ -57,7 +57,7 @@ fft_image = image.fft()
 fft_image.point_data
 
 
-###############################################################################
+# %%
 # Plot the FFT of the image
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the absolute value of the FFT of the image.
@@ -76,7 +76,7 @@ fft_image.plot(
 )
 
 
-###############################################################################
+# %%
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
@@ -108,7 +108,7 @@ fft_image.plot(
 )
 
 
-###############################################################################
+# %%
 # Convert to the spatial domain using reverse FFT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, convert the image data back to the "spatial" domain and plot it.

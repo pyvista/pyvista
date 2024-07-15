@@ -16,7 +16,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create sphere glyphs
 # ~~~~~~~~~~~~~~~~~~~~
 
@@ -36,7 +36,7 @@ spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
 spheres.plot(show_scalar_bar=False)
 
-###############################################################################
+# %%
 # Create the movie
 # ~~~~~~~~~~~~~~~~
 
