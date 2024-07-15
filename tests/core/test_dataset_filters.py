@@ -2864,11 +2864,13 @@ def test_merge_general(uniform):
 
 def test_merge_active_normals():
     plane = pv.Plane()
+
     # Check default normals
     default_normal = np.array([0, 0, 1])
     assert np.array_equal(plane["Normals"][0], default_normal)
     assert np.array_equal(plane.active_normals[0], default_normal)
     assert np.array_equal(plane.point_normals[0], default_normal)
+
     # Customize the normals
     plane["Normals"] *= -1
     negative_normal = -default_normal
