@@ -2185,6 +2185,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
 
+    The plane is defined by specifying an origin point, and then
+    two other points that, together with the origin, define two
+    axes for the plane (magnitude and direction). These axes do
+    not have to be orthogonal - so you can create a parallelogram.
+    The axes must not be parallel.
+
     .. versionadded:: 0.44
 
     Parameters
@@ -2195,17 +2201,37 @@ class PlaneSource(_vtk.vtkPlaneSource):
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    origin : sequence[float], default: (-0.5, -0.5, 0.0)
+        Origin in ``[x, y, z]``.
+
+    point_a : sequence[float], default: (0.5, -0.5, 0.0)
+        Location in ``[x, y, z]``.
+
+    point_b : sequence[float], default: (-0.5, 0.5, 0.0)
+        Location in ``[x, y, z]``.
+
     """
 
     def __init__(
         self,
         i_resolution=10,
         j_resolution=10,
+        center=(0.0, 0.0, 0.0),
+        origin=(-0.5, -0.5, 0.0),
+        point_a=(0.5, -0.5, 0.0),
+        point_b=(-0.5, 0.5, 0.0),
     ):
         """Initialize source."""
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
+        self.center = center
+        self.origin = origin
+        self.point_a = point_a
+        self.point_b = point_b
 
     @property
     def i_resolution(self) -> int:
@@ -2250,6 +2276,96 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Number of points on the plane in the j direction.
         """
         self.SetYResolution(j_resolution)
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        The center of the plane is translated to the specified point.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]):
+        """Set the origin in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        self.SetOrigin(origin)
+
+    @property
+    def point_a(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint1()
+
+    @point_a.setter
+    def point_a(self, point_a: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_a : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        self.SetPoint1(point_a)
+
+    @property
+    def point_b(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint2()
+
+    @point_b.setter
+    def point_b(self, point_b: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_b : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        self.SetPoint2(point_b)
 
     @property
     def output(self):

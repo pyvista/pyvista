@@ -26,12 +26,12 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download a gridded topography surface (DEM)
 dem = examples.download_crater_topo()
 dem
 
-###############################################################################
+# %%
 # Now let's subsample and extract an area of interest to make this example
 # simple (also the DEM we just load is pretty big).
 # Since the DEM we loaded is a :class:`pyvista.ImageData` mesh, we can use
@@ -40,17 +40,17 @@ subset = dem.extract_subset((500, 900, 400, 800, 0, 0), (5, 5, 1))
 subset.plot(cpos="xy")
 
 
-###############################################################################
+# %%
 # Now that we have a region of interest for our terrain following mesh, lets
 # make a 3D surface of that DEM:
 terrain = subset.warp_by_scalar()
 terrain
 
-###############################################################################
+# %%
 terrain.plot()
 
 
-###############################################################################
+# %%
 # And now we have a 3D structured surface of the terrain. We can now extend
 # that structured surface into a 3D mesh to form a terrain following grid.
 # To do this, we first our cell spacings in the z-direction (these start
@@ -69,7 +69,7 @@ mesh = pv.StructuredGrid(xx, yy, zz)
 mesh["Elevation"] = zz.ravel(order="F")
 mesh
 
-###############################################################################
+# %%
 cpos = [
     (1826736.796308761, 5655837.275274233, 4676.8405505181745),
     (1821066.1790519988, 5649248.765538796, 943.0995128226014),

@@ -18,7 +18,7 @@ from pyvista.trame.ui.vuetify3 import select
 from pyvista.trame.ui.vuetify3 import slider
 from pyvista.trame.ui.vuetify3 import text_field
 
-###############################################################################
+# %%
 # Let's first create the menu items we want to add to the trame's toolbar.
 # Here we want a "play" button that will be later connected to a slider
 # through the ``button_play`` function. The slider itself will represent the
@@ -68,7 +68,7 @@ def custom_tools():
     )
 
 
-###############################################################################
+# %%
 # The button callback function ``button_play`` needs to be created before starting
 # the server. This function will toggle the boolean state variable ``play``
 # and flush the server, i.e. "force" the server to see the change.
@@ -81,7 +81,7 @@ def button_play():
     state.flush()
 
 
-###############################################################################
+# %%
 # We will do a simple rendering of a Cone using `ConeSouce`.
 #
 # When using the ``pl.show`` method. The function we created ``custom_tools``
@@ -94,7 +94,7 @@ mesh_actor = pl.add_mesh(algo)
 
 widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
 
-###############################################################################
+# %%
 # To interact with ``trame``'s server we need to get the server's state.
 #
 # We initialize the ``play`` variable in the shared state and this will be
@@ -108,7 +108,7 @@ state, ctrl = widget.viewer.server.state, widget.viewer.server.controller
 state.play = False
 ctrl.view_update = widget.viewer.update
 
-###############################################################################
+# %%
 # Now we can create the callback functions for our menu items.
 #
 # The functions are decorated with a ``state.change("variable")``. This means

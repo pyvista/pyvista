@@ -30,7 +30,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Simple Surface Interpolation
 # ++++++++++++++++++++++++++++
 # Resample the points' arrays onto a surface
@@ -44,7 +44,7 @@ p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True
 p.add_mesh(surface)
 p.show()
 
-###############################################################################
+# %%
 # Run the interpolation
 
 interpolated = surface.interpolate(points, radius=12.0)
@@ -56,7 +56,7 @@ p.add_mesh(interpolated, scalars="val")
 p.show()
 
 
-###############################################################################
+# %%
 # Complex Interpolation
 # +++++++++++++++++++++
 # In this example, we will in interpolate sparse points in 3D space into a
@@ -70,14 +70,14 @@ p.show()
 # Download the sparse data
 probes = examples.download_thermal_probes()
 
-###############################################################################
+# %%
 # Create the interpolation grid around the sparse data
 grid = pv.ImageData()
 grid.origin = (329700, 4252600, -2700)
 grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
-###############################################################################
+# %%
 dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
@@ -91,11 +91,11 @@ p.add_mesh(probes, render_points_as_spheres=True, **dargs)
 p.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Run an interpolation
 interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_points')
 
-###############################################################################
+# %%
 # Visualize the results
 
 # sphinx_gallery_start_ignore

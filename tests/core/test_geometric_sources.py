@@ -393,6 +393,10 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
+    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
+    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
 
 
 def test_superquadric_source():
