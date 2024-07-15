@@ -594,11 +594,11 @@ copybutton_prompt_is_regexp = True
 # See https://sphinx-tags.readthedocs.io/en/latest/index.html
 
 tags_badge_colors = {
-    "Load": "primary",
-    "Filter": "secondary",
-    "Plot": "dark",
-    "Widgets": "success",
-    "Lights": "primary",
+    "load": "primary",
+    "filter": "secondary",
+    "plot": "dark",
+    "widgets": "success",
+    "lights": "primary",
 }
 tags_create_tags = True
 tags_create_badges = True
