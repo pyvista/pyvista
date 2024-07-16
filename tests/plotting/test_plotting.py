@@ -4036,20 +4036,34 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     ('Assembly', 'obj_kwargs'),
     [
         (pv.AxesAssembly, {}),
-        (pv.AxesAssemblySymmetric, dict(label_color='white', label_size=25)),
+        (pv.AxesAssemblySymmetric, dict(label_size=25)),
         (pv.PlanesAssembly, dict(opacity=1)),
     ],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
 def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
     plot = pv.Plotter()
-    assembly = Assembly(**test_kwargs, **obj_kwargs)
+    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
     plot.add_actor(assembly)
     if isinstance(assembly, pv.PlanesAssembly):
         assembly.camera = plot.camera
     if test_kwargs:
         # Add second axes at the origin for visual reference
         plot.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
+    plot.show()
+
+
+@pytest.mark.parametrize(
+    'Assembly',
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
+    ids=['Axes', 'AxesSymmetric', 'Planes'],
+)
+def test_xyz_assembly_show_labels(Assembly):
+    plot = pv.Plotter()
+    assembly = Assembly(show_labels=False)
+    plot.add_actor(assembly)
+    if isinstance(assembly, pv.PlanesAssembly):
+        assembly.camera = plot.camera
     plot.show()
 
 
