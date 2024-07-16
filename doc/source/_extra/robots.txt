@@ -1,0 +1,4 @@
+User-agent: *
+Allow: / # Allow everything
+
+Sitemap: https://docs.pyvista.org/sitemap.xml
