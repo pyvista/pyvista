@@ -22,7 +22,7 @@ helmet_file = examples.gltf.download_damaged_helmet()
 texture = examples.download_dikhololo_night()
 
 
-###############################################################################
+# %%
 # Set up the plotter and enable environment textures.  This works well
 # for physically based rendering enabled meshes like the damaged
 # helmet example.  Use :func:`pyvista.Plotter.import_gltf` to import file.
@@ -37,7 +37,7 @@ pl.camera.zoom(1.7)
 pl.show()
 
 
-###############################################################################
+# %%
 # You can also directly read in gltf files and extract the underlying
 # mesh.
 

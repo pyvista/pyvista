@@ -16,7 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import CellType
 
-###############################################################################
+# %%
 # Create a quadratic cell and extract its surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a single quadratic hexahedral cell and then extract its surface
@@ -73,7 +73,7 @@ surf = grid.extract_surface()
 surf.plot(show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Nonlinear Surface Subdivision
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Should your UnstructuredGrid contain quadratic cells, you can
