@@ -16,6 +16,7 @@ from .axes import Axes
 from .axes_actor import AxesActor
 from .axes_assembly import AxesAssembly
 from .axes_assembly import AxesAssemblySymmetric
+from .axes_assembly import PlanesAssembly
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox
@@ -44,7 +45,6 @@ from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
-from .planes_assembly import PlanesAssembly
 from .plotter import _ALL_PLOTTERS
 from .plotter import BasePlotter
 from .plotter import Plotter
