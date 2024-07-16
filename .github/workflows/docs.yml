@@ -154,8 +154,8 @@ jobs:
         uses: nwtgck/actions-netlify@v3.0
         with:
           publish-dir: .
-          production-deploy: ${{ github.ref == 'refs/heads/main' }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          production-deploy: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.ref == 'refs/heads/main' }}
+          github-token: ${{ secrets.PYVISTA_BOT_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
           enable-pull-request-comment: true
           enable-commit-comment: false
