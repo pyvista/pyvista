@@ -314,13 +314,13 @@ language = 'en'
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints", "_templates*"]
+html_extra_path = ["_extra"]
 
 # Pages are not detected correct by ``make linkcheck``
 linkcheck_ignore = [
     'https://data.kitware.com/#collection/55f17f758d777f6ddc7895b7/folder/5afd932e8d777f15ebe1b183',
     'https://www.sciencedirect.com/science/article/abs/pii/S0309170812002564',
     'https://www.researchgate.net/publication/2926068_LightKit_A_lighting_system_for_effective_visualization',
-    'https://docs.pyvista.org/versions.json',
 ]
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -496,12 +496,7 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
-    "check_switcher": False,
-    "switcher": {
-        "json_url": f"https://{cname}/versions.json",
-        "version_match": get_version_match(version),
-    },
-    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
