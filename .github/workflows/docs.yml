@@ -67,21 +67,21 @@ jobs:
 
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v') && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
         with:
           path: doc/source/examples/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache example data
         uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
         with:
           path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache Sphinx build directory
         uses: actions/cache@v3
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')
+        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
         with:
           path: doc/_build/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
