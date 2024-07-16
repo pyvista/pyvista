@@ -576,7 +576,7 @@ texinfo_documents = [
 notfound_context = {
     "body": '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
 }
-notfound_no_urls_prefix = True
+notfound_urls_prefix = None
 
 
 # Copy button customization ---------------------------------------------------
