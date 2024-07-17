@@ -4540,7 +4540,7 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
         pv.Color('blue').float_rgb,
         pv.Color('yellow').float_rgb,
     ]
-    plane.plot_normals(mag=0.8, color='red')
+    plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
