@@ -382,6 +382,18 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     _named_tuple_actors: type[NamedTuple] = _ShaftTipTuple
     _named_tuple_label_actors: type[NamedTuple] = _SingleLabelTuple
 
+    def _init_actors_from_source(self, geometry_source: AxesGeometrySource):
+        # Init shaft and tip actors
+        self._shaft_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
+        self._tip_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
+        self._shaft_and_tip_actors = (*self._shaft_actors, *self._tip_actors)
+
+        # Init shaft and tip datasets
+        self._shaft_and_tip_geometry_source = geometry_source
+        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
+        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
+            actor.mapper = pv.DataSetMapper(dataset=dataset)
+
     def __init__(
         self,
         *,
@@ -404,17 +416,8 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
-        self._shaft_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
-        self._tip_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
-        self._shaft_and_tip_actors = (*self._shaft_actors, *self._tip_actors)
-
-        # Init shaft and tip datasets
-        self._shaft_and_tip_geometry_source = AxesGeometrySource(symmetric=False, **kwargs)
-        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
-        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
-            actor.mapper = pv.DataSetMapper(dataset=dataset)
-
-        # Add actors to assembly
+        self._init_actors_from_source(AxesGeometrySource(symmetric=False, **kwargs))
+        # Init label actors
         self._label_actors = (Label(), Label(), Label())
 
         _XYZAssembly.__init__(
@@ -438,8 +441,10 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
             scale=scale,
             user_matrix=user_matrix,
         )
+        self._set_default_label_props()
 
-        # Set default text properties
+    def _set_default_label_props(self):
+        # TODO: implement set_text_prop() and use that instead
         for label in self._label_actor_iterator:
             prop = label.prop
             prop.bold = True
@@ -860,153 +865,6 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         for label, position in zip(labels, position_vectors):
             label.relative_position = position
 
-    # @property
-    # def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Return or set the scaling factor applied to the axes.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes = pv.AxesAssembly()
-    #     >>> axes.scale = (2.0, 2.0, 2.0)
-    #     >>> axes.scale
-    #     (2.0, 2.0, 2.0)
-    #     """
-    #     return self._prop3d.scale
-
-    # @scale.setter
-    # def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-    #     self._set_prop3d_attr('scale', scale)
-    #
-    # @property
-    # def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Return or set the position of the axes.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes = pv.AxesAssembly()
-    #     >>> axes.position = (1.0, 2.0, 3.0)
-    #     >>> axes.position
-    #     (1.0, 2.0, 3.0)
-    #     """
-    #     return self._prop3d.position
-    #
-    # @position.setter
-    # def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-    #     self._set_prop3d_attr('position', position)
-    #
-    # @property
-    # def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Return or set the axes orientation angles.
-    #
-    #     Orientation angles of the axes which define rotations about the
-    #     world's x-y-z axes. The angles are specified in degrees and in
-    #     x-y-z order. However, the actual rotations are applied in the
-    #     following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-    #     and finally :func:`~rotate_z`.
-    #
-    #     Rotations are applied about the specified :attr:`~origin`.
-    #
-    #     Examples
-    #     --------
-    #     Create axes positioned above the origin and set its orientation.
-    #
-    #     >>> import pyvista as pv
-    #     >>> axes = pv.AxesAssembly(
-    #     ...     position=(0, 0, 2), orientation=(45, 0, 0)
-    #     ... )
-    #
-    #     Create default non-oriented axes as well for reference.
-    #
-    #     >>> reference_axes = pv.AxesAssembly(
-    #     ...     x_color='black', y_color='black', z_color='black'
-    #     ... )
-    #
-    #     Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
-    #     default, such that the rotated axes appear directly above the reference axes.
-    #
-    #     >>> pl = pv.Plotter()
-    #     >>> _ = pl.add_actor(axes)
-    #     >>> _ = pl.add_actor(reference_axes)
-    #     >>> pl.show()
-    #
-    #     Now change the origin of the axes and plot the result. Since the rotation
-    #     is performed about a different point, the final position of the axes changes.
-    #
-    #     >>> axes.origin = (2, 2, 2)
-    #     >>> pl = pv.Plotter()
-    #     >>> _ = pl.add_actor(axes)
-    #     >>> _ = pl.add_actor(reference_axes)
-    #     >>> pl.show()
-    #     """
-    #     return self._prop3d.orientation
-    #
-    # @orientation.setter
-    # def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
-    #     self._set_prop3d_attr('orientation', orientation)
-    #
-    # @property
-    # def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-    #     """Return or set the origin of the axes.
-    #
-    #     This is the point about which all rotations take place.
-    #
-    #     See :attr:`~orientation` for examples.
-    #
-    #     """
-    #     return self._prop3d.origin
-    #
-    # @origin.setter
-    # def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
-    #     self._set_prop3d_attr('origin', origin)
-    #
-    # @property
-    # def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-    #     """Return or set the user matrix.
-    #
-    #     In addition to the instance variables such as position and orientation, the user
-    #     can add a transformation to the actor.
-    #
-    #     This matrix is concatenated with the actor's internal transformation that is
-    #     implicitly created when the actor is created. The user matrix is the last
-    #     transformation applied to the actor before rendering.
-    #
-    #     Returns
-    #     -------
-    #     np.ndarray
-    #         A 4x4 transformation matrix.
-    #
-    #     Examples
-    #     --------
-    #     Apply a 4x4 transformation to the axes. This effectively translates the actor
-    #     by one unit in the Z direction, rotates the actor about the z-axis by
-    #     approximately 45 degrees, and shrinks the actor by a factor of 0.5.
-    #
-    #     >>> import numpy as np
-    #     >>> import pyvista as pv
-    #     >>> axes = pv.AxesAssembly()
-    #     >>> array = np.array(
-    #     ...     [
-    #     ...         [0.35355339, -0.35355339, 0.0, 0.0],
-    #     ...         [0.35355339, 0.35355339, 0.0, 0.0],
-    #     ...         [0.0, 0.0, 0.5, 1.0],
-    #     ...         [0.0, 0.0, 0.0, 1.0],
-    #     ...     ]
-    #     ... )
-    #     >>> axes.user_matrix = array
-    #
-    #     >>> pl = pv.Plotter()
-    #     >>> _ = pl.add_actor(axes)
-    #     >>> pl.show()
-    #
-    #     """
-    #     return self._prop3d.user_matrix
-    #
-    # @user_matrix.setter
-    # def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-    #     self._set_prop3d_attr('user_matrix', matrix)
-
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the axes.
@@ -1222,6 +1080,8 @@ class AxesAssemblySymmetric(AxesAssembly):
     >>> pl.show()
     """
 
+    _named_tuple_label_actors = _PlusMinusTuple
+
     def __init__(
         self,
         *,
@@ -1243,13 +1103,16 @@ class AxesAssemblySymmetric(AxesAssembly):
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
-        # Init symmetric label actors and add to assembly
+        # Init shaft and tip actors
+        self._init_actors_from_source(AxesGeometrySource(symmetric=True, **kwargs))
+        # Init label actors
+        self._label_actors = (Label(), Label(), Label())
         self._label_actors_symmetric = (Label(), Label(), Label())
 
-        # TODO: move AddPart to superclass init, call _XYZ.__init__ directly
-        [self.AddPart(actor) for actor in self._label_actors_symmetric]
-
-        super().__init__(
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
+            xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),  # type: ignore[arg-type]
             x_label=x_label,  # type: ignore[arg-type]
             y_label=y_label,  # type: ignore[arg-type]
             z_label=z_label,  # type: ignore[arg-type]
@@ -1266,19 +1129,8 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
-            **kwargs,
         )
-
-        # Make the geometry symmetric
-        self._shaft_and_tip_geometry_source.symmetric = True
-        self._shaft_and_tip_geometry_source.update()
-
-        # Set default text properties
-        # TODO: implement set_text_prop() and use that instead
-        for label in self._label_actor_iterator:
-            prop = label.prop
-            prop.bold = True
-            prop.italic = True
+        self._set_default_label_props()
 
     @property  # type: ignore[override]
     def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
