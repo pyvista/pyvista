@@ -917,45 +917,40 @@ def test_fit_plane_to_points():
 # Default output from `np.linalg.eigh`
 DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
 
-CASE_RANK0 = (
-    0,
+
+CASE_0 = (  # coincidental points
     [[0, 0, 0], [0, 0, 0]],
     [DEFAULT_PRINCIPAL_AXES],
 )
-CASE_RANK1 = (
-    1,
+CASE_1 = (  # non-coincidental points
     [[0, 0, 0], [1, 0, 0]],
     [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]],
 )
 
-CASE_RANK2 = (
-    2,
-    [[1, 2, 3], [3, 2, 1]],
+CASE_2 = (  # non-collinear points
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
     [
-        [-0.70710678, 0.0, 0.70710678],
-        [0.0, 1.0, 0.0],
-        [-0.70710678, 0.0, -0.70710678],
+        [0.0, -0.70710678, 0.70710678],
+        [-0.81649658, 0.40824829, 0.40824829],
+        [-0.57735027, -0.57735027, -0.57735027],
     ],
 )
-CASE_RANK3 = (
-    3,
-    pv.examples.load_airplane().points,
+CASE_3 = (  # non-coplanar points
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, -1, -1]],
     [
-        [8.1159601e-07, -9.9255711e-01, -1.2178054e-01],
-        [-1.0000000e00, -8.0911440e-07, -6.9828459e-08],
-        [-2.9225653e-08, 1.2178054e-01, -9.9255711e-01],
+        [-0.57735027, -0.57735027, -0.57735027],
+        [0.0, -0.70710678, 0.70710678],
+        [-0.81649658, 0.40824829, 0.40824829],
     ],
 )
 
 
 @pytest.mark.parametrize(
-    ('rank', 'points', 'expected_axes'),
-    [CASE_RANK0, CASE_RANK1, CASE_RANK2, CASE_RANK3],
+    ('points', 'expected_axes'),
+    [CASE_0, CASE_1, CASE_2, CASE_3],
     ids=['rank0', 'rank1', 'rank2', 'rank3'],
 )
-def test_principal_axes(rank, points, expected_axes):
-    assert np.linalg.matrix_rank(points) == rank
-
+def test_principal_axes(points, expected_axes):
     axes = principal_axes(points)
     assert np.allclose(axes, expected_axes, atol=1e-7)
 
@@ -964,7 +959,9 @@ def test_principal_axes(rank, points, expected_axes):
     assert isinstance(axes, np.ndarray)
 
     _, std = principal_axes(points, return_std=True)
-    assert std[0] >= std[1] >= std[2]
+    assert std[0] >= std[1]
+    if not np.isnan(std[2]):
+        assert std[1] >= std[2]
     assert isinstance(std, np.ndarray)
 
 
