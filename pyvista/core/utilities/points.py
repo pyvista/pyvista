@@ -517,7 +517,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> rng = np.random.default_rng(seed=0)  # only seeding for the example!
+    >>> rng = np.random.default_rng(seed=0)  # only seeding for the example
 
     Create a mesh with points that have the largest variation in ``X``,
     followed by ``Y``, then ``Z``.
