@@ -875,6 +875,20 @@ is successful.
    `Notes Regarding Image Regression Testing`_ for testing methods which should
    be considered first.
 
+Controlling Cache for CI Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To reduce build times of the documentation for PRs, cached sphinx gallery, example data, and sphinx build directories
+are used in the CI on GitHub.  In some cases, the caching action can cause problems for a specific
+PR.  To invalidate a cache for a specific PR, one of the following labels can be applied to the PR.
+
+- ``no-example-data-cache``
+- ``no-gallery-cache``
+- ``no-sphinx-build-cache``
+
+The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
+rerun the CI with the labels applied.
+
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -13,11 +13,9 @@ import numpy as np
 
 import pyvista as pv
 from pyvista.core import _validation
-from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
-from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -688,7 +686,7 @@ class AxesAssembly(_vtk.vtkPropAssembly):
 
         return actors
 
-    def _transform_label_position(self, position_scalars: tuple[float, float, float]):
+    def _get_offset_label_position_vectors(self, position_scalars: tuple[float, float, float]):
         # Create position vectors
         position_vectors = np.diag(position_scalars)
 
@@ -699,30 +697,21 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         radial_offset2 = np.roll(offset_array, shift=-1, axis=1)
 
         position_vectors += radial_offset1 + radial_offset2
-
-        # Transform positions
-        matrix = array_from_vtkmatrix(self._prop3d.GetMatrix())
-        return apply_transformation_to_points(matrix, position_vectors)
-
-    def _apply_transformation_to_labels(
-        self, position_scalars: tuple[float, float, float], labels: tuple[Label, Label, Label]
-    ):
-        vectors = self._transform_label_position(position_scalars)
-        for label, vector in zip(labels, vectors):
-            label.position = vector
+        return position_vectors
 
     def _update_label_positions(self):
-        self._apply_transformation_to_labels(self.label_position, self._label_actors)
+        labels = self._label_actors
+        position_vectors = self._get_offset_label_position_vectors(self.label_position)
+        for label, position in zip(labels, position_vectors):
+            label.relative_position = position
 
     def _set_prop3d_attr(self, name, value):
         # Set props for shaft and tip actors
         # Validate input by setting then getting from prop3d
         setattr(self._prop3d, name, value)
         valid_value = getattr(self._prop3d, name)
-        [setattr(actor, name, valid_value) for actor in self._shaft_and_tip_actors]
-
-        # Update labels
-        self._update_label_positions()
+        actors = [*self._shaft_and_tip_actors, *self._label_actor_iterator]
+        [setattr(actor, name, valid_value) for actor in actors]
 
     @property
     def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1287,10 +1276,13 @@ class AxesAssemblySymmetric(AxesAssembly):
         self._set_axis_label(_AxisEnum.z, label)
 
     def _update_label_positions(self):
-        position_plus = self.label_position
-        labels_plus = self._label_actors
-        self._apply_transformation_to_labels(position_plus, labels_plus)
+        # Update plus labels using parent method
+        AxesAssembly._update_label_positions(self)
 
-        position_minus = (-position_plus[0], -position_plus[1], -position_plus[2])
+        # Update minus labels
+        label_position = self.label_position
+        label_position_minus = (-label_position[0], -label_position[1], -label_position[2])
         labels_minus = self._label_actors_symmetric
-        self._apply_transformation_to_labels(position_minus, labels_minus)
+        vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
+        for label, position in zip(labels_minus, vector_position_minus):
+            label.relative_position = position

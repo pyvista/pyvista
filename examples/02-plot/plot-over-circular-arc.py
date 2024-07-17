@@ -17,7 +17,7 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Volumetric Mesh
 # +++++++++++++++
 #
@@ -43,6 +43,6 @@ b = arc.points[-1]
 p.add_point_labels([a, b], ["A", "B"], font_size=48, point_color="red", text_color="red")
 p.show()
 
-###############################################################################
+# %%
 # Run the filter and produce a line plot.
 mesh.plot_over_circular_arc_normal(center, 100, normal, polar, angle, 'height')
