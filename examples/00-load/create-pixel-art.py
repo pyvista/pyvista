@@ -19,7 +19,7 @@ from pyvista.demos import logo
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Convert pixel art to an array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -47,7 +47,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
     alien.append([line[i : i + 2] == '% ' for i in range(0, len(line), 2)])
 
 
-###############################################################################
+# %%
 # Define function to draw pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
@@ -76,7 +76,7 @@ def draw_pixels(plotter, pixels, center, color):
     return plotter
 
 
-###############################################################################
+# %%
 # Now you can plot a pixel art of ALIEN MONSTERS.
 
 # Display MONSTERS

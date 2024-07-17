@@ -39,7 +39,7 @@ alpha_final = 1  # arbitrary > 1
 eta_final = 2  # arbitrary > 1
 kappa = (n - 1) / (2 * n)
 
-###############################################################################
+# %%
 # Let's define the chain of mappings we'll need for implementing the eversion:
 
 
@@ -145,7 +145,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
     return x2, y2, z2
 
 
-###############################################################################
+# %%
 # Now chain the functions by performing the process in Table 1 of the paper.
 # Start from the bottom for ``t = -1/Q``, keep stepping up, linearly changing
 # parameters that change from row to row, then at the top go from ``t = -1/Q``
@@ -239,7 +239,7 @@ for lamda in np.linspace(1, 0, n_steps + 1)[1:]:
 plotter.close()
 
 
-###############################################################################
+# %%
 # Looking at the still image of the middle state with ``t = 0``, we see a nice
 # symmetric configuration where two "inside" and two "outside" lobes of the
 # sphere are visible.
