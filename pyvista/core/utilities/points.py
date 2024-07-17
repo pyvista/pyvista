@@ -602,17 +602,18 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     Since the points are normally distributed, the relative proportion of
     the standard deviation matches the scaling of the axes almost perfectly.
     """
-    valid_points = _validation.validate_arrayNx3(points)
-    num_points = valid_points.shape[0]
-    scale_factor = np.sqrt(num_points) if num_points else 1  # Avoid div by zero
-    points_centered = (valid_points - valid_points.mean(axis=0)) / scale_factor
-    std, axes = np.linalg.eigh(points_centered.T @ points_centered)
-    axes = axes.T[::-1]  # columns, ascending order -> rows, descending order
-    std = std[::-1]  # ascending -> descending
+    points = _validation.validate_arrayNx3(points)
+
+    points_centered = points - np.mean(points, axis=0)
+    eig_vals, eig_vectors = np.linalg.eigh(points_centered.T @ points_centered)
+    axes = eig_vectors.T[::-1]  # columns, ascending order -> rows, descending order
 
     # Ensure axes form a right-handed coordinate frame
     if np.linalg.det(axes) < 0:
         axes[2] *= -1
+
     if return_std:
+        # Compute standard deviation and swap order from ascending -> descending
+        std = (np.sqrt(eig_vals) / len(points))[::-1]
         return axes, std
     return axes
