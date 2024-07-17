@@ -4525,6 +4525,7 @@ def test_direction_objects(direction_obj_test_case):
 
     plot.show()
 
+
 @skip_windows  # Windows colors all plane cells red (bug?)
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 @pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
