@@ -3508,7 +3508,9 @@ class OrthogonalPlanesSource:
     """Orthogonal planes source.
 
     This source generates three orthogonal planes. The :attr:`output` is a
-    :class:`~pyvista.MultiBlock` with named plane meshes ``'xy'``, ``'yz'``, ``'zx'``.
+    :class:`~pyvista.MultiBlock` with named plane meshes ``'yz'``, ``'zx'``, ``'xy'``.
+    The meshes are ordered such that the first, second, and third plane is perpendicular
+    to the x, y, and z-axis, respectively.
 
     Parameters
     ----------
@@ -3557,7 +3559,7 @@ class OrthogonalPlanesSource:
         *,
         resolution: int | VectorLike[int] = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
-        names: Sequence[str] = ('xy', 'yz', 'zx'),
+        names: Sequence[str] = ('yz', 'zx', 'xy'),
     ):
         # Init sources and the output dataset
         self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
@@ -3630,7 +3632,7 @@ class OrthogonalPlanesSource:
         ORIGIN = (0.0, 0.0, 0.0)
 
         # Unpack vars
-        xy_source, yz_source, zx_source = self._plane_sources
+        yz_source, zx_source, xy_source = self._plane_sources
         x_res, y_res, z_res = self.resolution
         x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
 
@@ -3678,7 +3680,9 @@ class OrthogonalPlanesSource:
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
-        plane. The blocks are named ``'xy'``, ``'yz'``, and ``'zx'`` by default.
+        plane. The blocks are named ``'yz'``, ``'zx'``, ``'xy'``, and are ordered such
+        that the first, second, and third plane is perpendicular to the x, y, and
+        z-axis, respectively.
 
         The source is automatically updated by :meth:`update` prior to returning
         the output.

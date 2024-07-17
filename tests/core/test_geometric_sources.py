@@ -690,7 +690,7 @@ def test_orthogonal_planes_source():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output
     assert isinstance(output, pv.MultiBlock)
-    assert output.keys() == ['xy', 'yz', 'zx']
+    assert output.keys() == ['yz', 'zx', 'xy']
     assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
