@@ -4541,9 +4541,6 @@ def test_orthogonal_planes_source_normals(normal_sign):
         ]
     # Merge for plotting, since multiblock does not have a `plot_normals` method
     merged = pv.merge(output)
-    # This line is necessary due to issue: https://github.com/pyvista/pyvista/issues/6365
-    merged.GetPointData().SetActiveNormals('Normals')
-
     merged.plot_normals(mag=0.8, color='red')
 
 
