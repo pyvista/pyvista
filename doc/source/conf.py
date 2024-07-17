@@ -88,7 +88,6 @@ extensions = [
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
     "sphinxcontrib.asciinema",
-    "sphinx_reredirects",
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
 ]
@@ -575,11 +574,6 @@ notfound_context = {
     "body": '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
 }
 notfound_urls_prefix = None
-
-redirects = {
-    "version/stable/*": "https://docs.pyvista.org/$source",
-    "version/dev/*": "https://dev.pyvista.org/$source",
-}
 
 
 # Copy button customization ---------------------------------------------------
