@@ -503,7 +503,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     return_std : bool, default: False
         If ``True``, also returns the standard deviation of the points along each axis.
         Standard deviation is computed as the square root of the eigenvalues of the
-        mean-centered covariance matrix, divided by the number of points.
+        mean-centered covariance matrix.
 
     Returns
     -------
@@ -511,13 +511,13 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
         3x3 orthonormal array with the principal axes as row vectors.
 
     numpy.ndarray
-        Three-item array of the axis sizes.
+        Three-item array of the standard deviations along each axis.
 
     Examples
     --------
     >>> import pyvista as pv
     >>> import numpy as np
-    >>> rng = np.random.default_rng(seed=0)
+    >>> rng = np.random.default_rng(seed=0)  # only seeding for the example!
 
     Create a mesh with points that have the largest variation in ``X``,
     followed by ``Y``, then ``Z``.
@@ -535,7 +535,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     >>> _ = p.show_grid()
     >>> p.show()
 
-    Compute its principal axes and return the standard deviation.
+    Compute its principal axes and return the standard deviations.
 
     >>> axes, std = pv.principal_axes(mesh.points, return_std=True)
     >>> axes
