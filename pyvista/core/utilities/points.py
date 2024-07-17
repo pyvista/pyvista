@@ -560,7 +560,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     Convert the values to proportions for analysis.
 
     >>> std / sum(std)
-    array([0.5769149 , 0.28845745, 0.1346276 ], dtype=float32)
+    array([0.5769149 , 0.28845742, 0.1346276 ], dtype=float32)
 
     From this result, we can determine that the axes explain approximately
     58%, 29%, and 13% of the total variance in the points, respectively.
