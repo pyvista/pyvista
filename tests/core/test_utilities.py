@@ -1005,7 +1005,7 @@ def test_principal_axes_vectors_success_with_many_points():
 
     # Check std to verify the computed output is valid
     # Need large atol due to loss of numerical precision
-    assert np.allclose(std, [0.001503, 0.001002, 0.00070782])
+    assert np.allclose(std, [1.50074922, 1.00049953, 0.70675449])
 
 
 @pytest.mark.parametrize(

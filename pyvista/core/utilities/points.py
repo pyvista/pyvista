@@ -555,7 +555,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     Show the standard deviation along each axis.
 
     >>> std
-    array([0.03060594, 0.01530297, 0.00714213], dtype=float32)
+    array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
 
     Convert the values to proportions for analysis.
 
@@ -591,7 +591,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     and compare the relative proportions.
 
     >>> std
-    array([0.18798689, 0.0915765 , 0.03228786])
+    array([5.94466738, 2.89590334, 1.02103169])
 
     >>> std / sum(std)
     array([0.60280948, 0.29365444, 0.10353608])
@@ -614,6 +614,6 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        std = (np.sqrt(eig_vals) / len(points))[::-1]
+        std = np.sqrt(eig_vals / len(points))[::-1]
         return axes, std
     return axes
