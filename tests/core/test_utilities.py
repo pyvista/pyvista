@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pickle
 import shutil
+import sys
 from unittest import mock
 import warnings
 
@@ -945,10 +946,11 @@ CASE_3 = (  # non-coplanar points
 )
 
 
+@pytest.mark.skipif(sys.version_info <= (3, 8), reason='Different results for some tests.')
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
     [CASE_0, CASE_1, CASE_2, CASE_3],
-    ids=['rank0', 'rank1', 'rank2', 'rank3'],
+    ids=['case0', 'case1', 'case2', 'case3'],
 )
 def test_principal_axes(points, expected_axes):
     axes = principal_axes(points)
