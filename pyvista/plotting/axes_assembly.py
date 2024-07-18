@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 import itertools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import Sequence
@@ -19,6 +21,8 @@ from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
+from pyvista.plotting.prop3d import Prop3D
+from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -27,8 +31,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
     from pyvista.plotting._typing import ColorLike
@@ -58,7 +60,224 @@ class _AxesGeometryKwargs(TypedDict):
     symmetric_bounds: bool
 
 
-class AxesAssembly(_vtk.vtkPropAssembly):
+class _XYZTuple(NamedTuple):
+    x: Any
+    y: Any
+    z: Any
+
+
+class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+    DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
+
+    def __init__(
+        self,
+        *,
+        xyz_actors: tuple[Any, Any, Any],
+        xyz_label_actors: tuple[Any, Any, Any],
+        x_label,
+        y_label,
+        z_label,
+        labels,
+        label_color,
+        show_labels,
+        label_position,
+        label_size,
+        x_color,
+        y_color,
+        z_color,
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
+    ):
+        super().__init__()
+
+        def _make_xyz_tuple(xyz):
+            def _get_tuple(actor_or_actors):
+                return actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
+
+            actor_tuples = [_get_tuple(actors) for actors in xyz]
+            return _XYZTuple(*actor_tuples)
+
+        self._assembly_actors = _make_xyz_tuple(xyz_actors)
+        self._assembly_label_actors = _make_xyz_tuple(xyz_label_actors)
+
+        # Add all actors to assembly
+        for parts in (*self._assembly_actors, *self._assembly_label_actors):
+            for part in parts:
+                self.AddPart(part)
+
+        # Set colors
+        if x_color is None:
+            x_color = pv.global_theme.axes.x_color
+        if y_color is None:
+            y_color = pv.global_theme.axes.y_color
+        if z_color is None:
+            z_color = pv.global_theme.axes.z_color
+
+        self.x_color = x_color
+        self.y_color = y_color
+        self.z_color = z_color
+
+        # Set text labels
+        if labels is None:
+            self.x_label = self.DEFAULT_LABELS.x if x_label is None else x_label
+            self.y_label = self.DEFAULT_LABELS.y if y_label is None else y_label
+            self.z_label = self.DEFAULT_LABELS.z if z_label is None else z_label
+        else:
+            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
+            if x_label is not None:
+                raise ValueError(msg.format('x_label'))
+            if y_label is not None:
+                raise ValueError(msg.format('y_label'))
+            if z_label is not None:
+                raise ValueError(msg.format('z_label'))
+            self.labels = labels
+        self.show_labels = show_labels
+        self.label_color = label_color
+        self.label_size = label_size
+        self.label_position = label_position
+
+        self.position = position  # type: ignore[method-assign]
+        self.orientation = orientation  # type: ignore[method-assign]
+        self.scale = scale  # type: ignore[method-assign]
+        self.origin = origin  # type: ignore[method-assign]
+        self.user_matrix = user_matrix  # type: ignore[method-assign]
+
+    @property
+    def parts(self):
+        collection = self.GetParts()
+        return tuple([collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())])
+
+    @property
+    def _label_actor_iterator(self) -> Iterator[Label]:
+        return itertools.chain.from_iterable(self._assembly_label_actors)
+
+    def _post_set_update(self):
+        # Update prop3D attributes for shaft, tip, and label actors
+        parts = self.parts
+        for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
+            # Only update values if modified
+            value = getattr(self._prop3d, name)
+            for part in parts:
+                if isinstance(part, (Prop3D, _Prop3DMixin)):
+                    if not np.array_equal(getattr(part, name), value):
+                        setattr(part, name, value)
+
+    @property
+    def show_labels(self) -> bool:  # numpydoc ignore=RT01
+        """Show or hide the text labels for the axes."""
+        return self._show_labels
+
+    @show_labels.setter
+    def show_labels(self, value: bool):  # numpydoc ignore=GL08
+        self._show_labels = value
+        for label in self._label_actor_iterator:
+            label.SetVisibility(value)
+
+    @property
+    @abstractmethod
+    def labels(self):  # numpydoc ignore=RT01
+        """XYZ labels."""
+
+    @labels.setter
+    @abstractmethod
+    def labels(self, labels):  # numpydoc ignore=GL08
+        """XYZ labels."""
+
+    @property
+    @abstractmethod
+    def x_label(self):  # numpydoc ignore=RT01
+        """Text label for the x-axis."""
+
+    @x_label.setter
+    @abstractmethod
+    def x_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the x-axis."""
+
+    @property
+    @abstractmethod
+    def y_label(self):  # numpydoc ignore=RT01
+        """Text label for the y-axis."""
+
+    @y_label.setter
+    @abstractmethod
+    def y_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the y-axis."""
+
+    @property
+    @abstractmethod
+    def z_label(self):  # numpydoc ignore=RT01
+        """Text label for the z-axis."""
+
+    @z_label.setter
+    @abstractmethod
+    def z_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the z-axis."""
+
+    @property
+    @abstractmethod
+    def label_size(self):  # numpydoc ignore=RT01
+        """Size of the text labels."""
+
+    @label_size.setter
+    @abstractmethod
+    def label_size(self, size):  # numpydoc ignore=GL08
+        """Size of the text labels."""
+
+    @property
+    @abstractmethod
+    def label_position(self):  # numpydoc ignore=RT01
+        """Position of the text labels."""
+
+    @label_position.setter
+    @abstractmethod
+    def label_position(self, position):  # numpydoc ignore=GL08
+        """Position of the text labels."""
+
+    @property
+    @abstractmethod
+    def label_color(self):  # numpydoc ignore=RT01
+        """Color of the text labels."""
+
+    @label_color.setter
+    @abstractmethod
+    def label_color(self, color):  # numpydoc ignore=GL08
+        """Color of the text labels."""
+
+    @property
+    @abstractmethod
+    def x_color(self):  # numpydoc ignore=RT01
+        """Color of the x-axis actors."""
+
+    @x_color.setter
+    @abstractmethod
+    def x_color(self, color):  # numpydoc ignore=GL08
+        """Color of the x-axis actors."""
+
+    @property
+    @abstractmethod
+    def y_color(self):  # numpydoc ignore=RT01
+        """Color of the y-axis actors."""
+
+    @y_color.setter
+    @abstractmethod
+    def y_color(self, color):  # numpydoc ignore=GL08
+        """Color of the y-axis actors."""
+
+    @property
+    @abstractmethod
+    def z_color(self):  # numpydoc ignore=RT01
+        """Color of the z-axis actors."""
+
+    @z_color.setter
+    @abstractmethod
+    def z_color(self, color):  # numpydoc ignore=GL08
+        """Color of the z-axis actors."""
+
+
+class AxesAssembly(_XYZAssembly):
     """Assembly of arrow-style axes parts.
 
     The axes may be used as a widget or added to a scene.
@@ -186,6 +405,18 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     >>> pl.show()
     """
 
+    def _init_actors_from_source(self, geometry_source: AxesGeometrySource):
+        # Init shaft and tip actors
+        self._shaft_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
+        self._tip_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
+        self._shaft_and_tip_actors = (*self._shaft_actors, *self._tip_actors)
+
+        # Init shaft and tip datasets
+        self._shaft_and_tip_geometry_source = geometry_source
+        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
+        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
+            actor.mapper = pv.DataSetMapper(dataset=dataset)
+
     def __init__(
         self,
         *,
@@ -207,71 +438,40 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
-        super().__init__()
-
-        # Add dummy prop3d for calculating transformations
-        self._prop3d = Actor()
-
         # Init shaft and tip actors
-        self._shaft_actors = (Actor(), Actor(), Actor())
-        self._tip_actors = (Actor(), Actor(), Actor())
-        self._shaft_and_tip_actors = (*self._shaft_actors, *self._tip_actors)
-
-        # Init shaft and tip datasets
-        self._shaft_and_tip_geometry_source = AxesGeometrySource(symmetric=False, **kwargs)
-        shaft_tip_datasets = self._shaft_and_tip_geometry_source.output
-        for actor, dataset in zip(self._shaft_and_tip_actors, shaft_tip_datasets):
-            actor.mapper = pv.DataSetMapper(dataset=dataset)
-
-        # Add actors to assembly
-        [self.AddPart(actor) for actor in self._shaft_and_tip_actors]
-
-        # Init label actors and add to assembly
+        self._init_actors_from_source(AxesGeometrySource(symmetric=False, **kwargs))
+        # Init label actors
         self._label_actors = (Label(), Label(), Label())
-        [self.AddPart(actor) for actor in self._label_actors]
 
-        # Set colors
-        if x_color is None:
-            x_color = pv.global_theme.axes.x_color
-        if y_color is None:
-            y_color = pv.global_theme.axes.y_color
-        if z_color is None:
-            z_color = pv.global_theme.axes.z_color
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
+            xyz_label_actors=self._label_actors,
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            labels=labels,
+            label_color=label_color,
+            show_labels=show_labels,
+            label_position=label_position,
+            label_size=label_size,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+        )
+        self._set_default_label_props()
 
-        self.x_color = x_color  # type: ignore[assignment]
-        self.y_color = y_color  # type: ignore[assignment]
-        self.z_color = z_color  # type: ignore[assignment]
-
-        # Set text labels
-        if labels is None:
-            self.x_label = 'X' if x_label is None else x_label
-            self.y_label = 'Y' if y_label is None else y_label
-            self.z_label = 'Z' if z_label is None else z_label
-        else:
-            msg = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-            if x_label is not None:
-                raise ValueError(msg.format('x_label'))
-            if y_label is not None:
-                raise ValueError(msg.format('y_label'))
-            if z_label is not None:
-                raise ValueError(msg.format('z_label'))
-            self.labels = labels  # type: ignore[assignment]
-        self.show_labels = show_labels
-        self.label_color = label_color  # type: ignore[assignment]
-        self.label_size = label_size
-        self.label_position = label_position  # type: ignore[assignment]
-
-        # Set default text properties
+    def _set_default_label_props(self):
+        # TODO: implement set_text_prop() and use that instead
         for label in self._label_actor_iterator:
             prop = label.prop
             prop.bold = True
             prop.italic = True
-
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
-        self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     def __repr__(self):
         """Representation of the axes assembly."""
@@ -311,12 +511,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
             f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
         ]
         return '\n'.join(attr)
-
-    @property
-    def _label_actor_iterator(self) -> Iterator[Label]:
-        collection = self.GetParts()
-        parts = [collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())]
-        return (part for part in parts if isinstance(part, Label))
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -398,17 +592,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
         self._label_actors[2].input = label
-
-    @property
-    def show_labels(self) -> bool:  # numpydoc ignore=RT01
-        """Show or hide the text labels for the axes."""
-        return self._show_labels
-
-    @show_labels.setter
-    def show_labels(self, value: bool):  # numpydoc ignore=GL08
-        self._show_labels = value
-        for label in self._label_actor_iterator:
-            label.SetVisibility(value)
 
     @property
     def label_size(self) -> int:  # numpydoc ignore=RT01
@@ -705,161 +888,6 @@ class AxesAssembly(_vtk.vtkPropAssembly):
         for label, position in zip(labels, position_vectors):
             label.relative_position = position
 
-    def _set_prop3d_attr(self, name, value):
-        # Set props for shaft and tip actors
-        # Validate input by setting then getting from prop3d
-        setattr(self._prop3d, name, value)
-        valid_value = getattr(self._prop3d, name)
-        actors = [*self._shaft_and_tip_actors, *self._label_actor_iterator]
-        [setattr(actor, name, valid_value) for actor in actors]
-
-    @property
-    def scale(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the scaling factor applied to the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.scale = (2.0, 2.0, 2.0)
-        >>> axes.scale
-        (2.0, 2.0, 2.0)
-        """
-        return self._prop3d.scale
-
-    @scale.setter
-    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('scale', scale)
-
-    @property
-    def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the position of the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.position = (1.0, 2.0, 3.0)
-        >>> axes.position
-        (1.0, 2.0, 3.0)
-        """
-        return self._prop3d.position
-
-    @position.setter
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('position', position)
-
-    @property
-    def orientation(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the axes orientation angles.
-
-        Orientation angles of the axes which define rotations about the
-        world's x-y-z axes. The angles are specified in degrees and in
-        x-y-z order. However, the actual rotations are applied in the
-        following order: :func:`~rotate_y` first, then :func:`~rotate_x`
-        and finally :func:`~rotate_z`.
-
-        Rotations are applied about the specified :attr:`~origin`.
-
-        Examples
-        --------
-        Create axes positioned above the origin and set its orientation.
-
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly(
-        ...     position=(0, 0, 2), orientation=(45, 0, 0)
-        ... )
-
-        Create default non-oriented axes as well for reference.
-
-        >>> reference_axes = pv.AxesAssembly(
-        ...     x_color='black', y_color='black', z_color='black'
-        ... )
-
-        Plot the axes. Note how the axes are rotated about the origin ``(0, 0, 0)`` by
-        default, such that the rotated axes appear directly above the reference axes.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes)
-        >>> _ = pl.add_actor(reference_axes)
-        >>> pl.show()
-
-        Now change the origin of the axes and plot the result. Since the rotation
-        is performed about a different point, the final position of the axes changes.
-
-        >>> axes.origin = (2, 2, 2)
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes)
-        >>> _ = pl.add_actor(reference_axes)
-        >>> pl.show()
-        """
-        return self._prop3d.orientation
-
-    @orientation.setter
-    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('orientation', orientation)
-
-    @property
-    def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return or set the origin of the axes.
-
-        This is the point about which all rotations take place.
-
-        See :attr:`~orientation` for examples.
-
-        """
-        return self._prop3d.origin
-
-    @origin.setter
-    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('origin', origin)
-
-    @property
-    def user_matrix(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
-        """Return or set the user matrix.
-
-        In addition to the instance variables such as position and orientation, the user
-        can add a transformation to the actor.
-
-        This matrix is concatenated with the actor's internal transformation that is
-        implicitly created when the actor is created. The user matrix is the last
-        transformation applied to the actor before rendering.
-
-        Returns
-        -------
-        np.ndarray
-            A 4x4 transformation matrix.
-
-        Examples
-        --------
-        Apply a 4x4 transformation to the axes. This effectively translates the actor
-        by one unit in the Z direction, rotates the actor about the z-axis by
-        approximately 45 degrees, and shrinks the actor by a factor of 0.5.
-
-        >>> import numpy as np
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> array = np.array(
-        ...     [
-        ...         [0.35355339, -0.35355339, 0.0, 0.0],
-        ...         [0.35355339, 0.35355339, 0.0, 0.0],
-        ...         [0.0, 0.0, 0.5, 1.0],
-        ...         [0.0, 0.0, 0.0, 1.0],
-        ...     ]
-        ... )
-        >>> axes.user_matrix = array
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_actor(axes)
-        >>> pl.show()
-
-        """
-        return self._prop3d.user_matrix
-
-    @user_matrix.setter
-    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        self._set_prop3d_attr('user_matrix', matrix)
-
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return the bounds of the axes.
@@ -1091,14 +1119,19 @@ class AxesAssemblySymmetric(AxesAssembly):
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
-        # Init symmetric label actors and add to assembly
+        # Init shaft and tip actors
+        self._init_actors_from_source(AxesGeometrySource(symmetric=True, **kwargs))
+        # Init label actors
+        self._label_actors = (Label(), Label(), Label())
         self._label_actors_symmetric = (Label(), Label(), Label())
-        [self.AddPart(actor) for actor in self._label_actors_symmetric]
 
-        super().__init__(
-            x_label=x_label,  # type: ignore[arg-type]
-            y_label=y_label,  # type: ignore[arg-type]
-            z_label=z_label,  # type: ignore[arg-type]
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
+            xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),  # type: ignore[arg-type]
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
             labels=labels,
             label_color=label_color,
             show_labels=show_labels,
@@ -1112,12 +1145,8 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
-            **kwargs,
         )
-
-        # Make the geometry symmetric
-        self._shaft_and_tip_geometry_source.symmetric = True
-        self._shaft_and_tip_geometry_source.update()
+        self._set_default_label_props()
 
     @property  # type: ignore[override]
     def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
