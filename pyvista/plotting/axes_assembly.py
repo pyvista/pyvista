@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 import itertools
-import sys
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -26,12 +26,8 @@ from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 
-if sys.version_info >= (3, 12):
-    pass
-else:
-    pass
-
 if TYPE_CHECKING:  # pragma: no cover
+    import sys
     from typing import Iterator
 
     from pyvista.core._typing_core import BoundsLike
@@ -65,85 +61,55 @@ class _AxesGeometryKwargs(TypedDict):
     symmetric_bounds: bool
 
 
+class _OrthogonalPlanesKwargs(TypedDict):
+    bounds: VectorLike[float]
+    resolution: int | VectorLike[int]
+    normal_sign: Literal['+', '-'] | Sequence[str]
+    # names: Sequence[str] = ('xy', 'yz', 'zx')
+
+
 class _XYZTuple(NamedTuple):
     x: Any
     y: Any
     z: Any
 
 
-class _SingleActorTuple(NamedTuple):
-    actor: Actor
-
-
-class _SingleLabelTuple(NamedTuple):
-    actor: Label
-
-
-from typing import Generic
-from typing import TypeVar
-
-_ActorsTupleT = TypeVar('_ActorsTupleT', bound=NamedTuple)
-_LabelActorsTupleT = TypeVar('_LabelActorsTupleT', bound=NamedTuple)
-
-
-class _XYZAssembly(Generic[_ActorsTupleT, _LabelActorsTupleT], _Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
-    _named_tuple_actors: type[NamedTuple] = _SingleActorTuple
-    _named_tuple_label_actors: type[NamedTuple] = _SingleLabelTuple
 
     def __init__(
         self,
         *,
         xyz_actors: tuple[Any, Any, Any],
         xyz_label_actors: tuple[Any, Any, Any],
-        x_label: str | None = None,
-        y_label: str | None = None,
-        z_label: str | None = None,
-        labels: Sequence[str] | None = None,
-        label_color: ColorLike = 'black',
-        show_labels: bool = True,
-        label_position: float | VectorLike[float] | None = None,
-        label_size: int = 50,
-        x_color: ColorLike | Sequence[ColorLike] | None = None,
-        y_color: ColorLike | Sequence[ColorLike] | None = None,
-        z_color: ColorLike | Sequence[ColorLike] | None = None,
-        position: VectorLike[float] = (0.0, 0.0, 0.0),
-        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
-        origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: VectorLike[float] = (1.0, 1.0, 1.0),
-        user_matrix: MatrixLike[float] | None = None,
+        x_label,
+        y_label,
+        z_label,
+        labels,
+        label_color,
+        show_labels,
+        label_position,
+        label_size,
+        x_color,
+        y_color,
+        z_color,
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
     ):
         super().__init__()
 
-        def _make_xyz_tuple(xyz, named_tuple_type):
-            def _make_actor_tuple(actor_or_actors):
-                actors = (
-                    actor_or_actors if isinstance(actor_or_actors, Sequence) else (actor_or_actors,)
-                )
-                num_actors_expected = len(named_tuple_type._fields)
-                if num_actors_expected != len(actors):
-                    raise TypeError(
-                        f'Cannot create assembly using named actor tuple {named_tuple_type} with fields {named_tuple_type._fields}. \n'
-                        f'Number of actors <{len(actors)}> must match number of fields <{num_actors_expected}>.\n'
-                        f'Subclasses may define their own NamedTuple to specify multiple actors per axis.'
-                    )
-                return named_tuple_type(*actors)
+        def _make_xyz_tuple(xyz):
+            def _get_tuple(actor_or_actors):
+                return actor_or_actors if isinstance(actor_or_actors, tuple) else (actor_or_actors,)
 
-            actor_tuples = [_make_actor_tuple(actors) for actors in xyz]
+            actor_tuples = [_get_tuple(actors) for actors in xyz]
             return _XYZTuple(*actor_tuples)
 
-        # Get named tuple classes from class definition
-        # type_args = get_args(get_original_bases(self.__class__)[0])
-        # if len(type_args) != 2:
-        #     ActorsNamedTuple, LabelActorsNamedTuple = self._named_tuple_actors, self._named_tuple_label_actors
-        #     #raise TypeError('Missing Generic type arguments. Subclass definitions must have two named tuples for actors and labels.')
-        # else:
-        # ActorsNamedTuple, LabelActorsNamedTuple = type_args
-        # Store as nested tuples
-        self._assembly_actors = _make_xyz_tuple(xyz_actors, self._named_tuple_actors)
-        self._assembly_label_actors = _make_xyz_tuple(
-            xyz_label_actors, self._named_tuple_label_actors
-        )
+        self._assembly_actors = _make_xyz_tuple(xyz_actors)
+        self._assembly_label_actors = _make_xyz_tuple(xyz_label_actors)
 
         # Add all actors to assembly
         for parts in (*self._assembly_actors, *self._assembly_label_actors):
@@ -181,35 +147,11 @@ class _XYZAssembly(Generic[_ActorsTupleT, _LabelActorsTupleT], _Prop3DMixin, _vt
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
-        self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
-
-    @property
-    def x_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.x
-
-    @property
-    def y_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.y
-
-    @property
-    def z_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.z
-
-    @property
-    def x_label_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.x
-
-    @property
-    def y_label_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.y
-
-    @property
-    def z_label_actors(self) -> _ActorsTupleT:
-        return self._assembly_actors.z
+        self.position = position  # type: ignore[method-assign]
+        self.orientation = orientation  # type: ignore[method-assign]
+        self.scale = scale  # type: ignore[method-assign]
+        self.origin = origin  # type: ignore[method-assign]
+        self.user_matrix = user_matrix  # type: ignore[method-assign]
 
     @property
     def parts(self):
@@ -245,13 +187,108 @@ class _XYZAssembly(Generic[_ActorsTupleT, _LabelActorsTupleT], _Prop3DMixin, _vt
                 part.scale = scale
                 part.user_matrix = user_matrix
 
+    @property
+    @abstractmethod
+    def labels(self):  # numpydoc ignore=RT01
+        """XYZ labels."""
 
-class _ShaftTipTuple(NamedTuple):
-    shaft: Actor
-    tip: Actor
+    @labels.setter
+    @abstractmethod
+    def labels(self, labels):  # numpydoc ignore=GL08
+        """XYZ labels."""
+
+    @property
+    @abstractmethod
+    def x_label(self):  # numpydoc ignore=RT01
+        """Text label for the x-axis."""
+
+    @x_label.setter
+    @abstractmethod
+    def x_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the x-axis."""
+
+    @property
+    @abstractmethod
+    def y_label(self):  # numpydoc ignore=RT01
+        """Text label for the y-axis."""
+
+    @y_label.setter
+    @abstractmethod
+    def y_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the y-axis."""
+
+    @property
+    @abstractmethod
+    def z_label(self):  # numpydoc ignore=RT01
+        """Text label for the z-axis."""
+
+    @z_label.setter
+    @abstractmethod
+    def z_label(self, label):  # numpydoc ignore=GL08
+        """Text label for the z-axis."""
+
+    @property
+    @abstractmethod
+    def label_size(self):  # numpydoc ignore=RT01
+        """Size of the text labels."""
+
+    @label_size.setter
+    @abstractmethod
+    def label_size(self, size):  # numpydoc ignore=GL08
+        """Size of the text labels."""
+
+    @property
+    @abstractmethod
+    def label_position(self):  # numpydoc ignore=RT01
+        """Position of the text labels."""
+
+    @label_position.setter
+    @abstractmethod
+    def label_position(self, position):  # numpydoc ignore=GL08
+        """Position of the text labels."""
+
+    @property
+    @abstractmethod
+    def label_color(self):  # numpydoc ignore=RT01
+        """Color of the text labels."""
+
+    @label_color.setter
+    @abstractmethod
+    def label_color(self, color):  # numpydoc ignore=GL08
+        """Color of the text labels."""
+
+    @property
+    @abstractmethod
+    def x_color(self):  # numpydoc ignore=RT01
+        """Color of the x-axis actors."""
+
+    @x_color.setter
+    @abstractmethod
+    def x_color(self, color):  # numpydoc ignore=GL08
+        """Color of the x-axis actors."""
+
+    @property
+    @abstractmethod
+    def y_color(self):  # numpydoc ignore=RT01
+        """Color of the y-axis actors."""
+
+    @y_color.setter
+    @abstractmethod
+    def y_color(self, color):  # numpydoc ignore=GL08
+        """Color of the y-axis actors."""
+
+    @property
+    @abstractmethod
+    def z_color(self):  # numpydoc ignore=RT01
+        """Color of the z-axis actors."""
+
+    @z_color.setter
+    @abstractmethod
+    def z_color(self, color):  # numpydoc ignore=GL08
+        """Color of the z-axis actors."""
 
 
-class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
+class AxesAssembly(_XYZAssembly):
     """Assembly of arrow-style axes parts.
 
     The axes may be used as a widget or added to a scene.
@@ -379,9 +416,6 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     >>> pl.show()
     """
 
-    _named_tuple_actors: type[NamedTuple] = _ShaftTipTuple
-    _named_tuple_label_actors: type[NamedTuple] = _SingleLabelTuple
-
     def _init_actors_from_source(self, geometry_source: AxesGeometrySource):
         # Init shaft and tip actors
         self._shaft_actors: tuple[Actor, Actor, Actor] = (Actor(), Actor(), Actor())
@@ -489,7 +523,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         ]
         return '\n'.join(attr)
 
-    @property  # type: ignore[override]
+    @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the axes labels.
 
@@ -584,7 +618,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         for label in self._label_actor_iterator:
             label.size = size
 
-    @property  # type: ignore[override]
+    @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the text label along each axis.
 
@@ -625,7 +659,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         )
         self._update_label_positions()
 
-    @property  # type: ignore[override]
+    @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the text labels."""
         return self._label_color
@@ -637,7 +671,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         for label in self._label_actor_iterator:
             label.prop.color = valid_color
 
-    @property  # type: ignore[override]
+    @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the x-axis shaft and tip."""
         return self.get_actor_prop('color')[_AxisEnum.x :: 3]
@@ -646,7 +680,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self.set_actor_prop('color', color, axis=_AxisEnum.x.value)  # type: ignore[arg-type]
 
-    @property  # type: ignore[override]
+    @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the y-axis shaft and tip."""
         return self.get_actor_prop('color')[_AxisEnum.y :: 3]
@@ -655,7 +689,7 @@ class AxesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self.set_actor_prop('color', color, axis=_AxisEnum.y.value)  # type: ignore[arg-type]
 
-    @property  # type: ignore[override]
+    @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the z-axis shaft and tip."""
         return self.get_actor_prop('color')[_AxisEnum.z.value :: 3]
@@ -957,11 +991,6 @@ def _validate_color_sequence(
     )
 
 
-class _PlusMinusTuple(NamedTuple):
-    plus: Label
-    minus: Label
-
-
 class AxesAssemblySymmetric(AxesAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
@@ -1080,8 +1109,6 @@ class AxesAssemblySymmetric(AxesAssembly):
     >>> pl.show()
     """
 
-    _named_tuple_label_actors = _PlusMinusTuple
-
     def __init__(
         self,
         *,
@@ -1113,9 +1140,9 @@ class AxesAssemblySymmetric(AxesAssembly):
             self,
             xyz_actors=tuple(zip(self._shaft_actors, self._tip_actors)),  # type: ignore[arg-type]
             xyz_label_actors=tuple(zip(self._label_actors, self._label_actors_symmetric)),  # type: ignore[arg-type]
-            x_label=x_label,  # type: ignore[arg-type]
-            y_label=y_label,  # type: ignore[arg-type]
-            z_label=z_label,  # type: ignore[arg-type]
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
             labels=labels,
             label_color=label_color,
             show_labels=show_labels,
@@ -1301,23 +1328,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             label.relative_position = position
 
 
-class _BoundsTuple(NamedTuple):
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
-    z_min: float
-    z_max: float
-
-
-class _OrthogonalPlanesKwargs(TypedDict):
-    bounds: VectorLike[float]
-    resolution: int | VectorLike[int]
-    normal_sign: Literal['+', '-'] | Sequence[str]
-    # names: Sequence[str] = ('xy', 'yz', 'zx')
-
-
-class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
+class PlanesAssembly(_XYZAssembly):
     """Assembly of orthogonal planes.
 
     The assembly may be used as a widget or added to a scene.
@@ -1426,8 +1437,6 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     """
 
     DEFAULT_LABELS = _XYZTuple('YZ', 'ZX', 'XY')
-    _named_tuple_actors = _SingleActorTuple
-    _named_tuple_label_actors = _SingleLabelTuple
 
     def __init__(
         self,
@@ -1544,36 +1553,6 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         ]
         return '\n'.join(attr)
 
-    # @property
-    # def _label_actor_iterator(self) -> Iterator[Label]:
-    #     collection = self.GetParts()
-    #     parts = [collection.GetItemAsObject(i) for i in range(collection.GetNumberOfItems())]
-    #     return (part for part in parts if isinstance(part, Label))
-
-    # @property
-    # def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
-    #     """Return or set the assembly labels.
-    #
-    #     This property may be used as an alternative to using :attr:`x_label`,
-    #     :attr:`y_label`, and :attr:`z_label` separately.
-    #
-    #     Examples
-    #     --------
-    #     >>> import pyvista as pv
-    #     >>> axes_actor = pv.AxesActor()
-    #     >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
-    #     >>> axes_actor.labels
-    #     ('X Axis', 'Y Axis', 'Z Axis')
-    #     """
-    #     return self.x_label, self.y_label, self.z_label
-    #
-    # @labels.setter
-    # def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
-    #     labels = _validate_label_sequence(labels, n_labels=3, name='labels')
-    #     self.x_label = labels[0]
-    #     self.y_label = labels[1]
-    #     self.z_label = labels[2]
-
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
         """Text label for the xy-plane.
@@ -1656,7 +1635,7 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         for axis in self._axis_actors:
             axis.SetTitleScale(size)
 
-    @property  # type: ignore[override]
+    @property
     def label_position(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Position of the text label along each axis.
 
@@ -1712,7 +1691,7 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
         for axis in self._axis_actors:
             axis.SetUse2DMode(use_2D)
 
-    @property  # type: ignore[override]
+    @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the xy-plane."""
         return self._plane_actors[0].prop.color
@@ -1721,7 +1700,7 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._plane_actors[0].prop.color = color
 
-    @property  # type: ignore[override]
+    @property
     def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the yz-plane."""
         return self._plane_actors[1].prop.color
@@ -1730,7 +1709,7 @@ class PlanesAssembly(_XYZAssembly):  # type: ignore[type-arg]
     def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
         self._plane_actors[1].prop.color = color
 
-    @property  # type: ignore[override]
+    @property
     def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
         """Color of the zx-plane."""
         return self._plane_actors[2].prop.color
