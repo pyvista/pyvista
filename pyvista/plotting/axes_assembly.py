@@ -174,18 +174,15 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             label.SetVisibility(value)
 
     def _post_set_update(self):
-        position = self._prop3d.position
-        orientation = self._prop3d.orientation
-        origin = self._prop3d.origin
-        scale = self._prop3d.scale
-        user_matrix = self._prop3d.user_matrix
-        for part in self.parts:
-            if isinstance(part, (Prop3D, _Prop3DMixin)):
-                part.position = position
-                part.orientation = orientation
-                part.origin = origin
-                part.scale = scale
-                part.user_matrix = user_matrix
+        # Update prop3D attributes for shaft, tip, and label actors
+        parts = self.parts
+        for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
+            # Only update values if modified
+            value = getattr(self._prop3d, name)
+            for part in parts:
+                if isinstance(part, (Prop3D, _Prop3DMixin)):
+                    if not np.array_equal(getattr(part, name), value):
+                        setattr(part, name, value)
 
     @property
     @abstractmethod
