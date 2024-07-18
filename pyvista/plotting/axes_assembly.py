@@ -21,7 +21,6 @@ from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
-from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 
@@ -160,10 +159,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
             # Only update values if modified
             value = getattr(self._prop3d, name)
-            for part in parts:
-                if isinstance(part, (Prop3D, _Prop3DMixin)):
-                    if not np.array_equal(getattr(part, name), value):
-                        setattr(part, name, value)
+            [
+                setattr(part, name, value)
+                for part in parts
+                if not np.array_equal(getattr(part, name), value)
+            ]
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
