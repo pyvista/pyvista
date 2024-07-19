@@ -25,6 +25,7 @@ from pyvista.plotting.colors import Color
 from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
+from pyvista.plotting.text import TextProperty
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
@@ -173,6 +174,18 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         for label in self._label_actor_iterator:
             label.SetVisibility(value)
 
+    @property
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the text labels."""
+        return self._label_color
+
+    @label_color.setter
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        for label in self._label_actor_iterator:
+            label.prop.color = valid_color
+
     def _post_set_update(self):
         # Update prop3D attributes for shaft, tip, and label actors
         parts = self.parts
@@ -243,16 +256,6 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
     @abstractmethod
     def label_position(self, position):  # numpydoc ignore=GL08
         """Position of the text labels."""
-
-    @property
-    @abstractmethod
-    def label_color(self):  # numpydoc ignore=RT01
-        """Color of the text labels."""
-
-    @label_color.setter
-    @abstractmethod
-    def label_color(self, color):  # numpydoc ignore=GL08
-        """Color of the text labels."""
 
     @property
     @abstractmethod
@@ -655,18 +658,6 @@ class AxesAssembly(_XYZAssembly):
             )
         )
         self._update_label_positions()
-
-    @property
-    def label_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the text labels."""
-        return self._label_color
-
-    @label_color.setter
-    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        valid_color = Color(color)
-        self._label_color = valid_color
-        for label in self._label_actor_iterator:
-            label.prop.color = valid_color
 
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -1607,17 +1598,6 @@ class PlanesAssembly(_XYZAssembly):
     def z_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[2].SetTitle(label)
 
-    # @property
-    # def show_labels(self) -> bool:  # numpydoc ignore=RT01
-    #     """Show or hide the text labels for the assembly."""
-    #     return self._show_labels
-    #
-    # @show_labels.setter
-    # def show_labels(self, value: bool):  # numpydoc ignore=GL08
-    #     self._show_labels = value
-    #     for label in self._label_actor_iterator:
-    #         label.SetVisibility(value)
-
     @property
     def label_size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text labels.
@@ -1852,6 +1832,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetHorizontalOffsetYTitle2D(0)
         self.GetTitleTextProperty().SetVerticalJustificationToCentered()
 
+        self.SetTitleTextProperty(TextProperty())
+
     @property
-    def prop(self):
+    def prop(self) -> TextProperty:
         return self.GetTitleTextProperty()
