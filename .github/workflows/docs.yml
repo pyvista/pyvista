@@ -15,6 +15,9 @@ on:
       - "*"
     branches:
       - main
+  issue_comment:
+    types:
+      - created
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -143,7 +146,12 @@ jobs:
     name: Preview Development Documentation
     runs-on: ubuntu-20.04
     needs: doc
-    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || (
+        github.event_name == 'issue_comment' &&
+        github.event.action == 'created' &&
+        github.event.issue.pull_request != null &&
+        startsWith(github.event.comment.body, '@pyvista-bot preview')
+        )
     steps:
       - uses: actions/download-artifact@v4
         with:
