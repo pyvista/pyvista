@@ -36,6 +36,13 @@ jobs:
       PYVISTA_OFF_SCREEN: "True"
       ALLOW_PLOTTING: true
       SHELLOPTS: "errexit:pipefail"
+    if:
+      github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || (
+      github.event_name == 'issue_comment' &&
+      github.event.action == 'created' &&
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '@pyvista-bot preview')
+      )
     steps:
       - uses: actions/checkout@v4
 
