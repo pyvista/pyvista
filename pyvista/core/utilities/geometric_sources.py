@@ -3667,9 +3667,9 @@ class OrthogonalPlanesSource:
 
         # Update the output
         output = self._output
-        for index, (name, source, plane, sign) in enumerate(zip(
-            self.names, self._plane_sources, output, self.normal_sign
-        )):
+        for index, (name, source, plane, sign) in enumerate(
+            zip(self.names, self._plane_sources, output, self.normal_sign)
+        ):
             plane.copy_from(source.GetOutput())
             if sign == '-':
                 plane['Normals'] *= -1
