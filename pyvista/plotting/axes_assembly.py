@@ -1743,6 +1743,10 @@ class PlanesAssembly(_XYZAssembly):
     def _update_label_positions(self):
         axis_actors = self._axis_actors
         plane_sources = self._plane_sources
+        transformation_matrix = self._transformation_matrix
+
+        def transform_point(point):
+            return (transformation_matrix @ (*point, 1))[:3]
 
         def set_axis_location(plane_id, location: int):
             this_plane_source = plane_sources[plane_id]
@@ -1783,8 +1787,8 @@ class PlanesAssembly(_XYZAssembly):
 
             # Set axis points to specified location
             axis_point1, axis_point2 = ordered_points[location : location + 2]
-            this_axis_actor.SetPoint1(axis_point1)
-            this_axis_actor.SetPoint2(axis_point2)
+            this_axis_actor.SetPoint1(transform_point(axis_point1))
+            this_axis_actor.SetPoint2(transform_point(axis_point2))
 
             # Align axis type to its direction
             # NOTE: Using SetAxisType() doesn't really seem to have any effect
@@ -1818,6 +1822,11 @@ class PlanesAssembly(_XYZAssembly):
         set_axis_location(1, positions[1])
         set_axis_location(2, positions[2])
 
+    def _post_set_update(self):
+        _XYZAssembly._post_set_update(self)
+        # Need to manually update axis actors
+        self._update_label_positions()
+
 
 class _AxisActor(_vtk.vtkAxisActor):
     def __init__(self):
@@ -1835,7 +1844,7 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetLabels(labels)
 
         # Format title positioning
-        self.SetTitleOffset(0, 0)
+        self.SetTitleOffset(0)
         self.SetLabelOffset(0)
 
         # For 2D mode only
