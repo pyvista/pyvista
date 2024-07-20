@@ -496,7 +496,7 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
-    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "navbar_end": ["theme-switcher"],
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
