@@ -72,8 +72,8 @@ class BaseGeometricSource:
         """
         precision = self._source.GetOutputPointsPrecision()
         return {
-            _vtk.vtkAlgorithm.SINGLE_PRECISION: 'float32',
-            _vtk.vtkAlgorithm.DOUBLE_PRECISION: 'float64',
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
         }[precision]
 
     @point_dtype.setter
@@ -93,8 +93,8 @@ class BaseGeometricSource:
         if point_dtype not in ['float32', 'float64']:
             raise ValueError("Point dtype must be either 'float32' or 'float64'")
         precision = {
-            'float32': _vtk.vtkAlgorithm.SINGLE_PRECISION,
-            'float64': _vtk.vtkAlgorithm.DOUBLE_PRECISION,
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
         }[point_dtype]
         self._source.SetOutputPointsPrecision(precision)
 
