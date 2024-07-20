@@ -589,4 +589,3 @@ def setup(app):
     app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
-    app.add_css_file("summary.css")
