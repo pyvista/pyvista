@@ -5381,6 +5381,7 @@ def _openfoam_tubes_read_func(filename):  # pragma: no cover
 _dataset_openfoam_tubes = _SingleFileDownloadableDatasetLoader(
     'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
     target_file='case.foam',
+    read_func=_openfoam_tubes_read_func,
 )
 
 
