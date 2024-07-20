@@ -7,7 +7,6 @@ from abc import abstractmethod
 from dataclasses import dataclass
 import enum
 from functools import wraps
-import importlib
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,18 +21,13 @@ from pyvista.core import _vtk_core as _vtk
 from .fileio import _get_ext_force
 from .fileio import _process_filename
 from .helpers import wrap
+from .misc import _lazy_vtk_instantiation
 from .misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
 HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
-
-
-def _lazy_vtk_instantiation(module_name, class_name):
-    """Lazy import and instantiation of a class from vtkmodules."""
-    module = importlib.import_module(f"vtkmodules.{module_name}")
-    return getattr(module, class_name)()
 
 
 def lazy_vtkPOpenFOAMReader():
