@@ -98,6 +98,16 @@ class BaseGeometricSource:
         }[point_dtype]
         self._source.SetOutputPointsPrecision(precision)
 
+    def source(self):
+        """Return the underlying VTK source.
+
+        Returns
+        -------
+        vtk.vtkAlgorithm
+            The underlying VTK source.
+        """
+        return self._source
+
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
     """Translate and orient a mesh to a new center and direction.

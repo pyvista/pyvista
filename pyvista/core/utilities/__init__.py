@@ -85,6 +85,7 @@ from .geometric_objects import Wavelet
 from .geometric_objects import translate
 from .geometric_sources import ArrowSource
 from .geometric_sources import AxesGeometrySource
+from .geometric_sources import BaseGeometricSource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
 from .geometric_sources import CubeSource
