@@ -15,7 +15,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a MultiBlock Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create 100 superellipsoids using :func:`pyvista.ParametricSuperEllipsoid`
@@ -40,7 +40,7 @@ def make_poly():
 blocks = pv.MultiBlock([make_poly() for _ in range(100)])
 blocks.plot()
 
-###############################################################################
+# %%
 # Enable Block Picking
 # ~~~~~~~~~~~~~~~~~~~~
 # Add ``blocks`` to a :class:`pyvista.Plotter` and enable block picking.  For

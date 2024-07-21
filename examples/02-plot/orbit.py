@@ -29,7 +29,7 @@ from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 
-###############################################################################
+# %%
 # Orbit around the Mt. St Helens dataset.
 
 p = pv.Plotter()
@@ -42,7 +42,7 @@ p.orbit_on_path(path, write_frames=True)
 p.close()
 
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(mesh, lighting=False)
@@ -55,12 +55,12 @@ p.orbit_on_path(path, write_frames=True, viewup=[0, 0, 1], step=0.05)
 p.close()
 
 
-###############################################################################
+# %%
 
 mesh = examples.download_dragon()
 viewup = [0, 1, 0]
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(mesh)
 p.show(auto_close=False)

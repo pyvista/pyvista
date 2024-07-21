@@ -393,6 +393,10 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
+    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
+    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
 
 
 def test_superquadric_source():
@@ -680,3 +684,62 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     axes_geometry_source.shaft_type = pv.ParametricTorus()
     repr_ = repr(axes_geometry_source)
     assert "Shaft type:                 'custom'" in repr_
+
+
+def test_orthogonal_planes_source():
+    planes_source = pv.OrthogonalPlanesSource()
+    output = planes_source.output
+    assert isinstance(output, pv.MultiBlock)
+    assert output.keys() == ['yz', 'zx', 'xy']
+    assert all(isinstance(poly, pv.PolyData) for poly in output)
+
+
+def test_orthogonal_planes_source_bounds():
+    # Test set get
+    bounds = (1, 2, 3, 4, 5, 6)
+    xmin, xmax, ymin, ymax, zmin, zmax = bounds
+    planes_source = pv.OrthogonalPlanesSource(bounds=bounds)
+    assert planes_source.bounds == bounds
+    # Test multiblock bounds
+    output = planes_source.output
+    assert output.bounds == bounds
+    # Test plane bounds
+    xmid, ymid, zmid = output.center
+    assert output['xy'].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
+    assert output['yz'].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
+    assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
+
+
+def test_orthogonal_planes_source_names():
+    planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
+    assert planes_source.names == ('a', 'b', 'c')
+
+    match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        planes_source.names = 'abc'
+
+
+def test_orthogonal_planes_source_normal_sign():
+    planes_source = pv.OrthogonalPlanesSource()
+    output = planes_source.output
+    assert planes_source.normal_sign == ('+', '+', '+')
+    assert np.all(pv.merge(output)['Normals'] >= 0)
+
+    planes_source.normal_sign = '-'
+    assert planes_source.normal_sign == ('-', '-', '-')
+    np.all(pv.merge(output)['Normals'] <= 0)
+
+    planes_source.normal_sign = ['+', '+', '+']
+    assert planes_source.normal_sign == ('+', '+', '+')
+
+    match = "must be one of: \n\t['+', '-']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        planes_source.normal_sign = 'a'
+
+    match = "must be one of: \n\t['+', '-']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        planes_source.normal_sign = ['a', 'b', 'c']
+
+    match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
+    with pytest.raises(TypeError, match=re.escape(match)):
+        planes_source.normal_sign = 0
