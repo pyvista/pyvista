@@ -105,8 +105,6 @@ jobs:
           wget --quiet ${CARTOPY_FEATURE}
           mkdir -p ${CARTOPY_SHARE_DIR}
           python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
-      - name: Pin NumPy version
-        run: pip install "numpy<2.0.0"
       - run: pytest
         working-directory: geovista
 
@@ -123,9 +121,10 @@ jobs:
           python-version: "3.10"
       - name: Install PyVista
         run: pip install -ve .
-      - name: Install Trame examples
-        run: pip install -r examples_trame/requirements.txt
-      - run: |
-          pip install -r ../requirements_test.txt
-          pytest ./tests
+      - name: Install requirements
+        run: |
+          pip install -r requirements_test.txt
+          pip install -r examples_trame/requirements.txt
+      - name: Run examples
         working-directory: examples_trame
+        run: pytest -v ./tests
