@@ -4524,3 +4524,32 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.parametrize('normal_sign', ['+', '-'])
+@pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
+def test_orthogonal_planes_source_normals(normal_sign, plane):
+    plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
+    output = plane_source.output
+    plane = output[plane]
+    plane['_rgb'] = [
+        pv.Color('red').float_rgb,
+        pv.Color('green').float_rgb,
+        pv.Color('blue').float_rgb,
+        pv.Color('yellow').float_rgb,
+    ]
+    plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
+
+
+# Add skips since Plane's edges differ (e.g. triangles instead of quads)
+@skip_windows
+@skip_9_1_0
+@pytest.mark.parametrize(
+    'resolution',
+    [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
+    ids=['x_resolution', 'y_resolution', 'z_resolution'],
+)
+def test_orthogonal_planes_source_resolution(resolution):
+    plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
+    plane_source.output.plot(show_edges=True, line_width=5, lighting=False)

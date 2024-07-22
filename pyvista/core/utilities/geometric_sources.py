@@ -11,6 +11,8 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
+from typing import Tuple
+from typing import cast
 from typing import get_args
 
 import numpy as np
@@ -3500,3 +3502,195 @@ class AxesGeometrySource:
         part_x = part_z.copy().rotate_y(90)
         part_y = part_z.copy().rotate_x(-90)
         return name, (part_x, part_y, part_z)
+
+
+class OrthogonalPlanesSource:
+    """Orthogonal planes source.
+
+    This source generates three orthogonal planes. The :attr:`output` is a
+    :class:`~pyvista.MultiBlock` with named plane meshes ``'yz'``, ``'zx'``, ``'xy'``.
+    The meshes are ordered such that the first, second, and third plane is perpendicular
+    to the x, y, and z-axis, respectively.
+
+    Parameters
+    ----------
+    bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        The generated planes are centered in these bounds.
+
+    resolution : int | VectorLike[int], default: 2
+        Number of points on the planes in the x-y-z directions. Use a single number
+        for a uniform resolution, or three values to set independent resolutions.
+
+    normal_sign : '+' | '-' | sequence['+' | '-'], default: '+'
+        Sign of the plane's normal vectors. Use a single value to set all normals to
+        the same sign, or three values to set them independently.
+
+    names : sequence[str], default: ('xy','yz','zx')
+        Name of each plane in the generated :class:`~pyvista.MultiBlock`.
+
+    Examples
+    --------
+    Generate default orthogonal planes.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> planes_source = pv.OrthogonalPlanesSource()
+    >>> output = planes_source.output
+    >>> output.plot()
+
+    Modify the planes to fit a mesh's bounds.
+
+    >>> human = examples.download_human()
+    >>> planes_source.bounds = human.bounds
+    >>> planes_source.update()
+
+    Plot the mesh and the planes.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
+    """
+
+    def __init__(
+        self,
+        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        *,
+        resolution: int | VectorLike[int] = 2,
+        normal_sign: Literal['+', '-'] | Sequence[str] = '+',
+        names: Sequence[str] = ('yz', 'zx', 'xy'),
+    ):
+        # Init sources and the output dataset
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
+        self._plane_sources = tuple(pyvista.PlaneSource() for _ in range(3))
+
+        # Init properties
+        self.bounds = bounds  # type: ignore[assignment]
+        self.resolution = resolution  # type: ignore[assignment]
+        self.normal_sign = normal_sign  # type: ignore[assignment]
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the sign of the plane's normal vectors."""
+        return cast(Tuple[str, str, str], self._normal_sign)
+
+    @normal_sign.setter
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
+        def _check_sign(sign_):
+            allowed = ['+', '-']
+            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+
+        valid_sign: Sequence[str]
+        _validation.check_instance(sign, (tuple, list, str), name='normal sign')
+        if isinstance(sign, str):
+            _check_sign(sign)
+            valid_sign = [sign] * 3
+        else:
+            _validation.check_length(sign, exact_length=3)
+            [_check_sign(s) for s in sign]
+            valid_sign = sign
+        self._normal_sign = tuple(valid_sign)
+
+    @property
+    def resolution(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
+        """Return or set the resolution of the planes."""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
+        self._resolution = _validation.validate_array3(
+            resolution, broadcast=True, to_tuple=True, name='resolution'
+        )
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounds of the planes."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        self._bounds = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+        )
+
+    @property
+    def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the planes."""
+        return self._names
+
+    @names.setter
+    def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=3, name='names')
+        self._names = cast(Tuple[str, str, str], tuple(names))
+
+    def update(self):
+        """Update the output of the source."""
+        ORIGIN = (0.0, 0.0, 0.0)
+
+        # Unpack vars
+        yz_source, zx_source, xy_source = self._plane_sources
+        x_res, y_res, z_res = self.resolution
+        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+
+        # Compute bounds-related vars
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+
+        # Update plane sources
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
+        xy_source.Update()
+
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
+        yz_source.Update()
+
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
+        zx_source.Update()
+
+        # Update the output
+        output = self._output
+        for index, (name, source, plane, sign) in enumerate(
+            zip(self.names, self._plane_sources, output, self.normal_sign)
+        ):
+            plane.copy_from(source.GetOutput())
+            if sign == '-':
+                plane['Normals'] *= -1
+            output.set_block_name(index, name)
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
+        plane. The blocks are named ``'yz'``, ``'zx'``, ``'xy'``, and are ordered such
+        that the first, second, and third plane is perpendicular to the x, y, and
+        z-axis, respectively.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
+        self.update()
+        return self._output
