@@ -312,9 +312,3 @@ def _reciprocal(x, tol=1e-8):
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
     return x
-
-
-def _lazy_vtk_instantiation(module_name, class_name):
-    """Lazy import and instantiation of a class from vtkmodules."""
-    module = importlib.import_module(f"vtkmodules.{module_name}")
-    return getattr(module, class_name)()

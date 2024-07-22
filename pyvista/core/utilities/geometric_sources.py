@@ -52,10 +52,6 @@ class Algorithm(_vtk.vtkAlgorithm):
         Set the desired output point types. It must be either 'float32' or 'float64'.
     """
 
-    _vtk_module_name: str = ''
-    _vtk_class_name: str = ''
-    _new_attr_exceptions: ClassVar[list[str]] = ['_source']
-
     def __init__(self, point_dtype='float32'):
         """Initialize the geometric source class."""
         super().__init__()
