@@ -99,6 +99,12 @@ from .geometric_sources import PolygonSource
 from .geometric_sources import SphereSource
 from .geometric_sources import SuperquadricSource
 from .geometric_sources import Text3DSource
+from .helpers import axes_rotation
+from .helpers import axis_rotation
+from .helpers import generate_plane
+from .helpers import is_inside_bounds
+from .helpers import is_pyvista_dataset
+from .helpers import wrap
 from .image_sources import ImageEllipsoidSource
 from .image_sources import ImageGaussianSource
 from .image_sources import ImageGridSource
@@ -109,11 +115,6 @@ from .image_sources import ImageSinusoidSource
 with contextlib.suppress(ImportError):
     from .geometric_sources import CapsuleSource
 
-from .helpers import axis_rotation
-from .helpers import generate_plane
-from .helpers import is_inside_bounds
-from .helpers import is_pyvista_dataset
-from .helpers import wrap
 from .misc import AnnotatedIntEnum
 from .misc import abstract_class
 from .misc import assert_empty_kwargs
@@ -156,6 +157,9 @@ from .points import fit_plane_to_points
 from .points import line_segments_from_points
 from .points import lines_from_points
 from .points import make_tri_mesh
+from .points import principal_axes_transform
+from .points import principal_axes_vectors
+from .points import random_sample_points
 from .points import vector_poly_data
 from .points import vtk_points
 from .reader import AVSucdReader

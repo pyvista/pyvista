@@ -19,10 +19,6 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
-from ._typing_core import MatrixLike
-from ._typing_core import Number
-from ._typing_core import NumpyArray
-from ._typing_core import VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -40,12 +36,18 @@ from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.misc import check_valid_vector
+from .utilities.points import principal_axes_vectors
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+
+    from ._typing_core import MatrixLike
+    from ._typing_core import Number
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1139,6 +1141,81 @@ class DataSet(DataSetFilters, DataObject):
             inplace=inplace,
         )
 
+    def rotate_axes(
+        self,
+        axes: VectorLike[float],
+        point=(0.0, 0.0, 0.0),
+        transform_all_input_vectors=False,
+        inplace=False,
+    ):
+        """Rotate mesh by a set of axes about a point.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        .. versionadded:: 0.43.0
+
+        See Also
+        --------
+        :attr:`~pyvista.principal_axes`
+            Get the mesh's principal axes vectors.
+        :func:`~pyvista.axes_rotation`
+            Rotate points by a set of axes.
+
+        Parameters
+        ----------
+        axes : np.ndarray | VectorArray
+            Axes to rotate.
+
+        point : sequence[float], default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Create a mesh away from the origin with an off-axis orientation.
+
+        >>> import pyvista as pv
+        >>> start = (-0.3, 0.8, 0.8)
+        >>> mesh = pv.Arrow(start=start, direction=(1, -2, 2), scale=2)
+
+        Rotate the mesh by its principal axes about its starting point.
+
+        >>> axes = mesh.principal_axes
+        >>> rot = mesh.rotate_axes(axes, point=start, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot, label="Rotated", color='lightblue')
+        >>> _ = pl.add_mesh(mesh, label="Original", color='goldenrod')
+        >>> _ = pl.add_axes_at_origin()
+        >>> _ = pl.add_legend()
+        >>> pl.show()
+
+        """
+        check_valid_vector(point, "point")
+        t = transformations.axes_rotation_matrix(axes, point_initial=point, point_final=point)
+        return self.transform(
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
     def translate(
         self,
         xyz: VectorLike[float],
@@ -1873,6 +1950,54 @@ class DataSet(DataSetFilters, DataObject):
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return sizes.cell_data['Area'].sum().item()
+
+    @property
+    def principal_axes(self) -> NumpyArray[float]:
+        """Return the mesh's principal axes.
+
+        The mesh's principal axes are orthonormal vectors that best fit
+        its points. The axes explain the total variance of the points.
+        The first axis explains the largest percentage of variance,
+        whereas the third axis explains the smallest percentage of variance.
+
+        The axes can be used as a rotation matrix to align the mesh to
+        the XYZ axes or vice-versa.
+
+        .. versionadded:: 0.43.0
+
+        Notes
+        -----
+        If the principal axes cannot be computed, the identity matrix is
+        returned.
+
+        See Also
+        --------
+        :func:`~pyvista.principal_axes_vectors`
+            Compute the principal axes vectors from points.
+        :func:`~pyvista.principal_axes_transform`,
+            Compute the principal axes transform from points.
+        :func:`~pyvista.DataSet.rotate_axes`
+            Rotate mesh by a set of axes.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 3x3 array with the principal axes as row vectors.
+
+        Examples
+        --------
+        Get the principal axes of a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> mesh.principal_axes
+        array([[ 8.1313652e-07, -9.9255711e-01, -1.2178052e-01],
+               [-1.0000000e+00, -8.1025058e-07, -7.3218182e-08],
+               [-2.5999512e-08,  1.2178052e-01, -9.9255711e-01]], dtype=float32)
+
+        """
+        return principal_axes_vectors(self.points)
 
     def get_array(
         self,

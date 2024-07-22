@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from itertools import permutations
 import json
 import os
 from pathlib import Path
 import pickle
+import random
+from re import escape
 import shutil
 from unittest import mock
 import warnings
@@ -19,7 +22,9 @@ from pyvista import examples as ex
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_plane_to_points
-from pyvista.core.utilities import transformations
+from pyvista.core.utilities import principal_axes_transform
+from pyvista.core.utilities import principal_axes_vectors
+from pyvista.core.utilities import random_sample_points
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
@@ -31,13 +36,21 @@ from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
+from pyvista.core.utilities.helpers import axes_rotation
 from pyvista.core.utilities.helpers import is_inside_bounds
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
+from pyvista.core.utilities.points import _swap_axes
 from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.transformations import apply_transformation_to_points
+from pyvista.core.utilities.transformations import axes_rotation_matrix
+from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import reflection
+
+random.seed(0)
 
 
 def test_version():
@@ -259,9 +272,8 @@ def get_array_vtk(hexbeam):
     get_array(grid_vtk, 'foo')
 
 
-def test_is_inside_bounds():
-    data = ex.load_uniform()
-    bnds = data.bounds
+def test_is_inside_bounds(uniform):
+    bnds = uniform.bounds
     assert is_inside_bounds((0.5, 0.5, 0.5), bnds)
     assert not is_inside_bounds((12, 5, 5), bnds)
     assert not is_inside_bounds((5, 12, 5), bnds)
@@ -468,9 +480,20 @@ def test_observer():
 
 
 def test_check_valid_vector():
-    with pytest.raises(ValueError, match="length three"):
-        check_valid_vector([0, 1])
     check_valid_vector([0, 1, 2])
+    check_valid_vector(np.array([0, 1, 2]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector(np.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector(np.array([0, 1, 2, 3]))
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector("abc")
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector("a")
+    with pytest.raises(ValueError, match="three numbers"):
+        check_valid_vector([0, 1])
+    with pytest.raises(TypeError, match="three numbers"):
+        check_valid_vector(0)
 
 
 def test_cells_dict_utils():
@@ -482,27 +505,26 @@ def test_cells_dict_utils():
         cells.get_mixed_cells(np.zeros(shape=[3, 3]))
 
 
-def test_apply_transformation_to_points():
-    mesh = ex.load_airplane()
-    points = mesh.points
+def test_apply_transformation_to_points(airplane):
+    points = airplane.points
     points_orig = points.copy()
 
     # identity 3 x 3
     tf = np.eye(3)
-    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    points_new = apply_transformation_to_points(tf, points, inplace=False)
     assert points_new == pytest.approx(points)
 
     # identity 4 x 4
     tf = np.eye(4)
-    points_new = transformations.apply_transformation_to_points(tf, points, inplace=False)
+    points_new = apply_transformation_to_points(tf, points, inplace=False)
     assert points_new == pytest.approx(points)
 
     # scale in-place
     tf = np.eye(4) * 2
     tf[3, 3] = 1
-    r = transformations.apply_transformation_to_points(tf, points, inplace=True)
+    r = apply_transformation_to_points(tf, points, inplace=True)
     assert r is None
-    assert mesh.points == pytest.approx(2 * points_orig)
+    assert airplane.points == pytest.approx(2 * points_orig)
 
 
 def _generate_vtk_err():
@@ -553,32 +575,32 @@ def test_axis_angle_rotation():
 
     # no-op case
     angle = 360
-    trans = transformations.axis_angle_rotation(axis, angle)
-    actual = transformations.apply_transformation_to_points(trans, points)
+    trans = axis_angle_rotation(axis, angle)
+    actual = apply_transformation_to_points(trans, points)
     assert np.array_equal(actual, points)
 
     # default origin
     angle = np.radians(120)
     expected = points[[1, 2, 0], :]
-    trans = transformations.axis_angle_rotation(axis, angle, deg=False)
-    actual = transformations.apply_transformation_to_points(trans, points)
+    trans = axis_angle_rotation(axis, angle, deg=False)
+    actual = apply_transformation_to_points(trans, points)
     assert np.allclose(actual, expected)
 
     # non-default origin
     p0 = [-2, -3, 4]
     points += p0
     expected += p0
-    trans = transformations.axis_angle_rotation(axis, angle, point=p0, deg=False)
-    actual = transformations.apply_transformation_to_points(trans, points)
+    trans = axis_angle_rotation(axis, angle, point=p0, deg=False)
+    actual = apply_transformation_to_points(trans, points)
     assert np.allclose(actual, expected)
 
     # invalid cases
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.axis_angle_rotation([1, 0, 0, 0], angle)
+        axis_angle_rotation([1, 0, 0, 0], angle)
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
+        axis_angle_rotation(axis, angle, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.axis_angle_rotation([0, 0, 0], angle)
+        axis_angle_rotation([0, 0, 0], angle)
 
 
 @pytest.mark.parametrize(
@@ -599,9 +621,9 @@ def test_axis_angle_rotation_many_times(axis, angle, times):
     # yields the exact same input
     expect = np.eye(3)
     actual = expect.copy()
-    trans = transformations.axis_angle_rotation(axis, angle)
+    trans = axis_angle_rotation(axis, angle)
     for _ in range(times):
-        actual = transformations.apply_transformation_to_points(trans, actual)
+        actual = apply_transformation_to_points(trans, actual)
     assert np.array_equal(actual, expect)
 
 
@@ -619,24 +641,24 @@ def test_reflection():
 
     # default origin
     expected = points[[2, 1, 0, 3], :]
-    trans = transformations.reflection(normal)
-    actual = transformations.apply_transformation_to_points(trans, points)
+    trans = reflection(normal)
+    actual = apply_transformation_to_points(trans, points)
     assert np.allclose(actual, expected)
 
     # non-default origin
     p0 = [1, 1, 0]
     expected += 2 * np.array(p0)
-    trans = transformations.reflection(normal, point=p0)
-    actual = transformations.apply_transformation_to_points(trans, points)
+    trans = reflection(normal, point=p0)
+    actual = apply_transformation_to_points(trans, points)
     assert np.allclose(actual, expected)
 
     # invalid cases
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.reflection([1, 0, 0, 0])
+        reflection([1, 0, 0, 0])
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.reflection(normal, point=[1, 0, 0, 0])
+        reflection(normal, point=[1, 0, 0, 0])
     with pytest.raises(ValueError):  # noqa: PT011
-        transformations.reflection([0, 0, 0])
+        reflection([0, 0, 0])
 
 
 def test_merge(sphere, cube, datasets):
@@ -894,23 +916,326 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points():
-    points = ex.load_airplane().points
-    plane, center, normal = fit_plane_to_points(points, return_meta=True)
+@pytest.mark.parametrize('normal_direction', ['z', '-z'])
+@pytest.mark.parametrize('i_resolution', [2, 10, 20])
+@pytest.mark.parametrize('j_resolution', [2, 10, 20])
+def test_fit_plane_to_points(airplane, normal_direction, i_resolution, j_resolution):
+    # set up
+    expected_normal = np.array([-2.5776557795075497e-08, 0.1217805140255676, -0.9925570544828484])
+    if normal_direction == 'z':
+        expected_normal *= -1
+    expected_center = [896.9955164251104, 686.6469899574811, 78.13206745346744]
+    # if is_double:
+    #     expected_bounds = [
+    #         139.06047647458706,
+    #         1654.9305563756338,
+    #         38.07752570263108,
+    #         1335.216454212331,
+    #         -1.4433109538384485,
+    #         157.70744586077336,
+    #     ]
+    # else:
+    expected_bounds = (
+        139.0604764745824,
+        1654.9305563756288,
+        38.07754817708553,
+        1335.2164766867857,
+        -1.4434941291069094,
+        157.70726268550465,
+    )
 
-    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
-    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
+    # do tests
+    plane = fit_plane_to_points(airplane.points)
+    assert np.any(plane.points)
+
+    plane, center, normal = fit_plane_to_points(
+        airplane.points,
+        return_meta=True,
+        i_resolution=i_resolution,
+        j_resolution=j_resolution,
+        normal_direction=normal_direction,
+    )
+
+    # test correct output
+    assert np.allclose(normal, expected_normal)
+    assert np.allclose(center, expected_center)
     assert np.allclose(
         plane.bounds,
+        expected_bounds,
+    )
+
+    # test output variables match the plane's actual geometry
+    actual_plane_normal = np.mean(plane.cell_normals, axis=0)
+    actual_plane_center = np.mean(plane.points, axis=0)
+    assert np.allclose(normal, actual_plane_normal)
+    assert np.allclose(center, actual_plane_center)
+
+
+def swap_axes_test_cases():
+    d = dict(swap_all=[1, 1, 1], swap_none=[3, 2, 1], swap_0_1=[2, 2, 1], swap_1_2=[2, 1, 1])
+    return list(d.items())
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', permutations([0, 1, 2]))
+@pytest.mark.parametrize('values_test_case', swap_axes_test_cases())
+def test_swap_axes(x, y, z, order, values_test_case):
+    case, values = values_test_case
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if case == "swap_all":
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif case == "swap_none":
+        assert np.array_equal(axes, swapped)
+    elif case == "swap_0_1":
+        assert np.flatnonzero(swapped[0])[0] < np.flatnonzero(swapped[1])[0]
+    elif case == "swap_1_2":
+        assert np.flatnonzero(swapped[1])[0] < np.flatnonzero(swapped[2])[0]
+
+
+def assert_valid_right_handed_frame(axes):
+    assert not np.allclose(axes[0], [0, 0, 0])
+    assert not np.allclose(axes[1], [0, 0, 0])
+    assert not np.allclose(axes[2], [0, 0, 0])
+    assert np.allclose(axes[2], np.cross(axes[0], axes[1]))
+    return True
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', permutations([0, 1, 2]))
+def test_principal_axes_vectors_returns_right_handed_frame(x, y, z, order):
+    directions = np.array((x, y, z))[list(order)]
+
+    # test generally with random data
+    points = np.random.default_rng().random((10, 3))
+    axes = principal_axes_vectors(points)
+    assert assert_valid_right_handed_frame(axes)
+
+    # test where direction vector may be perpendicular to axes
+    points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]  # axis-aligned data
+    axes = principal_axes_vectors(
+        points,
+        axis_0_direction=directions[0],
+        axis_1_direction=directions[1],
+    )
+    assert assert_valid_right_handed_frame(axes)
+    axes = principal_axes_vectors(
+        points,
+        axis_1_direction=directions[1],
+        axis_2_direction=directions[2],
+    )
+    assert assert_valid_right_handed_frame(axes)
+
+
+def test_principal_axes_vectors_swap_and_project():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    vectors = principal_axes_vectors(points, swap_equal_axes=False)
+    assert np.array_equal(vectors, [[0, 0, 1], [1, 0, 0], [0, 1, 0]])  # ZXY
+    vectors = principal_axes_vectors(points, swap_equal_axes=True)
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    vectors = principal_axes_vectors(points, swap_equal_axes=False)
+    assert np.array_equal(vectors, [[0, 1, 0], [1, 0, 0], [0, 0, -1]])  # YXZ
+    vectors = principal_axes_vectors(points, swap_equal_axes=True)
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ
+
+    vectors = principal_axes_vectors(points, project_xyz=True)
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ all positive
+    vectors = principal_axes_vectors(
+        points,
+        project_xyz=True,
+        axis_0_direction='-x',  # override default values
+        axis_1_direction='-y',
+        axis_2_direction='-z',
+        swap_equal_axes=False,
+    )
+    assert np.array_equal(vectors, [[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+
+
+def test_principal_axes_vectors_direction():
+    # define planar data with largest variation in x, then y
+    points = [[2, 1, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]]
+    vectors = principal_axes_vectors(points)
+    assert np.array_equal(vectors, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    axes = principal_axes_vectors(points, axis_0_direction=[1, 0, 0])
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+    axes = principal_axes_vectors(points, axis_1_direction=[0, -1, 0])
+    assert np.array_equal(axes, [[1, 0, 0], [-0, -1, -0], [0, 0, -1]])
+
+    axes = principal_axes_vectors(points, axis_2_direction=[0, 0, -1])
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+
+    axes = principal_axes_vectors(points, axis_0_direction=[-1, 0, 0], axis_1_direction=[0, -1, 0])
+    assert np.array_equal(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]])
+
+    axes = principal_axes_vectors(
+        points,
+        axis_0_direction='x',
+        axis_1_direction='-y',
+        axis_2_direction='-z',  # test has no effect
+    )
+    assert np.array_equal(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]])
+
+
+def test_principal_axes_vectors_return_transforms(airplane):
+    airplane.points_to_double()
+    initial_points = airplane.points
+
+    # verify not centered and not axis-aligned
+    initial_axes, transform, inverse = principal_axes_vectors(
+        initial_points,
+        return_transforms=True,
+    )
+    initial_center = np.mean(initial_points, axis=0)
+    assert not np.allclose(initial_axes, np.eye(3))
+    assert not np.allclose(initial_center, [0, 0, 0])
+    assert np.array_equal(transform.shape, (4, 4))
+    assert np.array_equal(inverse.shape, (4, 4))
+
+    # test transformed points are centered and axis-aligned
+    airplane.transform(transform)
+    aligned_points = airplane.points
+    aligned_axes = principal_axes_vectors(
+        aligned_points,
+        axis_0_direction='x',
+        axis_1_direction='y',
+    )
+    aligned_center = np.mean(aligned_points, axis=0)
+    assert np.allclose(aligned_axes, np.eye(3))
+    assert np.allclose(aligned_center, [0, 0, 0])
+
+    # test inverted points are same as initial
+    airplane.transform(inverse)
+    inverted_points = airplane.points
+    inverted_center = np.mean(inverted_points, axis=0)
+    assert np.allclose(inverted_points, initial_points)
+    assert np.allclose(inverted_center, initial_center)
+
+    # test transform_location
+    _, transform, _ = principal_axes_vectors(
+        initial_points,
+        return_transforms=True,
+        transformed_center="origin",
+    )
+    points = apply_transformation_to_points(transform, initial_points)
+    assert np.allclose(np.mean(points, axis=0), (0, 0, 0))
+
+    _, transform, _ = principal_axes_vectors(
+        initial_points,
+        return_transforms=True,
+        transformed_center="centroid",
+    )
+    points = apply_transformation_to_points(transform, initial_points)
+    assert np.allclose(np.mean(points, axis=0), np.mean(initial_points, axis=0))
+
+    _, transform, _ = principal_axes_vectors(
+        initial_points,
+        return_transforms=True,
+        transformed_center=(1, 2, 3),
+    )
+    points = apply_transformation_to_points(transform, initial_points)
+    assert np.allclose(np.mean(points, axis=0), (1, 2, 3))
+
+    msg = "Expected one of ['origin', 'centroid'], got abc instead."
+    with pytest.raises(ValueError, match=escape(msg)):
+        principal_axes_vectors(initial_points, transformed_center="abc", return_transforms=True)
+
+    # test returns default values
+    axes, transform, inverse = principal_axes_vectors([0, 0, 0], return_transforms=True)
+    assert np.array_equal(axes, np.eye(3))
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+    # test returns default values
+    axes, transform, inverse = principal_axes_vectors(np.empty((0, 3)), return_transforms=True)
+    assert np.array_equal(axes, np.eye(3))
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+
+def test_principal_axes_vectors(airplane):
+    axes = principal_axes_vectors(airplane.points)
+    assert np.allclose(
+        axes,
         [
-            139.06036376953125,
-            1654.9306640625,
-            38.0776252746582,
-            1335.2164306640625,
-            -1.4434913396835327,
-            157.70724487304688,
+            [-8.12132213e-07, 9.92557054e-01, 1.21780514e-01],
+            [1.00000000e00, 8.09226640e-07, 7.33171741e-08],
+            [-2.57765578e-08, 1.21780514e-01, -9.92557054e-01],
         ],
     )
+
+    # test two points returns non-default axes
+    points = [[0, 0, 0], [1, 1, 1]]
+    axes = principal_axes_vectors(points)
+    assert not np.array_equal(axes, np.eye(3))
+    assert np.array_equal(axes.shape, (3, 3))
+
+    # test empty data returns default axes
+    points = np.empty((0, 3))
+    axes = principal_axes_vectors(points)
+    assert np.array_equal(axes, np.eye(3))
+
+    # test single point returns default axes
+    points = [[0, 0, 0]]
+    axes = principal_axes_vectors(points)
+    assert np.array_equal(axes, np.eye(3))
+
+
+def test_principal_axes_vectors_raises():
+    with pytest.raises(ValueError, match="must be one of"):
+        principal_axes_vectors(np.empty((0, 3)), axis_0_direction='abc')
+    with pytest.raises(ValueError, match="must be distinct"):
+        principal_axes_vectors(np.empty((0, 3)), axis_0_direction='x', axis_1_direction='x')
+    with pytest.raises(ValueError, match="must be distinct"):
+        principal_axes_vectors(np.empty((0, 3)), axis_1_direction='x', axis_2_direction='x')
+
+
+def test_principal_axes_vectors_sample_count():
+    N = 100
+    points = np.random.default_rng().random((N, 3))
+    axes = principal_axes_vectors(points, sample_count=N + 1)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=N)
+    assert np.any(axes)
+    axes = principal_axes_vectors(points, sample_count=N - 1)
+    assert np.any(axes)
+
+    # test that None disables sampling
+    N_below_default = 100
+    points = np.random.default_rng().random((N_below_default, 3))
+    axes1 = principal_axes_vectors(points)
+    axes2 = principal_axes_vectors(points, sample_count=None)
+    assert np.array_equal(axes1, axes2)
+
+    N_above_default = 11000
+    points = np.random.default_rng().random((N_above_default, 3))
+    axes1 = principal_axes_vectors(points)
+    axes2 = principal_axes_vectors(points, sample_count=None)
+    assert not np.array_equal(axes1, axes2)
+
+
+def test_principal_axes_transform(airplane):
+    transform = principal_axes_transform(
+        airplane.points,
+        axis_0_direction='x',
+        axis_1_direction='y',
+        axis_2_direction='z',
+    )
+    assert np.any(transform)
+    assert np.array_equal(transform.shape, (4, 4))
+
+    transform, inverse = principal_axes_transform(airplane.points, return_inverse=True)
+    assert np.array_equal(transform.shape, (4, 4))
+    assert np.array_equal(inverse.shape, (4, 4))
 
 
 @pytest.mark.parametrize(
@@ -935,6 +1260,132 @@ def test_coerce_transformlike_arg_raises():
         _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     with pytest.raises(TypeError, match="must be one of"):
         _coerce_transformlike_arg("abc")
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_axes_rotation_equals_transform(airplane):
+    axes = np.eye(3)
+    points = airplane.points
+    rotate1 = axes_rotation(points, axes)
+    rotate2 = pv.PointSet(points).transform(axes).points
+    assert np.array_equal(rotate1, rotate2)
+
+
+def test_axes_rotation(airplane):
+    axes = np.eye(3)
+    points, _, _ = axes_rotation(
+        airplane.points,
+        axes=np.eye(3),
+        point_initial=(0, 0, 0),
+        point_final=(0, 0, 0),
+        inplace=False,
+        return_transforms=True,
+    )
+    assert np.array_equal(points, airplane.points)
+
+    points = airplane.points
+    rotate1 = axes_rotation(points, axes)
+    rotate2 = pv.PolyData(points).transform(axes).points
+    assert np.array_equal(rotate1, rotate2)
+
+    assert axes_rotation(points, axes, inplace=True) is None
+    transform, inverse = axes_rotation(points, axes, inplace=True, return_transforms=True)
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+    points, transform, inverse = axes_rotation(points, axes, inplace=False, return_transforms=True)
+    assert np.array_equal(points, airplane.points)
+    assert np.array_equal(transform, np.eye(4))
+    assert np.array_equal(inverse, np.eye(4))
+
+
+def test_axes_rotation_matrix():
+    # test passing axes without points creates a 4x4 rotation matrix
+    axes = np.eye(3)
+    transform = axes_rotation_matrix(axes)
+    assert np.array_equal(transform, np.eye(4))
+
+    axes = [[0, 0, 1], [1, 0, 0], [0, 1, 0]]  # ZXY
+    transform, inverse = axes_rotation_matrix(axes, return_inverse=True)
+    assert np.array_equal(
+        transform,
+        [[0.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+    )
+    assert np.array_equal(
+        inverse,
+        [[0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], [1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]],
+    )
+
+    p1 = (1, 2, 3)
+    p2 = np.array((4, 5, 6))
+
+    transform, inverse = axes_rotation_matrix(axes, point_initial=p1, return_inverse=True)
+    assert np.array_equal(
+        transform,
+        [[0, 0, 1, -3], [1, 0, 0, -1], [0, 1, 0, -2], [0, 0, 0, 1]],
+    )
+    assert np.array_equal(
+        inverse,
+        [[0.0, 1.0, 0.0, 1.0], [0.0, 0.0, 1.0, 2.0], [1.0, 0.0, 0.0, 3.0], [0.0, 0.0, 0.0, 1.0]],
+    )
+
+    transform, inverse = axes_rotation_matrix(axes, point_final=p1, return_inverse=True)
+    assert np.array_equal(
+        transform,
+        [[0, 0, 1, 1], [1, 0, 0, 2], [0, 1, 0, 3], [0, 0, 0, 1]],
+    )
+    assert np.array_equal(
+        inverse,
+        [[0.0, 1.0, 0.0, -2.0], [0.0, 0.0, 1.0, -3.0], [1.0, 0.0, 0.0, -1.0], [0.0, 0.0, 0.0, 1.0]],
+    )
+
+    transform, inverse = axes_rotation_matrix(
+        axes,
+        point_initial=p1,
+        point_final=p2,
+        return_inverse=True,
+    )
+    assert np.array_equal(
+        transform,
+        [[0, 0, 1, 1], [1, 0, 0, 4], [0, 1, 0, 4], [0, 0, 0, 1]],
+    )
+    assert np.array_equal(
+        inverse,
+        [[0.0, 1.0, 0.0, -4.0], [0.0, 0.0, 1.0, -4.0], [1.0, 0.0, 0.0, -1.0], [0.0, 0.0, 0.0, 1.0]],
+    )
+
+    with pytest.raises(ValueError, match="3x3 numeric"):
+        axes_rotation_matrix(np.array([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']]))
+    with pytest.raises(ValueError, match="3x3 numeric"):
+        axes_rotation_matrix([['a', 'b', 'c'], ['a', 'b', 'c'], ['a', 'b', 'c']])
+    with pytest.raises(TypeError, match="sequence or numpy array"):
+        axes_rotation_matrix(0)
+    with pytest.raises(TypeError, match="sequence or numpy"):
+        axes_rotation_matrix(axes_rotation_matrix)
+    with pytest.raises(ValueError, match="linearly independent"):
+        axes_rotation_matrix([[1, 0, 0], [1, 0, 0], [1, 0, 0]])
+    with pytest.raises(ValueError, match="right-handed "):
+        axes_rotation_matrix([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+
+
+def test_random_sample(airplane):
+    points = airplane.points
+    sample1 = random_sample_points(points, count=3, seed=2)
+    assert len(sample1) == 3
+    assert np.allclose(
+        sample1,
+        [[887.395, 48.7601, 80.7452], [915.95, 1075.49, 155.196], [946.622, 1075.49, 132.912]],
+    )
+
+    sample2 = random_sample_points(points, count=3, seed=42)
+    assert not np.array_equal(sample1, sample2)
+
+    N = len(points)
+    sample = random_sample_points(points, count=N + 1, pass_through=True)
+    assert np.array_equal(sample, points)
+    msg = "Sample larger than population or is negative"
+    with pytest.raises(ValueError, match=msg):
+        random_sample_points(points, count=N + 1, pass_through=False)
 
 
 @pytest.fixture()
