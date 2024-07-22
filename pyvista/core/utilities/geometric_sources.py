@@ -399,8 +399,7 @@ class ConeSource(_vtk.vtkConeSource, Algorithm):
         **kwargs,
     ):
         """Initialize the cone source class."""
-        super(_vtk.vtkConeSource, self).__init__()
-        super(Algorithm, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.center = center
         self.direction = direction
         self.height = height
