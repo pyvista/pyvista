@@ -27,7 +27,6 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
-from .misc import _lazy_vtk_instantiation
 from .misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -44,7 +43,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 @abstract_class
-class BaseGeometricSource:
+class Algorithm(_vtk.vtkAlgorithm):
     """The Base Geometric Sources class.
 
     Parameters
@@ -59,8 +58,7 @@ class BaseGeometricSource:
 
     def __init__(self, point_dtype='float32'):
         """Initialize the geometric source class."""
-        self._source = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
-        self._source.__init__()
+        super().__init__()
         self.point_dtype = point_dtype
 
     @property
@@ -72,7 +70,7 @@ class BaseGeometricSource:
         str
             Desired output point types.
         """
-        precision = self._source.GetOutputPointsPrecision()
+        precision = self.GetOutputPointsPrecision()
         return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
@@ -98,17 +96,7 @@ class BaseGeometricSource:
             'float32': SINGLE_PRECISION,
             'float64': DOUBLE_PRECISION,
         }[point_dtype]
-        self._source.SetOutputPointsPrecision(precision)
-
-    def source(self):
-        """Return the underlying VTK source.
-
-        Returns
-        -------
-        vtk.vtkAlgorithm
-            The underlying VTK source.
-        """
-        return self._source
+        self.SetOutputPointsPrecision(precision)
 
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
@@ -361,7 +349,7 @@ if _vtk.vtk_version_info < (9, 3):
 
 
 @no_new_attr
-class ConeSource(BaseGeometricSource):
+class ConeSource(_vtk.vtkConeSource, Algorithm):
     """Cone source algorithm class.
 
     Parameters
@@ -392,7 +380,7 @@ class ConeSource(BaseGeometricSource):
         Number of facets used to represent the cone.
 
     **kwargs : dict, optional
-        See :func:`pyvista.BaseGeometricSource` for additional options.
+        See :func:`pyvista.Algorithm` for additional options.
 
     Examples
     --------
@@ -402,9 +390,6 @@ class ConeSource(BaseGeometricSource):
     >>> source = pv.ConeSource()
     >>> source.output.plot(show_edges=True, line_width=5)
     """
-
-    _vtk_module_name = "vtkFiltersSources"
-    _vtk_class_name = "vtkConeSource"
 
     def __init__(
         self,
@@ -445,7 +430,7 @@ class ConeSource(BaseGeometricSource):
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
         """
-        return self._source.GetCenter()
+        return self.GetCenter()
 
     @center.setter
     def center(self, center: Sequence[float]):
@@ -457,7 +442,7 @@ class ConeSource(BaseGeometricSource):
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
         """
-        self._source.SetCenter(center)
+        self.SetCenter(center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -469,7 +454,7 @@ class ConeSource(BaseGeometricSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
         """
-        return self._source.GetDirection()
+        return self.GetDirection()
 
     @direction.setter
     def direction(self, direction: Sequence[float]):
@@ -481,7 +466,7 @@ class ConeSource(BaseGeometricSource):
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
         """
-        self._source.SetDirection(direction)
+        self.SetDirection(direction)
 
     @property
     def height(self) -> float:
@@ -492,7 +477,7 @@ class ConeSource(BaseGeometricSource):
         float
             Height along the cone in its specified direction.
         """
-        return self._source.GetHeight()
+        return self.GetHeight()
 
     @height.setter
     def height(self, height: float):
@@ -503,7 +488,7 @@ class ConeSource(BaseGeometricSource):
         height : float
             Height of the cone.
         """
-        self._source.SetHeight(height)
+        self.SetHeight(height)
 
     @property
     def radius(self) -> float:
@@ -514,7 +499,7 @@ class ConeSource(BaseGeometricSource):
         float
             Base radius of the cone.
         """
-        return self._source.GetRadius()
+        return self.GetRadius()
 
     @radius.setter
     def radius(self, radius: float):
@@ -525,7 +510,7 @@ class ConeSource(BaseGeometricSource):
         radius : float
             Base radius of the cone.
         """
-        self._source.SetRadius(radius)
+        self.SetRadius(radius)
 
     @property
     def capping(self) -> bool:
@@ -537,7 +522,7 @@ class ConeSource(BaseGeometricSource):
             Enable or disable the capping the base of the cone with a
             polygon.
         """
-        return bool(self._source.GetCapping())
+        return bool(self.GetCapping())
 
     @capping.setter
     def capping(self, capping: bool):
@@ -549,7 +534,7 @@ class ConeSource(BaseGeometricSource):
             Enable or disable the capping the base of the cone with a
             polygon.
         """
-        self._source.SetCapping(capping)
+        self.SetCapping(capping)
 
     @property
     def angle(self) -> float:
@@ -561,7 +546,7 @@ class ConeSource(BaseGeometricSource):
             The angle in degrees between the axis of the cone and a
             generatrix.
         """
-        return self._source.GetAngle()
+        return self.GetAngle()
 
     @angle.setter
     def angle(self, angle: float):
@@ -573,7 +558,7 @@ class ConeSource(BaseGeometricSource):
             The angle in degrees between the axis of the cone and a
             generatrix.
         """
-        self._source.SetAngle(angle)
+        self.SetAngle(angle)
 
     @property
     def resolution(self) -> int:
@@ -584,7 +569,7 @@ class ConeSource(BaseGeometricSource):
         int
             Number of points on the circular face of the cone.
         """
-        return self._source.GetResolution()
+        return self.GetResolution()
 
     @resolution.setter
     def resolution(self, resolution: int):
@@ -595,7 +580,7 @@ class ConeSource(BaseGeometricSource):
         resolution : int
             Number of points on the circular face of the cone.
         """
-        self._source.SetResolution(resolution)
+        self.SetResolution(resolution)
 
     @property
     def output(self):
@@ -606,8 +591,8 @@ class ConeSource(BaseGeometricSource):
         pyvista.PolyData
             Cone surface.
         """
-        self._source.Update()
-        return wrap(self._source.GetOutput())
+        self.Update()
+        return wrap(self.GetOutput())
 
 
 @no_new_attr

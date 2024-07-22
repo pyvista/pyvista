@@ -3712,19 +3712,19 @@ def test_add_point_scalar_labels_list():
 
 def test_plot_algorithm_cone():
     algo = pv.ConeSource()
-    algo.source.SetResolution(10)
+    algo.SetResolution(10)
 
     pl = pv.Plotter()
-    pl.add_mesh(algo.source, color='red')
+    pl.add_mesh(algo, color='red')
     pl.show(auto_close=False)
     # Use low resolution so it appears in image regression tests easily
-    algo.source.SetResolution(3)
+    algo.SetResolution(3)
     pl.show()
 
     # Bump resolution and plot with silhouette
-    algo.source.SetResolution(8)
+    algo.SetResolution(8)
     pl = pv.Plotter()
-    pl.add_mesh(algo.source, color='red', silhouette=True)
+    pl.add_mesh(algo, color='red', silhouette=True)
     pl.show()
 
 
