@@ -690,7 +690,7 @@ def test_orthogonal_planes_source():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output
     assert isinstance(output, pv.MultiBlock)
-    assert output.keys() == ['xy', 'yz', 'zx']
+    assert output.keys() == ['yz', 'zx', 'xy']
     assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
@@ -727,7 +727,7 @@ def test_orthogonal_planes_source_normal_sign():
 
     planes_source.normal_sign = '-'
     assert planes_source.normal_sign == ('-', '-', '-')
-    np.all(pv.merge(output)['Normals'] <= 0)
+    assert np.all(pv.merge(output)['Normals'] <= 0)
 
     planes_source.normal_sign = ['+', '+', '+']
     assert planes_source.normal_sign == ('+', '+', '+')

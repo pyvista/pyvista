@@ -4528,25 +4528,20 @@ def test_direction_objects(direction_obj_test_case):
     plot.show()
 
 
-# check_gc fails, suspected memory leak with pv.merge
-@pytest.mark.usefixtures('skip_check_gc')
+@skip_windows  # Windows colors all plane cells red (bug?)
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
-def test_orthogonal_planes_source_normals(normal_sign):
+@pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
+def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
     output = plane_source.output
-    for plane in output:
-        plane['_rgb'] = [
-            pv.Color('red').float_rgb,
-            pv.Color('green').float_rgb,
-            pv.Color('blue').float_rgb,
-            pv.Color('yellow').float_rgb,
-        ]
-    # Merge for plotting, since multiblock does not have a `plot_normals` method
-    merged = pv.merge(output)
-    # This line is necessary due to issue: https://github.com/pyvista/pyvista/issues/6365
-    merged.GetPointData().SetActiveNormals('Normals')
-
-    merged.plot_normals(mag=0.8, color='red')
+    plane = output[plane]
+    plane['_rgb'] = [
+        pv.Color('red').float_rgb,
+        pv.Color('green').float_rgb,
+        pv.Color('blue').float_rgb,
+        pv.Color('yellow').float_rgb,
+    ]
+    plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
