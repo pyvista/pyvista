@@ -743,3 +743,13 @@ def test_orthogonal_planes_source_normal_sign():
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.normal_sign = 0
+
+
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
+def test_point_dtype(point_dtype):
+    if point_dtype in ['float32', 'float64']:
+        cone = pv.ConeSource(point_dtype=point_dtype)
+        assert cone.output.points.dtype == point_dtype
+    else:
+        with pytest.raises(ValueError, match="Point dtype must be either 'float32' or 'float64'"):
+            _ = pv.ConeSource(point_dtype=point_dtype)
