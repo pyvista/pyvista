@@ -44,7 +44,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 @abstract_class
 class Algorithm(_vtk.vtkAlgorithm):
-    """The Base Geometric Sources class.
+    """Superclass for all sources.
 
     Parameters
     ----------
