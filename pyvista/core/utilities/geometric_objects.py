@@ -1303,6 +1303,7 @@ def Cone(
     capping=True,
     angle=None,
     resolution=6,
+    **kwargs,
 ):
     """Create a cone.
 
@@ -1333,6 +1334,9 @@ def Cone(
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
+    **kwargs : dict, optional
+        See :func:`pyvista.Algorithm` for additional options.
+
     Returns
     -------
     pyvista.PolyData
@@ -1354,6 +1358,7 @@ def Cone(
         angle=angle,
         radius=radius,
         resolution=resolution,
+        **kwargs,
     )
     return algo.output
 
