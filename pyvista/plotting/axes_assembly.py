@@ -1453,14 +1453,8 @@ class PlanesAssembly(_XYZAssembly):
         self._plane_actors = (Actor(), Actor(), Actor())
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
-        output = self._geometry_source.output
-        # Change order of planes and rename
-        # This is to match the standard 'x-y-z' API used by assemblies
-        self.planes = pv.MultiBlock(dict(x=output['yz'], y=output['zx'], z=output['xy']))
-
-        # Repeat for individual plane sources
-        plane_sources = self._geometry_source._plane_sources
-        self._plane_sources = plane_sources[1], plane_sources[2], plane_sources[0]
+        self.planes = self._geometry_source.output
+        self._plane_sources = self._geometry_source._plane_sources
 
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
