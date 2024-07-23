@@ -87,5 +87,5 @@ p.show()
 # %%
 # The Platonic solids come with cell scalars that index each face of the
 # solids.
-# %%
+#
 # .. tags:: load
