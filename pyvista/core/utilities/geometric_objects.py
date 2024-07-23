@@ -1335,7 +1335,7 @@ def Cone(
         Number of facets used to represent the cone.
 
     **kwargs : dict, optional
-        See :func:`pyvista.Algorithm` for additional options.
+        See :func:`pyvista.BaseSource` for additional options.
 
     Returns
     -------
