@@ -161,5 +161,5 @@ p.show()
 # In our opinion, color interpolation is not a preferred default for scientific
 # visualization and is why we have chosen to set the ``interpolate_before_map``
 # flag to ``True``.
-# %%
+#
 # .. tags:: plot
