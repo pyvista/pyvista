@@ -43,7 +43,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 @abstract_class
-class Algorithm(_vtk.vtkAlgorithm):
+class BaseSource(_vtk.vtkAlgorithm):
     """Superclass for all sources.
 
     Parameters
@@ -345,7 +345,7 @@ if _vtk.vtk_version_info < (9, 3):
 
 
 @no_new_attr
-class ConeSource(_vtk.vtkConeSource, Algorithm):
+class ConeSource(_vtk.vtkConeSource, BaseSource):
     """Cone source algorithm class.
 
     Parameters
@@ -376,7 +376,7 @@ class ConeSource(_vtk.vtkConeSource, Algorithm):
         Number of facets used to represent the cone.
 
     **kwargs : dict, optional
-        See :func:`pyvista.Algorithm` for additional options.
+        See :func:`pyvista.BaseSource` for additional options.
 
     Examples
     --------
