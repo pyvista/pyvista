@@ -198,6 +198,51 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
                         setattr(part, name, value)
 
     @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return the bounds of the axes.
+
+        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        """
+        return self.GetBounds()
+
+    @property
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return the center of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.center
+        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
+        """
+        bnds = self.bounds
+        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
+
+    @property
+    def length(self) -> float:  # numpydoc ignore=RT01
+        """Return the length of the axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes = pv.AxesAssembly()
+        >>> axes.length
+        1.9052558909067219
+        """
+        bnds = self.bounds
+        min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
+        max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
+        return np.linalg.norm(max_bnds - min_bnds).tolist()
+
+    @property
     @abstractmethod
     def labels(self):  # numpydoc ignore=RT01
         """XYZ labels."""
@@ -887,51 +932,6 @@ class AxesAssembly(_XYZAssembly):
         for label, position in zip(labels, position_vectors):
             label.relative_position = position
 
-    @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return the bounds of the axes.
-
-        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.bounds
-        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
-        """
-        return self.GetBounds()
-
-    @property
-    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return the center of the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.center
-        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
-        """
-        bnds = self.bounds
-        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
-
-    @property
-    def length(self) -> float:  # numpydoc ignore=RT01
-        """Return the length of the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.length
-        1.9052558909067219
-        """
-        bnds = self.bounds
-        min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
-        max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
-        return np.linalg.norm(max_bnds - min_bnds).tolist()
-
 
 def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int], name: str):
     _validation.check_instance(labels, (list, tuple), name=name)
@@ -1347,7 +1347,9 @@ class PlanesAssembly(_XYZAssembly):
         positioned at the ends of the shafts.
 
     label_size : int, default: 50
-        Size of the text labels.
+        Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
+        font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
+        proportional to the :attr:`length` of the assembly.
 
     label_mode : '2D' | '3D', default: '2D'
         Mode to use for text labels. In '2D' mode, the label actors are 2D
@@ -1437,7 +1439,7 @@ class PlanesAssembly(_XYZAssembly):
         show_labels: bool = True,
         label_position: int | VectorLike[int] = 0,
         label_size: int = 50,
-        label_mode: Literal['2D', '3D'] = '2D',
+        label_mode: Literal['2D', '3D'] = '3D',
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
@@ -1498,9 +1500,10 @@ class PlanesAssembly(_XYZAssembly):
         # TODO: implement set_text_prop() and use that instead
         for label in self._label_actor_iterator:
             prop = label.prop
-            prop.bold = True
-            prop.italic = True
             prop.justification_vertical = 'center'
+            prop.justification_horizontal = 'center'
+
+        self._update_label_positions()
 
     def __repr__(self):
         """Representation of the planes assembly."""
@@ -1534,6 +1537,30 @@ class PlanesAssembly(_XYZAssembly):
             f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
         ]
         return '\n'.join(attr)
+
+    @property
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_actor = pv.AxesAssembly()
+        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
+        >>> axes_actor.labels
+        ('X Axis', 'Y Axis', 'Z Axis')
+        """
+        return self.x_label, self.y_label, self.z_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
+        labels = _validate_label_sequence(labels, n_labels=3, name='labels')
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
 
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
@@ -1603,8 +1630,14 @@ class PlanesAssembly(_XYZAssembly):
     @label_size.setter
     def label_size(self, size: int):  # numpydoc ignore=GL08
         self._label_size = size
+        # Re-scale the title text proportional to planes assembly
+        # Values on the order of 0.01-0.05 seem to work best. Use a normalization
+        # factor so that values for `label_size` are on the order of 10-50
+        NORM_FACTOR = 1000
+        scale = self.planes.length * size / NORM_FACTOR
         for axis in self._axis_actors:
-            axis.SetTitleScale(size)
+            axis.GetTitleActor().SetScale(scale)  # 3D labels
+            axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
 
     @property
     def label_position(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
@@ -1776,13 +1809,6 @@ class PlanesAssembly(_XYZAssembly):
             else:
                 raise RuntimeError(f"Unexpected axis direction! Got {axis_dir}.")
 
-            # Re-scale the title text proportional to planes assembly
-            # Values on the order of 0.01-0.05 seem to work best. Use a normalization
-            # factor so that values for `label_size` are on the order of 10-50
-            NORM_FACTOR = 1000
-            scale = self.planes.length * self.label_size / NORM_FACTOR
-            this_axis_actor.GetTitleActor().SetScale(scale)
-
         #          2          1
         #    +----------+----------+
         #  3 | (-i, +j) | (+i, +j) | 0
@@ -1824,9 +1850,13 @@ class _AxisActor(_vtk.vtkAxisActor):
         # For 2D mode only
         self.SetVerticalOffsetXTitle2D(0)
         self.SetHorizontalOffsetYTitle2D(0)
-        self.GetTitleTextProperty().SetVerticalJustificationToCentered()
+        text_prop = TextProperty()
+        text_prop.justification_vertical = 'center'
+        self.SetTitleTextProperty(text_prop)
+        self.GetTitleActor()
 
-        self.SetTitleTextProperty(TextProperty())
+        # For 3D mode only
+        self.GetProperty().SetLighting(False)
 
     @property
     def prop(self) -> TextProperty:

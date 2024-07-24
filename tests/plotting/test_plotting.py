@@ -4593,3 +4593,30 @@ def test_planes_assembly_label_position(plane, label_kwarg, camera_position, lab
     plot.background_color = 'gray'
     plot.add_axes_at_origin()
     plot.show()
+
+
+BOUNDS = (-50, 50, -10, 30, -80, 80)
+
+
+@pytest.mark.parametrize(
+    'bounds',
+    [BOUNDS, BOUNDS * np.array(0.01)],
+)
+@pytest.mark.parametrize('label_size', [25, 50])
+def test_planes_assembly_labels(bounds, label_size):
+    plot = pv.Plotter()
+    labels = ['FIRST ', 'SECOND ', 'THIRD ']
+    common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
+    for label_mode in ['2D', '3D']:
+        color = 'white' if label_mode == '3D' else 'black'
+        actor = pv.PlanesAssembly(
+            x_label=labels[0] + label_mode,
+            y_label=labels[1] + label_mode,
+            z_label=labels[2] + label_mode,
+            label_mode=label_mode,
+            label_color=color,
+            **common_kwargs,
+        )
+        plot.add_actor(actor)
+        actor.camera = plot.camera
+    plot.show()
