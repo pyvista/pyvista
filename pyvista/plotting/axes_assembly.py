@@ -1343,8 +1343,16 @@ class PlanesAssembly(_XYZAssembly):
         Show or hide the text labels.
 
     label_position : float | VectorLike[float], optional
-        Position of the text labels along each axis. By default, the labels are
-        positioned at the ends of the shafts.
+        Position of the text label for each plane. Positions range from ``0`` to ``7``,
+        indicating one of eight positions along the perimeter of the plane::
+
+                    2          1
+              +----------+----------+
+            3 | (-i, +j) | (+i, +j) | 0
+              +----------+----------+
+            4 | (-i, -j) | (+i, -j) | 7
+              +----------+----------+
+                    5          6
 
     label_offset : float | VectorLike[float], optional
         Vertical offset of the text labels. The offset is proportional to
@@ -1649,11 +1657,18 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def label_position(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
-        """Position of the text label along each axis.
+        """Position of the text label for each plane.
 
-        By default, the labels are positioned at the ends of the shafts.
+        Positions range from ``0`` to ``7``, indicating one of eight positions along
+        the perimeter of the plane::
 
-        Values must be non-negative.
+                    2          1
+              +----------+----------+
+            3 | (-i, +j) | (+i, +j) | 0
+              +----------+----------+
+            4 | (-i, -j) | (+i, -j) | 7
+              +----------+----------+
+                    5          6
 
         Examples
         --------
@@ -1782,6 +1797,7 @@ class PlanesAssembly(_XYZAssembly):
             this_plane_source = plane_sources[plane_id]
             this_axis_actor = axis_actors[plane_id]
 
+            # Get vectors which define the plane
             origin, point1, point2 = (
                 np.array(this_plane_source.GetOrigin()),
                 np.array(this_plane_source.GetPoint1()),
@@ -1791,17 +1807,26 @@ class PlanesAssembly(_XYZAssembly):
             vector1 = point1 - origin
             vector2 = point2 - origin
 
+            # Define corners
             corner_bottom_left = origin
             corner_bottom_right = origin + vector1
             corner_top_left = origin + vector2
             corner_top_right = corner_bottom_right + vector2
 
+            # Define mid points along perimeter
             midpoint_left = (corner_top_left + corner_bottom_left) / 2
             midpoint_right = (corner_bottom_right + corner_top_right) / 2
             midpoint_top = (corner_top_left + corner_top_right) / 2
             midpoint_bottom = (corner_bottom_left + corner_bottom_right) / 2
 
-            # Order points counter-clockwise right side
+            #          2          1
+            #    +----------+----------+
+            #  3 | (-i, +j) | (+i, +j) | 0
+            #    +----------+----------+
+            #  4 | (-i, -j) | (+i, -j) | 7
+            #    +----------+----------+
+            #          5          6
+            # Order points counter-clockwise starting from right side (+i axis)
             ordered_points = [
                 midpoint_right,
                 corner_top_right,
@@ -1815,7 +1840,7 @@ class PlanesAssembly(_XYZAssembly):
             # Duplicate first point as last point
             ordered_points.append(ordered_points[0])
 
-            # Get initial points defining the axis
+            # Get initial points along perimeter defining the axis actor
             axis_point1, axis_point2 = ordered_points[location : location + 2]
 
             # Add offset
@@ -1830,14 +1855,6 @@ class PlanesAssembly(_XYZAssembly):
             # Set axis points
             this_axis_actor.SetPoint1(transform_point(axis_point1))
             this_axis_actor.SetPoint2(transform_point(axis_point2))
-
-        #          2          1
-        #    +----------+----------+
-        #  3 | (-i, +j) | (+i, +j) | 0
-        #    +----------+----------+
-        #  4 | (-i, -j) | (+i, -j) | 7
-        #    +----------+----------+
-        #          5          6
 
         positions = self.label_position
         set_axis_location(0, positions[0])

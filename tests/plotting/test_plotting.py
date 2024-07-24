@@ -4614,13 +4614,12 @@ def test_planes_assembly_labels(bounds, label_size):
     labels = ['FIRST ', 'SECOND ', 'THIRD ']
     common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
     for label_mode in ['2D', '3D']:
-        color = 'white' if label_mode == '3D' else 'black'
         actor = pv.PlanesAssembly(
             x_label=labels[0] + label_mode,
             y_label=labels[1] + label_mode,
             z_label=labels[2] + label_mode,
             label_mode=label_mode,
-            label_color=color,
+            label_color='white' if label_mode == '3D' else 'black',
             **common_kwargs,
         )
         plot.add_actor(actor)
