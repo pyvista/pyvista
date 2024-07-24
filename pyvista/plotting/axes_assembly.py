@@ -1346,6 +1346,11 @@ class PlanesAssembly(_XYZAssembly):
         Position of the text labels along each axis. By default, the labels are
         positioned at the ends of the shafts.
 
+    label_offset : float | VectorLike[float], optional
+        Vertical offset of the text labels. The offset is proportional to
+        the :attr:`length` of the assembly. Positive values move the labels away
+        from the center; negative values move them towards it.
+
     label_size : int, default: 50
         Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
         font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
@@ -1438,6 +1443,7 @@ class PlanesAssembly(_XYZAssembly):
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: int | VectorLike[int] = 0,
+        label_offset: float = 0.05,
         label_size: int = 50,
         label_mode: Literal['2D', '3D'] = '3D',
         x_color: ColorLike | Sequence[ColorLike] | None = None,
@@ -1464,6 +1470,7 @@ class PlanesAssembly(_XYZAssembly):
         # Init label actors
         self._axis_actors = (_AxisActor(), _AxisActor(), _AxisActor())
         self._label_properties = tuple(axis.GetTitleTextProperty() for axis in self._axis_actors)
+        self._label_offset = 0.05  # Init for now, validate input later
 
         _XYZAssembly.__init__(
             self,
@@ -1489,6 +1496,7 @@ class PlanesAssembly(_XYZAssembly):
 
         self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
+        self.label_offset = label_offset
 
         # Set default properties
         for actor in self._plane_actors:
@@ -1677,6 +1685,21 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
     @property
+    def label_offset(self) -> float:  # numpydoc ignore=RT01
+        """Vertical offset of the text labels.
+
+        The offset is proportional to the :attr:`length` of the assembly. Positive
+        values move the labels away from the center; negative values move them
+        towards it.
+        """
+        return self._label_offset
+
+    @label_offset.setter
+    def label_offset(self, offset: int):  # numpydoc ignore=GL08
+        self._label_offset = _validation.validate_number(offset, dtype_out=float)
+        self._update_label_positions()
+
+    @property
     def label_mode(self) -> Literal['2D', '3D']:  # numpydoc ignore=RT01
         """Mode to use for text labels.
 
@@ -1792,22 +1815,21 @@ class PlanesAssembly(_XYZAssembly):
             # Duplicate first point as last point
             ordered_points.append(ordered_points[0])
 
-            # Set axis points to specified location
+            # Get initial points defining the axis
             axis_point1, axis_point2 = ordered_points[location : location + 2]
+
+            # Add offset
+            axis_dir = (axis_point1 - axis_point2) / np.linalg.norm(axis_point1 - axis_point2)
+            offset_dir = np.cross(axis_dir, this_plane_source.GetNormal())
+            offset_dir = -1 * offset_dir / np.linalg.norm(offset_dir)
+            offset_mag = self.planes.length * self.label_offset
+            offset = offset_mag * offset_dir
+            axis_point1 += offset
+            axis_point2 += offset
+
+            # Set axis points
             this_axis_actor.SetPoint1(transform_point(axis_point1))
             this_axis_actor.SetPoint2(transform_point(axis_point2))
-
-            # Align axis type to its direction
-            # NOTE: Using SetAxisType() doesn't really seem to have any effect
-            axis_dir = np.abs(axis_point1 - axis_point2) / np.linalg.norm(axis_point1 - axis_point2)
-            if np.allclose(axis_dir, [1, 0, 0]):
-                this_axis_actor.SetAxisTypeToX()
-            elif np.allclose(axis_dir, [0, 1, 0]):
-                this_axis_actor.SetAxisTypeToY()
-            elif np.allclose(axis_dir, [0, 0, 1]):
-                this_axis_actor.SetAxisTypeToZ()
-            else:
-                raise RuntimeError(f"Unexpected axis direction! Got {axis_dir}.")
 
         #          2          1
         #    +----------+----------+
@@ -1836,6 +1858,7 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.MinorTicksVisibleOff()
         self.TickVisibilityOff()
         self.DrawGridlinesOff()
+        self.AxisVisibilityOff()  # Turn this on for debugging
 
         # Set empty tick labels
         labels = _vtk.vtkStringArray()
