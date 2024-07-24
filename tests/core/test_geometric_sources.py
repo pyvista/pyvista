@@ -726,8 +726,9 @@ def test_orthogonal_planes_source_normal_sign():
     assert np.all(pv.merge(output)['Normals'] >= 0)
 
     planes_source.normal_sign = '-'
+    planes_source.update()
     assert planes_source.normal_sign == ('-', '-', '-')
-    np.all(pv.merge(output)['Normals'] <= 0)
+    assert np.all(pv.merge(output)['Normals'] <= 0)
 
     planes_source.normal_sign = ['+', '+', '+']
     assert planes_source.normal_sign == ('+', '+', '+')
