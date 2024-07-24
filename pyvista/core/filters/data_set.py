@@ -3253,8 +3253,8 @@ class DataSetFilters:
     def point_data_to_cell_data(
         self,
         pass_point_data=False,
-        progress_bar=False,
         categorical=False,
+        progress_bar=False,
     ):
         """Transform point data into cell data.
 
@@ -3266,13 +3266,13 @@ class DataSetFilters:
         pass_point_data : bool, default: False
             If enabled, pass the input point data through to the output.
 
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
         categorical : bool, default: False
             Control whether the source point data is to be treated as
             categorical. If the data is categorical, histograming will be used
             to assign the cell data.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
