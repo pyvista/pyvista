@@ -1407,35 +1407,55 @@ class PlanesAssembly(_XYZAssembly):
 
     Examples
     --------
-    Add planes to a plot.
+    Fit planes to a model of a human.
 
     >>> import pyvista as pv
-    >>> planes = pv.PlanesAssembly()
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(planes)
-    >>> pl.show()
-
-    Customize the plane colors.
-
-    >>> planes.x_color = ['cyan', 'blue']
-    >>> planes.y_color = ['magenta', 'red']
-    >>> planes.z_color = 'yellow'
-
-    Customize the label color too.
-
-    >>> planes.label_color = 'brown'
-
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(planes)
-    >>> pl.show()
-
-    Position and orient the axes in space.
-
-    >>> axes = pv.PlanesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
+    >>> from pyvista import examples
+    >>> human = examples.download_human()
+    >>> labels = 'Transverse', 'Sagittal', 'Coronal'
+    >>> planes = pv.PlanesAssembly(
+    ...     bounds=human.bounds, labels=labels, label_size=25
     ... )
+
+    Plot the planes and the model.
+
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes)
+    >>> _ = pl.add_mesh(human, color='yellow')
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
+    >>> pl.show()
+
+    Customize the colors and opacity.
+
+    >>> planes.x_color = 'cyan'
+    >>> planes.y_color = 'magenta'
+    >>> planes.z_color = 'yellow'
+    >>> planes.opacity = 0.7
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, color='yellow')
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
+    >>> pl.show()
+
+    Apply a transformation to the planes and the model.
+
+    >>> transform = np.array(
+    ...     [
+    ...         [0.70645893, 0.69636424, 0.12646197, 1.0],
+    ...         [-0.62246712, 0.69636424, -0.35722756, 2.0],
+    ...         [-0.33682409, 0.17364818, 0.92541658, 3.0],
+    ...         [0.0, 0.0, 0.0, 1.0],
+    ...     ]
+    ... )
+    >>> planes.user_matrix = transform
+
+    >>> pl = pv.Plotter()
+    >>> human_actor = pl.add_mesh(
+    ...     human, color='yellow', user_matrix=transform
+    ... )
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
     >>> pl.show()
     """
 
@@ -1897,6 +1917,8 @@ class _AxisActor(_vtk.vtkAxisActor):
 
         # For 3D mode only
         self.GetProperty().SetLighting(False)
+
+        self.SetUseBounds(False)
 
     @property
     def prop(self) -> TextProperty:
