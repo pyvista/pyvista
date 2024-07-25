@@ -31,7 +31,6 @@ if TYPE_CHECKING:  # pragma: no cover
     import sys
     from typing import Iterator
 
-    from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
@@ -174,18 +173,6 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         for label in self._label_actor_iterator:
             label.SetVisibility(value)
 
-    @property
-    def label_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the text labels."""
-        return self._label_color
-
-    @label_color.setter
-    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        valid_color = Color(color)
-        self._label_color = valid_color
-        for label in self._label_actor_iterator:
-            label.prop.color = valid_color
-
     def _post_set_update(self):
         # Update prop3D attributes for shaft, tip, and label actors
         parts = self.parts
@@ -198,49 +185,16 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
                         setattr(part, name, value)
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return the bounds of the axes.
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the text labels."""
+        return self._label_color
 
-        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.bounds
-        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
-        """
-        return self.GetBounds()
-
-    @property
-    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Return the center of the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.center
-        (0.44999999925494194, 0.44999999925494194, 0.44999999925494194)
-        """
-        bnds = self.bounds
-        return (bnds[0] + bnds[1]) / 2, (bnds[1] + bnds[2]) / 2, (bnds[4] + bnds[5]) / 2
-
-    @property
-    def length(self) -> float:  # numpydoc ignore=RT01
-        """Return the length of the axes.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> axes = pv.AxesAssembly()
-        >>> axes.length
-        1.9052558909067219
-        """
-        bnds = self.bounds
-        min_bnds = np.array((bnds[0], bnds[2], bnds[4]))
-        max_bnds = np.array((bnds[1], bnds[3], bnds[5]))
-        return np.linalg.norm(max_bnds - min_bnds).tolist()
+    @label_color.setter
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        for label in self._label_actor_iterator:
+            label.prop.color = valid_color
 
     @property
     @abstractmethod
