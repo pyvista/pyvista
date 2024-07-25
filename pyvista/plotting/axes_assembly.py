@@ -1428,9 +1428,9 @@ class PlanesAssembly(_XYZAssembly):
         label_offset: float = 0.05,
         label_size: int = 50,
         label_mode: Literal['2D', '3D'] = '3D',
-        x_color: ColorLike | Sequence[ColorLike] | None = None,
-        y_color: ColorLike | Sequence[ColorLike] | None = None,
-        z_color: ColorLike | Sequence[ColorLike] | None = None,
+        x_color: ColorLike | None = None,
+        y_color: ColorLike | None = None,
+        z_color: ColorLike | None = None,
         opacity: float | VectorLike[float] = 0.3,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -1503,20 +1503,21 @@ class PlanesAssembly(_XYZAssembly):
             mat_info = 'Set'
         bnds = self.bounds
 
-        geometry_repr = repr(self._geometry_source).splitlines()[1:]
-
         attr = [
             f"{type(self).__name__} ({hex(id(self))})",
-            *geometry_repr,
+            f"  Resolution:                 {self._geometry_source.resolution}",
+            f"  Normal sign:                {self._geometry_source.normal_sign}",
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
             f"  Label color:                {self.label_color}",
             f"  Show labels:                {self.show_labels}",
             f"  Label position:             {self.label_position}",
-            f"  XY Color:                   {self.x_color}",
-            f"  YZ Color:                   {self.y_color}",
-            f"  ZX Color:                   {self.z_color}",
+            f"  Label offset:               {self.label_offset}",
+            f"  Label mode:                 '{self.label_mode}'",
+            f"  X Color:                    {self.x_color}",
+            f"  Y Color:                    {self.y_color}",
+            f"  Z Color:                    {self.z_color}",
             f"  Position:                   {self.position}",
             f"  Orientation:                {self.orientation}",
             f"  Origin:                     {self.origin}",
@@ -1708,30 +1709,30 @@ class PlanesAssembly(_XYZAssembly):
             axis.SetUse2DMode(use_2D)
 
     @property
-    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def x_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the xy-plane."""
         return self._plane_actors[0].prop.color
 
     @x_color.setter
-    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._plane_actors[0].prop.color = color
 
     @property
-    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def y_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the yz-plane."""
         return self._plane_actors[1].prop.color
 
     @y_color.setter
-    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._plane_actors[1].prop.color = color
 
     @property
-    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+    def z_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the zx-plane."""
         return self._plane_actors[2].prop.color
 
     @z_color.setter
-    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+    def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
         self._plane_actors[2].prop.color = color
 
     @property
@@ -1750,7 +1751,7 @@ class PlanesAssembly(_XYZAssembly):
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
         if not hasattr(self, '_camera'):
-            raise ValueError('Camera has not been')
+            raise ValueError('Camera has not been set.')
         return self._camera
 
     @camera.setter
