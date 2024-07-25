@@ -162,17 +162,6 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
     def _label_actor_iterator(self) -> Iterator[Label]:
         return itertools.chain.from_iterable(self._assembly_label_actors)
 
-    @property
-    def show_labels(self) -> bool:  # numpydoc ignore=RT01
-        """Show or hide the text labels for the axes."""
-        return self._show_labels
-
-    @show_labels.setter
-    def show_labels(self, value: bool):  # numpydoc ignore=GL08
-        self._show_labels = value
-        for label in self._label_actor_iterator:
-            label.SetVisibility(value)
-
     def _post_set_update(self):
         # Update prop3D attributes for shaft, tip, and label actors
         parts = self.parts
@@ -185,16 +174,15 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
                         setattr(part, name, value)
 
     @property
-    def label_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the text labels."""
-        return self._label_color
+    def show_labels(self) -> bool:  # numpydoc ignore=RT01
+        """Show or hide the text labels for the axes."""
+        return self._show_labels
 
-    @label_color.setter
-    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        valid_color = Color(color)
-        self._label_color = valid_color
+    @show_labels.setter
+    def show_labels(self, value: bool):  # numpydoc ignore=GL08
+        self._show_labels = value
         for label in self._label_actor_iterator:
-            label.prop.color = valid_color
+            label.SetVisibility(value)
 
     @property
     @abstractmethod
@@ -255,6 +243,18 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
     @abstractmethod
     def label_position(self, position):  # numpydoc ignore=GL08
         """Position of the text labels."""
+
+    @property
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the text labels."""
+        return self._label_color
+
+    @label_color.setter
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        for label in self._label_actor_iterator:
+            label.prop.color = valid_color
 
     @property
     @abstractmethod
