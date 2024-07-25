@@ -574,7 +574,6 @@ class _Prop3DMixin(ABC):
         """Update object after setting Prop3D attributes."""
 
     @property
-    @abstractmethod
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.bounds."""
