@@ -4580,23 +4580,27 @@ def test_planes_assembly_bounds(airplane):
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
 )
-@pytest.mark.parametrize('label_mode', ['2D', '3D'])
+@pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
 def test_planes_assembly_label_position(
-    plane, label_kwarg, camera_position, label_mode, label_offset
+    plane, label_kwarg, camera_position, label_mode, label_size, label_offset
 ):
     plot = pv.Plotter()
 
-    for num in range(8):
-        actor = pv.PlanesAssembly(
-            labels=['', '', ''],
-            opacity=0.1,
-            label_position=num,
-            label_mode=label_mode,
-            label_offset=label_offset,
-        )
-        setattr(actor, label_kwarg, str(num))
-        plot.add_actor(actor)
-        actor.camera = plot.camera
+    for side in ('right', 'top', 'left', 'bottom'):
+        for position in (-1, -0.5, 0, 0.5, 1):
+            actor = pv.PlanesAssembly(
+                labels=['', '', ''],
+                opacity=0.01,
+                label_side=side,
+                label_position=position,
+                label_mode=label_mode,
+                label_offset=label_offset,
+                label_size=label_size,
+            )
+            label_name = str(position) + side[0].upper()
+            setattr(actor, label_kwarg, label_name)
+            plot.add_actor(actor)
+            actor.camera = plot.camera
     plot.camera_position = camera_position
     plot.add_axes_at_origin()
     plot.show()
