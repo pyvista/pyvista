@@ -522,7 +522,7 @@ class AxesAssembly(_XYZAssembly):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesActor()
+        >>> axes_actor = pv.AxesAssembly()
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
