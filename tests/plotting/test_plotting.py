@@ -4575,6 +4575,7 @@ def test_planes_assembly_bounds(airplane):
     plot.show()
 
 
+@skip_9_1_0  # Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
     ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
