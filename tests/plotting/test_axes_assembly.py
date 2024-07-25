@@ -672,6 +672,19 @@ def test_planes_assembly_label_mode_init():
     assert planes_assembly.label_mode == label_mode
 
 
+def test_planes_assembly_opacity(planes_assembly):
+    assert planes_assembly.opacity == 0.3
+    opacity = 0.0
+    planes_assembly.opacity = opacity
+    assert planes_assembly.opacity == opacity
+
+
+def test_planes_assembly_opacity_init():
+    opacity = 0.5
+    planes_assembly = pv.PlanesAssembly(opacity=opacity)
+    assert planes_assembly.opacity == opacity
+
+
 def test_planes_assembly_camera(planes_assembly):
     with pytest.raises(ValueError, match='Camera has not been set.'):
         _ = planes_assembly.camera
