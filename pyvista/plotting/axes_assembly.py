@@ -1275,7 +1275,7 @@ class PlanesAssembly(_XYZAssembly):
 
     Assembly of three orthogonal plane meshes with labels.
 
-    The labels can be 2D or 3D and follow the camera such that the labels have the
+    The labels can be 2D or 3D, and will follow the camera such that they have the
     correct orientation and remain paralellel to the edges of the planes.
 
     The positioning of the labels may be customized using the :attr:`label_side`,
@@ -1284,18 +1284,18 @@ class PlanesAssembly(_XYZAssembly):
     .. warning::
 
         The :attr:`camera` must be set before rendering the assembly. Otherwise,
-        rendering the assembly will cause python to crash.
+        attempting to render it will cause python to crash.
 
     Parameters
     ----------
-    x_label : str, default: 'XY'
-        Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
-
-    y_label : str, default: 'YZ'
+    x_label : str, default: 'YZ'
         Text label for the yz-plane. Alternatively, set the label with :attr:`labels`.
 
-    z_label : str, default: 'ZX'
+    y_label : str, default: 'ZX'
         Text label for the zx-plane. Alternatively, set the label with :attr:`labels`.
+
+    z_label : str, default: 'XY'
+        Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
 
     labels : Sequence[str], optional,
         Text labels for the planes. This is an alternative parameter to using
