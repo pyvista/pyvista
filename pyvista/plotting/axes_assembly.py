@@ -1374,21 +1374,21 @@ class PlanesAssembly(_XYZAssembly):
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, color='yellow')
-    >>> _ = pl.add_actor(_planes)
-    >>> _planes.camera = pl.camera
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
     >>> pl.show()
 
     Customize the colors and opacity.
 
-    >>> _planes.x_color = 'cyan'
-    >>> _planes.y_color = 'magenta'
-    >>> _planes.z_color = 'yellow'
-    >>> _planes.opacity = 0.7
+    >>> planes.x_color = 'cyan'
+    >>> planes.y_color = 'magenta'
+    >>> planes.z_color = 'yellow'
+    >>> planes.opacity = 0.7
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, color='yellow')
-    >>> _ = pl.add_actor(_planes)
-    >>> _planes.camera = pl.camera
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
     >>> pl.show()
 
     Apply a transformation to the planes and the model.
@@ -1401,14 +1401,14 @@ class PlanesAssembly(_XYZAssembly):
     ...         [0.0, 0.0, 0.0, 1.0],
     ...     ]
     ... )
-    >>> _planes.user_matrix = transform
+    >>> planes.user_matrix = transform
 
     >>> pl = pv.Plotter()
     >>> human_actor = pl.add_mesh(
     ...     human, color='yellow', user_matrix=transform
     ... )
-    >>> _ = pl.add_actor(_planes)
-    >>> _planes.camera = pl.camera
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
     >>> pl.show()
     """
 
