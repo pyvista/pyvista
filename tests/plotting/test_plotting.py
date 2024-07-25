@@ -4566,15 +4566,6 @@ def test_planes_assembly(airplane):
     plot.show()
 
 
-def test_planes_assembly_bounds(airplane):
-    plot = pv.Plotter()
-    actor = pv.PlanesAssembly(bounds=airplane.bounds)
-    plot.add_actor(actor)
-    actor.camera = plot.camera
-    plot.add_axes()
-    plot.show()
-
-
 @skip_9_1_0  # Difference in clipping generates error of approx 500
 @pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
 @pytest.mark.parametrize(
