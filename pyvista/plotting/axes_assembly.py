@@ -1273,7 +1273,18 @@ class AxesAssemblySymmetric(AxesAssembly):
 class PlanesAssembly(_XYZAssembly):
     """Assembly of orthogonal planes.
 
-    The assembly may be used as a widget or added to a scene.
+    Assembly of three orthogonal plane meshes with labels.
+
+    The labels can be 2D or 3D and follow the camera such that the labels have the
+    correct orientation and remain paralellel to the edges of the planes.
+
+    The positioning of the labels may be customized using the :attr:`label_side`,
+    :attr:`label_position`, and :attr:`label_offset` attributes.
+
+    .. warning::
+
+        The :attr:`camera` must be set before rendering the assembly. Otherwise,
+        rendering the assembly will cause python to crash.
 
     Parameters
     ----------
@@ -1318,10 +1329,11 @@ class PlanesAssembly(_XYZAssembly):
         proportional to the :attr:`length` of the assembly.
 
     label_mode : '2D' | '3D', default: '2D'
-        Mode to use for text labels. In ``'2D'`` mode, the label actors are 2D
-        and are always visible. In ``'3D'`` mode, they are polygons and may be occluded
-        by other geometry. The two modes also have minor differences in appearance as
-        and behavior in terms of how they follow the camera.
+        Mode to use for text labels. In 2D mode, the label actors are always visible
+        and have a constant size regardless of window size. In 3D mode, the label actors
+        may be occluded by other geometry and will scale with changes to the window
+        size. The two modes also have minor differences in appearance as well as
+        behavior in terms of how they follow the camera.
 
     x_color : ColorLike, optional
         Color of the xy-plane.
@@ -1356,7 +1368,7 @@ class PlanesAssembly(_XYZAssembly):
         matrix. The user matrix is the last transformation applied to the actor.
 
     **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+        Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
 
     Examples
     --------
@@ -1535,7 +1547,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Return or set the axes labels.
+        """Return or set the labels for the planes.
 
         This property may be used as an alternative to using :attr:`x_label`,
         :attr:`y_label`, and :attr:`z_label` separately.
@@ -1543,10 +1555,10 @@ class PlanesAssembly(_XYZAssembly):
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
-        >>> axes_actor.labels
-        ('X Axis', 'Y Axis', 'Z Axis')
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.labels = ['Sagittal', 'Coronal', 'Transverse']
+        >>> planes.labels
+        ('Sagittal', 'Coronal', 'Transverse')
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -1559,16 +1571,15 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def x_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the xy-plane.
+        """Text label for the yz-plane.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.x_label = 'This axis'
-        >>> axes_actor.x_label
-        'This axis'
-
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.x_label = 'This plane'
+        >>> planes.x_label
+        'This plane'
         """
         return self._axis_actors[0].GetTitle()
 
@@ -1579,16 +1590,15 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the yz-plane.
+        """Text label for the zx-plane.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.y_label = 'This axis'
-        >>> axes_actor.y_label
-        'This axis'
-
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.y_label = 'This plane'
+        >>> planes.y_label
+        'This plane'
         """
         return self._axis_actors[1].GetTitle()
 
@@ -1599,16 +1609,15 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
-        """Text label for the zx-plane.
+        """Text label for the xy-plane.
 
         Examples
         --------
         >>> import pyvista as pv
-        >>> axes_actor = pv.AxesAssembly()
-        >>> axes_actor.z_label = 'This axis'
-        >>> axes_actor.z_label
-        'This axis'
-
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.z_label = 'This plane'
+        >>> planes.z_label
+        'This plane'
         """
         return self._axis_actors[2].GetTitle()
 
@@ -1763,10 +1772,11 @@ class PlanesAssembly(_XYZAssembly):
     def label_mode(self) -> Literal['2D', '3D']:  # numpydoc ignore=RT01
         """Mode to use for text labels.
 
-        Mode must be either '2D' or '3D'. In '2D' mode, the label actors are 2D
-        sprites and are always visible. In '3D' mode, the label actors polygons
-        and may be occluded. The two modes also have minor differences in
-        appearance as well as behavior in terms of how they follow the camera.
+        Mode must be either ``'2D'`` or ``'3D'``. In 2D mode, the label actors are
+        always visible and have a constant size regardless of window size. In 3D mode,
+        the label actors may be occluded by other geometry and will scale with changes
+        to the window size. The two modes also have minor differences in appearance as
+        well as behavior in terms of how they follow the camera.
         """
         return self._label_mode
 
