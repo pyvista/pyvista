@@ -1374,21 +1374,21 @@ class PlanesAssembly(_XYZAssembly):
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, color='yellow')
-    >>> _ = pl.add_actor(planes)
-    >>> planes.camera = pl.camera
+    >>> _ = pl.add_actor(_planes)
+    >>> _planes.camera = pl.camera
     >>> pl.show()
 
     Customize the colors and opacity.
 
-    >>> planes.x_color = 'cyan'
-    >>> planes.y_color = 'magenta'
-    >>> planes.z_color = 'yellow'
-    >>> planes.opacity = 0.7
+    >>> _planes.x_color = 'cyan'
+    >>> _planes.y_color = 'magenta'
+    >>> _planes.z_color = 'yellow'
+    >>> _planes.opacity = 0.7
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, color='yellow')
-    >>> _ = pl.add_actor(planes)
-    >>> planes.camera = pl.camera
+    >>> _ = pl.add_actor(_planes)
+    >>> _planes.camera = pl.camera
     >>> pl.show()
 
     Apply a transformation to the planes and the model.
@@ -1401,14 +1401,14 @@ class PlanesAssembly(_XYZAssembly):
     ...         [0.0, 0.0, 0.0, 1.0],
     ...     ]
     ... )
-    >>> planes.user_matrix = transform
+    >>> _planes.user_matrix = transform
 
     >>> pl = pv.Plotter()
     >>> human_actor = pl.add_mesh(
     ...     human, color='yellow', user_matrix=transform
     ... )
-    >>> _ = pl.add_actor(planes)
-    >>> planes.camera = pl.camera
+    >>> _ = pl.add_actor(_planes)
+    >>> _planes.camera = pl.camera
     >>> pl.show()
     """
 
@@ -1443,7 +1443,7 @@ class PlanesAssembly(_XYZAssembly):
         self._plane_actors = (Actor(), Actor(), Actor())
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
-        self.planes = self._geometry_source.output
+        self._planes = self._geometry_source.output
         self._plane_sources = self._geometry_source._plane_sources
 
         for actor, dataset in zip(self._plane_actors, self.planes):
@@ -1575,6 +1575,7 @@ class PlanesAssembly(_XYZAssembly):
     @x_label.setter
     def x_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[0].SetTitle(label)
+        self.planes.set_block_name(0, label)
 
     @property
     def y_label(self) -> str:  # numpydoc ignore=RT01
@@ -1594,6 +1595,7 @@ class PlanesAssembly(_XYZAssembly):
     @y_label.setter
     def y_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[1].SetTitle(label)
+        self.planes.set_block_name(1, label)
 
     @property
     def z_label(self) -> str:  # numpydoc ignore=RT01
@@ -1613,6 +1615,7 @@ class PlanesAssembly(_XYZAssembly):
     @z_label.setter
     def z_label(self, label: str):  # numpydoc ignore=GL08
         self._axis_actors[2].SetTitle(label)
+        self.planes.set_block_name(2, label)
 
     @property
     def label_size(self) -> int:  # numpydoc ignore=RT01
@@ -1826,6 +1829,23 @@ class PlanesAssembly(_XYZAssembly):
         self._camera = camera
         for axis in self._axis_actors:
             axis.SetCamera(camera)
+
+    @property
+    def planes(self):
+        """Get the orthogonal plane datasets of the assembly.
+
+        The planes are :class:`pyvista.PolyData` meshes stored as a
+        :class:`pyvista.MultiBlock`. The names of the blocks match the names of the
+        assembly's :attr:`labels`.
+
+        The planes are initially generated with :class:`pyvista.OrthogonalPlanesSource`.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
+        return self._planes
 
     def _update_label_positions(self):
         axis_actors = self._axis_actors

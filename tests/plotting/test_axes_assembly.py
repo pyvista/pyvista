@@ -622,6 +622,7 @@ def test_planes_assembly_x_label(planes_assembly):
     x_label = 'label'
     planes_assembly.x_label = x_label
     assert planes_assembly.x_label == x_label
+    assert planes_assembly._planes.get_block_name(0) == x_label
 
 
 def test_planes_assembly_x_label_init():
@@ -635,6 +636,7 @@ def test_planes_assembly_y_label(planes_assembly):
     y_label = 'label'
     planes_assembly.y_label = y_label
     assert planes_assembly.y_label == y_label
+    assert planes_assembly._planes.get_block_name(1) == y_label
 
 
 def test_planes_assembly_y_label_init():
@@ -648,6 +650,7 @@ def test_planes_assembly_z_label(planes_assembly):
     z_label = 'label'
     planes_assembly.z_label = z_label
     assert planes_assembly.z_label == z_label
+    assert planes_assembly._planes.get_block_name(2) == z_label
 
 
 def test_planes_assembly_z_label_init():
