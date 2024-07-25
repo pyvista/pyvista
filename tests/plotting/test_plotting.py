@@ -4017,7 +4017,7 @@ actor.scale = SCALE
 actor.origin = ORIGIN
 USER_MATRIX = pv.array_from_vtkmatrix(actor.GetMatrix())
 
-AXES_ASSEMBLY_TEST_CASES = dict(
+XYZ_ASSEMBLY_TEST_CASES = dict(
     default={},
     position=dict(position=POSITION),
     orientation=dict(orientation=ORIENTATION),
@@ -4029,39 +4029,36 @@ AXES_ASSEMBLY_TEST_CASES = dict(
 
 @pytest.mark.parametrize(
     'test_kwargs',
-    AXES_ASSEMBLY_TEST_CASES.values(),
-    ids=AXES_ASSEMBLY_TEST_CASES.keys(),
+    XYZ_ASSEMBLY_TEST_CASES.values(),
+    ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
 )
-def test_axes_assembly(test_kwargs):
+@pytest.mark.parametrize(
+    ('Assembly', 'obj_kwargs'),
+    [
+        (pv.AxesAssembly, {}),
+        (pv.AxesAssemblySymmetric, dict(label_size=25)),
+    ],
+    ids=['Axes', 'AxesSymmetric'],
+)
+def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
     plot = pv.Plotter()
-    axes_assembly = pv.AxesAssembly(**test_kwargs)
-    plot.add_actor(axes_assembly)
-
+    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    plot.add_actor(assembly)
     if test_kwargs:
         # Add second axes at the origin for visual reference
-        reference_axes = pv.AxesAssembly(
-            x_color='black', y_color='black', z_color='black', show_labels=False
-        )
-        plot.add_actor(reference_axes)
+        plot.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
     plot.show()
 
 
 @pytest.mark.parametrize(
-    'test_kwargs',
-    AXES_ASSEMBLY_TEST_CASES.values(),
-    ids=AXES_ASSEMBLY_TEST_CASES.keys(),
+    'Assembly',
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric],
+    ids=['Axes', 'AxesSymmetric'],
 )
-def test_axes_assembly_symmetric(test_kwargs):
+def test_xyz_assembly_show_labels_false(Assembly):
     plot = pv.Plotter()
-    axes_assembly = pv.AxesAssemblySymmetric(**test_kwargs, label_color='white', label_size=25)
-    plot.add_actor(axes_assembly)
-
-    if test_kwargs:
-        # Add second axes at the origin for visual reference
-        reference_axes = pv.AxesAssemblySymmetric(
-            x_color='black', y_color='black', z_color='black', show_labels=False
-        )
-        plot.add_actor(reference_axes)
+    assembly = Assembly(show_labels=False)
+    plot.add_actor(assembly)
     plot.show()
 
 
