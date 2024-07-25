@@ -1498,8 +1498,6 @@ class PlanesAssembly(_XYZAssembly):
             prop.justification_vertical = 'center'
             prop.justification_horizontal = 'center'
 
-        self._update_label_positions()
-
     def __repr__(self):
         """Representation of the planes assembly."""
         if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
@@ -1857,36 +1855,6 @@ class PlanesAssembly(_XYZAssembly):
             corner_top_left = origin + vector2
             corner_top_right = corner_bottom_right + vector2
 
-            # # Define mid points along perimeter
-            # midpoint_left = (corner_top_left + corner_bottom_left) / 2
-            # midpoint_right = (corner_bottom_right + corner_top_right) / 2
-            # midpoint_top = (corner_top_left + corner_top_right) / 2
-            # midpoint_bottom = (corner_bottom_left + corner_bottom_right) / 2
-
-            #          2          1
-            #    +----------+----------+
-            #  3 | (-i, +j) | (+i, +j) | 0
-            #    +----------+----------+
-            #  4 | (-i, -j) | (+i, -j) | 7
-            #    +----------+----------+
-            #          5          6
-            # # Order points counter-clockwise starting from right side (+i axis)
-            # ordered_points = [
-            #     midpoint_right,
-            #     corner_top_right,
-            #     midpoint_top,
-            #     corner_top_left,
-            #     midpoint_left,
-            #     corner_bottom_left,
-            #     midpoint_bottom,
-            #     corner_bottom_right,
-            # ]
-            # # Duplicate first point as last point
-            # ordered_points.append(ordered_points[0])
-            #
-            # # Get initial points along perimeter defining the axis actor
-            # axis_point1, axis_point2 = ordered_points[location : location + 2]
-
             # Define axis points in counter-clockwise order
             if side == 'top':
                 axis_point1, axis_point2 = corner_top_right, corner_top_left
@@ -1899,7 +1867,7 @@ class PlanesAssembly(_XYZAssembly):
 
             # Move axis to position along the edge
             axis_vector = axis_point1 - axis_point2
-            # Define position relative to center of plane
+            # Define position relative to center of edge
             position_vector = np.abs(axis_vector) * position * 0.5
             axis_point1 += position_vector
             axis_point2 += position_vector
