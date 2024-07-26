@@ -9,7 +9,9 @@ import vtk
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
 skip_mac = pytest.mark.skipif(
@@ -26,6 +28,22 @@ def actor():
 @pytest.fixture()
 def actor_from_multi_block():
     return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
+
+
+@pytest.fixture()
+def fake_actor(actor):
+    # Define prop3d-like class
+    class FakeActor(_Prop3DMixin, vtk.vtkPropAssembly):
+        def __init__(self):
+            super().__init__()
+            self.AddPart(actor)
+
+    # Sanity checks to make sure fixture is defined properly
+    fake_actor = FakeActor()
+    assert not isinstance(fake_actor, Prop3D)
+    assert isinstance(fake_actor, _Prop3DMixin)
+    assert fake_actor.GetBounds() == actor.GetBounds()
+    return fake_actor
 
 
 @pytest.fixture()
@@ -122,7 +140,9 @@ def test_actor_visible(actor):
     assert actor.visibility is True
 
 
-def test_actor_scale(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_scale(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert actor.scale == (1, 1, 1)
     scale = (2, 2, 2)
     actor.scale = scale
@@ -131,7 +151,9 @@ def test_actor_scale(actor):
     assert actor.scale == (3, 3, 3)
 
 
-def test_actor_position(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_position(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert actor.position == (0, 0, 0)
     position = (2, 2, 2)
     actor.position = position
@@ -153,7 +175,9 @@ def test_actor_rotate_z(actor):
     assert np.allclose(actor.orientation, (0, 0, 90))
 
 
-def test_actor_orientation(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_orientation(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
@@ -172,14 +196,18 @@ def test_actor_rotation_order(actor):
     assert np.allclose(dataset.bounds, actor.bounds)
 
 
-def test_actor_origin(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_origin(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert actor.origin == (0, 0, 0)
     origin = (1, 2, 3)
     actor.origin = origin
     assert np.allclose(actor.origin, origin)
 
 
-def test_actor_length(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_length(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
@@ -188,7 +216,9 @@ def test_actor_length(actor):
     assert actor.length == initial_length * scale_factor
 
 
-def test_actor_unit_matrix(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_user_matrix(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
     arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
@@ -198,12 +228,16 @@ def test_actor_unit_matrix(actor):
     assert np.allclose(actor.user_matrix, arr)
 
 
-def test_actor_bounds(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_bounds(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert isinstance(actor.bounds, tuple)
     assert np.allclose(actor.bounds, (-0.5, 0.5, -0.5, 0.5, 0, 0))
 
 
-def test_actor_center(actor):
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
+def test_actor_center(klass, actor, fake_actor):
+    actor = actor if klass == 'Prop3D' else fake_actor
     assert actor.center == (0.0, 0.0, 0.0)
 
 
