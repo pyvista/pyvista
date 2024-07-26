@@ -93,11 +93,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         x_color,
         y_color,
         z_color,
-        position,
-        orientation,
-        origin,
-        scale,
-        user_matrix,
+        position: VectorLike[float],
+        orientation: VectorLike[float],
+        origin: VectorLike[float],
+        scale: float | VectorLike[float],
+        user_matrix: MatrixLike[float] | None,
     ):
         super().__init__()
 
@@ -147,11 +147,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[method-assign]
-        self.orientation = orientation  # type: ignore[method-assign]
-        self.scale = scale  # type: ignore[method-assign]
-        self.origin = origin  # type: ignore[method-assign]
-        self.user_matrix = user_matrix  # type: ignore[method-assign]
+        self.position = position  # type: ignore[assignment]
+        self.orientation = orientation  # type: ignore[assignment]
+        self.scale = scale  # type: ignore[assignment]
+        self.origin = origin  # type: ignore[assignment]
+        self.user_matrix = user_matrix  # type: ignore[assignment]
 
     @property
     def parts(self):
