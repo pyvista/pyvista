@@ -4605,7 +4605,7 @@ BOUNDS = (-50, 50, -10, 30, -80, 80)
     [BOUNDS, BOUNDS * np.array(0.01)],
 )
 @pytest.mark.parametrize('label_size', [25, 50])
-def test_planes_assembly_labels(bounds, label_size):
+def test_planes_assembly_label_size(bounds, label_size):
     plot = pv.Plotter()
     labels = ['FIRST ', 'SECOND ', 'THIRD ']
     common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
