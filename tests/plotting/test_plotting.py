@@ -4058,7 +4058,7 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
     [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
     ids=['Axes', 'AxesSymmetric', 'Planes'],
 )
-def test_xyz_assembly_show_labels(Assembly):
+def test_xyz_assembly_show_labels_false(Assembly):
     plot = pv.Plotter()
     assembly = Assembly(show_labels=False)
     plot.add_actor(assembly)
