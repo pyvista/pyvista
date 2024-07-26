@@ -436,9 +436,9 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import pydata_sphinx_theme  # noqa: F401
+import sphinx_book_theme  # noqa: F401
 
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_book_theme"
 html_context = {
     "github_user": "pyvista",
     "github_repo": "pyvista",
@@ -471,6 +471,9 @@ html_theme_options = {
     "github_url": "https://github.com/pyvista/pyvista",
     "collapse_navigation": True,
     "use_edit_page_button": True,
+    "navigation_with_keys": False,
+    "show_navbar_depth": 1,
+    "max_navbar_depth": 3,
     "icon_links": [
         {
             "name": "Slack Community",
@@ -493,7 +496,6 @@ html_theme_options = {
             "icon": "fa fa-file-text fa-fw",
         },
     ],
-    "navbar_end": ["theme-switcher", "navbar-icon-links"],
 }
 
 # sphinx-panels shouldn't add bootstrap css since the pydata-sphinx-theme
@@ -586,4 +588,3 @@ def setup(app):
     app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")
-    app.add_css_file("summary.css")
