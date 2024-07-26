@@ -3563,9 +3563,21 @@ class OrthogonalPlanesSource:
     Plot the mesh and the planes.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
     >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
     >>> pl.show()
+
+    The planes are centered geometrically, but the frontal plane is positioned a bit
+    too far forward. Use :attr:`move` to move the frontal plane.
+
+    >>> planes_source.move = (0.0, -10.0, 0)
+    >>> planes_source.update()
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
+
     """
 
     def __init__(
