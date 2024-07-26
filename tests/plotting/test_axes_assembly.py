@@ -566,7 +566,7 @@ def test_planes_assembly_repr(planes_assembly):
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
         "  Show labels:                True",
         "  Label position:             (0.5, 0.5, 0.5)",
-        "  Label side:                 ('right', 'right', 'right')",
+        "  Label edge:                 ('right', 'right', 'right')",
         "  Label offset:               0.05",
         "  Label mode:                 '3D'",
         "  X Color:                    Color(name='tomato', hex='#ff6347ff', opacity=255)",

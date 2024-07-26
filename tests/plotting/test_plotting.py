@@ -4577,18 +4577,18 @@ def test_planes_assembly_label_position(
 ):
     plot = pv.Plotter()
 
-    for side in ('right', 'top', 'left', 'bottom'):
+    for edge in ('right', 'top', 'left', 'bottom'):
         for position in (-1, -0.5, 0, 0.5, 1):
             actor = pv.PlanesAssembly(
                 labels=['', '', ''],
                 opacity=0.01,
-                label_side=side,
+                label_edge=edge,
                 label_position=position,
                 label_mode=label_mode,
                 label_offset=label_offset,
                 label_size=label_size,
             )
-            label_name = str(position) + side[0].upper()
+            label_name = str(position) + edge[0].upper()
             setattr(actor, label_kwarg, label_name)
             plot.add_actor(actor)
             actor.camera = plot.camera
