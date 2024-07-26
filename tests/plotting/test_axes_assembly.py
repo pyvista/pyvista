@@ -685,6 +685,19 @@ def test_planes_assembly_opacity_init():
     assert planes_assembly.opacity == opacity
 
 
+def test_planes_assembly_label_size(planes_assembly):
+    assert planes_assembly.label_size == 50
+    label_size = 10
+    planes_assembly.label_size = label_size
+    assert planes_assembly.label_size == label_size
+
+
+def test_planes_assembly_label_size_init():
+    label_size = 10
+    planes_assembly = pv.PlanesAssembly(label_size=label_size)
+    assert planes_assembly.label_size == label_size
+
+
 def test_planes_assembly_camera(planes_assembly):
     with pytest.raises(ValueError, match='Camera has not been set.'):
         _ = planes_assembly.camera
