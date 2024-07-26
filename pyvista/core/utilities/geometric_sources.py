@@ -3512,11 +3512,26 @@ class OrthogonalPlanesSource:
     The meshes are ordered such that the first, second, and third plane is perpendicular
     to the x, y, and z-axis, respectively.
 
+    .. versionadded:: 0.45
+
     Parameters
     ----------
     bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
         The generated planes are centered in these bounds.
+
+    move : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Translate each plane by the specified distance along its respective positive
+        axis direction. More specifically:
+
+         - The yz plane is translated in the positive x direction by the first value
+         - The zx plane is translated in the positive y directionby the second value
+         - The xy plane is translated in the positive z directionby the third value
+
+        .. note::
+
+            The translations do *not* consider the normal direction specified
+            by :attr:`normal_sign`.
 
     resolution : int | VectorLike[int], default: 2
         Number of points on the planes in the x-y-z directions. Use a single number
@@ -3557,6 +3572,7 @@ class OrthogonalPlanesSource:
         self,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
+        move: VectorLike[float] = (0.0, 0.0, 0.0),
         resolution: int | VectorLike[int] = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
         names: Sequence[str] = ('yz', 'zx', 'xy'),
@@ -3567,6 +3583,7 @@ class OrthogonalPlanesSource:
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
+        self.move = move  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
         self.normal_sign = normal_sign  # type: ignore[assignment]
         self.names = names  # type: ignore[assignment]
@@ -3627,6 +3644,28 @@ class OrthogonalPlanesSource:
         _validation.check_length(names, exact_length=3, name='names')
         self._names = cast(Tuple[str, str, str], tuple(names))
 
+    @property
+    def move(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Translate each plane by the specified distance.
+
+        The translations are applied along each plane's respective positive
+        axis direction. More specifically:
+
+         - The yz plane is translated in the positive x direction by the first value
+         - The zx plane is translated in the positive y direction by the second value
+         - The xy plane is translated in the positive z direction by the third value
+
+        .. note::
+
+            The translations do *not* consider the normal direction specified
+            by :attr:`normal_sign`.
+        """
+        return self._move
+
+    @move.setter
+    def move(self, move_amount: VectorLike[float]):  # numpydoc ignore=GL08
+        self._move = _validation.validate_array3(move_amount, dtype_out=float)
+
     def update(self):
         """Update the output of the source."""
         ORIGIN = (0.0, 0.0, 0.0)
@@ -3667,13 +3706,15 @@ class OrthogonalPlanesSource:
 
         # Update the output
         output = self._output
-        for index, (name, source, plane, sign) in enumerate(
-            zip(self.names, self._plane_sources, output, self.normal_sign)
+        move_vectors = np.diag(self.move)
+        for index, (name, source, plane, sign, move) in enumerate(
+            zip(self.names, self._plane_sources, output, self.normal_sign, move_vectors)
         ):
             plane.copy_from(source.GetOutput())
             if sign == '-':
                 plane['Normals'] *= -1
             output.set_block_name(index, name)
+            plane.points += move
 
     @property
     def output(self) -> pyvista.MultiBlock:

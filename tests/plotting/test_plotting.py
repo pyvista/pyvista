@@ -4542,6 +4542,13 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
+@pytest.mark.parametrize('move', [(1, 1, 1), (-1, -1, -1)])
+def test_orthogonal_planes_source_move(move):
+    planes = pv.OrthogonalPlanesSource(move=move).output
+    planes = pv.merge(planes, merge_points=False)
+    planes.plot_normals()
+
+
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @skip_windows
 @skip_9_1_0
