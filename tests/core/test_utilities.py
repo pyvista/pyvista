@@ -27,7 +27,6 @@ from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import has_duplicates
 from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
@@ -912,16 +911,6 @@ def test_fit_plane_to_points():
     )
 
 
-@pytest.mark.parametrize(
-    'transform_like',
-    [
-        np.array(np.eye(3)),
-        np.array(np.eye(4)),
-        vtkmatrix_from_array(np.eye(3)),
-        vtkmatrix_from_array(np.eye(4)),
-        vtk.vtkTransform(),
-    ],
-)
 @pytest.fixture()
 def no_new_attr_subclass():
     @no_new_attr
