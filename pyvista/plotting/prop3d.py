@@ -573,15 +573,15 @@ class _Prop3DMixin(ABC):
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
 
+    @abstractmethod
+    def _get_bounds(self) -> BoundsLike:
+        """Return the object's 3D bounds."""
+
     @property
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Wrap :class:`pyvista.Prop3D.bounds."""
-        bnds = self.GetBounds() if hasattr(self, 'GetBounds') else None
-        if bnds is None:
-            x, y, z = self.position
-            bnds = (x, x, y, y, z, z)
-        return bnds
+        """Wrap :class:`pyvista.Prop3D.bounds`."""
+        return self._get_bounds()
 
     @property
     @wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
