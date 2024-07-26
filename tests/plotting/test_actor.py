@@ -33,21 +33,24 @@ def actor_from_multi_block():
 @pytest.fixture()
 def fake_actor(actor):
     # Define prop3d-like class
-    class FakeActor(_Prop3DMixin, vtk.vtkPropAssembly):
+    class FakeActor(_Prop3DMixin):
         def __init__(self):
             super().__init__()
-            self.actor = actor
-            self.AddPart(actor)
+            self._actor = actor
 
         def _post_set_update(self):
             # Apply the same transformation to the underlying actor
-            self.actor.user_matrix = self._transformation_matrix
+            self._actor.user_matrix = self._transformation_matrix
+
+        @property
+        def bounds(self):
+            return self._actor.GetBounds()
 
     # Sanity checks to make sure fixture is defined properly
     fake_actor = FakeActor()
     assert not isinstance(fake_actor, Prop3D)
     assert isinstance(fake_actor, _Prop3DMixin)
-    assert fake_actor.GetBounds() == actor.GetBounds()
+    assert fake_actor.bounds == actor.GetBounds()
     return fake_actor
 
 

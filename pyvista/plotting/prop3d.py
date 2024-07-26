@@ -571,9 +571,6 @@ class _Prop3DMixin(ABC):
     @abstractmethod
     def _post_set_update(self):
         """Update object after setting Prop3D attributes."""
-        raise NotImplementedError(
-            f"Class {self.__class__} must implement method `_post_set_update`."
-        )
 
     @property
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
