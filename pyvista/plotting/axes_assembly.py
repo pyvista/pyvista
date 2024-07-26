@@ -1380,6 +1380,7 @@ class PlanesAssembly(_XYZAssembly):
     --------
     Fit planes to a model of a human.
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> human = examples.download_human()
