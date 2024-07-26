@@ -719,6 +719,16 @@ def test_orthogonal_planes_source_names():
         planes_source.names = 'abc'
 
 
+def test_orthogonal_planes_source_move():
+    move = (10, 20, 30)
+    planes_source = pv.OrthogonalPlanesSource(move=move)
+    assert planes_source.move == (10, 20, 30)
+    output = planes_source.output
+    assert output['yz'].bounds == (10.0, 10.0, -1.0, 1.0, -1.0, 1.0)
+    assert output['zx'].bounds == (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0)
+    assert output['xy'].bounds == (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0)
+
+
 def test_orthogonal_planes_source_normal_sign():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output

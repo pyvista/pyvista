@@ -3664,7 +3664,7 @@ class OrthogonalPlanesSource:
 
     @move.setter
     def move(self, move_amount: VectorLike[float]):  # numpydoc ignore=GL08
-        self._move = _validation.validate_array3(move_amount, dtype_out=float)
+        self._move = _validation.validate_array3(move_amount, dtype_out=float, to_tuple=True)
 
     def update(self):
         """Update the output of the source."""
