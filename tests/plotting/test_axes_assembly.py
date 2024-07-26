@@ -673,8 +673,8 @@ def test_planes_assembly_label_mode_init():
 
 
 def test_planes_assembly_opacity(planes_assembly):
-    assert planes_assembly.opacity == 0.3
-    opacity = 0.0
+    assert planes_assembly.opacity == (0.3, 0.3, 0.3)
+    opacity = 0.0, 0.1, 0.2
     planes_assembly.opacity = opacity
     assert planes_assembly.opacity == opacity
 
@@ -682,7 +682,7 @@ def test_planes_assembly_opacity(planes_assembly):
 def test_planes_assembly_opacity_init():
     opacity = 0.5
     planes_assembly = pv.PlanesAssembly(opacity=opacity)
-    assert planes_assembly.opacity == opacity
+    assert planes_assembly.opacity == (opacity, opacity, opacity)
 
 
 def test_planes_assembly_label_size(planes_assembly):

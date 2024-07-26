@@ -444,7 +444,7 @@ class AxesAssembly(_XYZAssembly):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
@@ -1068,7 +1068,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
@@ -1285,6 +1285,8 @@ class PlanesAssembly(_XYZAssembly):
 
         The :attr:`camera` must be set before rendering the assembly. Otherwise,
         attempting to render it will cause python to crash.
+
+    .. versionadded:: 0.45
 
     Parameters
     ----------
@@ -1841,13 +1843,15 @@ class PlanesAssembly(_XYZAssembly):
         self._plane_actors[2].prop.color = color
 
     @property
-    def opacity(self) -> float:  # numpydoc ignore=RT01
+    def opacity(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Opacity of the planes."""
-        return self._plane_actors[2].prop.opacity
+        return self._opacity
 
     @opacity.setter
     def opacity(self, opacity: float):  # numpydoc ignore=GL08
-        valid_opacity = _validation.validate_array3(opacity, broadcast=True, dtype_out=float)
+        valid_opacity = _validation.validate_array3(
+            opacity, broadcast=True, dtype_out=float, to_tuple=True
+        )
         self._opacity = valid_opacity
         for actor, opacity in zip(self._plane_actors, valid_opacity):
             actor.prop.opacity = opacity
