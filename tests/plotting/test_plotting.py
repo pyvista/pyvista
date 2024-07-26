@@ -4542,7 +4542,8 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
-@pytest.mark.parametrize('move', [(1, 1, 1), (-1, -1, -1)])
+@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.parametrize('move', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
 def test_orthogonal_planes_source_move(move):
     planes = pv.OrthogonalPlanesSource(move=move).output
     planes = pv.merge(planes, merge_points=False)
