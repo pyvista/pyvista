@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista.core import _validation
-from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
@@ -340,7 +339,6 @@ class Prop3D(_vtk.vtkProp3D):
         rotates the actor about the z-axis by approximately 45 degrees, and
         shrinks the actor by a factor of 0.5.
 
-        >>> import numpy as np
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
@@ -352,14 +350,12 @@ class Prop3D(_vtk.vtkProp3D):
         ...     line_width=5,
         ...     lighting=False,
         ... )
-        >>> arr = np.array(
-        ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2],
-        ...     ]
-        ... )
+        >>> arr = [
+        ...     [0.707, -0.707, 0, 0],
+        ...     [0.707, 0.707, 0, 0],
+        ...     [0, 0, 1, 1.5],
+        ...     [0, 0, 0, 2],
+        ... ]
         >>> actor.user_matrix = arr
         >>> pl.show_axes()
         >>> pl.show()
@@ -370,8 +366,10 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
-        array = np.eye(4) if value is None else _coerce_transformlike_arg(value)
+    def user_matrix(
+        self, value: TransformLike | scipy.spatial.transform.Rotation
+    ):  # numpydoc ignore=GL08
+        array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
     @property
