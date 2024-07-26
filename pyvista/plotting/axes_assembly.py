@@ -1278,7 +1278,7 @@ class PlanesAssembly(_XYZAssembly):
     The labels can be 2D or 3D, and will follow the camera such that they have the
     correct orientation and remain paralellel to the edges of the planes.
 
-    The positioning of the labels may be customized using the :attr:`label_side`,
+    The positioning of the labels may be customized using the :attr:`label_edge`,
     :attr:`label_position`, and :attr:`label_offset` attributes.
 
     .. warning::
@@ -1311,14 +1311,18 @@ class PlanesAssembly(_XYZAssembly):
 
     label_position : float | VectorLike[float], default: 0.5
         Normalized relative position of the text labels along each plane's respective
-        :attr:`side`. The positions are normalized to have a range of ``[-1.0, 1.0]``
-        such that ``0.0`` is at the center of the side and ``-1.0`` and ``1.0`` are at
-        the corners.
+        :attr:`label_edge`. The positions are normalized to have a range of
+        ``[-1.0, 1.0]`` such that ``0.0`` is at the center of the edge and ``-1.0`` and
+        ``1.0`` are at the corners.
 
-    label_side : str, default: 'right'
-        Side on which to position each plane's label. Can be ``'top'``, ``'bottom'``,
-        ``'right'``, or ``'left'``. Use a single value to set the side for all labels
-        or set each side independently.
+        .. note::
+
+            The label text is centered horizontally at the specified positions.
+
+    label_edge : str, default: 'right'
+        Edge on which to position each plane's label. Can be ``'top'``, ``'bottom'``,
+        ``'right'``, or ``'left'``. Use a single value to set the edge for all labels
+        or set each edge independently.
 
     label_offset : float | VectorLike[float], optional
         Vertical offset of the text labels. The offset is proportional to
@@ -1431,7 +1435,7 @@ class PlanesAssembly(_XYZAssembly):
 
     >>> planes.label_offset = -0.05
 
-    Position the labels for the two larger planes closer to the corners.
+    Move the labels for the two larger planes closer to the corners.
 
     >>> planes.label_position = (0.8, 0.8, 0.5)
 
@@ -1456,7 +1460,7 @@ class PlanesAssembly(_XYZAssembly):
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: float | VectorLike[float] = 0.5,
-        label_side: Literal['top', 'bottom', 'right', 'left'] | Sequence[str] = 'right',
+        label_edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str] = 'right',
         label_offset: float = 0.05,
         label_size: int = 50,
         label_mode: Literal['2D', '3D'] = '3D',
@@ -1486,7 +1490,7 @@ class PlanesAssembly(_XYZAssembly):
 
         # Tempt init values for call to super class, will validate inputs later
         self._label_offset = 0.05
-        self._label_side = ('right', 'right', 'right')
+        self._label_edge = ('right', 'right', 'right')
         self._label_position = 0.5, 0.5, 0.5
 
         _XYZAssembly.__init__(
@@ -1514,7 +1518,7 @@ class PlanesAssembly(_XYZAssembly):
         self.opacity = opacity  # type: ignore[assignment]
         self.label_mode = label_mode
         self.label_offset = label_offset
-        self.label_side = label_side  # type: ignore[assignment]
+        self.label_edge = label_edge  # type: ignore[assignment]
 
         # Set default properties
         for actor in self._plane_actors:
@@ -1547,7 +1551,7 @@ class PlanesAssembly(_XYZAssembly):
             f"  Label color:                {self.label_color}",
             f"  Show labels:                {self.show_labels}",
             f"  Label position:             {self.label_position}",
-            f"  Label side:                 {self.label_side}",
+            f"  Label edge:                 {self.label_edge}",
             f"  Label offset:               {self.label_offset}",
             f"  Label mode:                 '{self.label_mode}'",
             f"  X Color:                    {self.x_color}",
@@ -1675,11 +1679,15 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Normalized relative position of the text labels along the side of each plane.
+        """Normalized relative position of the text labels along the edge of each plane.
 
-        Labels are positioned relative to each plane's respective :attr:`side`. The
-        positions are normalized to have a range of ``[-1.0, 1.0]`` such that ``0.0`` is
-        at the center of the side and ``-1.0`` and ``1.0`` are at the corners.
+        Labels are positioned relative to each plane's respective :attr:`label_edge`.
+        The positions are normalized to have a range of ``[-1.0, 1.0]`` such that ``0.0``
+        is at the center of the edge and ``-1.0`` and ``1.0`` are at the corners.
+
+        .. note::
+
+            The label text is centered horizontally at the specified positions.
 
         Examples
         --------
@@ -1726,21 +1734,21 @@ class PlanesAssembly(_XYZAssembly):
         self._update_label_positions()
 
     @property
-    def label_side(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
-        """Side on which to position each plane's label.
+    def label_edge(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Edge on which to position each plane's label.
 
-        Side can be ``'top'``,``'bottom'``,``'right'``, or ``'left'``, and can be
-        set independently for each plane or to the same side for all planes.
+        Edge can be ``'top'``,``'bottom'``,``'right'``, or ``'left'``, and can be
+        set independently for each plane or to the same edge for all planes.
 
-        The side is relative to each plane's local ``i`` and ``j`` coordinates.
+        The edge is relative to each plane's local ``i`` and ``j`` coordinates.
 
         Examples
         --------
         Position the labels at the top edge and plot.
 
         >>> import pyvista as pv
-        >>> planes = pv.PlanesAssembly(label_side='top')
-        >>> planes.label_side
+        >>> planes = pv.PlanesAssembly(label_edge='top')
+        >>> planes.label_edge
         ('top', 'top', 'top')
 
         >>> pl = pv.Plotter()
@@ -1750,34 +1758,34 @@ class PlanesAssembly(_XYZAssembly):
 
         Position the labels at the bottom.
 
-        >>> planes.label_side = 'bottom'
+        >>> planes.label_edge = 'bottom'
         >>> pl = pv.Plotter()
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
 
-        Vary the side of the labels independently for each plane.
+        Vary the edge of the labels independently for each plane.
 
-        >>> planes.label_side = ('top', 'right', 'left')
+        >>> planes.label_edge = ('top', 'right', 'left')
         >>> pl = pv.Plotter()
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
         """
-        return self._label_side
+        return self._label_edge
 
-    @label_side.setter
-    def label_side(
-        self, side: Literal['top', 'bottom', 'right', 'left'] | Sequence[str]
+    @label_edge.setter
+    def label_edge(
+        self, edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str]
     ):  # numpydoc ignore=GL08
-        valid_side = (
-            [side] * 3
-            if isinstance(side, str)
-            else _validate_label_sequence(side, n_labels=3, name='label edge')
+        valid_edge = (
+            [edge] * 3
+            if isinstance(edge, str)
+            else _validate_label_sequence(edge, n_labels=3, name='label edge')
         )
-        for side_ in valid_side:
-            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=side_)
-        self._label_side = tuple(valid_side)
+        for edge_ in valid_edge:
+            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=edge_)
+        self._label_edge = tuple(valid_edge)
         self._update_label_positions()
 
     @property
@@ -1894,7 +1902,7 @@ class PlanesAssembly(_XYZAssembly):
         def transform_point(point):
             return (transformation_matrix @ (*point, 1))[:3]
 
-        def set_axis_location(plane_id, side: str, position: float):
+        def set_axis_location(plane_id, edge: str, position: float):
             this_plane_source = plane_sources[plane_id]
             this_axis_actor = axis_actors[plane_id]
 
@@ -1915,11 +1923,11 @@ class PlanesAssembly(_XYZAssembly):
             corner_top_right = corner_bottom_right + vector2
 
             # Define axis points in counter-clockwise order
-            if side == 'top':
+            if edge == 'top':
                 axis_point1, axis_point2 = corner_top_right, corner_top_left
-            elif side == 'left':
+            elif edge == 'left':
                 axis_point1, axis_point2 = corner_top_left, corner_bottom_left
-            elif side == 'bottom':
+            elif edge == 'bottom':
                 axis_point1, axis_point2 = corner_bottom_left, corner_bottom_right
             else:  # 'right'
                 axis_point1, axis_point2 = corner_bottom_right, corner_top_right
@@ -1944,11 +1952,11 @@ class PlanesAssembly(_XYZAssembly):
             this_axis_actor.SetPoint1(transform_point(axis_point1))
             this_axis_actor.SetPoint2(transform_point(axis_point2))
 
-        side = self.label_side
+        edge = self.label_edge
         position = self.label_position
-        set_axis_location(0, side[0], position[0])
-        set_axis_location(1, side[1], position[1])
-        set_axis_location(2, side[2], position[2])
+        set_axis_location(0, edge[0], position[0])
+        set_axis_location(1, edge[1], position[1])
+        set_axis_location(2, edge[2], position[2])
 
     def _post_set_update(self):
         _XYZAssembly._post_set_update(self)
