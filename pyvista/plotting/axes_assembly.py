@@ -163,7 +163,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         return itertools.chain.from_iterable(self._assembly_label_actors)
 
     def _post_set_update(self):
-        # Update prop3D attributes for shaft, tip, and label actors
+        # Update prop3D attributes for all assembly parts
         parts = self.parts
         for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
             # Only update values if modified
@@ -1332,8 +1332,8 @@ class PlanesAssembly(_XYZAssembly):
         Mode to use for text labels. In 2D mode, the label actors are always visible
         and have a constant size regardless of window size. In 3D mode, the label actors
         may be occluded by other geometry and will scale with changes to the window
-        size. The two modes also have minor differences in appearance as well as
-        behavior in terms of how they follow the camera.
+        size. The two modes also have minor differences in appearance and behavior in
+        terms of how they follow the camera.
 
     x_color : ColorLike, optional
         Color of the xy-plane.
@@ -1454,7 +1454,7 @@ class PlanesAssembly(_XYZAssembly):
         label_color: ColorLike = 'black',
         show_labels: bool = True,
         label_position: float | VectorLike[float] = 0.5,
-        label_side: Literal['top', 'bottom', 'right', 'left'] = 'right',
+        label_side: Literal['top', 'bottom', 'right', 'left'] | Sequence[str] = 'right',
         label_offset: float = 0.05,
         label_size: int = 50,
         label_mode: Literal['2D', '3D'] = '3D',
@@ -1465,7 +1465,7 @@ class PlanesAssembly(_XYZAssembly):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
@@ -1482,7 +1482,7 @@ class PlanesAssembly(_XYZAssembly):
         # Init label actors
         self._axis_actors = (_AxisActor(), _AxisActor(), _AxisActor())
 
-        # Init for now, validate input later
+        # Tempt init values for call to super class, will validate inputs later
         self._label_offset = 0.05
         self._label_side = ('right', 'right', 'right')
         self._label_position = 0.5, 0.5, 0.5
@@ -1653,12 +1653,20 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_size.setter
     def label_size(self, size: int):  # numpydoc ignore=GL08
-        self._label_size = size
-        # Re-scale the title text proportional to planes assembly
+        valid_size = _validation.validate_number(
+            size,
+            must_be_in_range=[0, np.inf],
+            must_be_integer=True,
+            dtype_out=int,
+            name='label size',
+        )
+        self._label_size = valid_size
+        # 2D labels use font size (int) but 3D labels use a scaling factor (float)
+        # For 3D labels, we re-scale the text proportional to the planes assembly
         # Values on the order of 0.01-0.05 seem to work best. Use a normalization
-        # factor so that values for `label_size` are on the order of 10-50
+        # factor so that input values are on the order of 10-50 and roughly match 2D sizes
         NORM_FACTOR = 1000
-        scale = self.planes.length * size / NORM_FACTOR
+        scale = self.planes.length * float(valid_size) / NORM_FACTOR
         for axis in self._axis_actors:
             axis.GetTitleActor().SetScale(scale)  # 3D labels
             axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
@@ -1807,7 +1815,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def x_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the xy-plane."""
+        """Color of the yz-plane."""
         return self._plane_actors[0].prop.color
 
     @x_color.setter
@@ -1816,7 +1824,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def y_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the yz-plane."""
+        """Color of the zx-plane."""
         return self._plane_actors[1].prop.color
 
     @y_color.setter
@@ -1825,7 +1833,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def z_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the zx-plane."""
+        """Color of the xy-plane."""
         return self._plane_actors[2].prop.color
 
     @z_color.setter
@@ -1834,7 +1842,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @property
     def opacity(self) -> float:  # numpydoc ignore=RT01
-        """Color of the zx-plane."""
+        """Opacity of the planes."""
         return self._plane_actors[2].prop.opacity
 
     @opacity.setter
@@ -1960,6 +1968,10 @@ class _AxisActor(_vtk.vtkAxisActor):
         # labels.SetValue(0, "")
         self.SetLabels(labels)
 
+        # Ignore the axis bounds when rendering. Otherwise, the bounds must be
+        # set with SetBounds() every time the axis is updated
+        self.SetUseBounds(False)
+
         # Format title positioning
         self.SetTitleOffset(0)
         self.SetLabelOffset(0)
@@ -1974,8 +1986,6 @@ class _AxisActor(_vtk.vtkAxisActor):
 
         # For 3D mode only
         self.GetProperty().SetLighting(False)
-
-        self.SetUseBounds(False)
 
     @property
     def prop(self) -> TextProperty:
