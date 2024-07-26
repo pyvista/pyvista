@@ -36,7 +36,12 @@ def fake_actor(actor):
     class FakeActor(_Prop3DMixin, vtk.vtkPropAssembly):
         def __init__(self):
             super().__init__()
+            self.actor = actor
             self.AddPart(actor)
+
+        def _post_set_update(self):
+            # Apply the same transformation to the underlying actor
+            self.actor.user_matrix = self._transformation_matrix
 
     # Sanity checks to make sure fixture is defined properly
     fake_actor = FakeActor()
