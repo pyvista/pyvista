@@ -17,7 +17,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Iso-Lines
 # +++++++++
 #
@@ -32,7 +32,7 @@ pl.add_mesh(contours, color="white", line_width=5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Iso-Surfaces
 # ++++++++++++
 #
@@ -52,22 +52,22 @@ pl.camera_position = [
 pl.show()
 
 
-###############################################################################
+# %%
 # Banded Contours
 # +++++++++++++++
 # Create banded contours for surface meshes using :func:`~pyvista.PolyDataFilters.contour_banded`.
 mesh = examples.load_random_hills()
 
-###############################################################################
+# %%
 # Set number of contours and produce mesh and lines
 n_contours = 8
 contours, edges = mesh.contour_banded(n_contours)
 
-###############################################################################
+# %%
 # Also make normal vectors
 arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
 
-###############################################################################
+# %%
 
 # Common display arguments
 dargs = dict(scalars='Elevation', n_colors=n_contours - 1, cmap='Set3')
@@ -78,7 +78,7 @@ pl.add_mesh(contours, **dargs)
 pl.add_mesh(arrows, **dargs)
 pl.show()
 
-###############################################################################
+# %%
 # Contours from a label map
 # +++++++++++++++++++++++++
 #

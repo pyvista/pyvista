@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import enum
 from functools import lru_cache
 import importlib
@@ -10,9 +9,8 @@ import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
-from typing import Type
+from typing import Sequence
 from typing import TypeVar
-from typing import Union
 import warnings
 
 import numpy as np
@@ -98,7 +96,7 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
             raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
-        return object.__new__(cls)
+        return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
     return cls_
@@ -141,7 +139,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: T | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters

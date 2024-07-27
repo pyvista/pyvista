@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Sequence
 import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Tuple
+from typing import Sequence
 from typing import Union
 
 import numpy as np
@@ -70,9 +68,9 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[MatrixLike[float], VectorLike[float]],
+    points: MatrixLike[float] | VectorLike[float],
     copy: bool = False,
-) -> Tuple[NumpyArray[float], bool]:
+) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
@@ -250,7 +248,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> pyvista.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters

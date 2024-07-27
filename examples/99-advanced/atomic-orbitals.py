@@ -7,7 +7,7 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 
 """
 
-###############################################################################
+# %%
 # Import
 # ~~~~~~
 # Import the applicable libraries.
@@ -28,7 +28,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Generate the Dataset
 # ~~~~~~~~~~~~~~~~~~~~
 # Generate the dataset by evaluating the analytic hydrogen wave function from
@@ -60,7 +60,7 @@ grid = examples.load_hydrogen_orbital(3, 2, -2)
 grid
 
 
-###############################################################################
+# %%
 # Plot the Orbital
 # ~~~~~~~~~~~~~~~~
 # Plot the orbital using :func:`add_volume() <pyvista.Plotter.add_volume>` and
@@ -87,7 +87,7 @@ pl.show_axes()
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot the Orbital Contours as an Isosurface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate the contour plot for the orbital by determining when the orbital
@@ -111,7 +111,7 @@ contours.plot(
 )
 
 
-###############################################################################
+# %%
 # Volumetric Plot: Plot the Orbitals using RGBA
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's now combine some of the best parts of the two above plots. The
@@ -170,7 +170,7 @@ hydro_orbital = examples.load_hydrogen_orbital(3, 1, 0)
 plot_orbital(hydro_orbital, clip_plane='-x')
 
 
-###############################################################################
+# %%
 # Volumetric Plot: :math:`4d_{z^2}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -182,7 +182,7 @@ hydro_orbital = examples.load_hydrogen_orbital(4, 2, 0)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
 
-###############################################################################
+# %%
 # Volumetric Plot: :math:`4d_{xz}` orbital
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -194,7 +194,7 @@ hydro_orbital = examples.load_hydrogen_orbital(4, 2, -1)
 plot_orbital(hydro_orbital, clip_plane='-y')
 
 
-###############################################################################
+# %%
 # Plot an Orbital Using a Density Plot
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can also plot atomic orbitals using a 3D density plot. For this, we will
@@ -246,7 +246,7 @@ pl.background_color = 'w'
 pl.show()
 
 
-###############################################################################
+# %%
 # Density Plot - Gaussian Points Representation
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's plot the same data using the "Gaussian points" representation.

@@ -355,7 +355,10 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         for attr in dir(self):
             if not attr.startswith('_') and attr[0].islower():
                 name = ' '.join(attr.split('_')).capitalize() + ':'
-                value = getattr(self, attr)
+                try:
+                    value = getattr(self, attr)
+                except AttributeError:  # pragma:no cover
+                    continue
                 if callable(value):
                     continue
                 if isinstance(value, str):

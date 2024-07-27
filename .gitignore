@@ -38,6 +38,9 @@ doc/sphinx_warnings.txt
 tests/.coverage
 tests/htmlcov/
 
+# doctest generated
+ant.vtk
+
 # windows
 test.bat
 

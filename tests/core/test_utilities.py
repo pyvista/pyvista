@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import pathlib
 from pathlib import Path
 import pickle
 import shutil
@@ -96,7 +95,7 @@ def test_get_ext(path, target_ext):
 def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
     if use_pathlib:
-        fnames = [pathlib.Path(fname) for fname in fnames]
+        fnames = [Path(fname) for fname in fnames]
     types = (
         pv.PolyData,
         pv.PolyData,
@@ -194,7 +193,7 @@ def test_pyvista_read_exodus(read_exodus_mock):
     pv.read(ex.globefile, force_ext='.e')
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
-    assert filename == ex.globefile
+    assert filename == Path(ex.globefile)
 
 
 def test_get_array_cell(hexbeam):

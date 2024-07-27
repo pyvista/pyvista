@@ -6,7 +6,6 @@ import glob
 import os
 from pathlib import Path
 import shutil
-from typing import Dict
 from typing import NamedTuple
 import warnings
 
@@ -80,7 +79,7 @@ def _generate_test_cases():
         (3) Merges the two lists together and returns separate test cases to
             comparing all docs images to all cached images
     """
-    test_cases_dict: Dict = {}
+    test_cases_dict: dict = {}
 
     def add_to_dict(filepath: str, key: str):
         # Function for stuffing image paths into a dict.

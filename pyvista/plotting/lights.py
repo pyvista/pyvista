@@ -22,7 +22,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 
@@ -420,7 +420,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds to a
-        90-degree rotation around the z axis and a shift by (0, 0, -1), and
+        90-degree rotation around the z-axis and a shift by (0, 0, -1), and
         check that the light's position transforms as expected.
 
         >>> import numpy as np
@@ -474,7 +474,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds
-        to a 90-degree rotation around the z axis and a shift by (0,
+        to a 90-degree rotation around the z-axis and a shift by (0,
         0, -1), and check that the light's focal point transforms as
         expected.
 
@@ -785,7 +785,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds
-        to a 90-degree rotation around the z axis and a shift by (0,
+        to a 90-degree rotation around the z-axis and a shift by (0,
         0, -1), and check that the light's position transforms as
         expected.
 

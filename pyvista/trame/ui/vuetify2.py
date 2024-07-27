@@ -1,10 +1,11 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Viewer class for a Vue 2 client.
 
 This class, derived from `pyvista.trame.ui.base_viewer`,
 is intended for use with a trame application where the client type is "vue2".
 Therefore, the `ui` method implemented by this class utilizes the API of Vuetify 2.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -19,7 +20,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from trame_client.ui.core import AbstractLayout
 
 
@@ -132,10 +133,10 @@ class Viewer(BaseViewer):
         ) as row:
             server = row.server
             # Listen to state changes
-            server.state.change(self.EDGES)(self.on_edge_visiblity_change)
-            server.state.change(self.GRID)(self.on_grid_visiblity_change)
-            server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
-            server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.EDGES)(self.on_edge_visibility_change)
+            server.state.change(self.GRID)(self.on_grid_visibility_change)
+            server.state.change(self.OUTLINE)(self.on_outline_visibility_change)
+            server.state.change(self.AXIS)(self.on_axis_visibility_change)
             server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             vuetify.VDivider(vertical=True, classes='mr-1')
