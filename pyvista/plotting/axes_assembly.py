@@ -1381,7 +1381,7 @@ class PlanesAssembly(_XYZAssembly):
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> human = examples.download_human()
-    >>> labels = 'Transverse', 'Sagittal', 'Coronal'
+    >>> labels = 'Sagittal', 'Coronal', 'Transverse'
     >>> planes = pv.PlanesAssembly(
     ...     bounds=human.bounds, labels=labels, label_size=25
     ... )
