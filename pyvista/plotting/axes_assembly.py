@@ -65,7 +65,6 @@ class _OrthogonalPlanesKwargs(TypedDict):
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
     normal_sign: Literal['+', '-'] | Sequence[str]
-    # names: Sequence[str] = ('xy', 'yz', 'zx')
 
 
 class _XYZTuple(NamedTuple):
@@ -93,11 +92,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         x_color,
         y_color,
         z_color,
-        position: VectorLike[float],
-        orientation: VectorLike[float],
-        origin: VectorLike[float],
-        scale: float | VectorLike[float],
-        user_matrix: MatrixLike[float] | None,
+        position,
+        orientation,
+        origin,
+        scale,
+        user_matrix,
     ):
         super().__init__()
 
@@ -147,11 +146,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.label_size = label_size
         self.label_position = label_position
 
-        self.position = position  # type: ignore[assignment]
-        self.orientation = orientation  # type: ignore[assignment]
-        self.scale = scale  # type: ignore[assignment]
-        self.origin = origin  # type: ignore[assignment]
-        self.user_matrix = user_matrix  # type: ignore[assignment]
+        self.position = position  # type: ignore[method-assign]
+        self.orientation = orientation  # type: ignore[method-assign]
+        self.scale = scale  # type: ignore[method-assign]
+        self.origin = origin  # type: ignore[method-assign]
+        self.user_matrix = user_matrix  # type: ignore[method-assign]
 
     @property
     def parts(self):
@@ -165,13 +164,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
     def _post_set_update(self):
         # Update prop3D attributes for all assembly parts
         parts = self.parts
-        for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
-            # Only update values if modified
-            value = getattr(self._prop3d, name)
-            for part in parts:
-                if isinstance(part, (Prop3D, _Prop3DMixin)):
-                    if not np.array_equal(getattr(part, name), value):
-                        setattr(part, name, value)
+        new_matrix = pv.array_from_vtkmatrix(self._prop3d.GetMatrix())
+        for part in parts:
+            if isinstance(part, (Prop3D, _Prop3DMixin)):
+                if not np.array_equal(part.user_matrix, new_matrix):
+                    part.user_matrix = new_matrix
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
@@ -444,7 +441,7 @@ class AxesAssembly(_XYZAssembly):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
@@ -1068,7 +1065,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
-        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
