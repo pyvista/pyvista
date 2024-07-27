@@ -1273,7 +1273,7 @@ class PlanesAssembly(_XYZAssembly):
     Assembly of three orthogonal plane meshes with labels.
 
     The labels can be 2D or 3D, and will follow the camera such that they have the
-    correct orientation and remain paralellel to the edges of the planes.
+    correct orientation and remain parallel to the edges of the planes.
 
     The positioning of the labels may be customized using the :attr:`label_edge`,
     :attr:`label_position`, and :attr:`label_offset` attributes.
