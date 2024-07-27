@@ -68,3 +68,5 @@ p = pv.Plotter()
 p.add_mesh(voxels, opacity=0.25, scalars="implicit_distance")
 p.add_mesh(contours, opacity=0.5, scalars="implicit_distance")
 p.show(cpos=cpos)
+# %%
+# .. tags:: filter

@@ -116,3 +116,5 @@ pl.enable_ssao(radius=15, bias=0.5)
 pl.enable_anti_aliasing('ssaa')
 pl.camera.zoom(1.7)
 pl.show()
+# %%
+# .. tags:: plot
