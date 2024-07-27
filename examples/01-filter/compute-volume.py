@@ -162,3 +162,5 @@ for i, body in enumerate(bodies):
 # And visualize all the different volumes:
 
 bodies.plot(scalars="TOTAL VOLUME", cmap="viridis", show_grid=True)
+# %%
+# .. tags:: filter

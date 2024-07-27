@@ -90,3 +90,5 @@ UFO.show_actor()
 plotter.add_light(UFO)
 
 plotter.show()
+# %%
+# .. tags:: lights

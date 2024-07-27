@@ -91,3 +91,5 @@ pl.show()
 print(f'Original surface volume:   {surf.volume:.1f}')
 print(f'Laplacian smoothed volume: {smooth.volume:.1f}')
 print(f'Taubin smoothed volume:    {smooth_w_taubin.volume:.1f}')
+# %%
+# .. tags:: filter

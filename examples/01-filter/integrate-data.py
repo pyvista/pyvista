@@ -91,3 +91,5 @@ print(f"Center          : {center}")
 print(f"Volume          : {volume:.0f}")
 print(f"Mean density    : {mean_density:.4f}")
 print(f"Mean velocity   : {mean_velocity}")
+# %%
+# .. tags:: filter

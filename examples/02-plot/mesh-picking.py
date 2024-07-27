@@ -73,3 +73,5 @@ def callback(actor):
 
 pl.enable_mesh_picking(callback, use_actor=True, show=False)
 pl.show()
+# %%
+# .. tags:: plot
