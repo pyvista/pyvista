@@ -105,3 +105,5 @@ annotations = {
 p = pv.Plotter()
 p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
 p.show()
+# %%
+# .. tags:: plot

@@ -172,3 +172,5 @@ cpos = pl.show()
 # %%
 # Reset to use the document theme
 pv.set_plot_theme("document")
+# %%
+# .. tags:: plot

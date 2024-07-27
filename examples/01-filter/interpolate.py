@@ -113,3 +113,5 @@ p.add_mesh(interp.contour(5), opacity=0.5, **dargs)
 p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
 p.link_views()
 p.show(cpos=cpos)
+# %%
+# .. tags:: filter
