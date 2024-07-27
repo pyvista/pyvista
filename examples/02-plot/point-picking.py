@@ -69,3 +69,5 @@ p = pv.Plotter()
 p.add_mesh(sphere, pickable=True)
 p.enable_point_picking(left_clicking=True)
 p.show()
+# %%
+# .. tags:: plot

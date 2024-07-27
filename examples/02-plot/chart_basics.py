@@ -171,3 +171,5 @@ chart = pv.ChartMPL(f)
 chart.background_color = 'w'
 p.add_chart(chart)
 p.show()
+# %%
+# .. tags:: plot

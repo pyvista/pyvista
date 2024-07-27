@@ -77,3 +77,5 @@ cpos = [
 ]
 
 mesh.plot(show_edges=True, lighting=False, cpos=cpos)
+# %%
+# .. tags:: load
