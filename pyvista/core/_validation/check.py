@@ -28,7 +28,9 @@ from pyvista.core._validation._cast_array import _cast_to_numpy
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumberType
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
+    from pyvista.core._typing_core._array_like import _NumberType
 
 
 def check_subdtype(
@@ -476,16 +478,24 @@ def check_less_than(arr, /, value, *, strict=True, name="Array"):
         raise ValueError(f"{name} values must all be less than or equal to {value}.")
 
 
-def check_range(arr, /, rng, *, strict_lower=False, strict_upper=False, name="Array"):
+def check_range(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    rng: VectorLike[_NumberType],
+    *,
+    strict_lower: bool = False,
+    strict_upper: bool = False,
+    name: str = "Array",
+):
     """Check if an array's values are all within a specific range.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
-    rng : array_like[float, float], optional
-        Array-like with two elements ``[min, max]`` specifying the minimum
+    rng : VectorLike[float], optional
+        Vector with two elements ``[min, max]`` specifying the minimum
         and maximum data values allowed, respectively. By default, the
         range endpoints are inclusive, i.e. values must be >= min
         and <= max. Use ``strict_lower`` and/or ``strict_upper``
@@ -526,9 +536,9 @@ def check_range(arr, /, rng, *, strict_lower=False, strict_upper=False, name="Ar
     check_real(rng, name="Range")
     check_sorted(rng, name="Range")
 
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    check_greater_than(arr, rng[0], strict=strict_lower, name=name)
-    check_less_than(arr, rng[1], strict=strict_upper, name=name)
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    check_greater_than(array, rng[0], strict=strict_lower, name=name)
+    check_less_than(array, rng[1], strict=strict_upper, name=name)
 
 
 def check_shape(
