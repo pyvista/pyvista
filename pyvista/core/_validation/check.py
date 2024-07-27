@@ -374,7 +374,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "
     check_greater_than(array, 0, strict=False, name=name)
 
 
-def _validate_real_finite_value(scalar, name='Value'):
+def _validate_real_value(scalar, name='Value'):
     valid_scalar = _cast_to_numpy(scalar)
     check_shape(valid_scalar, (), name=name)
     check_real(valid_scalar, name=name)
