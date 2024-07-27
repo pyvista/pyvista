@@ -378,7 +378,6 @@ def _validate_real_finite_value(scalar, name='Value'):
     valid_scalar = _cast_to_numpy(scalar)
     check_shape(valid_scalar, (), name=name)
     check_real(valid_scalar, name=name)
-    check_finite(valid_scalar, name=name)
     return valid_scalar
 
 
