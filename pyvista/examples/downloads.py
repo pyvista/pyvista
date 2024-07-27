@@ -3047,7 +3047,7 @@ def download_human(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_human()
-    >>> dataset.plot()
+    >>> dataset.plot(scalars='Color', rgb=True)
 
     .. seealso::
 
