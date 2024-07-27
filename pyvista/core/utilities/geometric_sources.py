@@ -3525,8 +3525,8 @@ class OrthogonalPlanesSource:
         axis direction. More specifically:
 
          - The yz plane is translated in the positive x direction by the first value
-         - The zx plane is translated in the positive y directionby the second value
-         - The xy plane is translated in the positive z directionby the third value
+         - The zx plane is translated in the positive y direction by the second value
+         - The xy plane is translated in the positive z direction by the third value
 
         .. note::
 
