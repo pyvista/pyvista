@@ -66,3 +66,5 @@ point.SetPoints(points)
 point.SetVerts(vertices)
 mesh = pv.wrap(point)
 print(mesh)
+# %%
+# .. tags:: load
