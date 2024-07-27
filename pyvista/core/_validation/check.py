@@ -531,9 +531,8 @@ def check_range(
     >>> _validation.check_range([0, 0.5, 1], rng=[0, 1])
 
     """
-    rng = _cast_to_numpy(rng)
+    rng = rng if isinstance(rng, np.ndarray) else _cast_to_numpy(rng)
     check_shape(rng, 2, name="Range")
-    check_real(rng, name="Range")
     check_sorted(rng, name="Range")
 
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
