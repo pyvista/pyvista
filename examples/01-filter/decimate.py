@@ -67,3 +67,5 @@ pl.camera_position = cpos
 pl.reset_camera()
 pl.link_views()
 pl.show()
+# %%
+# .. tags:: filter

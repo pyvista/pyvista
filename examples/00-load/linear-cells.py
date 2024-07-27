@@ -212,3 +212,5 @@ add_cell_helper(
 
 pl.background_color = 'w'
 pl.show()
+# %%
+# .. tags:: load

@@ -96,3 +96,5 @@ p.show(cpos=camera_position)
 # The streamlines are only approximately evenly spaced and capture the
 # vortex pair downstream of the cylinder with appropriate choice of
 # ``start_position``.
+#
+# .. tags:: filter
