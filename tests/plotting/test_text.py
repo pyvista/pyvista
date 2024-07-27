@@ -64,6 +64,15 @@ def test_label():
     assert label.size == 99
 
 
+def test_label_prop3d():
+    position = (1.0, 2.0, 3.0)
+    label = pv.Label(position=position)
+    bounds = (1.0, 1.0, 2.0, 2.0, 3.0, 3.0)
+    assert label.bounds == bounds
+    assert label.center == position
+    assert label.length == 0.0
+
+
 def test_label_relative_position():
     label = pv.Label()
     position = (1, 2, 3)
