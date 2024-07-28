@@ -31,9 +31,9 @@ def actor_from_multi_block():
 
 
 @pytest.fixture()
-def fake_actor(actor):
+def dummy_actor(actor):
     # Define prop3d-like class
-    class FakeActor(_Prop3DMixin):
+    class DummyActor(_Prop3DMixin):
         def __init__(self):
             super().__init__()
             self._actor = actor
@@ -47,11 +47,11 @@ def fake_actor(actor):
             return self._actor.GetBounds()
 
     # Sanity checks to make sure fixture is defined properly
-    fake_actor = FakeActor()
-    assert not isinstance(fake_actor, Prop3D)
-    assert isinstance(fake_actor, _Prop3DMixin)
-    assert fake_actor.bounds == actor.GetBounds()
-    return fake_actor
+    dummy_actor = DummyActor()
+    assert not isinstance(dummy_actor, Prop3D)
+    assert isinstance(dummy_actor, _Prop3DMixin)
+    assert dummy_actor.bounds == actor.GetBounds()
+    return dummy_actor
 
 
 @pytest.fixture()
@@ -149,8 +149,8 @@ def test_actor_visible(actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_scale(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_scale(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.scale == (1, 1, 1)
     scale = (2, 2, 2)
     actor.scale = scale
@@ -160,8 +160,8 @@ def test_actor_scale(klass, actor, fake_actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_position(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_position(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.position == (0, 0, 0)
     position = (2, 2, 2)
     actor.position = position
@@ -184,8 +184,8 @@ def test_actor_rotate_z(actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_orientation(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_orientation(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
@@ -205,8 +205,8 @@ def test_actor_rotation_order(actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_origin(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_origin(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.origin == (0, 0, 0)
     origin = (1, 2, 3)
     actor.origin = origin
@@ -214,8 +214,8 @@ def test_actor_origin(klass, actor, fake_actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_length(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_length(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
@@ -225,8 +225,8 @@ def test_actor_length(klass, actor, fake_actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_user_matrix(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_user_matrix(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
     arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
@@ -237,15 +237,15 @@ def test_actor_user_matrix(klass, actor, fake_actor):
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_bounds(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_bounds(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert isinstance(actor.bounds, tuple)
     assert np.allclose(actor.bounds, (-0.5, 0.5, -0.5, 0.5, 0, 0))
 
 
 @pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
-def test_actor_center(klass, actor, fake_actor):
-    actor = actor if klass == 'Prop3D' else fake_actor
+def test_actor_center(klass, actor, dummy_actor):
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.center == (0.0, 0.0, 0.0)
 
 
