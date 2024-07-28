@@ -427,7 +427,7 @@ def check_greater_than(
 
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
-    valid_value = _validate_real_finite_value(value)
+    valid_value = _validate_real_value(value)
     if strict and not np.all(array > valid_value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(array >= valid_value):
@@ -481,7 +481,7 @@ def check_less_than(
 
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
-    valid_value = _validate_real_finite_value(value)
+    valid_value = _validate_real_value(value)
     if strict and not np.all(array < valid_value):
         raise ValueError(f"{name} values must all be less than {value}.")
     elif not np.all(array <= valid_value):
