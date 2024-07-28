@@ -145,3 +145,5 @@ p.add_mesh(
 )
 
 p.show()
+# %%
+# .. tags:: plot

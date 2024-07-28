@@ -150,3 +150,5 @@ plotter.show()
 # %%
 # The spotlight with exponent 0.3 is practically uniform, and the one with
 # exponent 5 is visibly focused along the axis of the light.
+#
+# .. tags:: lights

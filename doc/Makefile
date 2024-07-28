@@ -26,6 +26,7 @@ clean:
 	rm -rf $(SOURCEDIR)/images/auto-generated
 	rm -f $(SOURCEDIR)/getting-started/external_examples.rst
 	find $(SOURCEDIR) -type d -name "_autosummary" -exec rm -rf {} +
+	rm -rf $(SOURCEDIR)/tags
 
 clean-except-examples:
 	rm -rf $(BUILDDIR)/*

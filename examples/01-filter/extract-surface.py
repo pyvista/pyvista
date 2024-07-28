@@ -84,3 +84,5 @@ surf.plot(show_scalar_bar=False)
 
 surf_subdivided = grid.extract_surface(nonlinear_subdivision=5)
 surf_subdivided.plot(show_scalar_bar=False)
+# %%
+# .. tags:: filter

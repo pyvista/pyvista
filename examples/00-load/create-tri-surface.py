@@ -100,3 +100,5 @@ p = pv.Plotter()
 p.add_mesh(surf, show_edges=True)
 p.add_mesh(polygon, color="red", opacity=0.5)
 p.show(cpos="xy")
+# %%
+# .. tags:: load

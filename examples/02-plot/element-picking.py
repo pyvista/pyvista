@@ -77,3 +77,5 @@ try:
 except AttributeError:
     # ignore this section when manually closing the window
     pass
+# %%
+# .. tags:: plot
