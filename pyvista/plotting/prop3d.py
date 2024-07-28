@@ -16,10 +16,9 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    import scipy
-
     from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
@@ -388,9 +387,7 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
-    def rotation_from(
-        self, rotation: NumpyArray[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
-    ):
+    def rotation_from(self, rotation: RotationLike):
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes

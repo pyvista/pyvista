@@ -260,6 +260,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.BoundsLike$',
     '\.CellsLike$',
     '\.CellsArrayLike$',
+    '\.RotationLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
