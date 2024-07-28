@@ -79,7 +79,7 @@ jobs:
           key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
 
       - name: Cache Sphinx build directory
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
         with:
           path: doc/_build/
