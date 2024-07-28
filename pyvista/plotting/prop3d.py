@@ -340,7 +340,6 @@ class Prop3D(_vtk.vtkProp3D):
         rotates the actor about the z-axis by approximately 45 degrees, and
         shrinks the actor by a factor of 0.5.
 
-        >>> import numpy as np
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
@@ -352,14 +351,12 @@ class Prop3D(_vtk.vtkProp3D):
         ...     line_width=5,
         ...     lighting=False,
         ... )
-        >>> arr = np.array(
-        ...     [
-        ...         [0.707, -0.707, 0, 0],
-        ...         [0.707, 0.707, 0, 0],
-        ...         [0, 0, 1, 1.500001],
-        ...         [0, 0, 0, 2],
-        ...     ]
-        ... )
+        >>> arr = [
+        ...     [0.707, -0.707, 0, 0],
+        ...     [0.707, 0.707, 0, 0],
+        ...     [0, 0, 1, 1.5],
+        ...     [0, 0, 0, 2],
+        ... ]
         >>> actor.user_matrix = arr
         >>> pl.show_axes()
         >>> pl.show()
