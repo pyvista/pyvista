@@ -366,7 +366,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @user_matrix.setter
     def user_matrix(
-        self, value: TransformLike | scipy.spatial.transform.Rotation
+        self, value: TransformLike
     ):  # numpydoc ignore=GL08
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
@@ -395,7 +395,7 @@ class Prop3D(_vtk.vtkProp3D):
 
         Parameters
         ----------
-        rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         Examples
