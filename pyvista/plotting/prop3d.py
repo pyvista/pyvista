@@ -365,9 +365,7 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(
-        self, value: TransformLike
-    ):  # numpydoc ignore=GL08
+    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
