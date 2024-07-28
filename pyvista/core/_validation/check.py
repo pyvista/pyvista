@@ -379,6 +379,13 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "
     check_greater_than(array, 0, strict=False, name=name)
 
 
+def _validate_real_value(scalar, name='Value'):
+    valid_scalar = _cast_to_numpy(scalar)
+    check_shape(valid_scalar, (), name=name)
+    check_real(valid_scalar, name=name)
+    return valid_scalar
+
+
 def check_greater_than(
     array: _ArrayLikeOrScalar[NumberType],
     /,
@@ -425,25 +432,29 @@ def check_greater_than(
 
     """
     array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
-    valid_value = _cast_to_numpy(value)
-    check_shape(valid_value, (), name='Value')
-    check_real(valid_value, name='Value')
-    check_finite(valid_value, name='Value')
+    valid_value = _validate_real_value(value)
     if strict and not np.all(array > valid_value):
         raise ValueError(f"{name} values must all be greater than {value}.")
     elif not np.all(array >= valid_value):
         raise ValueError(f"{name} values must all be greater than or equal to {value}.")
 
 
-def check_less_than(arr, /, value, *, strict=True, name="Array"):
+def check_less_than(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    value: float,
+    *,
+    strict: bool = True,
+    name: str = "Array",
+):
     """Check if an array's elements are all less than some value.
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    array : float | ArrayLike[float]
+        Number or array to check.
 
-    value : Number
+    value : float
         Value which the array's elements must be less than.
 
     strict : bool, default: True
@@ -463,7 +474,7 @@ def check_less_than(arr, /, value, *, strict=True, name="Array"):
     See Also
     --------
     check_greater_than
-    check_in_range
+    check_range
     check_nonnegative
 
     Examples
@@ -474,10 +485,11 @@ def check_less_than(arr, /, value, *, strict=True, name="Array"):
     >>> _validation.check_less_than([-1, -2, -3], value=0)
 
     """
-    arr = arr if isinstance(arr, np.ndarray) else _cast_to_numpy(arr)
-    if strict and not np.all(arr < value):
+    array = array if isinstance(array, np.ndarray) else _cast_to_numpy(array)
+    valid_value = _validate_real_value(value)
+    if strict and not np.all(array < valid_value):
         raise ValueError(f"{name} values must all be less than {value}.")
-    elif not np.all(arr <= value):
+    elif not np.all(array <= valid_value):
         raise ValueError(f"{name} values must all be less than or equal to {value}.")
 
 
