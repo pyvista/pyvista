@@ -72,6 +72,23 @@ def test_label_prop3d():
     assert label.center == position
     assert label.length == 0.0
 
+    # Test correct bounds with more complex transformations
+    # Add offset along x-axis
+    offset = 100
+    label.relative_position = (offset, 0, 0)
+    # Rotate about z-axis
+    label.orientation = (0, 0, 90)
+    # Expect offset to be applied along y-axis (due to the rotation)
+    bounds = (
+        position[0],
+        position[0],
+        position[1] + offset,
+        position[1] + offset,
+        position[2],
+        position[2],
+    )
+    assert np.allclose(label.bounds, bounds)
+
 
 def test_label_relative_position():
     label = pv.Label()

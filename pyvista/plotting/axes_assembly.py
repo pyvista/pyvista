@@ -14,6 +14,7 @@ from typing import TypedDict
 import numpy as np
 
 import pyvista as pv
+from pyvista import BoundsLike
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -163,6 +164,9 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
                 for part in parts
                 if not np.array_equal(getattr(part, name), value)
             ]
+
+    def _get_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        return self.GetBounds()
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01

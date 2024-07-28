@@ -416,6 +416,11 @@ class Label(_Prop3DMixin, Text):
         new_position = (matrix4x4 @ vector4)[:3]
         self._label_position = new_position
 
+    def _get_bounds(self):
+        # Define its 3D position as its bounds
+        x, y, z = self._label_position
+        return x, x, y, y, z, z
+
 
 @no_new_attr
 class TextProperty(_vtk.vtkTextProperty):
