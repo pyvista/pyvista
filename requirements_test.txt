@@ -22,9 +22,9 @@ pytest-memprof<0.3.0
 pytest-pyvista==0.1.8
 pytest-xdist<3.7.0
 scipy<1.14.1
-sphinx<7.4.0
+sphinx<7.5.0
 sphinx-book-theme<1.2.0
-sphinx-gallery<0.17.0
+sphinx-gallery<0.18.0
 sphinx_design<0.7.0
 sympy<1.13.0
 tqdm<4.67.0
