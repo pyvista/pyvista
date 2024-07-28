@@ -42,8 +42,7 @@ def dummy_actor(actor):
             # Apply the same transformation to the underlying actor
             self._actor.user_matrix = self._transformation_matrix
 
-        @property
-        def bounds(self):
+        def _get_bounds(self):
             return self._actor.GetBounds()
 
     # Sanity checks to make sure fixture is defined properly
