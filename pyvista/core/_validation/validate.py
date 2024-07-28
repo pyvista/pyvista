@@ -544,7 +544,7 @@ def validate_transform3x3(transform, /, *, name="Transform"):
 
     Parameters
     ----------
-    transform : array_like | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+    transform : RotationLike
         Transformation matrix as a 3x3 array, vtk matrix, or a SciPy ``Rotation``
         instance.
 
