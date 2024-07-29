@@ -16,6 +16,11 @@ def axes_geometry_source():
     return pv.AxesGeometrySource()
 
 
+@pytest.fixture()
+def cube_faces_source():
+    return pv.CubeFacesSource()
+
+
 def test_capsule_source():
     if pv.vtk_version_info < (9, 3):
         algo = pv.CapsuleSource()
@@ -744,3 +749,56 @@ def test_orthogonal_planes_source_normal_sign():
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.normal_sign = 0
+
+
+def test_cube_faces_source(cube_faces_source):
+    output = cube_faces_source.output
+    assert isinstance(output, pv.MultiBlock)
+    assert output.keys() == ['+X', '-X', '+Y', '-Y', '+Z', '-Z']
+    assert all(isinstance(poly, pv.PolyData) for poly in output)
+    assert output.bounds == pv.CubeSource().output.bounds
+
+
+def test_cube_faces_source_update(cube_faces_source):
+    output_before = cube_faces_source.output
+    cube_faces_source.z_length = 2  # Make an arbitrary modification
+    cube_faces_source.update()
+    output_after = cube_faces_source.output
+    assert output_before is output_after
+    assert all(output_after[i] is output_after[i] for i in range(6))
+
+
+# def test_cube_faces_source_names():
+#     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
+#     assert planes_source.names == ('a', 'b', 'c')
+#
+#     match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
+#     with pytest.raises(TypeError, match=re.escape(match)):
+#         planes_source.names = 'abc'
+
+
+# def test_orthogonal_planes_source_normal_sign():
+#     planes_source = pv.OrthogonalPlanesSource()
+#     output = planes_source.output
+#     assert planes_source.normal_sign == ('+', '+', '+')
+#     assert np.all(pv.merge(output)['Normals'] >= 0)
+#
+#     planes_source.normal_sign = '-'
+#     planes_source.update()
+#     assert planes_source.normal_sign == ('-', '-', '-')
+#     assert np.all(pv.merge(output)['Normals'] <= 0)
+#
+#     planes_source.normal_sign = ['+', '+', '+']
+#     assert planes_source.normal_sign == ('+', '+', '+')
+#
+#     match = "must be one of: \n\t['+', '-']"
+#     with pytest.raises(ValueError, match=re.escape(match)):
+#         planes_source.normal_sign = 'a'
+#
+#     match = "must be one of: \n\t['+', '-']"
+#     with pytest.raises(ValueError, match=re.escape(match)):
+#         planes_source.normal_sign = ['a', 'b', 'c']
+#
+#     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
+#     with pytest.raises(TypeError, match=re.escape(match)):
+#         planes_source.normal_sign = 0

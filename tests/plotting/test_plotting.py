@@ -4550,3 +4550,14 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+def test_cube_faces_source():
+    cube_faces_source = pv.CubeFacesSource()
+    cube_faces_source.output.plot()
+
+
+def test_cube_faces_source_shrink():
+    cube_faces_source = pv.CubeFacesSource()
+    merged = pv.merge(cube_faces_source.output)
+    merged.shrink(0.8).plot()

@@ -3694,3 +3694,127 @@ class OrthogonalPlanesSource:
         """
         self.update()
         return self._output
+
+
+@no_new_attr
+class CubeFacesSource(CubeSource):
+    """Generate the faces of a cube.
+
+    This source generates a :class:`~pyvista.MultiBlock` with the six :class:`PolyData`
+    comprising the faces of a cube.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    center : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
+        Name of each face in the generated :class:`~pyvista.MultiBlock`.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+
+    Examples
+    --------
+    Generate the default cube faces.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> planes_source = pv.CubeFacesSource()
+    >>> output = planes_source.output
+    >>> output.plot()
+    """
+
+    _new_attr_exceptions: ClassVar[list[str]] = ['_output', '_names', 'names']
+
+    def __init__(
+        self,
+        *,
+        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        x_length: float = 1.0,
+        y_length: float = 1.0,
+        z_length: float = 1.0,
+        bounds: VectorLike[float] | None = None,
+        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        point_dtype='float32',
+    ):
+        # Init output datasets
+        super().__init__(
+            center=center,
+            x_length=x_length,
+            y_length=y_length,
+            z_length=z_length,
+            bounds=bounds,
+            point_dtype=point_dtype,
+        )
+
+        points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
+        faces = [4, 0, 1, 2, 3]
+        self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def names(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the planes."""
+        return self._names
+
+    @names.setter
+    def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=6, name='names')
+        self._names = cast(Tuple[str, str, str, str, str, str], tuple(names))
+
+    def _get_cube_face_points(self):
+        cube = CubeSource.output.fget(self)
+        points = cube.points
+        # TODO: Add explode and shrink
+        return [points[face] for face in cube.regular_faces]
+
+    def update(self):
+        """Update the output of the source."""
+        face_points = self._get_cube_face_points()
+        # Update the output
+        output = self._output
+        for index, (name, points) in enumerate(zip(self.names, face_points)):
+            output[index].points = points
+            # TODO: Add sign
+            # if sign == '-':
+            #     plane['Normals'] *= -1
+            output.set_block_name(index, name)
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
+        plane. The blocks are named ``'yz'``, ``'zx'``, ``'xy'``, and are ordered such
+        that the first, second, and third plane is perpendicular to the x, y, and
+        z-axis, respectively.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
+        self.update()
+        return self._output
