@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 import itertools
 from typing import TYPE_CHECKING
@@ -59,13 +60,25 @@ class _AxesGeometryKwargs(TypedDict):
     symmetric_bounds: bool
 
 
+class _CubeFacesSource(TypedDict):
+    center: VectorLike[float]
+    x_length: float
+    y_length: float
+    z_length: float
+    bounds: VectorLike[float] | None
+    shrink: float | None
+    explode: float | None
+    names: Sequence[str]
+    point_dtype: str
+
+
 class _XYZTuple(NamedTuple):
     x: Any
     y: Any
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -143,6 +156,12 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.scale = scale  # type: ignore[assignment]
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
+
+    # def __new__(cls, *args, **kwargs):
+    #     # Check subclasses have implemented abstract methods
+    #     if hasattr(cls, '__abstractmethods__') and len(cls.__abstractmethods__) > 0:
+    #         raise TypeError(f'Class {cls.__name__} must implement abstract methods {tuple(cls.__abstractmethods__)}')
+    #     return super().__new__(cls, *args, **kwargs)
 
     @property
     def parts(self):
@@ -1273,3 +1292,201 @@ class AxesAssemblySymmetric(AxesAssembly):
         vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
         for label, position in zip(labels_minus, vector_position_minus):
             label.relative_position = position
+
+
+class LabeledCubeAssembly(_XYZAssembly):
+    """Symmetric assembly of arrow-style axes parts.
+
+    This class is similar to :class:`~pyvista.AxesAssembly` but the axes are
+    symmetric.
+
+    The axes may be used as a widget or added to a scene.
+
+    Parameters
+    ----------
+    x_label : str, default: ('+X', '-X')
+        Text labels for the positive and negative x-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    y_label : str, default: ('+Y', '-Y')
+        Text labels for the positive and negative y-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    z_label : str, default: ('+Z', '-Z')
+        Text labels for the positive and negative z-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    labels : Sequence[str], optional
+        Text labels for the axes. Specify three strings, one for each axis, or
+        six strings, one for each +/- axis. If three strings plus ``'+'`` and minus
+        ``'-'`` characters are added. This is an alternative parameter to using
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
+
+    label_color : ColorLike, default: 'black'
+        Color of the text labels.
+
+    show_labels : bool, default: True
+        Show or hide the text labels.
+
+    label_position : float | VectorLike[float], optional
+        Position of the text labels along each axis. By default, the labels are
+        positioned at the ends of the shafts.
+
+    label_size : int, default: 50
+        Size of the text labels.
+
+    x_color : ColorLike | Sequence[ColorLike], optional
+        Color of the x-axis shaft and tip.
+
+    y_color : ColorLike | Sequence[ColorLike], optional
+        Color of the y-axis shaft and tip.
+
+    z_color : ColorLike | Sequence[ColorLike], optional
+        Color of the z-axis shaft and tip.
+
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the axes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the axes which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the axes. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the axes.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the actor.
+
+    **kwargs
+        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+
+    Examples
+    --------
+    Add symmetric axes to a plot.
+
+    >>> import pyvista as pv
+    >>> axes_assembly = pv.AxesAssemblySymmetric()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes_assembly)
+    >>> pl.show()
+
+    Customize the axes labels.
+
+    >>> axes_assembly.labels = [
+    ...     'east',
+    ...     'west',
+    ...     'north',
+    ...     'south',
+    ...     'up',
+    ...     'down',
+    ... ]
+    >>> axes_assembly.label_color = 'darkgoldenrod'
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(axes_assembly)
+    >>> pl.show()
+
+    Add the axes as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
+    only show text for the positive axes.
+
+    >>> axes_assembly = pv.AxesAssemblySymmetric(
+    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ... )
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     axes_assembly,
+    ...     viewport=(0, 0, 0.5, 0.5),
+    ... )
+    >>> pl.show()
+
+    Shrink the faces so they appear as a single point and render them as spheres.
+
+    >>> cube_faces_source.shrink = 1e-8
+    >>> cube_faces_source.update()
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(
+    ...     output,
+    ...     style='points',
+    ...     render_points_as_spheres=True,
+    ...     point_size=20,
+    ... )
+    >>> pl.show()
+
+    """
+
+    def __init__(
+        self,
+        *,
+        x_label: str | Sequence[str] | None = None,
+        y_label: str | Sequence[str] | None = None,
+        z_label: str | Sequence[str] | None = None,
+        labels: Sequence[str] | None = None,
+        label_color: ColorLike = 'black',
+        show_labels: bool = True,
+        label_position: float | VectorLike[float] | None = None,
+        label_size: int = 50,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
+        **kwargs: Unpack[_CubeFacesSource],
+    ):
+        # Init geometry
+        self._geometry_source = pv.CubeFacesSource(**kwargs)
+        # Init face actors
+        self._face_actors = tuple(
+            [
+                Actor(mapper=pv.DataSetMapper(dataset=dataset))
+                for dataset in self._geometry_source.output
+            ]
+        )
+        self._face_actors_plus = self._face_actors[0::2]
+        self._face_actors_minus = self._face_actors[1::2]
+
+        # Init label actors
+        self._label_actors = tuple(Label() for _ in range(6))
+        self._label_actors_plus = self._label_actors[0::2]
+        self._label_actors_minus = self._label_actors[1::2]
+
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=tuple(zip(self._face_actors_plus, self._face_actors_minus)),  # type: ignore[arg-type]
+            xyz_label_actors=tuple(zip(self._label_actors_plus, self._label_actors_minus)),  # type: ignore[arg-type]
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            labels=labels,
+            label_color=label_color,
+            show_labels=show_labels,
+            label_position=label_position,
+            label_size=label_size,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+        )
+        for label in self._label_actor_iterator:
+            prop = label.prop
+            prop.bold = True
