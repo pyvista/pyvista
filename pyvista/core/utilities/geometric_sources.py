@@ -3694,3 +3694,299 @@ class OrthogonalPlanesSource:
         """
         self.update()
         return self._output
+
+
+@no_new_attr
+class CubeFacesSource(CubeSource):
+    """Generate the faces of a cube.
+
+    This source generates a :class:`~pyvista.MultiBlock` with the six :class:`PolyData`
+    comprising the faces of a cube.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    center : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+
+    shrink : float, optional
+        Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
+        If set, this is the factor by which to shrink each face. Values must be
+        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+
+    explode : float, optional
+        Use :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
+        cube's center. If set, this is the factor by which to move each face.
+        Increasing values will push the cells farther away. Use a negative value to
+        "implode" the cube.
+
+    names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
+        Name of each face in the generated :class:`~pyvista.MultiBlock`.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+
+    Examples
+    --------
+    Generate the default faces of a cube.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> cube_faces_source = pv.CubeFacesSource()
+    >>> output = cube_faces_source.output
+    >>> output.plot()
+
+    The output is similar to that of :class:`CubeSource` except it's a
+    :class:`~pyvista.MultiBlock`.
+
+    >>> output
+    MultiBlock (...)
+      N Blocks    6
+      X Bounds    -0.500, 0.500
+      Y Bounds    -0.500, 0.500
+      Z Bounds    -0.500, 0.500
+
+    >>> cube_source = pv.CubeSource()
+    >>> cube_source.output
+    PolyData (...)
+      N Cells:    6
+      N Points:   24
+      N Strips:   0
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
+      N Arrays:   2
+
+    Use :attr:`explode` to explode the faces.
+
+    >>> cube_faces_source.explode = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot()
+
+    Use :attr:`shrink` to also shrink the faces.
+
+    >>> cube_faces_source.shrink = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot()
+
+    Fit cube faces to a dataset and only plot four of them.
+
+    >>> mesh = examples.load_airplane()
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds)
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output['+X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['+Y'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-Y'], opacity=0.5)
+    >>> pl.show()
+
+    """
+
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        '_output',
+        '_names',
+        'names',
+        '_shrink',
+        'shrink',
+        '_explode',
+        'explode',
+        '_bounds',
+        'bounds',
+    ]
+
+    class _FaceIndex(IntEnum):
+        X_NEG = 0
+        X_POS = 1
+        Y_NEG = 2
+        Y_POS = 3
+        Z_NEG = 4
+        Z_POS = 5
+
+    def __init__(
+        self,
+        *,
+        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        x_length: float = 1.0,
+        y_length: float = 1.0,
+        z_length: float = 1.0,
+        bounds: VectorLike[float] | None = None,
+        shrink: float | None = None,
+        explode: float | None = None,
+        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        point_dtype='float32',
+    ):
+        # Init CubeSource
+        super().__init__(
+            center=center,
+            x_length=x_length,
+            y_length=y_length,
+            z_length=z_length,
+            bounds=bounds,
+            point_dtype=point_dtype,
+        )
+
+        # Init output
+        points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
+        faces = [4, 0, 1, 2, 3]
+        self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
+
+        # Set properties
+        self.shrink = shrink
+        self.explode = explode
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def shrink(self) -> float | None:  # numpydoc ignore=RT01
+        """Shrink the cube's faces.
+
+        If set, this is the factor by which to shrink each face. Values must be
+        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+
+        Internally, :meth:`~pyvista.DataSetFilters.shrink` is used.
+        """
+        return self._shrink
+
+    @shrink.setter
+    def shrink(self, factor: float | None):  # numpydoc ignore=GL08
+        self._shrink = (
+            factor if factor is None else _validation.validate_number(factor, name='shrink factor')
+        )
+
+    @property
+    def explode(self) -> float | None:  # numpydoc ignore=RT01
+        """Push each face away from the cube's center.
+
+        If set, this is the factor by which to move each face. Larger values will
+        push the faces farther away. Use a negative value to "implode" the cube.
+
+        Internally, :meth:`~pyvista.DataSetFilters.explode` is used.
+        """
+        return self._explode
+
+    @explode.setter
+    def explode(self, factor: float | None):  # numpydoc ignore=GL08
+        self._explode = (
+            factor if factor is None else _validation.validate_number(factor, name='explode factor')
+        )
+
+    @property
+    def names(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the faces.
+
+        Specify three strings, one for each '+/-' face pair, or six strings, one for
+        each individual face.
+
+        If three strings, plus ``'+'`` and minus ``'-'`` characters are added to
+        the names.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces = pv.CubeFacesSource()
+
+        Use three strings to set the names. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> cube_faces.names = ['U', 'V', 'W']
+        >>> cube_faces.names
+        ('+U', '-U', '+V', '-V', '+W', '-W')
+
+        Alternatively, use six strings to set the names explicitly.
+
+        >>> cube_faces.names = [
+        ...     'right',
+        ...     'left',
+        ...     'anterior',
+        ...     'posterior',
+        ...     'superior',
+        ...     'inferior',
+        ... ]
+        >>> cube_faces.names
+        ('right', 'left', 'anterior', 'posterior', 'superior', 'inferior')
+        """
+        return self._names
+
+    @names.setter
+    def names(
+        self, names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+    ):  # numpydoc ignore=GL08
+        name = 'face names'
+        _validation.check_instance(names, (list, tuple), name=name)
+        _validation.check_iterable_items(names, str, name=name)
+        _validation.check_length(names, exact_length=[3, 6], name=name)
+        valid_names = (
+            tuple(names)
+            if len(names) == 6
+            else (
+                '+' + names[0],
+                '-' + names[0],
+                '+' + names[1],
+                '-' + names[1],
+                '+' + names[2],
+                '-' + names[2],
+            )
+        )
+        self._names = cast(Tuple[str, str, str, str, str, str], valid_names)
+
+    def _get_cube_face_points(self) -> list[NumpyArray[float]]:
+        cube = CubeSource.output.fget(self)  # type: ignore[attr-defined]
+        shrink, explode = self.shrink, self.explode
+        if shrink:
+            cube = cube.shrink(shrink)
+        if explode:
+            cube = cube.explode(explode).extract_geometry()
+        points, faces = cube.points, cube.regular_faces
+        Index: type[CubeFacesSource._FaceIndex] = CubeFacesSource._FaceIndex
+        return [
+            points[faces[Index.X_POS]],
+            points[faces[Index.X_NEG]],
+            points[faces[Index.Y_POS]],
+            points[faces[Index.Y_NEG]],
+            points[faces[Index.Z_POS]],
+            points[faces[Index.Z_NEG]],
+        ]
+
+    def update(self):
+        """Update the output of the source."""
+        # Get updated point geometry
+        face_points = self._get_cube_face_points()
+        output = self._output
+        for index, (name, points) in enumerate(zip(self.names, face_points)):
+            output[index].points = points
+            output.set_block_name(index, name)
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each
+        face. The blocks are named and ordered as  ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with six cube faces.
+        """
+        self.update()
+        return self._output

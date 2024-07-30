@@ -4550,3 +4550,12 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'), [(None, None), ('shrink', 0.5), ('explode', 0.5), ('explode', -0.5)]
+)
+def test_cube_faces_source(name, value):
+    kwargs = {name: value} if name and value else {}
+    cube_faces_source = pv.CubeFacesSource(**kwargs)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(mag=0.5)
