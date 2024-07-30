@@ -18,6 +18,11 @@ def axes_assembly_symmetric():
     return pv.AxesAssemblySymmetric()
 
 
+@pytest.fixture()
+def cube_assembly():
+    return pv.LabeledCubeAssembly()
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
@@ -547,3 +552,6 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     match = "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' and part 'shaft'"
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
+
+
+def test_labeled_cube_assembly(cube_assembly): ...

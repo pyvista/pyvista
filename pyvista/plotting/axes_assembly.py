@@ -160,7 +160,9 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
     def __new__(cls, *args, **kwargs):
         # Check subclasses have implemented abstract methods
         if hasattr(cls, '__abstractmethods__') and len(cls.__abstractmethods__) > 0:
-            raise TypeError(f'Class {cls.__name__} must implement abstract methods {tuple(cls.__abstractmethods__)}')
+            raise TypeError(
+                f'Class {cls.__name__} must implement abstract methods {tuple(sorted(cls.__abstractmethods__))}'
+            )
         return super().__new__(cls, *args, **kwargs)
 
     @property
@@ -1347,6 +1349,9 @@ class LabeledCubeAssembly(_XYZAssembly):
     z_color : ColorLike | Sequence[ColorLike], optional
         Color of the z-axis shaft and tip.
 
+    opacity : float | VectorLike[float], default: 0.3,
+        Opacity of the cube's faces.
+
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
         Position of the axes in space.
 
@@ -1442,6 +1447,7 @@ class LabeledCubeAssembly(_XYZAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
+        opacity: float | VectorLike[float] = 1.0,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -1450,13 +1456,12 @@ class LabeledCubeAssembly(_XYZAssembly):
         **kwargs: Unpack[_CubeFacesSource],
     ):
         # Init geometry
+        kwargs.setdefault('explode', 0.01)
         self._geometry_source = pv.CubeFacesSource(**kwargs)
+        self._face_datasets = self._geometry_source.output
         # Init face actors
         self._face_actors = tuple(
-            [
-                Actor(mapper=pv.DataSetMapper(dataset=dataset))
-                for dataset in self._geometry_source.output
-            ]
+            [Actor(mapper=pv.DataSetMapper(dataset=dataset)) for dataset in self._face_datasets]
         )
         self._face_actors_plus = self._face_actors[0::2]
         self._face_actors_minus = self._face_actors[1::2]
@@ -1487,6 +1492,303 @@ class LabeledCubeAssembly(_XYZAssembly):
             scale=scale,
             user_matrix=user_matrix,
         )
+        self.opacity = opacity  # type: ignore[assignment]
+        for actor in self._face_actors:
+            actor.prop.style = 'wireframe'
+            actor.prop.line_width = 20
+            actor.prop.render_lines_as_tubes = True
+
         for label in self._label_actor_iterator:
             prop = label.prop
             prop.bold = True
+            prop.justification_vertical = 'center'
+            prop.justification_horizontal = 'center'
+
+    @property
+    def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        Specify three strings, one for each axis, or six strings, one for each +/- axis.
+        If three strings, plus ``'+'`` and minus ``'-'`` characters are added.
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+
+        Use three strings to set the labels. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> axes_assembly.labels = ['U', 'V', 'W']
+        >>> axes_assembly.labels
+        ('+U', '-U', '+V', '-V', '+W', '-W')
+
+        Alternatively, use six strings to set the labels explicitly.
+
+        >>> axes_assembly.labels = [
+        ...     'east',
+        ...     'west',
+        ...     'north',
+        ...     'south',
+        ...     'up',
+        ...     'down',
+        ... ]
+        >>> axes_assembly.labels
+        ('east', 'west', 'north', 'south', 'up', 'down')
+        """
+        return *self.x_label, *self.y_label, *self.z_label
+
+    @labels.setter
+    def labels(
+        self, labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+    ):  # numpydoc ignore=GL08
+        valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
+        if len(valid_labels) == 3:
+            self.x_label = valid_labels[0]
+            self.y_label = valid_labels[1]
+            self.z_label = valid_labels[2]
+        else:
+            self.x_label = valid_labels[0:2]
+            self.y_label = valid_labels[2:4]
+            self.z_label = valid_labels[4:6]
+
+    def _get_axis_label(self, axis: _AxisEnum) -> tuple[str, str]:
+        label_plus = self._label_actors_plus[axis].input
+        label_minus = self._label_actors_minus[axis].input
+        return label_plus, label_minus
+
+    def _set_axis_label(self, axis: _AxisEnum, label: str | list[str] | tuple[str, str]):
+        if isinstance(label, str):
+            label_plus, label_minus = '+' + label, '-' + label
+        else:
+            label_plus, label_minus = _validate_label_sequence(label, n_labels=2, name='label')
+        self._label_actors_plus[axis].input = label_plus
+        self._label_actors_minus[axis].input = label_minus
+
+    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
+        color_plus = self._face_actors_plus[axis].prop.color
+        color_minus = self._face_actors_minus[axis].prop.color
+        return color_plus, color_minus
+
+    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
+        color_plus, color_minus = _validate_color_sequence(color, 2)
+        self._face_actors_plus[axis].prop.color = color_plus
+        self._face_actors_plus[axis].prop.edge_color = color_plus
+        self._face_actors_minus[axis].prop.color = color_minus
+        self._face_actors_minus[axis].prop.edge_color = color_minus
+
+    @property
+    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the x-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.x)
+
+    @x_color.setter
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.x, color)
+
+    @property
+    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the y-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.y)
+
+    @y_color.setter
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.y, color)
+
+    @property
+    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the z-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.z)
+
+    @z_color.setter
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.z, color)
+
+    @property
+    def opacity(self) -> tuple[float, float, float, float, float, float]:  # numpydoc ignore=RT01
+        """Opacity of the planes."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float):  # numpydoc ignore=GL08
+        valid_opacity = _validation.validate_array(
+            opacity, broadcast_to=(6,), dtype_out=float, to_tuple=True
+        )
+        self._opacity = valid_opacity
+        for actor, opacity in zip(self._face_actors, valid_opacity):
+            actor.prop.opacity = opacity
+
+    @property
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the text labels."""
+        return self._label_color
+
+    @label_color.setter
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        for label in self._label_actor_iterator:
+            label.prop.color = valid_color
+
+    @property
+    def label_size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text labels.
+
+        Must be a positive integer.
+        """
+        return self._label_size
+
+    @label_size.setter
+    def label_size(self, size: int):  # numpydoc ignore=GL08
+        self._label_size = size
+        for label in self._label_actor_iterator:
+            label.size = size
+
+    @property
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the text label along each axis.
+
+        By default, the labels are positioned at the ends of the shafts.
+
+        Values must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssembly()
+        >>> axes_assembly.label_position
+        (0.8, 0.8, 0.8)
+        >>> axes_assembly.label_position = 0.3
+        >>> axes_assembly.label_position
+        (0.3, 0.3, 0.3)
+        >>> axes_assembly.label_position = (0.1, 0.4, 0.2)
+        >>> axes_assembly.label_position
+        (0.1, 0.4, 0.2)
+
+        """
+        position = self._label_position
+        return self._shaft_and_tip_geometry_source.shaft_length if position is None else position
+
+    @label_position.setter
+    def label_position(self, position: float | VectorLike[float] | None):  # numpydoc ignore=GL08
+        self._label_position = (
+            None
+            if position is None
+            else _validation.validate_array3(
+                position,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                name='Label position',
+                dtype_out=float,
+                to_tuple=True,
+            )
+        )
+        self._update_label_positions()
+
+    @property
+    def x_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative x-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.x_label = 'Axis'
+        >>> axes_assembly.x_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.x_label = 'anterior', 'posterior'
+        >>> axes_assembly.x_label
+        ('anterior', 'posterior')
+        """
+        return self._get_axis_label(_AxisEnum.x)
+
+    @x_label.setter
+    def x_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.x, label)
+
+    @property
+    def y_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative y-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.y_label = 'Axis'
+        >>> axes_assembly.y_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.y_label = 'left', 'right'
+        >>> axes_assembly.y_label
+        ('left', 'right')
+        """
+        return self._get_axis_label(_AxisEnum.y)
+
+    @y_label.setter
+    def y_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.y, label)
+
+    @property
+    def z_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative z-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.z_label = 'Axis'
+        >>> axes_assembly.z_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.z_label = 'superior', 'inferior'
+        >>> axes_assembly.z_label
+        ('superior', 'inferior')
+        """
+        return self._get_axis_label(_AxisEnum.z)
+
+    @z_label.setter
+    def z_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.z, label)
+
+    def _update_label_positions(self):
+        faces = self._face_datasets
+        cube_center = faces.center
+        for face, label in zip(self._face_datasets, self._label_actors):
+            label.relative_position = face.center - cube_center
+        # label_position_plus = self.label_position
+        # label_position_minus = (-label_position_plus[0], -label_position_plus[1], -label_position_plus[2])
+        #
+        # labels_minus = self._label_actors_symmetric
+        # vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
+        # for label, position in zip(labels_minus, vector_position_minus):
+        #     label.relative_position = position
