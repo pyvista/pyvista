@@ -3858,9 +3858,6 @@ class CubeFacesSource(CubeSource):
         output = self._output
         for index, (name, points) in enumerate(zip(self.names, face_points)):
             output[index].points = points
-            # TODO: Add sign
-            # if sign == '-':
-            #     plane['Normals'] *= -1
             output.set_block_name(index, name)
 
     @property

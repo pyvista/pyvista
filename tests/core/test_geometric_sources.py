@@ -798,39 +798,3 @@ def test_cube_faces_source_points_faces(cube_faces_source, attr, value, face_id)
 
     assert default_points == modified_points
     assert default_faces == modified_faces
-
-
-# def test_cube_faces_source_names():
-#     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
-#     assert planes_source.names == ('a', 'b', 'c')
-#
-#     match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
-#     with pytest.raises(TypeError, match=re.escape(match)):
-#         planes_source.names = 'abc'
-
-
-# def test_orthogonal_planes_source_normal_sign():
-#     planes_source = pv.OrthogonalPlanesSource()
-#     output = planes_source.output
-#     assert planes_source.normal_sign == ('+', '+', '+')
-#     assert np.all(pv.merge(output)['Normals'] >= 0)
-#
-#     planes_source.normal_sign = '-'
-#     planes_source.update()
-#     assert planes_source.normal_sign == ('-', '-', '-')
-#     assert np.all(pv.merge(output)['Normals'] <= 0)
-#
-#     planes_source.normal_sign = ['+', '+', '+']
-#     assert planes_source.normal_sign == ('+', '+', '+')
-#
-#     match = "must be one of: \n\t['+', '-']"
-#     with pytest.raises(ValueError, match=re.escape(match)):
-#         planes_source.normal_sign = 'a'
-#
-#     match = "must be one of: \n\t['+', '-']"
-#     with pytest.raises(ValueError, match=re.escape(match)):
-#         planes_source.normal_sign = ['a', 'b', 'c']
-#
-#     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
-#     with pytest.raises(TypeError, match=re.escape(match)):
-#         planes_source.normal_sign = 0
