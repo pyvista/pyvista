@@ -3723,6 +3723,17 @@ class CubeFacesSource(CubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
+    shrink : float, optional
+        Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
+        If set, this is the factor by which to shrink each face. Values must be
+        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+
+    explode : float, optional
+        User :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
+        cube's center. If set, this is the factor by which to move each face away from
+        the center of the cube. ncreasing values will push the cells farther away. Set
+        this to a negative value to "implode" the cube.
+
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
 
@@ -3741,7 +3752,15 @@ class CubeFacesSource(CubeSource):
     >>> output.plot()
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_output', '_names', 'names']
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        '_output',
+        '_names',
+        'names',
+        '_shrink',
+        'shrink',
+        '_explode',
+        'explode',
+    ]
 
     def __init__(
         self,
@@ -3751,10 +3770,12 @@ class CubeFacesSource(CubeSource):
         y_length: float = 1.0,
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
+        shrink: float | None = None,
+        explode: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
         point_dtype='float32',
     ):
-        # Init output datasets
+        # Init CubeSource
         super().__init__(
             center=center,
             x_length=x_length,
@@ -3764,10 +3785,50 @@ class CubeFacesSource(CubeSource):
             point_dtype=point_dtype,
         )
 
+        # Init output
         points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
         faces = [4, 0, 1, 2, 3]
         self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
+
+        # Set properties
+        self.shrink = shrink
+        self.explode = explode
         self.names = names  # type: ignore[assignment]
+
+    @property
+    def shrink(self) -> float | None:  # numpydoc ignore=RT01
+        """Shrink the cube's faces.
+
+        If set, this is the factor by which to shrink each face. Values must be
+        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+
+        Internally, :meth:`~pyvista.DataSetFilters.shrink` is used.
+        """
+        return self._shrink
+
+    @shrink.setter
+    def shrink(self, factor: float | None):  # numpydoc ignore=GL08
+        self._shrink = (
+            factor if factor is None else _validation.validate_number(factor, name='shrink factor')
+        )
+
+    @property
+    def explode(self) -> float | None:  # numpydoc ignore=RT01
+        """Push each face away from the cube's center.
+
+        If set, this is the factor by which to move each face away from the center of
+        the cube. Increasing values will push the cells farther away. Set this to a
+        negative value to "implode" the cube.
+
+        Internally, :meth:`~pyvista.DataSetFilters.explode` is used.
+        """
+        return self._explode
+
+    @explode.setter
+    def explode(self, factor: float | None):  # numpydoc ignore=GL08
+        self._explode = (
+            factor if factor is None else _validation.validate_number(factor, name='explode factor')
+        )
 
     @property
     def names(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
@@ -3781,16 +3842,20 @@ class CubeFacesSource(CubeSource):
         _validation.check_length(names, exact_length=6, name='names')
         self._names = cast(Tuple[str, str, str, str, str, str], tuple(names))
 
-    def _get_cube_face_points(self):
-        cube = CubeSource.output.fget(self)
-        points = cube.points
-        # TODO: Add explode and shrink
-        return [points[face] for face in cube.regular_faces]
+    def _get_cube_face_points(self) -> list[NumpyArray[float]]:
+        cube = CubeSource.output.fget(self)  # type: ignore[attr-defined]
+        shrink, explode = self.shrink, self.explode
+        if shrink:
+            cube = cube.shrink(shrink)
+        if explode:
+            cube = cube.explode(explode).extract_geometry()
+        points, faces = cube.points, cube.regular_faces
+        return [points[face] for face in faces]
 
     def update(self):
         """Update the output of the source."""
+        # Get updated point geometry
         face_points = self._get_cube_face_points()
-        # Update the output
         output = self._output
         for index, (name, points) in enumerate(zip(self.names, face_points)):
             output[index].points = points

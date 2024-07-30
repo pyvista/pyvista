@@ -768,6 +768,38 @@ def test_cube_faces_source_update(cube_faces_source):
     assert all(output_after[i] is output_after[i] for i in range(6))
 
 
+def test_cube_faces_source_set_get_shrink():
+    source = pv.CubeFacesSource(shrink=0.5)
+    assert source.shrink == 0.5
+    source.shrink = 0.1
+    assert source.shrink == 0.1
+
+
+def test_cube_faces_source_set_get_explode():
+    source = pv.CubeFacesSource(explode=0.5)
+    assert source.explode == 0.5
+    source.explode = 0.1
+    assert source.explode == 0.1
+
+
+@pytest.mark.parametrize('face_id', list(range(6)))
+@pytest.mark.parametrize(('attr', 'value'), [('shrink', 1.0), ('explode', 0.0)])
+def test_cube_faces_source_points_faces(cube_faces_source, attr, value, face_id):
+    # Test that shrink and explode return the same points and faces
+    poly = cube_faces_source.output[face_id]
+    default_points = poly.points.tolist()
+    default_faces = poly.regular_faces.tolist()
+
+    setattr(cube_faces_source, attr, value)
+    cube_faces_source.update()
+
+    modified_points = poly.points.tolist()
+    modified_faces = poly.regular_faces.tolist()
+
+    assert default_points == modified_points
+    assert default_faces == modified_faces
+
+
 # def test_cube_faces_source_names():
 #     planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
 #     assert planes_source.names == ('a', 'b', 'c')
