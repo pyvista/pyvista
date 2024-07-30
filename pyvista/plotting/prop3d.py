@@ -16,7 +16,6 @@ from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
-    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
