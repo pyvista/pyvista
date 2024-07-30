@@ -362,6 +362,8 @@ class Renderers:
             self._active_index = index_row
             return
 
+        if index_column is None:
+            raise IndexError(f'Only one index is given for ({self.shape}).')
         if index_row < 0 or index_row >= self.shape[0]:
             raise IndexError(f'Row index is out of range ({self.shape[0]})')
         if index_column < 0 or index_column >= self.shape[1]:
