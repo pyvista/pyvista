@@ -157,11 +157,11 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
 
-    # def __new__(cls, *args, **kwargs):
-    #     # Check subclasses have implemented abstract methods
-    #     if hasattr(cls, '__abstractmethods__') and len(cls.__abstractmethods__) > 0:
-    #         raise TypeError(f'Class {cls.__name__} must implement abstract methods {tuple(cls.__abstractmethods__)}')
-    #     return super().__new__(cls, *args, **kwargs)
+    def __new__(cls, *args, **kwargs):
+        # Check subclasses have implemented abstract methods
+        if hasattr(cls, '__abstractmethods__') and len(cls.__abstractmethods__) > 0:
+            raise TypeError(f'Class {cls.__name__} must implement abstract methods {tuple(cls.__abstractmethods__)}')
+        return super().__new__(cls, *args, **kwargs)
 
     @property
     def parts(self):
