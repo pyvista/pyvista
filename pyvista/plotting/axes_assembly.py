@@ -167,7 +167,9 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         parts = self.parts
         new_matrix = pv.array_from_vtkmatrix(self._prop3d.GetMatrix())
         for part in parts:
-            if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(part.user_matrix, new_matrix):
+            if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
+                part.user_matrix, new_matrix
+            ):
                 part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
