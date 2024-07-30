@@ -3730,9 +3730,9 @@ class CubeFacesSource(CubeSource):
 
     explode : float, optional
         User :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
-        cube's center. If set, this is the factor by which to move each face away from
-        the center of the cube. ncreasing values will push the cells farther away. Set
-        this to a negative value to "implode" the cube.
+        cube's center. If set, this is the factor by which to move each face.
+        Increasing values will push the cells farther away. Set this to a negative
+        value to "implode" the cube.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
@@ -3816,9 +3816,8 @@ class CubeFacesSource(CubeSource):
     def explode(self) -> float | None:  # numpydoc ignore=RT01
         """Push each face away from the cube's center.
 
-        If set, this is the factor by which to move each face away from the center of
-        the cube. Increasing values will push the cells farther away. Set this to a
-        negative value to "implode" the cube.
+        If set, this is the factor by which to move each face. Increasing values will
+        push the cells farther away. Set this to a negative value to "implode" the cube.
 
         Internally, :meth:`~pyvista.DataSetFilters.explode` is used.
         """
