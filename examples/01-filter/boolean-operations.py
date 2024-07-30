@@ -160,3 +160,5 @@ sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
+# %%
+# .. tags:: filter

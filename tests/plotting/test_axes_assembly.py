@@ -373,7 +373,7 @@ def test_axes_assembly_symmetric_init_label(test_property):
     assert getattr(axes_assembly, test_property) == label
 
 
-def test_axes_actor_set_get_part_prop_all(axes_assembly):
+def test_axes_assembly_set_get_part_prop_all(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 1.0)
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
@@ -383,7 +383,7 @@ def test_axes_actor_set_get_part_prop_all(axes_assembly):
     assert val == (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
 
 
-def test_axes_actor_set_get_actor_prop_all_color(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
     axes_assembly.set_actor_prop('color', float_rgb)
     val = axes_assembly.get_actor_prop('color')
@@ -412,7 +412,7 @@ def test_axes_actor_set_get_actor_prop_all_color(axes_assembly):
     assert actual_rgb == expected_rgb
 
 
-def test_axes_actor_set_get_actor_prop_axis(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_axis(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.5, axis=0)
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.5, 0.0, 0.0, 0.5, 0.0, 0.0)
@@ -424,7 +424,7 @@ def test_axes_actor_set_get_actor_prop_axis(axes_assembly):
     assert val == (0.1, 0.0, 0.0, 0.2, 0.0, 0.0)
 
 
-def test_axes_actor_set_get_actor_prop_axis_color(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
     axes_assembly.set_actor_prop('color', float_rgb, axis=0)
     val = axes_assembly.get_actor_prop('color')
@@ -454,7 +454,7 @@ def test_axes_actor_set_get_actor_prop_axis_color(axes_assembly):
     assert actual_rgb == expected_rgb
 
 
-def test_axes_actor_set_get_actor_prop_axis_and_tip(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_axis_and_tip(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.7, axis=1, part=1)
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
@@ -464,7 +464,7 @@ def test_axes_actor_set_get_actor_prop_axis_and_tip(axes_assembly):
     assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
 
 
-def test_axes_actor_set_get_actor_prop_axis_and_tip_color(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_axis_and_tip_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
     axes_assembly.set_actor_prop('color', float_rgb, axis=1, part=1)
     val = axes_assembly.get_actor_prop('color')
@@ -485,7 +485,7 @@ def test_axes_actor_set_get_actor_prop_axis_and_tip_color(axes_assembly):
     assert actual_rgb == expected_rgb
 
 
-def test_axes_actor_set_get_actor_prop_axis_and_shaft(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_axis_and_shaft(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.1, axis=2, part=0)
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
@@ -495,7 +495,7 @@ def test_axes_actor_set_get_actor_prop_axis_and_shaft(axes_assembly):
     assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
 
 
-def test_axes_actor_set_get_actor_prop_shaft(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_shaft(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.3, part='shaft')
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.3, 0.3, 0.3, 0.0, 0.0, 0.0)
@@ -505,7 +505,7 @@ def test_axes_actor_set_get_actor_prop_shaft(axes_assembly):
     assert val == (0.1, 0.2, 0.4, 0.0, 0.0, 0.0)
 
 
-def test_axes_actor_set_get_actor_prop_shaft_color(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_shaft_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
     axes_assembly.set_actor_prop('color', float_rgb, part=0)
     val = axes_assembly.get_actor_prop('color')
@@ -526,7 +526,7 @@ def test_axes_actor_set_get_actor_prop_shaft_color(axes_assembly):
     assert actual_rgb == expected_rgb
 
 
-def test_axes_actor_set_get_actor_prop_tip(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_tip(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.3, part='tip')
     val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.3, 0.3, 0.3)
@@ -536,7 +536,7 @@ def test_axes_actor_set_get_actor_prop_tip(axes_assembly):
     assert val == (0.0, 0.0, 0.0, 0.1, 0.2, 0.4)
 
 
-def test_axes_actor_set_get_actor_prop_raises(axes_assembly):
+def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     match = "Part must be one of ['shaft', 'tip', 'all']."
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', 0.0, part=2)

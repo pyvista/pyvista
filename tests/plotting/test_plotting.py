@@ -2177,7 +2177,7 @@ def test_user_matrix_volume(uniform):
     volume = p.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         p.add_volume(uniform, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2192,7 +2192,7 @@ def test_user_matrix_mesh(sphere):
     actor = p.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         p.add_mesh(sphere, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):

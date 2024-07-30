@@ -177,3 +177,5 @@ p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())
 p.show()
+# %%
+# .. tags:: filter
