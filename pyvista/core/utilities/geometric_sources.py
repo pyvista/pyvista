@@ -3729,10 +3729,10 @@ class CubeFacesSource(CubeSource):
         between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
 
     explode : float, optional
-        User :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
+        Use :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
         cube's center. If set, this is the factor by which to move each face.
-        Increasing values will push the cells farther away. Set this to a negative
-        value to "implode" the cube.
+        Increasing values will push the cells farther away. Use a negative value to
+        "implode" the cube.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
@@ -3743,13 +3743,62 @@ class CubeFacesSource(CubeSource):
 
     Examples
     --------
-    Generate the default cube faces.
+    Generate the default faces of a cube.
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> planes_source = pv.CubeFacesSource()
-    >>> output = planes_source.output
+    >>> cube_faces_source = pv.CubeFacesSource()
+    >>> output = cube_faces_source.output
     >>> output.plot()
+
+    The output is similar to that of :class:`CubeSource` except it's a
+    :class:`~pyvista.MultiBlock`.
+
+    >>> output
+    MultiBlock (...)
+      N Blocks    6
+      X Bounds    -0.500, 0.500
+      Y Bounds    -0.500, 0.500
+      Z Bounds    -0.500, 0.500
+
+    >>> cube_source = pv.CubeSource()
+    >>> cube_source.output
+    PolyData (...)
+      N Cells:    6
+      N Points:   24
+      N Strips:   0
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
+      N Arrays:   2
+
+    Use :attr:`explode` to explode the faces.
+
+    >>> cube_faces_source.explode = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot()
+
+    Use :attr:`shrink` to also shrink the faces.
+
+    >>> cube_faces_source.shrink = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot()
+
+    Fit cube faces to a dataset and only plot four of them.
+
+    >>> mesh = examples.load_airplane()
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds)
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output['+X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['+Y'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-Y'], opacity=0.5)
+    >>> pl.show()
+
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
@@ -3760,15 +3809,17 @@ class CubeFacesSource(CubeSource):
         'shrink',
         '_explode',
         'explode',
+        '_bounds',
+        'bounds',
     ]
 
     class _FaceIndex(IntEnum):
-        X_POS = 1
         X_NEG = 0
-        Y_POS = 3
+        X_POS = 1
         Y_NEG = 2
-        Z_POS = 5
+        Y_POS = 3
         Z_NEG = 4
+        Z_POS = 5
 
     def __init__(
         self,
@@ -3824,8 +3875,8 @@ class CubeFacesSource(CubeSource):
     def explode(self) -> float | None:  # numpydoc ignore=RT01
         """Push each face away from the cube's center.
 
-        If set, this is the factor by which to move each face. Increasing values will
-        push the cells farther away. Set this to a negative value to "implode" the cube.
+        If set, this is the factor by which to move each face. Larger values will
+        push the faces farther away. Use a negative value to "implode" the cube.
 
         Internally, :meth:`~pyvista.DataSetFilters.explode` is used.
         """
@@ -3842,7 +3893,7 @@ class CubeFacesSource(CubeSource):
         """Return or set the names of the faces.
 
         Specify three strings, one for each '+/-' face pair, or six strings, one for
-        each face separately.
+        each individual face.
 
         If three strings, plus ``'+'`` and minus ``'-'`` characters are added to
         the names.
