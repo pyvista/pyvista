@@ -16,6 +16,7 @@ from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -65,7 +66,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: VectorLike[float]):  # numpydoc ignore=GL08
+    def scale(self, value: float | VectorLike[float]):  # numpydoc ignore=GL08
         self.SetScale(value)
 
     @property
@@ -262,7 +263,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetOrientation(value)
 
     @property
@@ -400,7 +401,6 @@ class Prop3D(_vtk.vtkProp3D):
         --------
         Create an actor and show its initial orientation.
 
-        >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(pv.Sphere())
@@ -409,9 +409,7 @@ class Prop3D(_vtk.vtkProp3D):
 
         Set the orientation using a 3x3 matrix.
 
-        >>> actor.rotation_from(
-        ...     np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-        ... )
+        >>> actor.rotation_from([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         >>> actor.orientation
         (0.0, -180.0, -89.99999999999999)
 
@@ -523,7 +521,7 @@ class _Prop3DMixin(ABC):
 
     @orientation.setter
     @wraps(Prop3D.orientation.fset)
-    def orientation(self, orientation: tuple[float, float, float]):  # numpydoc ignore=GL08
+    def orientation(self, orientation: VectorLike[float]):  # numpydoc ignore=GL08
         self._prop3d.orientation = orientation
         self._post_set_update()
 
@@ -535,7 +533,7 @@ class _Prop3DMixin(ABC):
 
     @origin.setter
     @wraps(Prop3D.origin.fset)
-    def origin(self, origin: tuple[float, float, float]):  # numpydoc ignore=GL08
+    def origin(self, origin: VectorLike[float]):  # numpydoc ignore=GL08
         self._prop3d.origin = origin
         self._post_set_update()
 
