@@ -45,3 +45,5 @@ plt.colorbar(label='Distance to Camera')
 plt.xlabel('X Pixel')
 plt.ylabel('Y Pixel')
 plt.show()
+# %%
+# .. tags:: plot

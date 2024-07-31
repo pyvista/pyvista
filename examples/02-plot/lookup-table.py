@@ -240,3 +240,5 @@ make_double_slider('scalar_range', 4)
 
 pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
 cpos = pl.show(return_cpos=True)
+# %%
+# .. tags:: plot

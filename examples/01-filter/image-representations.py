@@ -222,3 +222,5 @@ plot.add_points(
 )
 plot.view_xy()
 plot.show()
+# %%
+# .. tags:: filter
