@@ -16,7 +16,7 @@ from .axes import Axes
 from .axes_actor import AxesActor
 from .axes_assembly import AxesAssembly
 from .axes_assembly import AxesAssemblySymmetric
-from .axes_assembly import LabeledCubeAssembly
+from .axes_assembly import CubeAssembly
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox

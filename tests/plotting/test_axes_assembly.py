@@ -20,7 +20,7 @@ def axes_assembly_symmetric():
 
 @pytest.fixture()
 def cube_assembly():
-    return pv.LabeledCubeAssembly()
+    return pv.CubeAssembly()
 
 
 def test_axes_assembly_repr(axes_assembly):

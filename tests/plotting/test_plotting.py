@@ -4037,7 +4037,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
-        (pv.LabeledCubeAssembly, dict(label_size=25)),
+        (pv.CubeAssembly, dict(label_size=25)),
     ],
     ids=['Axes', 'AxesSymmetric', 'Cube'],
 )
@@ -4053,7 +4053,7 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
 
 @pytest.mark.parametrize(
     'Assembly',
-    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.LabeledCubeAssembly],
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.CubeAssembly],
     ids=['Axes', 'AxesSymmetric', 'Cube'],
 )
 def test_xyz_assembly_show_labels_false(Assembly):

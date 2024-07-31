@@ -1296,7 +1296,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             label.relative_position = position
 
 
-class LabeledCubeAssembly(_XYZAssembly):
+class CubeAssembly(_XYZAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
     This class is similar to :class:`~pyvista.AxesAssembly` but the axes are
