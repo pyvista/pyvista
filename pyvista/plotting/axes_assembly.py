@@ -1418,18 +1418,18 @@ class CubeAssembly(_XYZAssembly):
 
     Shrink the faces so they appear as a single point and render them as spheres.
 
-    >>> cube_faces_source.shrink = 1e-8
-    >>> cube_faces_source.update()
-
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh, color='tomato')
-    >>> _ = pl.add_mesh(
-    ...     output,
-    ...     style='points',
-    ...     render_points_as_spheres=True,
-    ...     point_size=20,
-    ... )
-    >>> pl.show()
+    # >>> cube_faces_source.shrink = 1e-8
+    # >>> cube_faces_source.update()
+    #
+    # >>> pl = pv.Plotter()
+    # >>> _ = pl.add_mesh(mesh, color='tomato')
+    # >>> _ = pl.add_mesh(
+    # ...     output,
+    # ...     style='points',
+    # ...     render_points_as_spheres=True,
+    # ...     point_size=20,
+    # ... )
+    # >>> pl.show()
 
     """
 
