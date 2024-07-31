@@ -3745,7 +3745,6 @@ class CubeFacesSource(CubeSource):
     --------
     Generate the default faces of a cube.
 
-    >>> import numpy as np
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> cube_faces_source = pv.CubeFacesSource()
