@@ -18,13 +18,16 @@ import pyvista as pv
 from pyvista import BoundsLike
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
+from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
+from pyvista.plotting.prop3d import Prop3D
 from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
+from pyvista.plotting.text import TextProperty
 
 if TYPE_CHECKING:  # pragma: no cover
     import sys
@@ -60,7 +63,7 @@ class _AxesGeometryKwargs(TypedDict):
     symmetric_bounds: bool
 
 
-class _CubeFacesSource(TypedDict):
+class _CubeFacesKwargs(TypedDict):
     center: VectorLike[float]
     x_length: float
     y_length: float
@@ -70,6 +73,12 @@ class _CubeFacesSource(TypedDict):
     explode: float | None
     names: Sequence[str]
     point_dtype: str
+
+
+class _OrthogonalPlanesKwargs(TypedDict):
+    bounds: VectorLike[float]
+    resolution: int | VectorLike[int]
+    normal_sign: Literal['+', '-'] | Sequence[str]
 
 
 class _XYZTuple(NamedTuple):
@@ -175,16 +184,14 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
         return itertools.chain.from_iterable(self._assembly_label_actors)
 
     def _post_set_update(self):
-        # Update prop3D attributes for shaft, tip, and label actors
+        # Update prop3D attributes for all assembly parts
         parts = self.parts
-        for name in ['position', 'orientation', 'scale', 'origin', 'user_matrix']:
-            # Only update values if modified
-            value = getattr(self._prop3d, name)
-            [
-                setattr(part, name, value)
-                for part in parts
-                if not np.array_equal(getattr(part, name), value)
-            ]
+        new_matrix = pv.array_from_vtkmatrix(self._prop3d.GetMatrix())
+        for part in parts:
+            if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
+                part.user_matrix, new_matrix
+            ):
+                part.user_matrix = new_matrix
 
     def _get_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         return self.GetBounds()
@@ -261,14 +268,16 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
         """Position of the text labels."""
 
     @property
-    @abstractmethod
-    def label_color(self):  # numpydoc ignore=RT01
+    def label_color(self) -> Color:  # numpydoc ignore=RT01
         """Color of the text labels."""
+        return self._label_color
 
     @label_color.setter
-    @abstractmethod
-    def label_color(self, color):  # numpydoc ignore=GL08
-        """Color of the text labels."""
+    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        valid_color = Color(color)
+        self._label_color = valid_color
+        for label in self._label_actor_iterator:
+            label.prop.color = valid_color
 
     @property
     @abstractmethod
@@ -671,18 +680,6 @@ class AxesAssembly(_XYZAssembly):
             )
         )
         self._update_label_positions()
-
-    @property
-    def label_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the text labels."""
-        return self._label_color
-
-    @label_color.setter
-    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        valid_color = Color(color)
-        self._label_color = valid_color
-        for label in self._label_actor_iterator:
-            label.prop.color = valid_color
 
     @property
     def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
@@ -1453,7 +1450,7 @@ class CubeAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
-        **kwargs: Unpack[_CubeFacesSource],
+        **kwargs: Unpack[_CubeFacesKwargs],
     ):
         # Init geometry
         kwargs.setdefault('explode', 0.01)
@@ -1792,3 +1789,738 @@ class CubeAssembly(_XYZAssembly):
         # vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
         # for label, position in zip(labels_minus, vector_position_minus):
         #     label.relative_position = position
+
+
+class PlanesAssembly(_XYZAssembly):
+    """Assembly of orthogonal planes.
+
+    Assembly of three orthogonal plane meshes with labels.
+
+    The labels can be 2D or 3D, and will follow the camera such that they have the
+    correct orientation and remain parallel to the edges of the planes.
+
+    The positioning of the labels may be customized using the :attr:`label_edge`,
+    :attr:`label_position`, and :attr:`label_offset` attributes.
+
+    .. warning::
+
+        The :attr:`camera` must be set before rendering the assembly. Otherwise,
+        attempting to render it will cause python to crash.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    x_label : str, default: 'YZ'
+        Text label for the yz-plane. Alternatively, set the label with :attr:`labels`.
+
+    y_label : str, default: 'ZX'
+        Text label for the zx-plane. Alternatively, set the label with :attr:`labels`.
+
+    z_label : str, default: 'XY'
+        Text label for the xy-plane. Alternatively, set the label with :attr:`labels`.
+
+    labels : Sequence[str], optional,
+        Text labels for the planes. This is an alternative parameter to using
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
+
+    label_color : ColorLike, default: 'black'
+        Color of the text labels.
+
+    show_labels : bool, default: True
+        Show or hide the text labels.
+
+    label_position : float | VectorLike[float], default: 0.5
+        Normalized relative position of the text labels along each plane's respective
+        :attr:`label_edge`. The positions are normalized to have a range of
+        ``[-1.0, 1.0]`` such that ``0.0`` is at the center of the edge and ``-1.0`` and
+        ``1.0`` are at the corners.
+
+        .. note::
+
+            The label text is centered horizontally at the specified positions.
+
+    label_edge : str, default: 'right'
+        Edge on which to position each plane's label. Can be ``'top'``, ``'bottom'``,
+        ``'right'``, or ``'left'``. Use a single value to set the edge for all labels
+        or set each edge independently.
+
+    label_offset : float | VectorLike[float], optional
+        Vertical offset of the text labels. The offset is proportional to
+        the :attr:`length` of the assembly. Positive values move the labels away
+        from the center; negative values move them towards it.
+
+    label_size : int, default: 50
+        Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
+        font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
+        proportional to the :attr:`length` of the assembly.
+
+    label_mode : '2D' | '3D', default: '2D'
+        Mode to use for text labels. In 2D mode, the label actors are always visible
+        and have a constant size regardless of window size. In 3D mode, the label actors
+        may be occluded by other geometry and will scale with changes to the window
+        size. The two modes also have minor differences in appearance and behavior in
+        terms of how they follow the camera.
+
+    x_color : ColorLike, optional
+        Color of the xy-plane.
+
+    y_color : ColorLike, optional
+        Color of the yz-plane.
+
+    z_color : ColorLike, optional
+        Color of the zx-plane.
+
+    opacity : float, default: 0.3
+        Opacity of the planes.
+
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the planes in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the assembly which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the assembly. This is the point about which all rotations take place.
+        The rotations are defined by the :attr:`orientation`.
+
+    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the assembly.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the assembly. Defaults to the identity
+        matrix. The user matrix is the last transformation applied to the actor.
+
+    **kwargs
+        Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
+
+    Examples
+    --------
+    Fit planes to a model of a human.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> human = examples.download_human()
+    >>> labels = 'Sagittal', 'Coronal', 'Transverse'
+    >>> planes = pv.PlanesAssembly(
+    ...     bounds=human.bounds, labels=labels, label_size=25
+    ... )
+
+    Plot the planes and the model.
+
+    >>> pl = pv.Plotter()
+    >>> human_actor = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
+    >>> pl.show()
+
+    Apply a transformation to the planes and the model.
+
+    >>> transform = np.array(
+    ...     [
+    ...         [0.70645893, 0.69636424, 0.12646197, 1.0],
+    ...         [-0.62246712, 0.69636424, -0.35722756, 2.0],
+    ...         [-0.33682409, 0.17364818, 0.92541658, 3.0],
+    ...         [0.0, 0.0, 0.0, 1.0],
+    ...     ]
+    ... )
+    >>> planes.user_matrix = transform
+    >>> human_actor.user_matrix = transform
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(human_actor)
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
+    >>> pl.show()
+
+    Create a new assembly and customize the colors and opacity.
+
+    >>> color = pv.global_theme.color
+    >>> planes = pv.PlanesAssembly(
+    ...     bounds=human.bounds,
+    ...     x_color=color,
+    ...     y_color=color,
+    ...     z_color=color,
+    ...     opacity=1.0,
+    ... )
+
+    Since the planes are opaque, the 3D labels may be occluded. Use 2D labels instead
+    so the labels are always visible.
+
+    >>> planes.label_mode = '2D'
+
+    Offset the labels to position them inside the bounds of the planes.
+
+    >>> planes.label_offset = -0.05
+
+    Move the labels for the two larger planes closer to the corners.
+
+    >>> planes.label_position = (0.8, 0.8, 0.5)
+
+    Visualize the result.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_actor(planes)
+    >>> planes.camera = pl.camera
+    >>> pl.show()
+    """
+
+    DEFAULT_LABELS = _XYZTuple('YZ', 'ZX', 'XY')
+
+    def __init__(
+        self,
+        *,
+        x_label: str | None = None,
+        y_label: str | None = None,
+        z_label: str | None = None,
+        labels: Sequence[str] | None = None,
+        label_color: ColorLike = 'black',
+        show_labels: bool = True,
+        label_position: float | VectorLike[float] = 0.5,
+        label_edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str] = 'right',
+        label_offset: float = 0.05,
+        label_size: int = 50,
+        label_mode: Literal['2D', '3D'] = '3D',
+        x_color: ColorLike | None = None,
+        y_color: ColorLike | None = None,
+        z_color: ColorLike | None = None,
+        opacity: float | VectorLike[float] = 0.3,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
+        **kwargs: Unpack[_OrthogonalPlanesKwargs],
+    ):
+        # Init plane actors
+        self._plane_actors = (Actor(), Actor(), Actor())
+        # Init planes from source
+        self._geometry_source = OrthogonalPlanesSource(**kwargs)
+        self._planes = self._geometry_source.output
+        self._plane_sources = self._geometry_source._plane_sources
+
+        for actor, dataset in zip(self._plane_actors, self.planes):
+            actor.mapper = pv.DataSetMapper(dataset=dataset)
+
+        # Init label actors
+        self._axis_actors = (_AxisActor(), _AxisActor(), _AxisActor())
+
+        # Tempt init values for call to super class, will validate inputs later
+        self._label_offset = 0.05
+        self._label_edge = ('right', 'right', 'right')
+        self._label_position = 0.5, 0.5, 0.5
+
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=self._plane_actors,
+            xyz_label_actors=self._axis_actors,
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            labels=labels,
+            label_color=label_color,
+            show_labels=show_labels,
+            label_position=label_position,
+            label_size=label_size,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+        )
+
+        self.opacity = opacity  # type: ignore[assignment]
+        self.label_mode = label_mode
+        self.label_offset = label_offset
+        self.label_edge = label_edge  # type: ignore[assignment]
+
+        # Set default properties
+        for actor in self._plane_actors:
+            prop = actor.prop
+            prop.show_edges = True
+            prop.line_width = 3
+
+        # Set default text properties
+        # TODO: implement set_text_prop() and use that instead
+        for label in self._label_actor_iterator:
+            prop = label.prop
+            prop.justification_vertical = 'center'
+            prop.justification_horizontal = 'center'
+
+    def __repr__(self):
+        """Representation of the planes assembly."""
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
+        bnds = self.bounds
+
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  Resolution:                 {self._geometry_source.resolution}",
+            f"  Normal sign:                {self._geometry_source.normal_sign}",
+            f"  X label:                    '{self.x_label}'",
+            f"  Y label:                    '{self.y_label}'",
+            f"  Z label:                    '{self.z_label}'",
+            f"  Label color:                {self.label_color}",
+            f"  Show labels:                {self.show_labels}",
+            f"  Label position:             {self.label_position}",
+            f"  Label edge:                 {self.label_edge}",
+            f"  Label offset:               {self.label_offset}",
+            f"  Label mode:                 '{self.label_mode}'",
+            f"  X Color:                    {self.x_color}",
+            f"  Y Color:                    {self.y_color}",
+            f"  Z Color:                    {self.z_color}",
+            f"  Position:                   {self.position}",
+            f"  Orientation:                {self.orientation}",
+            f"  Origin:                     {self.origin}",
+            f"  Scale:                      {self.scale}",
+            f"  User matrix:                {mat_info}",
+            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
+            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
+            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+        ]
+        return '\n'.join(attr)
+
+    @property
+    def labels(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the planes.
+
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.labels = ['Sagittal', 'Coronal', 'Transverse']
+        >>> planes.labels
+        ('Sagittal', 'Coronal', 'Transverse')
+        """
+        return self.x_label, self.y_label, self.z_label
+
+    @labels.setter
+    def labels(self, labels: list[str] | tuple[str, str, str]):  # numpydoc ignore=GL08
+        labels = _validate_label_sequence(labels, n_labels=3, name='labels')
+        self.x_label = labels[0]
+        self.y_label = labels[1]
+        self.z_label = labels[2]
+
+    @property
+    def x_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the yz-plane.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.x_label = 'This plane'
+        >>> planes.x_label
+        'This plane'
+        """
+        return self._axis_actors[0].GetTitle()
+
+    @x_label.setter
+    def x_label(self, label: str):  # numpydoc ignore=GL08
+        self._axis_actors[0].SetTitle(label)
+        self.planes.set_block_name(0, label)
+
+    @property
+    def y_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the zx-plane.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.y_label = 'This plane'
+        >>> planes.y_label
+        'This plane'
+        """
+        return self._axis_actors[1].GetTitle()
+
+    @y_label.setter
+    def y_label(self, label: str):  # numpydoc ignore=GL08
+        self._axis_actors[1].SetTitle(label)
+        self.planes.set_block_name(1, label)
+
+    @property
+    def z_label(self) -> str:  # numpydoc ignore=RT01
+        """Text label for the xy-plane.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly()
+        >>> planes.z_label = 'This plane'
+        >>> planes.z_label
+        'This plane'
+        """
+        return self._axis_actors[2].GetTitle()
+
+    @z_label.setter
+    def z_label(self, label: str):  # numpydoc ignore=GL08
+        self._axis_actors[2].SetTitle(label)
+        self.planes.set_block_name(2, label)
+
+    @property
+    def label_size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text labels.
+
+        Must be a positive integer.
+        """
+        return self._label_size
+
+    @label_size.setter
+    def label_size(self, size: int):  # numpydoc ignore=GL08
+        valid_size = _validation.validate_number(
+            size,
+            must_be_in_range=[0, np.inf],
+            must_be_integer=True,
+            dtype_out=int,
+            name='label size',
+        )
+        self._label_size = valid_size
+        # 2D labels use font size (int) but 3D labels use a scaling factor (float)
+        # For 3D labels, we re-scale the text proportional to the planes assembly
+        # Values on the order of 0.01-0.05 seem to work best. Use a normalization
+        # factor so that input values are on the order of 10-50 and roughly match 2D sizes
+        NORM_FACTOR = 1000
+        scale = self.planes.length * float(valid_size) / NORM_FACTOR
+        for axis in self._axis_actors:
+            axis.GetTitleActor().SetScale(scale)  # 3D labels
+            axis.GetTitleTextProperty().SetFontSize(size)  # 2D labels
+
+    @property
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Normalized relative position of the text labels along the edge of each plane.
+
+        Labels are positioned relative to each plane's respective :attr:`label_edge`.
+        The positions are normalized to have a range of ``[-1.0, 1.0]`` such that ``0.0``
+        is at the center of the edge and ``-1.0`` and ``1.0`` are at the corners.
+
+        .. note::
+
+            The label text is centered horizontally at the specified positions.
+
+        Examples
+        --------
+        Position the labels at the center (along the edges) and plot the assembly.
+
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly(label_position=0)
+        >>> planes.label_position
+        (0.0, 0.0, 0.0)
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+
+        Position the labels at the corners.
+
+        >>> planes.label_position = 1.0
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+
+        Vary the position of the labels independently for each plane. The values may be
+        negative and/or exceed a value of ``1.0``.
+
+        >>> planes.label_position = (-1.3, -1.0, -0.5)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+        """
+        return self._label_position
+
+    @label_position.setter
+    def label_position(self, position: int | VectorLike[int] | None):  # numpydoc ignore=GL08
+        self._label_position = _validation.validate_array3(
+            position,
+            broadcast=True,
+            name='Label position',
+            dtype_out=float,
+            to_tuple=True,
+        )
+        self._update_label_positions()
+
+    @property
+    def label_edge(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Edge on which to position each plane's label.
+
+        Edge can be ``'top'``,``'bottom'``,``'right'``, or ``'left'``, and can be
+        set independently for each plane or to the same edge for all planes.
+
+        The edge is relative to each plane's local ``i`` and ``j`` coordinates.
+
+        Examples
+        --------
+        Position the labels at the top edge and plot.
+
+        >>> import pyvista as pv
+        >>> planes = pv.PlanesAssembly(label_edge='top')
+        >>> planes.label_edge
+        ('top', 'top', 'top')
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+
+        Position the labels at the bottom.
+
+        >>> planes.label_edge = 'bottom'
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+
+        Vary the edge of the labels independently for each plane.
+
+        >>> planes.label_edge = ('top', 'right', 'left')
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_actor(planes)
+        >>> planes.camera = pl.camera
+        >>> pl.show()
+        """
+        return self._label_edge
+
+    @label_edge.setter
+    def label_edge(
+        self, edge: Literal['top', 'bottom', 'right', 'left'] | Sequence[str]
+    ):  # numpydoc ignore=GL08
+        valid_edge = (
+            [edge] * 3
+            if isinstance(edge, str)
+            else _validate_label_sequence(edge, n_labels=3, name='label edge')
+        )
+        for edge_ in valid_edge:
+            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=edge_)
+        self._label_edge = tuple(valid_edge)
+        self._update_label_positions()
+
+    @property
+    def label_offset(self) -> float:  # numpydoc ignore=RT01
+        """Vertical offset of the text labels.
+
+        The offset is proportional to the :attr:`length` of the assembly. Positive
+        values move the labels away from the center; negative values move them
+        towards it.
+        """
+        return self._label_offset
+
+    @label_offset.setter
+    def label_offset(self, offset: int):  # numpydoc ignore=GL08
+        self._label_offset = _validation.validate_number(offset, dtype_out=float)
+        self._update_label_positions()
+
+    @property
+    def label_mode(self) -> Literal['2D', '3D']:  # numpydoc ignore=RT01
+        """Mode to use for text labels.
+
+        Mode must be either ``'2D'`` or ``'3D'``. In 2D mode, the label actors are
+        always visible and have a constant size regardless of window size. In 3D mode,
+        the label actors may be occluded by other geometry and will scale with changes
+        to the window size. The two modes also have minor differences in appearance as
+        well as behavior in terms of how they follow the camera.
+        """
+        return self._label_mode
+
+    @label_mode.setter
+    def label_mode(self, mode: Literal['2D', '3D']):  # numpydoc ignore=GL08
+        _validation.check_contains(item=mode, container=['2D', '3D'])
+        self._label_mode = mode
+        use_2D = mode == '2D'
+        for axis in self._axis_actors:
+            axis.SetUse2DMode(use_2D)
+
+    @property
+    def x_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the yz-plane."""
+        return self._plane_actors[0].prop.color
+
+    @x_color.setter
+    def x_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        self._plane_actors[0].prop.color = color
+
+    @property
+    def y_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the zx-plane."""
+        return self._plane_actors[1].prop.color
+
+    @y_color.setter
+    def y_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        self._plane_actors[1].prop.color = color
+
+    @property
+    def z_color(self) -> Color:  # numpydoc ignore=RT01
+        """Color of the xy-plane."""
+        return self._plane_actors[2].prop.color
+
+    @z_color.setter
+    def z_color(self, color: ColorLike):  # numpydoc ignore=GL08
+        self._plane_actors[2].prop.color = color
+
+    @property
+    def opacity(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Opacity of the planes."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float):  # numpydoc ignore=GL08
+        valid_opacity = _validation.validate_array3(
+            opacity, broadcast=True, dtype_out=float, to_tuple=True
+        )
+        self._opacity = valid_opacity
+        for actor, opacity in zip(self._plane_actors, valid_opacity):
+            actor.prop.opacity = opacity
+
+    @property
+    def camera(self):  # numpydoc ignore=RT01
+        """Camera to use for displaying the labels."""
+        if not hasattr(self, '_camera'):
+            raise ValueError('Camera has not been set.')
+        return self._camera
+
+    @camera.setter
+    def camera(self, camera):  # numpydoc ignore=GL08
+        self._camera = camera
+        for axis in self._axis_actors:
+            axis.SetCamera(camera)
+
+    @property
+    def planes(self):
+        """Get the orthogonal plane datasets of the assembly.
+
+        The planes are :class:`pyvista.PolyData` meshes stored as a
+        :class:`pyvista.MultiBlock`. The names of the blocks match the names of the
+        assembly's :attr:`labels`.
+
+        The planes are initially generated with :class:`pyvista.OrthogonalPlanesSource`.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
+        return self._planes
+
+    def _update_label_positions(self):
+        axis_actors = self._axis_actors
+        plane_sources = self._plane_sources
+        transformation_matrix = self._transformation_matrix
+
+        def transform_point(point):
+            return (transformation_matrix @ (*point, 1))[:3]
+
+        def set_axis_location(plane_id, edge: str, position: float):
+            this_plane_source = plane_sources[plane_id]
+            this_axis_actor = axis_actors[plane_id]
+
+            # Get vectors which define the plane
+            origin, point1, point2 = (
+                np.array(this_plane_source.GetOrigin()),
+                np.array(this_plane_source.GetPoint1()),
+                np.array(this_plane_source.GetPoint2()),
+            )
+
+            vector1 = point1 - origin
+            vector2 = point2 - origin
+
+            # Define corners
+            corner_bottom_left = origin
+            corner_bottom_right = origin + vector1
+            corner_top_left = origin + vector2
+            corner_top_right = corner_bottom_right + vector2
+
+            # Define axis points in counter-clockwise order
+            if edge == 'top':
+                axis_point1, axis_point2 = corner_top_right, corner_top_left
+            elif edge == 'left':
+                axis_point1, axis_point2 = corner_top_left, corner_bottom_left
+            elif edge == 'bottom':
+                axis_point1, axis_point2 = corner_bottom_left, corner_bottom_right
+            else:  # 'right'
+                axis_point1, axis_point2 = corner_bottom_right, corner_top_right
+
+            # Move axis to position along the edge
+            axis_vector = axis_point1 - axis_point2
+            # Define position relative to center of edge
+            position_vector = np.abs(axis_vector) * position * 0.5
+            axis_point1 += position_vector
+            axis_point2 += position_vector
+
+            # Add offset
+            axis_dir = axis_vector / np.linalg.norm(axis_vector)
+            offset_dir = np.cross(axis_dir, this_plane_source.GetNormal())
+            offset_dir = -1 * offset_dir / np.linalg.norm(offset_dir)
+            offset_mag = self.planes.length * self.label_offset
+            offset = offset_mag * offset_dir
+            axis_point1 += offset
+            axis_point2 += offset
+
+            # Set axis points
+            this_axis_actor.SetPoint1(transform_point(axis_point1))
+            this_axis_actor.SetPoint2(transform_point(axis_point2))
+
+        edge = self.label_edge
+        position = self.label_position
+        set_axis_location(0, edge[0], position[0])
+        set_axis_location(1, edge[1], position[1])
+        set_axis_location(2, edge[2], position[2])
+
+    def _post_set_update(self):
+        _XYZAssembly._post_set_update(self)
+        # Need to manually update axis actors
+        self._update_label_positions()
+
+
+class _AxisActor(_vtk.vtkAxisActor):
+    def __init__(self):
+        super().__init__()
+        # Only show the title
+        self.TitleVisibilityOn()
+        self.MinorTicksVisibleOff()
+        self.TickVisibilityOff()
+        self.DrawGridlinesOff()
+        self.AxisVisibilityOff()  # Turn this on for debugging
+
+        # Set empty tick labels
+        labels = _vtk.vtkStringArray()
+        labels.SetNumberOfTuples(0)
+        # labels.SetValue(0, "")
+        self.SetLabels(labels)
+
+        # Ignore the axis bounds when rendering. Otherwise, the bounds must be
+        # set with SetBounds() every time the axis is updated
+        self.SetUseBounds(False)
+
+        # Format title positioning
+        self.SetTitleOffset(0)
+        self.SetLabelOffset(0)
+
+        # For 2D mode only
+        self.SetVerticalOffsetXTitle2D(0)
+        self.SetHorizontalOffsetYTitle2D(0)
+        text_prop = TextProperty()
+        text_prop.justification_vertical = 'center'
+        self.SetTitleTextProperty(text_prop)
+        self.GetTitleActor()
+
+        # For 3D mode only
+        self.GetProperty().SetLighting(False)
+
+    @property
+    def prop(self) -> TextProperty:
+        return self.GetTitleTextProperty()

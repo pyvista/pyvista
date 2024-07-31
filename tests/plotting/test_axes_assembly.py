@@ -23,6 +23,11 @@ def cube_assembly():
     return pv.CubeAssembly()
 
 
+@pytest.fixture()
+def planes_assembly():
+    return pv.PlanesAssembly()
+
+
 def test_axes_assembly_repr(axes_assembly):
     repr_ = repr(axes_assembly)
     actual_lines = repr_.splitlines()[1:]
@@ -555,3 +560,156 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
 
 
 def test_labeled_cube_assembly(cube_assembly): ...
+
+
+def test_planes_assembly_repr(planes_assembly):
+    repr_ = repr(planes_assembly)
+    actual_lines = repr_.splitlines()[1:]
+    expected_lines = [
+        "  Resolution:                 (2, 2, 2)",
+        "  Normal sign:                ('+', '+', '+')",
+        "  X label:                    'YZ'",
+        "  Y label:                    'ZX'",
+        "  Z label:                    'XY'",
+        "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
+        "  Show labels:                True",
+        "  Label position:             (0.5, 0.5, 0.5)",
+        "  Label edge:                 ('right', 'right', 'right')",
+        "  Label offset:               0.05",
+        "  Label mode:                 '3D'",
+        "  X Color:                    Color(name='tomato', hex='#ff6347ff', opacity=255)",
+        "  Y Color:                    Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
+        "  Z Color:                    Color(name='mediumblue', hex='#0000cdff', opacity=255)",
+        "  Position:                   (0.0, 0.0, 0.0)",
+        "  Orientation:                (0.0, -0.0, 0.0)",
+        "  Origin:                     (0.0, 0.0, 0.0)",
+        "  Scale:                      (1.0, 1.0, 1.0)",
+        "  User matrix:                Identity",
+        "  X Bounds                    -1.000E+00, 1.000E+00",
+        "  Y Bounds                    -1.000E+00, 1.000E+00",
+        "  Z Bounds                    -1.000E+00, 1.000E+00",
+    ]
+    assert len(actual_lines) == len(expected_lines)
+    assert actual_lines == expected_lines
+
+    planes_assembly.user_matrix = np.eye(4) * 2
+    repr_ = repr(planes_assembly)
+    assert "User matrix:                Set" in repr_
+
+
+def test_planes_assembly_x_color(planes_assembly):
+    planes_assembly.x_color = 'black'
+    assert planes_assembly.x_color.name == 'black'
+
+
+def test_planes_assembly_y_color(planes_assembly):
+    planes_assembly.y_color = 'black'
+    assert planes_assembly.y_color.name == 'black'
+
+
+def test_planes_assembly_z_color(planes_assembly):
+    planes_assembly.z_color = 'black'
+    assert planes_assembly.z_color.name == 'black'
+
+
+def test_planes_assembly_labels(planes_assembly):
+    assert planes_assembly.labels == ('YZ', 'ZX', 'XY')
+    labels = ('i', 'j', 'k')
+    planes_assembly.labels = labels
+    assert planes_assembly.labels == labels
+
+
+def test_planes_assembly_labels_init():
+    labels = ('i', 'j', 'k')
+    planes_assembly = pv.PlanesAssembly(labels=labels)
+    assert planes_assembly.labels == labels
+
+
+def test_planes_assembly_x_label(planes_assembly):
+    assert planes_assembly.x_label == 'YZ'
+    x_label = 'label'
+    planes_assembly.x_label = x_label
+    assert planes_assembly.x_label == x_label
+    assert planes_assembly._planes.get_block_name(0) == x_label
+
+
+def test_planes_assembly_x_label_init():
+    x_label = 'label'
+    planes_assembly = pv.PlanesAssembly(x_label=x_label)
+    assert planes_assembly.x_label == x_label
+
+
+def test_planes_assembly_y_label(planes_assembly):
+    assert planes_assembly.y_label == 'ZX'
+    y_label = 'label'
+    planes_assembly.y_label = y_label
+    assert planes_assembly.y_label == y_label
+    assert planes_assembly._planes.get_block_name(1) == y_label
+
+
+def test_planes_assembly_y_label_init():
+    y_label = 'label'
+    planes_assembly = pv.PlanesAssembly(y_label=y_label)
+    assert planes_assembly.y_label == y_label
+
+
+def test_planes_assembly_z_label(planes_assembly):
+    assert planes_assembly.z_label == 'XY'
+    z_label = 'label'
+    planes_assembly.z_label = z_label
+    assert planes_assembly.z_label == z_label
+    assert planes_assembly._planes.get_block_name(2) == z_label
+
+
+def test_planes_assembly_z_label_init():
+    z_label = 'label'
+    planes_assembly = pv.PlanesAssembly(z_label=z_label)
+    assert planes_assembly.z_label == z_label
+
+
+def test_planes_assembly_label_mode(planes_assembly):
+    assert planes_assembly.label_mode == '3D'
+    label_mode = '2D'
+    planes_assembly.label_mode = label_mode
+    assert planes_assembly.label_mode == label_mode
+
+
+def test_planes_assembly_label_mode_init():
+    label_mode = '2D'
+    planes_assembly = pv.PlanesAssembly(label_mode=label_mode)
+    assert planes_assembly.label_mode == label_mode
+
+
+def test_planes_assembly_opacity(planes_assembly):
+    assert planes_assembly.opacity == (0.3, 0.3, 0.3)
+    opacity = 0.0, 0.1, 0.2
+    planes_assembly.opacity = opacity
+    assert planes_assembly.opacity == opacity
+
+
+def test_planes_assembly_opacity_init():
+    opacity = 0.5
+    planes_assembly = pv.PlanesAssembly(opacity=opacity)
+    assert planes_assembly.opacity == (opacity, opacity, opacity)
+
+
+def test_planes_assembly_label_size(planes_assembly):
+    assert planes_assembly.label_size == 50
+    label_size = 10
+    planes_assembly.label_size = label_size
+    assert planes_assembly.label_size == label_size
+
+
+def test_planes_assembly_label_size_init():
+    label_size = 10
+    planes_assembly = pv.PlanesAssembly(label_size=label_size)
+    assert planes_assembly.label_size == label_size
+
+
+def test_planes_assembly_camera(planes_assembly):
+    with pytest.raises(ValueError, match='Camera has not been set.'):
+        _ = planes_assembly.camera
+
+    camera = pv.Camera()
+    planes_assembly.camera = camera
+    assert planes_assembly.camera is camera
