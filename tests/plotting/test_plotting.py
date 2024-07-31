@@ -4558,12 +4558,22 @@ def test_orthogonal_planes_source_resolution(resolution):
 
 
 @pytest.mark.parametrize(
-    ('name', 'value'), [(None, None), ('shrink', 0.5), ('explode', 0.5), ('explode', -0.5)]
+    ('name', 'value'),
+    [
+        (None, None),
+        ('shrink', 0.5),
+        ('explode', 0.5),
+        ('explode', -0.5),
+        ('frame_width', 0.2),
+        ('frame_width', 0.8),
+    ],
 )
 def test_cube_faces_source(name, value):
     kwargs = {name: value} if name and value else {}
-    cube_faces_source = pv.CubeFacesSource(**kwargs)
-    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(mag=0.5)
+    cube_faces_source = pv.CubeFacesSource(**kwargs, x_length=1, y_length=2, z_length=3)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(
+        mag=0.5, show_edges=True, line_width=3, edge_color='red'
+    )
 
 
 def test_planes_assembly(airplane):

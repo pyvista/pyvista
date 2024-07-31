@@ -812,6 +812,14 @@ def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_na
     assert poly.bounds == bounds
 
 
+def test_cube_faces_source_frame(cube_faces_source):
+    assert cube_faces_source.frame_width is None
+    cube_faces_source = pv.CubeFacesSource(frame_width=0.2)
+    assert cube_faces_source.frame_width == 0.2
+    cube_faces_source.frame_width = 0.3
+    assert cube_faces_source.frame_width == 0.3
+
+
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
