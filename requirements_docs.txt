@@ -15,7 +15,7 @@ osmnx==1.9.4
 pypandoc==1.13
 pytest-sphinx==0.6.3
 scipy==1.14.0
-sphinx==8.0.2
+sphinx==7.4.7
 sphinx-autobuild==2024.4.16
 sphinx-book-theme==1.1.3
 sphinx-copybutton==0.5.2
