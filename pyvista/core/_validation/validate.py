@@ -548,6 +548,12 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         Transformation matrix as a 3x3 array, vtk matrix, or a SciPy ``Rotation``
         instance.
 
+        .. note::
+        
+           Although ``RotationLike`` inputs are accepted, no checks are done
+           to verify that the transformation is a actually a rotation. 
+           Therefore, any 3x3 transformation is acceptable.
+
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
         validation checks fail.
