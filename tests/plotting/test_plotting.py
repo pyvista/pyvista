@@ -3013,7 +3013,7 @@ def test_ssaa_pass():
 
 @skip_windows_mesa
 def test_ssao_pass():
-    ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode_factor()
     pl = pv.Plotter()
     pl.add_mesh(ugrid)
 
@@ -3028,7 +3028,7 @@ def test_ssao_pass():
 
 @skip_mesa
 def test_ssao_pass_from_helper():
-    ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode()
+    ugrid = pv.ImageData(dimensions=(2, 2, 2)).to_tetrahedra(5).explode_factor()
 
     ugrid.plot(ssao=True)
 
@@ -4561,9 +4561,9 @@ def test_orthogonal_planes_source_resolution(resolution):
     ('name', 'value'),
     [
         (None, None),
-        ('shrink', 0.5),
-        ('explode', 0.5),
-        ('explode', -0.5),
+        ('shrink_factor', 0.5),
+        ('explode_factor', 0.5),
+        ('explode_factor', -0.5),
         ('frame_width', 0.2),
         ('frame_width', 0.8),
     ],

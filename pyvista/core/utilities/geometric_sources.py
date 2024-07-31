@@ -3730,12 +3730,12 @@ class CubeFacesSource(CubeSource):
         (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
         a constant width.
 
-    shrink : float, optional
+    shrink_factor : float, optional
         Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
         If set, this is the factor by which to shrink each face. Values must be
         between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
 
-    explode : float, optional
+    explode_factor : float, optional
         Use :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
         cube's center. If set, this is the factor by which to move each face.
         Increasing values will push the cells farther away. Use a negative value to
@@ -3779,15 +3779,15 @@ class CubeFacesSource(CubeSource):
       Z Bounds:   -5.000e-01, 5.000e-01
       N Arrays:   2
 
-    Use :attr:`explode` to explode the faces.
+    Use :attr:`explode_factor` to explode the faces.
 
-    >>> cube_faces_source.explode = 0.5
+    >>> cube_faces_source.explode_factor = 0.5
     >>> cube_faces_source.update()
     >>> output.plot(show_edges=True)
 
-    Use :attr:`shrink` to also shrink the faces.
+    Use :attr:`shrink_factor` to also shrink the faces.
 
-    >>> cube_faces_source.shrink = 0.5
+    >>> cube_faces_source.shrink_factor = 0.5
     >>> cube_faces_source.update()
     >>> output.plot(show_edges=True)
 
@@ -3826,9 +3826,9 @@ class CubeFacesSource(CubeSource):
         '_frame_width',
         'frame_width',
         '_shrink',
-        'shrink',
+        'shrink_factor',
         '_explode',
-        'explode',
+        'explode_factor',
         '_bounds',
         'bounds',
     ]
@@ -3850,8 +3850,8 @@ class CubeFacesSource(CubeSource):
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
         frame_width: float | None = None,
-        shrink: float | None = None,
-        explode: float | None = None,
+        shrink_factor: float | None = None,
+        explode_factor: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
         point_dtype='float32',
     ):
@@ -3872,8 +3872,8 @@ class CubeFacesSource(CubeSource):
 
         # Set properties
         self.frame_width = frame_width
-        self.shrink = shrink
-        self.explode = explode
+        self.shrink_factor = shrink_factor
+        self.explode_factor = explode_factor
         self.names = names  # type: ignore[assignment]
 
     @property
@@ -3910,7 +3910,7 @@ class CubeFacesSource(CubeSource):
         )
 
     @property
-    def shrink(self) -> float | None:  # numpydoc ignore=RT01
+    def shrink_factor(self) -> float | None:  # numpydoc ignore=RT01
         """Shrink the cube's faces.
 
         If set, this is the factor by which to shrink each face. Values must be
@@ -3920,14 +3920,14 @@ class CubeFacesSource(CubeSource):
         """
         return self._shrink
 
-    @shrink.setter
-    def shrink(self, factor: float | None):  # numpydoc ignore=GL08
+    @shrink_factor.setter
+    def shrink_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._shrink = (
             factor if factor is None else _validation.validate_number(factor, name='shrink factor')
         )
 
     @property
-    def explode(self) -> float | None:  # numpydoc ignore=RT01
+    def explode_factor(self) -> float | None:  # numpydoc ignore=RT01
         """Push each face away from the cube's center.
 
         If set, this is the factor by which to move each face. Larger values will
@@ -3937,8 +3937,8 @@ class CubeFacesSource(CubeSource):
         """
         return self._explode
 
-    @explode.setter
-    def explode(self, factor: float | None):  # numpydoc ignore=GL08
+    @explode_factor.setter
+    def explode_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._explode = (
             factor if factor is None else _validation.validate_number(factor, name='explode factor')
         )
@@ -4017,12 +4017,12 @@ class CubeFacesSource(CubeSource):
         cube = CubeSource.output.fget(self)
 
         # Modify cube
-        shrink, explode = self.shrink, self.explode
+        shrink_factor, explode_factor = self.shrink_factor, self.explode_factor
         modified_cube = cube
-        if shrink:
-            modified_cube = cube.shrink(shrink)
-        if explode:
-            modified_cube = cube.explode(explode).extract_geometry()
+        if shrink_factor:
+            modified_cube = cube.shrink(shrink_factor)
+        if explode_factor:
+            modified_cube = cube.explode(explode_factor).extract_geometry()
 
         # Extract list of points for each face in the desired order
         mod_points, mod_faces = modified_cube.points, modified_cube.regular_faces

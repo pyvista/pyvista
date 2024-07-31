@@ -250,7 +250,7 @@ def test_threshold_percent(pointset):
 
 
 def test_explode(pointset):
-    out = pointset.explode(1)
+    out = pointset.explode_factor(1)
     assert isinstance(out, pv.PointSet)
     ori_xlen = pointset.bounds[1] - pointset.bounds[0]
     new_xlen = out.bounds[1] - out.bounds[0]
@@ -301,7 +301,7 @@ def test_raise_unsupported(pointset):
         pointset.slice_orthogonal()
 
     with pytest.raises(PointSetCellOperationError):
-        pointset.shrink()
+        pointset.shrink_factor()
 
     with pytest.raises(PointSetCellOperationError):
         pointset.separate_cells()

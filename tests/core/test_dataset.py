@@ -1532,7 +1532,7 @@ def test_partition(hexbeam):
 
 def test_explode(datasets):
     for dataset in datasets:
-        out = dataset.explode()
+        out = dataset.explode_factor()
         assert out.n_cells == dataset.n_cells
         assert out.n_points > dataset.n_points
 
