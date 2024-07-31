@@ -6,20 +6,26 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
+from enum import IntEnum
+import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Literal
+from typing import Tuple
+from typing import cast
+from typing import get_args
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
-
-from .arrays import _coerce_pointslike_arg
-from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
@@ -28,6 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -880,8 +887,6 @@ class Text3DSource(vtkVectorText):
         '_normal',
         '_process_empty_string',
         '_output',
-        '_extrude_filter',
-        '_tri_filter',
         '_modified',
     ]
 
@@ -897,17 +902,6 @@ class Text3DSource(vtkVectorText):
     ):
         """Initialize source."""
         super().__init__()
-
-        # Create output filters to make text 3D
-        extrude = _vtk.vtkLinearExtrusionFilter()
-        extrude.SetInputConnection(self.GetOutputPort())
-        extrude.SetExtrusionTypeToNormalExtrusion()
-        extrude.SetVector(0, 0, 1)
-        self._extrude_filter = extrude
-
-        tri_filter = _vtk.vtkTriangleFilter()
-        tri_filter.SetInputConnection(extrude.GetOutputPort())
-        self._tri_filter = tri_filter
 
         self._output = pyvista.PolyData()
 
@@ -941,11 +935,6 @@ class Text3DSource(vtkVectorText):
                     f'Attribute "{name}" does not exist and cannot be added to type '
                     f'{self.__class__.__name__}',
                 )
-
-    def __del__(self):
-        """Delete filters."""
-        self._tri_filter = None
-        self._extrude_filter = None
 
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
@@ -1044,8 +1033,16 @@ class Text3DSource(vtkVectorText):
                 out = self.GetOutput()
             else:
                 # 3D case, apply filters
-                self._tri_filter.Update()
-                out = self._tri_filter.GetOutput()
+                # Create output filters to make text 3D
+                extrude = _vtk.vtkLinearExtrusionFilter()
+                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetExtrusionTypeToNormalExtrusion()
+                extrude.SetVector(0, 0, 1)
+
+                tri_filter = _vtk.vtkTriangleFilter()
+                tri_filter.SetInputConnection(extrude.GetOutputPort())
+                tri_filter.Update()
+                out = tri_filter.GetOutput()
 
             # Modify output object
             self._output.copy_from(out)
@@ -2188,6 +2185,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
 
+    The plane is defined by specifying an origin point, and then
+    two other points that, together with the origin, define two
+    axes for the plane (magnitude and direction). These axes do
+    not have to be orthogonal - so you can create a parallelogram.
+    The axes must not be parallel.
+
     .. versionadded:: 0.44
 
     Parameters
@@ -2198,17 +2201,37 @@ class PlaneSource(_vtk.vtkPlaneSource):
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    origin : sequence[float], default: (-0.5, -0.5, 0.0)
+        Origin in ``[x, y, z]``.
+
+    point_a : sequence[float], default: (0.5, -0.5, 0.0)
+        Location in ``[x, y, z]``.
+
+    point_b : sequence[float], default: (-0.5, 0.5, 0.0)
+        Location in ``[x, y, z]``.
+
     """
 
     def __init__(
         self,
         i_resolution=10,
         j_resolution=10,
+        center=(0.0, 0.0, 0.0),
+        origin=(-0.5, -0.5, 0.0),
+        point_a=(0.5, -0.5, 0.0),
+        point_b=(-0.5, 0.5, 0.0),
     ):
         """Initialize source."""
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
+        self.center = center
+        self.origin = origin
+        self.point_a = point_a
+        self.point_b = point_b
 
     @property
     def i_resolution(self) -> int:
@@ -2253,6 +2276,96 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Number of points on the plane in the j direction.
         """
         self.SetYResolution(j_resolution)
+
+    @property
+    def center(self) -> Sequence[float]:
+        """Get the center in ``[x, y, z]``.
+
+        The center of the plane is translated to the specified point.
+
+        Returns
+        -------
+        sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+        """
+        self.SetCenter(center)
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]):
+        """Set the origin in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            Origin in ``[x, y, z]``.
+        """
+        self.SetOrigin(origin)
+
+    @property
+    def point_a(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint1()
+
+    @point_a.setter
+    def point_a(self, point_a: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_a : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        self.SetPoint1(point_a)
+
+    @property
+    def point_b(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        return self.GetPoint2()
+
+    @point_b.setter
+    def point_b(self, point_b: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_b : sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        self.SetPoint2(point_b)
 
     @property
     def output(self):
@@ -2812,3 +2925,772 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+class _AxisEnum(IntEnum):
+    x = 0
+    y = 1
+    z = 2
+
+
+class _PartEnum(IntEnum):
+    shaft = 0
+    tip = 1
+
+
+class AxesGeometrySource:
+    """Create axes geometry source.
+
+    Source for generating fully 3-dimensional axes shaft and tip geometry.
+
+    By default, the shafts are cylinders and the tips are cones, though other geometries
+    such as spheres and cubes are also supported. The use of an arbitrary dataset
+    for the shafts and/or tips is also supported.
+
+    Unlike :class:`pyvista.AxesActor`, the output from this source is a
+    :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
+    The generated axes are "true-to-scale" by default, i.e. a shaft with a
+    radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
+    arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
+
+    Parameters
+    ----------
+    shaft_type : str | pyvista.DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    shaft_radius : float, default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str | pyvista.DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    tip_radius : float, default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    symmetric : bool, default: False
+        Mirror the axes such that they extend to negative values.
+
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
+    """
+
+    GeometryTypes = Literal[
+        'cylinder',
+        'sphere',
+        'hemisphere',
+        'cone',
+        'pyramid',
+        'cube',
+        'octahedron',
+    ]
+    GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
+
+    def __init__(
+        self,
+        *,
+        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
+        shaft_radius: float = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
+        tip_radius: float = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric: bool = False,
+        symmetric_bounds: bool = False,
+    ):
+        super().__init__()
+        # Init datasets
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+
+        # Store shaft/tip references in separate vars for convenience
+        self._shaft_datasets = (polys[0], polys[1], polys[2])
+        self._tip_datasets = (polys[3], polys[4], polys[5])
+
+        # Also store datasets for internal use
+        self._shaft_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+        self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+
+        # Set geometry-dependent params
+        self.shaft_type = shaft_type  # type: ignore[assignment]
+        self.shaft_radius = shaft_radius
+        self.shaft_length = shaft_length  # type: ignore[assignment]
+        self.tip_type = tip_type  # type: ignore[assignment]
+        self.tip_radius = tip_radius
+        self.tip_length = tip_length  # type: ignore[assignment]
+
+        # Set flags
+        self._symmetric = symmetric
+        self._symmetric_bounds = symmetric_bounds
+
+    def __repr__(self):
+        """Representation of the axes."""
+        attr = [
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  Shaft type:                 '{self.shaft_type}'",
+            f"  Shaft radius:               {self.shaft_radius}",
+            f"  Shaft length:               {self.shaft_length}",
+            f"  Tip type:                   '{self.tip_type}'",
+            f"  Tip radius:                 {self.tip_radius}",
+            f"  Tip length:                 {self.tip_length}",
+            f"  Symmetric:                  {self.symmetric}",
+            f"  Symmetric bounds:           {self.symmetric_bounds}",
+        ]
+        return '\n'.join(attr)
+
+    @property
+    def symmetric(self) -> bool:  # numpydoc ignore=RT01
+        """Mirror the axes such that they extend to negative values.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+        >>> axes_geometry_source.output.plot()
+        """
+        return self._symmetric
+
+    @symmetric.setter
+    def symmetric(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric = val
+
+    @property
+    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable symmetry in the axes bounds.
+
+        This option is similar to :attr:`symmetric`, except instead of making
+        the axes parts symmetric, only the bounds of the axes are made to be
+        symmetric. This is achieved by adding a single invisible cell to each tip
+        dataset along each axis to simulate the symmetry. Setting this
+        parameter primarily affects camera positioning and is useful if the
+        axes are used as a widget, as it allows for the axes to rotate
+        about its origin.
+
+        Examples
+        --------
+        Get the symmetric bounds of the axes.
+
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     symmetric_bounds=True
+        ... )
+        >>> axes_geometry_source.output.bounds
+        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+
+        >>> axes_geometry_source.output.center
+        array([0.0, 0.0, 0.0])
+
+        Get the asymmetric bounds.
+
+        >>> axes_geometry_source.symmetric_bounds = False
+        >>> axes_geometry_source.output.bounds
+        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+
+        >>> axes_geometry_source.output.center
+        array([0.45, 0.45, 0.45])
+
+        Show the difference in camera positioning with and without
+        symmetric bounds. Orientation is added for visualization.
+
+        Create actors.
+        >>> axes_sym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=True
+        ... )
+        >>> axes_asym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=False
+        ... )
+
+        Show multi-window plot.
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_actor(axes_sym)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_actor(axes_asym)
+        >>> pl.show()
+        """
+        return self._symmetric_bounds
+
+    @symmetric_bounds.setter
+    def symmetric_bounds(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric_bounds = val
+
+    @property
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the shaft for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_length
+        (0.8, 0.8, 0.8)
+        >>> axes_geometry_source.shaft_length = 0.7
+        >>> axes_geometry_source.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_geometry_source.shaft_length = (1.0, 0.9, 0.5)
+        >>> axes_geometry_source.shaft_length
+        (1.0, 0.9, 0.5)
+        """
+        return tuple(self._shaft_length.tolist())
+
+    @shaft_length.setter
+    def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Shaft length",
+        )
+
+    @property
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the tip for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_length
+        (0.2, 0.2, 0.2)
+        >>> axes_geometry_source.tip_length = 0.3
+        >>> axes_geometry_source.tip_length
+        (0.3, 0.3, 0.3)
+        >>> axes_geometry_source.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_geometry_source.tip_length
+        (0.1, 0.4, 0.2)
+        """
+        return tuple(self._tip_length.tolist())
+
+    @tip_length.setter
+    def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name="Tip length",
+        )
+
+    @property
+    def tip_radius(self) -> float:  # numpydoc ignore=RT01
+        """Radius of the axes tips.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_radius
+        0.1
+        >>> axes_geometry_source.tip_radius = 0.2
+        >>> axes_geometry_source.tip_radius
+        0.2
+        """
+        return self._tip_radius
+
+    @tip_radius.setter
+    def tip_radius(self, radius: float):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='tip radius')
+        self._tip_radius = radius
+
+    @property
+    def shaft_radius(self):  # numpydoc ignore=RT01
+        """Radius of the axes shafts.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_radius
+        0.025
+        >>> axes_geometry_source.shaft_radius = 0.05
+        >>> axes_geometry_source.shaft_radius
+        0.05
+        """
+        return self._shaft_radius
+
+    @shaft_radius.setter
+    def shaft_radius(self, radius):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
+        self._shaft_radius = radius
+
+    @property
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Shaft type for all axes.
+
+        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default shaft type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_type
+        'cylinder'
+        >>> axes_geometry_source.shaft_type = 'cube'
+        >>> axes_geometry_source.shaft_type
+        'cube'
+
+        Set the shaft type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.shaft_type = pv.Superquadric()
+        >>> axes_geometry_source.shaft_type
+        'custom'
+        """
+        return self._shaft_type
+
+    @shaft_type.setter
+    def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
+
+    @property
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Tip type for all axes.
+
+        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default tip type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_type
+        'cone'
+        >>> axes_geometry_source.tip_type = 'sphere'
+        >>> axes_geometry_source.tip_type
+        'sphere'
+
+        Set the tip type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.tip_type = pv.Text3D('O')
+        >>> axes_geometry_source.tip_type
+        'custom'
+
+        >>> axes_geometry_source.output.plot(cpos='xy')
+        """
+        return self._tip_type
+
+    @tip_type.setter
+    def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
+
+    def _set_normalized_datasets(self, part: _PartEnum, geometry: str | pyvista.DataSet):
+        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
+        datasets = (
+            self._shaft_datasets_normalized
+            if part == _PartEnum.shaft
+            else self._tip_datasets_normalized
+        )
+        datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
+        datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
+        datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
+        return geometry_name
+
+    def _reset_shaft_and_tip_geometry(self):
+        # Store local copies of properties for iterating
+        shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
+        tip_radius, tip_length = (
+            self.tip_radius,
+            self.tip_length,
+        )
+
+        nested_datasets = [self._shaft_datasets, self._tip_datasets]
+        nested_datasets_normalized = [
+            self._shaft_datasets_normalized,
+            self._tip_datasets_normalized,
+        ]
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
+            # Reset part by copying from the normalized version
+            part_normalized = nested_datasets_normalized[part_type][axis]
+            part = nested_datasets[part_type][axis]
+            part.copy_from(part_normalized)
+
+            # Offset so axis bounds are [0, 1]
+            part.points[:, axis] += 0.5
+
+            # Scale by length along axis, scale by radius off-axis
+            radius, length = (
+                (shaft_radius, shaft_length)
+                if part_type == _PartEnum.shaft
+                else (tip_radius, tip_length)
+            )
+            diameter = radius * 2
+            scale = [diameter] * 3
+            scale[axis] = length[axis]
+            part.scale(scale, inplace=True)
+
+            if part_type == _PartEnum.tip:
+                # Move tip to end of shaft
+                part.points[:, axis] += shaft_length[axis]
+
+            if self.symmetric:
+                # Flip and append to part
+                origin = [0, 0, 0]
+                normal = [0, 0, 0]
+                normal[axis] = 1
+                flipped = part.flip_normal(normal=normal, point=origin)
+                part.append_polydata(flipped, inplace=True)
+            elif self.symmetric_bounds and part_type == _PartEnum.tip:
+                # For this feature we add a single degenerate cell
+                # at the tip and flip its position
+                point = [0, 0, 0]
+                total_length = shaft_length[axis] + tip_length[axis]
+                point[axis] = total_length
+                flipped_point = np.array([point]) * -1  # Flip point
+                point_id = part.n_points
+                new_face = [3, point_id, point_id, point_id]
+
+                # Update mesh
+                part.points = np.append(part.points, flipped_point, axis=0)
+                part.faces = np.append(part.faces, new_face)
+
+    def update(self):
+        """Update the output of the source."""
+        self._reset_shaft_and_tip_geometry()
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
+        of the axes. The blocks are ordered by shafts first then tips, and in x-y-z order.
+        Specifically, they are named as follows:
+
+            (``'x_shaft'``, ``'y_shaft'``, ``'z_shaft'``, ``'x_tip'``, ``'y_tip'``, ``'z_tip'``)
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with separate shaft and tip datasets.
+        """
+        self.update()
+        return self._output
+
+    @staticmethod
+    def _make_default_part(geometry: str) -> pyvista.PolyData:
+        """Create part geometry with its length axis pointing in the +z direction."""
+        resolution = 50
+        if geometry == 'cylinder':
+            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'sphere':
+            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+        elif geometry == 'hemisphere':
+            return pyvista.SolidSphere(end_phi=90).extract_geometry()
+        elif geometry == 'cone':
+            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'pyramid':
+            return pyvista.Pyramid().extract_geometry()
+        elif geometry == 'cube':
+            return pyvista.Cube()
+        elif geometry == 'octahedron':
+            mesh = pyvista.Octahedron()
+            mesh.cell_data.remove('FaceIndex')
+            return mesh
+        else:
+            _validation.check_contains(
+                item=geometry,
+                container=AxesGeometrySource.GEOMETRY_TYPES,
+                name='Geometry',
+            )
+            raise NotImplementedError(
+                f"Geometry '{geometry}' is not implemented"
+            )  # pragma: no cover
+
+    @staticmethod
+    def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
+        part: pyvista.DataSet
+        part_poly: pyvista.PolyData
+        if isinstance(geometry, str):
+            name = geometry
+            part = AxesGeometrySource._make_default_part(
+                geometry,
+            )
+        elif isinstance(geometry, pyvista.DataSet):
+            name = 'custom'
+            part = geometry.copy()
+        else:
+            raise TypeError(
+                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
+            )
+        part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
+        part_poly = AxesGeometrySource._normalize_part(part_poly)
+        return name, part_poly
+
+    @staticmethod
+    def _normalize_part(part: pyvista.PolyData) -> pyvista.PolyData:
+        """Scale and translate part to have origin-centered bounding box with edge length one."""
+        # Center points at origin
+        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
+        part.points -= part.center  # type: ignore[misc]
+
+        # Scale so bounding box edges have length one
+        bnds = part.bounds
+        axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
+        if np.any(axis_length < 1e-8):
+            raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
+        part.scale(np.reciprocal(axis_length), inplace=True)
+        return part
+
+    @staticmethod
+    def _make_axes_parts(
+        geometry: str | pyvista.DataSet,
+    ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
+        """Return three axis-aligned normalized parts centered at the origin."""
+        name, part_z = AxesGeometrySource._make_any_part(geometry)
+        part_x = part_z.copy().rotate_y(90)
+        part_y = part_z.copy().rotate_x(-90)
+        return name, (part_x, part_y, part_z)
+
+
+class OrthogonalPlanesSource:
+    """Orthogonal planes source.
+
+    This source generates three orthogonal planes. The :attr:`output` is a
+    :class:`~pyvista.MultiBlock` with named plane meshes ``'yz'``, ``'zx'``, ``'xy'``.
+    The meshes are ordered such that the first, second, and third plane is perpendicular
+    to the x, y, and z-axis, respectively.
+
+    Parameters
+    ----------
+    bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        The generated planes are centered in these bounds.
+
+    resolution : int | VectorLike[int], default: 2
+        Number of points on the planes in the x-y-z directions. Use a single number
+        for a uniform resolution, or three values to set independent resolutions.
+
+    normal_sign : '+' | '-' | sequence['+' | '-'], default: '+'
+        Sign of the plane's normal vectors. Use a single value to set all normals to
+        the same sign, or three values to set them independently.
+
+    names : sequence[str], default: ('xy','yz','zx')
+        Name of each plane in the generated :class:`~pyvista.MultiBlock`.
+
+    Examples
+    --------
+    Generate default orthogonal planes.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> planes_source = pv.OrthogonalPlanesSource()
+    >>> output = planes_source.output
+    >>> output.plot()
+
+    Modify the planes to fit a mesh's bounds.
+
+    >>> human = examples.download_human()
+    >>> planes_source.bounds = human.bounds
+    >>> planes_source.update()
+
+    Plot the mesh and the planes.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
+    """
+
+    def __init__(
+        self,
+        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        *,
+        resolution: int | VectorLike[int] = 2,
+        normal_sign: Literal['+', '-'] | Sequence[str] = '+',
+        names: Sequence[str] = ('yz', 'zx', 'xy'),
+    ):
+        # Init sources and the output dataset
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
+        self._plane_sources = tuple(pyvista.PlaneSource() for _ in range(3))
+
+        # Init properties
+        self.bounds = bounds  # type: ignore[assignment]
+        self.resolution = resolution  # type: ignore[assignment]
+        self.normal_sign = normal_sign  # type: ignore[assignment]
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the sign of the plane's normal vectors."""
+        return cast(Tuple[str, str, str], self._normal_sign)
+
+    @normal_sign.setter
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
+        def _check_sign(sign_):
+            allowed = ['+', '-']
+            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+
+        valid_sign: Sequence[str]
+        _validation.check_instance(sign, (tuple, list, str), name='normal sign')
+        if isinstance(sign, str):
+            _check_sign(sign)
+            valid_sign = [sign] * 3
+        else:
+            _validation.check_length(sign, exact_length=3)
+            [_check_sign(s) for s in sign]
+            valid_sign = sign
+        self._normal_sign = tuple(valid_sign)
+
+    @property
+    def resolution(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
+        """Return or set the resolution of the planes."""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
+        self._resolution = _validation.validate_array3(
+            resolution, broadcast=True, to_tuple=True, name='resolution'
+        )
+
+    @property
+    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+        """Return or set the bounds of the planes."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+        self._bounds = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+        )
+
+    @property
+    def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the planes."""
+        return self._names
+
+    @names.setter
+    def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=3, name='names')
+        self._names = cast(Tuple[str, str, str], tuple(names))
+
+    def update(self):
+        """Update the output of the source."""
+        ORIGIN = (0.0, 0.0, 0.0)
+
+        # Unpack vars
+        yz_source, zx_source, xy_source = self._plane_sources
+        x_res, y_res, z_res = self.resolution
+        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+
+        # Compute bounds-related vars
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+
+        # Update plane sources
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
+        xy_source.Update()
+
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
+        yz_source.Update()
+
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
+        zx_source.Update()
+
+        # Update the output
+        output = self._output
+        for index, (name, source, plane, sign) in enumerate(
+            zip(self.names, self._plane_sources, output, self.normal_sign)
+        ):
+            plane.copy_from(source.GetOutput())
+            if sign == '-':
+                plane['Normals'] *= -1
+            output.set_block_name(index, name)
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
+        plane. The blocks are named ``'yz'``, ``'zx'``, ``'xy'``, and are ordered such
+        that the first, second, and third plane is perpendicular to the x, y, and
+        z-axis, respectively.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+        """
+        self.update()
+        return self._output

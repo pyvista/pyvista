@@ -17,7 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 
-###############################################################################
+# %%
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
 # ``shape=(2, 2)``. Use the :func:`pyvista.Plotter.subplot` method to
@@ -52,7 +52,7 @@ plotter.show_bounds(all_edges=True)
 plotter.show()
 
 
-###############################################################################
+# %%
 plotter = pv.Plotter(shape=(1, 2))
 
 # Note that the (0, 0) location is active by default
@@ -69,7 +69,7 @@ plotter.add_mesh(examples.load_uniform(), show_edges=True)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Split the rendering window in half and subdivide it in a nr. of vertical or
 # horizontal subplots.
 
@@ -102,7 +102,7 @@ plotter.add_mesh(pv.Cone(), show_edges=True)
 plotter.show()
 
 
-###############################################################################
+# %%
 # To get full flexibility over the layout grid, you can define the relative
 # weighting of rows and columns and register groups that can span over multiple
 # rows and columns. A group is defined through a tuple ``(rows,cols)`` of row
@@ -173,3 +173,5 @@ plotter.add_mesh(pv.Cube(), show_edges=True, color='lightblue')
 
 # Display the window
 plotter.show()
+# %%
+# .. tags:: plot

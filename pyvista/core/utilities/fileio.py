@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pathlib
 from pathlib import Path
 import warnings
 
@@ -53,7 +52,7 @@ def get_ext(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         The filename from which to extract the extension.
 
     Returns
@@ -124,7 +123,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
@@ -168,11 +167,11 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
-            name = Path(str(each)).name if isinstance(each, (str, pathlib.Path)) else None
+            name = Path(each).name if isinstance(each, (str, Path)) else None
             multi.append(read(each, file_format=file_format), name)
         return multi
-    filename = str(Path(str(filename)).expanduser().resolve())
-    if not Path(filename).is_file() and not Path(filename).is_dir():
+    filename = Path(filename).expanduser().resolve()
+    if not filename.is_file() and not filename.is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
 
     # Read file using meshio.read if file_format is present
@@ -269,7 +268,7 @@ def read_texture(filename, progress_bar=False):
     <class 'pyvista.plotting.texture.Texture'>
 
     """
-    filename = str(Path(filename).expanduser().resolve())
+    filename = Path(filename).expanduser().resolve()
     try:
         # initialize the reader using the extension to find it
 
@@ -297,7 +296,7 @@ def read_exodus(
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         The path to the exodus file to read.
 
     animate_mode_shapes : bool, default: True
@@ -345,7 +344,10 @@ def read_exodus(
         from vtk import vtkExodusIIReader
 
     reader = vtkExodusIIReader()
-    reader.SetFileName(filename)
+    if pyvista.vtk_version_info < (9, 1, 0):  # pragma no cover
+        reader.SetFileName(str(filename))
+    else:
+        reader.SetFileName(filename)
     reader.UpdateInformation()
     reader.SetAnimateModeShapes(animate_mode_shapes)
     reader.SetApplyDisplacements(apply_displacements)
@@ -506,7 +508,7 @@ def read_meshio(filename, file_format=None):
         raise ImportError("To use this feature install meshio with:\n\npip install meshio")
 
     # Make sure relative paths will work
-    filename = str(Path(str(filename)).expanduser().resolve())
+    filename = Path(filename).expanduser().resolve()
     # Read mesh file
     mesh = meshio.read(filename, file_format)
     return from_meshio(mesh)
@@ -552,7 +554,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
         from meshio._vtk_common import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = str(Path(str(filename)).expanduser().resolve())
+    filename = Path(filename).expanduser().resolve()
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
@@ -625,7 +627,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
 
 
 def _process_filename(filename):
-    return str(Path(str(filename)).expanduser().resolve())
+    return Path(filename).expanduser().resolve()
 
 
 def _try_imageio_imread(filename):
@@ -633,7 +635,7 @@ def _try_imageio_imread(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         Name of the file to read using ``imageio``.
 
     Returns

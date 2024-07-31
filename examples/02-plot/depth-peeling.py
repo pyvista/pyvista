@@ -19,7 +19,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 centers = [(0, 0, 0), (1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)]
 radii = [1, 0.5, 0.5, 0.5, 0.5]
 
@@ -27,7 +27,7 @@ spheres = pv.MultiBlock()
 for i, c in enumerate(centers):
     spheres.append(pv.Sphere(center=c, radius=radii[i]))
 
-###############################################################################
+# %%
 dargs = dict(opacity=0.5, color="red", smooth_shading=True)
 
 p = pv.Plotter(shape=(1, 2))
@@ -44,7 +44,7 @@ p.link_views()
 p.camera_position = [(11.7, 4.7, -4.33), (0.0, 0.0, 0.0), (0.3, 0.07, 0.9)]
 p.show()
 
-###############################################################################
+# %%
 # The following room surfaces example mesh, provided courtesy of
 # `Sam Potter <https://github.com/sampotter>`_ has coincident topology and
 # depth rendering helps correctly render those geometries when a global
@@ -68,7 +68,7 @@ p.camera_position = [(43.6, 49.5, 19.8), (0.0, 2.25, 0.0), (-0.57, 0.70, -0.42)]
 p.show()
 
 
-###############################################################################
+# %%
 # And here is another example wheen rendering many translucent contour
 # surfaces.
 
@@ -88,3 +88,5 @@ p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
 p.link_views()
 p.camera_position = [(418.3, 659.0, 53.8), (90.2, 111.5, 90.0), (0.03, 0.05, 1.0)]
 p.show()
+# %%
+# .. tags:: plot

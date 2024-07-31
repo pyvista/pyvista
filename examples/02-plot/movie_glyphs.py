@@ -16,7 +16,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create sphere glyphs
 # ~~~~~~~~~~~~~~~~~~~~
 
@@ -36,7 +36,7 @@ spheres = grid.glyph(scale='size', geom=sphere, orient=False)
 
 spheres.plot(show_scalar_bar=False)
 
-###############################################################################
+# %%
 # Create the movie
 # ~~~~~~~~~~~~~~~~
 
@@ -70,3 +70,5 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
 # Close and finalize the gif
 plotter.close()
+# %%
+# .. tags:: plot

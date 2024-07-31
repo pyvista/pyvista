@@ -27,10 +27,10 @@ if TYPE_CHECKING:  # pragma: no cover
 def button(click, icon, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify button."""
     with vuetify.VTooltip(location='bottom'):
-        with vuetify.Template(v_slot_activator='{ props }'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
             with vuetify.VBtn(
                 icon=True,
-                v_bind='props',
+                v_bind=('props',),
                 variant='text',
                 size='small',
                 click=click,
@@ -42,8 +42,8 @@ def button(click, icon, tooltip):  # numpydoc ignore=PR01
 def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
     """Create a vuetify checkbox."""
     with vuetify.VTooltip(location='bottom'):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VCheckbox(
                     v_model=model,
                     true_icon=icons[0],
@@ -58,8 +58,8 @@ def checkbox(model, icons, tooltip):  # numpydoc ignore=PR01
 def slider(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify slider."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VSlider(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -67,8 +67,8 @@ def slider(model, tooltip, **kwargs):  # numpydoc ignore=PR01
 def text_field(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify text field."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VTextField(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -76,8 +76,8 @@ def text_field(model, tooltip, **kwargs):  # numpydoc ignore=PR01
 def select(model, tooltip, **kwargs):  # numpydoc ignore=PR01
     """Create a vuetify select menu."""
     with vuetify.VTooltip(bottom=True):
-        with vuetify.Template(v_slot_activator='{ props }'):
-            with html.Div(v_bind='props'):
+        with vuetify.Template(v_slot_activator=('{ props }',)):
+            with html.Div(v_bind=('props',)):
                 vuetify.VSelect(v_model=model, **kwargs)
         html.Span(tooltip)
 
@@ -140,10 +140,10 @@ class Viewer(BaseViewer):
         ) as row:
             server = row.server
             # Listen to state changes
-            server.state.change(self.EDGES)(self.on_edge_visiblity_change)
-            server.state.change(self.GRID)(self.on_grid_visiblity_change)
-            server.state.change(self.OUTLINE)(self.on_outline_visiblity_change)
-            server.state.change(self.AXIS)(self.on_axis_visiblity_change)
+            server.state.change(self.EDGES)(self.on_edge_visibility_change)
+            server.state.change(self.GRID)(self.on_grid_visibility_change)
+            server.state.change(self.OUTLINE)(self.on_outline_visibility_change)
+            server.state.change(self.AXIS)(self.on_axis_visibility_change)
             server.state.change(self.SERVER_RENDERING)(self.on_rendering_mode_change)
             server.state.change(self.PARALLEL)(self.on_parallel_projection_change)
             vuetify.VDivider(vertical=True, classes='mr-1')

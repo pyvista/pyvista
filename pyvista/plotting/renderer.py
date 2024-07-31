@@ -102,10 +102,10 @@ def make_legend_face(face):
 
     Parameters
     ----------
-    face : str | None | pyvista.PolyData
+    face : str | pyvista.PolyData | NoneType
         The shape of the legend face. Valid strings are:
-        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
-        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle', 'none'.
+        Also accepts ``None`` or instances of ``pyvista.PolyData``.
 
     Returns
     -------
@@ -117,8 +117,8 @@ def make_legend_face(face):
     ValueError
         If the provided face value is invalid.
     """
-    if face is None:
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
+    if face is None or face == "none":
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -135,7 +135,7 @@ def make_legend_face(face):
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
-            '\tNone'
+            '\t"none"\n'
             '\tpyvista.PolyData',
         )
     return legendface
@@ -476,7 +476,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds))
+        return cast(BoundsLike, tuple(the_bounds.tolist()))
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -490,12 +490,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
         -------
-        list
+        tuple[float, float, float]
             Cartesian coordinates of the center.
 
         """
@@ -503,7 +503,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x = (bounds[1] + bounds[0]) / 2
         y = (bounds[3] + bounds[2]) / 2
         z = (bounds[5] + bounds[4]) / 2
-        return [x, y, z]
+        return x, y, z
 
     @property
     def background_color(self):  # numpydoc ignore=RT01
@@ -3636,8 +3636,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
               of the item to add, ``color`` is the color of the label to add,
               and ``face`` is a string which defines the face (i.e. ``circle``,
               ``triangle``, ``box``, etc.).
-              ``face`` could be also ``None`` (there is no face then), or a
-              :class:`pyvista.PolyData`.
+              ``face`` could be also ``"none"`` (no face shown for the entry),
+              or a :class:`pyvista.PolyData`.
             * A dict with the key ``label``. Optionally you can add the
               keys ``color`` and ``face``. The values of these keys can be
               strings. For the ``face`` key, it can be also a
@@ -3676,17 +3676,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData | NoneType, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
 
-            * None: ``None``
+            You may set it to one of the following:
+
+            * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
             * Triangle: ``"^"`` or ``'triangle'``
             * Circle: ``"o"`` or ``'circle'``
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``None`` removes the legend face.  A custom face can be
+            Passing ``"none"`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
 
@@ -3853,7 +3857,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointa,
         pointb,
         flip_range=False,
-        number_labels=5,
+        number_labels=None,
         show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -3893,8 +3897,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int, default: 5
+        number_labels : int, optional
             Number of labels to place on ruler.
+            If not supplied, the number will be adjusted for "nice" values.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -3997,7 +4002,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
+        if number_labels is not None:
+            ruler.AdjustLabelsOff()
+            ruler.SetNumberOfLabels(number_labels)
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

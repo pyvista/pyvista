@@ -18,7 +18,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a dataset to plot
 
 
@@ -35,7 +35,7 @@ def make_points():
 points = make_points()
 points[0:5, :]
 
-###############################################################################
+# %%
 # Interpolate those points onto a parametric Kochanek spline
 
 # Create Kochanek spline with 6 interpolation points
@@ -81,3 +81,5 @@ for i in range(5):
     )
 
 p.show(cpos="xy")
+# %%
+# .. tags:: load

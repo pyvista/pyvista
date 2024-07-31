@@ -15,7 +15,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Show All Bounds
 # ~~~~~~~~~~~~~~~
 # In this plot we show the bounds for all axes by setting ``location='all'``.
@@ -26,7 +26,7 @@ plotter.show_bounds(location='all')
 plotter.show()
 
 
-###############################################################################
+# %%
 # Override Shown Values Limits
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we override the values shown along the X and Y axes with our
@@ -44,7 +44,7 @@ plotter.show()
 print(f'Actual dataset bounds: {gears.bounds}')
 
 
-###############################################################################
+# %%
 # Show Bounds for Only One Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows only the bounds for a single dataset. Again we use
@@ -72,3 +72,5 @@ plotter.show_grid(
     grid=False,
 )
 plotter.show()
+# %%
+# .. tags:: plot

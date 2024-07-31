@@ -78,7 +78,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
+        return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
@@ -537,18 +537,22 @@ class PolyDataFilters(DataSetFilters):
                     faces=merged.GetCells(),
                     deep=False,
                 )
-                # Calling update() will modify the active scalars in this specific
-                # case. Store values to restore after updating.
+                # Calling update() will modify the active scalars and normals in this
+                # specific case. Store values to restore after updating.
                 active_point_scalars_name = merged.point_data.active_scalars_name
                 active_cell_scalars_name = merged.cell_data.active_scalars_name
+                active_point_normals_name = merged.point_data._active_normals_name
+                active_cell_normals_name = merged.cell_data._active_normals_name
 
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
 
-                # restore active scalars
+                # restore active scalars and normals
                 polydata_merged.point_data.active_scalars_name = active_point_scalars_name
                 polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+                polydata_merged.point_data._active_normals_name = active_point_normals_name
+                polydata_merged.cell_data._active_normals_name = active_cell_normals_name
 
                 merged = polydata_merged
 
@@ -3852,4 +3856,33 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
         _update_alg(alg, progress_bar, 'Triangulating Contours')
+        return _get_output(alg)
+
+    def protein_ribbon(self, progress_bar=False):
+        """Generate protein ribbon.
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Generated protein ribbon.
+
+        Examples
+        --------
+        Generate protein ribbon.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> tgqp = examples.download_3gqp()
+        >>> ribbon = tgqp.protein_ribbon()
+        >>> ribbon.plot()
+
+        """
+        alg = _vtk.vtkRibbonFilter()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)

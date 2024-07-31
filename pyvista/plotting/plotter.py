@@ -12,7 +12,6 @@ from functools import wraps
 import io
 import logging
 import os
-import pathlib
 from pathlib import Path
 import platform
 import sys
@@ -430,7 +429,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to the glTF file.
 
         set_camera : bool, default: True
@@ -456,15 +455,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         See :ref:`load_gltf` for a full example using this method.
 
         """
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
         from vtkmodules.vtkIOImport import vtkGLTFImporter
 
         importer = vtkGLTFImporter()
-        importer.SetFileName(filename)
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            importer.SetFileName(str(filename))
+        else:
+            importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -482,7 +484,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to the VRML file.
 
         Examples
@@ -501,13 +503,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtkVRMLImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
         importer = vtkVRMLImporter()
-        importer.SetFileName(filename)
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            importer.SetFileName(str(filename))
+        else:
+            importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -518,7 +523,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to the 3DS file.
 
         Examples
@@ -533,25 +538,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         from vtkmodules.vtkIOImport import vtk3DSImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
+        filename = Path(filename).expanduser().resolve()
         if not Path(filename).is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
         importer = vtk3DSImporter()
-        importer.SetFileName(filename)
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            importer.SetFileName(str(filename))
+        else:
+            importer.SetFileName(filename)
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-    def import_obj(self, filename) -> None:
+    def import_obj(self, filename, filename_mtl=None) -> None:
         """Import from .obj wavefront files.
 
         .. versionadded:: 0.44.0
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to the .obj file.
+
+        filename_mtl : str, optional
+            Path to the .mtl file.
 
         Examples
         --------
@@ -563,16 +574,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> pl.import_obj(download_obj_file)
         >>> pl.show()
+
+        Import an .obj file with a texture.
+
+        >>> from pathlib import Path
+        >>> filename = examples.download_doorman(load=False)
+        >>> pl = pv.Plotter()
+        >>> pl.import_obj(filename)
+        >>> pl.show(cpos="xy")
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
-        filename = str(Path(str(filename)).expanduser().resolve())
-        if not Path(filename).is_file():
+        filename = Path(filename).expanduser().resolve()
+        if not filename.is_file():
             raise FileNotFoundError(f'Unable to locate {filename}')
 
         # lazy import here to avoid importing unused modules
         importer = vtkOBJImporter()
         importer.SetFileName(filename)
+        filename_mtl = filename.with_suffix('.mtl')
+        if filename_mtl.is_file():
+            importer.SetFileNameMTL(filename_mtl)
+            importer.SetTexturePath(filename_mtl.parents[0])
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
@@ -581,7 +604,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Path to export the html file to.
 
         Returns
@@ -622,7 +645,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if filename is None:
             return buffer
 
-        if not filename.endswith('.html'):
+        filename = Path(filename)
+        if filename.suffix != ".html":
             filename += '.html'
 
         # Move to final destination
@@ -638,7 +662,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str | Path, optional
             Path to export the file to. Defaults to ``'scene-export.vtksz'``.
 
         format : str, optional
@@ -814,7 +838,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename to export the scene to.
 
         Examples
@@ -960,12 +984,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.__before_close_callback = None
 
     @property
-    def shape(self) -> tuple[int, int]:  # numpydoc ignore=RT01
+    def shape(self) -> tuple[int] | tuple[int, int]:
         """Return the shape of the plotter.
 
         Returns
         -------
-        tuple[numpy.int32, numpy.int32]
+        tuple[int] | tuple[int, int]
             Shape of the plotter.
 
         Examples
@@ -976,8 +1000,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> plotter.shape
         (2, 2)
+
         """
-        return self.renderers._shape
+        return self.renderers.shape
 
     @property
     def renderer(self) -> Renderer:  # numpydoc ignore=RT01
@@ -1654,7 +1679,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.length
 
     @property
-    def center(self) -> list[float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the active renderer.
 
         Returns
@@ -1668,7 +1693,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
 
         """
         return self.renderer.center
@@ -2620,9 +2645,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If an 2 dimensional array is passed as the scalars, plot
             those values as RGB(A) colors. ``rgba`` is also an
             accepted alias for this.  Opacity (the A) is optional.  If
-            a scalars array ending with ``"_rgba"`` is passed, the default
-            becomes ``True``.  This can be overridden by setting this
-            parameter to ``False``.
+            a scalars array ending with ``"_rgb"`` or ``"_rgba"`` is passed,
+            the default becomes ``True``.  This can be overridden by setting
+            this parameter to ``False``.
 
         below_color : ColorLike, optional
             Solid color for values below the scalars range
@@ -2860,6 +2885,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 )
 
             if scalars is not None:
+                # enable rgb if the scalars name ends with rgb or rgba
+                if rgb is None and scalars.endswith(('_rgb', '_rgba')):
+                    rgb = True
+                    show_scalar_bar = False
+
                 scalar_bar_args = self.mapper.set_scalars(
                     scalars,
                     preference,
@@ -4389,9 +4419,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            self.mapper.scalar_mode = 'point'
+            self.mapper.scalar_map_mode = 'point'
         elif scalars.shape[0] == volume.n_cells:
-            self.mapper.scalar_mode = 'cell'
+            self.mapper.scalar_map_mode = 'cell'
         else:
             raise_not_matching(scalars, volume)
 
@@ -5083,7 +5113,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename of the movie to open.  Filename should end in mp4,
             but other filetypes may be supported.  See :func:`imageio.get_writer()
             <imageio.v2.get_writer>`.
@@ -5119,8 +5149,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_movie` with:\n\n   pip install imageio',
             ) from None
 
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
         self.mwriter = get_writer(filename, fps=framerate, quality=quality, **kwargs)
 
     def open_gif(
@@ -5138,7 +5170,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename of the gif to open.  Filename must end in ``"gif"``.
 
         loop : int, default: 0
@@ -5192,11 +5224,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 'Install imageio to use `open_gif` with:\n\n   pip install imageio',
             ) from None
 
-        if filename[-3:] != 'gif':
+        filename = Path(filename)
+        if not filename.suffix == '.gif':
             raise ValueError('Unsupported filetype.  Must end in .gif')
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
-        self._gif_filename = str(Path(filename).resolve())
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        self._gif_filename = filename.resolve()
 
         kwargs['mode'] = 'I'
         kwargs['loop'] = loop
@@ -5879,11 +5912,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file if requested
-        if isinstance(filename, (str, pathlib.Path, io.BytesIO)):
+        if isinstance(filename, (str, Path, io.BytesIO)):
             from PIL import Image
 
-            if isinstance(filename, (str, pathlib.Path)):
-                filename = pathlib.Path(filename)
+            if isinstance(filename, (str, Path)):
+                filename = Path(filename)
                 if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
                     filename = Path(pyvista.FIGURE_PATH) / filename
                 if not filename.suffix:
@@ -5893,7 +5926,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         f'Unsupported extension {filename.suffix}\n'
                         f'Must be one of the following: {SUPPORTED_FORMATS}',
                     )
-                filename = str(Path(str(filename)).expanduser().resolve())
+                filename = filename.expanduser().resolve()
                 Image.fromarray(image).save(filename)
             else:
                 Image.fromarray(image).save(filename, format="PNG")
@@ -5946,9 +5979,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._first_time:
             self._on_first_render_request()
             self.render()
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
-        filename = str(Path(filename).expanduser().resolve())
+        filename = Path(filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
+        filename = filename.expanduser().resolve()
         extension = pyvista.core.utilities.fileio.get_ext(filename)
 
         writer = vtkGL2PSExporter()
@@ -5965,7 +5999,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f"Valid options include: {', '.join(modes.keys())}",
             )
         writer.CompressOff()
-        writer.SetFilePrefix(filename.replace(extension, ''))
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            writer.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            writer.SetFilePrefix(filename.with_suffix(''))
         writer.SetInput(self.render_window)
         modes[extension]()
         writer.SetTitle(title)
@@ -5986,7 +6023,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str | pathlib.Path | io.BytesIO, optional
+        filename : str | Path | io.BytesIO, optional
             Location to write image to.  If ``None``, no image is written.
 
         transparent_background : bool, optional
@@ -6189,7 +6226,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_globe()
         >>> texture = examples.load_globe_texture()
-        >>> filename = str(Path(mkdtemp()) / 'orbit.gif')
+        >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
         >>> _ = plotter.add_mesh(
         ...     mesh, texture=texture, smooth_shading=True
@@ -6258,7 +6295,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        filename : str
+        filename : str | Path
             Filename to export the scene to.  Must end in ``'.obj'``.
 
         Examples
@@ -6275,17 +6312,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.render_window is None:
             raise RuntimeError("This plotter must still have a render window open.")
-        if isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute():
-            filename = str(Path(pyvista.FIGURE_PATH) / filename)
+        if (
+            isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
+        ):  # pragma: no cover
+            filename = Path(pyvista.FIGURE_PATH) / filename
         else:
-            filename = str(Path(filename).expanduser().resolve())
+            filename = Path(filename).expanduser().resolve()
 
-        if not filename.endswith('.obj'):
+        if not filename.suffix == '.obj':
             raise ValueError('`filename` must end with ".obj"')
 
         exporter = vtkOBJExporter()
         # remove the extension as VTK always adds it in
-        exporter.SetFilePrefix(filename[:-4])
+        if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+            exporter.SetFilePrefix(str(filename.with_suffix('')))
+        else:
+            exporter.SetFilePrefix(filename.with_suffix(''))
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
@@ -6462,7 +6504,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[tuple[numpy.int64, numpy.int64]]
+        list[tuple[int, int]]
             A list with the subplot coordinates of the actor.
 
         Examples
@@ -6481,9 +6523,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         [(0, 0), (1, 0)]
 
         >>> plotter.show()
+
         """
         return [
-            tuple(self.renderers.index_to_loc(index))
+            tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
             if name in self.renderers[index]._actors
         ]
@@ -6750,7 +6793,7 @@ class Plotter(BasePlotter):
             ``window_size``.  Defaults to
             :attr:`pyvista.global_theme.full_screen <pyvista.plotting.themes.Theme.full_screen>`.
 
-        screenshot : str | pathlib.Path | io.BytesIO | bool, default: False
+        screenshot : str | Path | io.BytesIO | bool, default: False
             Take a screenshot of the initial state of the plot.  If a string,
             it specifies the path to which the screenshot is saved. If
             ``True``, the screenshot is returned as an array. For interactive

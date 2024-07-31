@@ -178,7 +178,9 @@ try:
     from matplotlib import colormaps
     from matplotlib import colors
 except ImportError:  # pragma: no cover
-    from matplotlib import cm as colormaps
+    # typing for newer versions of matplotlib
+    # in newer versions cm is a module
+    from matplotlib import cm as colormaps  # type: ignore[assignment]
     from matplotlib import colors
 
 from typing import TYPE_CHECKING
@@ -695,15 +697,9 @@ class Color:
     The internally used representation is an integer RGBA sequence (values
     between 0 and 255). This might however change in future releases.
 
-    .. raw:: html
-
-       <details><summary>Refer to the table below for a list of supported colors.</summary>
+    Refer to the table below for a list of supported colors
 
     .. include:: ../color_table/color_table.rst
-
-    .. raw:: html
-
-       </details>
 
     Examples
     --------

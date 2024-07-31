@@ -710,3 +710,120 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageGridSource(_vtk.vtkImageGridSource):
+    """Create an image of a grid.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    origin : sequence[float]
+        The origin of the grid.
+
+    extent : sequence[int]
+        The extent of the whole output image, Default: (0,255,0,255,0,0).
+
+    spacing : tuple
+        The pixel spacing.
+
+    Examples
+    --------
+    Create an image of a grid.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageGridSource(
+    ...     extent=(0, 20, 0, 20, 0, 0),
+    ...     spacing=(1, 1, 1),
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    def __init__(self, origin=None, extent=None, spacing=None) -> None:
+        super().__init__()
+        if origin is not None:
+            self.origin = origin
+        if extent is not None:
+            self.extent = extent
+        if spacing is not None:
+            self.spacing = spacing
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin of the data.
+
+        Returns
+        -------
+        sequence[float]
+            The origin of the grid.
+        """
+        return self.GetGridOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]) -> None:
+        """Set the origin of the data.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            The origin of the grid.
+        """
+        self.SetGridOrigin(origin)
+
+    @property
+    def extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+        """
+        return self.GetDataExtent()
+
+    @extent.setter
+    def extent(self, extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        extent : sequence[int]
+            The extent of the whole output image.
+        """
+        self.SetDataExtent(extent)
+
+    @property
+    def spacing(self) -> Sequence[float]:
+        """Get the spacing of the grid.
+
+        Returns
+        -------
+        sequence[float]
+            The pixel spacing.
+        """
+        return self.GetDataSpacing()
+
+    @spacing.setter
+    def spacing(self, spacing: Sequence[float]) -> None:
+        """Set the spacing of the grid.
+
+        Parameters
+        ----------
+        spacing : sequence[float]
+            The pixel spacing.
+        """
+        self.SetDataSpacing(spacing)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())

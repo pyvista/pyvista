@@ -35,6 +35,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
+import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -51,7 +52,6 @@ try:
     import imageio
 except ModuleNotFoundError:
     HAS_IMAGEIO = False
-
 
 ffmpeg_failed = False
 try:
@@ -219,6 +219,14 @@ def test_import_obj():
 
     pl.import_obj(download_obj_file)
     pl.show()
+
+
+@skip_9_0_X
+def test_import_obj_with_texture():
+    filename = examples.download_doorman(load=False)
+    pl = pv.Plotter()
+    pl.import_obj(filename)
+    pl.show(cpos="xy")
 
 
 @skip_windows
@@ -1401,27 +1409,92 @@ def test_read_texture_from_numpy():
     plotter.show()
 
 
-def test_plot_rgb():
-    """Test adding a texture to a plot"""
-    cube = pv.Cube()
-    cube.clear_data()
-    x_face_color = (255, 0, 0)
-    y_face_color = (0, 255, 0)
-    z_face_color = (0, 0, 255)
-    face_colors = np.array(
-        [
-            x_face_color,
-            x_face_color,
-            y_face_color,
-            y_face_color,
-            z_face_color,
-            z_face_color,
-        ],
-        dtype=np.uint8,
-    )
-    cube.cell_data['face_colors'] = face_colors
+def _make_rgb_dataset(dtype: str, return_composite: bool, scalars: str):
+    def _dtype_convert_func(dtype):
+        # Convert color to the specified dtype
+        if dtype == 'float':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).float_rgb
+        elif dtype == 'int':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return pv.Color(color).int_rgb
+        elif dtype == 'uint8':
+
+            def as_dtype(color: tuple[float, float, float]):
+                return np.array(pv.Color(color).int_rgb, dtype=np.uint8)
+        else:
+            raise NotImplementedError
+
+        return as_dtype
+
+    def _make_polys():
+        # Create 3 separate PolyData with one quad cell each
+        faces = [4, 0, 1, 2, 3]
+        poly1 = pv.PolyData(
+            [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        poly2 = pv.PolyData(
+            [[0.0, 1.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 1.0, 1.0]], faces
+        )
+        poly3 = pv.PolyData(
+            [[0.0, 0.0, 1.0], [0.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 0.0, 1.0]], faces
+        )
+        return poly1, poly2, poly3
+
+    poly1, poly2, poly3 = _make_polys()
+    dtype_convert_func = _dtype_convert_func(dtype)
+
+    RED = dtype_convert_func((1.0, 0.0, 0.0))
+    GREEN = dtype_convert_func((0.0, 1.0, 0.0))
+    BLUE = dtype_convert_func((0.0, 0.0, 1.0))
+
+    # Color the polydata cells
+    poly1[scalars] = [RED]
+    poly2[scalars] = [GREEN]
+    poly3[scalars] = [BLUE]
+
+    dataset = pv.MultiBlock((poly1, poly2, poly3))
+
+    # Make sure the dataset is as expected
+    if return_composite:
+        assert isinstance(dataset, pv.MultiBlock)
+        assert all(np.dtype(block[scalars].dtype) == np.dtype(dtype) for block in dataset)
+        assert all(block.array_names == [scalars] for block in dataset)
+    else:
+        # Merge and return
+        dataset = pv.merge(dataset)
+        assert isinstance(dataset, pv.PolyData)
+        assert np.dtype(dataset[scalars].dtype) == np.dtype(dtype)
+        assert dataset.array_names == [scalars]
+    return dataset
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+@pytest.mark.parametrize('dtype', ['float', 'int', 'uint8'])
+def test_plot_rgb(composite, dtype):
+    scalars = 'face_colors'
+    dataset = _make_rgb_dataset(dtype, return_composite=composite, scalars=scalars)
+
     plotter = pv.Plotter()
-    plotter.add_mesh(cube, scalars='face_colors', rgb=True)
+    actor = plotter.add_mesh(dataset, scalars=scalars, rgb=True)
+    actor.prop.lighting = False
+    plotter.show()
+
+
+# check_gc fails for polydata (suspected memory leak with pv.merge)
+@pytest.mark.usefixtures('skip_check_gc')
+@pytest.mark.parametrize('scalars', ['_rgb', '_rgba'])
+@pytest.mark.parametrize('composite', [True, False], ids=['composite', 'polydata'])
+def test_plot_rgb_implicit(composite, scalars):
+    dataset = _make_rgb_dataset(dtype='uint8', return_composite=composite, scalars=scalars)
+
+    plotter = pv.Plotter()
+    actor = plotter.add_mesh(dataset)
+    actor.prop.lighting = False
     plotter.show()
 
 
@@ -2104,7 +2177,7 @@ def test_user_matrix_volume(uniform):
     volume = p.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         p.add_volume(uniform, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2119,7 +2192,7 @@ def test_user_matrix_mesh(sphere):
     actor = p.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError):
         p.add_mesh(sphere, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2786,6 +2859,14 @@ def test_ruler():
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Sphere())
     plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2)
+    plotter.view_xy()
+    plotter.show()
+
+
+def test_ruler_number_labels():
+    plotter = pv.Plotter()
+    plotter.add_mesh(pv.Sphere())
+    plotter.add_ruler([-0.6, -0.6, 0], [0.6, -0.6, 0], font_size_factor=1.2, number_labels=2)
     plotter.view_xy()
     plotter.show()
 
@@ -3912,6 +3993,96 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
+
+
+POSITION = (-0.5, -0.5, 1)
+ORIENTATION = (10, 20, 30)
+SCALE = (1.5, 2, 2.5)
+ORIGIN = (2, 1.5, 1)
+actor = pv.Actor()
+actor.position = POSITION
+actor.orientation = ORIENTATION
+actor.scale = SCALE
+actor.origin = ORIGIN
+USER_MATRIX = pv.array_from_vtkmatrix(actor.GetMatrix())
+
+XYZ_ASSEMBLY_TEST_CASES = dict(
+    default={},
+    position=dict(position=POSITION),
+    orientation=dict(orientation=ORIENTATION),
+    scale=dict(scale=SCALE),
+    origin=dict(origin=ORIGIN, orientation=ORIENTATION),
+    user_matrix=dict(user_matrix=USER_MATRIX),
+)
+
+
+@pytest.mark.parametrize(
+    'test_kwargs',
+    XYZ_ASSEMBLY_TEST_CASES.values(),
+    ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
+)
+@pytest.mark.parametrize(
+    ('Assembly', 'obj_kwargs'),
+    [
+        (pv.AxesAssembly, {}),
+        (pv.AxesAssemblySymmetric, dict(label_size=25)),
+        (pv.PlanesAssembly, dict(opacity=1)),
+    ],
+    ids=['Axes', 'AxesSymmetric', 'Planes'],
+)
+def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
+    plot = pv.Plotter()
+    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    plot.add_actor(assembly)
+    if isinstance(assembly, pv.PlanesAssembly):
+        assembly.camera = plot.camera
+    if test_kwargs:
+        # Add second axes at the origin for visual reference
+        plot.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
+    plot.show()
+
+
+@pytest.mark.parametrize(
+    'Assembly',
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
+    ids=['Axes', 'AxesSymmetric', 'Planes'],
+)
+def test_xyz_assembly_show_labels_false(Assembly):
+    plot = pv.Plotter()
+    assembly = Assembly(show_labels=False)
+    plot.add_actor(assembly)
+    if isinstance(assembly, pv.PlanesAssembly):
+        assembly.camera = plot.camera
+    plot.show()
+
+
+@pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
+def test_label_prop3d(relative_position):
+    dataset = pv.Cone(direction=(0, 0, 1))
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=dataset))
+    actor.user_matrix = USER_MATRIX
+
+    label = pv.Label(text='TEXT', size=100, relative_position=relative_position)
+    label.prop.justification_horizontal = 'center'
+    label.user_matrix = USER_MATRIX
+
+    pl = pv.Plotter()
+    pl.add_actor(label)
+    pl.add_actor(actor)
+    pl.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
@@ -4354,4 +4525,99 @@ def test_direction_objects(direction_obj_test_case):
     plot.view_xy()
     plot.add_axes(**axes_kwargs)
 
+    plot.show()
+
+
+@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.parametrize('normal_sign', ['+', '-'])
+@pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
+def test_orthogonal_planes_source_normals(normal_sign, plane):
+    plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
+    output = plane_source.output
+    plane = output[plane]
+    plane['_rgb'] = [
+        pv.Color('red').float_rgb,
+        pv.Color('green').float_rgb,
+        pv.Color('blue').float_rgb,
+        pv.Color('yellow').float_rgb,
+    ]
+    plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
+
+
+# Add skips since Plane's edges differ (e.g. triangles instead of quads)
+@skip_windows
+@skip_9_1_0
+@pytest.mark.parametrize(
+    'resolution',
+    [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
+    ids=['x_resolution', 'y_resolution', 'z_resolution'],
+)
+def test_orthogonal_planes_source_resolution(resolution):
+    plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
+    plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+def test_planes_assembly(airplane):
+    plot = pv.Plotter()
+    actor = pv.PlanesAssembly()
+    plot.add_actor(actor)
+    actor.camera = plot.camera
+    plot.add_axes()
+    plot.show()
+
+
+@skip_9_1_0  # Difference in clipping generates error of approx 500
+@pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
+@pytest.mark.parametrize(
+    ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
+)
+@pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
+def test_planes_assembly_label_position(
+    plane, label_kwarg, camera_position, label_mode, label_size, label_offset
+):
+    plot = pv.Plotter()
+
+    for edge in ('right', 'top', 'left', 'bottom'):
+        for position in (-1, -0.5, 0, 0.5, 1):
+            actor = pv.PlanesAssembly(
+                labels=['', '', ''],
+                opacity=0.01,
+                label_edge=edge,
+                label_position=position,
+                label_mode=label_mode,
+                label_offset=label_offset,
+                label_size=label_size,
+            )
+            label_name = str(position) + edge[0].upper()
+            setattr(actor, label_kwarg, label_name)
+            plot.add_actor(actor)
+            actor.camera = plot.camera
+    plot.camera_position = camera_position
+    plot.add_axes_at_origin()
+    plot.show()
+
+
+BOUNDS = (-50, 50, -10, 30, -80, 80)
+
+
+@pytest.mark.parametrize(
+    'bounds',
+    [BOUNDS, BOUNDS * np.array(0.01)],
+)
+@pytest.mark.parametrize('label_size', [25, 50])
+def test_planes_assembly_label_size(bounds, label_size):
+    plot = pv.Plotter()
+    labels = ['FIRST ', 'SECOND ', 'THIRD ']
+    common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
+    for label_mode in ['2D', '3D']:
+        actor = pv.PlanesAssembly(
+            x_label=labels[0] + label_mode,
+            y_label=labels[1] + label_mode,
+            z_label=labels[2] + label_mode,
+            label_mode=label_mode,
+            label_color='white' if label_mode == '3D' else 'black',
+            **common_kwargs,
+        )
+        plot.add_actor(actor)
+        actor.camera = plot.camera
     plot.show()

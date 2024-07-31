@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Generate Perlin Noise over a 3D StructuredGrid
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Feel free to change the values of ``freq`` to change the shape of
@@ -30,7 +30,7 @@ grid = pv.sample_function(noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(120, 40, 40))
 out = grid.threshold(0.02)
 out
 
-###############################################################################
+# %%
 # color limits without blue
 mn, mx = [out['scalars'].min(), out['scalars'].max()]
 clim = (mn, mx * 1.8)
@@ -43,3 +43,5 @@ out.plot(
     clim=clim,
     show_edges=False,
 )
+# %%
+# .. tags:: filter

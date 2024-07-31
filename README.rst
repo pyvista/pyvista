@@ -103,8 +103,14 @@ Status badges
 .. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
    :target: https://github.com/nschloe/awesome-scientific-computing
 
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
+
+.. |Good first issue| image:: https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue
+   :target: https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+
 +----------------------+------------------------------------------------+
-| Deployment           | |pypi| |conda|                                 |
+| Deployment           | |pypi| |conda| |Packaging status|              |
 +----------------------+------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
@@ -116,7 +122,7 @@ Status badges
 +----------------------+------------------------------------------------+
 | License              | |MIT|                                          |
 +----------------------+------------------------------------------------+
-| Community            | |slack| |discuss|                              |
+| Community            | |slack| |discuss| |Good first issue|           |
 +----------------------+------------------------------------------------+
 | Formatter            | |prettier|                                     |
 +----------------------+------------------------------------------------+

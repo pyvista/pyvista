@@ -41,7 +41,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Camera light
 # ============
 #
@@ -62,7 +62,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Scene light
 # ===========
 #
@@ -75,3 +75,5 @@ plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
 light = pv.Light(position=(0, 1, 0), light_type='scene light')
 plotter.add_light(light)
 plotter.show()
+# %%
+# .. tags:: lights

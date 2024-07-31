@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Meshes are colored by the data on their nodes or cells - when coloring a mesh
 # by data on its nodes, the values must be interpolated across the faces of
 # cells. The process by which those scalars are interpolated is critical.
@@ -62,7 +62,7 @@ p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
 p.show()
 
-###############################################################################
+# %%
 # Shown in the figure above, when not interpolating the scalars before mapping,
 # the colors (RGB values, not scalars) are interpolated between the vertices by
 # the underlying graphics library (OpenGL), and the colors shown are not
@@ -91,7 +91,7 @@ p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
 p.show()
 
-###############################################################################
+# %%
 # The cylinder mesh above is a great example dataset for this as it has a wide
 # spread between the vertices (points are only at the top and bottom of the
 # cylinder) which means high surface are of the mesh has to be interpolated.
@@ -123,7 +123,7 @@ p.link_views()
 p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
 p.show()
 
-###############################################################################
+# %%
 # This time is pretty difficult to notice the differences - they are there,
 # subtle, but present. The differences become more apparent when we decrease
 # the number of colors in colormap.
@@ -150,7 +150,7 @@ p.link_views()
 p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
 p.show()
 
-###############################################################################
+# %%
 # Left, ``interpolate_before_map`` OFF.  Right, ``interpolate_before_map`` ON.
 #
 # Now that is much more compelling. On the right, the contours of the scalar
@@ -161,3 +161,5 @@ p.show()
 # In our opinion, color interpolation is not a preferred default for scientific
 # visualization and is why we have chosen to set the ``interpolate_before_map``
 # flag to ``True``.
+#
+# .. tags:: plot

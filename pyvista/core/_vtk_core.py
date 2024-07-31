@@ -20,6 +20,7 @@ import warnings
 from vtkmodules.vtkCommonCore import vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource
+from vtkmodules.vtkImagingSources import vtkImageGridSource
 from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource
 from vtkmodules.vtkImagingSources import vtkImageNoiseSource
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
@@ -212,6 +213,7 @@ from vtkmodules.vtkCommonExecutionModel import vtkImageToStructuredGrid
 from vtkmodules.vtkCommonMath import vtkMatrix3x3
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
+from vtkmodules.vtkDomainsChemistry import vtkProteinRibbonFilter
 from vtkmodules.vtkFiltersCore import VTK_BEST_FITTING_PLANE
 from vtkmodules.vtkFiltersCore import vtkAppendArcLength
 from vtkmodules.vtkFiltersCore import vtkAppendFilter
