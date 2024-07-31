@@ -3727,7 +3727,8 @@ class CubeFacesSource(CubeSource):
         If set, the center portion of each face is removed and the :attr:`output`
         :class:`pyvista.PolyData` will each have four quad cells (one for each
         side of the frame) instead of a single quad cell. Values must be between ``0.0``
-        (minimal frame) and ``1.0`` (large frame).
+        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
+        a constant width.
 
     shrink : float, optional
         Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
@@ -3782,13 +3783,13 @@ class CubeFacesSource(CubeSource):
 
     >>> cube_faces_source.explode = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot()
+    >>> output.plot(show_edges=True)
 
     Use :attr:`shrink` to also shrink the faces.
 
     >>> cube_faces_source.shrink = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot()
+    >>> output.plot(show_edges=True)
 
     Fit cube faces to a dataset and only plot four of them.
 
@@ -3804,6 +3805,18 @@ class CubeFacesSource(CubeSource):
     >>> _ = pl.add_mesh(output['-Y'], opacity=0.5)
     >>> pl.show()
 
+    Generate a frame instead of full faces.
+
+    >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
+    >>> cube_faces_source = pv.CubeFacesSource(
+    ...     bounds=mesh.bounds, frame_width=0.1
+    ... )
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output, show_edges=True, line_width=3)
+    >>> pl.show()
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
@@ -3865,12 +3878,28 @@ class CubeFacesSource(CubeSource):
 
     @property
     def frame_width(self) -> float | None:  # numpydoc ignore=RT01
-        """Shrink the cube's faces.
+        """Convert the faces into frames with the specified width.
 
-        If set, this is the factor by which to shrink each face. Values must be
-        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+        If set, the center portion of each face is removed and the :attr:`output`
+        :class:`pyvista.PolyData` will each have four quad cells (one for each
+        side of the frame) instead of a single quad cell. Values must be between ``0.0``
+        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
+        a constant width.
 
-        Internally, :meth:`~pyvista.DataSetFilters.shrink` is used.
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, frame_width=0.1
+        ... )
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
+        >>> cube_faces_source.frame_width = 0.5
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
+        >>> cube_faces_source.frame_width = 0.9
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
         """
         return self._frame_width
 
