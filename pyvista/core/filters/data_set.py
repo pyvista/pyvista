@@ -3268,14 +3268,14 @@ class DataSetFilters:
 
         categorical : bool, default: False
             Control whether the source point data is to be treated as
-            categorical. If ``True``,  histograming is used to assign the 
+            categorical. If ``True``,  histograming is used to assign the
             cell data. Specifically, a histogram is populated for each cell
             from the scalar values at each point, and the bin with the most
             elements is selected. In case of a tie, the smaller value is selected.
-            
+
             .. note::
-             
-                If the point data is continuous, values that are almost equal (within 
+
+                If the point data is continuous, values that are almost equal (within
                 ``1e-6``) are merged into a single bin. Otherwise, for discrete data
                 the number of bins equals the number of unique values.
 
