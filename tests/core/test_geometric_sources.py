@@ -769,17 +769,17 @@ def test_cube_faces_source_update(cube_faces_source):
 
 
 def test_cube_faces_source_set_get_shrink():
-    source = pv.CubeFacesSource(shrink=0.5)
-    assert source.shrink == 0.5
-    source.shrink = 0.1
-    assert source.shrink == 0.1
+    source = pv.CubeFacesSource(shrink_factor=0.5)
+    assert source.shrink_factor == 0.5
+    source.shrink_factor = 0.1
+    assert source.shrink_factor == 0.1
 
 
 def test_cube_faces_source_set_get_explode():
-    source = pv.CubeFacesSource(explode=0.5)
-    assert source.explode == 0.5
-    source.explode = 0.1
-    assert source.explode == 0.1
+    source = pv.CubeFacesSource(explode_factor=0.5)
+    assert source.explode_factor == 0.5
+    source.explode_factor = 0.1
+    assert source.explode_factor == 0.1
 
 
 @pytest.mark.parametrize(
@@ -793,7 +793,7 @@ def test_cube_faces_source_set_get_explode():
         ('-Z', (-0.5, 0.5, -0.5, 0.5, -0.5, -0.5)),
     ],
 )
-@pytest.mark.parametrize(('attr', 'value'), [('shrink', 1.0), ('explode', 0.0)])
+@pytest.mark.parametrize(('attr', 'value'), [('shrink_factor', 1.0), ('explode_factor', 0.0)])
 def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_name, bounds):
     # Make sure bounds of each face are correct
     # Parametrize with shrink and explode to ensure they do not modify order of points and faces
@@ -810,6 +810,14 @@ def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_na
     assert default_points == modified_points
     assert default_faces == modified_faces
     assert poly.bounds == bounds
+
+
+def test_cube_faces_source_frame(cube_faces_source):
+    assert cube_faces_source.frame_width is None
+    cube_faces_source = pv.CubeFacesSource(frame_width=0.2)
+    assert cube_faces_source.frame_width == 0.2
+    cube_faces_source.frame_width = 0.3
+    assert cube_faces_source.frame_width == 0.3
 
 
 @pytest.mark.parametrize(

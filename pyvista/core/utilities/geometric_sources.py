@@ -3723,12 +3723,19 @@ class CubeFacesSource(CubeSource):
         Specify the bounding box of the cube. If given, all other size
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
-    shrink : float, optional
+    frame_width : float, optional
+        If set, the center portion of each face is removed and the :attr:`output`
+        :class:`pyvista.PolyData` will each have four quad cells (one for each
+        side of the frame) instead of a single quad cell. Values must be between ``0.0``
+        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
+        a constant width.
+
+    shrink_factor : float, optional
         Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
         If set, this is the factor by which to shrink each face. Values must be
         between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
 
-    explode : float, optional
+    explode_factor : float, optional
         Use :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
         cube's center. If set, this is the factor by which to move each face.
         Increasing values will push the cells farther away. Use a negative value to
@@ -3772,17 +3779,17 @@ class CubeFacesSource(CubeSource):
       Z Bounds:   -5.000e-01, 5.000e-01
       N Arrays:   2
 
-    Use :attr:`explode` to explode the faces.
+    Use :attr:`explode_factor` to explode the faces.
 
-    >>> cube_faces_source.explode = 0.5
+    >>> cube_faces_source.explode_factor = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot()
+    >>> output.plot(show_edges=True)
 
-    Use :attr:`shrink` to also shrink the faces.
+    Use :attr:`shrink_factor` to also shrink the faces.
 
-    >>> cube_faces_source.shrink = 0.5
+    >>> cube_faces_source.shrink_factor = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot()
+    >>> output.plot(show_edges=True)
 
     Fit cube faces to a dataset and only plot four of them.
 
@@ -3798,16 +3805,30 @@ class CubeFacesSource(CubeSource):
     >>> _ = pl.add_mesh(output['-Y'], opacity=0.5)
     >>> pl.show()
 
+    Generate a frame instead of full faces.
+
+    >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
+    >>> cube_faces_source = pv.CubeFacesSource(
+    ...     bounds=mesh.bounds, frame_width=0.1
+    ... )
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output, show_edges=True, line_width=3)
+    >>> pl.show()
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
         '_output',
         '_names',
         'names',
+        '_frame_width',
+        'frame_width',
         '_shrink',
-        'shrink',
+        'shrink_factor',
         '_explode',
-        'explode',
+        'explode_factor',
         '_bounds',
         'bounds',
     ]
@@ -3828,8 +3849,9 @@ class CubeFacesSource(CubeSource):
         y_length: float = 1.0,
         z_length: float = 1.0,
         bounds: VectorLike[float] | None = None,
-        shrink: float | None = None,
-        explode: float | None = None,
+        frame_width: float | None = None,
+        shrink_factor: float | None = None,
+        explode_factor: float | None = None,
         names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
         point_dtype='float32',
     ):
@@ -3849,12 +3871,46 @@ class CubeFacesSource(CubeSource):
         self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
 
         # Set properties
-        self.shrink = shrink
-        self.explode = explode
+        self.frame_width = frame_width
+        self.shrink_factor = shrink_factor
+        self.explode_factor = explode_factor
         self.names = names  # type: ignore[assignment]
 
     @property
-    def shrink(self) -> float | None:  # numpydoc ignore=RT01
+    def frame_width(self) -> float | None:  # numpydoc ignore=RT01
+        """Convert the faces into frames with the specified width.
+
+        If set, the center portion of each face is removed and the :attr:`output`
+        :class:`pyvista.PolyData` will each have four quad cells (one for each
+        side of the frame) instead of a single quad cell. Values must be between ``0.0``
+        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
+        a constant width.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, frame_width=0.1
+        ... )
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
+        >>> cube_faces_source.frame_width = 0.5
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
+        >>> cube_faces_source.frame_width = 0.9
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+
+        """
+        return self._frame_width
+
+    @frame_width.setter
+    def frame_width(self, width: float | None):  # numpydoc ignore=GL08
+        self._frame_width = (
+            width if width is None else _validation.validate_number(width, name='frame width')
+        )
+
+    @property
+    def shrink_factor(self) -> float | None:  # numpydoc ignore=RT01
         """Shrink the cube's faces.
 
         If set, this is the factor by which to shrink each face. Values must be
@@ -3864,14 +3920,14 @@ class CubeFacesSource(CubeSource):
         """
         return self._shrink
 
-    @shrink.setter
-    def shrink(self, factor: float | None):  # numpydoc ignore=GL08
+    @shrink_factor.setter
+    def shrink_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._shrink = (
             factor if factor is None else _validation.validate_number(factor, name='shrink factor')
         )
 
     @property
-    def explode(self) -> float | None:  # numpydoc ignore=RT01
+    def explode_factor(self) -> float | None:  # numpydoc ignore=RT01
         """Push each face away from the cube's center.
 
         If set, this is the factor by which to move each face. Larger values will
@@ -3881,8 +3937,8 @@ class CubeFacesSource(CubeSource):
         """
         return self._explode
 
-    @explode.setter
-    def explode(self, factor: float | None):  # numpydoc ignore=GL08
+    @explode_factor.setter
+    def explode_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._explode = (
             factor if factor is None else _validation.validate_number(factor, name='explode factor')
         )
@@ -3946,32 +4002,66 @@ class CubeFacesSource(CubeSource):
         )
         self._names = cast(Tuple[str, str, str, str, str, str], valid_names)
 
-    def _get_cube_face_points(self) -> list[NumpyArray[float]]:
-        cube = CubeSource.output.fget(self)  # type: ignore[attr-defined]
-        shrink, explode = self.shrink, self.explode
-        if shrink:
-            cube = cube.shrink(shrink)
-        if explode:
-            cube = cube.explode(explode).extract_geometry()
-        points, faces = cube.points, cube.regular_faces
-        Index: type[CubeFacesSource._FaceIndex] = CubeFacesSource._FaceIndex
-        return [
-            points[faces[Index.X_POS]],
-            points[faces[Index.X_NEG]],
-            points[faces[Index.Y_POS]],
-            points[faces[Index.Y_NEG]],
-            points[faces[Index.Z_POS]],
-            points[faces[Index.Z_NEG]],
-        ]
-
     def update(self):
         """Update the output of the source."""
-        # Get updated point geometry
-        face_points = self._get_cube_face_points()
+
+        def _compute_relative_lengths(bnds: BoundsLike):
+            # Need to rescale points to make frame width consistent
+            x_len = np.linalg.norm(bnds[1] - bnds[0])
+            y_len = np.linalg.norm(bnds[3] - bnds[2])
+            z_len = np.linalg.norm(bnds[5] - bnds[4])
+            lengths = np.array((x_len, y_len, z_len))
+            return lengths / np.min(lengths)
+
+        # Get initial cube output
+        cube = CubeSource.output.fget(self)
+
+        # Modify cube
+        shrink_factor, explode_factor = self.shrink_factor, self.explode_factor
+        modified_cube = cube
+        if shrink_factor:
+            modified_cube = cube.shrink(shrink_factor)
+        if explode_factor:
+            modified_cube = cube.explode(explode_factor).extract_geometry()
+
+        # Extract list of points for each face in the desired order
+        mod_points, mod_faces = modified_cube.points, modified_cube.regular_faces
+        Index = CubeFacesSource._FaceIndex
+        face_points = [
+            mod_points[mod_faces[Index.X_POS]],
+            mod_points[mod_faces[Index.X_NEG]],
+            mod_points[mod_faces[Index.Y_POS]],
+            mod_points[mod_faces[Index.Y_NEG]],
+            mod_points[mod_faces[Index.Z_POS]],
+            mod_points[mod_faces[Index.Z_NEG]],
+        ]
+
+        # Update the polydata for each face
         output = self._output
         for index, (name, points) in enumerate(zip(self.names, face_points)):
-            output[index].points = points
             output.set_block_name(index, name)
+            face_poly = output[index]
+            face_poly.points = points
+            if self.frame_width is None:
+                face_poly.faces = [4, 0, 1, 2, 3]  # Single quad
+            else:
+                # Need to scale points to make the frame width consistent
+                scale = 1 - self.frame_width / _compute_relative_lengths(cube.bounds)
+                center = face_poly.center
+                inner_points = points.copy()
+                inner_points -= center
+                inner_points *= scale
+                inner_points += center
+
+                # Define frame quads from outer and inner points
+                quad1_points = np.vstack((points[[0, 1]], inner_points[[1, 0]]))
+                quad2_points = np.vstack((points[[1, 2]], inner_points[[2, 1]]))
+                quad3_points = np.vstack((points[[2, 3]], inner_points[[3, 2]]))
+                quad4_points = np.vstack((points[[3, 0]], inner_points[[0, 3]]))
+                face_poly.points = np.vstack(
+                    (quad1_points, quad2_points, quad3_points, quad4_points)
+                )
+                face_poly.faces = [4, 0, 1, 2, 3, 4, 4, 5, 6, 7, 4, 8, 9, 10, 11, 4, 12, 13, 14, 15]
 
     @property
     def output(self) -> pyvista.MultiBlock:
