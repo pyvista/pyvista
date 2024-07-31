@@ -83,7 +83,7 @@ mesh.plot(show_edges=True, line_width=5)
 
 # %%
 # Generate quadrilateral mesh of Sphere
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows how a more complicated mesh can be defined.
 # :func:`pyvista.Sphere` creates a sphere with a triangulated mesh,
 # but a regular quadrilateral mesh is desired for some use case.
