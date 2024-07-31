@@ -31,3 +31,5 @@ pl.subplot(0, 1)
 pl.add_mesh(surf, color=True, show_edges=True)
 pl.add_title('Reconstructed Surface')
 pl.show()
+# %%
+# .. tags:: filter

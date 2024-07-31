@@ -71,3 +71,5 @@ grid.point_data["values"] = values.flatten(order="F")  # Flatten the array
 
 # Now plot the grid
 grid.plot(show_edges=True)
+# %%
+# .. tags:: load

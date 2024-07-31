@@ -104,3 +104,5 @@ restripped
 # The output from the ``strip`` filter is, as expected, identical to the
 # original ``mesh``.
 restripped == mesh
+# %%
+# .. tags:: load

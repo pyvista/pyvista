@@ -93,3 +93,5 @@ for i in range(1, 50):
     update_time(t[i])
 
 p.show()  # Keep plotter open to let user play with time slider
+# %%
+# .. tags:: plot

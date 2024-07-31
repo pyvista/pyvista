@@ -65,3 +65,5 @@ def plot_subdivisions(mesh, a, b):
 plotter = plot_subdivisions(mesh, 1, 3)
 plotter.camera_position = cpos
 plotter.show()
+# %%
+# .. tags:: filter
