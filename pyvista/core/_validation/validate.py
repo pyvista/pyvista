@@ -549,9 +549,9 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         instance.
 
         .. note::
-        
+
            Although ``RotationLike`` inputs are accepted, no checks are done
-           to verify that the transformation is a actually a rotation. 
+           to verify that the transformation is a actually a rotation.
            Therefore, any 3x3 transformation is acceptable.
 
     name : str, default: "Transform"
