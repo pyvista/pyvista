@@ -26,7 +26,7 @@ sphinx-tags==0.4.0
 sphinx-toolbox==3.7.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==2.0.0
-sympy==1.12.1
+sympy==1.13.1
 trame==3.6.3
 trame-vtk==2.8.9
 trame-vuetify==2.6.2
