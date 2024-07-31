@@ -3284,7 +3284,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         >>> import pyvista as pv
         >>> ugrid = pv.ImageData(dimensions=(3, 2, 2)).to_tetrahedra(12)
-        >>> exploded = ugrid.explode_factor()
+        >>> exploded = ugrid.explode()
         >>> exploded.plot()
 
         Enable SSAO with the default parameters.

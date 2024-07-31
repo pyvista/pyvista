@@ -633,7 +633,7 @@ def SolidSphere(
     >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
     ...     partial_solid_sphere.cell_centers().points, axis=-1
     ... )
-    >>> partial_solid_sphere.explode_factor(1).plot()
+    >>> partial_solid_sphere.explode(1).plot()
 
     """
     if end_theta is None:

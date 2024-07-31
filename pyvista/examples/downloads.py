@@ -1356,7 +1356,7 @@ def download_tetrahedron(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> dataset = examples.download_tetrahedron()
-    >>> dataset.shrink_factor(0.85).plot()
+    >>> dataset.shrink(0.85).plot()
 
     .. seealso::
 
@@ -1552,7 +1552,7 @@ def download_quadratic_pyramid(load=True):  # pragma: no cover
 
     >>> from pyvista import examples
     >>> dataset = examples.download_quadratic_pyramid()
-    >>> dataset.shrink_factor(0.4).plot()
+    >>> dataset.shrink(0.4).plot()
 
     .. seealso::
 

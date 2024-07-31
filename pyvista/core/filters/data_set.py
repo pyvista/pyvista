@@ -6490,7 +6490,7 @@ class DataSetFilters:
 
         Now, plot the mesh with shrunk faces.
 
-        >>> shrunk = mesh.shrink_factor(0.5)
+        >>> shrunk = mesh.shrink(0.5)
         >>> shrunk.clear_data()  # cleans up plot
         >>> shrunk.plot(show_edges=True, line_width=5)
 
@@ -6971,7 +6971,7 @@ class DataSetFilters:
         >>> yrng = np.linspace(0, 2, 4)
         >>> zrng = np.linspace(0, 3, 5)
         >>> grid = pv.RectilinearGrid(xrng, yrng, zrng)
-        >>> exploded = grid.explode_factor()
+        >>> exploded = grid.explode()
         >>> exploded.plot(show_edges=True)
 
         """

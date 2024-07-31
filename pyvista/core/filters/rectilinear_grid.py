@@ -81,13 +81,13 @@ class RectilinearGridFilters:
         Now, generate the tetrahedra plot in the exploded view of the cell.
 
         >>> tet_grid = grid.to_tetrahedra()
-        >>> tet_grid.explode_factor(factor=0.5).plot(show_edges=True)
+        >>> tet_grid.explode(factor=0.5).plot(show_edges=True)
 
         Take the same grid but divide the first cell into 5 cells and the other
         cell into 12 tetrahedrons per cell.
 
         >>> tet_grid = grid.to_tetrahedra(mixed=[5, 12])
-        >>> tet_grid.explode_factor(factor=0.5).plot(show_edges=True)
+        >>> tet_grid.explode(factor=0.5).plot(show_edges=True)
 
         """
         alg = _vtk.vtkRectilinearGridToTetrahedra()
