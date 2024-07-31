@@ -69,8 +69,9 @@ class _CubeFacesKwargs(TypedDict):
     y_length: float
     z_length: float
     bounds: VectorLike[float] | None
-    shrink: float | None
-    explode: float | None
+    frame_width: float | None
+    shrink_factor: float | None
+    explode_factor: float | None
     names: Sequence[str]
     point_dtype: str
 
@@ -1293,7 +1294,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             label.relative_position = position
 
 
-class CubeAssembly(_XYZAssembly):
+class BoxAssembly(_XYZAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
     This class is similar to :class:`~pyvista.AxesAssembly` but the axes are
@@ -1347,7 +1348,7 @@ class CubeAssembly(_XYZAssembly):
         Color of the z-axis shaft and tip.
 
     opacity : float | VectorLike[float], default: 0.3,
-        Opacity of the cube's faces.
+        Opacity of the box's faces.
 
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
         Position of the axes in space.
@@ -1453,7 +1454,7 @@ class CubeAssembly(_XYZAssembly):
         **kwargs: Unpack[_CubeFacesKwargs],
     ):
         # Init geometry
-        kwargs.setdefault('explode', 0.01)
+        kwargs.setdefault('frame_width', 0.1)
         self._geometry_source = pv.CubeFacesSource(**kwargs)
         self._face_datasets = self._geometry_source.output
         # Init face actors
@@ -1490,10 +1491,6 @@ class CubeAssembly(_XYZAssembly):
             user_matrix=user_matrix,
         )
         self.opacity = opacity  # type: ignore[assignment]
-        for actor in self._face_actors:
-            actor.prop.style = 'wireframe'
-            actor.prop.line_width = 20
-            actor.prop.render_lines_as_tubes = True
 
         for label in self._label_actor_iterator:
             prop = label.prop
@@ -1779,9 +1776,9 @@ class CubeAssembly(_XYZAssembly):
 
     def _update_label_positions(self):
         faces = self._face_datasets
-        cube_center = faces.center
+        box_center = faces.center
         for face, label in zip(self._face_datasets, self._label_actors):
-            label.relative_position = face.center - cube_center
+            label.relative_position = face.center - box_center
         # label_position_plus = self.label_position
         # label_position_minus = (-label_position_plus[0], -label_position_plus[1], -label_position_plus[2])
         #
