@@ -1295,12 +1295,9 @@ class AxesAssemblySymmetric(AxesAssembly):
 
 
 class BoxAssembly(_XYZAssembly):
-    """Symmetric assembly of arrow-style axes parts.
+    """Assembly of box faces with labels.
 
-    This class is similar to :class:`~pyvista.AxesAssembly` but the axes are
-    symmetric.
-
-    The axes may be used as a widget or added to a scene.
+    The assembly may be used as a widget or added to a scene.
 
     Parameters
     ----------
@@ -1323,7 +1320,7 @@ class BoxAssembly(_XYZAssembly):
         are added. Alternatively, set the labels with :attr:`labels`.
 
     labels : Sequence[str], optional
-        Text labels for the axes. Specify three strings, one for each axis, or
+        Text labels for the box. Specify three strings, one for each axis, or
         six strings, one for each +/- axis. If three strings plus ``'+'`` and minus
         ``'-'`` characters are added. This is an alternative parameter to using
         :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
@@ -1342,15 +1339,15 @@ class BoxAssembly(_XYZAssembly):
         Size of the text labels.
 
     x_color : ColorLike | Sequence[ColorLike], optional
-        Color of the x-axis shaft and tip.
+        Color of the x-axis faces.
 
     y_color : ColorLike | Sequence[ColorLike], optional
-        Color of the y-axis shaft and tip.
+        Color of the y-axis faces.
 
     z_color : ColorLike | Sequence[ColorLike], optional
-        Color of the z-axis shaft and tip.
+        Color of the z-axis faces.
 
-    opacity : float | VectorLike[float], default: 0.3,
+    opacity : float | VectorLike[float], default: 1.0,
         Opacity of the box's faces.
 
     culling : 'front' | 'back' | None, default: None
@@ -1358,84 +1355,79 @@ class BoxAssembly(_XYZAssembly):
         render the back faces of the box, or ``back`` to only render the front faces.
 
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
-        Position of the axes in space.
+        Position of the box in space.
 
     orientation : VectorLike[float], default: (0, 0, 0)
-        Orientation angles of the axes which define rotations about the
+        Orientation angles of the box which define rotations about the
         world's x-y-z axes. The angles are specified in degrees and in
         x-y-z order. However, the actual rotations are applied in the
         around the y-axis first, then the x-axis, and finally the z-axis.
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
-        Origin of the axes. This is the point about which all rotations take place. The
+        Origin of the box. This is the point about which all rotations take place. The
         rotations are defined by the :attr:`orientation`.
 
-    scale : VectorLike[float], default: (1.0, 1.0, 1.0)
-        Scaling factor applied to the axes.
+    scale : float | VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the box.
 
     user_matrix : MatrixLike[float], optional
-        A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
-        The user matrix is the last transformation applied to the actor.
+        A 4x4 transformation matrix applied to the box. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the assembly.
 
     **kwargs
-        Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
+        Keyword arguments passed to :class:`pyvista.CubeFacesSource`.
 
     Examples
     --------
-    Add symmetric axes to a plot.
+    Add a box assembly to a plot. It has a ``'frame'`` :attr:`box_style` by default.
 
     >>> import pyvista as pv
-    >>> axes_assembly = pv.AxesAssemblySymmetric()
+    >>> from pyvista import examples
+    >>> box = pv.BoxAssembly()
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
+    >>> _ = pl.add_actor(box)
     >>> pl.show()
 
-    Customize the axes labels.
+    Cull the front faces and hide the labels to only render the frame behind a mesh.
 
-    >>> axes_assembly.labels = [
-    ...     'east',
-    ...     'west',
-    ...     'north',
-    ...     'south',
-    ...     'up',
-    ...     'down',
-    ... ]
-    >>> axes_assembly.label_color = 'darkgoldenrod'
+    >>> box.culling = 'front'
+    >>> box.show_labels = False
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_actor(axes_assembly)
+    >>> _ = pl.add_mesh(pv.Sphere())
+    >>> _ = pl.add_actor(box)
     >>> pl.show()
 
-    Add the axes as a custom orientation widget with
-    :func:`~pyvista.Renderer.add_orientation_widget`. We also configure the labels to
-    only show text for the positive axes.
+    Use the ``'tube'`` :attr:`box_style` and fit the box to a mesh. We also customize
+    the axes labels to use the ``RAS`` coordinate system for medical applications.
 
-    >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    >>> human = examples.download_human()
+    >>> # RAS coordinates: right/left, anterior/posterior, superior/inferior
+    >>> labels = ['R', 'L', 'A', 'P', 'S', 'I']
+    >>> box = pv.BoxAssembly(
+    ...     bounds=human.bounds,
+    ...     box_style='tube',
+    ...     labels=labels,
+    ...     label_color='gray',
     ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_actor(box)
+    >>> pl.show()
+
+    Add the box as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`. For this use case we also use
+    the ``'face'`` :attr:`box_style`.
+
+    >>> box = pv.BoxAssembly(box_style='face')
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
     >>> _ = pl.add_orientation_widget(
-    ...     axes_assembly,
-    ...     viewport=(0, 0, 0.5, 0.5),
+    ...     box,
+    ...     viewport=(0, 0, 0.3, 0.3),
     ... )
     >>> pl.show()
-
-    Shrink the faces so they appear as a single point and render them as spheres.
-
-    # >>> cube_faces_source.shrink = 1e-8
-    # >>> cube_faces_source.update()
-    #
-    # >>> pl = pv.Plotter()
-    # >>> _ = pl.add_mesh(mesh, color='tomato')
-    # >>> _ = pl.add_mesh(
-    # ...     output,
-    # ...     style='points',
-    # ...     render_points_as_spheres=True,
-    # ...     point_size=20,
-    # ... )
-    # >>> pl.show()
-
     """
 
     def __init__(
