@@ -19,10 +19,6 @@ import pyvista
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsLike
-from ._typing_core import MatrixLike
-from ._typing_core import Number
-from ._typing_core import NumpyArray
-from ._typing_core import VectorLike
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -47,7 +43,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator
     from collections.abc import Iterator
 
-    import scipy
+    from ._typing_core import MatrixLike
+    from ._typing_core import Number
+    from ._typing_core import NumpyArray
+    from ._typing_core import RotationLike
+    from ._typing_core import VectorLike
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1143,7 +1143,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def rotate(
         self,
-        rotation: MatrixLike[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation,
+        rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1157,7 +1157,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        rotation : MatrixLike[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         point : Vector, default: (0.0, 0.0, 0.0)

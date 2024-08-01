@@ -9,10 +9,7 @@ import numpy as np
 from pyvista.core import _validation
 
 if TYPE_CHECKING:  # pragma: no cover
-    import scipy
-
-    from pyvista.core import _vtk_core as _vtk
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -324,7 +321,7 @@ def apply_transformation_to_points(transformation, points, inplace=False):
 
 
 def rotation(
-    rotation: MatrixLike[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation,
+    rotation: RotationLike,
     point: VectorLike[float] | None = None,
 ):
     """Return a 4x4 matrix for rotation about a point.
@@ -337,7 +334,7 @@ def rotation(
 
     Parameters
     ----------
-    rotation : NumpyArray[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+    rotation : RotationLike
         3x3 rotation matrix or a SciPy ``Rotation`` object.
 
     point : Vector, default: (0.0, 0.0, 0.0)
