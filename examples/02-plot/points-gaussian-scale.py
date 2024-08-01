@@ -79,3 +79,5 @@ actor = pl.add_mesh(
 actor.mapper.scale_array = 'radius'
 pl.camera.zoom(1.5)
 pl.show()
+# %%
+# .. tags:: plot

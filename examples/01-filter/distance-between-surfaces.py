@@ -139,3 +139,5 @@ p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()
+# %%
+# .. tags:: filter

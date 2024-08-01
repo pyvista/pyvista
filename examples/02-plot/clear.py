@@ -38,3 +38,5 @@ plotter.add_mesh(pv.Sphere(), name="mymesh")
 plotter.add_mesh(pv.Plane(), name="mymesh")
 # Only the Plane is shown.
 plotter.show()
+# %%
+# .. tags:: plot

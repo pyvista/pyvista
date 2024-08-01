@@ -21,14 +21,12 @@ from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
-from pyvista.core.utilities.arrays import _coerce_transformlike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
 from pyvista.core.utilities.arrays import copy_vtk_array
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import has_duplicates
 from pyvista.core.utilities.arrays import raise_has_duplicates
 from pyvista.core.utilities.arrays import vtk_id_list_to_array
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
@@ -911,30 +909,6 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
-
-
-@pytest.mark.parametrize(
-    'transform_like',
-    [
-        np.array(np.eye(3)),
-        np.array(np.eye(4)),
-        vtkmatrix_from_array(np.eye(3)),
-        vtkmatrix_from_array(np.eye(4)),
-        vtk.vtkTransform(),
-    ],
-)
-def test_coerce_transformlike_arg(transform_like):
-    result = _coerce_transformlike_arg(transform_like)
-    assert np.array_equal(result, np.eye(4))
-
-
-def test_coerce_transformlike_arg_raises():
-    with pytest.raises(ValueError, match="must be 3x3 or 4x4"):
-        _coerce_transformlike_arg(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must be one of"):
-        _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    with pytest.raises(TypeError, match="must be one of"):
-        _coerce_transformlike_arg("abc")
 
 
 @pytest.fixture()

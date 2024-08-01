@@ -154,3 +154,5 @@ vol = pv.StructuredGrid()
 vol.points = np.vstack((top, bottom))
 vol.dimensions = [*struct.dimensions[0:2], 2]
 vol.plot(show_edges=True)
+# %%
+# .. tags:: load

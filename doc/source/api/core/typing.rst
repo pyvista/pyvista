@@ -61,6 +61,13 @@ pyvista.CellArrayLike
 
 .. autodata:: CellArrayLike
 
+pyvista.RotationLike
+~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: RotationLike
+
 pyvista.TransformLike
 ~~~~~~~~~~~~~~~~~~~~~
 

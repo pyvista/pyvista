@@ -84,3 +84,5 @@ pl.add_volume_clip_plane(
     normal_rotation=False,
 )
 pl.show()
+# %%
+# .. tags:: widgets

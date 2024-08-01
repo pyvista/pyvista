@@ -102,3 +102,5 @@ pl = pv.Plotter()
 pl.add_mesh(grid, show_edges=True)
 pl.add_point_labels(points, labels=[f"{i}" for i in range(points.shape[0])])
 pl.show(cpos="xy")
+# %%
+# .. tags:: filter
