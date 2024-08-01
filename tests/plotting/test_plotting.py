@@ -4558,6 +4558,8 @@ def test_orthogonal_planes_source_resolution(resolution):
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
 
 
+@skip_9_1_0
+@skip_windows
 @pytest.mark.parametrize(
     ('name', 'value'),
     [
