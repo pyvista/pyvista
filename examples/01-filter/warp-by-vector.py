@@ -42,3 +42,5 @@ for i, j in product(range(2), repeat=2):
     p.add_mesh(sphere.warp_by_vector(factor=warp_factors[idx]))
     p.add_text(f'factor={warp_factors[idx]}')
 p.show()
+# %%
+# .. tags:: filter

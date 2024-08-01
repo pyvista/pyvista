@@ -121,3 +121,5 @@ p.add_mesh(crinkled, show_edges=True)
 p.add_mesh(plane.extract_feature_edges(), color='r')
 p.link_views()
 p.show()
+# %%
+# .. tags:: filter
