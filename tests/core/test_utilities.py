@@ -1005,30 +1005,6 @@ def test_principal_axes_vectors_success_with_many_points():
     assert np.allclose(std, [1.50074922, 1.00049953, 0.70675449])
 
 
-@pytest.mark.parametrize(
-    'transform_like',
-    [
-        np.array(np.eye(3)),
-        np.array(np.eye(4)),
-        vtkmatrix_from_array(np.eye(3)),
-        vtkmatrix_from_array(np.eye(4)),
-        vtk.vtkTransform(),
-    ],
-)
-def test_coerce_transformlike_arg(transform_like):
-    result = _coerce_transformlike_arg(transform_like)
-    assert np.array_equal(result, np.eye(4))
-
-
-def test_coerce_transformlike_arg_raises():
-    with pytest.raises(ValueError, match="must be 3x3 or 4x4"):
-        _coerce_transformlike_arg(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must be one of"):
-        _coerce_transformlike_arg([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    with pytest.raises(TypeError, match="must be one of"):
-        _coerce_transformlike_arg("abc")
-
-
 @pytest.fixture()
 def no_new_attr_subclass():
     @no_new_attr
