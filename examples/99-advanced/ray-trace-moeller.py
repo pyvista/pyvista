@@ -83,7 +83,7 @@ def ray_triangle_intersection(ray_start, ray_vec, triangle):
     return True, np.array([t, u, v])
 
 
-###############################################################################
+# %%
 
 # Create a basic triangle within pyvista
 points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
@@ -104,7 +104,7 @@ print('u:', u)
 print('v:', v)
 
 
-###############################################################################
+# %%
 # Plot the problem setup and the intersection
 
 if inter:
