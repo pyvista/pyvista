@@ -1304,6 +1304,9 @@ class BoxAssembly(_XYZAssembly):
 
     Parameters
     ----------
+    box_style : 'frame' | 'tube' | 'face', default: 'frame'
+        Style of the box.
+
     x_label : str, default: ('+X', '-X')
         Text labels for the positive and negative x-axis. Specify two strings or a
         single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
@@ -1434,6 +1437,7 @@ class BoxAssembly(_XYZAssembly):
     def __init__(
         self,
         *,
+        box_style: Literal['frame', 'tube', 'face'] = 'frame',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1445,7 +1449,7 @@ class BoxAssembly(_XYZAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        opacity: float | VectorLike[float] = 1.0,
+        opacity: float | VectorLike[float] | None = None,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -1454,7 +1458,6 @@ class BoxAssembly(_XYZAssembly):
         **kwargs: Unpack[_CubeFacesKwargs],
     ):
         # Init geometry
-        kwargs.setdefault('frame_width', 0.1)
         self._geometry_source = pv.CubeFacesSource(**kwargs)
         self._face_datasets = self._geometry_source.output
         # Init face actors
@@ -1490,13 +1493,60 @@ class BoxAssembly(_XYZAssembly):
             scale=scale,
             user_matrix=user_matrix,
         )
-        self.opacity = opacity  # type: ignore[assignment]
+        self.box_style = box_style
+        if opacity is not None:
+            self.opacity = opacity  # type: ignore[assignment]
 
         for label in self._label_actor_iterator:
             prop = label.prop
             prop.bold = True
             prop.justification_vertical = 'center'
             prop.justification_horizontal = 'center'
+
+    @property
+    def box_style(self) -> Literal['frame', 'tube', 'face']:  # numpydoc ignore=RT01
+        """Style of the box."""
+        return self._box_style
+
+    @box_style.setter
+    def box_style(self, style: Literal['frame', 'tube', 'face']):  # numpydoc ignore=GL08
+        self._box_style = style
+
+        source = self._geometry_source
+        props: list[pv.Property] = [actor.prop for actor in self._face_actors]
+        DEFAULT_PROPERTY = pv.Property()
+
+        if style == 'frame':
+            source.shrink_factor = None
+            source.explode_factor = None
+            source.frame_width = 0.05
+            for prop in props:
+                prop.lighting = True
+                prop.ambient = 0.5
+                prop.render_lines_as_tubes = False
+                prop.style = 'surface'
+                prop.line_width = DEFAULT_PROPERTY.line_width
+
+        elif style == 'tube':
+            source.shrink_factor = 0.99
+            source.explode_factor = None
+            source.frame_width = None
+            for prop in props:
+                prop.lighting = True
+                prop.render_lines_as_tubes = True
+                prop.style = 'wireframe'
+                prop.line_width = 10
+
+        elif style == 'face':
+            source.shrink_factor = None
+            source.explode_factor = None
+            source.frame_width = None
+            for prop in props:
+                prop.lighting = True
+                prop.render_lines_as_tubes = False
+                prop.style = 'surface'
+                prop.line_width = DEFAULT_PROPERTY.line_width
+        source.update()
 
     @property
     def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01

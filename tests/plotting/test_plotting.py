@@ -4577,6 +4577,21 @@ def test_cube_faces_source(name, value):
     )
 
 
+@pytest.mark.parametrize('box_style', ['frame', 'tube', 'face'])
+def test_box_assembly_box_style(box_style):
+    plot = pv.Plotter()
+    actor = pv.BoxAssembly(box_style=box_style)
+    plot.add_actor(actor)
+    plot.show()
+
+
+def test_box_assembly_bounds(airplane):
+    plot = pv.Plotter()
+    actor = pv.BoxAssembly(bounds=airplane.bounds)
+    plot.add_actor(actor)
+    plot.show()
+
+
 def test_planes_assembly(airplane):
     plot = pv.Plotter()
     actor = pv.PlanesAssembly()
