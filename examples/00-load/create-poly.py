@@ -152,13 +152,13 @@ faces.extend([3, 0, ntheta, 1])
 
 points_to_label = tuple(range(ntheta + 1))
 mesh = pv.PolyData(points, faces=faces)
-pl = pv.Plotter(off_screen=True)
+pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_point_labels(
     mesh.points[points_to_label, :], points_to_label, font_size=30, fill_shape=False
 )
 pl.view_xy()
-pl.show(screenshot="tmp.png")
+pl.show()
 
 # %%
 # Next form the quadrilaterals. This process is the same except
@@ -178,7 +178,7 @@ faces.extend([4, ntheta, 1, ntheta + 1, ntheta * 2])
 
 points_to_label = tuple(range(ntheta * 2 + 1))
 mesh = pv.PolyData(points, faces=faces)
-pl = pv.Plotter(off_screen=True)
+pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_point_labels(
     mesh.points[points_to_label, :],
@@ -188,7 +188,7 @@ pl.add_point_labels(
     always_visible=True,
 )
 pl.view_xy()
-pl.show(screenshot="tmp2.png")
+pl.show()
 
 
 # %%
@@ -221,7 +221,7 @@ faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 mesh = pv.PolyData(points, faces=faces)
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
-pl.show(screenshot="tmp3.png")
+pl.show()
 
 # %%
 # .. tags:: load
