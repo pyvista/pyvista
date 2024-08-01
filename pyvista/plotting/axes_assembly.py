@@ -1841,14 +1841,8 @@ class BoxAssembly(_XYZAssembly):
         faces = self._face_datasets
         box_center = faces.center
         for face, label in zip(self._face_datasets, self._label_actors):
-            label.relative_position = face.center - box_center
-        # label_position_plus = self.label_position
-        # label_position_minus = (-label_position_plus[0], -label_position_plus[1], -label_position_plus[2])
-        #
-        # labels_minus = self._label_actors_symmetric
-        # vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
-        # for label, position in zip(labels_minus, vector_position_minus):
-        #     label.relative_position = position
+            face_center = np.array(face.center)
+            label.relative_position = (face_center - box_center) + box_center
 
 
 class PlanesAssembly(_XYZAssembly):

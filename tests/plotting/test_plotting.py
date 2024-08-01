@@ -4587,7 +4587,7 @@ def test_box_assembly_box_style(box_style):
 
 def test_box_assembly_bounds(airplane):
     plot = pv.Plotter()
-    actor = pv.BoxAssembly(bounds=airplane.bounds)
+    actor = pv.BoxAssembly(bounds=airplane.bounds, box_style='tube')
     plot.add_actor(actor)
     plot.show()
 
