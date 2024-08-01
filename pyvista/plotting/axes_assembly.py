@@ -1449,7 +1449,7 @@ class BoxAssembly(_XYZAssembly):
         x_color: ColorLike | Sequence[ColorLike] | None = None,
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
-        opacity: float | VectorLike[float] | None = None,
+        opacity: float | VectorLike[float] = 1.0,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -1494,8 +1494,7 @@ class BoxAssembly(_XYZAssembly):
             user_matrix=user_matrix,
         )
         self.box_style = box_style
-        if opacity is not None:
-            self.opacity = opacity  # type: ignore[assignment]
+        self.opacity = opacity  # type: ignore[assignment]
 
         for label in self._label_actor_iterator:
             prop = label.prop
