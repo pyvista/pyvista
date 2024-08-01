@@ -3250,7 +3250,12 @@ class DataSetFilters:
             **kwargs,
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
+    def point_data_to_cell_data(
+        self,
+        pass_point_data=False,
+        categorical=False,
+        progress_bar=False,
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -3260,6 +3265,19 @@ class DataSetFilters:
         ----------
         pass_point_data : bool, default: False
             If enabled, pass the input point data through to the output.
+
+        categorical : bool, default: False
+            Control whether the source point data is to be treated as
+            categorical. If ``True``,  histograming is used to assign the
+            cell data. Specifically, a histogram is populated for each cell
+            from the scalar values at each point, and the bin with the most
+            elements is selected. In case of a tie, the smaller value is selected.
+
+            .. note::
+
+                If the point data is continuous, values that are almost equal (within
+                ``1e-6``) are merged into a single bin. Otherwise, for discrete data
+                the number of bins equals the number of unique values.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3304,6 +3322,7 @@ class DataSetFilters:
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
+        alg.SetCategoricalData(categorical)
         _update_alg(alg, progress_bar, 'Transforming point data into cell data')
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
