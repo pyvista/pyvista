@@ -1353,6 +1353,10 @@ class BoxAssembly(_XYZAssembly):
     opacity : float | VectorLike[float], default: 0.3,
         Opacity of the box's faces.
 
+    culling : 'front' | 'back' | None, default: None
+        Control face :attr:`~pyvista.Property.culling`. Set to ``'front'`` to only
+        render the back faces of the box, or ``back`` to only render the front faces.
+
     position : VectorLike[float], default: (0.0, 0.0, 0.0)
         Position of the axes in space.
 
@@ -1450,6 +1454,7 @@ class BoxAssembly(_XYZAssembly):
         y_color: ColorLike | Sequence[ColorLike] | None = None,
         z_color: ColorLike | Sequence[ColorLike] | None = None,
         opacity: float | VectorLike[float] = 1.0,
+        culling: Literal['front', 'back'] | None = None,
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         orientation: VectorLike[float] = (0.0, 0.0, 0.0),
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -1495,6 +1500,7 @@ class BoxAssembly(_XYZAssembly):
         )
         self.box_style = box_style
         self.opacity = opacity  # type: ignore[assignment]
+        self.culling = culling
 
         for label in self._label_actor_iterator:
             prop = label.prop
@@ -1662,6 +1668,22 @@ class BoxAssembly(_XYZAssembly):
         self._opacity = valid_opacity
         for actor, opacity in zip(self._face_actors, valid_opacity):
             actor.prop.opacity = opacity
+
+    @property
+    def culling(self) -> Literal['front', 'back'] | None:  # numpydoc ignore=RT01
+        """Return or set face :attr:`~pyvista.Property.culling`.
+
+        Set to ``'front'`` to only render the back faces of the box, or ``back`` to
+        only render the front faces.
+        """
+        return self._culling
+
+    @culling.setter
+    def culling(self, culling: Literal['front', 'back'] | None):  # numpydoc ignore=GL08
+        self._culling = culling
+        valid_culling = 'none' if culling is None else culling
+        for actor in self._face_actors:
+            actor.prop.culling = valid_culling
 
     @property
     def label_color(self) -> Color:  # numpydoc ignore=RT01
