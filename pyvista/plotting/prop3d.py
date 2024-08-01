@@ -15,11 +15,9 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    import scipy
-
     from pyvista.core._typing_core import BoundsLike
-    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
@@ -367,9 +365,7 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(
-        self, value: TransformLike | scipy.spatial.transform.Rotation
-    ):  # numpydoc ignore=GL08
+    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
@@ -387,9 +383,7 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
-    def rotation_from(
-        self, rotation: MatrixLike[float] | _vtk.vtkMatrix3x3 | scipy.spatial.transform.Rotation
-    ):
+    def rotation_from(self, rotation: RotationLike):
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
@@ -399,7 +393,7 @@ class Prop3D(_vtk.vtkProp3D):
 
         Parameters
         ----------
-        rotation : MatrixLike[float] | vtkMatrix3x3 | scipy.spatial.transform.Rotation
+        rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         Examples
