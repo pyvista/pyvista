@@ -2901,8 +2901,8 @@ class WidgetHelper:
         representation.SetArrowTipRadius(arrow_tip_radius)
         representation.SetArrowShaftRadius(arrow_shaft_radius)
         widget = _vtk.vtkOrientationWidget()
-        widget.SetInteractor(self.iren.interactor)  # type: ignore
-        widget.SetCurrentRenderer(self.renderer)  # type: ignore
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
         widget.On()
         self.rotate_orientation_widgets.append(widget)
