@@ -571,7 +571,7 @@ class _Prop3DMixin(ABC):
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.bounds`."""
-        return self._get_bounds()
+        return BoundsTuple(*self._get_bounds())
 
     @property
     @wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
