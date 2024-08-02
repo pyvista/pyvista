@@ -1195,10 +1195,10 @@ class CubeSource(_vtk.vtkCubeSource):
         return cast(BoundsLike, tuple(bnds))
 
     @bounds.setter
-    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self.SetBounds(bounds)
 
@@ -2578,14 +2578,14 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the box."""
+        """Return or set the bounds of the box."""
         return self.GetBounds()
 
     @bounds.setter
-    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
+    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
             )
         self.SetBounds(bounds)
 
