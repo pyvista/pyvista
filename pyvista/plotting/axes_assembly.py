@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from functools import wraps
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -18,6 +19,7 @@ import pyvista as pv
 from pyvista import BoundsLike
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
+from pyvista.core.utilities.geometric_sources import CubeFacesSource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
@@ -69,10 +71,6 @@ class _CubeFacesKwargs(TypedDict):
     y_length: float
     z_length: float
     bounds: VectorLike[float] | None
-    frame_width: float | None
-    shrink_factor: float | None
-    explode_factor: float | None
-    names: Sequence[str]
     point_dtype: str
 
 
@@ -1295,14 +1293,30 @@ class AxesAssemblySymmetric(AxesAssembly):
 
 
 class BoxAssembly(_XYZAssembly):
-    """Assembly of box faces with labels.
+    """Assembly of labeled box faces.
 
-    The assembly may be used as a widget or added to a scene.
+    Box with faces that can be stylized and colored, and labels that follow the
+    camera.
 
     Parameters
     ----------
     box_style : 'frames' | 'tubes' | 'faces', default: 'frames'
         Style of the box.
+
+    frame_width : float, optional
+        Convert the faces into frames with the specified width. If set, the center
+        portion of each face is removed. Values must be between ``0.0`` (minimal frame)
+        and ``1.0`` (large frame). The frame is scaled to ensure it has a constant width.
+
+    shrink_factor : float, optional
+        Shrink or grow the faces by some factor. The amount of shrinking or growth is
+        relative to the smallest edge length of the box, and all sides of the faces are
+        shrunk by the same (constant) value.
+
+    explode_factor : float, optional
+        Push the faces away from (or pull them toward) the box's center by some factor.
+        The magnitude of the move is relative to the smallest edge length of the cube,
+        and all faces are moved by the same (constant) amount.
 
     x_label : str, default: ('+X', '-X')
         Text labels for the positive and negative x-axis. Specify two strings or a
@@ -1434,6 +1448,9 @@ class BoxAssembly(_XYZAssembly):
         self,
         *,
         box_style: Literal['frames', 'tubes', 'faces'] = 'frames',
+        frame_width: float | None = None,
+        shrink_factor: float | None = None,
+        explode_factor: float | None = None,
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1455,7 +1472,7 @@ class BoxAssembly(_XYZAssembly):
         **kwargs: Unpack[_CubeFacesKwargs],
     ):
         # Init geometry
-        self._geometry_source = pv.CubeFacesSource(**kwargs)
+        self._geometry_source = CubeFacesSource(**kwargs)
         self._face_datasets = self._geometry_source.output
         # Init face actors
         self._face_actors = tuple(
@@ -1494,6 +1511,10 @@ class BoxAssembly(_XYZAssembly):
         self.opacity = opacity  # type: ignore[assignment]
         self.culling = culling
 
+        self.frame_width = frame_width  # type: ignore[method-assign]
+        self.shrink_factor = shrink_factor  # type: ignore[method-assign]
+        self.explode_factor = explode_factor  # type: ignore[method-assign]
+
         for label in self._label_actor_iterator:
             prop = label.prop
             prop.bold = True
@@ -1509,14 +1530,13 @@ class BoxAssembly(_XYZAssembly):
     def box_style(self, style: Literal['frames', 'tubes', 'faces']):  # numpydoc ignore=GL08
         self._box_style = style
 
-        source = self._geometry_source
         props: list[pv.Property] = [actor.prop for actor in self._face_actors]
         DEFAULT_PROPERTY = pv.Property()
 
         if style == 'frames':
-            source.shrink_factor = None
-            source.explode_factor = None
-            source.frame_width = 0.05
+            self.shrink_factor = None  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = 0.05  # type: ignore[method-assign]
             for prop in props:
                 prop.lighting = True
                 prop.ambient = 0.5
@@ -1525,9 +1545,9 @@ class BoxAssembly(_XYZAssembly):
                 prop.line_width = DEFAULT_PROPERTY.line_width
 
         elif style == 'tubes':
-            source.shrink_factor = 0.99
-            source.explode_factor = None
-            source.frame_width = None
+            self.shrink_factor = 0.99  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = None  # type: ignore[method-assign]
             for prop in props:
                 prop.lighting = DEFAULT_PROPERTY.lighting
                 prop.ambient = DEFAULT_PROPERTY.ambient
@@ -1536,16 +1556,52 @@ class BoxAssembly(_XYZAssembly):
                 prop.line_width = 10
 
         elif style == 'faces':
-            source.shrink_factor = None
-            source.explode_factor = None
-            source.frame_width = None
+            self.shrink_factor = None  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = None  # type: ignore[method-assign]
             for prop in props:
                 prop.lighting = DEFAULT_PROPERTY.lighting
                 prop.ambient = DEFAULT_PROPERTY.ambient
                 prop.render_lines_as_tubes = False
                 prop.style = 'surface'
                 prop.line_width = DEFAULT_PROPERTY.line_width
-        source.update()
+
+    @property
+    @wraps(CubeFacesSource.frame_width.fget)  # type: ignore[attr-defined]
+    def frame_width(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Wrap :class:`pyvista.CubeFacesSource.frame_width`."""
+        return self._geometry_source.frame_width
+
+    @frame_width.setter
+    def frame_width(self, width: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.frame_width`."""
+        self._geometry_source.frame_width = width
+        self._geometry_source.update()
+
+    @property
+    @wraps(CubeFacesSource.shrink_factor.fget)  # type: ignore[attr-defined]
+    def shrink_factor(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Wrap :class:`pyvista.CubeFacesSource.shrink_factor`."""
+        return self._geometry_source.shrink_factor
+
+    @shrink_factor.setter
+    def shrink_factor(self, factor: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.shrink_factor`."""
+        self._geometry_source.shrink_factor = factor
+        self._geometry_source.update()
+
+    @property
+    @wraps(CubeFacesSource.explode_factor.fget)  # type: ignore[attr-defined]
+    def explode_factor(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Wrap :class:`pyvista.CubeFacesSource.explode_factor`."""
+        return self._geometry_source.explode_factor
+
+    @explode_factor.setter
+    def explode_factor(self, factor: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.explode_factor`."""
+        self._geometry_source.explode_factor = factor
+        self._geometry_source.update()
+        self._update_label_positions()
 
     @property
     def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
