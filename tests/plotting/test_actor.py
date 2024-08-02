@@ -43,7 +43,7 @@ def dummy_actor(actor):
             self._actor.user_matrix = self._transformation_matrix
 
         def _get_bounds(self):
-            return pv.BoundsTuple(*self._actor.GetBounds())
+            return self._actor.GetBounds()
 
     # Sanity checks to make sure fixture is defined properly
     dummy_actor = DummyActor()
