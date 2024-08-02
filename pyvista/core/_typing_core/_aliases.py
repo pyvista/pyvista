@@ -62,7 +62,7 @@ Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 class BoundsTuple(NamedTuple):
     """Tuple of six values representing 3D bounds.
 
-    Has the form (``x_min``, ``x_max``, ``y_min``, ``y_max``, ``z_min``, ``z_max``).
+    Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
     """
 
     x_min: float

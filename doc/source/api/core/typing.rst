@@ -41,7 +41,7 @@ VTK Related Types
 -----------------
 
 pyvista.BoundsTuple
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
