@@ -3736,10 +3736,10 @@ class CubeFacesSource(CubeSource):
         between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
 
     explode_factor : float, optional
-        Use :meth:`~pyvista.DataSetFilters.explode` to push each face away from the
-        cube's center. If set, this is the factor by which to move each face.
-        Increasing values will push the cells farther away. Use a negative value to
-        "implode" the cube.
+        Push each face away from the cube's center. If set, this is the factor by which
+        to move each face. The magnitude of the move is relative to the smallest edge
+        length of the cube, and all faces are moved by the same amount. Larger values
+        will push the faces farther away. Use a negative value to "implode" the cube.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
@@ -3825,9 +3825,9 @@ class CubeFacesSource(CubeSource):
         'names',
         '_frame_width',
         'frame_width',
-        '_shrink',
+        '_shrink_factor',
         'shrink_factor',
-        '_explode',
+        '_explode_factor',
         'explode_factor',
         '_bounds',
         'bounds',
@@ -3911,35 +3911,79 @@ class CubeFacesSource(CubeSource):
 
     @property
     def shrink_factor(self) -> float | None:  # numpydoc ignore=RT01
-        """Shrink the cube's faces.
+        """Shrink or grow the cube's faces.
 
-        If set, this is the factor by which to shrink each face. Values must be
-        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+        If set, this is the factor by which to shrink each face. The amount of
+        shrinking is relative to the smallest edge length of the cube, and all sides
+        of the faces are shrunk by the same (constant) value.
 
-        Internally, :meth:`~pyvista.DataSetFilters.shrink` is used.
+        .. note::
+            - A value of ``1.0`` has no effect.
+            - Values between ``0.0`` and ``1.0`` will shrink the faces.
+            - Values greater than ``1.0`` will grow the faces.
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.shrink`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, shrink_factor=0.8
+        ... )
+        >>> output = cube_faces_source.output
+        >>> output.plot(show_edges=True, line_width=10)
+
+        Note how all edges are shrunk by the same amount. Compare this to using
+        :meth:`~pyvista.DataSetFilters.shrink` where the shrinkage varies by face.
+
+        >>> exploded = pv.merge(output).shrink(0.8)
+        >>> exploded.plot(show_edges=True, line_width=10)
         """
-        return self._shrink
+        return self._shrink_factor
 
     @shrink_factor.setter
     def shrink_factor(self, factor: float | None):  # numpydoc ignore=GL08
-        self._shrink = (
+        self._shrink_factor = (
             factor if factor is None else _validation.validate_number(factor, name='shrink factor')
         )
 
     @property
     def explode_factor(self) -> float | None:  # numpydoc ignore=RT01
-        """Push each face away from the cube's center.
+        """Push the faces away from (or pull them toward) the cube's center.
 
-        If set, this is the factor by which to move each face. Larger values will
-        push the faces farther away. Use a negative value to "implode" the cube.
+        If set, this is the factor by which to move each face. The magnitude of the
+        move is relative to the smallest edge length of the cube, and all faces are
+        moved by the same (constant) amount.
 
-        Internally, :meth:`~pyvista.DataSetFilters.explode` is used.
+        .. note::
+            - A value of ``0.0`` has no effect.
+            - Increasing positive values will push the faces farther away (explode)
+            - Decreasing negative values will pull the faces closer together (implode).
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, explode_factor=0.2
+        ... )
+        >>> output = cube_faces_source.output
+        >>> output.plot(show_edges=True, line_width=10)
+
+        Note how all faces are moved by the same amount. Compare this to using
+        :meth:`~pyvista.DataSetFilters.explode` where the distance each face moves
+        varies.
+
+        >>> exploded = pv.merge(output).explode(0.2)
+        >>> exploded.plot(show_edges=True, line_width=10)
+
         """
-        return self._explode
+        return self._explode_factor
 
     @explode_factor.setter
     def explode_factor(self, factor: float | None):  # numpydoc ignore=GL08
-        self._explode = (
+        self._explode_factor = (
             factor if factor is None else _validation.validate_number(factor, name='explode factor')
         )
 
@@ -4005,63 +4049,95 @@ class CubeFacesSource(CubeSource):
     def update(self):
         """Update the output of the source."""
 
-        def _compute_relative_lengths(bnds: BoundsLike):
-            # Need to rescale points to make frame width consistent
-            x_len = np.linalg.norm(bnds[1] - bnds[0])
-            y_len = np.linalg.norm(bnds[3] - bnds[2])
-            z_len = np.linalg.norm(bnds[5] - bnds[4])
-            lengths = np.array((x_len, y_len, z_len))
-            return lengths / np.min(lengths)
+        def _scale_points(points_, origin_, scale_):
+            points_ -= origin_
+            points_ *= scale_
+            points_ += origin_
+            return points_
+
+        def _create_frame_from_quad_points(quad_points, center, scale):
+            """Create a picture-frame from 4 points defining a rectangle.
+
+            The inner points of the frame are generated by scaling the quad_points by
+            the length-3 scaling factor.
+            """
+            inner_points = _scale_points(quad_points.copy(), center, scale)
+
+            # Define frame quads from outer and inner points
+            quad1_points = np.vstack((quad_points[[0, 1]], inner_points[[1, 0]]))
+            quad2_points = np.vstack((quad_points[[1, 2]], inner_points[[2, 1]]))
+            quad3_points = np.vstack((quad_points[[2, 3]], inner_points[[3, 2]]))
+            quad4_points = np.vstack((quad_points[[3, 0]], inner_points[[0, 3]]))
+            frame_points = np.vstack((quad1_points, quad2_points, quad3_points, quad4_points))
+            frame_faces = np.array(
+                [[4, 0, 1, 2, 3], [4, 4, 5, 6, 7], [4, 8, 9, 10, 11], [4, 12, 13, 14, 15]]
+            ).ravel()
+            return frame_points, frame_faces
 
         # Get initial cube output
         cube = CubeSource.output.fget(self)
 
-        # Modify cube
-        shrink_factor, explode_factor = self.shrink_factor, self.explode_factor
-        modified_cube = cube
-        if shrink_factor:
-            modified_cube = cube.shrink(shrink_factor)
-        if explode_factor:
-            modified_cube = cube.explode(explode_factor).extract_geometry()
-
         # Extract list of points for each face in the desired order
-        mod_points, mod_faces = modified_cube.points, modified_cube.regular_faces
+        cube_points, cube_faces = cube.points, cube.regular_faces
         Index = CubeFacesSource._FaceIndex
         face_points = [
-            mod_points[mod_faces[Index.X_POS]],
-            mod_points[mod_faces[Index.X_NEG]],
-            mod_points[mod_faces[Index.Y_POS]],
-            mod_points[mod_faces[Index.Y_NEG]],
-            mod_points[mod_faces[Index.Z_POS]],
-            mod_points[mod_faces[Index.Z_NEG]],
+            cube_points[cube_faces[Index.X_POS]],
+            cube_points[cube_faces[Index.X_NEG]],
+            cube_points[cube_faces[Index.Y_POS]],
+            cube_points[cube_faces[Index.Y_NEG]],
+            cube_points[cube_faces[Index.Z_POS]],
+            cube_points[cube_faces[Index.Z_NEG]],
         ]
 
-        # Update the polydata for each face
+        # Calc lengths/properties of cube
+        cube_center = np.array(cube.center)
+        bnds = cube.bounds
+        x_len = np.linalg.norm(bnds[1] - bnds[0])
+        y_len = np.linalg.norm(bnds[3] - bnds[2])
+        z_len = np.linalg.norm(bnds[5] - bnds[4])
+        lengths = np.array((x_len, y_len, z_len))
+        min_length = np.min(lengths)
+
+        # Store vars for updating the output
+        shrink_factor, explode_factor, frame_width = (
+            self.shrink_factor,
+            self.explode_factor,
+            self.frame_width,
+        )
         output = self._output
+
+        # Modify each face mesh of the output
         for index, (name, points) in enumerate(zip(self.names, face_points)):
             output.set_block_name(index, name)
             face_poly = output[index]
-            face_poly.points = points
-            if self.frame_width is None:
-                face_poly.faces = [4, 0, 1, 2, 3]  # Single quad
-            else:
-                # Need to scale points to make the frame width consistent
-                scale = 1 - self.frame_width / _compute_relative_lengths(cube.bounds)
-                center = face_poly.center
-                inner_points = points.copy()
-                inner_points -= center
-                inner_points *= scale
-                inner_points += center
+            face_center = np.mean(points, axis=0)
 
-                # Define frame quads from outer and inner points
-                quad1_points = np.vstack((points[[0, 1]], inner_points[[1, 0]]))
-                quad2_points = np.vstack((points[[1, 2]], inner_points[[2, 1]]))
-                quad3_points = np.vstack((points[[2, 3]], inner_points[[3, 2]]))
-                quad4_points = np.vstack((points[[3, 0]], inner_points[[0, 3]]))
-                face_poly.points = np.vstack(
-                    (quad1_points, quad2_points, quad3_points, quad4_points)
+            if shrink_factor is not None:
+                # Shrink proportional to the smallest face
+                shrink_scale = shrink_factor + (1 - shrink_factor) * (1 - min_length / lengths)
+                _scale_points(points, face_center, shrink_scale)
+
+            if explode_factor is not None:
+                # Move away from center by some distance proportional to the smallest face
+                explode_scale = min_length * explode_factor
+                direction = face_center - cube_center
+                direction /= np.linalg.norm(direction)
+                vector = direction * explode_scale
+                points += vector
+
+            # Set poly as a single quad cell
+            face_poly.points = points
+            face_poly.faces = [4, 0, 1, 2, 3]
+
+            if frame_width is not None:
+                # Create frame proportional to the smallest face
+                frame_scale = 1 - (frame_width * min_length / lengths)
+                frame_points, frame_faces = _create_frame_from_quad_points(
+                    points, face_center, frame_scale
                 )
-                face_poly.faces = [4, 0, 1, 2, 3, 4, 4, 5, 6, 7, 4, 8, 9, 10, 11, 4, 12, 13, 14, 15]
+                # Set poly as four quad cells of the frame
+                face_poly.points = frame_points
+                face_poly.faces = frame_faces
 
     @property
     def output(self) -> pyvista.MultiBlock:
