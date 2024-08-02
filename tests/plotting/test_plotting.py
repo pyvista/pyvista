@@ -4037,7 +4037,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
-        (pv.BoxAssembly, dict(label_size=25, box_style='tube')),
+        (pv.BoxAssembly, dict(label_size=25, box_style='tubes')),
         (pv.PlanesAssembly, dict(opacity=1)),
     ],
     ids=['Axes', 'AxesSymmetric', 'Box', 'Planes'],
@@ -4579,7 +4579,7 @@ def test_cube_faces_source(name, value):
     )
 
 
-@pytest.mark.parametrize('box_style', ['frame', 'tube', 'face'])
+@pytest.mark.parametrize('box_style', ['frames', 'tubes', 'faces'])
 def test_box_assembly_box_style(box_style):
     plot = pv.Plotter()
     actor = pv.BoxAssembly(box_style=box_style)
@@ -4589,7 +4589,7 @@ def test_box_assembly_box_style(box_style):
 
 def test_box_assembly_bounds(airplane):
     plot = pv.Plotter()
-    actor = pv.BoxAssembly(bounds=airplane.bounds, box_style='tube')
+    actor = pv.BoxAssembly(bounds=airplane.bounds, box_style='tubes')
     plot.add_actor(actor)
     plot.show()
 

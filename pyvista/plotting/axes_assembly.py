@@ -1301,7 +1301,7 @@ class BoxAssembly(_XYZAssembly):
 
     Parameters
     ----------
-    box_style : 'frame' | 'tube' | 'face', default: 'frame'
+    box_style : 'frames' | 'tubes' | 'faces', default: 'frames'
         Style of the box.
 
     x_label : str, default: ('+X', '-X')
@@ -1379,7 +1379,7 @@ class BoxAssembly(_XYZAssembly):
 
     Examples
     --------
-    Add a box assembly to a plot. It has a ``'frame'`` :attr:`box_style` by default.
+    Add a box assembly to a plot. It has a ``'frames'`` :attr:`box_style` by default.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
@@ -1398,7 +1398,7 @@ class BoxAssembly(_XYZAssembly):
     >>> _ = pl.add_actor(box)
     >>> pl.show()
 
-    Use the ``'tube'`` :attr:`box_style` and fit the box to a mesh. We also customize
+    Use the ``'tubes'`` :attr:`box_style` and fit the box to a mesh. We also customize
     the axes labels to use the ``RAS`` coordinate system for medical applications.
 
     >>> human = examples.download_human()
@@ -1406,7 +1406,7 @@ class BoxAssembly(_XYZAssembly):
     >>> labels = ['R', 'L', 'A', 'P', 'S', 'I']
     >>> box = pv.BoxAssembly(
     ...     bounds=human.bounds,
-    ...     box_style='tube',
+    ...     box_style='tubes',
     ...     labels=labels,
     ...     label_color='gray',
     ... )
@@ -1418,9 +1418,9 @@ class BoxAssembly(_XYZAssembly):
 
     Add the box as a custom orientation widget with
     :func:`~pyvista.Renderer.add_orientation_widget`. For this use case we also use
-    the ``'face'`` :attr:`box_style`.
+    the ``'faces'`` :attr:`box_style`.
 
-    >>> box = pv.BoxAssembly(box_style='face')
+    >>> box = pv.BoxAssembly(box_style='faces')
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
     >>> _ = pl.add_orientation_widget(
@@ -1433,7 +1433,7 @@ class BoxAssembly(_XYZAssembly):
     def __init__(
         self,
         *,
-        box_style: Literal['frame', 'tube', 'face'] = 'frame',
+        box_style: Literal['frames', 'tubes', 'faces'] = 'frames',
         x_label: str | Sequence[str] | None = None,
         y_label: str | Sequence[str] | None = None,
         z_label: str | Sequence[str] | None = None,
@@ -1501,19 +1501,19 @@ class BoxAssembly(_XYZAssembly):
             prop.justification_horizontal = 'center'
 
     @property
-    def box_style(self) -> Literal['frame', 'tube', 'face']:  # numpydoc ignore=RT01
+    def box_style(self) -> Literal['frames', 'tubes', 'faces']:  # numpydoc ignore=RT01
         """Style of the box."""
         return self._box_style
 
     @box_style.setter
-    def box_style(self, style: Literal['frame', 'tube', 'face']):  # numpydoc ignore=GL08
+    def box_style(self, style: Literal['frames', 'tubes', 'faces']):  # numpydoc ignore=GL08
         self._box_style = style
 
         source = self._geometry_source
         props: list[pv.Property] = [actor.prop for actor in self._face_actors]
         DEFAULT_PROPERTY = pv.Property()
 
-        if style == 'frame':
+        if style == 'frames':
             source.shrink_factor = None
             source.explode_factor = None
             source.frame_width = 0.05
@@ -1524,22 +1524,24 @@ class BoxAssembly(_XYZAssembly):
                 prop.style = 'surface'
                 prop.line_width = DEFAULT_PROPERTY.line_width
 
-        elif style == 'tube':
+        elif style == 'tubes':
             source.shrink_factor = 0.99
             source.explode_factor = None
             source.frame_width = None
             for prop in props:
-                prop.lighting = True
+                prop.lighting = DEFAULT_PROPERTY.lighting
+                prop.ambient = DEFAULT_PROPERTY.ambient
                 prop.render_lines_as_tubes = True
                 prop.style = 'wireframe'
                 prop.line_width = 10
 
-        elif style == 'face':
+        elif style == 'faces':
             source.shrink_factor = None
             source.explode_factor = None
             source.frame_width = None
             for prop in props:
-                prop.lighting = True
+                prop.lighting = DEFAULT_PROPERTY.lighting
+                prop.ambient = DEFAULT_PROPERTY.ambient
                 prop.render_lines_as_tubes = False
                 prop.style = 'surface'
                 prop.line_width = DEFAULT_PROPERTY.line_width
