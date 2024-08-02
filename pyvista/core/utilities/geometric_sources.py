@@ -3703,6 +3703,10 @@ class CubeFacesSource(CubeSource):
     This source generates a :class:`~pyvista.MultiBlock` with the six :class:`PolyData`
     comprising the faces of a cube.
 
+    The faces may be shrunk or exploded to create equal-sized gaps or intersections
+    between the faces. Additionally, the faces may be converted to frames with a
+    constant-width border.
+
     .. versionadded:: 0.45.0
 
     Parameters
@@ -3724,29 +3728,29 @@ class CubeFacesSource(CubeSource):
         arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     frame_width : float, optional
-        If set, the center portion of each face is removed and the :attr:`output`
-        :class:`pyvista.PolyData` will each have four quad cells (one for each
-        side of the frame) instead of a single quad cell. Values must be between ``0.0``
-        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
-        a constant width.
+        Convert the faces into frames with the specified width. If set, the center
+        portion of each face is removed and the output faces will each have four quad
+        cells (one for each side of the frame) instead of a single quad cell. Values
+        must be between ``0.0`` (minimal frame) and ``1.0`` (large frame). The frame is
+        scaled to ensure it has a constant width.
 
     shrink_factor : float, optional
-        Use :meth:`~pyvista.DataSetFilters.shrink` to shrink the cube's faces.
-        If set, this is the factor by which to shrink each face. Values must be
-        between ``0.0`` (maximum shrinkage) and ``1.0`` (no shrinkage).
+        Shrink or grow the cube's faces. If set, this is the factor by which to shrink
+        or grow each face. The amount of shrinking or growth is relative to the smallest
+        edge length of the cube, and all sides of the faces are shrunk by the same
+        (constant) value.
 
     explode_factor : float, optional
-        Push each face away from the cube's center. If set, this is the factor by which
-        to move each face. The magnitude of the move is relative to the smallest edge
-        length of the cube, and all faces are moved by the same amount. Larger values
-        will push the faces farther away. Use a negative value to "implode" the cube.
+        Push the faces away from (or pull them toward) the cube's center. If set, this
+        is the factor by which to move each face. The magnitude of the move is relative
+        to the smallest edge length of the cube, and all faces are moved by the same
+        (constant) amount.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
-
 
     Examples
     --------
@@ -3756,7 +3760,7 @@ class CubeFacesSource(CubeSource):
     >>> from pyvista import examples
     >>> cube_faces_source = pv.CubeFacesSource()
     >>> output = cube_faces_source.output
-    >>> output.plot()
+    >>> output.plot(show_edges=True, line_width=10)
 
     The output is similar to that of :class:`CubeSource` except it's a
     :class:`~pyvista.MultiBlock`.
@@ -3783,13 +3787,13 @@ class CubeFacesSource(CubeSource):
 
     >>> cube_faces_source.explode_factor = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot(show_edges=True)
+    >>> output.plot(show_edges=True, line_width=10)
 
     Use :attr:`shrink_factor` to also shrink the faces.
 
     >>> cube_faces_source.shrink_factor = 0.5
     >>> cube_faces_source.update()
-    >>> output.plot(show_edges=True)
+    >>> output.plot(show_edges=True, line_width=10)
 
     Fit cube faces to a dataset and only plot four of them.
 
@@ -3815,7 +3819,7 @@ class CubeFacesSource(CubeSource):
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh, color='tomato')
-    >>> _ = pl.add_mesh(output, show_edges=True, line_width=3)
+    >>> _ = pl.add_mesh(output, show_edges=True, line_width=10)
     >>> pl.show()
     """
 
@@ -3878,7 +3882,7 @@ class CubeFacesSource(CubeSource):
 
     @property
     def frame_width(self) -> float | None:  # numpydoc ignore=RT01
-        """Convert the faces into frames with the specified width.
+        """Convert the faces into frames with the specified border width.
 
         If set, the center portion of each face is removed and the :attr:`output`
         :class:`pyvista.PolyData` will each have four quad cells (one for each
@@ -3890,15 +3894,12 @@ class CubeFacesSource(CubeSource):
         --------
         >>> import pyvista as pv
         >>> cube_faces_source = pv.CubeFacesSource(
-        ...     x_length=3, y_length=2, z_length=1, frame_width=0.1
+        ...     x_length=3, y_length=2, z_length=1, frame_width=0.2
         ... )
-        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=10)
 
-        >>> cube_faces_source.frame_width = 0.5
-        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
-
-        >>> cube_faces_source.frame_width = 0.9
-        >>> cube_faces_source.output.plot(show_edges=True, line_width=3)
+        >>> cube_faces_source.frame_width = 0.8
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=10)
 
         """
         return self._frame_width
@@ -3906,16 +3907,18 @@ class CubeFacesSource(CubeSource):
     @frame_width.setter
     def frame_width(self, width: float | None):  # numpydoc ignore=GL08
         self._frame_width = (
-            width if width is None else _validation.validate_number(width, name='frame width')
+            width
+            if width is None
+            else _validation.validate_number(width, must_be_in_range=[0.0, 1.0], name='frame width')
         )
 
     @property
     def shrink_factor(self) -> float | None:  # numpydoc ignore=RT01
         """Shrink or grow the cube's faces.
 
-        If set, this is the factor by which to shrink each face. The amount of
-        shrinking is relative to the smallest edge length of the cube, and all sides
-        of the faces are shrunk by the same (constant) value.
+        If set, this is the factor by which to shrink or grow each face. The amount of
+        shrinking or growth is relative to the smallest edge length of the cube, and
+        all sides of the faces are shrunk by the same (constant) value.
 
         .. note::
             - A value of ``1.0`` has no effect.
@@ -3933,8 +3936,9 @@ class CubeFacesSource(CubeSource):
         >>> output = cube_faces_source.output
         >>> output.plot(show_edges=True, line_width=10)
 
-        Note how all edges are shrunk by the same amount. Compare this to using
-        :meth:`~pyvista.DataSetFilters.shrink` where the shrinkage varies by face.
+        Note how all edges are shrunk by the same (constant) amount in terms of absolute
+        distance. Compare this to :meth:`~pyvista.DataSetFilters.shrink` where the
+        amount of shrinkage is relative to the size of the faces.
 
         >>> exploded = pv.merge(output).shrink(0.8)
         >>> exploded.plot(show_edges=True, line_width=10)
@@ -3944,7 +3948,11 @@ class CubeFacesSource(CubeSource):
     @shrink_factor.setter
     def shrink_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._shrink_factor = (
-            factor if factor is None else _validation.validate_number(factor, name='shrink factor')
+            factor
+            if factor is None
+            else _validation.validate_number(
+                factor, must_be_in_range=[0.0, np.inf], name='shrink factor'
+            )
         )
 
     @property
@@ -3973,7 +3981,7 @@ class CubeFacesSource(CubeSource):
 
         Note how all faces are moved by the same amount. Compare this to using
         :meth:`~pyvista.DataSetFilters.explode` where the distance each face moves
-        varies.
+        is relative to distance of each face to the center of the cube.
 
         >>> exploded = pv.merge(output).explode(0.2)
         >>> exploded.plot(show_edges=True, line_width=10)
