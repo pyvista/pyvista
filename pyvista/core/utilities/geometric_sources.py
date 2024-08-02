@@ -2556,7 +2556,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     Parameters
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounding box of the cube.
+        Specify the bounds of the box.
         ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     level : int, default: 0
@@ -2582,18 +2582,15 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the cube."""
-        return self._bounds
+        """Return or set the bounding box of the box."""
+        return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
     def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
-        bounds_array = np.array(bounds, dtype=float)
         if np.array(bounds).size != 6:
             raise TypeError(
                 'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        bounds_tuple = BoundsTuple(*bounds_array.tolist())
-        self._bounds = bounds_tuple
         self.SetBounds(bounds)
 
     @property
