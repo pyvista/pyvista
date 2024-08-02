@@ -10,7 +10,6 @@ import numpy as np
 import pyvista
 from pyvista import vtk_version_info
 from pyvista.core._typing_core._array_like import NumpyArray
-from pyvista.core.utilities.arrays import get_array, get_array_association
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
