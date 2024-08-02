@@ -21,6 +21,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import BoundsLike
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -30,7 +31,6 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
-    from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -1190,15 +1190,16 @@ class CubeSource(_vtk.vtkCubeSource):
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
-        return self._bounds
+        bnds = [0.0] * 6
+        self.GetBounds(bnds)
+        return cast(BoundsLike, tuple(bnds))
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
         self.SetBounds(bounds)
 
     @property
@@ -2551,7 +2552,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     Parameters
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounding box of the cube.
+        Specify the bounds of the box.
         ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
 
     level : int, default: 0
@@ -2577,16 +2578,15 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     @property
     def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the cube."""
-        return self._bounds
+        """Return or set the bounding box of the box."""
+        return self.GetBounds()
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
         self.SetBounds(bounds)
 
     @property

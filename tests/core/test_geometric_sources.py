@@ -345,6 +345,7 @@ def test_cube_source():
     assert algo.x_length == 1.0
     assert algo.y_length == 1.0
     assert algo.z_length == 1.0
+    assert algo.bounds == (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
     bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
     algo = pv.CubeSource(bounds=bounds)
     assert np.array_equal(algo.bounds, bounds)
