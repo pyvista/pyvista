@@ -21,6 +21,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -30,7 +31,6 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
-    from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -1074,7 +1074,11 @@ class Text3DSource(vtkVectorText):
 
         # Scale mesh
         bnds = out.bounds
-        size_w, size_h, size_d = bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]
+        size_w, size_h, size_d = (
+            bnds.x_max - bnds.x_min,
+            bnds.y_max - bnds.y_min,
+            bnds.z_max - bnds.z_min,
+        )
         scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
 
         # Scale width and height first
@@ -1146,7 +1150,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
@@ -1188,17 +1192,18 @@ class CubeSource(_vtk.vtkCubeSource):
         self.point_dtype = point_dtype
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
-        return self._bounds
+        bnds = [0] * 6
+        self.GetBounds(bnds)
+        return BoundsTuple(*bnds)
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
         self.SetBounds(bounds)
 
     @property
@@ -2552,7 +2557,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     level : int, default: 0
         Level of subdivision of the faces.
@@ -2576,17 +2581,19 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         self.quads = quads
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
         return self._bounds
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
+        bounds_array = np.array(bounds, dtype=float)
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
+        bounds_tuple = BoundsTuple(*bounds_array.tolist())
+        self._bounds = bounds_tuple
         self.SetBounds(bounds)
 
     @property
@@ -3487,7 +3494,9 @@ class AxesGeometrySource:
 
         # Scale so bounding box edges have length one
         bnds = part.bounds
-        axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
+        axis_length = np.array(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        )
         if np.any(axis_length < 1e-8):
             raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
         part.scale(np.reciprocal(axis_length), inplace=True)
@@ -3515,7 +3524,7 @@ class OrthogonalPlanesSource:
     Parameters
     ----------
     bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        Specify the bounds of the planes in the form: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
         The generated planes are centered in these bounds.
 
     resolution : int | VectorLike[int], default: 2
@@ -3605,15 +3614,16 @@ class OrthogonalPlanesSource:
         )
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounds of the planes."""
         return self._bounds
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
-        self._bounds = _validation.validate_array(
+    def bounds(self, bounds: BoundsTuple):  # numpydoc ignore=GL08
+        bounds_tuple = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
+        self._bounds = BoundsTuple(*bounds_tuple)
 
     @property
     def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01

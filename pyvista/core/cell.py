@@ -12,6 +12,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
+from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError
@@ -479,13 +480,13 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         return Cell(cell, deep=True, cell_type=cell.GetCellType())
 
     @property
-    def bounds(self) -> tuple[float, float, float, float, float, float]:
-        """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+    def bounds(self) -> BoundsTuple:
+        """Get the cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------
-        tuple[float, float, float, float, float, float]
-            The cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+        BoundsTuple
+            The cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -495,7 +496,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         (0.0, 0.05405950918793678, 0.0, 0.011239604093134403, 0.49706897139549255, 0.5)
 
         """
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def center(self) -> tuple[float, float, float]:

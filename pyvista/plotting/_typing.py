@@ -8,7 +8,7 @@ from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-from pyvista.core._typing_core import BoundsLike  # noqa: F401
+from pyvista.core._typing_core import BoundsTuple  # noqa: F401
 from pyvista.core._typing_core import Number  # noqa: F401
 from pyvista.core._typing_core import NumpyArray
 

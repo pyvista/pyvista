@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Tuple
+from typing import NamedTuple
 from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
@@ -58,11 +58,20 @@ TransformLike.__doc__ = """Array or object representing a spatial transformation
 
 Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
 
-BoundsLike = Tuple[Number, Number, Number, Number, Number, Number]
-BoundsLike.__doc__ = """Tuple of six values representing 3D bounds.
 
-Has the form (``xmin``, ``xmax``, ``ymin``, ``ymax``, ``zmin``, ``zmax``).
-"""
+class BoundsTuple(NamedTuple):
+    """Tuple of six values representing 3D bounds.
+
+    Has the form (``x_min``, ``x_max``, ``y_min``, ``y_max``, ``z_min``, ``z_max``).
+    """
+
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
+    z_min: float
+    z_max: float
+
 
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
 

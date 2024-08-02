@@ -18,11 +18,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import MatrixLike
-from ._typing_core import Number
-from ._typing_core import NumpyArray
-from ._typing_core import VectorLike
+from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -46,6 +42,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+
+    from ._typing_core import MatrixLike
+    from ._typing_core import Number
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -1730,14 +1731,14 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsTuple:
         """Return the bounding box of this dataset.
 
         Returns
         -------
         BoundsLike
             Bounding box of this dataset.
-            The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -1749,7 +1750,7 @@ class DataSet(DataSetFilters, DataObject):
         (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
 
         """
-        return cast(BoundsLike, self.GetBounds())
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def length(self) -> float:
@@ -2706,13 +2707,13 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: BoundsLike) -> NumpyArray[int]:
+    def find_cells_within_bounds(self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
         ----------
         bounds : sequence[float]
-            Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            Bounding box. The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------

@@ -45,7 +45,7 @@ from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import ArrayLike
-    from ._typing_core import BoundsLike
+    from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
@@ -3035,7 +3035,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
