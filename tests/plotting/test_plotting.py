@@ -4037,7 +4037,7 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
-        (pv.BoxAssembly, dict(label_size=25)),
+        (pv.BoxAssembly, dict(label_size=25, box_style='tube')),
         (pv.PlanesAssembly, dict(opacity=1)),
     ],
     ids=['Axes', 'AxesSymmetric', 'Box', 'Planes'],
