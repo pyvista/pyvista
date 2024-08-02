@@ -12,6 +12,8 @@ cylindrical shell, and sweeping a circle creates a torus.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
@@ -22,7 +24,7 @@ line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
 poly = line.extrude_rotate(resolution=resolution)
 poly
 
-###############################################################################
+# %%
 # Plot the extruded line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -53,7 +55,7 @@ plotter.add_mesh(
 
 plotter.show(cpos="xy")
 
-###############################################################################
+# %%
 # Create a spring
 # ~~~~~~~~~~~~~~~
 
@@ -81,3 +83,5 @@ plotter.add_text("Spring", font_size=24)
 plotter.add_mesh(spring, color='lightblue', show_edges=True)
 
 plotter.show(cpos="zx")
+# %%
+# .. tags:: filter

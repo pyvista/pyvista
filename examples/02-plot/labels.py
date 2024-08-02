@@ -5,6 +5,8 @@ Label Points
 Use string arrays in a point set to label points
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -17,24 +19,25 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_thumbnail_number = 3
 from pyvista import examples
 
-###############################################################################
+# %%
 # Label String Array
 # ++++++++++++++++++
 #
 # This example will label the nodes of a mesh with a given array of string
 # labels for each of the nodes.
 
-# Make some random points
-poly = pv.PolyData(np.random.default_rng().random((10, 3)))
+# Make some random points. Seed the rng for reproducibility.
+rng = np.random.default_rng(seed=0)
+poly = pv.PolyData(rng.random((10, 3)))
 
-###############################################################################
+# %%
 # Add string labels to the point data - this associates a label with every
 # node:
 
 poly["My Labels"] = [f"Label {i}" for i in range(poly.n_points)]
 poly
 
-###############################################################################
+# %%
 # Now plot the points with labels:
 
 plotter = pv.Plotter()
@@ -42,7 +45,7 @@ plotter.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Label Node Locations
 # ++++++++++++++++++++
 #
@@ -52,7 +55,7 @@ plotter.show()
 grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
 
-###############################################################################
+# %%
 # Create plotting class and add the unstructured grid
 plotter = pv.Plotter()
 plotter.add_mesh(grid, show_edges=True, color='lightblue')
@@ -67,7 +70,7 @@ plotter.camera_position = [(-1.5, 1.5, 3.0), (0.05, 0.6, 1.2), (0.2, 0.9, -0.25)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Label Scalar Values
 # +++++++++++++++++++
 #
@@ -75,7 +78,7 @@ plotter.show()
 
 mesh = examples.load_uniform().slice()
 
-###############################################################################
+# %%
 p = pv.Plotter()
 
 # Add the mesh:
@@ -87,3 +90,5 @@ p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=3
 p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]
 
 p.show()
+# %%
+# .. tags:: plot

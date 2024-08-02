@@ -1,16 +1,22 @@
-# flake8: noqa: D102,D103,D107
+# ruff: noqa: D102,D103,D107
 """PyVista Trame Base Viewer class.
 
 This base class defines methods to manipulate a PyVista Plotter.
 This base class does not define a `ui` method, but its derived classes do.
 See `pyvista.trame.ui.vuetify2` and ``pyvista.trame.ui.vuetify3` for its derived classes.
 """
+
+from __future__ import annotations
+
 import io
+from typing import TYPE_CHECKING
 
 from trame.app import get_server
-from trame_client.ui.core import AbstractLayout
 
 import pyvista
+
+if TYPE_CHECKING:  # pragma: no cover
+    from trame_client.ui.core import AbstractLayout
 
 
 class BaseViewer:
@@ -41,7 +47,7 @@ class BaseViewer:
         self.GRID = f'{plotter._id_name}_grid_visibility'
         self.OUTLINE = f'{plotter._id_name}_outline_visibility'
         self.EDGES = f'{plotter._id_name}_edge_visibility'
-        self.AXIS = f'{plotter._id_name}_axis_visiblity'
+        self.AXIS = f'{plotter._id_name}_axis_visibility'
         self.PARALLEL = f'{plotter._id_name}_parallel_projection'
         self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
         self.VALID_UI_MODES = [
@@ -158,7 +164,7 @@ class BaseViewer:
                 renderer.disable_parallel_projection()
         self.update()
 
-    def on_edge_visiblity_change(self, **kwargs):
+    def on_edge_visibility_change(self, **kwargs):
         """Toggle edge visibility for all actors.
 
         Parameters
@@ -174,7 +180,7 @@ class BaseViewer:
                     actor.prop.show_edges = value
         self.update()
 
-    def on_grid_visiblity_change(self, **kwargs):
+    def on_grid_visibility_change(self, **kwargs):
         """Handle axes grid visibility.
 
         Parameters
@@ -191,7 +197,7 @@ class BaseViewer:
                 renderer.remove_bounds_axes()
         self.update()
 
-    def on_outline_visiblity_change(self, **kwargs):
+    def on_outline_visibility_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters
@@ -208,7 +214,7 @@ class BaseViewer:
                 renderer.remove_bounding_box()
         self.update()
 
-    def on_axis_visiblity_change(self, **kwargs):
+    def on_axis_visibility_change(self, **kwargs):
         """Handle outline visibility.
 
         Parameters

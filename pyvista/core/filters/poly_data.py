@@ -1,30 +1,31 @@
 """Filters module with a class to manage filters/algorithms for polydata datasets."""
 
-import collections.abc
+from __future__ import annotations
+
+from typing import Sequence
 import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaFutureWarning,
-    VTKVersionError,
-)
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaFutureWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
-from pyvista.core.utilities.arrays import (
-    FieldAssociation,
-    get_array,
-    get_array_association,
-    set_default_active_scalars,
-    vtk_id_list_to_array,
-)
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
+from pyvista.core.utilities.arrays import get_array_association
+from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.geometric_objects import NORMALS
-from pyvista.core.utilities.helpers import generate_plane, wrap
-from pyvista.core.utilities.misc import abstract_class, assert_empty_kwargs
+from pyvista.core.utilities.helpers import generate_plane
+from pyvista.core.utilities.helpers import wrap
+from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.misc import assert_empty_kwargs
 
 
 @abstract_class
@@ -77,7 +78,7 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
+        return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
@@ -536,18 +537,22 @@ class PolyDataFilters(DataSetFilters):
                     faces=merged.GetCells(),
                     deep=False,
                 )
-                # Calling update() will modify the active scalars in this specific
-                # case. Store values to restore after updating.
+                # Calling update() will modify the active scalars and normals in this
+                # specific case. Store values to restore after updating.
                 active_point_scalars_name = merged.point_data.active_scalars_name
                 active_cell_scalars_name = merged.cell_data.active_scalars_name
+                active_point_normals_name = merged.point_data._active_normals_name
+                active_cell_normals_name = merged.cell_data._active_normals_name
 
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
 
-                # restore active scalars
+                # restore active scalars and normals
                 polydata_merged.point_data.active_scalars_name = active_point_scalars_name
                 polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+                polydata_merged.point_data._active_normals_name = active_point_normals_name
+                polydata_merged.cell_data._active_normals_name = active_cell_normals_name
 
                 merged = polydata_merged
 
@@ -2797,7 +2802,7 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(self.center) - np.array(normal) * self.length / 2.0
@@ -3147,10 +3152,7 @@ class PolyDataFilters(DataSetFilters):
                 PyVistaFutureWarning,
             )
 
-        if (
-            not isinstance(rotation_axis, (np.ndarray, collections.abc.Sequence))
-            or len(rotation_axis) != 3
-        ):
+        if not isinstance(rotation_axis, (np.ndarray, Sequence)) or len(rotation_axis) != 3:
             raise ValueError('Vector must be a length three vector')
 
         if resolution <= 0:
@@ -3245,7 +3247,7 @@ class PolyDataFilters(DataSetFilters):
         >>> extruded_disc.plot(smooth_shading=True, split_sharp_edges=True)
 
         """
-        if not isinstance(direction, (np.ndarray, collections.abc.Sequence)) or len(direction) != 3:
+        if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
         extrusions = {"boundary_edges": 0, "all_edges": 1}
@@ -3854,4 +3856,33 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputDataObject(self)
         alg.SetTriangulationErrorDisplay(display_errors)
         _update_alg(alg, progress_bar, 'Triangulating Contours')
+        return _get_output(alg)
+
+    def protein_ribbon(self, progress_bar=False):
+        """Generate protein ribbon.
+
+        Parameters
+        ----------
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Generated protein ribbon.
+
+        Examples
+        --------
+        Generate protein ribbon.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> tgqp = examples.download_3gqp()
+        >>> ribbon = tgqp.protein_ribbon()
+        >>> ribbon.plot()
+
+        """
+        alg = _vtk.vtkRibbonFilter()
+        alg.SetInputData(self)
+        _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)

@@ -4,17 +4,25 @@ from __future__ import annotations
 
 import pathlib
 from pathlib import Path
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING
 
 import pyvista
-from pyvista.core.utilities.misc import _check_range, no_new_attr
+from pyvista.core import _validation
+from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from .colors import Color
+from .prop3d import _Prop3DMixin
 from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import ClassVar
+    from typing import Sequence
+
+    from pyvista.core._typing_core import VectorLike
+
     from ._typing import ColorLike
 
 
@@ -221,6 +229,197 @@ class Text(_vtk.vtkTextActor):
     @position.setter
     def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
         self.SetPosition(position[0], position[1])
+
+
+class Label(_Prop3DMixin, Text):
+    """2D label actor with a 3D position coordinate.
+
+    Unlike :class:`~pyvista.Text`, which uses 2D viewport coordinates to position text
+    in a plot, this class instead uses a 3D position coordinate. This class may be
+    positioned, oriented, and transformed in a manner similar to a 3D
+    :class:`~pyvista.Actor`.
+
+    In addition, this class supports an additional :attr:`relative_position` attribute.
+    In general, it is recommended to simply use :attr:`position` when positioning a
+    :class:`Label` by itself. However, if the position of the label depends on the
+    positioning of another actor, both :attr:`position` and :attr:`relative_position`
+    may be used together. In these cases, the :attr:`position` of the label and actor
+    should be kept in-sync. See the examples below.
+
+    Parameters
+    ----------
+    text : str, optional
+        Text string to be displayed.
+
+    position : VectorLike[float]
+        Position of the text in XYZ coordinates.
+
+    relative_position : VectorLike[float]
+        Position of the text in XYZ coordinates relative to its :attr:`position`.
+
+    size : int
+        Size of the text label.
+
+    prop : pyvista.TextProperty, optional
+        The property of this actor.
+
+    See Also
+    --------
+    pyvista.Plotter.add_point_labels
+
+    Examples
+    --------
+    Create a label for a point of interest. Here we add a label to the tip of a cone.
+
+    >>> import pyvista as pv
+    >>> cone_dataset = pv.Cone()
+    >>> tip = (0.5, 0, 0)
+    >>> label = pv.Label('tip', position=tip)
+
+    Plot the mesh and label.
+
+    >>> pl = pv.Plotter()
+    >>> cone_actor = pl.add_mesh(cone_dataset)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
+    The previous example set the label's position as the cone's tip explicitly.
+    However, this means that the two actors now have different positions.
+
+    >>> cone_actor.position
+    (0.0, 0.0, 0.0)
+    >>> label.position
+    (0.5, 0.0, 0.0)
+
+    And if we change the 3D orientation of the cone and label, the label is no longer
+    positioned at the tip.
+
+    >>> cone_actor.orientation = 0, 0, 90
+    >>> label.orientation = 0, 0, 90
+    >>>
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
+    This is because rotations by :class:`pyvista.Prop3D` are applied **before** the
+    actor is moved to its final position, and therefore the label's position is not
+    considered in the rotation. Hence, the final position of the label remains at
+    ``(0.5, 0.0, 0.0)`` as it did earlier, despite changing its orientation.
+
+    If we want the position of the label to have the same positioning *relative* to the
+    cone, we can instead set its :attr:`relative_position`.
+
+    First, reset the label's position to match the cone's position.
+
+    >>> label.position = cone_actor.position
+    >>> label.position
+    (0.0, 0.0, 0.0)
+
+    Now set its :attr:`relative_position` to the tip of the cone.
+
+    >>> label.relative_position = tip
+    >>> label.relative_position
+    (0.5, 0.0, 0.0)
+
+    Plot the results. The label is now correctly positioned at the tip of the cone.
+    This is because the :attr:`relative_position` is considered as part of the
+    rotation.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> pl.show()
+
+    As long as the label and cone's :class:`pyvista.Prop3D` attributes are modified
+    together and synchronized, the label will remain at the tip of the cone.
+
+    Modify the position of the label and tip.
+
+    >>> cone_actor.position = (1.0, 2.0, 3.0)
+    >>> label.position = (1.0, 2.0, 3.0)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(cone_actor)
+    >>> _ = pl.add_actor(label)
+    >>> _ = pl.add_axes_at_origin()
+    >>> pl.show()
+
+    """
+
+    _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
+        'size',
+        'relative_position',
+        '_relative_position',
+        '_prop3d',
+    )
+
+    def __init__(
+        self,
+        text: str | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
+        *,
+        size: int = 50,
+        prop: pyvista.Property | None = None,
+    ):
+        Text.__init__(self, text=text, prop=prop)
+        self.GetPositionCoordinate().SetCoordinateSystemToWorld()
+        self.SetTextScaleModeToNone()  # Use font size to control size of text
+
+        _Prop3DMixin.__init__(self)
+        self.relative_position = relative_position  # type: ignore[assignment]
+        self.position = position  # type: ignore[assignment]
+        self.size = size
+
+    @property
+    def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the label in xyz space.
+
+        This is the "true" position of the label. Internally this is loosely
+        equal to :attr:`position` + :attr:`relative_position`.
+        """
+        return self.GetPositionCoordinate().GetValue()
+
+    @_label_position.setter
+    def _label_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        valid_position = _validation.validate_array3(position)
+        self.GetPositionCoordinate().SetValue(valid_position)
+
+    @property
+    def size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text label.
+
+        Notes
+        -----
+        The text property's font size used to control the size of the label.
+        """
+        return self.prop.font_size
+
+    @size.setter
+    def size(self, size: int):  # numpydoc ignore=GL08
+        self.prop.font_size = size
+
+    @property
+    def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the label relative to its :attr:`position`."""
+        return tuple(self._relative_position.tolist())
+
+    @relative_position.setter
+    def relative_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+        self._relative_position = _validation.validate_array3(position, dtype_out=float)
+        self._post_set_update()
+
+    def _post_set_update(self):
+        # Update the label's underlying text position
+        matrix4x4 = self._transformation_matrix
+        vector4 = (*self.relative_position, 1)
+        new_position = (matrix4x4 @ vector4)[:3]
+        self._label_position = new_position
+
+    def _get_bounds(self):
+        # Define its 3D position as its bounds
+        x, y, z = self._label_position
+        return x, x, y, y, z, z
 
 
 @no_new_attr

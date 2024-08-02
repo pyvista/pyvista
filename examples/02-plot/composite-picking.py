@@ -9,25 +9,30 @@ using :func:`pyvista.Plotter.enable_block_picking`.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a MultiBlock Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create 100 superellipsoids using :func:`pyvista.ParametricSuperEllipsoid`
+
+# Seed rng for reproducibility
+rng = np.random.default_rng(seed=0)
 
 
 def make_poly():
     """Create a superellipsoid in a random location."""
     poly = pv.ParametricSuperEllipsoid(
-        n1=np.random.default_rng().random(),
-        n2=np.random.default_rng().random() * 2,
+        n1=rng.random(),
+        n2=rng.random() * 2,
         u_res=50,
         v_res=50,
     )
-    poly.points += np.random.default_rng().random(3) * 20
+    poly.points += rng.random(3) * 20
     return poly
 
 
@@ -35,7 +40,7 @@ def make_poly():
 blocks = pv.MultiBlock([make_poly() for _ in range(100)])
 blocks.plot()
 
-###############################################################################
+# %%
 # Enable Block Picking
 # ~~~~~~~~~~~~~~~~~~~~
 # Add ``blocks`` to a :class:`pyvista.Plotter` and enable block picking.  For
@@ -63,3 +68,5 @@ def callback(index, *args):
 pl.enable_block_picking(callback, side="left")
 pl.background_color = "w"
 pl.show()
+# %%
+# .. tags:: plot

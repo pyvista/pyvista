@@ -45,7 +45,6 @@ OBJReader, <class 'pyvista.utilities.reader.OBJReader'>
 Observer, <class 'pyvista.utilities.errors.Observer'>
 Octahedron, <function Octahedron at 0x7f72f5caca60>
 OpenFOAMReader, <class 'pyvista.utilities.reader.OpenFOAMReader'>
-Optional, typing.Optional
 PLYReader, <class 'pyvista.utilities.reader.PLYReader'>
 PNGReader, <class 'pyvista.utilities.reader.PNGReader'>
 PNMReader, <class 'pyvista.utilities.reader.PNMReader'>

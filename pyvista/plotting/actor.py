@@ -1,14 +1,21 @@
 """Wrap vtkActor module."""
 
-from typing import ClassVar, List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import ClassVar
+
+import numpy as np
 
 import pyvista
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
-from .mapper import _BaseMapper
 from .prop3d import Prop3D
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .mapper import _BaseMapper
 
 
 @no_new_attr
@@ -50,7 +57,7 @@ class Actor(Prop3D, _vtk.vtkActor):
       X Bounds                    -4.993E-01, 4.993E-01
       Y Bounds                    -4.965E-01, 4.965E-01
       Z Bounds                    -5.000E-01, 5.000E-01
-      User matrix:                Set
+      User matrix:                Identity
       Has mapper:                 True
     ...
 
@@ -76,7 +83,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_name']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -275,7 +282,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         pl.add_actor(self)
         pl.show(**kwargs)
 
-    def copy(self, deep=True) -> 'Actor':
+    def copy(self, deep=True) -> Actor:
         """Create a copy of this actor.
 
         Parameters
@@ -319,7 +326,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        mat_info = 'Unset' if self.user_matrix is None else 'Set'
+        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
+            mat_info = 'Identity'
+        else:
+            mat_info = 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -342,7 +352,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return '\n'.join(attr)
 
     @property
-    def backface_prop(self) -> Optional['pyvista.Property']:  # numpydoc ignore=RT01
+    def backface_prop(self) -> pyvista.Property | None:  # numpydoc ignore=RT01
         """Return or set the backface property.
 
         By default this property matches the frontface property
@@ -383,5 +393,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()
 
     @backface_prop.setter
-    def backface_prop(self, value: 'pyvista.Property'):  # numpydoc ignore=GL08
+    def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

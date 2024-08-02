@@ -20,13 +20,14 @@ library.
 """
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download the DataSet
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's first download the example dataset and show that it's a
@@ -37,7 +38,7 @@ grid = examples.download_coil_magnetic_field()
 grid.point_data
 
 
-###############################################################################
+# %%
 # Create Coils
 # ~~~~~~~~~~~~
 # Create several hoops to represent the coil. This matches the geometry in the
@@ -48,7 +49,7 @@ coil_block = pv.MultiBlock(coils)
 coil_block.plot(render_lines_as_tubes=True, line_width=10)
 
 
-###############################################################################
+# %%
 # Compute and Plot Field Lines
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, let's compute streamlines from the center of the coil to represent the
@@ -75,7 +76,7 @@ pl.camera.zoom(3)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot the Magnet Field Strength
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's bring this all together by plotting the magnetic field

@@ -14,6 +14,8 @@ This example shows the performance improvement when clipping using the
 
 """
 
+from __future__ import annotations
+
 import time
 
 import pyvista as pv
@@ -26,11 +28,11 @@ clipped = lidar.clip(origin=(0, 0, 1.76e3), normal=(0, 0, 1))
 t_elapsed = time.time() - tstart
 print(f"Time to clip with a PolyData {t_elapsed:.2f} seconds.")
 
-###############################################################################
+# %%
 # Plot the clipped polydata
 clipped.plot(show_scalar_bar=False)
 
-###############################################################################
+# %%
 # Show the performance improvement when using a PointSet.
 # This is only available with VTK >= 9.1.0.
 
@@ -43,7 +45,7 @@ if pv.vtk_version_info >= (9, 1):
     t_elapsed = time.time() - tstart
     print(f"Time to clip with a PointSet {t_elapsed:.2f} seconds.")
 
-###############################################################################
+# %%
 # Plot the same dataset.
 #
 # .. note::
@@ -52,3 +54,5 @@ if pv.vtk_version_info >= (9, 1):
 
 if pv.vtk_version_info >= (9, 1):
     clipped_pset.plot(show_scalar_bar=False)
+# %%
+# .. tags:: load

@@ -1,7 +1,10 @@
 """Module managing picking events."""
 
-from functools import partial, wraps
-from typing import Tuple, cast
+from __future__ import annotations
+
+from functools import partial
+from functools import wraps
+from typing import cast
 import warnings
 import weakref
 
@@ -14,7 +17,8 @@ from pyvista.core.utilities.misc import try_callback
 from . import _vtk
 from .composite_mapper import CompositePolyDataMapper
 from .errors import PyVistaPickingError
-from .opts import ElementType, PickerType
+from .opts import ElementType
+from .opts import PickerType
 
 PICKED_REPRESENTATION_NAMES = {
     'point': '_picked_point',
@@ -51,7 +55,7 @@ class RectangleSelection:
     ----------
     frustum : _vtk.vtkPlanes
         Frustum that defines the selection.
-    viewport : Tuple[float, float, float, float]
+    viewport : tuple[float, float, float, float]
         The selected viewport coordinates, given as ``(x0, y0, x1, y1)``.
 
     """
@@ -66,7 +70,7 @@ class RectangleSelection:
         return self._frustum
 
     @property
-    def frustum_mesh(self) -> 'pyvista.PolyData':  # numpydoc ignore=RT01
+    def frustum_mesh(self) -> pyvista.PolyData:  # numpydoc ignore=RT01
         """Get the frustum as a PyVista mesh."""
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()
@@ -75,7 +79,7 @@ class RectangleSelection:
         return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
 
     @property
-    def viewport(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
+    def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the selected viewport coordinates.
 
         Coordinates are given as: ``(x0, y0, x1, y1)``

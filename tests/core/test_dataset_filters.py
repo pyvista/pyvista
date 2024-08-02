@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import functools
 import itertools
 from pathlib import Path
 import platform
 import re
-from typing import Any, NamedTuple
-from unittest.mock import Mock, patch
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -13,7 +17,9 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import MissingDataError, NotAllTrianglesError, VTKVersionError
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import VTKVersionError
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -1024,12 +1030,14 @@ def test_glyph_orient_and_scale():
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
 def test_glyph_color_mode(sphere, color_mode):
-    assert sphere.glyph(color_mode=color_mode)
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
 
 
 def test_glyph_raises(sphere):
     with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
-        sphere.glyph(color_mode="foo")
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
@@ -2464,10 +2472,13 @@ def test_extract_values_split_ranges_values(labeled_data):
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
 values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
-values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
-    'val0',
-    'val1',
-]
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
 
 
 @pytest.mark.parametrize(
@@ -2851,6 +2862,29 @@ def test_merge_general(uniform):
     assert isinstance(merged, pv.PolyData)
 
 
+def test_merge_active_normals():
+    plane = pv.Plane()
+
+    # Check default normals
+    default_normal = np.array([0, 0, 1])
+    assert np.array_equal(plane["Normals"][0], default_normal)
+    assert np.array_equal(plane.active_normals[0], default_normal)
+    assert np.array_equal(plane.point_normals[0], default_normal)
+
+    # Customize the normals
+    plane["Normals"] *= -1
+    negative_normal = -default_normal
+    assert np.array_equal(plane["Normals"][0], negative_normal)
+    assert np.array_equal(plane.active_normals[0], negative_normal)
+    assert np.array_equal(plane.point_normals[0], negative_normal)
+
+    # Now test merge
+    merged = pv.merge([plane])
+    assert np.array_equal(merged["Normals"][0], negative_normal)
+    assert np.array_equal(merged.active_normals[0], negative_normal)
+    assert np.array_equal(merged.point_normals[0], negative_normal)
+
+
 def test_iadd_general(uniform, hexbeam, sphere):
     unstructured = hexbeam
     sphere_shifted = sphere.copy()
@@ -3132,13 +3166,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():

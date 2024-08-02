@@ -13,10 +13,11 @@ https://asa.scitation.org/doi/10.1121/1.401643
 
 """
 
-###############################################################################
+# %%
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
+from __future__ import annotations
 
 from itertools import product
 
@@ -182,7 +183,7 @@ for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)
     error = np.abs(freq2 - freq1) / freq1 * 100.0
     print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
 
-###############################################################################
+# %%
 # Now, let's display a mode on a mesh of the cube.
 
 # Create the 3D NumPy array of spatially referenced data
@@ -224,7 +225,7 @@ pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
 pl.add_mesh(warped, scalars=warpby)
 pl.show()
 
-###############################################################################
+# %%
 # Finally, let's make a gallery of the first 8 unique eigenmodes.
 
 

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import ClassVar, List, Sequence
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.misc import no_new_attr
 
 from .helpers import wrap
+
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
 
 
 @no_new_attr
@@ -220,7 +224,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
 
 @no_new_attr
 class ImageNoiseSource(_vtk.vtkImageNoiseSource):
-    """Create a binary image of an ellipsoid class.
+    """Create an image filled with uniform noise.
 
     .. versionadded:: 0.44.0
 
@@ -235,6 +239,9 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     maximum : float
         The maximum value for the generated noise.
 
+    seed : int, optional
+        Seed the random number generator with a value.
+
     Examples
     --------
     Create an image of noise.
@@ -244,13 +251,20 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     minimum=0,
     ...     maximum=255,
+    ...     seed=0,
     ... )
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
-    def __init__(self, whole_extent=None, minimum=None, maximum=None) -> None:
+    def __init__(
+        self,
+        whole_extent=(0, 255, 0, 255, 0, 0),
+        minimum=0.0,
+        maximum=1.0,
+        seed=None,
+    ) -> None:
         super().__init__()
         if whole_extent is not None:
             self.whole_extent = whole_extent
@@ -258,6 +272,8 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
             self.minimum = minimum
         if maximum is not None:
             self.maximum = maximum
+        if seed is not None:
+            self.seed(seed)
 
     @property
     def whole_extent(self) -> Sequence[int]:
@@ -326,6 +342,16 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
         """
         self.SetMaximum(maximum)
 
+    def seed(self, value: int) -> None:
+        """Seed the random number generator with a value.
+
+        Parameters
+        ----------
+        value : int
+          The seed value for the random number generator to use.
+        """
+        _vtk.vtkMath().RandomSeed(value)
+
     @property
     def output(self):
         """Get the output image as a ImageData.
@@ -377,7 +403,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(
         self,
@@ -564,7 +590,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     >>> source.output.plot(cpos="xy")
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_whole_extent', 'whole_extent']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_whole_extent', 'whole_extent']
 
     def __init__(self, center=None, whole_extent=None, maximum=None, std=None) -> None:
         super().__init__()
@@ -681,6 +707,123 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
         -------
         pyvista.ImageData
           The output image.
+        """
+        self.Update()
+        return wrap(self.GetOutput())
+
+
+@no_new_attr
+class ImageGridSource(_vtk.vtkImageGridSource):
+    """Create an image of a grid.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    origin : sequence[float]
+        The origin of the grid.
+
+    extent : sequence[int]
+        The extent of the whole output image, Default: (0,255,0,255,0,0).
+
+    spacing : tuple
+        The pixel spacing.
+
+    Examples
+    --------
+    Create an image of a grid.
+
+    >>> import pyvista as pv
+    >>> source = pv.ImageGridSource(
+    ...     extent=(0, 20, 0, 20, 0, 0),
+    ...     spacing=(1, 1, 1),
+    ... )
+    >>> source.output.plot(cpos="xy")
+    """
+
+    def __init__(self, origin=None, extent=None, spacing=None) -> None:
+        super().__init__()
+        if origin is not None:
+            self.origin = origin
+        if extent is not None:
+            self.extent = extent
+        if spacing is not None:
+            self.spacing = spacing
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin of the data.
+
+        Returns
+        -------
+        sequence[float]
+            The origin of the grid.
+        """
+        return self.GetGridOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]) -> None:
+        """Set the origin of the data.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            The origin of the grid.
+        """
+        self.SetGridOrigin(origin)
+
+    @property
+    def extent(self) -> Sequence[int]:
+        """Get extent of the whole output image.
+
+        Returns
+        -------
+        sequence[int]
+            The extent of the whole output image.
+        """
+        return self.GetDataExtent()
+
+    @extent.setter
+    def extent(self, extent: Sequence[int]) -> None:
+        """Set extent of the whole output image.
+
+        Parameters
+        ----------
+        extent : sequence[int]
+            The extent of the whole output image.
+        """
+        self.SetDataExtent(extent)
+
+    @property
+    def spacing(self) -> Sequence[float]:
+        """Get the spacing of the grid.
+
+        Returns
+        -------
+        sequence[float]
+            The pixel spacing.
+        """
+        return self.GetDataSpacing()
+
+    @spacing.setter
+    def spacing(self, spacing: Sequence[float]) -> None:
+        """Set the spacing of the grid.
+
+        Parameters
+        ----------
+        spacing : sequence[float]
+            The pixel spacing.
+        """
+        self.SetDataSpacing(spacing)
+
+    @property
+    def output(self):
+        """Get the output image as a ImageData.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The output image.
         """
         self.Update()
         return wrap(self.GetOutput())

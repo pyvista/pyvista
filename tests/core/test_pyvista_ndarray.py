@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from unittest import mock
 
 import numpy as np
 import pytest
 import vtk as _vtk
 
-from pyvista import examples, pyvista_ndarray
+from pyvista import examples
+from pyvista import pyvista_ndarray
 
 
 @pytest.fixture()

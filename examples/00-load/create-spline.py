@@ -8,12 +8,14 @@ Create a spline/polyline from a numpy array of XYZ vertices using
 :func:`pyvista.Spline`.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a dataset to plot
 
 
@@ -30,7 +32,7 @@ def make_points():
 points = make_points()
 points[0:5, :]
 
-###############################################################################
+# %%
 # Now let's make a function that can create line cells on a
 # :class:`pyvista.PolyData` mesh given that the points are in order for the
 # segments they make.
@@ -50,13 +52,13 @@ def lines_from_points(points):
 line = lines_from_points(points)
 line
 
-###############################################################################
+# %%
 line["scalars"] = np.arange(line.n_points)
 tube = line.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
 
-###############################################################################
+# %%
 # That tube has sharp edges at each line segment. This can be mitigated by
 # creating a single PolyLine cell for all of the points
 
@@ -76,13 +78,13 @@ tube = polyline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
 
-###############################################################################
+# %%
 # You could also interpolate those points onto a parametric spline
 
 # Create spline with 1000 interpolation points
 spline = pv.Spline(points, 1000)
 
-###############################################################################
+# %%
 # Plot spline as a tube
 
 # add scalars to spline and plot it
@@ -90,7 +92,7 @@ spline["scalars"] = np.arange(spline.n_points)
 tube = spline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
-###############################################################################
+# %%
 # The spline can also be plotted as a plain line
 
 # generate same spline with 400 interpolation points
@@ -100,7 +102,7 @@ spline = pv.Spline(points, 400)
 spline.plot(line_width=4, color="k")
 
 
-###############################################################################
+# %%
 # The radius of the tube can be modulated with scalars
 
 spline["theta"] = 0.4 * np.arange(len(spline.points))
@@ -109,7 +111,7 @@ tube = spline.tube(scalars="radius", absolute=True)
 tube.plot(scalars="theta", smooth_shading=True)
 
 
-###############################################################################
+# %%
 # Ribbons
 # +++++++
 #
@@ -118,3 +120,5 @@ tube.plot(scalars="theta", smooth_shading=True)
 
 ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
+# %%
+# .. tags:: load

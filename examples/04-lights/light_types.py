@@ -22,6 +22,8 @@ where you move the camera, the light always emanates from the view point:
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -39,7 +41,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Camera light
 # ============
 #
@@ -60,7 +62,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Scene light
 # ===========
 #
@@ -73,3 +75,5 @@ plotter.add_mesh(mesh, color='lightblue', smooth_shading=True)
 light = pv.Light(position=(0, 1, 0), light_type='scene light')
 plotter.add_light(light)
 plotter.show()
+# %%
+# .. tags:: lights

@@ -20,13 +20,15 @@ critical consideration.
 
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Load the dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset using :mod:`pyvista.examples` module. This module
@@ -37,7 +39,7 @@ mesh = examples.download_fea_hertzian_contact_cylinder()
 mesh
 
 
-###############################################################################
+# %%
 # Plot the Dataset
 # ~~~~~~~~~~~~~~~~
 # Plot the dataset by part ID.
@@ -45,7 +47,7 @@ mesh
 mesh.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Creating a Line to Denote the Point of Contact
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Construct a line to represent the point of contact between the cylinder and
@@ -58,7 +60,7 @@ line = pv.Line(a, b, resolution=100)
 line.clear_data()
 line
 
-###############################################################################
+# %%
 # Sampling the Stress along the Line
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can sample the Z component stress along the contact edge and compare it
@@ -104,7 +106,7 @@ plt.legend()
 plt.show()
 
 
-###############################################################################
+# %%
 # Visualizing the Z Stress Distribution
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can now visualize the Z stress distribution. Use :class:`pyvista.Plotter` to

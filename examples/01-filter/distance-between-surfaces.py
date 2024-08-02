@@ -31,6 +31,8 @@ to the top surface, unlike the first two examples.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -50,7 +52,7 @@ h1 = hill(10)
 h1.points[:, -1] += 5
 h1 = h1.elevation()
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(h0, smooth_shading=True)
@@ -58,14 +60,14 @@ p.add_mesh(h1, smooth_shading=True)
 p.show_grid()
 p.show()
 
-###############################################################################
+# %%
 # Ray Tracing Distance
 # ++++++++++++++++++++
 #
 # Compute normals of lower surface at vertex points
 h0n = h0.compute_normals(point_normals=True, cell_normals=False, auto_orient_normals=True)
 
-###############################################################################
+# %%
 # Travel along normals to the other surface and compute the thickness on each
 # vector.
 
@@ -84,14 +86,14 @@ mask = h0n["distances"] == 0
 h0n["distances"][mask] = np.nan
 np.nanmean(h0n["distances"])
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(h0n, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()
 
 
-###############################################################################
+# %%
 # Nearest Neighbor Distance
 # +++++++++++++++++++++++++
 #
@@ -107,14 +109,14 @@ d_kdtree, idx = tree.query(h0.points)
 h0["distances"] = d_kdtree
 np.mean(d_kdtree)
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()
 
 
-###############################################################################
+# %%
 # Using PyVista Filter
 # ++++++++++++++++++++
 #
@@ -129,7 +131,7 @@ h0["distances"] = d_exact
 np.mean(d_exact)
 
 
-###############################################################################
+# %%
 # As expected there is only a small difference between this method and the
 # KDTree method.
 
@@ -137,3 +139,5 @@ p = pv.Plotter()
 p.add_mesh(h0, scalars="distances", smooth_shading=True)
 p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()
+# %%
+# .. tags:: filter

@@ -1,12 +1,16 @@
 """This module contains some convenience helper functions."""
 
-from typing import Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.helpers import is_pyvista_dataset
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
 
 def plot_arrows(cent, direction, **kwargs):
@@ -39,16 +43,17 @@ def plot_arrows(cent, direction, **kwargs):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> cent = np.random.default_rng().random(3)
-    >>> direction = np.random.default_rng().random(3)
+    >>> rng = np.random.default_rng(seed=0)
+    >>> cent = rng.random(3)
+    >>> direction = rng.random(3)
     >>> pv.plot_arrows(cent, direction)
 
     Plot 100 random arrows.
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> cent = np.random.default_rng().random((100, 3))
-    >>> direction = np.random.default_rng().random((100, 3))
+    >>> cent = rng.random((100, 3))
+    >>> direction = rng.random((100, 3))
     >>> pv.plot_arrows(cent, direction)
 
     """
@@ -143,7 +148,7 @@ def plot_compare_four(
     return pl.show(screenshot=screenshot, **show_kwargs)
 
 
-def view_vectors(view: str, negative: bool = False) -> Tuple[NumpyArray[int], NumpyArray[int]]:
+def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], NumpyArray[int]]:
     """Given a plane to view, return vectors for setting up camera.
 
     Parameters

@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
+from typing import TYPE_CHECKING
+from typing import Dict
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
-from pyvista.core._typing_core import BoundsLike, Number, NumpyArray  # noqa: F401
+from pyvista.core._typing_core import BoundsLike  # noqa: F401
+from pyvista.core._typing_core import Number  # noqa: F401
+from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .plotting.charts import Chart2D, ChartBox, ChartMPL, ChartPie
+    from .plotting.charts import Chart2D
+    from .plotting.charts import ChartBox
+    from .plotting.charts import ChartMPL
+    from .plotting.charts import ChartPie
     from .plotting.colors import Color
 
 ColorLike = Union[

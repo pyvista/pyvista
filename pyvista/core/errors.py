@@ -1,5 +1,7 @@
 """PyVista specific errors."""
 
+from __future__ import annotations
+
 
 class NotAllTrianglesError(ValueError):
     """Exception when a mesh does not contain all triangles.

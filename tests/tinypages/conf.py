@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from pathlib import Path
 import re
@@ -33,7 +35,7 @@ plot_setup = plot_cleanup = 'import pyvista'
 
 # -- Options for HTML output ----------------------------------------------
 
-html_theme = 'pydata_sphinx_theme'
+html_theme = 'sphinx_book_theme'
 
 html_static_path = ['_static']
 

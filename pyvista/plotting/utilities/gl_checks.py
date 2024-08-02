@@ -1,5 +1,7 @@
 """Plotting GL checks."""
 
+from __future__ import annotations
+
 from pyvista.plotting import _vtk
 
 

@@ -6,6 +6,8 @@ Linked Views in Subplots
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -43,3 +45,5 @@ for i in range(nframe):
 
 # Close movie and delete object
 p.close()
+# %%
+# .. tags:: plot

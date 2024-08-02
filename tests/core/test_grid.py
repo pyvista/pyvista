@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pathlib
 from pathlib import Path
 import weakref
@@ -7,8 +9,11 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import CellType, examples
-from pyvista.core.errors import AmbiguousDataError, CellSizeError, MissingDataError
+from pyvista import CellType
+from pyvista import examples
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import CellSizeError
+from pyvista.core.errors import MissingDataError
 
 test_path = str(Path(__file__).resolve().parent)
 
@@ -1323,9 +1328,9 @@ def test_ExplicitStructuredGrid_cell_coords():
     grid = examples.load_explicit_structured()
 
     coords = grid.cell_coords(19)
-    assert isinstance(coords, tuple)
-    assert all(np.issubdtype(c, np.integer) for c in coords)
-    assert coords == (3, 4, 0)
+    assert isinstance(coords, np.ndarray)
+    assert np.issubdtype(coords.dtype, np.integer)
+    assert np.array_equal(coords, (3, 4, 0))
 
     coords = grid.cell_coords((19, 31, 41, 54))
     assert isinstance(coords, np.ndarray)

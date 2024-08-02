@@ -8,14 +8,16 @@ Extract a subset of the edges of a polygonal mesh to generate an outline
 (silhouette) of a mesh.
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 
-###############################################################################
+# %%
 # Prepare a triangulated ``PolyData``
 bunny = examples.download_bunny()
 
-###############################################################################
+# %%
 # Now we can display the silhouette of the mesh and compare the result:
 plotter = pyvista.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
@@ -29,7 +31,7 @@ plotter.view_xy()
 plotter.show()
 
 
-###############################################################################
+# %%
 # Maybe the default parameters are not enough to really notice the silhouette.
 # But by using a ``dict``, it is possible to modify the properties of the
 # outline. For example, color and width could be specified like so:
@@ -43,7 +45,7 @@ plotter.view_xy()
 plotter.show()
 
 
-###############################################################################
+# %%
 # By default, PyVista uses a pretty aggressive decimation level but we might
 # want to disable it. It is also possible to display sharp edges:
 cylinder = pyvista.Cylinder(
@@ -79,7 +81,7 @@ plotter.view_isometric()
 plotter.show()
 
 
-###############################################################################
+# %%
 # Here is another example:
 dragon = examples.download_dragon()
 plotter = pyvista.Plotter()
@@ -104,3 +106,5 @@ plotter.camera_position = [
     (0.34348225747312017, 0.8567703221182346, -0.38466160965007384),
 ]
 plotter.show()
+# %%
+# .. tags:: plot
