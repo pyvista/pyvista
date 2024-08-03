@@ -3725,7 +3725,7 @@ class CubeFacesSource(CubeSource):
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     frame_width : float, optional
         Convert the faces into frames with the specified width. If set, the center
@@ -3740,11 +3740,25 @@ class CubeFacesSource(CubeSource):
         edge length of the cube, and all sides of the faces are shrunk by the same
         (constant) value.
 
+        .. note::
+            - A value of ``1.0`` has no effect.
+            - Values between ``0.0`` and ``1.0`` will shrink the faces.
+            - Values greater than ``1.0`` will grow the faces.
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.shrink`.
+
     explode_factor : float, optional
         Push the faces away from (or pull them toward) the cube's center. If set, this
         is the factor by which to move each face. The magnitude of the move is relative
         to the smallest edge length of the cube, and all faces are moved by the same
         (constant) amount.
+
+        .. note::
+            - A value of ``0.0`` has no effect.
+            - Increasing positive values will push the faces farther away (explode).
+            - Decreasing negative values will pull the faces closer together (implode).
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
@@ -3962,7 +3976,7 @@ class CubeFacesSource(CubeSource):
 
         .. note::
             - A value of ``0.0`` has no effect.
-            - Increasing positive values will push the faces farther away (explode)
+            - Increasing positive values will push the faces farther away (explode).
             - Decreasing negative values will pull the faces closer together (implode).
 
         This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
@@ -4149,7 +4163,7 @@ class CubeFacesSource(CubeSource):
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each
-        face. The blocks are named and ordered as  ``('+X','-X','+Y','-Y','+Z','-Z')``.
+        face. The blocks are named and ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
 
         The source is automatically updated by :meth:`update` prior to returning
         the output.
