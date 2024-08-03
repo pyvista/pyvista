@@ -4118,11 +4118,9 @@ class CubeFacesSource(CubeSource):
         min_length = np.min(lengths)
 
         # Store vars for updating the output
-        shrink_factor, explode_factor, frame_width = (
-            self.shrink_factor,
-            self.explode_factor,
-            self.frame_width,
-        )
+        shrink_factor = self.shrink_factor
+        explode_factor = self.explode_factor
+        frame_width = self.frame_width
         output = self._output
 
         # Modify each face mesh of the output
