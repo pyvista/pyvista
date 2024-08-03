@@ -1,30 +1,54 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import numpy as np
 import pytest
 
 import pyvista as pv
 
+if TYPE_CHECKING:
+    from types import ModuleType
 
-@pytest.mark.parametrize(
-    ('class_name', 'kwargs'),
-    [
-        ('Plotter', None),  # Also covers Renderer
-        ('MultiBlock', None),
-        ('Actor', None),  # Test Prop3D
-        ('AxesAssembly', None),  # Test Prop3DMixin
-        ('Label', None),
-        ('Cell', None),
-        ('CubeAxesActor', dict(camera=pv.Camera())),
-        ('BoxSource', None),
-        ('CubeSource', None),
-        ('FixedPointVolumeRayCastMapper', None),  # Test _BaseMapper
-        ('PolyData', None),  # Test DataSet
-    ],
-)
-def test_bounds_tuple(class_name, kwargs):
-    kwargs = kwargs if kwargs else {}
-    instance = getattr(pv, class_name)(**kwargs)
+
+def _get_classes_with_bounds(module: ModuleType) -> list[type]:
+    return [
+        getattr(module, item)
+        for item in module.__dict__.keys()
+        if hasattr(getattr(module, item), 'bounds')
+    ]
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'class_with_bounds' in metafunc.fixturenames:
+        # Generate a separate test for each class that has bounds
+        core_classes: list[type] = _get_classes_with_bounds(pv.core)
+        plotting_classes: list[type] = _get_classes_with_bounds(pv.plotting)
+        classes = [*core_classes, *plotting_classes]
+        class_names = [class_.__name__ for class_ in classes]
+        metafunc.parametrize('class_with_bounds', classes, ids=class_names)
+
+
+def test_bounds_tuple(class_with_bounds):
+    # Define kwargs as required for some cases.
+    kwargs = {}
+    if class_with_bounds is pv.CubeAxesActor:
+        kwargs['camera'] = pv.Camera()
+    elif class_with_bounds is pv.Renderer:
+        kwargs['parent'] = pv.Plotter()
+
+    # Init object but skip if abstract
+    try:
+        instance = class_with_bounds(**kwargs)
+    except TypeError as e:
+        if 'abstract' in repr(e):
+            pytest.skip('Class is abstract.')
+        raise
+
+    # Do test
     bounds = instance.bounds
     assert len(bounds) == 6
     assert isinstance(bounds, pv.BoundsTuple)
-    assert all(isinstance(bnd, float) for bnd in bounds)
+    # Make sure we have built-in floats
+    assert all(isinstance(bnd, float) and not isinstance(bnd, np.generic) for bnd in bounds)
