@@ -1194,7 +1194,7 @@ class CubeSource(_vtk.vtkCubeSource):
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
-        bnds = [0] * 6
+        bnds = [0.0] * 6
         self.GetBounds(bnds)
         return BoundsTuple(*bnds)
 
@@ -2582,7 +2582,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the box."""
+        """Return or set the bounds of the box."""
         return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
