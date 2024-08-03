@@ -3868,11 +3868,8 @@ class CubeFacesSource(CubeSource):
             bounds=bounds,
             point_dtype=point_dtype,
         )
-
         # Init output
-        points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-        faces = [4, 0, 1, 2, 3]
-        self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(6)])
 
         # Set properties
         self.frame_width = frame_width
