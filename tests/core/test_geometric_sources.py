@@ -768,18 +768,12 @@ def test_cube_faces_source_update(cube_faces_source):
     assert all(output_after[i] is output_after[i] for i in range(6))
 
 
-def test_cube_faces_source_set_get_shrink():
-    source = pv.CubeFacesSource(shrink_factor=0.5)
-    assert source.shrink_factor == 0.5
-    source.shrink_factor = 0.1
-    assert source.shrink_factor == 0.1
-
-
-def test_cube_faces_source_set_get_explode():
-    source = pv.CubeFacesSource(explode_factor=0.5)
-    assert source.explode_factor == 0.5
-    source.explode_factor = 0.1
-    assert source.explode_factor == 0.1
+@pytest.mark.parametrize('attr', ['shrink_factor', 'explode_factor', 'frame_width'])
+def test_cube_faces_source_set_get_factor(attr):
+    source = pv.CubeFacesSource(**{attr: 0.5})
+    assert getattr(source, attr) == 0.5
+    setattr(source, attr, 0.1)
+    assert getattr(source, attr) == 0.1
 
 
 @pytest.mark.parametrize(
