@@ -45,7 +45,7 @@ pyvista.BoundsTuple
 
 .. currentmodule:: pyvista
 
-.. autodata:: BoundsTuple
+.. autoclass:: BoundsTuple
 
 pyvista.CellsLike
 ~~~~~~~~~~~~~~~~~
