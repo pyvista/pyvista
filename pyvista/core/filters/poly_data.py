@@ -3913,10 +3913,10 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> mesh = pv.Cylinder(resolution=4)
-        >>> mesh.points
+        >>> mesh.n_points
         16
         >>> mesh.merge_points(inplace=True)
-        >>> merged.n_points
+        >>> mesh.n_points
         8
 
         """
