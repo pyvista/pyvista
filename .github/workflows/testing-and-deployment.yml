@@ -298,8 +298,8 @@ jobs:
 
       - name: Reinstall matplotlib
         run: |
-            pip uninstall matplotlib
-            pip install matplotlib
+          pip uninstall matplotlib
+          pip install matplotlib
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
