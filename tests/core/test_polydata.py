@@ -1300,7 +1300,6 @@ def test_n_faces_etc_deprecated(cells: str):
 
 def test_merge_points():
     mesh = pv.Cylinder(resolution=4)
-    n_points = mesh.n_points
-    assert n_points == 8 * 2
+    assert mesh.n_points == 8 * 2
     mesh.merge_points(inplace=True)
     assert mesh.n_points == 8
