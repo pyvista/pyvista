@@ -536,9 +536,9 @@ def test_text_3d():
 
     bnds = mesh.bounds
     actual_width, actual_height, actual_depth = (
-        bnds[1] - bnds[0],
-        bnds[3] - bnds[2],
-        bnds[5] - bnds[4],
+        bnds.x_max - bnds.x_min,
+        bnds.y_max - bnds.y_min,
+        bnds.z_max - bnds.z_min,
     )
     assert np.isclose(actual_width, 2.0)
     assert np.isclose(actual_height, 3.0)

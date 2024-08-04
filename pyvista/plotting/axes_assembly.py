@@ -14,7 +14,7 @@ from typing import TypedDict
 import numpy as np
 
 import pyvista as pv
-from pyvista import BoundsLike
+from pyvista import BoundsTuple
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
@@ -172,8 +172,8 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             ):
                 part.user_matrix = new_matrix
 
-    def _get_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        return self.GetBounds()
+    def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
@@ -518,9 +518,9 @@ class AxesAssembly(_XYZAssembly):
             f"  Origin:                     {self.origin}",
             f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+            f"  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}",
+            f"  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}",
+            f"  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}",
         ]
         return '\n'.join(attr)
 
@@ -1565,9 +1565,9 @@ class PlanesAssembly(_XYZAssembly):
             f"  Origin:                     {self.origin}",
             f"  Scale:                      {self.scale}",
             f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+            f"  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}",
+            f"  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}",
+            f"  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}",
         ]
         return '\n'.join(attr)
 

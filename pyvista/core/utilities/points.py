@@ -288,8 +288,8 @@ def fit_plane_to_points(points, return_meta=False):
     projected.transform(rotate_transform)
 
     # Compute size of the plane
-    i_size = projected.bounds[1] - projected.bounds[0]
-    j_size = projected.bounds[3] - projected.bounds[2]
+    i_size = projected.bounds.x_max - projected.bounds.x_min
+    j_size = projected.bounds.y_max - projected.bounds.y_min
 
     # The center of the input data does not necessarily coincide with
     # the center of the plane. The true center of the plane is the

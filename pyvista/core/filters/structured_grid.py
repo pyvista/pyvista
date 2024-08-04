@@ -31,7 +31,7 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
