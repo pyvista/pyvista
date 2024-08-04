@@ -28,6 +28,8 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
+from .misc import abstract_class
+
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
@@ -38,6 +40,59 @@ if TYPE_CHECKING:  # pragma: no cover
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
+
+
+@abstract_class
+class BaseSource(_vtk.vtkAlgorithm):
+    """Superclass for all sources.
+
+    Parameters
+    ----------
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+    """
+
+    def __init__(self, point_dtype='float32'):
+        """Initialize the geometric source class."""
+        super().__init__()
+        self.point_dtype = point_dtype
+
+    @property
+    def point_dtype(self) -> str:
+        """Get the desired output point types. It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        str
+            Desired output point types.
+        """
+        precision = self.GetOutputPointsPrecision()
+        return {
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
+        }[precision]
+
+    @point_dtype.setter
+    def point_dtype(self, point_dtype: str):
+        """Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        Parameters
+        ----------
+        point_dtype : str, default: 'float32'
+            Set the desired output point types. It must be either 'float32' or 'float64'.
+
+        Returns
+        -------
+        point_dtype: str
+            Desired output point types.
+        """
+        if point_dtype not in ['float32', 'float64']:
+            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+        precision = {
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
+        }[point_dtype]
+        self.SetOutputPointsPrecision(precision)
 
 
 def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
@@ -290,7 +345,7 @@ if _vtk.vtk_version_info < (9, 3):
 
 
 @no_new_attr
-class ConeSource(_vtk.vtkConeSource):
+class ConeSource(_vtk.vtkConeSource, BaseSource):
     """Cone source algorithm class.
 
     Parameters
@@ -320,6 +375,9 @@ class ConeSource(_vtk.vtkConeSource):
     resolution : int, default: 6
         Number of facets used to represent the cone.
 
+    **kwargs : dict, optional
+        See :func:`pyvista.BaseSource` for additional options.
+
     Examples
     --------
     Create a default ConeSource.
@@ -338,9 +396,10 @@ class ConeSource(_vtk.vtkConeSource):
         capping=True,
         angle=None,
         resolution=6,
+        **kwargs,
     ):
         """Initialize the cone source class."""
-        super().__init__()
+        super().__init__(**kwargs)
         self.center = center
         self.direction = direction
         self.height = height
