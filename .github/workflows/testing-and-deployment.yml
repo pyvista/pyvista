@@ -293,10 +293,6 @@ jobs:
       - name: Install PyVista
         run: pip install . --no-deps
 
-      - name: Install msvc-runtime
-        run: |
-          pip install msvc-runtime
-
       - name: Install test dependencies
         run: |
           pip install vtk
