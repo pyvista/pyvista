@@ -866,7 +866,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.bounds
-        (2.0, 5.0, 2.0, 5.0, 2.0, 5.0)
+        BoundsTuple(x_min=2.0, x_max=5.0, y_min=2.0, y_max=5.0, z_min=2.0, z_max=5.0)
         >>> grid.dimensions
         (4, 4, 4)
 

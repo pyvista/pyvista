@@ -28,8 +28,9 @@ mesh['height'] = mesh.points[:, 2]
 # Make two points at the bounds of the mesh and one at the center to
 # construct a circular arc.
 normal = [0, 1, 0]
-polar = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+bnds = mesh.bounds
+polar = [bnds.x_min, bnds.y_min, bnds.z_max]
+center = [bnds.x_min, bnds.y_min, bnds.z_min]
 angle = 90.0
 
 # Preview how this circular arc intersects this mesh

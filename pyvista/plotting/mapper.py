@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
 from typing import Optional
 from typing import cast
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import convert_array
 from pyvista.core.utilities.arrays import convert_string_array
@@ -24,9 +24,6 @@ from .colors import get_cmap_safe
 from .lookup_table import LookupTable
 from .tools import normalize
 from .utilities.algorithms import set_algorithm_input
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
 
 
 @abstract_class
@@ -51,7 +48,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         )
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of this mapper.
 
         Examples
@@ -59,10 +56,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mapper = pv.DataSetMapper(dataset=pv.Cube())
         >>> mapper.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
 
         """
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     def copy(self) -> _BaseMapper:
         """Create a copy of this mapper.
