@@ -1212,7 +1212,7 @@ def Cube(
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     clean : bool, default: True
         Whether to clean the raw points of the mesh, making the cube
@@ -1269,7 +1269,7 @@ def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     level : int, default: 0
         Level of subdivision of the faces.

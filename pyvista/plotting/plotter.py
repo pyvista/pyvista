@@ -88,7 +88,7 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -1654,7 +1654,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera.is_set = is_set
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of the active renderer.
 
         Returns
@@ -1668,7 +1668,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
 
         """
         return self.renderer.bounds
@@ -6153,9 +6153,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if viewup is None:
             viewup = self._theme.camera.viewup
         center = np.array(self.center)
-        bnds = np.array(self.bounds)
-        radius = (bnds[1] - bnds[0]) * factor
-        y = (bnds[3] - bnds[2]) * factor
+        bnds = self.bounds
+        radius = (bnds.x_max - bnds.x_min) * factor
+        y = (bnds.y_max - bnds.y_min) * factor
         if y > radius:
             radius = y
         center += np.array(viewup) * shift
@@ -7138,7 +7138,7 @@ class Plotter(BasePlotter):
         bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
             Specify the bounds in the format of:
 
-            - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+            - ``(x_min, x_max, y_min, y_max, z_min, z_max)``
 
         focal_point : sequence[float], default: (0.0, 0.0, 0.0)
             The focal point of the cursor.
