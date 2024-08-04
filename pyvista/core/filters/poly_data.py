@@ -3915,7 +3915,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = pv.Cylinder(resolution=4)
         >>> mesh.n_points
         16
-        >>> mesh.merge_points(inplace=True)
+        >>> _ = mesh.merge_points(inplace=True)
         >>> mesh.n_points
         8
 
