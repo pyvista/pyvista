@@ -1647,9 +1647,10 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = "all_datasets_carousel"
 
+    @classmethod  # type: ignore[misc]
     @property
-    def doc(self):
-        return DatasetCardFetcher.generate_alphabet_index(self.dataset_names)
+    def doc(cls):
+        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod
     def fetch_dataset_names(cls):
