@@ -1358,7 +1358,15 @@ class DatasetCardFetcher:
         # Get mapping of alphabet letters to first dataset name which begins with each letter
         alphabet_dict = {}
         for dataset_name in sorted(dataset_names):
-            alphabet_dict.setdefault(dataset_name[0].upper(), dataset_name)
+            index_character = dataset_name[0].upper()
+            try:
+                int(index_character)
+            except ValueError:
+                pass
+            else:
+                index_character = '#'
+
+            alphabet_dict.setdefault(index_character, dataset_name)
 
         buttons = []
         for letter, dataset_name in alphabet_dict.items():
