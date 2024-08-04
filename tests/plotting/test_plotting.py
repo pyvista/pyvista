@@ -4037,9 +4037,10 @@ XYZ_ASSEMBLY_TEST_CASES = dict(
     [
         (pv.AxesAssembly, {}),
         (pv.AxesAssemblySymmetric, dict(label_size=25)),
+        (pv.BoxAssembly, dict(label_size=25)),
         (pv.PlanesAssembly, dict(opacity=1)),
     ],
-    ids=['Axes', 'AxesSymmetric', 'Planes'],
+    ids=['Axes', 'AxesSymmetric', 'Box', 'Planes'],
 )
 def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
     plot = pv.Plotter()
@@ -4055,8 +4056,8 @@ def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
 
 @pytest.mark.parametrize(
     'Assembly',
-    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
-    ids=['Axes', 'AxesSymmetric', 'Planes'],
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.BoxAssembly, pv.PlanesAssembly],
+    ids=['Axes', 'AxesSymmetric', 'Box', 'Planes'],
 )
 def test_xyz_assembly_show_labels_false(Assembly):
     plot = pv.Plotter()
@@ -4555,6 +4556,42 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+@skip_9_1_0
+@skip_windows
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        (None, None),
+        ('shrink_factor', 0.5),
+        ('explode_factor', 0.5),
+        ('explode_factor', -0.5),
+        ('frame_width', 0.2),
+        ('frame_width', 0.8),
+    ],
+)
+def test_cube_faces_source(name, value):
+    kwargs = {name: value} if name and value else {}
+    cube_faces_source = pv.CubeFacesSource(**kwargs, x_length=1, y_length=2, z_length=3)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(
+        mag=0.5, show_edges=True, line_width=3, edge_color='red'
+    )
+
+
+@pytest.mark.parametrize('box_style', ['frame', 'tube', 'face'])
+def test_box_assembly_box_style(box_style):
+    plot = pv.Plotter()
+    actor = pv.BoxAssembly(box_style=box_style)
+    plot.add_actor(actor)
+    plot.show()
+
+
+def test_box_assembly_bounds(airplane):
+    plot = pv.Plotter()
+    actor = pv.BoxAssembly(bounds=airplane.bounds, box_style='tube')
+    plot.add_actor(actor)
+    plot.show()
 
 
 def test_planes_assembly(airplane):

@@ -19,6 +19,11 @@ def axes_assembly_symmetric():
 
 
 @pytest.fixture()
+def box_assembly():
+    return pv.BoxAssembly()
+
+
+@pytest.fixture()
 def planes_assembly():
     return pv.PlanesAssembly()
 
@@ -552,6 +557,9 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     match = "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' and part 'shaft'"
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
+
+
+def test_labeled_box_assembly(box_assembly): ...
 
 
 def test_planes_assembly_repr(planes_assembly):
