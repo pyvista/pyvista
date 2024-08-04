@@ -294,6 +294,7 @@ jobs:
         run: pip install . --no-deps
 
       - name: Install test dependencies
+        # https://github.com/pyvista/pyvista/pull/6458
         run: pip install vtk --only-binary "matplotlib" -r requirements_test.txt
 
       - name: Report
