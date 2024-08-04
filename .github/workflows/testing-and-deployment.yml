@@ -293,13 +293,12 @@ jobs:
       - name: Install PyVista
         run: pip install . --no-deps
 
+      - name: Install msvc-runtime
+        run: |
+          pip install msvc-runtime
+
       - name: Install test dependencies
         run: pip install vtk -r requirements_test.txt
-
-      - name: Reinstall matplotlib
-        run: |
-          pip uninstall matplotlib
-          pip install matplotlib
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
