@@ -64,6 +64,18 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
 }
 
 
+class classproperty(property):
+    """Read-only class property decorator.
+
+    Used as an alternative to chaining @classmethod and @property which is deprecated.
+
+    See https://stackoverflow.com/a/13624858
+    """
+
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
+
+
 def _aligned_dedent(txt):
     """Custom variant of `textwrap.dedent`.
 
@@ -1346,7 +1358,15 @@ class DatasetCardFetcher:
         # Get mapping of alphabet letters to first dataset name which begins with each letter
         alphabet_dict = {}
         for dataset_name in sorted(dataset_names):
-            alphabet_dict.setdefault(dataset_name[0].upper(), dataset_name)
+            index_character = dataset_name[0].upper()
+            try:
+                int(index_character)
+            except ValueError:
+                pass
+            else:
+                index_character = '#'
+
+            alphabet_dict.setdefault(index_character, dataset_name)
 
         buttons = []
         for letter, dataset_name in alphabet_dict.items():
@@ -1647,9 +1667,9 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = "all_datasets_carousel"
 
-    @property
-    def doc(self):
-        return DatasetCardFetcher.generate_alphabet_index(self.dataset_names)
+    @classproperty
+    def doc(cls):
+        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod
     def fetch_dataset_names(cls):

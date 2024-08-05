@@ -10,12 +10,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pyvista.core import _validation
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -281,10 +281,10 @@ class Prop3D(_vtk.vtkProp3D):
         self.SetOrigin(value)
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of the entity.
 
-        Bounds are ``(-X, +X, -Y, +Y, -Z, +Z)``
+        Bounds are ``(x_min, x_max, y_min, y_max, z_min, z_max)``
 
         Examples
         --------
@@ -293,10 +293,10 @@ class Prop3D(_vtk.vtkProp3D):
         >>> mesh = pv.Cube(x_length=0.1, y_length=0.2, z_length=0.3)
         >>> actor = pl.add_mesh(mesh)
         >>> actor.bounds
-        (-0.05, 0.05, -0.1, 0.1, -0.15, 0.15)
+        BoundsTuple(x_min=-0.05, x_max=0.05, y_min=-0.1, y_max=0.1, z_min=-0.15, z_max=0.15)
 
         """
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -564,25 +564,31 @@ class _Prop3DMixin(ABC):
         """Update object after setting Prop3D attributes."""
 
     @abstractmethod
-    def _get_bounds(self) -> BoundsLike:
+    def _get_bounds(self) -> BoundsTuple:
         """Return the object's 3D bounds."""
 
     @property
     @wraps(Prop3D.bounds.fget)  # type: ignore[attr-defined]
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.bounds`."""
-        return self._get_bounds()
+        return BoundsTuple(*self._get_bounds())
 
     @property
     @wraps(Prop3D.center.fget)  # type: ignore[attr-defined]
     def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.center."""
         bnds = self.bounds
-        return (bnds[0] + bnds[1]) / 2, (bnds[2] + bnds[3]) / 2, (bnds[4] + bnds[5]) / 2
+        return (
+            (bnds.x_min + bnds.x_max) / 2,
+            (bnds.y_min + bnds.y_max) / 2,
+            (bnds.z_min + bnds.z_max) / 2,
+        )
 
     @property
     @wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
     def length(self) -> float:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.length."""
         bnds = self.bounds
-        return np.linalg.norm((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4])).tolist()
+        return np.linalg.norm(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        ).tolist()
