@@ -980,6 +980,30 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out)
 
 
+@pytest.fixture()
+def uniform_spherical_surface():
+    # uniform spherical surface with radius 2
+    rng = np.random.default_rng(seed=42)
+    arr = rng.normal(size=(100000, 3))
+    sphere = arr / np.linalg.norm(arr, axis=1, keepdims=True) * 2
+
+    atol = 1e-4
+    assert np.allclose(np.max(sphere, axis=0), 2, atol=atol)
+    assert np.allclose(np.min(sphere, axis=0), -2, atol=atol)
+    return sphere
+
+
+def test_principal_axes_correct_std(uniform_spherical_surface):
+    _, std_actual = pv.principal_axes(uniform_spherical_surface, return_std=True)
+    std_expected = np.std(uniform_spherical_surface)
+
+    # Values range from approx 1.15-1.16
+    atol = 0.01
+    assert np.allclose(std_actual, std_expected, atol=atol)
+    assert np.allclose(std_actual, 1.15, atol=atol)
+    assert np.allclose(std_expected, 1.15, atol=atol)
+
+
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)

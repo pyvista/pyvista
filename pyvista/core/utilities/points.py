@@ -557,6 +557,11 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     >>> std
     array([3.014956 , 1.507478 , 0.7035637], dtype=float32)
 
+    Compare this to using :meth:`numpy.std` for the computation.
+
+    >>> np.std(mesh.points, axis=0)
+    pyvista_ndarray([3.0149572, 1.5074761, 0.7035699], dtype=float32)
+
     Convert the values to proportions for analysis.
 
     >>> std / sum(std)
@@ -614,6 +619,6 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        std = np.sqrt(eig_vals / len(points))[::-1]
+        std = np.sqrt(eig_vals / len(points), out=eig_vals)[::-1]
         return axes, std
     return axes
