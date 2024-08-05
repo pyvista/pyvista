@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from collections import UserDict
-from collections.abc import Sequence
 import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Tuple
+from typing import Sequence
 from typing import Union
 
 import numpy as np
@@ -22,7 +20,6 @@ from pyvista.core.errors import MissingDataError
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -70,9 +67,9 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[MatrixLike[float], VectorLike[float]],
+    points: MatrixLike[float] | VectorLike[float],
     copy: bool = False,
-) -> Tuple[NumpyArray[float], bool]:
+) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
@@ -250,7 +247,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> pyvista.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -789,47 +786,6 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
             f"point data: {possible_scalars_point}.\n"
             "Set one as active using DataSet.set_active_scalars(name, preference=type)",
         )
-
-
-def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
-    """Check and coerce transform-like arg to a 4x4 numpy array.
-
-    Parameters
-    ----------
-    transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
-        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
-        from a vtkTransform.
-
-    Returns
-    -------
-    np.ndarray
-        4x4 transformation matrix.
-
-    """
-    transform_array: NumpyArray[float] = np.eye(4)
-    if isinstance(transform_like, _vtk.vtkMatrix4x4):
-        transform_array = array_from_vtkmatrix(transform_like)
-    elif isinstance(transform_like, _vtk.vtkMatrix3x3):
-        transform_array[:3, :3] = array_from_vtkmatrix(transform_like)
-    elif isinstance(transform_like, _vtk.vtkTransform):
-        transform_array = array_from_vtkmatrix(transform_like.GetMatrix())
-    elif isinstance(transform_like, np.ndarray):
-        if transform_like.shape == (3, 3):
-            transform_array[:3, :3] = transform_like
-        elif transform_like.shape == (4, 4):
-            transform_array = transform_like
-        else:
-            raise ValueError('Transformation array must be 3x3 or 4x4.')
-    else:
-        raise TypeError(
-            'Input transform must be one of:\n'
-            '\tvtk.vtkMatrix4x4\n'
-            '\tvtk.vtkMatrix3x3\n'
-            '\tvtk.vtkTransform\n'
-            '\t4x4 np.ndarray\n'
-            '\t3x3 np.ndarray\n',
-        )
-    return transform_array
 
 
 _JSONValueType = Union[

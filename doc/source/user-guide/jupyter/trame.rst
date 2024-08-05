@@ -155,7 +155,7 @@ Setting Remote Jupyter Host with an Environment Variable
 You can set the Remote Jupyter Host manually with the flags discussed above,
 but these need to be set every time the Jupyter kernel restarts. In some environments,
 it may be more efficient to configure the Remote Jupyter Host with an environment variable.
-If set, the value for `PYVISTA_TRAME_JUPYTER_MODE` will determine the values of
+If set, the value for ``PYVISTA_TRAME_JUPYTER_MODE`` will determine the values of
 these two flags:
 
 * :py:attr:`pyvista.global_theme.trame.server_proxy_enabled
@@ -163,7 +163,7 @@ these two flags:
 * :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
-If set, the accepted values for `PYVISTA_TRAME_JUPYTER_MODE` include ``'extension'``, ``'proxy'``, and ``'native'``.
+If set, the accepted values for ``PYVISTA_TRAME_JUPYTER_MODE`` include ``'extension'``, ``'proxy'``, and ``'native'``.
 The following table shows how each accepted value will affect the two flags, as well as any precondition
 that must be true for the value to be applicable. To meet these prerequisites,
 review the sections above for installation instructions.
@@ -171,7 +171,7 @@ review the sections above for installation instructions.
 .. list-table::
    :header-rows: 1
 
-   * - `PYVISTA_TRAME_JUPYTER_MODE`
+   * - ``PYVISTA_TRAME_JUPYTER_MODE``
      - Description
      - Condition
      - `server_proxy_enabled`

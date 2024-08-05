@@ -75,7 +75,7 @@ yy_bounds = _cell_bounds(y_polar)
 # in this case a single level slightly above the surface of a sphere
 levels = [RADIUS * 1.01]
 
-###############################################################################
+# %%
 # Create a structured grid
 grid_scalar = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
@@ -89,7 +89,7 @@ p.add_mesh(grid_scalar, clim=[0.1, 2.0], opacity=0.5, cmap="plasma")
 p.show()
 
 
-###############################################################################
+# %%
 # Visualize vectors in spherical coordinates
 # Vertical wind
 w_vec = rng.random(u_vec.shape)
@@ -133,7 +133,7 @@ p.add_mesh(grid_winds.glyph(orient="example", scale="example", tolerance=0.005))
 p.show()
 
 
-###############################################################################
+# %%
 # Isurfaces of 3D data in spherical coordinates
 
 # Number of vertical levels
@@ -165,3 +165,5 @@ p = pv.Plotter()
 p.add_mesh(pv.Sphere(radius=RADIUS))
 p.add_mesh(surfaces)
 p.show()
+# %%
+# .. tags:: plot

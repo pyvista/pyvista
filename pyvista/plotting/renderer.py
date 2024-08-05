@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
 from typing import ClassVar
-from typing import cast
+from typing import Sequence
 import warnings
 
 import numpy as np
@@ -16,7 +15,7 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
-from pyvista.core._typing_core import BoundsLike
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -34,6 +33,7 @@ from .mapper import DataSetMapper
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
+from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
@@ -101,10 +101,10 @@ def make_legend_face(face):
 
     Parameters
     ----------
-    face : str | None | pyvista.PolyData
+    face : str | pyvista.PolyData | NoneType
         The shape of the legend face. Valid strings are:
-        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle'.
-        Also accepts ``None`` and instances of ``pyvista.PolyData``.
+        '-', 'line', '^', 'triangle', 'o', 'circle', 'r', 'rectangle', 'none'.
+        Also accepts ``None`` or instances of ``pyvista.PolyData``.
 
     Returns
     -------
@@ -116,8 +116,8 @@ def make_legend_face(face):
     ValueError
         If the provided face value is invalid.
     """
-    if face is None:
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0])
+    if face is None or face == "none":
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
     elif face in ["-", "line"]:
         legendface = _line_for_legend()
     elif face in ["^", "triangle"]:
@@ -134,7 +134,7 @@ def make_legend_face(face):
             '\t"triangle"\n'
             '\t"circle"\n'
             '\t"rectangle"\n'
-            '\tNone'
+            '\t"none"\n'
             '\tpyvista.PolyData',
         )
     return legendface
@@ -447,7 +447,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -475,7 +475,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds))
+        return BoundsTuple(*the_bounds.tolist())
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -489,20 +489,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return pyvista.Box(self.bounds).length
 
     @property
-    def center(self):  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box around all data present in the scene.
 
         Returns
         -------
-        list
+        tuple[float, float, float]
             Cartesian coordinates of the center.
 
         """
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0]) / 2
-        y = (bounds[3] + bounds[2]) / 2
-        z = (bounds[5] + bounds[4]) / 2
-        return [x, y, z]
+        bnds = self.bounds
+        x = (bnds.x_max + bnds.x_min) / 2
+        y = (bnds.y_max + bnds.y_min) / 2
+        z = (bnds.z_max + bnds.z_min) / 2
+        return x, y, z
 
     @property
     def background_color(self):  # numpydoc ignore=RT01
@@ -1199,6 +1199,81 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
+    def add_north_arrow_widget(
+        self,
+        interactive=None,
+        color="#4169E1",
+        opacity=1.0,
+        line_width=2,
+        edge_color=None,
+        lighting=False,
+        viewport=(0, 0, 0.1, 0.1),
+    ):
+        """Add a geographic north arrow to the scene.
+
+        .. versionadded:: 0.44.0
+
+        Parameters
+        ----------
+        interactive : bool, optional
+            Control if the orientation widget is interactive.  By
+            default uses the value from
+            :attr:`pyvista.global_theme.interactive
+            <pyvista.plotting.themes.Theme.interactive>`.
+
+        color : ColorLike, optional
+            Color of the north arrow.
+
+        opacity : float, optional
+            Opacity of the north arrow.
+
+        line_width : float, optional
+            Width of the north edge arrow lines.
+
+        edge_color : ColorLike, optional
+            Color of the edges.
+
+        lighting : bool, optional
+            Enable or disable lighting on north arrow.
+
+        viewport : sequence[float], default: (0, 0, 0.1, 0.1)
+            Viewport ``(xstart, ystart, xend, yend)`` of the widget.
+
+        Returns
+        -------
+        vtk.vtkOrientationMarkerWidget
+            Orientation marker widget.
+
+        Examples
+        --------
+        Use an north arrow as the orientation widget.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> terrain = examples.download_st_helens().warp_by_scalar()
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(terrain)
+        >>> widget = pl.add_north_arrow_widget()
+        >>> pl.enable_terrain_style(True)
+        >>> pl.show()
+
+        """
+        marker = create_north_arrow()
+        mapper = pyvista.DataSetMapper(marker)
+        actor = pyvista.Actor(mapper)
+        actor.prop.show_edges = True
+        if edge_color is not None:
+            actor.prop.edge_color = edge_color
+        actor.prop.line_width = line_width
+        actor.prop.color = color
+        actor.prop.opacity = opacity
+        actor.prop.lighting = lighting
+        return self.add_orientation_widget(
+            actor,
+            interactive=interactive,
+            viewport=viewport,
+        )
+
     def add_box_axes(
         self,
         *,
@@ -1284,7 +1359,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        vtk.vtkAnnotatedCubeActor
             Axes actor.
 
         Examples
@@ -1468,7 +1543,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             to manually display different values. These values must be in the
             form:
 
-            ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         show_xaxis : bool, default: True
             Makes x-axis visible.
@@ -1584,7 +1659,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkCubeAxesActor
+        pyvista.CubeAxesActor
             Bounds actor.
 
         Examples
@@ -1782,7 +1857,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.',
+                    '`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.',
                 )
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -1853,7 +1928,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         Returns
         -------
-        vtk.vtkAxesActor
+        pyvista.CubeAxesActor
             Bounds actor.
 
         Examples
@@ -2109,32 +2184,32 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
-            center[2] = self.bounds[4] - (ranges[2] * offset)
+            center[2] = self.bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
-            center[1] = self.bounds[2] - (ranges[1] * offset)
+            center[1] = self.bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '-x':
-            center[0] = self.bounds[0] - (ranges[0] * offset)
+            center[0] = self.bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
-            center[2] = self.bounds[5] + (ranges[2] * offset)
+            center[2] = self.bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
-            center[1] = self.bounds[3] + (ranges[1] * offset)
+            center[1] = self.bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '+x':
-            center[0] = self.bounds[1] + (ranges[0] * offset)
+            center[0] = self.bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
@@ -2711,7 +2786,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2761,7 +2836,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2802,7 +2877,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
         focal_pt = self.center
@@ -2826,7 +2901,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2857,7 +2932,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2888,7 +2963,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2919,7 +2994,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2950,7 +3025,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2981,7 +3056,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -3560,8 +3635,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
               of the item to add, ``color`` is the color of the label to add,
               and ``face`` is a string which defines the face (i.e. ``circle``,
               ``triangle``, ``box``, etc.).
-              ``face`` could be also ``None`` (there is no face then), or a
-              :class:`pyvista.PolyData`.
+              ``face`` could be also ``"none"`` (no face shown for the entry),
+              or a :class:`pyvista.PolyData`.
             * A dict with the key ``label``. Optionally you can add the
               keys ``color`` and ``face``. The values of these keys can be
               strings. For the ``face`` key, it can be also a
@@ -3600,17 +3675,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             * ``'upper center'``
             * ``'center'``
 
-        face : str | pyvista.PolyData | NoneType, default: "triangle"
-            Face shape of legend face.  One of the following:
+        face : str | pyvista.PolyData, optional
+            Face shape of legend face. Defaults to a triangle for most meshes,
+            with the exception of glyphs where the glyph is shown
+            (e.g. arrows).
 
-            * None: ``None``
+            You may set it to one of the following:
+
+            * None: ``"none"``
             * Line: ``"-"`` or ``"line"``
             * Triangle: ``"^"`` or ``'triangle'``
             * Circle: ``"o"`` or ``'circle'``
             * Rectangle: ``"r"`` or ``'rectangle'``
             * Custom: :class:`pyvista.PolyData`
 
-            Passing ``None`` removes the legend face.  A custom face can be
+            Passing ``"none"`` removes the legend face.  A custom face can be
             created using :class:`pyvista.PolyData`.  This will be rendered
             from the XY plane.
 
@@ -3777,7 +3856,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         pointa,
         pointb,
         flip_range=False,
-        number_labels=5,
+        number_labels=None,
         show_labels=True,
         font_size_factor=0.6,
         label_size_factor=1.0,
@@ -3817,8 +3896,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         flip_range : bool, default: False
             If ``True``, the distance range goes from ``pointb`` to ``pointa``.
 
-        number_labels : int, default: 5
+        number_labels : int, optional
             Number of labels to place on ruler.
+            If not supplied, the number will be adjusted for "nice" values.
 
         show_labels : bool, default: True
             Whether to show labels.
@@ -3881,8 +3961,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Measure x direction of cone and place ruler slightly below.
 
         >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
-        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     pointa=[cone.bounds.x_min, cone.bounds.y_min - 0.1, 0.0],
+        ...     pointb=[cone.bounds.x_max, cone.bounds.y_min - 0.1, 0.0],
         ...     title="X Distance",
         ... )
 
@@ -3891,8 +3971,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         traveling from ``pointa`` to ``pointb``.
 
         >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
-        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
+        ...     pointb=[cone.bounds.x_min - 0.1, cone.bounds.y_min, 0.0],
         ...     flip_range=True,
         ...     title="Y Distance",
         ... )
@@ -3921,7 +4001,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ruler.SetTitle(title)
         ruler.SetFontFactor(font_size_factor)
         ruler.SetLabelFactor(label_size_factor)
-        ruler.SetNumberOfLabels(number_labels)
+        if number_labels is not None:
+            ruler.AdjustLabelsOff()
+            ruler.SetNumberOfLabels(number_labels)
         ruler.SetLabelVisibility(show_labels)
         if label_format:
             ruler.SetLabelFormat(label_format)

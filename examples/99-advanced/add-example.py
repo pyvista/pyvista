@@ -71,7 +71,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Section Title
 # ~~~~~~~~~~~~~
 # Code blocks can be broken up with text "sections" which are interpreted as
@@ -92,7 +92,7 @@ dataset = pv.Sphere()
 dataset
 
 
-###############################################################################
+# %%
 # Plots and images
 # ~~~~~~~~~~~~~~~~
 # If you use anything that outputs an image (for example,
@@ -109,7 +109,7 @@ dataset
 dataset.plot(text='Example Figure')
 
 
-###############################################################################
+# %%
 # Caveat - Plotter must be within One Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # It's not possible for a single :class:`pyvista.Plotter` object across
@@ -125,7 +125,7 @@ actor = pl.add_mesh(dataset)
 actor
 
 
-###############################################################################
+# %%
 # This Cell Cannot Run the Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The plotter will already be closed by ``sphinx_gallery``.
@@ -138,7 +138,7 @@ actor
 pl.close()
 
 
-###############################################################################
+# %%
 # Animations
 # ~~~~~~~~~~
 # You can even create animations, and while there is a full example in
@@ -170,7 +170,7 @@ for i in range(n_frames):
 pl.close()
 
 
-###############################################################################
+# %%
 # Adding Example Files
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista has a variety of example files all stored at `pyvista/vtk_data
@@ -185,7 +185,7 @@ filename = examples.download_file('bunny.ply')
 filename
 
 
-###############################################################################
+# %%
 # Adding a Wrapped Example
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # While it's possible to simply download a file and then read it in, it's

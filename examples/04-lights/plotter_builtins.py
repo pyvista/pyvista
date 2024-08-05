@@ -39,7 +39,7 @@ pv.plotting.plotter._ALL_PLOTTERS.clear()
 light_types
 
 
-###############################################################################
+# %%
 # Add a white terrain to the scene:
 
 mesh = examples.download_st_helens().warp_by_scalar()
@@ -48,7 +48,7 @@ plotter.add_mesh(mesh, color='white')
 plotter.show()
 
 
-###############################################################################
+# %%
 # Three-lights illumination
 # =========================
 #
@@ -61,7 +61,7 @@ plotter = pv.Plotter(lighting='three lights')
 plotter.add_mesh(mesh, color='white')
 plotter.show()
 
-###############################################################################
+# %%
 # Again we can check what kind of lights this setting uses:
 
 plotter = pv.Plotter(lighting='three lights')
@@ -73,7 +73,7 @@ pv.plotting.plotter._ALL_PLOTTERS.clear()
 light_types
 
 
-###############################################################################
+# %%
 # Custom lighting
 # ===============
 #
@@ -90,7 +90,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Custom lighting with shadows
 # ============================
 #
@@ -105,3 +105,5 @@ light.set_direction_angle(20, -20)
 plotter.add_light(light)
 plotter.enable_shadows()
 plotter.show()
+# %%
+# .. tags:: lights

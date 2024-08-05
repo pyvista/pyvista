@@ -1,6 +1,6 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 import os

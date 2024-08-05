@@ -14,7 +14,7 @@ import numpy as np
 # sphinx_gallery_thumbnail_number = 2
 from pyvista import examples
 
-###############################################################################
+# %%
 # Computing the normals of a surface is quite easy using
 # :class:`pyvista.PolyData`'s :func:`pyvista.PolyDataFilters.compute_normals`
 # method.
@@ -22,7 +22,7 @@ from pyvista import examples
 mesh = examples.download_topo_global()
 mesh.plot(cmap="gist_earth", show_scalar_bar=False)
 
-###############################################################################
+# %%
 # Now we have a surface dataset of the globe loaded - unfortunately, the
 # dataset shows the globe with a uniform radius which hides topographic relief.
 # Using :func:`pyvista.PolyDataFilters.compute_normals`, we can compute the normal
@@ -40,7 +40,7 @@ warp = mesh.warp_by_scalar(factor=0.5e-5)
 warp.plot(cmap="gist_earth", show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # We could also use face/cell normals to extract all the faces of a mesh
 # facing a general direction. In the following snippet, we take a mesh, compute
 # the normals along its cell faces, and extract the faces that face upward.
@@ -62,3 +62,5 @@ cpos = [
 ]
 
 top.plot(cpos=cpos, color=True)
+# %%
+# .. tags:: filter

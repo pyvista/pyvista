@@ -41,12 +41,12 @@ class MyCustomRoutine:
         self.output.copy_from(result)
 
 
-###############################################################################
+# %%
 
 starting_mesh = pv.Sphere()
 engine = MyCustomRoutine(starting_mesh)
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(starting_mesh, show_edges=True)
@@ -78,3 +78,5 @@ p.add_slider_widget(
     style='modern',
 )
 p.show()
+# %%
+# .. tags:: widgets

@@ -38,7 +38,7 @@ import pyvista as pv
 
 mesh = pv.Icosphere()
 
-###############################################################################
+# %%
 # No Anti-Aliasing
 # ~~~~~~~~~~~~~~~~
 # First, let's show a plot without any anti-aliasing.
@@ -50,7 +50,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Default: Multi-Sample Anti-Aliasing (MSAA)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, let's show the default anti-aliasing configuration. By default, PyVista
@@ -69,7 +69,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # You can increase the smoothing by increasing multi_samples
 
 pl = pv.Plotter()
@@ -79,7 +79,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Fast Approximate Anti-Aliasing (FXAA)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # FXAA is the most performant of all three anti-aliasing techniques. This is
@@ -101,7 +101,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Super-Sample Anti-Aliasing (SSAA)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SSAA, or Super-Sample Anti-Aliasing is a brute force method of
@@ -120,7 +120,7 @@ pl.enable_anti_aliasing('ssaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Compare render time
 # ~~~~~~~~~~~~~~~~~~~
 # You can compare the time to render for each one of the anti-aliasing
@@ -158,3 +158,5 @@ pl.show()
 #     Render time for ssaa  : 51.450 ms
 #
 #
+# %%
+# .. tags:: plot

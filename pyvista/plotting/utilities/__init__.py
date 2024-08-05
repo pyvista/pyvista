@@ -1,6 +1,6 @@
 """Plotting utilities."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 from .algorithms import active_scalars_algorithm

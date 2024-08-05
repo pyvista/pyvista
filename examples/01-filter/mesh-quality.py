@@ -23,10 +23,12 @@ cpos = [
     (-0.2970769821136617, 0.9100381451936025, 0.2890948650371137),
 ]
 
-###############################################################################
+# %%
 # Compute the cell quality. Note that there are many different quality measures
 qual = mesh.compute_cell_quality(quality_measure='scaled_jacobian')
 qual
 
-###############################################################################
+# %%
 qual.plot(cpos=cpos, scalars='CellQuality')
+# %%
+# .. tags:: filter

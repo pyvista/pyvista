@@ -456,7 +456,7 @@ class AffineWidget3D:
             actor.user_matrix = matrix
 
     @property
-    def origin(self) -> Tuple[float, float, float]:
+    def origin(self) -> tuple[float, float, float]:
         """Origin of the widget.
 
         This is where the origin of the widget will be located and where the

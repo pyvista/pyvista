@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
-from typing import Tuple
-from typing import Union
+from typing import Sequence
 import warnings
 
 import numpy as np
@@ -17,11 +15,11 @@ from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 from . import _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 
-class Texture(_vtk.vtkTexture, DataObject):
+class Texture(DataObject, _vtk.vtkTexture):
     """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
@@ -117,7 +115,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(uinput, **kwargs)
+        super().__init__(uinput)
 
         if isinstance(uinput, _vtk.vtkTexture):
             self._from_texture(uinput)
@@ -450,7 +448,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -593,7 +591,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
-    def wrap(self, value: Union[Texture.WrapType, int]):  # numpydoc ignore=GL08
+    def wrap(self, value: Texture.WrapType | int):  # numpydoc ignore=GL08
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 

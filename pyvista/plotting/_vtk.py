@@ -8,7 +8,7 @@ the entire library.
 
 """
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 from vtkmodules.vtkChartsCore import vtkAxis
@@ -48,6 +48,7 @@ from vtkmodules.vtkInteractionWidgets import vtkSplineWidget
 from vtkmodules.vtkInteractionWidgets import vtkTexturedButtonRepresentation2D
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
+from vtkmodules.vtkRenderingAnnotation import vtkAxisActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxisActor2D
 from vtkmodules.vtkRenderingAnnotation import vtkCornerAnnotation
 from vtkmodules.vtkRenderingAnnotation import vtkCubeAxesActor

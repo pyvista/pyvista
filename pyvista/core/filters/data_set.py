@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 import warnings
 
 import matplotlib.pyplot as plt
@@ -311,7 +311,7 @@ class DataSetFilters:
         Parameters
         ----------
         bounds : sequence[float], optional
-            Length 6 sequence of floats: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             Length 3 sequence of floats: distances from the min coordinate of
             of the input mesh. Single float value: uniform distance from the
             min coordinate. Length 12 sequence of length 3 sequence of floats:
@@ -1531,7 +1531,7 @@ class DataSetFilters:
         Parameters
         ----------
         extent : sequence[float], optional
-            Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
+            Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
         progress_bar : bool, default: False
@@ -1716,10 +1716,10 @@ class DataSetFilters:
         # Fix the projection line:
         if low_point is None:
             low_point = list(self.center)
-            low_point[2] = self.bounds[4]
+            low_point[2] = self.bounds.z_min
         if high_point is None:
             high_point = list(self.center)
-            high_point[2] = self.bounds[5]
+            high_point[2] = self.bounds.z_max
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range = (low_point[2], high_point[2])
@@ -2268,10 +2268,10 @@ class DataSetFilters:
             Set the range of values to be considered by the filter
             when scalars values are provided.
 
-        color_mode : str, optional, default: ``scale``
-            If ``scale`` , color by scale the glyphs.
-            If ``scalar`` , color by scalar the glyphs.
-            If ``vector`` , color by vector the glyphs.
+        color_mode : str, optional, default: ``'scale'``
+            If ``'scale'`` , color the glyphs by scale.
+            If ``'scalar'`` , color the glyphs by scalar.
+            If ``'vector'`` , color the glyphs by vector.
 
             .. versionadded:: 0.44
 
@@ -3250,7 +3250,12 @@ class DataSetFilters:
             **kwargs,
         )
 
-    def point_data_to_cell_data(self, pass_point_data=False, progress_bar=False):
+    def point_data_to_cell_data(
+        self,
+        pass_point_data=False,
+        categorical=False,
+        progress_bar=False,
+    ):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified within cells.
@@ -3260,6 +3265,19 @@ class DataSetFilters:
         ----------
         pass_point_data : bool, default: False
             If enabled, pass the input point data through to the output.
+
+        categorical : bool, default: False
+            Control whether the source point data is to be treated as
+            categorical. If ``True``,  histograming is used to assign the
+            cell data. Specifically, a histogram is populated for each cell
+            from the scalar values at each point, and the bin with the most
+            elements is selected. In case of a tie, the smaller value is selected.
+
+            .. note::
+
+                If the point data is continuous, values that are almost equal (within
+                ``1e-6``) are merged into a single bin. Otherwise, for discrete data
+                the number of bins equals the number of unique values.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3304,6 +3322,7 @@ class DataSetFilters:
         alg = _vtk.vtkPointDataToCellData()
         alg.SetInputDataObject(self)
         alg.SetPassPointData(pass_point_data)
+        alg.SetCategoricalData(categorical)
         _update_alg(alg, progress_bar, 'Transforming point data into cell data')
         active_scalars = None
         if not isinstance(self, pyvista.MultiBlock):
@@ -4611,19 +4630,19 @@ class DataSetFilters:
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
         >>> pointa = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[5],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_max,
         ... ]
         >>> pointb = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[3],
-        ...     uniform.bounds[4],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_max,
+        ...     uniform.bounds.z_min,
         ... ]
         >>> center = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[4],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_min,
         ... ]
         >>> sampled_arc = uniform.sample_over_circular_arc(
         ...     pointa, pointb, center
@@ -4702,9 +4721,9 @@ class DataSetFilters:
         >>> normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> center = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[5],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_max,
         ... ]
         >>> arc = uniform.sample_over_circular_arc_normal(
         ...     center, normal=normal, polar=polar
@@ -4802,9 +4821,13 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
-        >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-        >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+        >>> b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+        >>> center = [
+        ...     mesh.bounds.x_min,
+        ...     mesh.bounds.y_min,
+        ...     mesh.bounds.z_min,
+        ... ]
         >>> mesh.plot_over_circular_arc(
         ...     a, b, center, resolution=1000, show=False
         ... )  # doctest:+SKIP
@@ -4936,7 +4959,11 @@ class DataSetFilters:
         >>> normal = normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> angle = 90
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> center = [
+        ...     mesh.bounds.x_min,
+        ...     mesh.bounds.y_min,
+        ...     mesh.bounds.z_min,
+        ... ]
         >>> mesh.plot_over_circular_arc_normal(
         ...     center, polar=polar, angle=angle
         ... )  # doctest:+SKIP
@@ -5124,11 +5151,13 @@ class DataSetFilters:
 
     def split_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5283,11 +5312,13 @@ class DataSetFilters:
 
     def extract_values(
         self,
-        values: None | (
+        values: None
+        | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
         ) = None,
         *,
-        ranges: None | (
+        ranges: None
+        | (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
@@ -5457,7 +5488,7 @@ class DataSetFilters:
         values other than ``0`` are included in the output.
 
         >>> extracted.get_data_range()
-        (0.0, 81.0)
+        (np.float64(0.0), np.float64(81.0))
         >>> extracted.plot()
 
         Set ``include_cells=False`` to only extract points. The output scalars now
@@ -5465,7 +5496,7 @@ class DataSetFilters:
 
         >>> extracted = mesh.extract_values(0, include_cells=False)
         >>> extracted.get_data_range()
-        (0.0, 0.0)
+        (np.float64(0.0), np.float64(0.0))
         >>> extracted.plot(render_points_as_spheres=True, point_size=100)
 
         Use ``ranges`` to extract values from a grid's point data in range.
@@ -6835,9 +6866,9 @@ class DataSetFilters:
         There is only 1 point and cell, so access the only value.
 
         >>> integrated["Area"][0]
-        3.14
+        np.float64(3.14)
         >>> integrated["data"][0]
-        6.28
+        np.float64(6.28)
 
         See the :ref:`integrate_example` for more examples using this filter.
 
@@ -7249,7 +7280,7 @@ class DataSetFilters:
         Show range of labels
 
         >>> image_labels.get_data_range()
-        (0, 29)
+        (np.uint8(0), np.uint8(29))
 
         Find 'gaps' in the labels
 
@@ -7266,7 +7297,7 @@ class DataSetFilters:
         Show range of packed labels
 
         >>> packed_labels.get_data_range()
-        (0, 25)
+        (np.uint8(0), np.uint8(25))
 
         """
         # Set a input scalars

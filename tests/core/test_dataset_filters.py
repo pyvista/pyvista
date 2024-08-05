@@ -679,7 +679,7 @@ def test_elevation():
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.bounds.z_min, dataset.bounds.z_max)
     # test vector args
     c = list(dataset.center)
     t = list(c)  # cast so it does not point to `c`
@@ -687,7 +687,7 @@ def test_elevation():
     elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.center[2], dataset.bounds.z_max)
     # Test not setting active
     elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
@@ -725,8 +725,8 @@ def test_texture_map_to_plane():
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds[1], bnds[2], bnds[4])
-    point_v = (bnds[0], bnds[3], bnds[4])
+    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -1018,24 +1018,26 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
     glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds[4] == geom.bounds[0] * scale
-    assert glyph1.bounds[5] == geom.bounds[1] * scale
-    assert glyph2.bounds[0] == geom.bounds[0] * scale
-    assert glyph2.bounds[1] == geom.bounds[1] * scale
-    assert glyph3.bounds[4] == geom.bounds[0]
-    assert glyph3.bounds[5] == geom.bounds[1]
-    assert glyph4.bounds[0] == geom.bounds[0]
-    assert glyph4.bounds[1] == geom.bounds[1]
+    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
+    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
+    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
+    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
+    assert glyph3.bounds.z_min == geom.bounds.x_min
+    assert glyph3.bounds.z_max == geom.bounds.x_max
+    assert glyph4.bounds.x_min == geom.bounds.x_min
+    assert glyph4.bounds.x_max == geom.bounds.x_max
 
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
 def test_glyph_color_mode(sphere, color_mode):
-    assert sphere.glyph(color_mode=color_mode)
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
 
 
 def test_glyph_raises(sphere):
     with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
-        sphere.glyph(color_mode="foo")
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
@@ -1811,8 +1813,8 @@ def test_plot_over_line(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1866,11 +1868,11 @@ def test_sample_over_circular_arc():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    xmax = uniform.bounds[1]
-    ymin = uniform.bounds[2]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    xmax = uniform.bounds.x_max
+    ymin = uniform.bounds.y_min
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
@@ -1902,11 +1904,11 @@ def test_sample_over_circular_arc_normal():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    ymin = uniform.bounds[2]
-    ymax = uniform.bounds[3]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    ymin = uniform.bounds.y_min
+    ymax = uniform.bounds.y_max
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
     angle = 90.0 * np.random.default_rng().random()
@@ -1946,9 +1948,9 @@ def test_plot_over_circular_arc(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make two points and center to construct the circular arc between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
         a,
         b,
@@ -1994,10 +1996,10 @@ def test_plot_over_circular_arc_normal(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
-    # normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    # normal = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    polar = [mesh.bounds.x_min, mesh.bounds.y_max, mesh.bounds.z_min]
     angle = 90
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
         center,
         polar=polar,
@@ -2039,7 +2041,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
-    x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
+    x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
     spline = pv.Spline(points, n)
     slc = model.slice_along_line(spline, progress_bar=True)
@@ -2047,14 +2049,14 @@ def test_slice_along_line():
     slc = model.slice_along_line(spline, contour=True, progress_bar=True)
     assert slc.n_points > 0
     # Now check a simple line
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[3], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_max, model.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     slc = model.slice_along_line(line, progress_bar=True)
     assert slc.n_points > 0
     # Now check a bad input
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[2], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_min, model.bounds.z_max]
     line2 = pv.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
     with pytest.raises(ValueError):  # noqa: PT011
@@ -2470,10 +2472,13 @@ def test_extract_values_split_ranges_values(labeled_data):
 values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
 values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
 values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
-values_component_dict = dict(values=dict(val0=[0], val1=[1]), component_mode='multi'), [
-    'val0',
-    'val1',
-]
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
 
 
 @pytest.mark.parametrize(
@@ -2747,8 +2752,8 @@ def test_extract_values_raises(grid4x4):
 
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
-    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
+    a = [composite.bounds.x_min, composite.bounds.y_min, composite.bounds.z_min]
+    b = [composite.bounds.x_max, composite.bounds.y_max, composite.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     output = composite.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
@@ -2855,6 +2860,29 @@ def test_merge_general(uniform):
     # Pure PolyData inputs should yield poly data output
     merged = uniform.extract_surface() + con
     assert isinstance(merged, pv.PolyData)
+
+
+def test_merge_active_normals():
+    plane = pv.Plane()
+
+    # Check default normals
+    default_normal = np.array([0, 0, 1])
+    assert np.array_equal(plane["Normals"][0], default_normal)
+    assert np.array_equal(plane.active_normals[0], default_normal)
+    assert np.array_equal(plane.point_normals[0], default_normal)
+
+    # Customize the normals
+    plane["Normals"] *= -1
+    negative_normal = -default_normal
+    assert np.array_equal(plane["Normals"][0], negative_normal)
+    assert np.array_equal(plane.active_normals[0], negative_normal)
+    assert np.array_equal(plane.point_normals[0], negative_normal)
+
+    # Now test merge
+    merged = pv.merge([plane])
+    assert np.array_equal(merged["Normals"][0], negative_normal)
+    assert np.array_equal(merged.active_normals[0], negative_normal)
+    assert np.array_equal(merged.point_normals[0], negative_normal)
 
 
 def test_iadd_general(uniform, hexbeam, sphere):
@@ -3622,20 +3650,20 @@ def test_extrude_rotate():
         progress_bar=True,
         capping=True,
     )
-    zmax = poly.bounds[5]
+    zmax = poly.bounds.z_max
     assert zmax == translation
-    xmax = poly.bounds[1]
-    assert xmax == line.bounds[1] + dradius
+    xmax = poly.bounds.x_max
+    assert xmax == line.bounds.x_max + dradius
 
     poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
-    xmin = poly.bounds[0]
-    xmax = poly.bounds[1]
-    ymin = poly.bounds[2]
-    ymax = poly.bounds[3]
-    assert xmin == line.bounds[0]
-    assert xmax == line.bounds[1]
-    assert ymin == line.bounds[0]
-    assert ymax == line.bounds[1]
+    xmin = poly.bounds.x_min
+    xmax = poly.bounds.x_max
+    ymin = poly.bounds.y_min
+    ymax = poly.bounds.y_max
+    assert xmin == line.bounds.x_min
+    assert xmax == line.bounds.x_max
+    assert ymin == line.bounds.x_min
+    assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
     if not pv.vtk_version_info >= (9, 1, 0):

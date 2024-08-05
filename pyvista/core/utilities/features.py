@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 import os
 import sys
+from typing import Sequence
 
 import numpy as np
 
@@ -547,7 +547,7 @@ def sample_function(
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
-        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        - ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     dim : sequence[float], default: (50, 50, 50)
         Dimensions of the data on which to sample in the format of

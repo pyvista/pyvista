@@ -61,6 +61,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
 
    getting-started/index
    user-guide/index
+   tags/tagsindex
    examples/index
    api/index
    extras/index

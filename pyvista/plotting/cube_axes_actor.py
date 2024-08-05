@@ -3,18 +3,17 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import List
-from typing import Tuple
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
 
-if TYPE_CHECKING:
-    from pyvista.core._typing_core import BoundsLike
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import VectorLike
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
@@ -236,45 +235,46 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             )
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box."""
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         self.SetBounds(bounds)
         self._update_labels()
-        self.x_axis_range = float(bounds[0]), float(bounds[1])
-        self.y_axis_range = float(bounds[2]), float(bounds[3])
-        self.z_axis_range = float(bounds[4]), float(bounds[5])
+        bnds = self.bounds
+        self.x_axis_range = bnds.x_min, bnds.x_max
+        self.y_axis_range = bnds.y_min, bnds.y_max
+        self.z_axis_range = bnds.z_min, bnds.z_max
 
     @property
-    def x_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the x-axis range."""
         return self.GetXAxisRange()
 
     @x_axis_range.setter
-    def x_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def x_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetXAxisRange(value)
         self._update_x_labels()
 
     @property
-    def y_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def y_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the y-axis range."""
         return self.GetYAxisRange()
 
     @y_axis_range.setter
-    def y_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def y_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetYAxisRange(value)
         self._update_y_labels()
 
     @property
-    def z_axis_range(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def z_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the z-axis range."""
         return self.GetZAxisRange()
 
     @z_axis_range.setter
-    def z_axis_range(self, value: Tuple[float, float]):  # numpydoc ignore=GL08
+    def z_axis_range(self, value: tuple[float, float]):  # numpydoc ignore=GL08
         self.SetZAxisRange(value)
         self._update_z_labels()
 
@@ -543,17 +543,17 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             self.SetAxisLabels(2, self._empty_str)
 
     @property
-    def x_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
         return convert_string_array(self.GetAxisLabels(0))
 
     @property
-    def y_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
         return convert_string_array(self.GetAxisLabels(1))
 
     @property
-    def z_labels(self) -> List[str]:  # numpydoc ignore=RT01
+    def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
         return convert_string_array(self.GetAxisLabels(2))
 
@@ -566,7 +566,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         Parameters
         ----------
         bounds : sequence[float]
-            Bounds in the form of ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
         self.bounds = bounds

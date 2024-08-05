@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from .check import check_contains
 from .check import check_finite
 from .check import check_greater_than

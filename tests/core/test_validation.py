@@ -10,6 +10,7 @@ from typing import get_origin
 
 import numpy as np
 import pytest
+import scipy
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
@@ -85,7 +86,9 @@ def test_validate_transform4x4_raises():
         np.eye(3),
         np.eye(3).tolist(),
         vtkmatrix_from_array(np.eye(3)),
+        scipy.spatial.transform.Rotation.from_matrix(np.eye(3)),
     ],
+    ids=['numpy', 'list', 'vtk', 'scipy'],
 )
 def test_validate_transform3x3(transform_like):
     result = validate_transform3x3(transform_like)
@@ -94,9 +97,11 @@ def test_validate_transform3x3(transform_like):
 
 
 def test_validate_transform3x3_raises():
-    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
+    match = "Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n\tscipy.spatial.transform.Rotation\nGot array([1, 2, 3]) with type <class 'numpy.ndarray'> instead."
+    with pytest.raises(TypeError, match=escape(match)):
         validate_transform3x3(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must have real numbers."):
+    match = "Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n\tscipy.spatial.transform.Rotation\nGot 'abc' with type <class 'str'> instead."
+    with pytest.raises(TypeError, match=match):
         validate_transform3x3("abc")
 
 
@@ -158,7 +163,7 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    match = "Data Range [1 0] must be sorted in ascending order."
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
     with pytest.raises(ValueError, match=escape(match)):
         validate_data_range((1, 0))
 
@@ -652,6 +657,8 @@ def test_check_real():
     match = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
+    with pytest.raises(TypeError, match=match):
+        check_real(True)
     match = '_input must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j, name="_input")
@@ -721,7 +728,7 @@ def test_check_length():
     with pytest.raises(ValueError, match=match):
         check_length((1,), min_length=2, name="_input")
 
-    match = "Range [4 2] must be sorted in ascending order."
+    match = 'Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(
             (
@@ -795,20 +802,20 @@ def test_check_sorted(shape, axis, ascending, strict):
     if strict and ascending:
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_ascending, arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict ascending order"):
+            with pytest.raises(ValueError, match="must be sorted in strict ascending order. Got:"):
                 _check_sorted_params(a)
 
     elif not strict and ascending:
         _check_sorted_params(arr_ascending)
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in ascending order"):
+            with pytest.raises(ValueError, match="must be sorted in ascending order. Got:"):
                 _check_sorted_params(a)
 
     elif strict and not ascending:
         _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending, arr_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict descending order"):
+            with pytest.raises(ValueError, match="must be sorted in strict descending order. Got:"):
                 _check_sorted_params(a)
 
     elif not strict and not ascending:
