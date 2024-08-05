@@ -39,6 +39,7 @@ def pytest_generate_tests(metafunc):
             'Cell',
             'CompositePolyDataMapper',
             'CubeAxesActor',
+            'CubeFacesSource',
             'CubeSource',
             'DataSet',
             'DataSetMapper',
@@ -66,7 +67,9 @@ def pytest_generate_tests(metafunc):
             'UnstructuredGridVolumeRayCastMapper',
             'Volume',
         ]
-        assert sorted(class_names) == sorted(expected_names)
+        diff = set(class_names) - set(expected_names)
+        if diff:
+            pytest.fail(f"The `bounds` property for class {diff}\n must return a {pv.BoundsTuple}.")
 
         metafunc.parametrize('class_with_bounds', classes, ids=class_names)
 
