@@ -2745,8 +2745,9 @@ class Theme(_ThemeConfig):
 
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: str | None):  # numpydoc ignore=GL08
-        if isinstance(anti_aliasing, str) and anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
-            raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+        if isinstance(anti_aliasing, str):
+            if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
+                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
         elif anti_aliasing is not None:
             raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
 
