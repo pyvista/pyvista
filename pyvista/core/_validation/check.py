@@ -98,7 +98,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:

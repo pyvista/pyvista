@@ -1296,3 +1296,10 @@ def test_n_faces_etc_deprecated(cells: str):
             raise RuntimeError(f"Convert `PolyData` `{n_cells}` deprecation warning to error")
         if pv._version.version_info >= (0, 48):
             raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")
+
+
+def test_merge_points():
+    mesh = pv.Cylinder(resolution=4)
+    assert mesh.n_points == 8 * 2
+    mesh.merge_points(inplace=True)
+    assert mesh.n_points == 8
