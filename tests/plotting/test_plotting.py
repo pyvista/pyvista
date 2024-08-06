@@ -2908,7 +2908,7 @@ def test_plot_complex_value(plane, verify_image_cache):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
@@ -3211,7 +3211,7 @@ def test_plot_composite_poly_complex(multiblock_poly):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     pl = pv.Plotter()
     with pytest.warns(ComplexWarning, match='Casting complex'):
