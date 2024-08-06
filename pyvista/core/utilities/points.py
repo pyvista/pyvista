@@ -562,6 +562,11 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
     >>> np.std(mesh.points, axis=0)
     pyvista_ndarray([3.0149572, 1.5074761, 0.7035699], dtype=float32)
 
+    Since the points are axis-aligned, the two results agree in this case. In general, 
+    however, these two methods differ in that :meth:`numpy.std` with `axis=0` computes
+    the standard deviation along the `x-y-z` axes, whereas the standard deviation 
+    returned by :meth:`principal_axes` is computed along the principal axes.
+
     Convert the values to proportions for analysis.
 
     >>> std / sum(std)
@@ -619,6 +624,6 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        std = np.sqrt(eig_vals / len(points), out=eig_vals)[::-1]
+        std = np.sqrt(eig_vals / len(points))[::-1]
         return axes, std
     return axes
