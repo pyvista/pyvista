@@ -844,10 +844,9 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
 
     # Set flag to raise error if not type
     elif not allow_subclass:
-        if isinstance(classinfo, tuple):
-            if type(obj) not in classinfo:
-                is_error = True
-                msg_body = "must have one of the following types"
+        if isinstance(classinfo, tuple) and type(obj) not in classinfo:
+            is_error = True
+            msg_body = "must have one of the following types"
         elif type(obj) is not classinfo:
             is_error = True
             msg_body = "must have type"
@@ -1103,18 +1102,16 @@ def check_length(
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 
-    if min_length is not None:
-        if len(arr) < min_length:
-            raise ValueError(
-                f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead.",
-            )
-    if max_length is not None:
-        if len(arr) > max_length:
-            raise ValueError(
-                f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead.",
-            )
+    if min_length is not None and len(arr) < min_length:
+        raise ValueError(
+            f"{name} must have a minimum length of {min_length}. "
+            f"Got length {len(arr)} instead.",
+        )
+    if max_length is not None and len(arr) > max_length:
+        raise ValueError(
+            f"{name} must have a maximum length of {max_length}. "
+            f"Got length {len(arr)} instead.",
+        )
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:

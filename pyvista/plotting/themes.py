@@ -202,12 +202,12 @@ class _ThemeConfig(metaclass=_ForceSlots):
         for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
-            if isinstance(attr, (tuple, list)):
-                if tuple(attr) != tuple(other_attr):
-                    return False
-            else:
-                if not attr == other_attr:
-                    return False
+            if (
+                isinstance(attr, (tuple, list))
+                and tuple(attr) != tuple(other_attr)
+                or not attr == other_attr
+            ):
+                return False
 
         return True
 
@@ -2745,9 +2745,8 @@ class Theme(_ThemeConfig):
 
     @anti_aliasing.setter
     def anti_aliasing(self, anti_aliasing: str | None):  # numpydoc ignore=GL08
-        if isinstance(anti_aliasing, str):
-            if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
-                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+        if isinstance(anti_aliasing, str) and anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
+            raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
         elif anti_aliasing is not None:
             raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
 
