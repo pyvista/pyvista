@@ -410,8 +410,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # check if a valid camera position
             if (
                 not isinstance(camera_location, CameraPosition)
-                and not len(camera_location) == 3
-                or any(len(item) != 3 for item in camera_location)
+                and (not len(camera_location) == 3
+                or any(len(item) != 3 for item in camera_location))
             ):
                 raise InvalidCameraError
 
