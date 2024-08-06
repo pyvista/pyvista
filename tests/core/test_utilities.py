@@ -966,42 +966,25 @@ def test_principal_axes(points, expected_axes):
 
 
 def test_principal_axes_return_std():
-    # Create axis-aligned symmetric point cloud with 6 points
-    sizes_in = np.array((3, 2, 1))
-    points_plus = np.diag(sizes_in)
-    points_minus = -points_plus
-    points = np.vstack([points_plus, points_minus])
+    # Create axis-aligned normally distributed points
+    rng = np.random.default_rng(seed=42)
+    n = 100_000
+    std_in = np.array([3, 2, 1])
+    normal_points = rng.normal(size=(n, 3)) * std_in
 
-    axes, std = principal_axes(points, return_std=True)
+    _, std_out = principal_axes(normal_points, return_std=True)
+
+    # Test output matches numpy std
+    std_numpy = np.std(normal_points, axis=0)
+    assert np.allclose(std_out, std_numpy, atol=1e-4)
+
+    # Test output matches input std
+    assert np.allclose(std_out, std_in, atol=0.02)
 
     # Test ratios of input sizes match ratios of output std
-    ratios_in = sizes_in / sum(sizes_in)
-    ratios_out = std / sum(std)
-    assert np.allclose(ratios_in, ratios_out)
-
-
-@pytest.fixture()
-def uniform_spherical_surface():
-    # uniform spherical surface with radius 2
-    rng = np.random.default_rng(seed=42)
-    arr = rng.normal(size=(100000, 3))
-    sphere = arr / np.linalg.norm(arr, axis=1, keepdims=True) * 2
-
-    atol = 1e-4
-    assert np.allclose(np.max(sphere, axis=0), 2, atol=atol)
-    assert np.allclose(np.min(sphere, axis=0), -2, atol=atol)
-    return sphere
-
-
-def test_principal_axes_correct_std(uniform_spherical_surface):
-    _, std_actual = pv.principal_axes(uniform_spherical_surface, return_std=True)
-    std_expected = np.std(uniform_spherical_surface)
-
-    # Values range from approx 1.15-1.16
-    atol = 0.01
-    assert np.allclose(std_actual, std_expected, atol=atol)
-    assert np.allclose(std_actual, 1.15, atol=atol)
-    assert np.allclose(std_expected, 1.15, atol=atol)
+    ratios_in = std_in / sum(std_in)
+    ratios_out = std_out / sum(std_out)
+    assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
 def test_principal_axes_empty():
