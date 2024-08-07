@@ -1794,7 +1794,7 @@ class DataSet(DataSetFilters, DataObject):
         [1.0, 2.0, 0.0]
 
         """
-        return list(self.GetCenter())
+        return self.GetCenter()
 
     @property
     def volume(self) -> float:

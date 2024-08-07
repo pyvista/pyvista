@@ -141,7 +141,7 @@ if _vtk.vtk_version_info < (9, 3):
             self.phi_resolution = phi_resolution
 
         @property
-        def center(self) -> Sequence[float]:
+        def center(self) -> tuple[float, float, float]:
             """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
 
             Returns
@@ -896,8 +896,8 @@ class Text3DSource(vtkVectorText):
         depth=None,
         width=None,
         height=None,
-        center=(0, 0, 0),
-        normal=(0, 0, 1),
+        center=(0.0, 0.0, 0.0),
+        normal=(0.0, 0.0, 1.0),
         process_empty_string=True,
     ):
         """Initialize source."""
