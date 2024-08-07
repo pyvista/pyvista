@@ -1460,7 +1460,7 @@ class _BaseDatasetBadge:
         primary = auto()
         secondary = auto()
         success = auto()
-        dark = auto()
+        surface = auto()
 
     # Name of the badge
     name: str
@@ -1572,7 +1572,7 @@ class CellTypeBadge(_BaseDatasetBadge):
     @classmethod
     def __post_init__(cls):
         cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.surface
 
 
 class DatasetGalleryCarousel(DocTable):
