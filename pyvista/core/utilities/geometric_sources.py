@@ -2379,6 +2379,27 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.Update()
         return wrap(self.GetOutput())
 
+    @property
+    def normal(self) -> tuple[float, float, float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+        """
+        origin = np.array(self.origin)
+        v1 = self.point_a - origin
+        v2 = self.point_b - origin
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        return tuple((normal / norm).tolist()) if norm else (0, 0, 1)
+
+    def push(self, distance: float):  # numpydoc ignore: PR01
+        """Translate the plane in the direction of the normal by the distance specified."""
+        _validation.validate_number(distance, dtype_out=float)
+        self.center = (self.center + np.array(self.normal) * distance).tolist()
+
 
 @no_new_attr
 class ArrowSource(_vtk.vtkArrowSource):
