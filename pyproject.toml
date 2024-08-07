@@ -293,8 +293,7 @@ line-length = 100
 indent-width = 4
 
 [tool.ruff.format]
-docstring-code-format = true
-docstring-code-line-length = 88
+docstring-code-format = false
 quote-style = "preserve"
 
 [tool.ruff.lint]
