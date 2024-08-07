@@ -3115,7 +3115,7 @@ class AxesGeometrySource:
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
         >>> axes_geometry_source.output.center
-        array([0.0, 0.0, 0.0])
+        (0.0, 0.0, 0.0)
 
         Get the asymmetric bounds.
 
@@ -3124,7 +3124,7 @@ class AxesGeometrySource:
         BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
 
         >>> axes_geometry_source.output.center
-        array([0.45, 0.45, 0.45])
+        (0.45, 0.45, 0.45)
 
         Show the difference in camera positioning with and without
         symmetric bounds. Orientation is added for visualization.
