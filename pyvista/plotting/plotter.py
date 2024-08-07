@@ -440,12 +440,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> helmet_file = (
-        ...     examples.gltf.download_damaged_helmet()
-        ... )  # doctest:+SKIP
-        >>> texture = (
-        ...     examples.hdr.download_dikhololo_night()
-        ... )  # doctest:+SKIP
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
         >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
@@ -491,9 +487,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> sextant_file = (
-        ...     examples.vrml.download_sextant()
-        ... )  # doctest:+SKIP
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
@@ -568,9 +562,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> download_obj_file = examples.download_room_surface_mesh(
-        ...     load=False
-        ... )
+        >>> download_obj_file = examples.download_room_surface_mesh(load=False)
         >>> pl = pv.Plotter()
         >>> pl.import_obj(download_obj_file)
         >>> pl.show()
@@ -622,13 +614,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
         >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Point Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Cell Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pv.html')  # doctest:+SKIP
 
         """
@@ -1839,10 +1827,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> with pl.window_size_context((400, 400)):
         ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
-        ...
         >>> with pl.window_size_context((1000, 1000)):
         ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
-        ...
 
         """
         # No op if not set
@@ -2107,9 +2093,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> sphere_actor = pl.add_mesh(pv.Sphere())
-        >>> cube_actor = pl.add_mesh(
-        ...     pv.Cube(), pickable=False, style='wireframe'
-        ... )
+        >>> cube_actor = pl.add_mesh(pv.Cube(), pickable=False, style='wireframe')
         >>> len(pl.pickable_actors)
         1
 
@@ -2759,9 +2743,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         case of multiple nested composite datasets.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -3360,9 +3342,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, scalar_bar_args={'title': 'Z Position'}
-        ... )
+        >>> _ = plotter.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
 
         Plot using RGB on a single cell.  Note that since the number of
@@ -3379,9 +3359,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...         [0.5, 0.33, 0.667],
         ...     ]
         ... )
-        >>> faces = np.hstack(
-        ...     [[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]]
-        ... )
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
         >>> mesh = pv.PolyData(vertices, faces)
         >>> mesh.cell_data['colors'] = [
         ...     [255, 255, 255],
@@ -4169,9 +4147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> grid = pv.ImageData(dimensions=(5, 20, 20))
         >>> scalars = grid.points - (grid.origin)
         >>> scalars /= scalars.max()
-        >>> opacity = np.linalg.norm(
-        ...     grid.points - grid.center, axis=1
-        ... ).reshape(-1, 1)
+        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
         >>> opacity /= opacity.max()
         >>> scalars = np.hstack((scalars, opacity**3))
         >>> scalars *= 255
@@ -5209,9 +5185,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.open_gif(
-        ...     'movie.gif', fps=8, palettesize=64
-        ... )  # doctest:+SKIP
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
         See :ref:`gif_movie_example` for a full example using this method.
 
@@ -5400,9 +5374,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> pl = pv.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-        >>> actor = pl.add_lines(
-        ...     points, color='purple', width=3, connected=True
-        ... )
+        >>> actor = pl.add_lines(points, color='purple', width=3, connected=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -5602,9 +5574,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> points = np.array(
-        ...     [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]]
-        ... )
+        >>> points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]])
         >>> labels = ['Point A', 'Point B', 'Point C']
         >>> actor = pl.add_point_labels(
         ...     points,
@@ -5819,9 +5789,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> rng = np.random.default_rng(seed=0)
         >>> points = rng.random((10, 3))
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_points(
-        ...     points, render_points_as_spheres=True, point_size=100.0
-        ... )
+        >>> actor = pl.add_points(points, render_points_as_spheres=True, point_size=100.0)
         >>> pl.show()
 
         Plot using the ``'points_gaussian'`` style
@@ -6143,9 +6111,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> plotter = pv.Plotter()
         >>> _ = plotter.add_mesh(pv.Sphere())
         >>> viewup = [0, 0, 1]
-        >>> orbit = plotter.generate_orbital_path(
-        ...     factor=2.0, n_points=50, shift=0.0, viewup=viewup
-        ... )
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=50, shift=0.0, viewup=viewup)
 
         See :ref:`orbiting_example` for a full example using this method.
 
@@ -6228,17 +6194,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> texture = examples.load_globe_texture()
         >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
-        >>> _ = plotter.add_mesh(
-        ...     mesh, texture=texture, smooth_shading=True
-        ... )
+        >>> _ = plotter.add_mesh(mesh, texture=texture, smooth_shading=True)
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
-        >>> orbit = plotter.generate_orbital_path(
-        ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
-        ... )
-        >>> plotter.orbit_on_path(
-        ...     orbit, write_frames=True, viewup=viewup, step=0.02
-        ... )
+        >>> orbit = plotter.generate_orbital_path(factor=2.0, n_points=24, shift=0.0, viewup=viewup)
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
         See :ref:`orbiting_example` for a full example using this method.
 
@@ -6600,9 +6560,7 @@ class Plotter(BasePlotter):
     >>> mesh = pv.Cube()
     >>> another_mesh = pv.Sphere()
     >>> pl = pv.Plotter()
-    >>> actor = pl.add_mesh(
-    ...     mesh, color='red', style='wireframe', line_width=4
-    ... )
+    >>> actor = pl.add_mesh(mesh, color='red', style='wireframe', line_width=4)
     >>> actor = pl.add_mesh(another_mesh, color='blue')
     >>> pl.show()
 
@@ -7106,9 +7064,7 @@ class Plotter(BasePlotter):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title(
-        ...     'Plot Title', font='courier', color='k', font_size=40
-        ... )
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
         >>> pl.show()
 
         """

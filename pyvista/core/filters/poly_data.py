@@ -167,12 +167,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_union(sphere_b)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -240,12 +236,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_intersection(sphere_b)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -317,12 +309,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a.boolean_difference(sphere_b)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -621,9 +609,7 @@ class PolyDataFilters(DataSetFilters):
         The mesh splitting takes additional time and can be turned
         off for either mesh individually.
 
-        >>> intersection, _, s2_split = s1.intersection(
-        ...     s2, split_first=False, split_second=True
-        ... )
+        >>> intersection, _, s2_split = s1.intersection(s2, split_first=False, split_second=True)
 
         """
         intfilter = _vtk.vtkIntersectionPolyDataFilter()
@@ -732,9 +718,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> from pyvista import examples
         >>> hills = examples.load_random_hills()
-        >>> hills.plot_curvature(
-        ...     curv_type='gaussian', smooth_shading=True, clim=[0, 1]
-        ... )
+        >>> hills.plot_curvature(curv_type='gaussian', smooth_shading=True, clim=[0, 1])
 
         """
         kwargs.setdefault('scalar_bar_args', {'title': f'{curv_type.capitalize()} Curvature'})
@@ -1802,9 +1786,7 @@ class PolyDataFilters(DataSetFilters):
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
-        >>> clipped_mesh = sphere.clip_closed_surface(
-        ...     'z', origin=[0, 0, 0.3]
-        ... )
+        >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         """
@@ -1957,9 +1939,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.array(
-        ...     [[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32
-        ... )
+        >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32)
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 2, 2])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
@@ -2185,9 +2165,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> point, cell = sphere.ray_trace(
-        ...     [0, 0, 0], [1, 0, 0], first_point=True
-        ... )
+        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
         >>> f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}'
         'Intersected at 0.499 0.000 0.000'
 
@@ -2288,10 +2266,7 @@ class PolyDataFilters(DataSetFilters):
         ...     first_point=True,
         ... )  # doctest:+SKIP
         >>> string = ", ".join(
-        ...     [
-        ...         f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})"
-        ...         for point in points
-        ...     ]
+        ...     [f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points]
         ... )  # doctest:+SKIP
         >>> f'Rays intersected at {string}'  # doctest:+SKIP
         'Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)'
@@ -3495,9 +3470,7 @@ class PolyDataFilters(DataSetFilters):
         Alternatively, simply plot the collisions using the default
         ``'collision_rgba'`` array after enabling ``generate_scalars``.
 
-        >>> collision, ncol = mesh_a.collision(
-        ...     mesh_b, cell_tolerance=1, generate_scalars=True
-        ... )
+        >>> collision, ncol = mesh_a.collision(mesh_b, cell_tolerance=1, generate_scalars=True)
         >>> collision.plot()
 
         See :ref:`collision_example` for more examples using this filter.

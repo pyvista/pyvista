@@ -760,7 +760,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
         ...     pl.add_chart(chart_right)
         ...     return pl, chart_left, chart_right
-        ...
         >>> pl, *_ = plotter_with_charts()
         >>> pl.show()
 
@@ -1682,9 +1681,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> mesh = examples.load_random_hills()
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(
-        ...     mesh, cmap='terrain', show_scalar_bar=False
-        ... )
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -1701,9 +1698,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Hide labels, but still show axis titles.
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(
-        ...     mesh, cmap='terrain', show_scalar_bar=False
-        ... )
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -3147,7 +3142,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...         metallic=1.0,
         ...         color=color,
         ...     )
-        ...
         >>> pl.camera.zoom(1.8)
         >>> pl.camera_position = [
         ...     (4.74, 0.959, 0.525),
@@ -3429,9 +3423,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(
-        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
-        ... )
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
         >>> pl.set_environment_texture(cubemap)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
@@ -3457,9 +3449,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(
-        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
-        ... )
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
         >>> pl.set_environment_texture(cubemap)
         >>> pl.remove_environment_texture()
         >>> pl.camera_position = 'xy'
@@ -3715,9 +3705,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> sphere = pv.Sphere(center=(0, 0, 1))
         >>> cube = pv.Cube()
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, 'grey', smooth_shading=True, label='Sphere'
-        ... )
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
         >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()

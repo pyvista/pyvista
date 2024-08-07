@@ -1900,23 +1900,21 @@ class Theme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(
-        ...     scalars='Elevation', cmap='rainbow', show_edges=True
-        ... )
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.subplot(0, 1)
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.link_views()
         >>> p.camera_position = [

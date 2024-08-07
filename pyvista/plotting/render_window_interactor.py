@@ -174,10 +174,7 @@ class RenderWindowInteractor:
         >>> actor = pl.add_mesh(sphere)
         >>> def callback(step):
         ...     actor.position = [step / 100.0, step / 100.0, 0]
-        ...
-        >>> pl.add_timer_event(
-        ...     max_steps=200, duration=500, callback=callback
-        ... )
+        >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
         self._timer = Timer(max_steps, callback)
@@ -219,9 +216,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
 
         """
         call = partial(try_callback, call)
@@ -253,9 +248,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -278,12 +271,8 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
-        >>> obs_leave = pl.iren.add_observer(
-        ...     "LeaveEvent", lambda *_: print('Leave!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer("EnterEvent", lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer("LeaveEvent", lambda *_: print('Leave!'))
         >>> pl.iren.remove_observers()
 
         """
@@ -1012,9 +1001,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(
-        ...     mouse_wheel_zooms=True, shift_pans=True
-        ... )
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
         >>> plotter.show()  # doctest:+SKIP
 
         """

@@ -68,9 +68,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> mesh = examples.planets.load_sun()
     >>> texture = examples.planets.download_sun_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -109,9 +107,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> mesh = examples.planets.load_moon()
     >>> texture = examples.planets.download_moon_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -150,9 +146,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh = examples.planets.load_mercury()
     >>> texture = examples.planets.download_mercury_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -191,9 +185,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> mesh = examples.planets.load_venus()
     >>> texture = examples.planets.download_venus_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -232,9 +224,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> mesh = examples.planets.load_earth()
     >>> texture = examples.load_globe_texture()
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -273,9 +263,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> mesh = examples.planets.load_mars()
     >>> texture = examples.planets.download_mars_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -314,9 +302,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh = examples.planets.load_jupiter()
     >>> texture = examples.planets.download_jupiter_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -355,9 +341,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> mesh = examples.planets.load_saturn()
     >>> texture = examples.planets.download_saturn_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -398,9 +382,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> mesh = examples.planets.load_saturn_rings()
     >>> texture = examples.planets.download_saturn_rings(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -440,9 +422,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> mesh = examples.planets.load_uranus()
     >>> texture = examples.planets.download_uranus_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -481,9 +461,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh = examples.planets.load_neptune()
     >>> texture = examples.planets.download_neptune_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -522,9 +500,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> mesh = examples.planets.load_pluto()
     >>> texture = examples.planets.download_pluto_surface(texture=True)
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> _ = pl.add_mesh(mesh, texture=texture)
     >>> pl.show()
@@ -899,9 +875,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 
@@ -938,9 +912,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 

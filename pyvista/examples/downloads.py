@@ -996,9 +996,7 @@ def download_topo_land(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_topo_land()
-    >>> dataset.plot(
-    ...     clim=[-2000, 3000], cmap="gist_earth", show_scalar_bar=False
-    ... )
+    >>> dataset.plot(clim=[-2000, 3000], cmap="gist_earth", show_scalar_bar=False)
 
     .. seealso::
 
@@ -1117,9 +1115,7 @@ def download_knee_full(load=True):  # pragma: no cover
     ...     (74.8305, 89.2905, 100.0),
     ...     (0.23, 0.072, 0.97),
     ... ]
-    >>> dataset.plot(
-    ...     volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False
-    ... )
+    >>> dataset.plot(volume=True, cmap="bone", cpos=cpos, show_scalar_bar=False)
 
     .. seealso::
 
@@ -1425,9 +1421,7 @@ def download_sparse_points(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_sparse_points()
-    >>> dataset.plot(
-    ...     scalars="val", render_points_as_spheres=True, point_size=50
-    ... )
+    >>> dataset.plot(scalars="val", render_points_as_spheres=True, point_size=50)
 
     .. seealso::
 
@@ -3364,7 +3358,6 @@ def download_gears(load=True):  # pragma: no cover
     ...     bid = np.empty(body.n_points)
     ...     bid[:] = i
     ...     body.point_data["Body ID"] = bid
-    ...
     >>> bodies.plot(cmap='jet')
 
     .. seealso::
@@ -3611,9 +3604,7 @@ def download_thermal_probes(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_thermal_probes()
-    >>> dataset.plot(
-    ...     render_points_as_spheres=True, point_size=5, cpos="xy"
-    ... )
+    >>> dataset.plot(render_points_as_spheres=True, point_size=5, cpos="xy")
 
     .. seealso::
 
@@ -3867,9 +3858,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
     ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
     ... ]
     >>> dataset = examples.download_damavand_volcano()
-    >>> dataset.plot(
-    ...     cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True
-    ... )
+    >>> dataset.plot(cpos=cpos, cmap="reds", show_scalar_bar=False, volume=True)
 
     .. seealso::
 
@@ -3992,9 +3981,7 @@ def download_antarctica_velocity(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_antarctica_velocity()
-    >>> dataset.plot(
-    ...     cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True
-    ... )
+    >>> dataset.plot(cpos='xy', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
     .. seealso::
 
@@ -4305,9 +4292,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(
-    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
-    ... )
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
 
     .. seealso::
@@ -4371,9 +4356,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
     >>> _ = pl.add_actor(cubemap.to_skybox())
     >>> pl.set_environment_texture(cubemap, True)
     >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(
-    ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
-    ... )
+    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0)
     >>> pl.show()
 
     .. seealso::
@@ -5140,7 +5123,6 @@ def download_single_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
-    ...
     >>> plotter.close()
 
     .. seealso::
@@ -5200,7 +5182,6 @@ def download_dual_sphere_animation(load=True):  # pragma: no cover
     ...     plotter.write_frame()
     ...     plotter.clear()
     ...     plotter.enable_lightkit()
-    ...
     >>> plotter.close()
 
     .. seealso::
@@ -5229,12 +5210,8 @@ def download_osmnx_graph(load=True):  # pragma: no cover
 
         >>> import osmnx as ox  # doctest:+SKIP
         >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
-        >>> graph = ox.graph_from_address(
-        ...     address, dist=500, network_type='drive'
-        ... )  # doctest:+SKIP
-        >>> pickle.dump(
-        ...     graph, open('osmnx_graph.p', 'wb')
-        ... )  # doctest:+SKIP
+        >>> graph = ox.graph_from_address(address, dist=500, network_type='drive')  # doctest:+SKIP
+        >>> pickle.dump(graph, open('osmnx_graph.p', 'wb'))  # doctest:+SKIP
 
     Parameters
     ----------
@@ -6545,9 +6522,7 @@ def download_fea_hertzian_contact_cylinder(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> grid = examples.download_fea_hertzian_contact_cylinder()
-    >>> grid.plot(
-    ...     scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False
-    ... )
+    >>> grid.plot(scalars='PartID', cmap=['green', 'blue'], show_scalar_bar=False)
 
     Plot the absolute value of the component stress in the Z direction.
 
@@ -7190,17 +7165,12 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> # create coils
     >>> coils = []
     >>> for z in np.linspace(-8, 8, 16):
-    ...     coils.append(
-    ...         pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False)
-    ...     )
-    ...
+    ...     coils.append(pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False))
     >>> coils = pv.MultiBlock(coils)
     >>> # plot the magnet field strength in the Z direction
     >>> scalars = np.abs(grid['B'][:, 2])
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     coils, render_lines_as_tubes=True, line_width=5, color='w'
-    ... )
+    >>> _ = pl.add_mesh(coils, render_lines_as_tubes=True, line_width=5, color='w')
     >>> vol = pl.add_volume(
     ...     grid,
     ...     scalars=scalars,
@@ -7299,9 +7269,7 @@ def download_victorian_goblet_face_illusion(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> mesh = examples.download_victorian_goblet_face_illusion()
     >>> plotter = pv.Plotter(lighting='none')
-    >>> _ = plotter.add_mesh(
-    ...     mesh, edge_color='gray', color='white', show_edges=True
-    ... )
+    >>> _ = plotter.add_mesh(mesh, edge_color='gray', color='white', show_edges=True)
     >>> _ = plotter.add_floor('-x', color="black")
     >>> plotter.enable_parallel_projection()
     >>> plotter.show(cpos="yz")
@@ -7890,9 +7858,7 @@ def download_caffeine(load=True):  # pragma: no cover
     Add atoms and bonds to the plotter.
 
     >>> pl = pv.Plotter()
-    >>> atoms = pl.add_mesh(
-    ...     poly.glyph(geom=pv.Sphere(radius=0.1)), color="red"
-    ... )
+    >>> atoms = pl.add_mesh(poly.glyph(geom=pv.Sphere(radius=0.1)), color="red")
     >>> bonds = pl.add_mesh(poly.tube(radius=0.1), color="gray")
     >>> pl.show(cpos="xy")
 

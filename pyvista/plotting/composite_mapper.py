@@ -114,9 +114,7 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'r'
@@ -148,9 +146,7 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].visible = False
@@ -188,9 +184,7 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[2].opacity = 0.5
@@ -223,9 +217,7 @@ class BlockAttributes:
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
@@ -331,9 +323,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].visible = False
@@ -355,9 +345,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].pickable = True
@@ -381,9 +369,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         Set individual block colors and then reset them.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset, color='w')
         >>> mapper.block_attr[1].color = 'r'
@@ -406,9 +392,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         to our indexing to access the right block.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[2].opacity = 0.5
@@ -458,9 +442,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         and ``2`` to access the individual sub-blocks.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
@@ -576,9 +558,7 @@ class CompositePolyDataMapper(
         Examples
         --------
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
@@ -624,9 +604,7 @@ class CompositePolyDataMapper(
         change the visibility and color of the blocks.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -650,14 +628,10 @@ class CompositePolyDataMapper(
         Enable coloring missing values with NaN.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> pl = pv.Plotter()
-        >>> actor, mapper = pl.add_composite(
-        ...     dataset, scalars='data', show_scalar_bar=False
-        ... )
+        >>> actor, mapper = pl.add_composite(dataset, scalars='data', show_scalar_bar=False)
         >>> mapper.nan_color = 'r'
         >>> mapper.color_missing_with_nan = True
         >>> pl.show()
@@ -689,9 +663,7 @@ class CompositePolyDataMapper(
         Set each block of the composite dataset to a unique color.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.set_unique_colors()
