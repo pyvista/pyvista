@@ -844,9 +844,10 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
 
     # Set flag to raise error if not type
     elif not allow_subclass:
-        if isinstance(classinfo, tuple) and type(obj) not in classinfo:
-            is_error = True
-            msg_body = "must have one of the following types"
+        if isinstance(classinfo, tuple):
+            if type(obj) not in classinfo:
+                is_error = True
+                msg_body = "must have one of the following types"
         elif type(obj) is not classinfo:
             is_error = True
             msg_body = "must have type"

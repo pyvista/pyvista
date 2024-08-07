@@ -2361,11 +2361,12 @@ class DataSetFilters:
                 warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
                 scale = False
 
-        if scale and dataset.active_scalars is not None:
-            if dataset.active_scalars.ndim > 1:
-                alg.SetScaleModeToScaleByVector()
-            else:
-                alg.SetScaleModeToScaleByScalar()
+        if scale:
+            if dataset.active_scalars is not None:
+                if dataset.active_scalars.ndim > 1:
+                    alg.SetScaleModeToScaleByVector()
+                else:
+                    alg.SetScaleModeToScaleByScalar()
         else:
             alg.SetScaleModeToDataScalingOff()
 

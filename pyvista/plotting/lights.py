@@ -602,8 +602,9 @@ class Light(vtkLight):
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:
-            if actor_state and actor_name not in renderer.actors:
-                renderer.add_actor(self.actor, render=False)
+            if actor_state:
+                if actor_name not in renderer.actors:
+                    renderer.add_actor(self.actor, render=False)
             elif actor_name in renderer.actors:
                 renderer.remove_actor(self.actor, render=False)
 
