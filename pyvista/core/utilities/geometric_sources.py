@@ -2384,6 +2384,27 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.Update()
         return wrap(self.GetOutput())
 
+    @property
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore: RT01
+        """Get the plane's normal vector."""
+        origin = np.array(self.origin)
+        v1 = self.point_a - origin
+        v2 = self.point_b - origin
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        # Avoid div by zero and return +z normal by default
+        return tuple((normal / norm).tolist()) if norm else (0.0, 0.0, 1.0)
+
+    def flip_normal(self):
+        """Flip the plane's normal.
+
+        This method modifies the plane's :attr:`point_a` and :attr:`point_b` by
+        swapping them.
+        """
+        point_a = self.point_a
+        self.point_a = self.point_b
+        self.point_b = point_a
+
 
 @no_new_attr
 class ArrowSource(_vtk.vtkArrowSource):

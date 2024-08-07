@@ -394,10 +394,20 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
-    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-    assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.origin == (-0.5, -0.5, 0.0)
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.origin == (-0.5, -0.5, 0.0)
+    point_a = (0.5, -0.5, 0.0)
+    point_b = (-0.5, 0.5, 0.0)
+    normal = (0.0, 0.0, 1.0)
+    assert algo.point_a == point_a
+    assert algo.point_b == point_b
+    assert algo.normal == normal
+    algo.flip_normal()
+    assert algo.point_a == point_b
+    assert algo.point_b == point_a
+    assert algo.normal == tuple((np.array(normal) * -1).tolist())
 
 
 def test_superquadric_source():
