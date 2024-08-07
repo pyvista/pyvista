@@ -51,6 +51,8 @@ def test_plot_logo():
 def test_plot_datasets():
     # simply should not fail
     demos.plot_datasets()
+    with pytest.raises(TypeError):
+        demos.plot_datasets(data_type='foo')
 
 
 @skip_no_plotting
