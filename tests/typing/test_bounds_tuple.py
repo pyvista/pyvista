@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -110,6 +111,15 @@ def try_init_object(class_, kwargs):
     return instance
 
 
+def get_property_return_type(prop: property):
+    members = inspect.getmembers(prop)
+    for member in members:
+        name, func = member
+        if name == 'fget':
+            return func.__annotations__['return']
+    return None
+
+
 def test_bounds_tuple(class_with_bounds):
     # Define kwargs as required for some cases.
     kwargs = {}
@@ -136,8 +146,12 @@ def test_center_tuple(class_with_center):
     # Init object but skip if abstract
     instance = try_init_object(class_with_center, kwargs)
 
-    # Do test
+    # Test type at runtime
     center = instance.center
     assert len(center) == 3
     assert isinstance(center, tuple)
     assert is_all_floats(center)
+
+    # Test type annotations
+    return_type = get_property_return_type(class_with_center.center)
+    assert return_type == 'tuple[float, float, float]'

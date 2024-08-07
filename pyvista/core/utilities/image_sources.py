@@ -76,7 +76,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
         self.SetWholeExtent(whole_extent)
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center of the ellipsoid.
 
         Returns
@@ -604,7 +604,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
             self.std = std
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center of the gaussian.
 
         Returns

@@ -358,7 +358,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.resolution = resolution
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Returns
@@ -609,7 +609,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.capping = capping
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get location of the centroid in ``[x, y, z]``.
 
         Returns
@@ -1207,7 +1207,7 @@ class CubeSource(_vtk.vtkCubeSource):
         self.SetBounds(bounds)
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
@@ -1391,7 +1391,7 @@ class DiscSource(_vtk.vtkDiskSource):
         self.c_res = c_res
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
@@ -1722,7 +1722,7 @@ class SphereSource(_vtk.vtkSphereSource):
         self.end_phi = end_phi
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
@@ -1970,7 +1970,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         self.fill = fill
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
@@ -2283,7 +2283,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.SetYResolution(j_resolution)
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         The center of the plane is translated to the specified point.
@@ -2719,7 +2719,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         self.thickness = thickness
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Center of the superquadric in ``[x, y, z]``.
 
         Returns
