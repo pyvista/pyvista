@@ -3663,6 +3663,7 @@ class OrthogonalPlanesSource:
         yz_source, zx_source, xy_source = self._plane_sources
         x_res, y_res, z_res = self.resolution
         x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+        flip_yz, flip_zx, flip_xy = self.normal_sign == np.array(['-', '-', '-'])
 
         # Compute bounds-related vars
         x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
@@ -3675,6 +3676,8 @@ class OrthogonalPlanesSource:
         xy_source.point_b = 0.0, y_size, 0.0
         xy_source.origin = ORIGIN
         xy_source.center = center
+        if flip_xy:
+            xy_source.flip_normal()
         xy_source.Update()
 
         yz_source.i_resolution = y_res
@@ -3683,6 +3686,8 @@ class OrthogonalPlanesSource:
         yz_source.point_b = 0.0, 0.0, z_size
         yz_source.origin = ORIGIN
         yz_source.center = center
+        if flip_yz:
+            yz_source.flip_normal()
         yz_source.Update()
 
         zx_source.i_resolution = z_res
@@ -3691,16 +3696,14 @@ class OrthogonalPlanesSource:
         zx_source.point_b = x_size, 0.0, 0.0
         zx_source.origin = ORIGIN
         zx_source.center = center
+        if flip_zx:
+            zx_source.flip_normal()
         zx_source.Update()
 
         # Update the output
         output = self._output
-        for index, (name, source, plane, sign) in enumerate(
-            zip(self.names, self._plane_sources, output, self.normal_sign)
-        ):
+        for index, (name, source, plane) in enumerate(zip(self.names, self._plane_sources, output)):
             plane.copy_from(source.GetOutput())
-            if sign == '-':
-                plane['Normals'] *= -1
             output.set_block_name(index, name)
 
     @property
