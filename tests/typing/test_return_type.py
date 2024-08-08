@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -71,6 +72,15 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('class_with_bounds', classes, ids=class_names)
 
 
+def get_property_return_type(prop: property):
+    members = inspect.getmembers(prop)
+    for member in members:
+        name, func = member
+        if name == 'fget':
+            return func.__annotations__['return']
+    return None
+
+
 def test_bounds_tuple(class_with_bounds):
     # Define kwargs as required for some cases.
     kwargs = {}
@@ -95,3 +105,7 @@ def test_bounds_tuple(class_with_bounds):
     assert isinstance(bounds, pv.BoundsTuple)
     # Make sure we have built-in floats
     assert all(isinstance(bnd, float) and not isinstance(bnd, np.generic) for bnd in bounds)
+
+    # Test type annotations
+    return_type = get_property_return_type(class_with_bounds.bounds)
+    assert return_type == 'BoundsTuple'
