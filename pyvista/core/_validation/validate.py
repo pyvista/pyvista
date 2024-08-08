@@ -407,9 +407,7 @@ def validate_axes(
 
     Create a validated left-handed axes array from two vectors.
 
-    >>> _validation.validate_axes(
-    ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
-    ... )
+    >>> _validation.validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation='left')
     array([[ 1.,  0.,  0.],
            [ 0.,  1.,  0.],
            [ 0.,  0., -1.]])
@@ -657,9 +655,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
 
     Additional checks can be added as needed.
 
-    >>> _validation.validate_number(
-    ...     10, must_be_in_range=[0, 10], must_be_integer=True
-    ... )
+    >>> _validation.validate_number(10, must_be_in_range=[0, 10], must_be_integer=True)
     10
 
     """
@@ -780,9 +776,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
 
     Add additional constraints.
 
-    >>> _validation.validate_arrayNx3(
-    ...     ((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10]
-    ... )
+    >>> _validation.validate_arrayNx3(((1, 2, 3), (4, 5, 6)), must_be_in_range=[0, 10])
     array([[1, 2, 3],
            [4, 5, 6]])
 
@@ -939,9 +933,7 @@ def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_unsigned(
-    ...     (1, 2, 3), must_be_in_range=[1, 3]
-    ... )
+    >>> _validation.validate_arrayN_unsigned((1, 2, 3), must_be_in_range=[1, 3])
     array([1, 2, 3])
 
     """

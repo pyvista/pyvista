@@ -67,9 +67,7 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -166,9 +164,7 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -1385,7 +1381,6 @@ class ImageDataFilters(DataSetFilters):
         ...     plot.view_xy()
         ...     plot.camera.tight()
         ...     return plot
-        ...
         >>>
         >>> plot = grayscale_image_plotter(padded)
         >>> plot.show()
@@ -1415,9 +1410,7 @@ class ImageDataFilters(DataSetFilters):
         >>> red = (255, 0, 0, 255)  # RGBA
         >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
         >>>
-        >>> plot_kwargs = dict(
-        ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
-        ... )
+        >>> plot_kwargs = dict(cpos='xy', zoom='tight', rgb=True, show_axes=False)
         >>> padded.plot(**plot_kwargs)
 
         Pad each edge of the image separately with a different color.

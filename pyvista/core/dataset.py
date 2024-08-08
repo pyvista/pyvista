@@ -1532,9 +1532,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.point_data['my_array'] = np.random.default_rng().random(
-        ...     mesh.n_points
-        ... )
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -1625,9 +1623,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(
-        ...     mesh.n_cells
-        ... )
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
         >>> mesh.cell_data
         pyvista DataSetAttributes
@@ -2543,9 +2539,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista as pv
-        >>> mesh = pv.ImageData(
-        ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
-        ... )
+        >>> mesh = pv.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
         >>> mesh
         ImageData...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
@@ -2732,9 +2726,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> index = mesh.find_cells_within_bounds(
-        ...     [-2.0, 2.0, -2.0, 2.0, -2.0, 2.0]
-        ... )
+        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
 
         """
         if np.array(bounds).size != 6:
@@ -2839,7 +2831,6 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.ImageData(dimensions=(3, 3, 1))
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
-        ...
         """
         for i in range(self.n_cells):
             yield self.get_cell(i)
@@ -2926,9 +2917,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     # Add current cell
         ...     i_cell = 0
         ...     current_cell = mesh.extract_cells(i_cell)
-        ...     _ = pl.add_mesh(
-        ...         current_cell, show_edges=True, color="blue"
-        ...     )
+        ...     _ = pl.add_mesh(current_cell, show_edges=True, color="blue")
         ...     _ = add_point_labels(
         ...         current_cell.cell_centers().points,
         ...         labels=[f"{i_cell}"],
@@ -2947,7 +2936,6 @@ class DataSet(DataSetFilters, DataObject):
         ...     ids.append(i_cell)
         ...     others = mesh.extract_cells(ids, invert=True)
         ...     _ = pl.add_mesh(others, show_edges=True)
-        ...
         >>> pl.show()
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
@@ -3023,9 +3011,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh, show_edges=True)
         >>>
         >>> # Label the 0-th point
-        >>> _ = pl.add_point_labels(
-        ...     mesh.points[0], ["0"], text_color="blue", font_size=40
-        ... )
+        >>> _ = pl.add_point_labels(mesh.points[0], ["0"], text_color="blue", font_size=40)
         >>>
         >>> # Get the point neighbors and plot them
         >>> neighbors = mesh.point_neighbors(0)
@@ -3104,9 +3090,7 @@ class DataSet(DataSetFilters, DataObject):
         ... )
         >>>
         >>> # Add the first point label
-        >>> _ = add_point_labels(
-        ...     mesh.points[0], labels=["0"], text_color="blue"
-        ... )
+        >>> _ = add_point_labels(mesh.points[0], labels=["0"], text_color="blue")
         >>>
         >>> # Add the neighbors to the plot
         >>> neighbors = mesh.point_neighbors_levels(0, n_levels=3)
@@ -3116,7 +3100,6 @@ class DataSet(DataSetFilters, DataObject):
         ...         labels=[f"{i}"] * len(ids),
         ...         text_color="red",
         ...     )
-        ...
         >>>
         >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
@@ -3167,9 +3150,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>> nbr_levels = mesh.cell_neighbors_levels(
-        ...     0, connections="edges", n_levels=3
-        ... )
+        >>> nbr_levels = mesh.cell_neighbors_levels(0, connections="edges", n_levels=3)
         >>> nbr_levels = list(nbr_levels)
         >>> nbr_levels[0]
         [1, 21, 9]
@@ -3205,17 +3186,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> other_ids = [0]
         >>>
         >>> # Add the neighbors to the plot
-        >>> neighbors = mesh.cell_neighbors_levels(
-        ...     0, connections="edges", n_levels=3
-        ... )
+        >>> neighbors = mesh.cell_neighbors_levels(0, connections="edges", n_levels=3)
         >>> for i, ids in enumerate(neighbors, start=1):
         ...     cells = mesh.extract_cells(ids)
         ...     _ = pl.add_mesh(cells, show_edges=True)
-        ...     _ = add_point_labels(
-        ...         cells.cell_centers().points, labels=[f"{i}"] * len(ids)
-        ...     )
+        ...     _ = add_point_labels(cells.cell_centers().points, labels=[f"{i}"] * len(ids))
         ...     other_ids.extend(ids)
-        ...
         >>>
         >>> # Add the cell IDs that are not neighbors (ie. the rest of the sphere)
         >>> cells = mesh.extract_cells(other_ids, invert=True)
@@ -3284,9 +3260,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh, show_edges=True)
         >>>
         >>> # Label the 0-th point
-        >>> _ = pl.add_point_labels(
-        ...     mesh.points[0], ["0"], text_color="blue", font_size=20
-        ... )
+        >>> _ = pl.add_point_labels(mesh.points[0], ["0"], text_color="blue", font_size=20)
         >>>
         >>> # Get the cells ids using the 0-th point
         >>> ids = mesh.point_cell_ids(0)
@@ -3303,9 +3277,7 @@ class DataSet(DataSetFilters, DataObject):
         ... )
         >>>
         >>> # Plot the other cells
-        >>> others = mesh.extract_cells(
-        ...     [i for i in range(mesh.n_cells) if i not in ids]
-        ... )
+        >>> others = mesh.extract_cells([i for i in range(mesh.n_cells) if i not in ids])
         >>> _ = pl.add_mesh(others, show_edges=True)
         >>>
         >>> pl.camera_position = "yx"

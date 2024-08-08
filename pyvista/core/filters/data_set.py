@@ -143,24 +143,18 @@ class DataSetFilters:
         >>> source = pv.Cylinder(resolution=30).triangulate().subdivide(1)
         >>> transformed = source.rotate_y(20).translate([-0.75, -0.5, 0.5])
         >>> aligned = transformed.align(source)
-        >>> _, closest_points = aligned.find_closest_cell(
-        ...     source.points, return_closest_point=True
-        ... )
+        >>> _, closest_points = aligned.find_closest_cell(source.points, return_closest_point=True)
         >>> dist = np.linalg.norm(source.points - closest_points, axis=1)
 
         Visualize the source, transformed, and aligned meshes.
 
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> _ = pl.add_text('Before Alignment')
-        >>> _ = pl.add_mesh(
-        ...     source, style='wireframe', opacity=0.5, line_width=2
-        ... )
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
         >>> _ = pl.add_mesh(transformed)
         >>> pl.subplot(0, 1)
         >>> _ = pl.add_text('After Alignment')
-        >>> _ = pl.add_mesh(
-        ...     source, style='wireframe', opacity=0.5, line_width=2
-        ... )
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
         >>> _ = pl.add_mesh(
         ...     aligned,
         ...     scalars=dist,
@@ -455,9 +449,7 @@ class DataSetFilters:
         plane are positive, and distances below the plane are negative.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere, scalars='implicit_distance', cmap='bwr'
-        ... )
+        >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
         >>> pl.show()
 
@@ -543,9 +535,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(
-        ...     scalars="sample_point_scalars", value=100
-        ... )
+        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
         >>> clipped.plot()
 
         Get clipped meshes corresponding to the portions of the mesh above and below 100.
@@ -562,9 +552,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(
-        ...     scalars="sample_point_scalars", value=100, invert=False
-        ... )
+        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100, invert=False)
         >>> clipped.plot()
 
         """
@@ -1238,9 +1226,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
         >>> grid.plot(
         ...     cmap='gist_earth_r',
         ...     show_scalar_bar=True,
@@ -1251,9 +1237,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(20, 20, 20))
         >>> threshed = grid.threshold(value=0.02)
         >>> threshed.plot(
         ...     cmap='gist_earth_r',
@@ -1385,9 +1369,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 2, 2), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1.0, -0, 1.0, 0, 1.0], dim=(30, 30, 30))
         >>> threshed = grid.threshold_percent(0.5)
         >>> threshed.plot(
         ...     cmap='gist_earth_r',
@@ -1834,7 +1816,6 @@ class DataSetFilters:
         ...         - 2 * (a - b) * xyz
         ...         - a * b * xx_yy
         ...     ) ** 2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b)) ** 2
-        ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.ImageData(
@@ -2291,9 +2272,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
-        >>> arrows = mesh.glyph(
-        ...     scale="Normals", orient="Normals", tolerance=0.05
-        ... )
+        >>> arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
         >>> pl = pv.Plotter()
         >>> actor = pl.add_mesh(arrows, color="black")
         >>> actor = pl.add_mesh(
@@ -2595,15 +2574,9 @@ class DataSetFilters:
         region has a different cell count.
 
         >>> import pyvista as pv
-        >>> large = pv.Sphere(
-        ...     center=(-4, 0, 0), phi_resolution=40, theta_resolution=40
-        ... )
-        >>> medium = pv.Sphere(
-        ...     center=(-2, 0, 0), phi_resolution=15, theta_resolution=15
-        ... )
-        >>> small = pv.Sphere(
-        ...     center=(0, 0, 0), phi_resolution=7, theta_resolution=7
-        ... )
+        >>> large = pv.Sphere(center=(-4, 0, 0), phi_resolution=40, theta_resolution=40)
+        >>> medium = pv.Sphere(center=(-2, 0, 0), phi_resolution=15, theta_resolution=15)
+        >>> small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
         >>> mesh = large + medium + small
 
         Plot their connectivity.
@@ -3804,9 +3777,7 @@ class DataSetFilters:
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
@@ -4265,9 +4236,7 @@ class DataSetFilters:
         ...     separating_distance_ratio=0.2,
         ... )
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     streams.tube(radius=0.02), scalars="vorticity_mag"
-        ... )
+        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars="vorticity_mag")
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -4408,9 +4377,7 @@ class DataSetFilters:
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -4569,9 +4536,7 @@ class DataSetFilters:
         ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
         ... )
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -4644,9 +4609,7 @@ class DataSetFilters:
         ...     uniform.bounds.y_min,
         ...     uniform.bounds.z_min,
         ... ]
-        >>> sampled_arc = uniform.sample_over_circular_arc(
-        ...     pointa, pointb, center
-        ... )
+        >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(sampled_arc, line_width=10)
@@ -4725,9 +4688,7 @@ class DataSetFilters:
         ...     uniform.bounds.y_min,
         ...     uniform.bounds.z_max,
         ... ]
-        >>> arc = uniform.sample_over_circular_arc_normal(
-        ...     center, normal=normal, polar=polar
-        ... )
+        >>> arc = uniform.sample_over_circular_arc_normal(center, normal=normal, polar=polar)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(arc, line_width=10)
@@ -4828,9 +4789,7 @@ class DataSetFilters:
         ...     mesh.bounds.y_min,
         ...     mesh.bounds.z_min,
         ... ]
-        >>> mesh.plot_over_circular_arc(
-        ...     a, b, center, resolution=1000, show=False
-        ... )  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc(a, b, center, resolution=1000, show=False)  # doctest:+SKIP
 
         """
         # Sample on circular arc
@@ -4964,9 +4923,7 @@ class DataSetFilters:
         ...     mesh.bounds.y_min,
         ...     mesh.bounds.z_min,
         ... ]
-        >>> mesh.plot_over_circular_arc_normal(
-        ...     center, polar=polar, angle=angle
-        ... )  # doctest:+SKIP
+        >>> mesh.plot_over_circular_arc_normal(center, polar=polar, angle=angle)  # doctest:+SKIP
 
         """
         # Sample on circular arc
@@ -5044,9 +5001,7 @@ class DataSetFilters:
         >>> subset.n_cells
         20
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     grid, style='wireframe', line_width=5, color='black'
-        ... )
+        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
         >>> actor = pl.add_mesh(subset, color='grey')
         >>> pl.show()
 
@@ -5114,9 +5069,7 @@ class DataSetFilters:
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> extracted = sphere.extract_points(
-        ...     sphere.points[:, 2] > 0, include_cells=False
-        ... )
+        >>> extracted = sphere.extract_points(sphere.points[:, 2] > 0, include_cells=False)
         >>> extracted.clear_data()  # clear for plotting
         >>> extracted.plot()
 
@@ -5290,10 +5243,7 @@ class DataSetFilters:
         >>>
         >>> plot = pv.Plotter()
         >>> plot.set_color_cycler('default')
-        >>> _ = [
-        ...     plot.add_mesh(block, label=label)
-        ...     for block, label in zip(multiblock, labels)
-        ... ]
+        >>> _ = [plot.add_mesh(block, label=label) for block, label in zip(multiblock, labels)]
         >>> _ = plot.add_legend()
         >>> plot.show()
 
@@ -5527,9 +5477,7 @@ class DataSetFilters:
         E.g. extract a single value and two ranges, and split the result into separate
         blocks of a MultiBlock.
 
-        >>> extracted = mesh.extract_values(
-        ...     values=18, ranges=[[0, 8], [29, 40]], split=True
-        ... )
+        >>> extracted = mesh.extract_values(values=18, ranges=[[0, 8], [29, 40]], split=True)
         >>> extracted
         MultiBlock (...)
           N Blocks    3
@@ -5547,27 +5495,21 @@ class DataSetFilters:
         >>> colors = rng.random((30, 3))
         >>> point_cloud = pv.PointSet(points)
         >>> point_cloud['colors'] = colors
-        >>> plot_kwargs = dict(
-        ...     render_points_as_spheres=True, point_size=50, rgb=True
-        ... )
+        >>> plot_kwargs = dict(render_points_as_spheres=True, point_size=50, rgb=True)
         >>> point_cloud.plot(**plot_kwargs)
 
         Extract values from a single component.
 
         E.g. extract points with a strong red component (i.e. > 0.8).
 
-        >>> extracted = point_cloud.extract_values(
-        ...     ranges=[0.8, 1.0], component_mode=0
-        ... )
+        >>> extracted = point_cloud.extract_values(ranges=[0.8, 1.0], component_mode=0)
         >>> extracted.plot(**plot_kwargs)
 
         Extract values from all components.
 
         E.g. extract points where all RGB components are dark (i.e. < 0.5).
 
-        >>> extracted = point_cloud.extract_values(
-        ...     ranges=[0.0, 0.5], component_mode='all'
-        ... )
+        >>> extracted = point_cloud.extract_values(ranges=[0.0, 0.5], component_mode='all')
         >>> extracted.plot(**plot_kwargs)
 
         Extract specific multi-component values.
@@ -6340,13 +6282,9 @@ class DataSetFilters:
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> _ = plotter.add_mesh(mesh, show_edges=True)
         >>> plotter.subplot(1, 0)
-        >>> _ = plotter.add_mesh(
-        ...     cqual, scalars="DistanceFromCellCenterToFaceCenter"
-        ... )
+        >>> _ = plotter.add_mesh(cqual, scalars="DistanceFromCellCenterToFaceCenter")
         >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(
-        ...     cqual, scalars="DistanceFromCellCenterToFacePlane"
-        ... )
+        >>> _ = plotter.add_mesh(cqual, scalars="DistanceFromCellCenterToFacePlane")
         >>> plotter.subplot(1, 1)
         >>> _ = plotter.add_mesh(
         ...     cqual,
@@ -7172,9 +7110,7 @@ class DataSetFilters:
 
         Show label info for first four labels
 
-        >>> label_number, label_size = np.unique(
-        ...     image_labels['MetaImage'], return_counts=True
-        ... )
+        >>> label_number, label_size = np.unique(image_labels['MetaImage'], return_counts=True)
         >>> label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
         >>> label_size[:4]

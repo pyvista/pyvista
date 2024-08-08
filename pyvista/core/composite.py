@@ -111,12 +111,10 @@ class MultiBlock(
 
     >>> for name in blocks.keys():
     ...     block = blocks[name]
-    ...
 
     >>> for block in blocks:
     ...     # Do something with each dataset
     ...     surf = block.extract_surface()
-    ...
 
     """
 
@@ -481,9 +479,7 @@ class MultiBlock(
         ...     "sphere": pv.Sphere(center=(2, 2, 0)),
         ... }
         >>> blocks = pv.MultiBlock(data)
-        >>> blocks_uniform = pv.MultiBlock(
-        ...     {"uniform": examples.load_uniform()}
-        ... )
+        >>> blocks_uniform = pv.MultiBlock({"uniform": examples.load_uniform()})
         >>> blocks.extend(blocks_uniform)
         >>> len(blocks)
         3

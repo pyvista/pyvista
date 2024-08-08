@@ -580,9 +580,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     pv.CylinderSource().output, show_edges=True, line_width=5
-    ... )
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -3108,9 +3106,7 @@ class AxesGeometrySource:
         Get the symmetric bounds of the axes.
 
         >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     symmetric_bounds=True
-        ... )
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
@@ -3130,12 +3126,8 @@ class AxesGeometrySource:
         symmetric bounds. Orientation is added for visualization.
 
         Create actors.
-        >>> axes_sym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_asym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
+        >>> axes_sym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=True)
+        >>> axes_asym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=False)
 
         Show multi-window plot.
         >>> pl = pv.Plotter(shape=(1, 2))

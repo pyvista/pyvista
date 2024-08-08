@@ -221,15 +221,11 @@ def fit_plane_to_points(points, return_meta=False):
     >>> cloud[:, 2] *= 0.1
     >>>
     >>> # Fit plane
-    >>> plane, center, normal = pv.fit_plane_to_points(
-    ...     cloud, return_meta=True
-    ... )
+    >>> plane, center, normal = pv.fit_plane_to_points(cloud, return_meta=True)
     >>>
     >>> # Plot the fitted plane
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, color='lightblue', style='wireframe', line_width=4
-    ... )
+    >>> _ = pl.add_mesh(plane, color='lightblue', style='wireframe', line_width=4)
     >>> _ = pl.add_points(
     ...     cloud,
     ...     render_points_as_spheres=True,
@@ -251,9 +247,7 @@ def fit_plane_to_points(points, return_meta=False):
     >>>
     >>> # Plot the fitted plane
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, show_edges=True, color='lightblue', opacity=0.25
-    ... )
+    >>> _ = pl.add_mesh(plane, show_edges=True, color='lightblue', opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
     >>> pl.camera_position = [
     ...     (-117, 76, 235),
@@ -400,9 +394,7 @@ def vector_poly_data(orig, vec):
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
     >>> u = x / np.sqrt(x**2 + y**2)
     >>> v = y / np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack(
-    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
-    ... ).T
+    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
     >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']

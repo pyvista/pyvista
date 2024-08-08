@@ -191,7 +191,6 @@ class WidgetHelper:
         ...     )
         ...     sphere = pv.Sphere(new_radius, new_center)
         ...     _ = plotter.add_mesh(sphere, name="Sphere")
-        ...
         >>> _ = plotter.add_box_widget(callback=simulate)
         >>> plotter.show()
 
@@ -504,10 +503,7 @@ class WidgetHelper:
         ...         i_size=20,
         ...         j_size=20,
         ...     )
-        ...     _ = pl.add_mesh(
-        ...         peak_plane, name="Peak", color='red', opacity=0.4
-        ...     )
-        ...
+        ...     _ = pl.add_mesh(peak_plane, name="Peak", color='red', opacity=0.4)
         >>> _ = pl.add_plane_widget(callback, normal_rotation=False)
         >>> pl.show()
 
@@ -1253,7 +1249,6 @@ class WidgetHelper:
         ...     single_slc = model.slice(normal=normal, origin=center)
         ...
         ...     _ = pl.add_mesh(single_slc, name="slc")
-        ...
         >>> _ = pl.add_line_widget(callback=move_center, use_vertices=True)
         >>> pl.show()
 
@@ -1511,11 +1506,8 @@ class WidgetHelper:
         >>> pl = pv.Plotter()
         >>> def create_mesh(value):
         ...     res = int(value)
-        ...     sphere = pv.Sphere(
-        ...         phi_resolution=res, theta_resolution=res
-        ...     )
+        ...     sphere = pv.Sphere(phi_resolution=res, theta_resolution=res)
         ...     pl.add_mesh(sphere, name="sphere", show_edges=True)
-        ...
         >>> slider = pl.add_slider_widget(
         ...     create_mesh,
         ...     [5, 100],
@@ -2568,7 +2560,6 @@ class WidgetHelper:
         >>> actor = p.add_mesh(mesh)
         >>> def toggle_vis(flag):
         ...     actor.SetVisibility(flag)
-        ...
         >>> _ = p.add_checkbox_button_widget(toggle_vis, value=True)
         >>> p.show()
 
@@ -2647,9 +2638,7 @@ class WidgetHelper:
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     mesh, scalars=range(6), show_scalar_bar=False
-        ... )
+        >>> _ = plotter.add_mesh(mesh, scalars=range(6), show_scalar_bar=False)
         >>> _ = plotter.add_camera_orientation_widget()
         >>> plotter.show()
 
