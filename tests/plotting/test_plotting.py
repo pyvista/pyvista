@@ -2715,6 +2715,21 @@ def test_add_remove_background(sphere):
     plotter.show()
 
 
+@pytest.mark.parametrize(
+    'background', [examples.mapfile, Path(examples.mapfile), 'blue'], ids=['str', 'Path', 'color']
+)
+def test_plot_mesh_background(background):
+    globe = examples.load_globe()
+    globe.plot(texture=pv.Texture(examples.mapfile), background=background)
+
+
+def test_plot_mesh_background_raises():
+    globe = examples.load_globe()
+    match = 'Background must be color-like or a file path. Got {} instead.'
+    with pytest.raises(ValueError, match=match):
+        globe.plot(texture=pv.Texture(examples.mapfile), background={})
+
+
 def test_plot_zoom(sphere):
     # it's difficult to verify that zoom actually worked since we
     # can't get the output with cpos or verify the image cache matches
