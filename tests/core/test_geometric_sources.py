@@ -394,10 +394,33 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
-    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
-    assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.origin == (-0.5, -0.5, 0.0)
+    point_a = (0.5, -0.5, 0.0)
+    point_b = (-0.5, 0.5, 0.0)
+    normal = (0.0, 0.0, 1.0)
+    assert algo.point_a == point_a
+    assert algo.point_b == point_b
+    assert algo.normal == normal
+    algo.flip_normal()
+    assert algo.point_a == point_b
+    assert algo.point_b == point_a
+    assert algo.normal == tuple((np.array(normal) * -1).tolist())
+
+
+def test_plane_source_push():
+    algo = pv.PlaneSource()
+    assert algo.center == (0.0, 0.0, 0.0)
+    assert algo.normal == (0.0, 0.0, 1.0)
+
+    distance = 5.0
+    algo.push(distance)
+    assert algo.center == (0, 0, distance)
+    assert tuple(algo.output.center) == (0, 0, distance)
+
+    algo.push(distance)
+    assert algo.center == (0, 0, distance * 2)
+    assert tuple(algo.output.center) == (0, 0, distance * 2)
 
 
 def test_superquadric_source():
@@ -718,6 +741,16 @@ def test_orthogonal_planes_source_names():
     match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
+
+
+def test_orthogonal_planes_source_move():
+    move = (10, 20, 30)
+    planes_source = pv.OrthogonalPlanesSource(move=move)
+    assert planes_source.move == (10, 20, 30)
+    output = planes_source.output
+    assert output['yz'].bounds == (10.0, 10.0, -1.0, 1.0, -1.0, 1.0)
+    assert output['zx'].bounds == (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0)
+    assert output['xy'].bounds == (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0)
 
 
 def test_orthogonal_planes_source_normal_sign():

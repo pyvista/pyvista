@@ -2384,6 +2384,32 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.Update()
         return wrap(self.GetOutput())
 
+    @property
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore: RT01
+        """Get the plane's normal vector."""
+        origin = np.array(self.origin)
+        v1 = self.point_a - origin
+        v2 = self.point_b - origin
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        # Avoid div by zero and return +z normal by default
+        return tuple((normal / norm).tolist()) if norm else (0.0, 0.0, 1.0)
+
+    def flip_normal(self):
+        """Flip the plane's normal.
+
+        This method modifies the plane's :attr:`point_a` and :attr:`point_b` by
+        swapping them.
+        """
+        point_a = self.point_a
+        self.point_a = self.point_b
+        self.point_b = point_a
+
+    def push(self, distance: float):  # numpydoc ignore: PR01
+        """Translate the plane in the direction of the normal by the distance specified."""
+        _validation.validate_number(distance, dtype_out=float)
+        self.center = (self.center + np.array(self.normal) * distance).tolist()
+
 
 @no_new_attr
 class ArrowSource(_vtk.vtkArrowSource):
@@ -3518,11 +3544,26 @@ class OrthogonalPlanesSource:
     The meshes are ordered such that the first, second, and third plane is perpendicular
     to the x, y, and z-axis, respectively.
 
+    .. versionadded:: 0.45
+
     Parameters
     ----------
     bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds of the planes in the form: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
         The generated planes are centered in these bounds.
+
+    move : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Translate each plane by the specified distance along its respective positive
+        axis direction. More specifically:
+
+         - The yz plane is translated in the positive x direction by the first value
+         - The zx plane is translated in the positive y direction by the second value
+         - The xy plane is translated in the positive z direction by the third value
+
+        .. note::
+
+            The translations do *not* consider the normal direction specified
+            by :attr:`normal_sign`.
 
     resolution : int | VectorLike[int], default: 2
         Number of points on the planes in the x-y-z directions. Use a single number
@@ -3554,15 +3595,28 @@ class OrthogonalPlanesSource:
     Plot the mesh and the planes.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
     >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
     >>> pl.show()
+
+    The planes are centered geometrically, but the frontal plane is positioned a bit
+    too far forward. Use :attr:`move` to move the frontal plane.
+
+    >>> planes_source.move = (0.0, -10.0, 0)
+    >>> planes_source.update()
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
+
     """
 
     def __init__(
         self,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
+        move: VectorLike[float] = (0.0, 0.0, 0.0),
         resolution: int | VectorLike[int] = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
         names: Sequence[str] = ('yz', 'zx', 'xy'),
@@ -3573,6 +3627,7 @@ class OrthogonalPlanesSource:
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
+        self.move = move  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
         self.normal_sign = normal_sign  # type: ignore[assignment]
         self.names = names  # type: ignore[assignment]
@@ -3634,6 +3689,28 @@ class OrthogonalPlanesSource:
         _validation.check_length(names, exact_length=3, name='names')
         self._names = cast(Tuple[str, str, str], tuple(names))
 
+    @property
+    def move(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Translate each plane by the specified distance.
+
+        The translations are applied along each plane's respective positive
+        axis direction. More specifically:
+
+         - The yz plane is translated in the positive x direction by the first value
+         - The zx plane is translated in the positive y direction by the second value
+         - The xy plane is translated in the positive z direction by the third value
+
+        .. note::
+
+            The translations do *not* consider the normal direction specified
+            by :attr:`normal_sign`.
+        """
+        return self._move
+
+    @move.setter
+    def move(self, move_amount: VectorLike[float]):  # numpydoc ignore=GL08
+        self._move = _validation.validate_array3(move_amount, dtype_out=float, to_tuple=True)
+
     def update(self):
         """Update the output of the source."""
         ORIGIN = (0.0, 0.0, 0.0)
@@ -3642,6 +3719,7 @@ class OrthogonalPlanesSource:
         yz_source, zx_source, xy_source = self._plane_sources
         x_res, y_res, z_res = self.resolution
         x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
+        flip_yz, flip_zx, flip_xy = self.normal_sign == np.array(['-', '-', '-'])
 
         # Compute bounds-related vars
         x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
@@ -3654,6 +3732,8 @@ class OrthogonalPlanesSource:
         xy_source.point_b = 0.0, y_size, 0.0
         xy_source.origin = ORIGIN
         xy_source.center = center
+        if flip_xy:
+            xy_source.flip_normal()
         xy_source.Update()
 
         yz_source.i_resolution = y_res
@@ -3662,6 +3742,8 @@ class OrthogonalPlanesSource:
         yz_source.point_b = 0.0, 0.0, z_size
         yz_source.origin = ORIGIN
         yz_source.center = center
+        if flip_yz:
+            yz_source.flip_normal()
         yz_source.Update()
 
         zx_source.i_resolution = z_res
@@ -3670,17 +3752,19 @@ class OrthogonalPlanesSource:
         zx_source.point_b = x_size, 0.0, 0.0
         zx_source.origin = ORIGIN
         zx_source.center = center
+        if flip_zx:
+            zx_source.flip_normal()
         zx_source.Update()
 
         # Update the output
         output = self._output
-        for index, (name, source, plane, sign) in enumerate(
-            zip(self.names, self._plane_sources, output, self.normal_sign)
+        move_vectors = np.diag(self.move)
+        for index, (name, source, plane, move) in enumerate(
+            zip(self.names, self._plane_sources, output, move_vectors)
         ):
             plane.copy_from(source.GetOutput())
-            if sign == '-':
-                plane['Normals'] *= -1
             output.set_block_name(index, name)
+            plane.points += move
 
     @property
     def output(self) -> pyvista.MultiBlock:
