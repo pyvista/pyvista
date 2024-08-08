@@ -155,3 +155,4 @@ def test_center_tuple(class_with_center):
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
     assert return_type == 'tuple[float, float, float]'
+
