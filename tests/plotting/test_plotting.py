@@ -2461,7 +2461,8 @@ def test_set_focus(point):
     p.show()
 
 
-def test_set_viewup(verify_image_cache):
+@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([1.0, 1.0, 1.0])])
+def test_set_viewup(verify_image_cache, vector):
     verify_image_cache.high_variance_test = True
 
     plane = pv.Plane()
@@ -2469,7 +2470,7 @@ def test_set_viewup(verify_image_cache):
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=False)
     p.add_mesh(plane_higher, color="red", show_edges=False)
-    p.set_viewup((1.0, 1.0, 1.0))
+    p.set_viewup(vector)
     p.show()
 
 
