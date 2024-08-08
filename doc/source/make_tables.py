@@ -1143,7 +1143,8 @@ class DatasetPropsGenerator:
             file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
             if len(file_ext) > 6:
                 # Limit number of extensions displayed
-                first, last = _format_ext(file_ext[:3]), _format_ext(file_ext[-3:])
+                first = _format_ext(file_ext[:3])
+                last = _format_ext(file_ext[-3:])
                 return first + sep + '...' + sep + last
             return _format_ext(file_ext)
         return None
