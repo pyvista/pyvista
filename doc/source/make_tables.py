@@ -1456,8 +1456,9 @@ class _BaseDatasetBadge:
     class SemanticColorEnum(StrEnum):
         """Enum of badge colors.
 
-        See: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
-        https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/styling.html#color-variables
+        See:
+        - https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
+        - https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/styling.html#color-variables
         """
 
         primary = auto()
