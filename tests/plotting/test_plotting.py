@@ -2452,11 +2452,12 @@ def test_log_scale():
     plotter.show()
 
 
-def test_set_focus():
+@pytest.mark.parametrize('point', [(-0.5, 0.5, 0), np.array([-0.5, 0.5, 0])])
+def test_set_focus(point):
     plane = pv.Plane()
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
+    p.set_focus(point)  # focus on corner of the plane
     p.show()
 
 
