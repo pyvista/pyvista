@@ -93,6 +93,24 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('class_with_center', class_types, ids=class_names)
 
 
+def get_property_return_type(prop: property):
+    members = inspect.getmembers(prop)
+    for member in members:
+        name, func = member
+        if name == 'fget':
+            return func.__annotations__['return']
+    return None
+
+
+def test_bounds_tuple(class_with_bounds):
+    # Define kwargs as required for some cases.
+    kwargs = {}
+    if class_with_bounds is pv.CubeAxesActor:
+        kwargs['camera'] = pv.Camera()
+    elif class_with_bounds is pv.Renderer:
+        kwargs['parent'] = pv.Plotter()
+
+
 def is_all_floats(iterable: Iterable):
     """Return True if input only has built-in floats."""
     return all(isinstance(item, float) and not isinstance(item, np.generic) for item in iterable)
@@ -136,6 +154,10 @@ def test_bounds_tuple(class_with_bounds):
     assert isinstance(bounds, pv.BoundsTuple)
     assert is_all_floats(bounds)
 
+    # Test type annotations
+    return_type = get_property_return_type(class_with_bounds.bounds)
+    assert return_type == 'BoundsTuple'
+
 
 def test_center_tuple(class_with_center):
     # Define kwargs as required for some cases.
@@ -143,7 +165,6 @@ def test_center_tuple(class_with_center):
     if class_with_center is pv.Renderer:
         kwargs['parent'] = pv.Plotter()
 
-    # Init object but skip if abstract
     instance = try_init_object(class_with_center, kwargs)
 
     # Test type at runtime
@@ -155,3 +176,4 @@ def test_center_tuple(class_with_center):
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
     assert return_type == 'tuple[float, float, float]'
+
