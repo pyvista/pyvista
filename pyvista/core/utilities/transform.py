@@ -217,7 +217,7 @@ class Transform(_vtk.vtkTransform):
         --------
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.pre_multiply()
+        >>> _ = transform.pre_multiply()
         >>> transform.multiply_mode
         'pre'
         """
@@ -236,7 +236,7 @@ class Transform(_vtk.vtkTransform):
         --------
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.post_multiply()
+        >>> _ = transform.post_multiply()
         >>> transform.multiply_mode
         'post'
         """
@@ -277,7 +277,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.scale(1, 2, 3)
+        >>> _ = transform.scale(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -332,7 +332,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.translate(1, 2, 3)
+        >>> _ = transform.translate(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 1.],
                [0., 1., 0., 2.],
@@ -384,7 +384,7 @@ class Transform(_vtk.vtkTransform):
         >>> import pyvista as pv
         >>> rotation_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
         >>> transform = pv.Transform()
-        >>> transform.rotate(rotation_z_90)
+        >>> _ = transform.rotate(rotation_z_90)
         >>> transform.matrix
         array([[ 0., -1.,  0.,  0.],
                [ 1.,  0.,  0.,  0.],
@@ -441,7 +441,7 @@ class Transform(_vtk.vtkTransform):
         ...     [0, 0, 0, 2],
         ... ]
         >>> transform = pv.Transform()
-        >>> transform.concatenate(array)
+        >>> _ = transform.concatenate(array)
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.707,  0.707,  0.   ,  0.   ],
@@ -598,7 +598,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.scale(2.0)
+        >>> _ = transform.scale(2.0)
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -612,7 +612,7 @@ class Transform(_vtk.vtkTransform):
 
         Invert the transformation and show the matrix.
 
-        >>> transform.invert()
+        >>> _ = transform.invert()
         >>> transform.matrix
         array([[0.5, 0. , 0. , 0. ],
                [0. , 0.5, 0. , 0. ],
@@ -625,7 +625,7 @@ class Transform(_vtk.vtkTransform):
 
         Invert it again to restore it back to its original state.
 
-        >>> transform.invert()
+        >>> _ = transform.invert()
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -648,7 +648,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> transform.scale(2.0)
+        >>> _ = transform.scale(2.0)
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -657,7 +657,7 @@ class Transform(_vtk.vtkTransform):
 
         Reset the transformation to the identity matrix.
 
-        >>> transform.identity()
+        >>> _ = transform.identity()
         >>> transform.matrix
         array([[1., 0., 0., 0.],
                [0., 1., 0., 0.],
