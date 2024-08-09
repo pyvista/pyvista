@@ -588,7 +588,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_center', 'center', '_direction']
 
     def __init__(
         self,
@@ -601,7 +601,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     ):
         """Initialize the cylinder source class."""
         super().__init__()
-        self._center = center
+        self.center = center
         self._direction = direction
         self.radius = radius
         self.height = height
@@ -630,7 +630,8 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
         """
-        self._center = center
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(Tuple[float, float, float], valid_center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -880,6 +881,7 @@ class Text3DSource(vtkVectorText):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
+        'center',
         '_center',
         '_height',
         '_width',
@@ -908,7 +910,7 @@ class Text3DSource(vtkVectorText):
         # Set params
         self.string = "" if string is None else string
         self._process_empty_string = process_empty_string
-        self._center = center
+        self.center = center
         self._normal = normal
         self._height = height
         self._width = width
@@ -973,7 +975,8 @@ class Text3DSource(vtkVectorText):
 
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
-        self._center = float(center[0]), float(center[1]), float(center[2])
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(Tuple[float, float, float], valid_center)
 
     @property
     def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
