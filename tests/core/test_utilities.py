@@ -1094,6 +1094,10 @@ def test_transform_matrix_list(transform, attr):
     assert isinstance(matrix_list[0], np.ndarray)
     assert matrix_list[0].shape == (4, 4)
 
+    transform.rotate([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+    matrix_list = getattr(transform, attr)
+    assert len(matrix_list) == 2
+
     identity = transform.matrix_list[0] @ transform.inverse_matrix_list[0]
     assert np.array_equal(identity, np.eye(4))
 
@@ -1151,3 +1155,10 @@ def test_transform_multiply_mode(transform):
     assert transform.multiply_mode == 'post'
     transform.pre_multiply()
     assert transform.multiply_mode == 'pre'
+
+
+def test_transform_identity(transform):
+    transform.scale(2)
+    assert not np.array_equal(transform.matrix, np.eye(4))
+    transform.identity()
+    assert np.array_equal(transform.matrix, np.eye(4))

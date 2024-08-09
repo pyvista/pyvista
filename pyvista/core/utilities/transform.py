@@ -36,6 +36,94 @@ class Transform(_vtk.vtkTransform):
         This class performs all of its operations in a right-handed coordinate system
         with right-handed rotations. Some other graphics libraries use left-handed
         coordinate systems and rotations.
+
+
+    Examples
+    --------
+    Apply two transformations, :meth:`translate` and :meth:`scale`, using
+    post-multiplication (default).
+
+    >>> import pyvista as pv
+    >>> transform = pv.Transform()
+    >>> transform.multiply_mode
+    'post'
+    >>> position = (-0.6, -0.8, 2.1)
+    >>> scale = 2.0
+    >>> transform.translate(position)
+    >>> transform.scale(scale)
+
+    Use :attr:`n_transformations` to check the number of transformations.
+
+    >>> transform.n_transformations
+    2
+
+    Use :attr:`matrix_list` to get a list of the transformations. Since
+    post-multiplication is used, the translation matrix is first in the list since
+    it was applied first, and the scale matrix is second.
+
+    >>> transform.matrix_list
+    [array([[ 1. ,  0. ,  0. , -0.6],
+           [ 0. ,  1. ,  0. , -0.8],
+           [ 0. ,  0. ,  1. ,  2.1],
+           [ 0. ,  0. ,  0. ,  1. ]]), array([[2., 0., 0., 0.],
+           [0., 2., 0., 0.],
+           [0., 0., 2., 0.],
+           [0., 0., 0., 1.]])]
+
+    Show the concatenated matrix. Note that the position is now ``(2, 4, 6)``
+    instead of ``(1, 2, 3)``, indicating that the scaling is applied *after*
+    the translation.
+
+    >>> matrix_post = transform.matrix
+    >>> matrix_post
+    array([[ 2. ,  0. ,  0. , -1.2],
+           [ 0. ,  2. ,  0. , -1.6],
+           [ 0. ,  0. ,  2. ,  4.2],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Reset the transform to the identity matrix and set :attr:`multiply_mode` to
+    use pre-multiplication instead.
+
+    >>> transform.identity()
+    >>> transform.multiply_mode = 'pre'
+
+    Apply the same two transformations as before and in the same order.
+
+    >>> transform.translate(position)
+    >>> transform.scale(scale)
+
+    Show the matrix list again. Note how with pre-multiplication, the order is
+    reversed from post-multiplication, and the scaling matrix is now first
+    followed by the translation.
+
+    >>> transform.matrix_list
+    [array([[2., 0., 0., 0.],
+           [0., 2., 0., 0.],
+           [0., 0., 2., 0.],
+           [0., 0., 0., 1.]]), array([[ 1. ,  0. ,  0. , -0.6],
+           [ 0. ,  1. ,  0. , -0.8],
+           [ 0. ,  0. ,  1. ,  2.1],
+           [ 0. ,  0. ,  0. ,  1. ]])]
+
+    Show the concatenated matrix. Unlike before, the position is not scaled,
+    and is set to ``(1, 2, 3)`` instead of ``(2, 4, 6)``.
+
+    >>> matrix_pre = transform.matrix
+    >>> matrix_pre
+    array([[ 2. ,  0. ,  0. , -0.6],
+           [ 0. ,  2. ,  0. , -0.8],
+           [ 0. ,  0. ,  2. ,  2.1],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Apply the two transformations to a dataset and plot them.
+
+    >>> mesh_post = pv.Sphere().transform(matrix_post)
+    >>> mesh_pre = pv.Cone().transform(matrix_pre)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh_post, name='post', color='goldenrod')
+    >>> _ = pl.add_mesh(mesh_pre, name='pre', color='teal')
+    >>> _ = pl.add_axes_at_origin()
+    >>> pl.show()
     """
 
     def __init__(self):
@@ -129,12 +217,13 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
-
         """
         valid_vector = _validation.validate_array3(
             vector, broadcast=True, dtype_out=float, name='translation vector'
         )
-        self._concatenate('Translate', valid_vector, multiply_mode=multiply_mode)
+        transform = _vtk.vtkTransform()
+        transform.Translate(valid_vector)
+        self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
         self, rotation: RotationLike, multiply_mode: Literal['pre', 'post'] | None = None
@@ -180,12 +269,13 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
-
         """
         if not isinstance(matrix, _vtk.vtkMatrix4x4):
             matrix = _validation.validate_transform4x4(matrix, name='matrix')
             matrix = vtkmatrix_from_array(matrix)
-        self._concatenate('Concatenate', matrix, multiply_mode=multiply_mode)
+        transform = _vtk.vtkTransform()
+        transform.SetMatrix(matrix)
+        self._concatenate('Concatenate', transform, multiply_mode=multiply_mode)
 
     @property
     def matrix(self) -> NumpyArray[float]:
@@ -294,6 +384,13 @@ class Transform(_vtk.vtkTransform):
         Use :attr:`is_inverted` to check if the transformations are currently inverted.
         """
         self.Inverse()
+
+    def identity(self) -> None:  # numpydoc ignore: RT01
+        """Set the transformation to the identity transformation.
+
+        This can be used to "reset" the transform.
+        """
+        self.Identity()
 
     @property
     def is_inverted(self) -> bool:  # numpydoc ignore: RT01
