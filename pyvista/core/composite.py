@@ -12,7 +12,6 @@ import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import List
-from typing import Tuple
 from typing import Union
 from typing import cast
 from typing import overload
@@ -233,9 +232,7 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
-        # (typing.cast necessary to make mypy happy with np.reshape())
-        center_array = np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
-        return cast(Tuple[float, float, float], tuple(center_array.tolist()))
+        return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @property
     def length(self) -> float:
