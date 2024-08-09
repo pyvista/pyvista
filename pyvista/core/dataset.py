@@ -1171,6 +1171,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Translated dataset.
 
+        See Also
+        --------
+        :meth:`pyvista.Transform.translate`
+            Concatenate a translation matrix with a transformation.
+
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
@@ -1222,6 +1227,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Scaled dataset.
+
+        See Also
+        --------
+        :meth:`pyvista.Transform.scale`
+            Concatenate a scale matrix with a transformation.
 
         Examples
         --------

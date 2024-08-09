@@ -1,4 +1,4 @@
-"""Module containing Transform classes."""
+"""Module containing the Transform class."""
 
 from __future__ import annotations
 
@@ -35,6 +35,13 @@ class Transform(_vtk.vtkTransform):
         This class performs all of its operations in a right-handed coordinate system
         with right-handed rotations. Some other graphics libraries use left-handed
         coordinate systems and rotations.
+
+    .. versionadded:: 0.45
+
+    See Also
+    --------
+    :meth:`pyvista.DataSetFilters.transform`
+        Apply a transformation to a mesh.
 
     Examples
     --------
@@ -247,6 +254,11 @@ class Transform(_vtk.vtkTransform):
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
+        See Also
+        --------
+        :meth:`pyvista.DataSet.scale`
+            Scale a mesh.
+
         Examples
         --------
         Concatenate a scale matrix.
@@ -294,6 +306,11 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        :meth:`pyvista.DataSet.translate`
+            Translate a mesh.
 
         Examples
         --------
