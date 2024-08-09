@@ -8,7 +8,18 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from dataclasses import dataclass
-from enum import StrEnum
+import sys
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return self.value
+
+
 from enum import auto
 import inspect
 import io
@@ -1122,11 +1133,20 @@ class DatasetPropsGenerator:
     def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
+        def _format_ext(file_ext_: list[str]):
+            return sep.join(["``" + ext + "``" for ext in file_ext_])
+
+        sep = ",\n"
         file_ext = DatasetPropsGenerator._try_getattr(loader, "unique_extension")
         if file_ext:
             file_ext = loader.unique_extension
             file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
-            return "\n".join(["``'" + ext + "'``" for ext in file_ext])
+            if len(file_ext) > 10:
+                # Limit number of extensions displayed
+                first = _format_ext(file_ext[:3])
+                last = _format_ext(file_ext[-3:])
+                return first + sep + '...' + sep + last
+            return _format_ext(file_ext)
         return None
 
     @staticmethod
@@ -1455,12 +1475,14 @@ class DatasetCardFetcher:
 class _BaseDatasetBadge:
     class SemanticColorEnum(StrEnum):
         """Enum of badge colors.
-        See: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html"""
+
+        See: https://sphinx-design.readthedocs.io/en/pydata-theme/badges_buttons.html
+        """
 
         primary = auto()
         secondary = auto()
         success = auto()
-        dark = auto()
+        muted = auto()
 
     # Name of the badge
     name: str
@@ -1572,7 +1594,7 @@ class CellTypeBadge(_BaseDatasetBadge):
     @classmethod
     def __post_init__(cls):
         cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.muted
 
 
 class DatasetGalleryCarousel(DocTable):
