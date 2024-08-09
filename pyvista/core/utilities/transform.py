@@ -5,14 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
-import numpy as np
-
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -104,7 +102,7 @@ class Transform(_vtk.vtkTransform):
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
-            to ``'pre'`` for pre-multiplication, or ``'post'`` for post-multiplication.
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
         """
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
@@ -130,7 +128,7 @@ class Transform(_vtk.vtkTransform):
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
-            to ``'pre'`` for pre-multiplication, or ``'post'`` for post-multiplication.
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         """
         valid_vector = _validation.validate_array3(
@@ -157,12 +155,10 @@ class Transform(_vtk.vtkTransform):
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
-            to ``'pre'`` for pre-multiplication, or ``'post'`` for post-multiplication.
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
         """
         valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
-        matrix = np.eye(4)
-        matrix[:3, :3] = valid_rotation
-        self.concatenate(matrix, multiply_mode=multiply_mode)
+        self.concatenate(valid_rotation, multiply_mode=multiply_mode)
 
     def concatenate(
         self, matrix: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
@@ -183,7 +179,7 @@ class Transform(_vtk.vtkTransform):
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
-            to ``'pre'`` for pre-multiplication, or ``'post'`` for post-multiplication.
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
         """
         if not isinstance(matrix, _vtk.vtkMatrix4x4):
