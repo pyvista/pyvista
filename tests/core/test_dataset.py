@@ -1286,6 +1286,13 @@ def test_rotate_vector():
         out = mesh.rotate_vector(30, 33)
 
 
+def test_rotate():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    assert isinstance(out, pv.StructuredGrid)
+
+
 def test_transform_integers():
     # regression test for gh-1943
     points = [

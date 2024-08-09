@@ -293,6 +293,23 @@ def test_rotation_from(actor, func):
     assert np.allclose(actual, expected)
 
 
+@pytest.mark.parametrize('origin', [None, [1, 2, 3]])
+def test_rotation_from_matches_dataset_rotate(origin):
+    array = [
+        [0.78410209, -0.49240388, 0.37778609],
+        [0.52128058, 0.85286853, 0.02969559],
+        [-0.33682409, 0.17364818, 0.92541658],
+    ]
+    # Rotate dataset and actor independently
+    dataset = pv.Cube()
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Cube()))
+    dataset.rotate(array, point=origin, inplace=True)
+    actor.rotation_from(array)
+    if origin:
+        actor.origin = origin
+    assert np.allclose(dataset.bounds, actor.bounds)
+
+
 @pytest.mark.parametrize('order', ['F', 'C'])
 def test_convert_orientation_to_rotation_matrix(order):
     orientation = (10, 20, 30)
