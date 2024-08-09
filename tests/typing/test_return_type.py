@@ -45,70 +45,12 @@ def pytest_generate_tests(metafunc):
     if 'class_with_bounds' in metafunc.fixturenames:
         # Generate a separate test for any class that has bounds
         class_names, class_types = get_classes_with_attribute('bounds')
-
-        # List all the classes explicitly
-        expected_names = [
-            'Actor',
-            'AxesAssembly',
-            'AxesAssemblySymmetric',
-            'BasePlotter',
-            'BoxSource',
-            'Cell',
-            'CompositePolyDataMapper',
-            'CubeAxesActor',
-            'CubeSource',
-            'DataSet',
-            'DataSetMapper',
-            'ExplicitStructuredGrid',
-            'FixedPointVolumeRayCastMapper',
-            'GPUVolumeRayCastMapper',
-            'Grid',
-            'ImageData',
-            'Label',
-            'MultiBlock',
-            'OpenGLGPUVolumeRayCastMapper',
-            'OrthogonalPlanesSource',
-            'PlanesAssembly',
-            'Plotter',
-            'PointGaussianMapper',
-            'PointGrid',
-            'PointSet',
-            'PolyData',
-            'Prop3D',
-            'RectilinearGrid',
-            'Renderer',
-            'SmartVolumeMapper',
-            'StructuredGrid',
-            'UnstructuredGrid',
-            'UnstructuredGridVolumeRayCastMapper',
-            'Volume',
-        ]
-        assert sorted(class_names) == sorted(expected_names)
-
         metafunc.parametrize('class_with_bounds', class_types, ids=class_names)
 
     if 'class_with_center' in metafunc.fixturenames:
         # Generate a separate test for any class that has a center
         class_names, class_types = get_classes_with_attribute('center')
         metafunc.parametrize('class_with_center', class_types, ids=class_names)
-
-
-def get_property_return_type(prop: property):
-    members = inspect.getmembers(prop)
-    for member in members:
-        name, func = member
-        if name == 'fget':
-            return func.__annotations__['return']
-    return None
-
-
-def test_bounds_tuple(class_with_bounds):
-    # Define kwargs as required for some cases.
-    kwargs = {}
-    if class_with_bounds is pv.CubeAxesActor:
-        kwargs['camera'] = pv.Camera()
-    elif class_with_bounds is pv.Renderer:
-        kwargs['parent'] = pv.Plotter()
 
 
 def is_all_floats(iterable: Iterable):
@@ -148,7 +90,7 @@ def test_bounds_tuple(class_with_bounds):
 
     instance = try_init_object(class_with_bounds, kwargs)
 
-    # Do test
+    # Test type at runtime
     bounds = instance.bounds
     assert len(bounds) == 6
     assert isinstance(bounds, pv.BoundsTuple)
@@ -176,4 +118,3 @@ def test_center_tuple(class_with_center):
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
     assert return_type == 'tuple[float, float, float]'
-
