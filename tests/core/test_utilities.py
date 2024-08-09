@@ -36,6 +36,13 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.transform import Transform
+from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+
+
+@pytest.fixture()
+def transform():
+    return Transform()
 
 
 def test_version():
@@ -1019,3 +1026,113 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
     assert repr(serial_dict_empty) == '{"foo": 42}'
     serial_dict_with_foobar.setdefault('foo', 42)
     assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
+
+
+SCALE = 2
+
+
+@pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
+def test_transform_scale(transform, scale_args):
+    transform.scale(*scale_args)
+    actual = transform.matrix
+    expected = np.diag((SCALE, SCALE, SCALE, 1))
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_translate(transform):
+    vector = (1, 2, 3)
+    transform.translate(vector)
+    actual = transform.matrix
+    expected = np.eye(4)
+    expected[:3, 3] = vector
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_rotate(transform):
+    rotate_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+    transform.rotate(rotate_z_90)
+    actual = transform.matrix
+    expected = np.eye(4)
+    expected[:3, :3] = rotate_z_90
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_invert(transform):
+    assert transform.is_inverted is False
+
+    # Add a transformation and check its output
+    transform.scale(SCALE)
+    inverse = transform.inverse_matrix
+    transform.invert()
+    assert transform.is_inverted is True
+    assert np.array_equal(inverse, transform.matrix)
+
+    transform.invert()
+    assert transform.is_inverted is False
+
+
+@pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
+def test_transform_matrix_list(transform, attr):
+    matrix_list = getattr(transform, attr)
+    assert isinstance(matrix_list, list)
+    assert len(matrix_list) == 0
+    assert transform.n_transformations == 0
+
+    transform.scale(SCALE)
+    matrix_list = getattr(transform, attr)
+    assert len(matrix_list) == 1
+    assert transform.n_transformations == 1
+    assert isinstance(matrix_list[0], np.ndarray)
+    assert matrix_list[0].shape == (4, 4)
+
+    identity = transform.matrix_list[0] @ transform.inverse_matrix_list[0]
+    assert np.array_equal(identity, np.eye(4))
+
+
+@pytest.fixture()
+def transformed_actor():
+    actor = pv.Actor()
+    actor.position = (-0.5, -0.5, 1)
+    actor.orientation = (10, 20, 30)
+    actor.scale = (1.5, 2, 2.5)
+    actor.origin = (2, 1.5, 1)
+    actor.user_matrix = pv.array_from_vtkmatrix(actor.GetMatrix())
+    return actor
+
+
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_matches_prop3d(transform, transformed_actor, multiply_mode):
+    transform.multiply_mode = multiply_mode
+
+    # Center data at the origin
+    transform.translate(np.array(transformed_actor.origin) * -1)
+
+    # Scale and rotate
+    transform.scale(transformed_actor.scale)
+    rotation = _orientation_as_rotation_matrix(transformed_actor.orientation)
+    transform.rotate(rotation)
+
+    # Move to position
+    transform.translate(np.array(transformed_actor.origin))
+    transform.translate(transformed_actor.position)
+
+    # Apply user matrix
+    transform.concatenate(transformed_actor.user_matrix)
+
+    # Check result
+    transform_matrix = transform.matrix
+    actor_matrix = pv.array_from_vtkmatrix(transformed_actor.GetMatrix())
+    if multiply_mode == 'post':
+        assert np.allclose(transform_matrix, actor_matrix)
+    else:
+        # Pre-multiplication produces a totally different result
+        assert not np.allclose(transform_matrix, actor_matrix)
