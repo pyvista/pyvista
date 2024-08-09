@@ -2452,15 +2452,17 @@ def test_log_scale():
     plotter.show()
 
 
-def test_set_focus():
+@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_focus(point):
     plane = pv.Plane()
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
+    p.set_focus(point)  # focus on corner of the plane
     p.show()
 
 
-def test_set_viewup(verify_image_cache):
+@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_viewup(verify_image_cache, vector):
     verify_image_cache.high_variance_test = True
 
     plane = pv.Plane()
@@ -2468,7 +2470,7 @@ def test_set_viewup(verify_image_cache):
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=False)
     p.add_mesh(plane_higher, color="red", show_edges=False)
-    p.set_viewup((1.0, 1.0, 1.0))
+    p.set_viewup(vector)
     p.show()
 
 
@@ -2908,7 +2910,7 @@ def test_plot_complex_value(plane, verify_image_cache):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
@@ -3211,7 +3213,7 @@ def test_plot_composite_poly_complex(multiblock_poly):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     pl = pv.Plotter()
     with pytest.warns(ComplexWarning, match='Casting complex'):

@@ -202,12 +202,12 @@ class _ThemeConfig(metaclass=_ForceSlots):
         for attr_name in other._all__slots__():
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
-            if isinstance(attr, (tuple, list)):
-                if tuple(attr) != tuple(other_attr):
-                    return False
-            else:
-                if not attr == other_attr:
-                    return False
+            if (
+                isinstance(attr, (tuple, list))
+                and tuple(attr) != tuple(other_attr)
+                or not attr == other_attr
+            ):
+                return False
 
         return True
 

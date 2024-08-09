@@ -3569,7 +3569,7 @@ class OrthogonalPlanesSource:
     ):
         # Init sources and the output dataset
         self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
-        self._plane_sources = tuple(pyvista.PlaneSource() for _ in range(3))
+        self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
@@ -3606,9 +3606,21 @@ class OrthogonalPlanesSource:
 
     @resolution.setter
     def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
-        self._resolution = _validation.validate_array3(
+        valid_resolution = _validation.validate_array3(
             resolution, broadcast=True, to_tuple=True, name='resolution'
         )
+        self._resolution = valid_resolution
+
+        # Modify sources
+        x_res, y_res, z_res = valid_resolution
+        yz_source, zx_source, xy_source = self.sources
+
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -3622,6 +3634,28 @@ class OrthogonalPlanesSource:
         )
         self._bounds = BoundsTuple(*bounds_tuple)
 
+        # Modify sources
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds_tuple
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+        ORIGIN = (0.0, 0.0, 0.0)
+        yz_source, zx_source, xy_source = self.sources
+
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
+
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
+
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
+
     @property
     def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the names of the planes."""
@@ -3632,55 +3666,19 @@ class OrthogonalPlanesSource:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        self._names = cast(Tuple[str, str, str], tuple(names))
+        valid_names = cast(Tuple[str, str, str], tuple(names))
+        self._names = valid_names
+
+        output = self._output
+        for i, name in enumerate(valid_names):
+            output.set_block_name(i, name)
 
     def update(self):
         """Update the output of the source."""
-        ORIGIN = (0.0, 0.0, 0.0)
-
-        # Unpack vars
-        yz_source, zx_source, xy_source = self._plane_sources
-        x_res, y_res, z_res = self.resolution
-        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
-
-        # Compute bounds-related vars
-        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
-        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
-
-        # Update plane sources
-        xy_source.i_resolution = x_res
-        xy_source.j_resolution = y_res
-        xy_source.point_a = x_size, 0.0, 0.0
-        xy_source.point_b = 0.0, y_size, 0.0
-        xy_source.origin = ORIGIN
-        xy_source.center = center
-        xy_source.Update()
-
-        yz_source.i_resolution = y_res
-        yz_source.j_resolution = z_res
-        yz_source.point_a = 0.0, y_size, 0.0
-        yz_source.point_b = 0.0, 0.0, z_size
-        yz_source.origin = ORIGIN
-        yz_source.center = center
-        yz_source.Update()
-
-        zx_source.i_resolution = z_res
-        zx_source.j_resolution = x_res
-        zx_source.point_a = 0.0, 0.0, z_size
-        zx_source.point_b = x_size, 0.0, 0.0
-        zx_source.origin = ORIGIN
-        zx_source.center = center
-        zx_source.Update()
-
-        # Update the output
-        output = self._output
-        for index, (name, source, plane, sign) in enumerate(
-            zip(self.names, self._plane_sources, output, self.normal_sign)
-        ):
-            plane.copy_from(source.GetOutput())
+        for source, plane, sign in zip(self.sources, self._output, self.normal_sign):
+            plane.copy_from(source.output)
             if sign == '-':
                 plane['Normals'] *= -1
-            output.set_block_name(index, name)
 
     @property
     def output(self) -> pyvista.MultiBlock:
