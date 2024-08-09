@@ -1475,12 +1475,14 @@ class DatasetCardFetcher:
 class _BaseDatasetBadge:
     class SemanticColorEnum(StrEnum):
         """Enum of badge colors.
-        See: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html"""
+
+        See: https://sphinx-design.readthedocs.io/en/pydata-theme/badges_buttons.html
+        """
 
         primary = auto()
         secondary = auto()
         success = auto()
-        dark = auto()
+        muted = auto()
 
     # Name of the badge
     name: str
@@ -1592,7 +1594,7 @@ class CellTypeBadge(_BaseDatasetBadge):
     @classmethod
     def __post_init__(cls):
         cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.muted
 
 
 class DatasetGalleryCarousel(DocTable):
