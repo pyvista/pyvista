@@ -146,7 +146,7 @@ if _vtk.vtk_version_info < (9, 3):
 
             Returns
             -------
-            sequence[float]
+            tuple[float, float, float]
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
             """
@@ -363,7 +363,7 @@ class ConeSource(_vtk.vtkConeSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
         """
@@ -614,7 +614,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
         """
@@ -1212,7 +1212,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -1396,7 +1396,7 @@ class DiscSource(_vtk.vtkDiskSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
@@ -1727,7 +1727,7 @@ class SphereSource(_vtk.vtkSphereSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         if pyvista.vtk_version_info >= (9, 2):
@@ -1975,7 +1975,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -2290,7 +2290,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -2724,7 +2724,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center of the superquadric in ``[x, y, z]``.
         """
         return self.GetCenter()

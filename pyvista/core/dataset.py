@@ -1781,7 +1781,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        Vector
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples

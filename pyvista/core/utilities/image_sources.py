@@ -81,7 +81,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             The center of the ellipsoid.
         """
         return self.GetCenter()
@@ -609,7 +609,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
           The center of the gaussian.
         """
         return self.GetCenter()

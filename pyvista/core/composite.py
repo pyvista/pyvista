@@ -216,7 +216,7 @@ class MultiBlock(
 
         Returns
         -------
-        np.ndarray
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
