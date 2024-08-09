@@ -1066,6 +1066,18 @@ def test_transform_rotate(transform):
     assert np.array_equal(identity, np.eye(4))
 
 
+def test_transform_concatenate_vtkmatrix(transform):
+    scale_array = np.diag((1, 2, 3, 1))
+    vtkmatrix = pv.vtkmatrix_from_array(scale_array)
+    transform.concatenate(vtkmatrix)
+    actual = transform.matrix
+    expected = scale_array
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
 def test_transform_invert(transform):
     assert transform.is_inverted is False
 
