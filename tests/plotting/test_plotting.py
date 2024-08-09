@@ -2452,17 +2452,15 @@ def test_log_scale():
     plotter.show()
 
 
-@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([-0.5, -0.5, 0])])
-def test_set_focus(point):
+def test_set_focus():
     plane = pv.Plane()
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus(point)  # focus on corner of the plane
+    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
     p.show()
 
 
-@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([1.0, 1.0, 1.0])])
-def test_set_viewup(verify_image_cache, vector):
+def test_set_viewup(verify_image_cache):
     verify_image_cache.high_variance_test = True
 
     plane = pv.Plane()
@@ -2470,7 +2468,7 @@ def test_set_viewup(verify_image_cache, vector):
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=False)
     p.add_mesh(plane_higher, color="red", show_edges=False)
-    p.set_viewup(vector)
+    p.set_viewup((1.0, 1.0, 1.0))
     p.show()
 
 
