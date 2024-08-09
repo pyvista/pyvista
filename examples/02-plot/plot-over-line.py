@@ -26,8 +26,8 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 mesh = examples.download_kitchen()
 
 # Make two points to construct the line between
-a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
 
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
@@ -50,8 +50,8 @@ mesh.plot_over_line(a, b, resolution=100)
 mesh = examples.download_st_helens()
 
 # Make two points to construct the line between
-a = [mesh.center[0], mesh.bounds[2], mesh.bounds[5]]
-b = [mesh.center[0], mesh.bounds[3], mesh.bounds[5]]
+a = [mesh.center[0], mesh.bounds.y_min, mesh.bounds.z_max]
+b = [mesh.center[0], mesh.bounds.y_max, mesh.bounds.z_max]
 
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
@@ -72,3 +72,5 @@ mesh.plot_over_line(
     ylabel="Height above sea level",
     figsize=(10, 5),
 )
+# %%
+# .. tags:: plot

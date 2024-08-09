@@ -173,9 +173,9 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
     out = src.output
     bnds = out.bounds
     actual_width, actual_height, actual_depth = (
-        bnds[1] - bnds[0],
-        bnds[3] - bnds[2],
-        bnds[5] - bnds[4],
+        bnds.x_max - bnds.x_min,
+        bnds.y_max - bnds.y_min,
+        bnds.z_max - bnds.z_min,
     )
 
     # Compute expected values
@@ -193,7 +193,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         src_not_scaled = pv.Text3DSource(string=string, center=center)
         out_not_scaled = src_not_scaled.output
         bnds = out_not_scaled.bounds
-        unscaled_width, unscaled_height = bnds[1] - bnds[0], bnds[3] - bnds[2]
+        unscaled_width, unscaled_height = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min
         if width is None and height is not None:
             expected_width = unscaled_width * actual_height / unscaled_height
         elif width is not None and height is None:
@@ -345,6 +345,7 @@ def test_cube_source():
     assert algo.x_length == 1.0
     assert algo.y_length == 1.0
     assert algo.z_length == 1.0
+    assert algo.bounds == (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
     bounds = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
     algo = pv.CubeSource(bounds=bounds)
     assert np.array_equal(algo.bounds, bounds)
@@ -393,18 +394,18 @@ def test_plane_source():
     algo = pv.PlaneSource()
     assert algo.i_resolution == 10
     assert algo.j_resolution == 10
-    assert algo.center == (0.0, 0.0, 0.0)
-    assert algo.origin == (-0.5, -0.5, 0.0)
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
     point_a = (0.5, -0.5, 0.0)
     point_b = (-0.5, 0.5, 0.0)
     normal = (0.0, 0.0, 1.0)
-    assert algo.point_a == point_a
-    assert algo.point_b == point_b
-    assert algo.normal == normal
+    assert np.array_equal(algo.point_a, point_a)
+    assert np.array_equal(algo.point_b, point_b)
+    assert np.array_equal(algo.normal, normal)
     algo.flip_normal()
-    assert algo.point_a == point_b
-    assert algo.point_b == point_a
-    assert algo.normal == tuple((np.array(normal) * -1).tolist())
+    assert np.array_equal(algo.point_a, point_b)
+    assert np.array_equal(algo.point_b, point_a)
+    assert np.array_equal(algo.normal, np.array(normal) * -1)
 
 
 def test_plane_source_push():
@@ -414,12 +415,12 @@ def test_plane_source_push():
 
     distance = 5.0
     algo.push(distance)
-    assert algo.center == (0, 0, distance)
-    assert tuple(algo.output.center) == (0, 0, distance)
+    assert np.array_equal(algo.center, (0, 0, distance))
+    assert np.array_equal(algo.output.center, (0, 0, distance))
 
     algo.push(distance)
-    assert algo.center == (0, 0, distance * 2)
-    assert tuple(algo.output.center) == (0, 0, distance * 2)
+    assert np.array_equal(algo.center, (0, 0, distance * 2))
+    assert np.array_equal(algo.output.center, (0, 0, distance * 2))
 
 
 def test_superquadric_source():
@@ -613,7 +614,7 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.tip_type = pv.ParametricKlein()
     assert axes_geometry_source.tip_type == 'custom'
 
-    match = 'Custom axes part must be 3D. Got bounds: (-0.5, 0.5, -0.5, 0.5, 0.0, 0.0).'
+    match = 'Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0).'
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 

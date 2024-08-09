@@ -68,3 +68,5 @@ path = p.generate_orbital_path(factor=2.0, n_points=36, viewup=viewup, shift=0.2
 p.open_gif("orbit.gif")
 p.orbit_on_path(path, write_frames=True, viewup=viewup, step=0.05)
 p.close()
+# %%
+# .. tags:: plot

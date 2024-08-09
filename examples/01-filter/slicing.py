@@ -91,7 +91,7 @@ def path(y):
     return x, y
 
 
-x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
+x, y = path(np.arange(model.bounds.y_min, model.bounds.y_max, 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
 spline = pv.Spline(points, 15)
@@ -177,3 +177,5 @@ p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())
 p.show()
+# %%
+# .. tags:: filter

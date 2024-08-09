@@ -82,11 +82,10 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points:
-            if np.allclose(self.points, other_mesh.points):
-                raise ValueError(
-                    "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
-                )
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
+            raise ValueError(
+                "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
+            )
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
@@ -3886,3 +3885,45 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)
+
+    def merge_points(self, tolerance=0.0, inplace=False, progress_bar=False):
+        """Merge duplicate points in this mesh.
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Specify a tolerance to use when comparing points. Points within
+            this tolerance will be merged.
+
+        inplace : bool, default: False
+            Overwrite the original mesh with the result.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh with merged points.
+
+        Examples
+        --------
+        Merge duplicate points in a mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cylinder(resolution=4)
+        >>> mesh.n_points
+        16
+        >>> _ = mesh.merge_points(inplace=True)
+        >>> mesh.n_points
+        8
+
+        """
+        return self.merge(
+            pyvista.PolyData(self.points),
+            merge_points=True,
+            tolerance=tolerance,
+            inplace=inplace,
+            main_has_priority=True,
+            progress_bar=progress_bar,
+        )

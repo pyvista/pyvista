@@ -209,3 +209,5 @@ plotter.close()
 # wavelength (size of the features) of the Perlin noise decreases as the
 # frequency cutoff is increased since wavelength and frequency are inversely
 # proportional.
+#
+# .. tags:: filter

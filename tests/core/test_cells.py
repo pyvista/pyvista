@@ -288,9 +288,9 @@ def test_cell_center(grid):
     bounds = grid.get_cell(0).bounds
 
     assert isinstance(center, tuple)
-    assert bounds[0] <= center[0] <= bounds[1]
-    assert bounds[2] <= center[1] <= bounds[3]
-    assert bounds[4] <= center[2] <= bounds[5]
+    assert bounds.x_min <= center[0] <= bounds.x_max
+    assert bounds.y_min <= center[1] <= bounds.y_max
+    assert bounds.z_min <= center[2] <= bounds.z_max
 
 
 def test_cell_center_value():
