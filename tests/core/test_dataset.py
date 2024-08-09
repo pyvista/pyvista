@@ -311,6 +311,12 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
 
 
+def test_translate_should_not_fail_given_none(grid):
+    bounds = grid.bounds
+    grid.transform(None)
+    assert grid.bounds == bounds
+
+
 def test_set_points():
     dataset = pv.UnstructuredGrid()
     points = np.random.default_rng().random((10, 3))
