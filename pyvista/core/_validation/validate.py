@@ -521,7 +521,6 @@ def validate_transform4x4(transform, /, *, name="Transform"):
                 arr = validate_array(
                     transform,
                     must_have_shape=(4, 4),
-                    must_be_finite=True,
                     name=name,
                 )
             except ValueError:
