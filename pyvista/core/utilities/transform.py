@@ -38,6 +38,12 @@ class Transform(_vtk.vtkTransform):
 
     .. versionadded:: 0.45
 
+    Parameters
+    ----------
+    trans : TransformLike, optional
+        Initialize the transform with a transformation. By default, the transform
+        is initialized as the identity matrix.
+
     See Also
     --------
     :meth:`pyvista.DataSetFilters.transform`
@@ -172,9 +178,11 @@ class Transform(_vtk.vtkTransform):
     >>> pl.show()
     """
 
-    def __init__(self):
+    def __init__(self, trans: TransformLike | None = None):
         super().__init__()
         self.multiply_mode = 'post'
+        if trans is not None:
+            self.concatenate(trans)
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
