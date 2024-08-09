@@ -79,6 +79,13 @@ Array Access
    point_array
 
 
+Transformations
+~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   Transform
+
 Image Comparison and Regression
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
