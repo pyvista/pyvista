@@ -54,7 +54,7 @@ def test_plot_datasets():
 
 
 def test_plot_datasets_dataset_type():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         demos.plot_datasets(dataset_type='foo')
 
 
