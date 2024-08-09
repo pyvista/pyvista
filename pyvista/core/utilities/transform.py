@@ -195,7 +195,9 @@ class Transform(_vtk.vtkTransform):
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
         )
-        self._concatenate('Scale', valid_factor, multiply_mode=multiply_mode)
+        transform = _vtk.vtkTransform()
+        transform.Scale(valid_factor)
+        self.concatenate(transform, multiply_mode=multiply_mode)
 
     def translate(
         self, vector: VectorLike[float], multiply_mode: Literal['pre', 'post'] | None = None
@@ -250,7 +252,7 @@ class Transform(_vtk.vtkTransform):
         self.concatenate(valid_rotation, multiply_mode=multiply_mode)
 
     def concatenate(
-        self, matrix: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
+        self, transform: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> None:
         """Concatenate a transformation matrix.
 
@@ -262,7 +264,7 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        matrix : TransformLike
+        transform : TransformLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
         multiply_mode : 'pre' | 'post' | None, optional
@@ -270,12 +272,25 @@ class Transform(_vtk.vtkTransform):
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
         """
-        if not isinstance(matrix, _vtk.vtkMatrix4x4):
-            matrix = _validation.validate_transform4x4(matrix, name='matrix')
-            matrix = vtkmatrix_from_array(matrix)
-        transform = _vtk.vtkTransform()
-        transform.SetMatrix(matrix)
-        self._concatenate('Concatenate', transform, multiply_mode=multiply_mode)
+        # Make sure we have a vtkTransform
+        if isinstance(transform, _vtk.vtkTransform):
+            vtk_transform = transform
+        elif isinstance(transform, _vtk.vtkMatrix4x4):
+            vtk_transform = _vtk.vtkTransform()
+            vtk_transform.SetMatrix(transform)
+        else:
+            array = _validation.validate_transform4x4(transform, name='matrix')
+            vtk_transform = _vtk.vtkTransform()
+            vtk_transform.SetMatrix(vtkmatrix_from_array(array))
+
+        if multiply_mode is not None:
+            original_mode = self.multiply_mode
+            self.multiply_mode = multiply_mode
+
+        self.Concatenate(vtk_transform)
+
+        if multiply_mode:
+            self.multiply_mode = original_mode
 
     @property
     def matrix(self) -> NumpyArray[float]:
@@ -396,19 +411,3 @@ class Transform(_vtk.vtkTransform):
     def is_inverted(self) -> bool:  # numpydoc ignore: RT01
         """Get the inverse flag of the transformation."""
         return bool(self.GetInverseFlag())
-
-    def _concatenate(
-        self,
-        method: Literal['Scale', 'Translate', 'Concatenate'],
-        arg,
-        multiply_mode: Literal['pre', 'post'] | None,
-    ):
-        if multiply_mode is not None:
-            original_mode = self.multiply_mode
-            self.multiply_mode = multiply_mode
-
-        method_obj = getattr(self, method)
-        method_obj(arg)
-
-        if multiply_mode:
-            self.multiply_mode = original_mode
