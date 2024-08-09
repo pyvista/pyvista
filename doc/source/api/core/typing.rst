@@ -40,12 +40,12 @@ pyvista.VectorLike
 VTK Related Types
 -----------------
 
-pyvista.BoundsLike
-~~~~~~~~~~~~~~~~~~
+pyvista.BoundsTuple
+~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autodata:: BoundsLike
+.. autoclass:: BoundsTuple
 
 pyvista.CellsLike
 ~~~~~~~~~~~~~~~~~

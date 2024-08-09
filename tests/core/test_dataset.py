@@ -1020,23 +1020,23 @@ def test_find_cells_within_bounds():
     mesh = pv.Cube()
 
     bounds = [
-        mesh.bounds[0] * 2.0,
-        mesh.bounds[1] * 2.0,
-        mesh.bounds[2] * 2.0,
-        mesh.bounds[3] * 2.0,
-        mesh.bounds[4] * 2.0,
-        mesh.bounds[5] * 2.0,
+        mesh.bounds.x_min * 2.0,
+        mesh.bounds.x_max * 2.0,
+        mesh.bounds.y_min * 2.0,
+        mesh.bounds.y_max * 2.0,
+        mesh.bounds.z_min * 2.0,
+        mesh.bounds.z_max * 2.0,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == mesh.n_cells
 
     bounds = [
-        mesh.bounds[0] * 0.5,
-        mesh.bounds[1] * 0.5,
-        mesh.bounds[2] * 0.5,
-        mesh.bounds[3] * 0.5,
-        mesh.bounds[4] * 0.5,
-        mesh.bounds[5] * 0.5,
+        mesh.bounds.x_min * 0.5,
+        mesh.bounds.x_max * 0.5,
+        mesh.bounds.y_min * 0.5,
+        mesh.bounds.y_max * 0.5,
+        mesh.bounds.z_min * 0.5,
+        mesh.bounds.z_max * 0.5,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == 0

@@ -98,7 +98,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:
@@ -1103,18 +1103,16 @@ def check_length(
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 
-    if min_length is not None:
-        if len(arr) < min_length:
-            raise ValueError(
-                f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead.",
-            )
-    if max_length is not None:
-        if len(arr) > max_length:
-            raise ValueError(
-                f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead.",
-            )
+    if min_length is not None and len(arr) < min_length:
+        raise ValueError(
+            f"{name} must have a minimum length of {min_length}. "
+            f"Got length {len(arr)} instead.",
+        )
+    if max_length is not None and len(arr) > max_length:
+        raise ValueError(
+            f"{name} must have a maximum length of {max_length}. "
+            f"Got length {len(arr)} instead.",
+        )
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:

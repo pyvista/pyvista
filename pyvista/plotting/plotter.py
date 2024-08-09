@@ -88,7 +88,7 @@ from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
@@ -1654,7 +1654,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.camera.is_set = is_set
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of the active renderer.
 
         Returns
@@ -1668,7 +1668,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube())
         >>> pl.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
 
         """
         return self.renderer.bounds
@@ -2222,10 +2222,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
-        if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
-            if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
-                # must raise a runtime error as this causes a segfault on VTK9
-                raise ValueError('Invoking helper with no framebuffer')
+        if (
+            hasattr(self.render_window, 'GetOffScreenFramebuffer')
+            and not self.render_window.GetOffScreenFramebuffer().GetFBOIndex()
+        ):
+            # must raise a runtime error as this causes a segfault on VTK9
+            raise ValueError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()
 
@@ -3617,9 +3619,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
-            if rgb is None:
-                if scalars.endswith(('_rgb', '_rgba')):
-                    rgb = True
+            if rgb is None and scalars.endswith(('_rgb', '_rgba')):
+                rgb = True
 
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars, preference=preference, err=True)
@@ -3779,9 +3780,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if style == 'points_gaussian' and self.mapper.dataset is not None:
             self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not self.mapper.emissive:
-                if prop.opacity >= 1.0:
-                    prop.opacity = 0.9999  # otherwise, weird triangles
+            if not render_points_as_spheres and not self.mapper.emissive and prop.opacity >= 1.0:
+                prop.opacity = 0.9999  # otherwise, weird triangles
 
         if render_points_as_spheres:
             if style == 'points_gaussian':
@@ -4298,9 +4298,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure structured grids are not less than 3D
         # ImageData and RectilinearGrid should be olay as <3D
-        if isinstance(volume, pyvista.StructuredGrid):
-            if any(d < 2 for d in volume.dimensions):
-                raise ValueError('StructuredGrids must be 3D dimensional.')
+        if isinstance(volume, pyvista.StructuredGrid) and any(d < 2 for d in volume.dimensions):
+            raise ValueError('StructuredGrids must be 3D dimensional.')
 
         if isinstance(volume, pyvista.PolyData):
             raise TypeError(
@@ -4395,9 +4394,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         # data must be between [0, 255], but not necessarily UINT8
         # Preserve backwards compatibility and have same behavior as VTK.
@@ -4955,9 +4953,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
-        if not pyvista.BUILDING_GALLERY:
-            if _ALL_PLOTTERS is not None:
-                _ALL_PLOTTERS.pop(self._id_name, None)
+        if not pyvista.BUILDING_GALLERY and _ALL_PLOTTERS is not None:
+            _ALL_PLOTTERS.pop(self._id_name, None)
 
         # this helps managing closed plotters
         self._closed = True
@@ -6153,9 +6150,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if viewup is None:
             viewup = self._theme.camera.viewup
         center = np.array(self.center)
-        bnds = np.array(self.bounds)
-        radius = (bnds[1] - bnds[0]) * factor
-        y = (bnds[3] - bnds[2]) * factor
+        bnds = self.bounds
+        radius = (bnds.x_max - bnds.x_min) * factor
+        y = (bnds.y_max - bnds.y_min) * factor
         if y > radius:
             radius = y
         center += np.array(viewup) * shift
@@ -6348,9 +6345,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __del__(self):
         """Delete the plotter."""
         # We have to check here if the plotter was only partially initialized
-        if self._initialized:
-            if not self._closed:
-                self.close()
+        if self._initialized and not self._closed:
+            self.close()
         self.deep_clean()
         if self._initialized:
             del self.renderers
@@ -6727,10 +6723,9 @@ class Plotter(BasePlotter):
         else:
             self.window_size = window_size
 
-        if self._theme.depth_peeling.enabled:
-            if self.enable_depth_peeling():
-                for renderer in self.renderers:
-                    renderer.enable_depth_peeling()
+        if self._theme.depth_peeling.enabled and self.enable_depth_peeling():
+            for renderer in self.renderers:
+                renderer.enable_depth_peeling()
 
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
@@ -7138,7 +7133,7 @@ class Plotter(BasePlotter):
         bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
             Specify the bounds in the format of:
 
-            - ``(xmin, xmax, ymin, ymax, zmin, zmax)``
+            - ``(x_min, x_max, y_min, y_max, z_min, z_max)``
 
         focal_point : sequence[float], default: (0.0, 0.0, 0.0)
             The focal point of the cursor.

@@ -311,7 +311,7 @@ class DataSetFilters:
         Parameters
         ----------
         bounds : sequence[float], optional
-            Length 6 sequence of floats: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            Length 6 sequence of floats: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             Length 3 sequence of floats: distances from the min coordinate of
             of the input mesh. Single float value: uniform distance from the
             min coordinate. Length 12 sequence of length 3 sequence of floats:
@@ -1531,7 +1531,7 @@ class DataSetFilters:
         Parameters
         ----------
         extent : sequence[float], optional
-            Specify a ``(xmin, xmax, ymin, ymax, zmin, zmax)`` bounding box to
+            Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
         progress_bar : bool, default: False
@@ -1716,10 +1716,10 @@ class DataSetFilters:
         # Fix the projection line:
         if low_point is None:
             low_point = list(self.center)
-            low_point[2] = self.bounds[4]
+            low_point[2] = self.bounds.z_min
         if high_point is None:
             high_point = list(self.center)
-            high_point[2] = self.bounds[5]
+            high_point[2] = self.bounds.z_max
         # Fix scalar_range:
         if scalar_range is None:
             scalar_range = (low_point[2], high_point[2])
@@ -1930,9 +1930,8 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
-        if scalars_name not in output.point_data:
-            if 'Unnamed_0' in output.point_data:
-                output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
+        if scalars_name not in output.point_data and 'Unnamed_0' in output.point_data:
+            output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
 
         return output
 
@@ -2391,9 +2390,12 @@ class DataSetFilters:
                 )
                 orient = False
 
-        if scale and orient:
-            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
-                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+        if (
+            scale
+            and orient
+            and dataset.active_vectors_info.association != dataset.active_scalars_info.association
+        ):
+            raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
         set_actives_on_source_data = False
@@ -4630,19 +4632,19 @@ class DataSetFilters:
         >>> uniform = examples.load_uniform()
         >>> uniform["height"] = uniform.points[:, 2]
         >>> pointa = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[5],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_max,
         ... ]
         >>> pointb = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[3],
-        ...     uniform.bounds[4],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_max,
+        ...     uniform.bounds.z_min,
         ... ]
         >>> center = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[4],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_min,
         ... ]
         >>> sampled_arc = uniform.sample_over_circular_arc(
         ...     pointa, pointb, center
@@ -4721,9 +4723,9 @@ class DataSetFilters:
         >>> normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> center = [
-        ...     uniform.bounds[1],
-        ...     uniform.bounds[2],
-        ...     uniform.bounds[5],
+        ...     uniform.bounds.x_max,
+        ...     uniform.bounds.y_min,
+        ...     uniform.bounds.z_max,
         ... ]
         >>> arc = uniform.sample_over_circular_arc_normal(
         ...     center, normal=normal, polar=polar
@@ -4821,9 +4823,13 @@ class DataSetFilters:
 
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
-        >>> a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-        >>> b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+        >>> b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+        >>> center = [
+        ...     mesh.bounds.x_min,
+        ...     mesh.bounds.y_min,
+        ...     mesh.bounds.z_min,
+        ... ]
         >>> mesh.plot_over_circular_arc(
         ...     a, b, center, resolution=1000, show=False
         ... )  # doctest:+SKIP
@@ -4955,7 +4961,11 @@ class DataSetFilters:
         >>> normal = normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> angle = 90
-        >>> center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+        >>> center = [
+        ...     mesh.bounds.x_min,
+        ...     mesh.bounds.y_min,
+        ...     mesh.bounds.z_min,
+        ... ]
         >>> mesh.plot_over_circular_arc_normal(
         ...     center, polar=polar, angle=angle
         ... )  # doctest:+SKIP
@@ -5064,10 +5074,9 @@ class DataSetFilters:
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
-        if subgrid.n_points:
-            if self.points.dtype != np.dtype('float32'):
-                ind = subgrid.point_data['vtkOriginalPointIds']
-                subgrid.points = self.points[ind]
+        if subgrid.n_points and self.points.dtype != np.dtype('float32'):
+            ind = subgrid.point_data['vtkOriginalPointIds']
+            subgrid.points = self.points[ind]
 
         return subgrid
 

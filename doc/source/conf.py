@@ -91,6 +91,7 @@ extensions = [
     "sphinx_tags",
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
+    "sphinx_toolbox.more_autodoc.autonamedtuple",
 ]
 
 # Configuration of pyvista.ext.coverage

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pickle
 import shutil
+import sys
 from unittest import mock
 import warnings
 
@@ -19,6 +20,7 @@ from pyvista import examples as ex
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
 from pyvista.core.utilities import fit_plane_to_points
+from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.arrays import _SerializedDictArray
@@ -909,6 +911,105 @@ def test_fit_plane_to_points():
             157.70724487304688,
         ],
     )
+
+
+# Default output from `np.linalg.eigh`
+DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
+
+
+CASE_0 = (  # coincidental points
+    [[0, 0, 0], [0, 0, 0]],
+    [DEFAULT_PRINCIPAL_AXES],
+)
+CASE_1 = (  # non-coincidental points
+    [[0, 0, 0], [1, 0, 0]],
+    [[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]],
+)
+
+CASE_2 = (  # non-collinear points
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    [
+        [0.0, -0.70710678, 0.70710678],
+        [-0.81649658, 0.40824829, 0.40824829],
+        [-0.57735027, -0.57735027, -0.57735027],
+    ],
+)
+CASE_3 = (  # non-coplanar points
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, -1, -1]],
+    [
+        [-0.57735027, -0.57735027, -0.57735027],
+        [0.0, -0.70710678, 0.70710678],
+        [-0.81649658, 0.40824829, 0.40824829],
+    ],
+)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 9), reason='Different results for some tests.')
+@pytest.mark.parametrize(
+    ('points', 'expected_axes'),
+    [CASE_0, CASE_1, CASE_2, CASE_3],
+    ids=['case0', 'case1', 'case2', 'case3'],
+)
+def test_principal_axes(points, expected_axes):
+    axes = principal_axes(points)
+    assert np.allclose(axes, expected_axes, atol=1e-7)
+
+    assert np.allclose(np.cross(axes[0], axes[1]), axes[2])
+    assert np.allclose(np.linalg.norm(axes, axis=1), 1)
+    assert isinstance(axes, np.ndarray)
+
+    _, std = principal_axes(points, return_std=True)
+    assert std[0] >= std[1]
+    if not np.isnan(std[2]):
+        assert std[1] >= std[2]
+    assert isinstance(std, np.ndarray)
+
+
+def test_principal_axes_return_std():
+    # Create axis-aligned normally distributed points
+    rng = np.random.default_rng(seed=42)
+    n = 100_000
+    std_in = np.array([3, 2, 1])
+    normal_points = rng.normal(size=(n, 3)) * std_in
+
+    _, std_out = principal_axes(normal_points, return_std=True)
+
+    # Test output matches numpy std
+    std_numpy = np.std(normal_points, axis=0)
+    assert np.allclose(std_out, std_numpy, atol=1e-4)
+
+    # Test output matches input std
+    assert np.allclose(std_out, std_in, atol=0.02)
+
+    # Test ratios of input sizes match ratios of output std
+    ratios_in = std_in / sum(std_in)
+    ratios_out = std_out / sum(std_out)
+    assert np.allclose(ratios_in, ratios_out, atol=0.02)
+
+
+def test_principal_axes_empty():
+    axes = principal_axes(np.empty((0, 3)))
+    assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
+
+
+def test_principal_axes_single_point():
+    axes = principal_axes([1, 2, 3])
+    assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
+
+
+def test_principal_axes_vectors_success_with_many_points():
+    # Use large mesh to verify no memory errors are raised
+    res = 1000
+    ellipsoid = pv.ParametricEllipsoid(
+        xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
+    )
+    assert ellipsoid.n_points == 997_004
+
+    axes, std = pv.principal_axes(ellipsoid.points, return_std=True)
+
+    # Check std to verify the computed output is valid
+    # Need large atol due to loss of numerical precision
+    assert np.allclose(std, [1.50074922, 1.00049953, 0.70675449])
 
 
 @pytest.fixture()
