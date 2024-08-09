@@ -198,7 +198,7 @@ class Transform(_vtk.vtkTransform):
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
-    def pre_multiply(self) -> None:
+    def pre_multiply(self) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to pre-multiply.
 
         In pre-multiply mode, any additional transformations (e.g. using
@@ -215,8 +215,9 @@ class Transform(_vtk.vtkTransform):
         """
         self._multiply_mode: Literal['pre', 'post'] = 'pre'
         self.PreMultiply()
+        return self
 
-    def post_multiply(self) -> None:
+    def post_multiply(self) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to post-multiply.
 
         In post-multiply mode, any additional transformations (e.g. using
@@ -233,8 +234,11 @@ class Transform(_vtk.vtkTransform):
         """
         self._multiply_mode = 'post'
         self.PostMultiply()
+        return self
 
-    def scale(self, *factor, multiply_mode: Literal['pre', 'post'] | None = None) -> None:
+    def scale(
+        self, *factor, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a scale matrix.
 
         Create a scale matrix and :meth:`concatenate` it with the current
@@ -286,9 +290,11 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
-        self.concatenate(transform, multiply_mode=multiply_mode)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
 
-    def translate(self, *vector, multiply_mode: Literal['pre', 'post'] | None = None) -> None:
+    def translate(
+        self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a translation matrix.
 
         Create a translation matrix and :meth:`concatenate` it with the current
@@ -339,11 +345,11 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
-        self.concatenate(transform, multiply_mode=multiply_mode)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
         self, rotation: RotationLike, multiply_mode: Literal['pre', 'post'] | None = None
-    ) -> None:
+    ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation matrix.
 
         Create a rotation matrix and :meth:`concatenate` it with the current
@@ -392,10 +398,11 @@ class Transform(_vtk.vtkTransform):
         """
         valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
         self.concatenate(valid_rotation, multiply_mode=multiply_mode)
+        return self
 
     def concatenate(
         self, transform: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
-    ) -> None:
+    ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
         Create a 4x4 matrix from any transform-like input and concatenate it with the
@@ -463,6 +470,8 @@ class Transform(_vtk.vtkTransform):
 
         if multiply_mode:
             self.multiply_mode = original_mode
+
+        return self
 
     @property
     def matrix(self) -> NumpyArray[float]:
@@ -562,7 +571,7 @@ class Transform(_vtk.vtkTransform):
         """Return the current number of concatenated transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
-    def invert(self) -> None:  # numpydoc ignore: RT01
+    def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
 
         The current transformation :attr:`matrix` (including all matrices in the
@@ -613,8 +622,9 @@ class Transform(_vtk.vtkTransform):
         False
         """
         self.Inverse()
+        return self
 
-    def identity(self) -> None:  # numpydoc ignore: RT01
+    def identity(self) -> Transform:  # numpydoc ignore: RT01
         """Set the transformation to the identity transformation.
 
         This can be used to "reset" the transform.
@@ -642,6 +652,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
         """
         self.Identity()
+        return self
 
     @property
     def is_inverted(self) -> bool:  # numpydoc ignore: RT01
