@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -65,6 +66,15 @@ def try_init_object(class_, kwargs):
     return instance
 
 
+def get_property_return_type(prop: property):
+    members = inspect.getmembers(prop)
+    for member in members:
+        name, func = member
+        if name == 'fget':
+            return func.__annotations__['return']
+    return None
+
+
 def test_bounds_tuple(class_with_bounds):
     # Define kwargs as required for some cases.
     kwargs = {}
@@ -80,3 +90,7 @@ def test_bounds_tuple(class_with_bounds):
     assert len(bounds) == 6
     assert isinstance(bounds, pv.BoundsTuple)
     assert is_all_floats(bounds)
+
+    # Test type annotations
+    return_type = get_property_return_type(class_with_bounds.bounds)
+    assert return_type == 'BoundsTuple'
