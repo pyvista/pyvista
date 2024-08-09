@@ -47,6 +47,11 @@ def pytest_generate_tests(metafunc):
         class_names, class_types = get_classes_with_attribute('bounds')
         metafunc.parametrize('class_with_bounds', class_types, ids=class_names)
 
+    if 'class_with_center' in metafunc.fixturenames:
+        # Generate a separate test for any class that has a center
+        class_names, class_types = get_classes_with_attribute('center')
+        metafunc.parametrize('class_with_center', class_types, ids=class_names)
+
 
 def is_all_floats(iterable: Iterable):
     """Return True if input only has built-in floats."""
@@ -85,7 +90,7 @@ def test_bounds_tuple(class_with_bounds):
 
     instance = try_init_object(class_with_bounds, kwargs)
 
-    # Do test
+    # Test type at runtime
     bounds = instance.bounds
     assert len(bounds) == 6
     assert isinstance(bounds, pv.BoundsTuple)
@@ -94,3 +99,22 @@ def test_bounds_tuple(class_with_bounds):
     # Test type annotations
     return_type = get_property_return_type(class_with_bounds.bounds)
     assert return_type == 'BoundsTuple'
+
+
+def test_center_tuple(class_with_center):
+    # Define kwargs as required for some cases.
+    kwargs = {}
+    if class_with_center is pv.Renderer:
+        kwargs['parent'] = pv.Plotter()
+
+    instance = try_init_object(class_with_center, kwargs)
+
+    # Test type at runtime
+    center = instance.center
+    assert len(center) == 3
+    assert isinstance(center, tuple)
+    assert is_all_floats(center)
+
+    # Test type annotations
+    return_type = get_property_return_type(class_with_center.center)
+    assert return_type == 'tuple[float, float, float]'

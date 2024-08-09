@@ -1684,7 +1684,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        list[numpy.float64, numpy.float64, numpy.float64]
+        tuple[float, float, float]
             Center of the active renderer.
 
         Examples

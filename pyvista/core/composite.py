@@ -26,6 +26,7 @@ from ._typing_core import BoundsTuple
 
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import NumpyArray
+
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -210,12 +211,12 @@ class MultiBlock(
         return BoundsTuple(minima[0], maxima[0], minima[1], maxima[1], minima[2], maxima[2])
 
     @property
-    def center(self) -> NumpyArray[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        np.ndarray
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -231,8 +232,7 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
-        # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
+        return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @property
     def length(self) -> float:

@@ -217,10 +217,10 @@ class _PointSet(DataSet):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=True)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
         if inplace:

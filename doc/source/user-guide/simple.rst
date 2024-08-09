@@ -79,7 +79,7 @@ First, check out some common meta-properties:
     Where is the center of this mesh?
 
     >>> mesh.center
-    [897.0, 676.02, 132.19]
+    (897.0, 676.02, 132.19)
 
 
 Access the points by fetching the :attr:`points
