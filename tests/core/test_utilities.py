@@ -1109,30 +1109,45 @@ def transformed_actor():
     return actor
 
 
-@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
-def test_transform_matches_prop3d(transform, transformed_actor, multiply_mode):
-    transform.multiply_mode = multiply_mode
+@pytest.mark.parametrize('override_mode', ['pre', 'post'])
+@pytest.mark.parametrize('object_mode', ['pre', 'post'])
+def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
+    # This test validates multiply mode by performing the same transformations
+    # applied by `Prop3D` objects and comparing the results
+
+    transform.multiply_mode = object_mode
 
     # Center data at the origin
-    transform.translate(np.array(transformed_actor.origin) * -1)
+    transform.translate(np.array(transformed_actor.origin) * -1, multiply_mode=override_mode)
 
     # Scale and rotate
-    transform.scale(transformed_actor.scale)
+    transform.scale(transformed_actor.scale, multiply_mode=override_mode)
     rotation = _orientation_as_rotation_matrix(transformed_actor.orientation)
-    transform.rotate(rotation)
+    transform.rotate(rotation, multiply_mode=override_mode)
 
     # Move to position
-    transform.translate(np.array(transformed_actor.origin))
-    transform.translate(transformed_actor.position)
+    transform.translate(np.array(transformed_actor.origin), multiply_mode=override_mode)
+    transform.translate(transformed_actor.position, multiply_mode=override_mode)
 
     # Apply user matrix
-    transform.concatenate(transformed_actor.user_matrix)
+    transform.concatenate(transformed_actor.user_matrix, multiply_mode=override_mode)
 
     # Check result
     transform_matrix = transform.matrix
     actor_matrix = pv.array_from_vtkmatrix(transformed_actor.GetMatrix())
-    if multiply_mode == 'post':
+    if override_mode == 'post':
         assert np.allclose(transform_matrix, actor_matrix)
     else:
         # Pre-multiplication produces a totally different result
         assert not np.allclose(transform_matrix, actor_matrix)
+
+
+def test_transform_multiply_mode(transform):
+    assert transform.multiply_mode == 'post'
+    transform.multiply_mode = 'pre'
+    assert transform.multiply_mode == 'pre'
+
+    transform.post_multiply()
+    assert transform.multiply_mode == 'post'
+    transform.pre_multiply()
+    assert transform.multiply_mode == 'pre'
