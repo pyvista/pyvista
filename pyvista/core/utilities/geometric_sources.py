@@ -3552,19 +3552,6 @@ class OrthogonalPlanesSource:
         Specify the bounds of the planes in the form: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
         The generated planes are centered in these bounds.
 
-    move : VectorLike[float], default: (0.0, 0.0, 0.0)
-        Translate each plane by the specified distance along its respective positive
-        axis direction. More specifically:
-
-         - The yz plane is translated in the positive x direction by the first value
-         - The zx plane is translated in the positive y direction by the second value
-         - The xy plane is translated in the positive z direction by the third value
-
-        .. note::
-
-            The translations do *not* consider the normal direction specified
-            by :attr:`normal_sign`.
-
     resolution : int | VectorLike[int], default: 2
         Number of points on the planes in the x-y-z directions. Use a single number
         for a uniform resolution, or three values to set independent resolutions.
@@ -3600,14 +3587,17 @@ class OrthogonalPlanesSource:
     >>> pl.show()
 
     The planes are centered geometrically, but the frontal plane is positioned a bit
-    too far forward. Use :attr:`move` to move the frontal plane.
+    too far forward. Use :meth:`push` to move the frontal plane.
 
-    >>> planes_source.move = (0.0, -10.0, 0)
+    >>> planes_source.push(0.0, -10.0, 0)
     >>> planes_source.update()
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
-    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> _ = pl.add_mesh(
+    ...     output, opacity=0.3, show_edges=True, line_width=10
+    ... )
+    >>> pl.view_yz()
     >>> pl.show()
 
     """
@@ -3616,7 +3606,6 @@ class OrthogonalPlanesSource:
         self,
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
-        move: VectorLike[float] = (0.0, 0.0, 0.0),
         resolution: int | VectorLike[int] = 2,
         normal_sign: Literal['+', '-'] | Sequence[str] = '+',
         names: Sequence[str] = ('yz', 'zx', 'xy'),
@@ -3627,7 +3616,6 @@ class OrthogonalPlanesSource:
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
-        self.move = move  # type: ignore[assignment]
         self.resolution = resolution  # type: ignore[assignment]
         self.normal_sign = normal_sign  # type: ignore[assignment]
         self.names = names  # type: ignore[assignment]
@@ -3734,27 +3722,22 @@ class OrthogonalPlanesSource:
         for i, name in enumerate(valid_names):
             output.set_block_name(i, name)
 
-    @property
-    def move(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Translate each plane by the specified distance.
+    def push(self, *distance: float | VectorLike[float]):  # numpydoc ignore=RT01
+        """Translate each plane by the specified distance along its normal.
 
-        The translations are applied along each plane's respective positive
-        axis direction. More specifically:
+        Internally, this method calls :meth:`pyvista.PlaneSource.push` on each
+        plane source.
 
-         - The yz plane is translated in the positive x direction by the first value
-         - The zx plane is translated in the positive y direction by the second value
-         - The xy plane is translated in the positive z direction by the third value
-
-        .. note::
-
-            The translations do *not* consider the normal direction specified
-            by :attr:`normal_sign`.
+        Parameters
+        ----------
+        *distance : float | VectorLike[float], default: (0.0, 0.0, 0.0)
+            Distance to move each plane.
         """
-        return self._move
-
-    @move.setter
-    def move(self, move_amount: VectorLike[float]):  # numpydoc ignore=GL08
-        self._move = _validation.validate_array3(move_amount, dtype_out=float, to_tuple=True)
+        valid_distance = _validation.validate_array3(
+            distance, broadcast=True, dtype_out=float, to_tuple=True
+        )
+        for source, dist in zip(self.sources, valid_distance):
+            source.push(dist)
 
     def update(self):
         """Update the output of the source."""
