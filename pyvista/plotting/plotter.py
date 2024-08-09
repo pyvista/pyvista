@@ -2222,10 +2222,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
-        if hasattr(self.render_window, 'GetOffScreenFramebuffer'):
-            if not self.render_window.GetOffScreenFramebuffer().GetFBOIndex():
-                # must raise a runtime error as this causes a segfault on VTK9
-                raise ValueError('Invoking helper with no framebuffer')
+        if (
+            hasattr(self.render_window, 'GetOffScreenFramebuffer')
+            and not self.render_window.GetOffScreenFramebuffer().GetFBOIndex()
+        ):
+            # must raise a runtime error as this causes a segfault on VTK9
+            raise ValueError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()
 
@@ -3617,9 +3619,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.array_name = scalars
 
             # enable rgb if the scalars name ends with rgb or rgba
-            if rgb is None:
-                if scalars.endswith(('_rgb', '_rgba')):
-                    rgb = True
+            if rgb is None and scalars.endswith(('_rgb', '_rgba')):
+                rgb = True
 
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars, preference=preference, err=True)
@@ -3779,9 +3780,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if style == 'points_gaussian' and self.mapper.dataset is not None:
             self.mapper.scale_factor = prop.point_size * self.mapper.dataset.length / 1300
-            if not render_points_as_spheres and not self.mapper.emissive:
-                if prop.opacity >= 1.0:
-                    prop.opacity = 0.9999  # otherwise, weird triangles
+            if not render_points_as_spheres and not self.mapper.emissive and prop.opacity >= 1.0:
+                prop.opacity = 0.9999  # otherwise, weird triangles
 
         if render_points_as_spheres:
             if style == 'points_gaussian':
@@ -4298,9 +4298,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Make sure structured grids are not less than 3D
         # ImageData and RectilinearGrid should be olay as <3D
-        if isinstance(volume, pyvista.StructuredGrid):
-            if any(d < 2 for d in volume.dimensions):
-                raise ValueError('StructuredGrids must be 3D dimensional.')
+        if isinstance(volume, pyvista.StructuredGrid) and any(d < 2 for d in volume.dimensions):
+            raise ValueError('StructuredGrids must be 3D dimensional.')
 
         if isinstance(volume, pyvista.PolyData):
             raise TypeError(
@@ -4395,9 +4394,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(clim, (float, int)):
             clim = [-clim, clim]
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         # data must be between [0, 255], but not necessarily UINT8
         # Preserve backwards compatibility and have same behavior as VTK.
@@ -4955,9 +4953,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Remove the global reference to this plotter unless building the
         # gallery to allow it to collect.
-        if not pyvista.BUILDING_GALLERY:
-            if _ALL_PLOTTERS is not None:
-                _ALL_PLOTTERS.pop(self._id_name, None)
+        if not pyvista.BUILDING_GALLERY and _ALL_PLOTTERS is not None:
+            _ALL_PLOTTERS.pop(self._id_name, None)
 
         # this helps managing closed plotters
         self._closed = True
@@ -6348,9 +6345,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def __del__(self):
         """Delete the plotter."""
         # We have to check here if the plotter was only partially initialized
-        if self._initialized:
-            if not self._closed:
-                self.close()
+        if self._initialized and not self._closed:
+            self.close()
         self.deep_clean()
         if self._initialized:
             del self.renderers
@@ -6727,10 +6723,9 @@ class Plotter(BasePlotter):
         else:
             self.window_size = window_size
 
-        if self._theme.depth_peeling.enabled:
-            if self.enable_depth_peeling():
-                for renderer in self.renderers:
-                    renderer.enable_depth_peeling()
+        if self._theme.depth_peeling.enabled and self.enable_depth_peeling():
+            for renderer in self.renderers:
+                renderer.enable_depth_peeling()
 
         # set anti_aliasing based on theme
         if self.theme.anti_aliasing:
