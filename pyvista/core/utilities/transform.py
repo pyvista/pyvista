@@ -25,9 +25,9 @@ class Transform(_vtk.vtkTransform):
 
     The transformation methods (e.g. :meth:`translate`, :meth:`rotate`,
     :meth:`concatenate`) can operate in either :meth:`pre_multiply` or
-    :meth:`post_multiply` (the default) mode. In pre-multiply mode, any additional
-    transformations will occur *before* any transformations represented by the current
-    :attr:`matrix`. In post-multiply mode, the additional transformation will occur
+    :meth:`post_multiply` mode. In pre-multiply mode, any additional transformations
+    will occur *before* any transformations represented by the current :attr:`matrix`.
+    In post-multiply mode (the default), the additional transformation will occur
     *after* any transformations represented by the current matrix.
 
     .. note::
@@ -51,7 +51,7 @@ class Transform(_vtk.vtkTransform):
 
     Examples
     --------
-    Apply two transformations with :meth:`translate` and :meth:`scale` using
+    Concatenate two transformations with :meth:`translate` and :meth:`scale` using
     post-multiplication (default).
 
     >>> import pyvista as pv
@@ -101,10 +101,10 @@ class Transform(_vtk.vtkTransform):
     >>> transform.identity()
     >>> transform.multiply_mode = 'pre'
 
-    Apply the same two transformations as before and in the same order.
+    Apply the same two transformations as before and in the same order. Note that the
+    function calls can be chained together.
 
-    >>> transform.translate(position)
-    >>> transform.scale(scale)
+    >>> transform.translate(position).scale(scale)
 
     Show the matrix list again. Note how with pre-multiplication, the order is
     reversed from post-multiplication, and the scaling matrix is now first
