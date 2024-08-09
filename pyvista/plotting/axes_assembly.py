@@ -859,13 +859,16 @@ class AxesAssembly(_XYZAssembly):
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
         actors: list[Actor] = []
         for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
-            if part in [part_type.name, part_type.value, 'all']:
-                if axis in [axis_num.name, axis_num.value, 'all']:
-                    # Add actor to list
-                    if part_type == _PartEnum.shaft:
-                        actors.append(self._shaft_actors[axis_num])
-                    else:
-                        actors.append(self._tip_actors[axis_num])
+            if part in [part_type.name, part_type.value, 'all'] and axis in [
+                axis_num.name,
+                axis_num.value,
+                'all',
+            ]:
+                # Add actor to list
+                if part_type == _PartEnum.shaft:
+                    actors.append(self._shaft_actors[axis_num])
+                else:
+                    actors.append(self._tip_actors[axis_num])
 
         return actors
 
@@ -1483,7 +1486,7 @@ class PlanesAssembly(_XYZAssembly):
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
         self._planes = self._geometry_source.output
-        self._plane_sources = self._geometry_source._plane_sources
+        self._plane_sources = self._geometry_source.sources
 
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
