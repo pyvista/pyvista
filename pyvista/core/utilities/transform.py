@@ -60,8 +60,8 @@ class Transform(_vtk.vtkTransform):
     'post'
     >>> position = (-0.6, -0.8, 2.1)
     >>> scale = 2.0
-    >>> transform.translate(position)
-    >>> transform.scale(scale)
+    >>> _ = transform.translate(position)
+    >>> _ = transform.scale(scale)
 
     Use :attr:`n_transformations` to verify that there are two transformations.
 
@@ -98,13 +98,13 @@ class Transform(_vtk.vtkTransform):
     Reset the transform to the identity matrix and set :attr:`multiply_mode` to
     use pre-multiplication instead.
 
-    >>> transform.identity()
+    >>> _ = transform.identity()
     >>> transform.multiply_mode = 'pre'
 
     Apply the same two transformations as before and in the same order. Note that the
     function calls can be chained together.
 
-    >>> transform.translate(position).scale(scale)
+    >>> _ = transform.translate(position).scale(scale)
 
     Show the matrix list again. Note how with pre-multiplication, the order is
     reversed from post-multiplication, and the scaling matrix is now first
@@ -286,7 +286,7 @@ class Transform(_vtk.vtkTransform):
 
         Concatenate a second scale matrix.
 
-        >>> transform.scale(2)
+        >>> _ = transform.scale(2)
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 4., 0., 0.],
@@ -341,7 +341,7 @@ class Transform(_vtk.vtkTransform):
 
         Concatenate a second translation matrix.
 
-        >>> transform.translate((1, 1, 1))
+        >>> _ = transform.translate((1, 1, 1))
         >>> transform.matrix
         array([[1., 0., 0., 2.],
                [0., 1., 0., 3.],
@@ -394,7 +394,7 @@ class Transform(_vtk.vtkTransform):
         Concatenate a second rotation matrix. In this case we use the same rotation as
         before.
 
-        >>> transform.rotate(rotation_z_90)
+        >>> _ = transform.rotate(rotation_z_90)
 
         The result is a matrix that rotates about the z-axis by 180 degrees.
 
@@ -451,7 +451,7 @@ class Transform(_vtk.vtkTransform):
         Define a second transformation and concatenate it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
-        >>> transform.concatenate(array)
+        >>> _ = transform.concatenate(array)
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   , -1.   , -1.5  ],
