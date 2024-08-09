@@ -14,7 +14,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
 
 
 class Transform(_vtk.vtkTransform):
@@ -26,7 +25,7 @@ class Transform(_vtk.vtkTransform):
 
     The transformation methods (e.g. :meth:`translate`, :meth:`rotate`,
     :meth:`concatenate`) can operate in either :meth:`pre_multiply` or
-    :meth:`post_multiply` (the default) mode.  In pre-multiply mode, any additional
+    :meth:`post_multiply` (the default) mode. In pre-multiply mode, any additional
     transformations will occur *before* any transformations represented by the current
     :attr:`matrix`. In post-multiply mode, the additional transformation will occur
     *after* any transformations represented by the current matrix.
@@ -37,10 +36,9 @@ class Transform(_vtk.vtkTransform):
         with right-handed rotations. Some other graphics libraries use left-handed
         coordinate systems and rotations.
 
-
     Examples
     --------
-    Apply two transformations, :meth:`translate` and :meth:`scale`, using
+    Apply two transformations with :meth:`translate` and :meth:`scale` using
     post-multiplication (default).
 
     >>> import pyvista as pv
@@ -52,7 +50,7 @@ class Transform(_vtk.vtkTransform):
     >>> transform.translate(position)
     >>> transform.scale(scale)
 
-    Use :attr:`n_transformations` to check the number of transformations.
+    Use :attr:`n_transformations` to verify that there are two transformations.
 
     >>> transform.n_transformations
     2
@@ -61,18 +59,21 @@ class Transform(_vtk.vtkTransform):
     post-multiplication is used, the translation matrix is first in the list since
     it was applied first, and the scale matrix is second.
 
-    >>> transform.matrix_list
-    [array([[ 1. ,  0. ,  0. , -0.6],
+    >>> transform.matrix_list[0]  # translation
+    array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]]), array([[2., 0., 0., 0.],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    >>> transform.matrix_list[1]  # scaling
+    array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
-           [0., 0., 0., 1.]])]
+           [0., 0., 0., 1.]])
 
-    Show the concatenated matrix. Note that the position is now ``(2, 4, 6)``
-    instead of ``(1, 2, 3)``, indicating that the scaling is applied *after*
-    the translation.
+    Show the concatenated matrix. Note that the position has doubled from
+    ``(-0.6, -0.8, 2.1)`` to ``(-1.2, -1.6, 4.2)``, indicating that the scaling is
+    applied *after* the translation.
 
     >>> matrix_post = transform.matrix
     >>> matrix_post
@@ -96,17 +97,20 @@ class Transform(_vtk.vtkTransform):
     reversed from post-multiplication, and the scaling matrix is now first
     followed by the translation.
 
-    >>> transform.matrix_list
-    [array([[2., 0., 0., 0.],
+    >>> transform.matrix_list[0]  # scaling
+    array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
-           [0., 0., 0., 1.]]), array([[ 1. ,  0. ,  0. , -0.6],
+           [0., 0., 0., 1.]])
+
+    >>> transform.matrix_list[1]  # translation
+    array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]])]
+           [ 0. ,  0. ,  0. ,  1. ]])
 
     Show the concatenated matrix. Unlike before, the position is not scaled,
-    and is set to ``(1, 2, 3)`` instead of ``(2, 4, 6)``.
+    and is ``(-0.6, -0.8, 2.1)`` instead of ``(-1.2, -1.6, 4.2)``.
 
     >>> matrix_pre = transform.matrix
     >>> matrix_pre
@@ -115,12 +119,46 @@ class Transform(_vtk.vtkTransform):
            [ 0. ,  0. ,  2. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    Apply the two transformations to a dataset and plot them.
+    Apply the two transformations to a dataset and plot them. Note how the meshes
+    have different positions since pre- and post-multiplication produce different
+    transformations.
 
     >>> mesh_post = pv.Sphere().transform(matrix_post)
     >>> mesh_pre = pv.Cone().transform(matrix_pre)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, name='post', color='goldenrod')
+    >>> _ = pl.add_mesh(mesh_pre, name='pre', color='teal')
+    >>> _ = pl.add_axes_at_origin()
+    >>> pl.show()
+
+    Get the concatenated inverse transformation matrix of the pre-multiplication case.
+
+    >>> transform.inverse_matrix
+    array([[ 0.5 ,  0.  ,  0.  ,  0.3 ],
+           [ 0.  ,  0.5 ,  0.  ,  0.4 ],
+           [ 0.  ,  0.  ,  0.5 , -1.05],
+           [ 0.  ,  0.  ,  0.  ,  1.  ]])
+
+    Similar to using :attr:`matrix_list`, we can inspect the individual transformation
+    inverses with :attr:`inverse_matrix_list`.
+
+    >>> transform.inverse_matrix_list[0]  # inverse scaling
+    array([[0.5, 0. , 0. , 0. ],
+           [0. , 0.5, 0. , 0. ],
+           [0. , 0. , 0.5, 0. ],
+           [0. , 0. , 0. , 1. ]])
+
+    >>> transform.inverse_matrix_list[1]  # inverse translation
+    array([[ 1. ,  0. ,  0. ,  0.6],
+           [ 0. ,  1. ,  0. ,  0.8],
+           [ 0. ,  0. ,  1. , -2.1],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Transform the mesh by its inverse to restore it to its original un-scaled state
+    and positioning at the origin.
+
+    >>> mesh_pre = mesh_pre.transform(transform.inverse_matrix)
+    >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_pre, name='pre', color='teal')
     >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
@@ -158,6 +196,14 @@ class Transform(_vtk.vtkTransform):
         In pre-multiply mode, any additional transformations (e.g. using
         :meth:`translate`,:meth:`concatenate`, etc.) will occur *before* any
         transformations represented by the current :attr:`matrix`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.pre_multiply()
+        >>> transform.multiply_mode
+        'pre'
         """
         self._multiply_mode: Literal['pre'] = 'pre'
         self.PreMultiply()
@@ -168,6 +214,14 @@ class Transform(_vtk.vtkTransform):
         In post-multiply mode, any additional transformations (e.g. using
         :meth:`translate`,:meth:`concatenate`, etc.) will occur *after* any
         transformations represented by the current :attr:`matrix`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.post_multiply()
+        >>> transform.multiply_mode
+        'post'
         """
         self._multiply_mode: Literal['post'] = 'post'
         self.PostMultiply()
@@ -191,6 +245,28 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        Examples
+        --------
+        Concatenate a scale matrix.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.scale(1, 2, 3)
+        >>> transform.matrix
+        array([[1., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 3., 0.],
+               [0., 0., 0., 1.]])
+
+        Concatenate a second scale matrix.
+
+        >>> transform.scale(2)
+        >>> transform.matrix
+        array([[2., 0., 0., 0.],
+               [0., 4., 0., 0.],
+               [0., 0., 6., 0.],
+               [0., 0., 0., 1.]])
         """
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
@@ -199,9 +275,7 @@ class Transform(_vtk.vtkTransform):
         transform.Scale(valid_factor)
         self.concatenate(transform, multiply_mode=multiply_mode)
 
-    def translate(
-        self, vector: VectorLike[float], multiply_mode: Literal['pre', 'post'] | None = None
-    ) -> None:
+    def translate(self, *vector, multiply_mode: Literal['pre', 'post'] | None = None) -> None:
         """Concatenate a translation matrix.
 
         Create a translation matrix and :meth:`concatenate` it with the current
@@ -212,16 +286,38 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        vector : VectorLike[float]
+        *vector : VectorLike[float]
             Vector to use for the translation.
 
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        Examples
+        --------
+        Concatenate a translation matrix.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.translate(1, 2, 3)
+        >>> transform.matrix
+        array([[1., 0., 0., 1.],
+               [0., 1., 0., 2.],
+               [0., 0., 1., 3.],
+               [0., 0., 0., 1.]])
+
+        Concatenate a second translation matrix.
+
+        >>> transform.translate((1, 1, 1))
+        >>> transform.matrix
+        array([[1., 0., 0., 2.],
+               [0., 1., 0., 3.],
+               [0., 0., 1., 4.],
+               [0., 0., 0., 1.]])
         """
         valid_vector = _validation.validate_array3(
-            vector, broadcast=True, dtype_out=float, name='translation vector'
+            vector, dtype_out=float, name='translation vector'
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
@@ -247,6 +343,34 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        Examples
+        --------
+        Concatenate a rotation matrix. In this case the rotation rotates about the
+        z-axis by 90 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        >>> transform = pv.Transform()
+        >>> transform.rotate(rotation_z_90)
+        >>> transform.matrix
+        array([[ 0., -1.,  0.,  0.],
+               [ 1.,  0.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second rotation matrix. In this case we use the same rotation as
+        before.
+
+        >>> transform.rotate(rotation_z_90)
+
+        The result is a matrix that rotates about the z-axis by 180 degrees.
+
+        >>> transform.matrix
+        array([[-1.,  0.,  0.,  0.],
+               [ 0., -1.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
         """
         valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
         self.concatenate(valid_rotation, multiply_mode=multiply_mode)
@@ -256,21 +380,50 @@ class Transform(_vtk.vtkTransform):
     ) -> None:
         """Concatenate a transformation matrix.
 
-        Create a 4x4 matrix from any transform-like input and :meth:`concatenate` it
-        with the current transformation :attr:`matrix` according to pre-multiply or
-        post-multiply semantics.
+        Create a 4x4 matrix from any transform-like input and concatenate it with the
+        current transformation :attr:`matrix` according to pre-multiply or post-multiply
+        semantics.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
         Parameters
         ----------
         transform : TransformLike
-            3x3 rotation matrix or a SciPy ``Rotation`` object.
+            Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        Examples
+        --------
+        Define an arbitrary 4x4 affine transformation matrix and concatenate it.
+
+        >>> import pyvista as pv
+        >>> array = [
+        ...     [0.707, -0.707, 0, 0],
+        ...     [0.707, 0.707, 0, 0],
+        ...     [0, 0, 1, 1.5],
+        ...     [0, 0, 0, 2],
+        ... ]
+        >>> transform = pv.Transform()
+        >>> transform.concatenate(array)
+        >>> transform.matrix
+        array([[ 0.707, -0.707,  0.   ,  0.   ],
+               [ 0.707,  0.707,  0.   ,  0.   ],
+               [ 0.   ,  0.   ,  1.   ,  1.5  ],
+               [ 0.   ,  0.   ,  0.   ,  2.   ]])
+
+        Define a second transformation and concatenate it.
+
+        >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
+        >>> transform.concatenate(array)
+        >>> transform.matrix
+        array([[ 0.707, -0.707,  0.   ,  0.   ],
+               [ 0.   ,  0.   , -1.   , -1.5  ],
+               [-0.707, -0.707,  0.   ,  0.   ],
+               [ 0.   ,  0.   ,  0.   ,  2.   ]])
         """
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
@@ -284,6 +437,7 @@ class Transform(_vtk.vtkTransform):
             vtk_transform.SetMatrix(vtkmatrix_from_array(array))
 
         if multiply_mode is not None:
+            # Override multiply mode
             original_mode = self.multiply_mode
             self.multiply_mode = multiply_mode
 
@@ -397,6 +551,48 @@ class Transform(_vtk.vtkTransform):
         :attr:`matrix_list`) is inverted every time :meth:`invert` is called.
 
         Use :attr:`is_inverted` to check if the transformations are currently inverted.
+
+        Examples
+        --------
+        Concatenate an arbitrary transformation.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.scale(2.0)
+        >>> transform.matrix
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
+
+        Check if the transformation is inverted.
+
+        >>> transform.is_inverted
+        False
+
+        Invert the transformation and show the matrix.
+
+        >>> transform.invert()
+        >>> transform.matrix
+        array([[0.5, 0. , 0. , 0. ],
+               [0. , 0.5, 0. , 0. ],
+               [0. , 0. , 0.5, 0. ],
+               [0. , 0. , 0. , 1. ]])
+
+        Check that the transformation is inverted.
+        >>> transform.is_inverted
+        True
+
+        Invert it again to restore it back to its original state.
+
+        >>> transform.invert()
+        >>> transform.matrix
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
+        >>> transform.is_inverted
+        False
         """
         self.Inverse()
 
@@ -404,10 +600,35 @@ class Transform(_vtk.vtkTransform):
         """Set the transformation to the identity transformation.
 
         This can be used to "reset" the transform.
+
+        Examples
+        --------
+        Concatenate an arbitrary transformation.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> transform.scale(2.0)
+        >>> transform.matrix
+        array([[2., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 2., 0.],
+               [0., 0., 0., 1.]])
+
+        Reset the transformation to the identity matrix.
+
+        >>> transform.identity()
+        >>> transform.matrix
+        array([[1., 0., 0., 0.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 1.]])
         """
         self.Identity()
 
     @property
     def is_inverted(self) -> bool:  # numpydoc ignore: RT01
-        """Get the inverse flag of the transformation."""
+        """Get the inverse flag of the transformation.
+
+        This flag is modified whenever :meth:`invert` is called.
+        """
         return bool(self.GetInverseFlag())
