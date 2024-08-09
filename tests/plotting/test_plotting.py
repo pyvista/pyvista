@@ -2452,7 +2452,7 @@ def test_log_scale():
     plotter.show()
 
 
-@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([-0.5, -0.5, 0])])
+@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([[-0.5], [-0.5], [0]])])
 def test_set_focus(point):
     plane = pv.Plane()
     p = pv.Plotter()
@@ -2461,7 +2461,7 @@ def test_set_focus(point):
     p.show()
 
 
-@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([1.0, 1.0, 1.0])])
+@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([[-0.5], [-0.5], [0]])])
 def test_set_viewup(verify_image_cache, vector):
     verify_image_cache.high_variance_test = True
 
