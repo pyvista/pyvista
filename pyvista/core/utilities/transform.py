@@ -182,7 +182,7 @@ class Transform(_vtk.vtkTransform):
         super().__init__()
         self.multiply_mode = 'post'
         if trans is not None:
-            self.concatenate(trans)
+            self.matrix = trans  # type: ignore[assignment]
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
@@ -483,7 +483,7 @@ class Transform(_vtk.vtkTransform):
 
     @property
     def matrix(self) -> NumpyArray[float]:
-        """Return the current transformation matrix.
+        """Return or set the current transformation matrix.
 
         Notes
         -----
@@ -502,6 +502,11 @@ class Transform(_vtk.vtkTransform):
             Current transformation matrix.
         """
         return array_from_vtkmatrix(self.GetMatrix())
+
+    @matrix.setter
+    def matrix(self, trans: TransformLike):  # numpydoc ignore=GL08
+        array = _validation.validate_transform4x4(trans)
+        self.SetMatrix(vtkmatrix_from_array(array))
 
     @property
     def inverse_matrix(self) -> NumpyArray[float]:
