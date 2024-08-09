@@ -1486,7 +1486,7 @@ class PlanesAssembly(_XYZAssembly):
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
         self._planes = self._geometry_source.output
-        self._plane_sources = self._geometry_source._plane_sources
+        self._plane_sources = self._geometry_source.sources
 
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)

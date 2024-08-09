@@ -55,6 +55,11 @@ def test_plot_datasets():
         demos.plot_datasets(data_type='foo')
 
 
+def test_plot_datasets_dataset_type():
+    with pytest.raises(ValueError, match="Invalid dataset_type"):
+        demos.plot_datasets(dataset_type='foo')
+
+
 @skip_no_plotting
 def test_plot_wave():
     points = demos.plot_wave(wavetime=0.1)
