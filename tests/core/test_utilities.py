@@ -1174,3 +1174,29 @@ def test_transform_identity(transform):
     assert not np.array_equal(transform.matrix, np.eye(4))
     transform.identity()
     assert np.array_equal(transform.matrix, np.eye(4))
+
+
+def test_transform_init():
+    matrix = np.diag((SCALE, SCALE, SCALE, 1))
+    transform = Transform(matrix)
+    assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_chain_methods():
+    eye3 = np.eye(3)
+    eye4 = np.eye(4)
+    ones = (1, 1, 1)
+    zeros = (0, 0, 0)
+    matrix = (
+        Transform()
+        .identity()
+        .scale(ones)
+        .translate(zeros)
+        .rotate(eye3)
+        .concatenate(eye4)
+        .invert()
+        .post_multiply()
+        .pre_multiply()
+        .matrix
+    )
+    assert np.array_equal(matrix, eye4)
