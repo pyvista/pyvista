@@ -126,14 +126,15 @@ class Transform(_vtk.vtkTransform):
     >>> mesh_post = pv.Sphere().transform(matrix_post)
     >>> mesh_pre = pv.Cone().transform(matrix_pre)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh_post, name='post', color='goldenrod')
-    >>> _ = pl.add_mesh(mesh_pre, name='pre', color='teal')
+    >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
+    >>> _ = pl.add_mesh(mesh_pre, color='teal')
     >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
 
     Get the concatenated inverse transformation matrix of the pre-multiplication case.
 
-    >>> transform.inverse_matrix
+    >>> inverse_matrix = transform.inverse_matrix
+    >>> inverse_matrix
     array([[ 0.5 ,  0.  ,  0.  ,  0.3 ],
            [ 0.  ,  0.5 ,  0.  ,  0.4 ],
            [ 0.  ,  0.  ,  0.5 , -1.05],
@@ -157,9 +158,9 @@ class Transform(_vtk.vtkTransform):
     Transform the mesh by its inverse to restore it to its original un-scaled state
     and positioning at the origin.
 
-    >>> mesh_pre = mesh_pre.transform(transform.inverse_matrix)
+    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh_pre, name='pre', color='teal')
+    >>> _ = pl.add_mesh(mesh_pre_inverted, color='teal')
     >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
     """
@@ -184,13 +185,13 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(self, multiply_mode: Literal['pre', 'post']):  # numpydoc ignore=GL08
+    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:  # numpydoc ignore=GL08
         _validation.check_contains(
             item=multiply_mode, container=['pre', 'post'], name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
-    def pre_multiply(self):
+    def pre_multiply(self) -> None:
         """Set the multiplication mode to pre-multiply.
 
         In pre-multiply mode, any additional transformations (e.g. using
@@ -205,10 +206,10 @@ class Transform(_vtk.vtkTransform):
         >>> transform.multiply_mode
         'pre'
         """
-        self._multiply_mode: Literal['pre'] = 'pre'
+        self._multiply_mode: Literal['pre', 'post'] = 'pre'
         self.PreMultiply()
 
-    def post_multiply(self):
+    def post_multiply(self) -> None:
         """Set the multiplication mode to post-multiply.
 
         In post-multiply mode, any additional transformations (e.g. using
@@ -223,7 +224,7 @@ class Transform(_vtk.vtkTransform):
         >>> transform.multiply_mode
         'post'
         """
-        self._multiply_mode: Literal['post'] = 'post'
+        self._multiply_mode = 'post'
         self.PostMultiply()
 
     def scale(self, *factor, multiply_mode: Literal['pre', 'post'] | None = None) -> None:
