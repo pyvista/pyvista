@@ -218,6 +218,11 @@ class DataSetFilters:
         matrix : numpy.ndarray
             Transform matrix to transform the input dataset to the x-y-z axes.
 
+        See Also
+        --------
+        pyvista.principal_axes
+            Best-fit axes used by this filter for the alignment.
+
         Examples
         --------
         Create a dataset and align it to the x-y-z axes.
