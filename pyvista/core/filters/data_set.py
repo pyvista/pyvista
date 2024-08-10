@@ -259,7 +259,7 @@ class DataSetFilters:
         """
         axes = pyvista.principal_axes(self.points)
         matrix = np.eye(4)
-        matrix[:3, 3] = axes
+        matrix[:3, :3] = axes
 
         aligned = self.transform(matrix, inplace=False)
         translate = -np.array(aligned.center)
