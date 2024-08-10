@@ -16,6 +16,11 @@ def axes_geometry_source():
     return pv.AxesGeometrySource()
 
 
+@pytest.fixture()
+def cube_faces_source():
+    return pv.CubeFacesSource()
+
+
 def test_capsule_source():
     if pv.vtk_version_info < (9, 3):
         algo = pv.CapsuleSource()
@@ -778,3 +783,81 @@ def test_orthogonal_planes_source_normal_sign():
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.normal_sign = 0
+
+
+def test_cube_faces_source(cube_faces_source):
+    output = cube_faces_source.output
+    assert isinstance(output, pv.MultiBlock)
+    assert output.keys() == ['+X', '-X', '+Y', '-Y', '+Z', '-Z']
+    assert all(isinstance(poly, pv.PolyData) for poly in output)
+    assert output.bounds == pv.CubeSource().output.bounds
+
+
+def test_cube_faces_source_update(cube_faces_source):
+    output_before = cube_faces_source.output
+    cube_faces_source.z_length = 2  # Make an arbitrary modification
+    cube_faces_source.update()
+    output_after = cube_faces_source.output
+    assert output_before is output_after
+    assert all(output_after[i] is output_after[i] for i in range(6))
+
+
+@pytest.mark.parametrize('attr', ['shrink_factor', 'explode_factor', 'frame_width'])
+def test_cube_faces_source_set_get_factor(attr):
+    source = pv.CubeFacesSource(**{attr: 0.5})
+    assert getattr(source, attr) == 0.5
+    setattr(source, attr, 0.1)
+    assert getattr(source, attr) == 0.1
+
+
+@pytest.mark.parametrize(
+    ('face_name', 'bounds'),
+    [
+        ('+X', (0.5, 0.5, -0.5, 0.5, -0.5, 0.5)),
+        ('-X', (-0.5, -0.5, -0.5, 0.5, -0.5, 0.5)),
+        ('+Y', (-0.5, 0.5, 0.5, 0.5, -0.5, 0.5)),
+        ('-Y', (-0.5, 0.5, -0.5, -0.5, -0.5, 0.5)),
+        ('+Z', (-0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
+        ('-Z', (-0.5, 0.5, -0.5, 0.5, -0.5, -0.5)),
+    ],
+)
+@pytest.mark.parametrize(('attr', 'value'), [('shrink_factor', 1.0), ('explode_factor', 0.0)])
+def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_name, bounds):
+    # Make sure bounds of each face are correct
+    # Parametrize with shrink and explode to ensure they do not modify order of points and faces
+    poly = cube_faces_source.output[face_name]
+    default_points = poly.points.tolist()
+    default_faces = poly.regular_faces.tolist()
+
+    setattr(cube_faces_source, attr, value)
+    cube_faces_source.update()
+
+    modified_points = poly.points.tolist()
+    modified_faces = poly.regular_faces.tolist()
+
+    assert default_points == modified_points
+    assert default_faces == modified_faces
+    assert poly.bounds == bounds
+
+
+def test_cube_faces_source_frame(cube_faces_source):
+    assert cube_faces_source.frame_width is None
+    cube_faces_source = pv.CubeFacesSource(frame_width=0.2)
+    assert cube_faces_source.frame_width == 0.2
+    cube_faces_source.frame_width = 0.3
+    assert cube_faces_source.frame_width == 0.3
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('center', (1, 2, 3)),
+        ('x_length', 42),
+        ('y_length', 42),
+        ('z_length', 42),
+        ('bounds', (0, 1, 2, 3, 4, 5)),
+    ],
+)
+def test_cube_faces_source_parent_attr(name, value):
+    source = pv.CubeFacesSource(**{name: value})
+    setattr(source, name, value)
