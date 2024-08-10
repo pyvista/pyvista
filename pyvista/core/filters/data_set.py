@@ -26,17 +26,17 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -6600,7 +6600,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
+        trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -6628,7 +6628,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
+        trans : TransformLike
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -6650,6 +6650,11 @@ class DataSetFilters:
             input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
         Examples
         --------
         Translate a mesh by ``(50, 100, 200)``.
@@ -6658,9 +6663,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but
-        ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
-        accepted.
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        is accepted.
 
         >>> transform_matrix = np.array(
         ...     [
@@ -6677,28 +6681,9 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            m = trans
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = trans
-            m = trans.GetMatrix()
-        elif isinstance(trans, np.ndarray):
-            if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
-            m = vtkmatrix_from_array(trans)
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        else:
-            raise TypeError(
-                'Input transform must be either:\n'
-                '\tvtk.vtkMatrix4x4\n'
-                '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n',
-            )
+        t = Transform(trans)
 
-        if m.GetElement(3, 3) == 0:
+        if t.matrix[3, 3] == 0:
             raise ValueError("Transform element (3,3), the inverse scale term, is zero")
 
         # vtkTransformFilter truncates the result if the input is an integer type

@@ -311,9 +311,10 @@ def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amo
     assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
 
 
-def test_translate_should_fail_given_none(grid):
-    with pytest.raises(TypeError):
-        grid.transform(None)
+def test_translate_should_not_fail_given_none(grid):
+    bounds = grid.bounds
+    grid.transform(None)
+    assert grid.bounds == bounds
 
 
 def test_set_points():
@@ -340,8 +341,8 @@ def test_translate_should_fail_bad_points_or_transform(grid):
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape != (4, 4))
-    with pytest.raises(ValueError):  # noqa: PT011
+    assume(array.shape not in [(4, 4), (3, 3)])
+    with pytest.raises(TypeError):
         grid.transform(array)
 
 
