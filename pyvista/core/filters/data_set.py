@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -192,6 +193,78 @@ class DataSetFilters:
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
+
+    def align_xyz(
+        self,
+        *,
+        centered: bool = True,
+        return_matrix: bool = False,
+    ):
+        """Align a dataset to the x-y-z axes.
+
+        Parameters
+        ----------
+        centered : bool, default: True
+            Center the mesh at the origin. If ``False``, the aligned dataset has the
+            same center as the input.
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        pyvista.DataSet
+            The dataset aligned to the x-y-z axes.
+
+        matrix : numpy.ndarray
+            Transform matrix to transform the input dataset to the x-y-z axes.
+
+        Examples
+        --------
+        Create a dataset and align it to the x-y-z axes.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> aligned = mesh.align_xyz()
+
+        Plot the aligned mesh along with the original. Show axes at the origin for
+        context.
+
+        >>> axes = pv.AxesAssembly(scale=aligned.length / 2)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(mesh, style='wireframe')
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Align the mesh but don't center it at the origin.
+        >>> aligned = mesh.align_xyz(centered=False)
+
+        Plot the result again.
+
+        >>> axes = pv.AxesAssembly(
+        ...     position=mesh.center, scale=aligned.length / 2
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(mesh, style='wireframe')
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+        """
+        axes = pyvista.principal_axes(self.points)
+        matrix = _validation.validate_transform4x4(axes)
+
+        aligned = self.transform(matrix, inplace=False)
+        translate = -np.array(aligned.center)
+        if not centered:
+            translate += self.center
+        matrix[:3, 3] = translate
+        aligned.translate(translate, inplace=True)
+
+        if return_matrix:
+            return aligned, matrix
+        return aligned
 
     def clip(
         self,

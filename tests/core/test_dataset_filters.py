@@ -3883,6 +3883,17 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
+    assert np.allclose(aligned.center, (0, 0, 0))
+
+    aligned, matrix = mesh.align_xyz(centered=False, return_matrix=True)
+    assert np.allclose(aligned.center, mesh.center)
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.shape == (4, 4)
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
