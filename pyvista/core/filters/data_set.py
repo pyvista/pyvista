@@ -6662,7 +6662,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but any :ref:`~pyvista.TransformLike`
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
         is accepted.
 
         >>> transform_matrix = np.array(
