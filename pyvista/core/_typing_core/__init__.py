@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ._aliases import ArrayLike  # noqa: F401
-from ._aliases import BoundsLike  # noqa: F401
+from ._aliases import BoundsTuple  # noqa: F401
 from ._aliases import CellArrayLike  # noqa: F401
 from ._aliases import CellsLike  # noqa: F401
 from ._aliases import MatrixLike  # noqa: F401

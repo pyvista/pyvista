@@ -21,6 +21,7 @@ from vtkmodules.vtkRenderingFreeType import vtkVectorText
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -30,7 +31,6 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Sequence
 
-    from pyvista.core._typing_core import BoundsLike
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -1074,7 +1074,11 @@ class Text3DSource(vtkVectorText):
 
         # Scale mesh
         bnds = out.bounds
-        size_w, size_h, size_d = bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]
+        size_w, size_h, size_d = (
+            bnds.x_max - bnds.x_min,
+            bnds.y_max - bnds.y_min,
+            bnds.z_max - bnds.z_min,
+        )
         scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
 
         # Scale width and height first
@@ -1146,7 +1150,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
@@ -1188,17 +1192,18 @@ class CubeSource(_vtk.vtkCubeSource):
         self.point_dtype = point_dtype
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
-        return self._bounds
+        bnds = [0.0] * 6
+        self.GetBounds(bnds)
+        return BoundsTuple(*bnds)
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
         self.SetBounds(bounds)
 
     @property
@@ -2379,6 +2384,27 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.Update()
         return wrap(self.GetOutput())
 
+    @property
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore: RT01
+        """Get the plane's normal vector."""
+        origin = np.array(self.origin)
+        v1 = self.point_a - origin
+        v2 = self.point_b - origin
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        # Avoid div by zero and return +z normal by default
+        return tuple((normal / norm).tolist()) if norm else (0.0, 0.0, 1.0)
+
+    def flip_normal(self):
+        """Flip the plane's normal.
+
+        This method modifies the plane's :attr:`point_a` and :attr:`point_b` by
+        swapping them.
+        """
+        point_a = self.point_a
+        self.point_a = self.point_b
+        self.point_b = point_a
+
 
 @no_new_attr
 class ArrowSource(_vtk.vtkArrowSource):
@@ -2551,8 +2577,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     Parameters
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        Specify the bounds of the box.
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     level : int, default: 0
         Level of subdivision of the faces.
@@ -2576,17 +2602,16 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         self.quads = quads
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the cube."""
-        return self._bounds
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
+        """Return or set the bounds of the box."""
+        return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
         self.SetBounds(bounds)
 
     @property
@@ -3108,7 +3133,7 @@ class AxesGeometrySource:
         ...     symmetric_bounds=True
         ... )
         >>> axes_geometry_source.output.bounds
-        (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
         >>> axes_geometry_source.output.center
         array([0.0, 0.0, 0.0])
@@ -3117,7 +3142,7 @@ class AxesGeometrySource:
 
         >>> axes_geometry_source.symmetric_bounds = False
         >>> axes_geometry_source.output.bounds
-        (-0.10000000149011612, 1.0, -0.10000000149011612, 1.0, -0.10000000149011612, 1.0)
+        BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
 
         >>> axes_geometry_source.output.center
         array([0.45, 0.45, 0.45])
@@ -3487,7 +3512,9 @@ class AxesGeometrySource:
 
         # Scale so bounding box edges have length one
         bnds = part.bounds
-        axis_length = np.array((bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]))
+        axis_length = np.array(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        )
         if np.any(axis_length < 1e-8):
             raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
         part.scale(np.reciprocal(axis_length), inplace=True)
@@ -3515,7 +3542,7 @@ class OrthogonalPlanesSource:
     Parameters
     ----------
     bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounds of the planes in the form: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        Specify the bounds of the planes in the form: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
         The generated planes are centered in these bounds.
 
     resolution : int | VectorLike[int], default: 2
@@ -3563,7 +3590,7 @@ class OrthogonalPlanesSource:
     ):
         # Init sources and the output dataset
         self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
-        self._plane_sources = tuple(pyvista.PlaneSource() for _ in range(3))
+        self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
 
         # Init properties
         self.bounds = bounds  # type: ignore[assignment]
@@ -3593,6 +3620,12 @@ class OrthogonalPlanesSource:
             valid_sign = sign
         self._normal_sign = tuple(valid_sign)
 
+        # Modify sources
+        for source, axis_vector, sign in zip(self.sources, np.eye(3), valid_sign):
+            has_positive_normal = np.dot(source.normal, axis_vector) > 0
+            if has_positive_normal and sign == '-':
+                source.flip_normal()
+
     @property
     def resolution(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return or set the resolution of the planes."""
@@ -3600,20 +3633,55 @@ class OrthogonalPlanesSource:
 
     @resolution.setter
     def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
-        self._resolution = _validation.validate_array3(
+        valid_resolution = _validation.validate_array3(
             resolution, broadcast=True, to_tuple=True, name='resolution'
         )
+        self._resolution = valid_resolution
+
+        # Modify sources
+        x_res, y_res, z_res = valid_resolution
+        yz_source, zx_source, xy_source = self.sources
+
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounds of the planes."""
         return self._bounds
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
-        self._bounds = _validation.validate_array(
+    def bounds(self, bounds: BoundsTuple):  # numpydoc ignore=GL08
+        bounds_tuple = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
+        self._bounds = BoundsTuple(*bounds_tuple)
+
+        # Modify sources
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds_tuple
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+        ORIGIN = (0.0, 0.0, 0.0)
+        yz_source, zx_source, xy_source = self.sources
+
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
+
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
+
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
 
     @property
     def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
@@ -3625,55 +3693,17 @@ class OrthogonalPlanesSource:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        self._names = cast(Tuple[str, str, str], tuple(names))
+        valid_names = cast(Tuple[str, str, str], tuple(names))
+        self._names = valid_names
+
+        output = self._output
+        for i, name in enumerate(valid_names):
+            output.set_block_name(i, name)
 
     def update(self):
         """Update the output of the source."""
-        ORIGIN = (0.0, 0.0, 0.0)
-
-        # Unpack vars
-        yz_source, zx_source, xy_source = self._plane_sources
-        x_res, y_res, z_res = self.resolution
-        x_min, x_max, y_min, y_max, z_min, z_max = self.bounds
-
-        # Compute bounds-related vars
-        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
-        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
-
-        # Update plane sources
-        xy_source.i_resolution = x_res
-        xy_source.j_resolution = y_res
-        xy_source.point_a = x_size, 0.0, 0.0
-        xy_source.point_b = 0.0, y_size, 0.0
-        xy_source.origin = ORIGIN
-        xy_source.center = center
-        xy_source.Update()
-
-        yz_source.i_resolution = y_res
-        yz_source.j_resolution = z_res
-        yz_source.point_a = 0.0, y_size, 0.0
-        yz_source.point_b = 0.0, 0.0, z_size
-        yz_source.origin = ORIGIN
-        yz_source.center = center
-        yz_source.Update()
-
-        zx_source.i_resolution = z_res
-        zx_source.j_resolution = x_res
-        zx_source.point_a = 0.0, 0.0, z_size
-        zx_source.point_b = x_size, 0.0, 0.0
-        zx_source.origin = ORIGIN
-        zx_source.center = center
-        zx_source.Update()
-
-        # Update the output
-        output = self._output
-        for index, (name, source, plane, sign) in enumerate(
-            zip(self.names, self._plane_sources, output, self.normal_sign)
-        ):
-            plane.copy_from(source.GetOutput())
-            if sign == '-':
-                plane['Normals'] *= -1
-            output.set_block_name(index, name)
+        for source, plane in zip(self.sources, self._output):
+            plane.copy_from(source.output)
 
     @property
     def output(self) -> pyvista.MultiBlock:
@@ -3725,7 +3755,7 @@ class CubeFacesSource(CubeSource):
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     frame_width : float, optional
         Convert the faces into frames with the specified width. If set, the center
@@ -3740,11 +3770,25 @@ class CubeFacesSource(CubeSource):
         edge length of the cube, and all sides of the faces are shrunk by the same
         (constant) value.
 
+        .. note::
+            - A value of ``1.0`` has no effect.
+            - Values between ``0.0`` and ``1.0`` will shrink the faces.
+            - Values greater than ``1.0`` will grow the faces.
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.shrink`.
+
     explode_factor : float, optional
         Push the faces away from (or pull them toward) the cube's center. If set, this
         is the factor by which to move each face. The magnitude of the move is relative
         to the smallest edge length of the cube, and all faces are moved by the same
         (constant) amount.
+
+        .. note::
+            - A value of ``0.0`` has no effect.
+            - Increasing positive values will push the faces farther away (explode).
+            - Decreasing negative values will pull the faces closer together (implode).
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
 
     names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
         Name of each face in the generated :class:`~pyvista.MultiBlock`.
@@ -3868,11 +3912,8 @@ class CubeFacesSource(CubeSource):
             bounds=bounds,
             point_dtype=point_dtype,
         )
-
         # Init output
-        points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-        faces = [4, 0, 1, 2, 3]
-        self._output = pyvista.MultiBlock([pyvista.PolyData(points, faces) for _ in range(6)])
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(6)])
 
         # Set properties
         self.frame_width = frame_width
@@ -3965,7 +4006,7 @@ class CubeFacesSource(CubeSource):
 
         .. note::
             - A value of ``0.0`` has no effect.
-            - Increasing positive values will push the faces farther away (explode)
+            - Increasing positive values will push the faces farther away (explode).
             - Decreasing negative values will pull the faces closer together (implode).
 
         This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
@@ -4107,11 +4148,9 @@ class CubeFacesSource(CubeSource):
         min_length = np.min(lengths)
 
         # Store vars for updating the output
-        shrink_factor, explode_factor, frame_width = (
-            self.shrink_factor,
-            self.explode_factor,
-            self.frame_width,
-        )
+        shrink_factor = self.shrink_factor
+        explode_factor = self.explode_factor
+        frame_width = self.frame_width
         output = self._output
 
         # Modify each face mesh of the output
