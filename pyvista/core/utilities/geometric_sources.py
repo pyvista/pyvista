@@ -4191,7 +4191,7 @@ class CubeFacesSource(CubeSource):
         """Get the output of the source.
 
         The output is a :class:`pyvista.MultiBlock` with six blocks: one for each
-        face. The blocks are named and ordered as  ``('+X','-X','+Y','-Y','+Z','-Z')``.
+        face. The blocks are named and ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
 
         The source is automatically updated by :meth:`update` prior to returning
         the output.
