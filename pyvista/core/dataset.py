@@ -37,7 +37,6 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
-from .utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -1190,7 +1189,8 @@ class DataSet(DataSetFilters, DataObject):
         [2.0, 1.0, 2.0]
 
         """
-        transform = Transform().translate(xyz)
+        transform = _vtk.vtkTransform()
+        transform.Translate(cast(Sequence[float], xyz))
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1251,7 +1251,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        transform = Transform().scale(xyz)
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
+        transform = _vtk.vtkTransform()
+        transform.Scale(xyz)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
