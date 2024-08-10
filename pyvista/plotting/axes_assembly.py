@@ -1514,9 +1514,12 @@ class BoxAssembly(_XYZAssembly):
         self.opacity = opacity  # type: ignore[assignment]
         self.culling = culling
 
-        self.frame_width = frame_width  # type: ignore[method-assign]
-        self.shrink_factor = shrink_factor  # type: ignore[method-assign]
-        self.explode_factor = explode_factor  # type: ignore[method-assign]
+        if frame_width is not None:
+            self.frame_width = frame_width  # type: ignore[method-assign]
+        if shrink_factor is not None:
+            self.shrink_factor = shrink_factor  # type: ignore[method-assign]
+        if explode_factor is not None:
+            self.explode_factor = explode_factor  # type: ignore[method-assign]
 
         for label in self._label_actor_iterator:
             prop = label.prop
