@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -253,12 +252,13 @@ class DataSetFilters:
         >>> pl.show()
         """
         axes = pyvista.principal_axes(self.points)
-        matrix = _validation.validate_transform4x4(axes)
+        matrix = np.eye(4)
+        matrix[:3, 3] = axes
 
         aligned = self.transform(matrix, inplace=False)
         translate = -np.array(aligned.center)
         if not centered:
-            translate += self.center
+            translate += self.center  # type: ignore[attr-defined]
         matrix[:3, 3] = translate
         aligned.translate(translate, inplace=True)
 
